@@ -5,8 +5,38 @@ import getLogger from '../../utils/logger';
 import { getWfServiceToken } from './auth';
 
 const logger = getLogger();
+// Notification interface
+interface WFNotification {
+    content: string;
+    subject: string;
+    resourceType?: string;
+    resourceId: string;
+    workload?: string;
+    priority?: string;
+    resourceName: string;
+    timestamp?: number;
+    notificationType: string;
+    actionRequired?:
+        | boolean
+        | {
+              to: string;
+              state: {
+                  [key: string]: string;
+              };
+              label: string;
+          };
+    link?: {
+        url: string;
+        label: string;
+    };
+    persist?: boolean;
+    ttl?: number;
+    action?: string;
+    userId?: string;
+    service?: string;
+}
 
-export default async function sendWFNotification(accountId: string, requestBody: any) {
+async function sendWFNotification(accountId: string, requestBody: WFNotification) {
     logger.info('Sending workload factory notification:', { accountId, requestBody });
     try {
         const { token } = await getWfServiceToken();
@@ -24,3 +54,5 @@ export default async function sendWFNotification(accountId: string, requestBody:
         throw createError(500, `Error occurred while sending Workload factory notification, ${err}`);
     }
 }
+
+export { sendWFNotification, WFNotification };

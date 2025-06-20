@@ -5,7 +5,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { emailSchema, notificationSchema } from './schemas/notification-schema';
 import castRequest from './utils';
 import processEmailRequest from '../operations/notification-operations';
-import { prepareWFNotificationRequest } from '../operations/wf-notification-operations';
+import prepareWFNotificationRequest from '../operations/wf-notification-operations';
 
 export default function notificationRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();

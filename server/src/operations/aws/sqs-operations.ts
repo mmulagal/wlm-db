@@ -24,7 +24,8 @@ import {
     RESOURCE_SOURCE,
     STORAGE_PROTOCOLS,
     DatabaseTypes,
-    AuditStatus
+    AuditStatus,
+    WF_NOTIFICATION_PRIORITY
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -63,6 +64,7 @@ import { getPgSqlInstanceInfo } from '../workloads/pgsql/pgsql-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { DeploymentDetails } from '../../utils/common-types';
 import { paginateDescribeEbsVolumes } from '../../lib/aws/ec2';
+import prepareWFNotificationRequest from '../wf-notification-operations';
 
 const logger = getLogger();
 
@@ -247,10 +249,30 @@ async function modifyMasterJobStatus(
         error: jobStatus === JOBSTATUS.FAILED ? [...new Set(combinedErrors)].join(',') : undefined
     });
 
-    if (jobStatus === JOBSTATUS.FAILED) {
-        updateLongRunningAuditGroup(AuditStatus.FAILED, [...new Set(combinedErrors)].join(','));
-    } else if (jobStatus === JOBSTATUS.COMPLETED) {
-        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    const isFailed = jobStatus === JOBSTATUS.FAILED;
+    const isCompleted = jobStatus === JOBSTATUS.COMPLETED;
+
+    if (isFailed || isCompleted) {
+        if (isFailed) {
+            updateLongRunningAuditGroup(AuditStatus.FAILED, [...new Set(combinedErrors)].join(','));
+        } else {
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+        }
+
+        const notificationData = {
+            content: isFailed
+                ? `The ${databaseType} deployment host has failed. See more details in job monitoring`
+                : `The ${databaseType} deployment host has been completed successfully`,
+            subject: isFailed
+                ? `${databaseType} host Deployment with stack ${stackName} has been failed. `
+                : `${databaseType} host Deployment with stack ${stackName} has been completed successfully`,
+            resourceName: stackName,
+            resourceId: stackName,
+            notificationType: 'Deployment',
+            resourceType: `${databaseType} host`,
+            priority: isFailed ? WF_NOTIFICATION_PRIORITY.WF_ERROR : WF_NOTIFICATION_PRIORITY.WF_SUCCESS
+        };
+        await prepareWFNotificationRequest(accountId, notificationData);
     }
 
     logger.debug('Update job response:', response);
@@ -298,7 +320,7 @@ async function createOrUpdateChildJobs(
         undefined,
         childJobName
     );
-    if (!childJob && parentJob.name !== `Deploying ${logicalResourceId}`) {
+    if (!childJob && parentJob.name !== `Deploying ${logicalResourceId} `) {
         logger.info('Create child level job:', {
             parentJobId: parentJob.id,
             parentJobName: parentJob.name,
@@ -321,7 +343,7 @@ async function createOrUpdateChildJobs(
             }
         ]);
     } else if (
-        (childJob && parentJob.name !== `Deploying ${logicalResourceId}`) ||
+        (childJob && parentJob.name !== `Deploying ${logicalResourceId} `) ||
         (childJob && childJobName === childJob.name)
     ) {
         // https://jira.ngage.netapp.com/browse/DBS-1942
@@ -376,7 +398,7 @@ async function processCloudFormationMessages() {
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
             if (!isEmpty(sqsMessages)) {
-                logger.debug(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages });
+                logger.debug(`>>> SQS MESSAGES @${Date.now()} `, { sqsMessages });
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
@@ -456,7 +478,7 @@ async function processCloudFormationMessages() {
                                                 });
 
                                                 // Create master job
-                                                const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
+                                                const masterJobName = `${trackdatabaseType} deployment with stack ${stackName} `;
                                                 logger.info('Creating master job:', masterJobName);
                                                 const stackUrl = deployedStackUrl(region, stackName);
                                                 await createJobs(accountId, [
@@ -467,7 +489,7 @@ async function processCloudFormationMessages() {
                                                         type: JOBTYPE.DEPLOYMENT,
                                                         status: JOBSTATUS.IN_PROGRESS,
                                                         resource_name: trackresourceName,
-                                                        name: `${masterJobName};href:${stackUrl}`,
+                                                        name: `${masterJobName}; href:${stackUrl} `,
                                                         start_time: new Date(messageTimestamp)
                                                     }
                                                 ]);
@@ -497,7 +519,7 @@ async function processCloudFormationMessages() {
                                                     });
 
                                                     // Update master job with completion status
-                                                    const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
+                                                    const masterJobName = `${trackdatabaseType} deployment with stack ${stackName} `;
                                                     const [masterJob] = await listJobs(
                                                         accountId,
                                                         credentialsId,
@@ -735,21 +757,6 @@ async function processCloudFormationMessages() {
                                                     } catch (error) {
                                                         logger.error('Error while tagging resource', error);
                                                     }
-                                                    // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
-                                                    // const notificationData = {
-                                                    //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
-                                                    //     subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
-                                                    //     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been deployed successfully`,
-                                                    //     actionLabel: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
-                                                    //     redirectURL: `${REDIRECT_URL}/${resourceId}`,
-                                                    //     label: ACTION_BUTTON_DASHBOARD,
-                                                    //     priority: SUCCESS,
-                                                    //     accountId
-                                                    // };
-                                                    // await handleNotification(notificationData, {
-                                                    //     uiNotification: true,
-                                                    //     emailNotification: true
-                                                    // });
                                                 }
                                             }
                                         } else {
@@ -824,22 +831,6 @@ async function processCloudFormationMessages() {
                                                         deploymentStatus: DEPLOYMENT_STATUS.DELETE_IN_PROGRESS
                                                     });
                                                 }
-
-                                                // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
-                                                // const notificationData = {
-                                                //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
-                                                //     subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                                //     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
-                                                //     actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                                //     redirectURL: '/',
-                                                //     label: ACTION_BUTTON_DASHBOARD,
-                                                //     priority: CRITICAL,
-                                                //     accountId
-                                                // };
-                                                // await handleNotification(notificationData, {
-                                                //     uiNotification: true,
-                                                //     emailNotification: true
-                                                // });
                                             }
                                         }
                                     } catch (error) {
@@ -864,22 +855,6 @@ async function processCloudFormationMessages() {
                                                 JOBSTATUS.FAILED,
                                                 messageTimestamp
                                             );
-
-                                            // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
-                                            // const notificationData = {
-                                            //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
-                                            //     subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                            //     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
-                                            //     actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                            //     redirectURL: '/',
-                                            //     label: ACTION_BUTTON_DASHBOARD,
-                                            //     priority: CRITICAL,
-                                            //     accountId
-                                            // };
-                                            // await handleNotification(notificationData, {
-                                            //     uiNotification: true,
-                                            //     emailNotification: true
-                                            // });
                                         }
                                     }
                                 }
@@ -971,11 +946,9 @@ async function processCloudFormationMessages() {
                                     /**
                                              a master stack deployment record is created as part of the custom resource definition in master       template. As part of stack message additional deployment details for the master template deployment are  available.
                                              *In addition, all nested stack deployment messages are also available, if its master template related message then update the existing record, otherwise if its related to nested deployment insert a deployment record; a master template may have a set of nested templates deployed;
-
                                              Cloudformation does not send a notfication for parent stack deployment. We rely on nested template notification to capture the status of master stack.
                                              During initial deployment, cloudformation status would begin with 'CREATE_'. If any of the nested stacks fail (CREATE_FAILED) master stack is marked as CREATE_FAILED.
                                              It could be the case other nested stacks deploy successfully, however master stack should be CREATE_FAILED since one (or more) nested stack may have failed.
-
                                              Retry failed stack
                                              ==================
                                              User may retry failed stack, cloudformation status would now begin with 'UPDATE_'.

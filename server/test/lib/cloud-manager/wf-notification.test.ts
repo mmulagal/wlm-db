@@ -5,7 +5,7 @@ import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope'
 import '../../simulator/scopes/cloud-manager/cloud-manager-notification-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-notification-scope';
 import '../../simulator/scopes/opentelemetry-scope';
-import sendWFNotification from '../../../src/lib/cloud-manager/wf-notification';
+import { sendWFNotification } from '../../../src/lib/cloud-manager/wf-notification';
 import { ACCOUNT_ID } from '../../../src/utils/consts';
 
 const notificationRequestBody = {
