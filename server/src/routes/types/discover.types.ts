@@ -1,5 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { PGSQL_DEFAULT_INSTANCE_NAME, SqlServerDeploymentModel } from '../../utils/consts';
+import { DatabaseHostsQueryFields, PGSQL_DEFAULT_INSTANCE_NAME, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
 
 const DiscoverQuery = Type.Object({
@@ -209,7 +209,7 @@ const SqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
         description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
     }),
-    fields: Type.Optional(Type.String())
+    fields: Type.Optional(Type.String({ enum: Object.values(DatabaseHostsQueryFields) }))
 });
 
 const pgSqlServerNode = Type.Object({
