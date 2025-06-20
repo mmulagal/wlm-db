@@ -233,9 +233,10 @@ async function getResources(
     credentialsId?: string | string[],
     region?: string | string[],
     resourceType?: string | string[],
-    pageSize: number = 200,
+    pageSize: number | undefined = 200,
     nextToken?: string,
-    includeDatabaseInstances?: boolean
+    includeDatabaseInstances?: boolean,
+    allRecords?: boolean
 ): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
     logger.info(' Get the Resources', {
         accountId,
@@ -248,6 +249,10 @@ async function getResources(
     });
 
     resourceType = resourceType || [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL];
+
+    if (allRecords) {
+        pageSize = undefined;
+    }
 
     try {
         const recordsPromise = listResources(
@@ -276,7 +281,9 @@ async function getResources(
             count: items?.length,
             items,
             nextToken:
-                totalResourcesCount > pageSize && records.length >= pageSize ? items[items.length - 1].id : undefined
+                totalResourcesCount > Number(pageSize) && records.length >= Number(pageSize)
+                    ? items[items.length - 1].id
+                    : undefined
         };
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');

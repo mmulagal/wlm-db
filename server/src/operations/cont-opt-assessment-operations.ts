@@ -34,7 +34,7 @@ import {
 } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
-import { listDatabaseInstances, listResources } from '../lib/database/db';
+import { listResources } from '../lib/database/db';
 import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import {
     CloneDriftResponseType,
@@ -53,6 +53,7 @@ import {
 } from '../lib/database/database-instance-config';
 import {
     getInstanceInfo,
+    getResources,
     listAllManagedInstances,
     updateInstanceMetadata,
     updateResourceMetaData
@@ -150,9 +151,21 @@ async function updateAssesmentResultsInInstanceMetadata(
         updateInHost
     });
     const [driftAssessmentData, instanceDetails, [resourceDetails]] = await Promise.all([
-        fetchDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
-        getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId),
-        updateInHost ? listResources(accountId, databaseHostId, credentialsId, region) : Promise.resolve([])
+        fetchDriftAssessment(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            undefined,
+            managedInstance
+        ),
+        managedInstance ?? getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId),
+        updateInHost
+            ? managedInstance.resource && !isEmpty(managedInstance.resource)
+                ? [managedInstance.resource]
+                : getResources(accountId, databaseHostId, credentialsId, region).then(({ items = [] }) => items)
+            : Promise.resolve([])
     ]);
     const { metadata } = instanceDetails as unknown as DatabaseInstance;
 
@@ -779,7 +792,9 @@ async function triggerAssessment(
             credentialsId,
             region,
             databaseHostId,
-            databaseInstanceId
+            databaseInstanceId,
+            undefined,
+            managedInstance
         );
 
         activeNodeInstanceId = instanceDetails.activeNodeInstanceId;
@@ -1137,7 +1152,8 @@ async function fetchDriftAssessment(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    fields?: string
+    fields?: string,
+    databaseInstance?: DatabaseInstance
 ) {
     logger.info('Fetching drift assessment', {
         accountId,
@@ -1149,8 +1165,9 @@ async function fetchDriftAssessment(
     });
 
     let dismissedConfigurations;
+    const instanceDetail =
+        databaseInstance ?? (await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId));
 
-    const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
     let {
         database_instance_name: databaseInstanceName,
         fsxn_ids: fileSystemId,
@@ -1473,7 +1490,18 @@ async function fetchDriftAssessmentPerHost(
     logger.info('Fetching drift assessment per host', { accountId, credentialsId, region, databaseHostId, fields });
 
     if (isEmpty(resourceDetail)) {
-        [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+        ({
+            items: [resourceDetail]
+        } = await getResources(
+            accountId,
+            databaseHostId,
+            credentialsId,
+            region,
+            undefined,
+            undefined,
+            undefined,
+            true
+        ));
     }
     if (isEmpty(resourceDetail)) {
         const infoMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -1481,11 +1509,7 @@ async function fetchDriftAssessmentPerHost(
         throw createError(HttpErrorCodes.NOT_FOUND, `${infoMessage}`);
     }
 
-    const instancesManaged = await listDatabaseInstances(accountId, {
-        resourceId: databaseHostId,
-        credentialsId,
-        region
-    });
+    const instancesManaged = resourceDetail?.database_instances || [];
     logger.debug('Instances managed:', instancesManaged);
 
     if (isEmpty(instancesManaged)) {
@@ -1586,7 +1610,8 @@ async function fetchDriftAssessmentPerHost(
                         region,
                         databaseHostId,
                         databaseInstanceId,
-                        instanceFieldsToQuery.join(',')
+                        instanceFieldsToQuery.join(','),
+                        { ...managedInstance, resource: resourceDetail } as DatabaseInstancesIncludingResource
                     );
 
                     if (isHostLevelMetrics) {
@@ -1674,23 +1699,19 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         fields,
         parentJobId
     });
-
-    const [managedInstance] = (await listDatabaseInstances(accountId, {
-        credentialsId,
-        region,
-        resourceId: databaseHostId,
-        sqlInstanceId: databaseInstanceId
-    })) as DatabaseInstancesIncludingResource[];
-    if (isEmpty(managedInstance)) {
-        const errorMessage = `No managed database instance by account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId} found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
-    }
-    const {
-        resource: { resource_name: resourceName },
-        database_instance_name: instanceName
-    } = managedInstance;
     try {
+        const managedInstance = (await getInstanceInfo(
+            accountId,
+            credentialsId,
+            databaseHostId,
+            databaseInstanceId,
+            region
+        )) as DatabaseInstancesIncludingResource;
+
+        const {
+            resource: { resource_name: resourceName },
+            database_instance_name: instanceName
+        } = managedInstance;
         const savedInstanceName = `${resourceName}\\${instanceName}`;
         const jobName = `Microsoft SQL Server assessment for instance ${savedInstanceName}`;
         const jobDescription = `${jobName}`;

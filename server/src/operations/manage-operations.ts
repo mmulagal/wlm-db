@@ -408,8 +408,8 @@ async function manageSqlInstance(
                 items: [resourceDetails]
             } = await getResources(accountId, resourceId, credentialsId, region, undefined, undefined, undefined, true);
             isResourceTobeCreated = !resourceDetails;
-            if (resourceDetails && Array.isArray(resourceDetails.databaseInstanceDetails)) {
-                alreadyManagedDatabaseInstances = resourceDetails.databaseInstanceDetails;
+            if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
+                alreadyManagedDatabaseInstances = resourceDetails.database_instances;
             }
         }
 
@@ -486,8 +486,8 @@ async function manageSqlInstance(
                         true
                     );
                     isResourceTobeCreated = !resourceDetails;
-                    if (resourceDetails && Array.isArray(resourceDetails.databaseInstanceDetails)) {
-                        alreadyManagedDatabaseInstances = resourceDetails.databaseInstanceDetails;
+                    if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
+                        alreadyManagedDatabaseInstances = resourceDetails.database_instances;
                     }
                 }
 

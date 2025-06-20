@@ -264,7 +264,7 @@ interface ResourceDetails {
     fsxwId?: string; // internal field used to store the windows fsx ID for the unmanaged MSSQL resource,
     sqlServerDeploymentType?: string;
     clusterNodeDetails?: NodeDetails[];
-    databaseInstanceDetails?: DatabaseInstance[];
+    database_instances?: DatabaseInstance[];
     ec2UsageOperation?: string; // internal field used to store the ec2 usage operation for the unmanaged MSSQL resource
     configurations?: DatabaseInstanceConfigurations | JsonValue;
 }

@@ -489,10 +489,10 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
 
         const fsxnIds = fsxnId
             ? [fsxnId]
-            : resourceDetail.databaseInstanceDetails?.flatMap(f => (f.fsxn_ids ? [f.fsxn_ids] : []));
+            : resourceDetail.database_instances?.flatMap(f => (f.fsxn_ids ? [f.fsxn_ids] : []));
         const fsxwIds = fsxwId
             ? [fsxwId]
-            : resourceDetail.databaseInstanceDetails?.flatMap(f => (f.fsxwId ? [f.fsxwId] : []));
+            : resourceDetail.database_instances?.flatMap(f => (f.fsxwId ? [f.fsxwId] : []));
 
         const [ec2Info, fsxnInfo, ebsInfo, fsxwInfo] = await Promise.all([
             getEc2ResourceInfo(credentialsId, region, activeNodeInstanceId),
@@ -500,7 +500,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxnIds!)])]
                 : [Promise.resolve()]),
             ...(ebsVolumeIds && !isEmpty(ebsVolumeIds)
-                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds, resourceDetail?.databaseInstanceDetails)]
+                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds, resourceDetail?.database_instances)]
                 : [Promise.resolve()]),
             ...(fsxwIds && !isEmpty(fsxwIds)
                 ? [getFsxResourceInfo(credentialsId, region, [...new Set(fsxwIds!)])]
@@ -1090,8 +1090,11 @@ async function getDatabaseHostSummaryV2(
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLowerCase());
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
-    if (isEmpty(instancesManaged)) {
-        instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    if (instancesManaged && isEmpty(instancesManaged)) {
+        instancesManaged =
+            resourceDetail.database_instances && !isEmpty(resourceDetail.database_instances)
+                ? resourceDetail.database_instances.map(instance => ({ ...instance, resource: resourceDetail }))
+                : await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
     }
 
     if (isDemo()) {
@@ -1241,12 +1244,12 @@ async function getDatabaseHostSummaryV2(
                                 instance.instanceState === ServerState.UP &&
                                 (instance.instanceName === resource.database_instance_name ||
                                     (resourceType === DatabaseTypes.PG_SQL &&
-                                        resourceId === resource.resource.resource_id))
+                                        resourceId === resource?.resource?.resource_id))
                         )
                     );
                 } else {
                     runningDatabaseInstances =
-                        resourceDetail.databaseInstanceDetails?.filter(
+                        resourceDetail.database_instances?.filter(
                             instance => instance?.instanceState?.toUpperCase() === 'RUNNING'
                         ) ?? [];
                 }
@@ -1405,8 +1408,9 @@ async function getDatabaseHostInstanceSummary(
         databaseHostId,
         databaseInstanceId
     );
-
-    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+    const [resourceDetails] = newDatabaseInstanceDetails.resource
+        ? [newDatabaseInstanceDetails.resource]
+        : await listResources(accountId, databaseHostId, credentialsId, region);
 
     const [databaseInstanceSummary] = await getDatabaseInstancesSummary(
         accountId,
@@ -1674,14 +1678,13 @@ async function getInstanceDetails(
 
     // If either resource or databaseInstanceDetails is empty, make both DB calls
     if (isEmpty(resource) || isEmpty(dbInstanceDetails)) {
-        [[resourceDetails], [instanceDetails]] = await Promise.all([
-            listResources(accountId, databaseHostId, credentialsId, region),
-            listDatabaseInstances(accountId, {
-                resourceId: databaseHostId,
-                credentialsId,
-                sqlInstanceId: databaseInstanceId
-            })
-        ]);
+        [instanceDetails] = await listDatabaseInstances(accountId, {
+            resourceId: databaseHostId,
+            credentialsId,
+            sqlInstanceId: databaseInstanceId,
+            region
+        });
+        resourceDetails = instanceDetails?.resource;
     }
 
     if (isEmpty(resourceDetails) || isEmpty(instanceDetails)) {
