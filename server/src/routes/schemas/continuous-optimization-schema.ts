@@ -22,7 +22,7 @@ import {
     BulkOptimizeCloneBody,
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
-    ContinousOptimizationQueryString
+    ContinuousOptimizationQueryString
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -42,7 +42,7 @@ const DriftAssessmentDataCollection = {
     description: 'Get database instance parameters drift from recommended settings',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
-    querystring: ContinousOptimizationQueryString,
+    querystring: ContinuousOptimizationQueryString,
     response: {
         200: DriftAssessmentResponse
     }
@@ -54,7 +54,7 @@ const DriftAssessmentPerHost = {
     description: 'Get database parameters drift from recommended settings for all instances on a host',
     params: DatabaseHostSummaryParams,
     tags: [RouteTags.ASSESSMENT],
-    querystring: ContinousOptimizationQueryString,
+    querystring: ContinuousOptimizationQueryString,
     response: {
         200: DriftAssessmentResponsePerHost
     }
@@ -66,7 +66,7 @@ const TriggerDriftAssessmentSchema = {
     description: 'Trigger assessment for best practice misalignments on a managed database instance',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
-    querystring: ContinousOptimizationQueryString,
+    querystring: ContinuousOptimizationQueryString,
     response: {
         202: Type.Object({
             jobId: Type.String()

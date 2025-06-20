@@ -16,7 +16,7 @@ import {
 import { CLONE_ACTION } from '../../utils/consts';
 
 // Query parameter to fetch database, protection
-const ContinousOptimizationQueryString = Type.Object({
+const ContinuousOptimizationQueryString = Type.Object({
     fields: Type.Optional(Type.String({ enum: Object.values(AssessmentCategories) })),
     nextToken: Type.Optional(Type.String())
 });
@@ -662,5 +662,5 @@ export {
     BulkDismissConfigurationResponse,
     dismissedConfigurationsResponseType,
     BulkDismissConfigurationBodyType,
-    ContinousOptimizationQueryString
+    ContinuousOptimizationQueryString
 };
