@@ -126,7 +126,7 @@
                 "At least one character, one digit and one special character required.",
                 "Must not contain non-English letters or 'admin'."
             ],
-            "password-did-not-match": "Passwords do not match."
+            "passwords-not-match": "Passwords do not match."
         }
     }
 }

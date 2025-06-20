@@ -7,7 +7,6 @@ export interface InstanceDetailsData {
 export interface WorkloadFactoryResourceEntities {
     instanceDetailsData: InstanceDetailsData;
     sqlServerUserName: string;
-    windowsServerUserName: string;
     passwordResetLoading: boolean;
     resourceLoading: boolean;
     resourceDetails: WorkloadFactoryResourceDetails;
@@ -22,10 +21,6 @@ export interface WorkloadFactoryResourceEntities {
     isResourceRefresh: boolean;
     fsxAdminPasswords: any;
     sqlServerPasswords: any;
-    windowsServerPasswords: {
-        password: string;
-        confirmPassword: string;
-    };
     selectedAuthenticationType: string;
 }
 
