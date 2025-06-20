@@ -51,6 +51,7 @@ import onpremTcoRoutes from './routes/onprem-tco';
 import continuousOptimizationRoutes from './routes/continuous-optimization';
 import notificationRoutes from './routes/notification';
 import logsAnalyzerRoutes from './routes/logs-analyzer';
+import registerRoutes from './routes/register';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -223,6 +224,7 @@ const app = fastify({
             notificationRoutes(instance);
             logsAnalyzerRoutes(instance);
             sandboxRoutes(instance);
+            registerRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }
@@ -370,12 +372,12 @@ try {
     if (isActiveInstance()) {
         await execute('node_modules/prisma/build/index.js migrate deploy');
     }
+    logger.info('Database initialized');
 } catch (error) {
     logger.error('Failed to initialize database', error);
 }
-logger.info('Database initialized');
-// Initialize cron jobs
 
+// Initialize cron jobs
 if (isActiveInstance()) {
     initiateCronOperations();
 }

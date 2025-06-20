@@ -1,7 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import Promise from 'bluebird';
 import throat from 'throat';
 import moment from 'moment';
 import getLogger from '../utils/logger';
@@ -45,7 +44,8 @@ import {
     LicenseDriftResponseType,
     MSSQLPatchDriftResponseType,
     ParameterDriftResponseType,
-    RssConfigDriftResponseType
+    RssConfigDriftResponseType,
+    StorageParameterDriftResponseType
 } from '../routes/types/continuous-optimization.types';
 import {
     createDatabaseInstanceConfigData,
@@ -169,7 +169,7 @@ async function updateAssesmentResultsInInstanceMetadata(
                   const { items = [] } = await getResources(accountId, databaseHostId, credentialsId, region);
                   return items;
               })()
-            : Promise.resolve({})
+            : Promise.resolve([])
     ]);
     const { metadata } = instanceDetails as unknown as DatabaseInstance;
 
@@ -1142,11 +1142,11 @@ async function hostLevelDriftData(
     ]);
 
     return {
-        computeAssessmentResponse,
-        licenseAssessmentResponse,
-        hostOsPatchAssessmentResponse,
-        rssConfigResponse,
-        mssqlPatchAssessmentResponse
+        computeAssessmentResponse: computeAssessmentResponse as ComputeDriftResponseType,
+        licenseAssessmentResponse: licenseAssessmentResponse as LicenseDriftResponseType,
+        hostOsPatchAssessmentResponse: hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType,
+        rssConfigResponse: rssConfigResponse as RssConfigDriftResponseType,
+        mssqlPatchAssessmentResponse: mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType
     };
 }
 
@@ -1258,7 +1258,7 @@ async function fetchDriftAssessment(
                   databaseInstanceId,
                   storageAssessmentData as unknown as StorageAssessment
               )
-            : Promise.resolve({}),
+            : Promise.resolve({} as StorageParameterDriftResponseType),
         shouldCalculateMaxDOPAssessment
             ? calculateMaxDOPDrift(
                   accountId,
@@ -1278,7 +1278,7 @@ async function fetchDriftAssessment(
                   databaseInstanceId,
                   cloneAssessmentData as unknown as CloneAssessment
               )
-            : Promise.resolve({}),
+            : Promise.resolve({} as CloneDriftResponseType),
         shouldCalculateComputeAssessment ||
         shouldCalculateLicenseAssessment ||
         shouldCalculateHostOsPatchAssessment ||
@@ -1293,7 +1293,13 @@ async function fetchDriftAssessment(
                   resourceMetadata as unknown as Metadata,
                   fieldsValues
               )
-            : Promise.resolve({}),
+            : Promise.resolve({
+                  computeAssessmentResponse: {} as ComputeDriftResponseType,
+                  licenseAssessmentResponse: {} as LicenseDriftResponseType,
+                  hostOsPatchAssessmentResponse: {} as HostOsPatchDriftResponseType,
+                  rssConfigResponse: {} as RssConfigDriftResponseType,
+                  mssqlPatchAssessmentResponse: {} as MSSQLPatchDriftResponseType
+              }),
         shouldCalculateResilienceAssessment
             ? getResilienceDriftAssessment(
                   accountId,

@@ -61,3 +61,15 @@
         margin-bottom: 6px;
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .selectedHosts {
+        .valueArea {
+            width: 100% !important;
+
+            .container {
+                width: 33.33%;
+            }
+        }
+    }
+}

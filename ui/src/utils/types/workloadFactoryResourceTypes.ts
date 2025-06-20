@@ -33,6 +33,7 @@ export interface WorkloadFactoryResourceDetails {
     name: string;
     status: string;
     databaseCount: number;
+    databaseInstanceName?: string;
     databaseServer: {
         collation?: string;
         operatingSystem: string;
@@ -52,6 +53,11 @@ export interface WorkloadFactoryResourceDetails {
         writeIops: ResourceTrendMetric[];
         readLatency: ResourceTrendMetric[];
         writeLatency: ResourceTrendMetric[];
+    };
+    nodeTopology?: {
+        ec2Details: Array<{
+            id?: string;
+        }>;
     };
     topology: {
         awsAccount: string;

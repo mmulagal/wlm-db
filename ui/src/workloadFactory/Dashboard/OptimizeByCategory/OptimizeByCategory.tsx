@@ -1,6 +1,7 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography, useDialog } from '@netapp/design-system';
 import { useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Storage } from '../../../assets/Storage.svg';
 import { ReactComponent as Applications } from '../../../assets/Application.svg';
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
@@ -30,7 +31,6 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { useTranslation } from 'react-i18next';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();

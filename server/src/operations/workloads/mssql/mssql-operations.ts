@@ -1,4 +1,4 @@
-import Promise from 'bluebird';
+import throat from 'throat';
 import createError from 'http-errors';
 import { attempt, compact, isEmpty } from 'lodash-es';
 import { STORAGE_TYPE } from '@prisma/client';
@@ -467,14 +467,15 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
         offset += DB_ROWS_COUNT;
     }
 
-    const responses = await Promise.map(
-        batchQueries,
-        async query =>
-            callSsmExecution(credentialsId, region, [query], activeNodeInstanceId!, 'Get database tables summary'),
-        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+    const responses = await Promise.all(
+        batchQueries.map(
+            throat(SSM_QUERY_CONCURRENCY_LIMIT, async (query: string) =>
+                callSsmExecution(credentialsId, region, [query], activeNodeInstanceId!, 'Get database tables summary')
+            )
+        )
     );
     const tablesList = `[${responses.join().replace(/\[|\]/g, '')}]`;
-    // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
+    // this type of formatting is done because the responses are in an array of strings I am concatenating into 1 string by removing '[' and ']' and appending them again to start and end for proper JSON formatting
 
     const cleanResponses = sqlResponseParsing(tablesList);
     for (const record of cleanResponses) {

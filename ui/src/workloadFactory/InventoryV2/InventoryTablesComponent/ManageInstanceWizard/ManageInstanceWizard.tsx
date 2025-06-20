@@ -9,8 +9,8 @@ import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
 import ManageOnlyWizard from './ManageOnlyWizard';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { isAlreadyDetectedCheck } from './ManageInstanceUtils';
 
 const Wizard = () => {
     const { t } = useTranslation();
@@ -60,18 +60,16 @@ const ManageInstanceWizard = () => {
     ];
 
     const stepsMap = Object.fromEntries(MANAGE_STEPS.map(({ key, component }) => [key, component]));
-
     const stepPaths = {
         regular: MANAGE_STEPS.map(({ label, key }) => ({ label, key }))
     };
+
     const initialState: Partial<WizardState> = {};
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
-    const isAlreadyDetected = useMemo(() => {
-        if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-            return true;
-        }
-        return false;
-    }, [manageSingleInstanceData]);
+    const isAlreadyDetected = useMemo(
+        () => isAlreadyDetectedCheck(manageSingleInstanceData),
+        [manageSingleInstanceData]
+    );
 
     return (
         <>

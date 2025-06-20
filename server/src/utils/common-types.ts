@@ -225,6 +225,7 @@ interface UserDatabase {
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
         isCRREnabled: boolean;
+        isAppConsistentBackupEnabled?: boolean | string;
     };
     collation: string;
 }
@@ -687,6 +688,22 @@ interface AWSSDKCacheParams {
     credentialsId?: string; // Optional credentials ID for cache key generation
 }
 
+interface FSxCredsRegistration {
+    fsxId: string;
+    ontapconnectivity: boolean;
+    ontaperror?: string;
+}
+
+interface DatabaseInstanceRegistration {
+    sqlInstanceName: string;
+    sqlInstanceConnectivity: boolean;
+    sqlerror?: string;
+    sqlEdition?: string;
+    noOfDatabases?: number;
+    sqlPermissions?: string[];
+    availablePsModules?: string[];
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -750,5 +767,7 @@ export {
     CrrAssessment,
     CrrDetails,
     OptimizeMpioTimeoutParams,
-    AWSSDKCacheParams
+    AWSSDKCacheParams,
+    FSxCredsRegistration,
+    DatabaseInstanceRegistration
 };

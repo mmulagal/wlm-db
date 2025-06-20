@@ -465,7 +465,8 @@ const ASSESMENT_CONFIG_DATA = {
                 accessPath: 'T:\\',
                 policy: 'LB'
             }
-        ]
+        ],
+        'mpio-timeout': 40
     },
     luns: [
         {

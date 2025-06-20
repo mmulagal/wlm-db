@@ -24,7 +24,7 @@ const RemediationRecommendationObject = Type.Object({
     error: Type.String(),
     cause: Type.String(),
     count: Type.Number(),
-    severity: Type.String(),
+    severity: Type.Optional(Type.String()),
     remediation: Type.Array(Type.String()),
     firstOccurrence: Type.Optional(Type.Number()),
     lastOccurrence: Type.Optional(Type.Number()),

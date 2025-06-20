@@ -2,23 +2,16 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
     DiscoverMsSqlSchema,
-    DiscoverCredentialsSchema,
-    PrepareForManageSchema,
     MsSqlInstancesSchema,
     UnManageMsSqlSchema,
-    ManageMsSqlSchemaV2,
     DiscoverPgSqlSchema,
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
     UnManagePgSqlSchema,
-    JobBasedManageSchema,
     OracleResourceDetailsSchema
 } from './schemas/discover-schemas';
 import {
     getHostAndSqlServerInfo,
-    manageSqlServerV2,
-    validateAndStoreDiscoveredParameters,
-    prepareForManage,
     fetchUnmanagedHostsInformationV2,
     unmanageDatabaseInstance,
     discoverPgSqlResources,
@@ -29,7 +22,6 @@ import {
 
 import getLogger from '../utils/logger';
 import castRequest from './utils';
-import { manageSqlInstances } from '../operations/manage-operations';
 
 const logger = getLogger();
 
@@ -53,37 +45,6 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         return apiInfo;
     });
 
-    server.post('/v1/mssql/manage', { schema: ManageMsSqlSchemaV2 }, async request => {
-        const {
-            params: { accountId },
-            body: { items }
-        } = castRequest(request);
-        logger.info(`Manage SQL Server instances for account ${accountId}, ${items}`);
-        const apiInfo = await manageSqlServerV2(accountId, items);
-        return apiInfo;
-    });
-
-    server.post(
-        `${DISCOVER_MSSQL_API_PATH}/instances/:instanceId/discover/resource-credentials`,
-        { schema: DiscoverCredentialsSchema },
-        async request => {
-            const {
-                params: { accountId, credentialsId, region, instanceId },
-                body: { credentials, clusterNodesIpAddress, checkManageReadiness }
-            } = castRequest(request);
-
-            return validateAndStoreDiscoveredParameters(
-                accountId,
-                credentialsId,
-                region,
-                instanceId,
-                credentials,
-                clusterNodesIpAddress,
-                checkManageReadiness
-            );
-        }
-    );
-
     server.get(`${DISCOVER_MSSQL_API_PATH}/instances`, { schema: MsSqlInstancesSchema }, async request => {
         const {
             params: { accountId, credentialsId, region },
@@ -92,19 +53,6 @@ export default function discoverRoutes(fastify: FastifyInstance) {
 
         return fetchUnmanagedHostsInformationV2(accountId, credentialsId, region, instances.split(','), fields);
     });
-
-    server.post(
-        `${DISCOVER_MSSQL_API_PATH}/instances/:instanceId/prepare`,
-        { schema: PrepareForManageSchema },
-        async request => {
-            const {
-                params: { accountId, credentialsId, region, instanceId }
-            } = castRequest(request);
-
-            const apiInfo = await prepareForManage(accountId, credentialsId, region, instanceId);
-            return { jobId: apiInfo };
-        }
-    );
 
     server.delete(
         '/v1/mssql/credentials/:credentialsId/resources/:resourceId/instances',
@@ -177,16 +125,6 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         } = castRequest(request);
         const apiInfo = await discoverOracleResources(accountId, credentialsId, region, pageSize, nextToken);
         return apiInfo;
-    });
-
-    // Manage job based
-    server.post('/v2/mssql/manage', { schema: JobBasedManageSchema }, async request => {
-        const {
-            params: { accountId },
-            body: { items }
-        } = castRequest(request);
-        const response = await manageSqlInstances(accountId, items);
-        return response;
     });
 
     server.get(

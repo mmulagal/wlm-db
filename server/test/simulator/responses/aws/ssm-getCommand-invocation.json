@@ -1818,6 +1818,34 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
+      "verifyMpioTimeoutSettingResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-verifyMpioTimeoutSetting",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-verifyMpioTimeoutSetting",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"status\": \"success\", \"error\": \"\"}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
     "getPatchBaselineCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -2204,9 +2232,18 @@
     "getSnapshotCopyDetailsResponse": {
         "errors": {},
         "response": {
-            "ad251a8f-da34-11ef-b315-11b9ce95d982": "2025-03-10T10:20:02+00:00",
-            "74a8a789-c5dd-11ef-b315-11b9ce95d982": "2025-03-10T10:14:23+00:00",
-            "438cc269-edeb-11ef-994b-3b81e03bea3e": "2025-03-10T10:17:03+00:00"
+            "ad251a8f-da34-11ef-b315-11b9ce95d982": {
+                "create_time": "2025-03-10T10:20:02+00:00",
+                "comment": "creator=snapcenter"
+            },
+            "74a8a789-c5dd-11ef-b315-11b9ce95d982": {
+                "create_time": "2025-03-10T10:14:23+00:00",
+                "comment": "creator=snapcenter"
+
+            },
+            "438cc269-edeb-11ef-994b-3b81e03bea3e": {
+                "create_time": "2025-03-10T10:17:03+00:00"
+            }
         }
     },
     "optimizeNetworkAdaptersResponse": {

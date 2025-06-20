@@ -55,3 +55,21 @@
         width: 1407px;
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .exportPdf {
+        width: 91%;
+    }
+}
+
+@media screen and (min-width: 2133px) and (max-width: 5020px) {
+    .exportPdf {
+        width: 86%;
+    }
+}
+
+@media screen and (min-width: 1900px) and (max-width: 2000px) {
+    .exportPdf {
+        width: 83%;
+    }
+}

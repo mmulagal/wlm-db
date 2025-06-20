@@ -121,6 +121,7 @@ function getWindowsPrepareScript(scriptParams: {
 
     return `
     # Logs Analysis Windows Prepare Script
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     try {
         $s3SignedUrl = "${s3SignedUrl}";
         $packageName = "${packageName}";

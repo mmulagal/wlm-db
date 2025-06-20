@@ -178,6 +178,11 @@ export interface InventoryTableInstanceDatInterface {
         serverVersion?: string;
     };
     sqlServerDeploymentType?: string;
+    discoverInstanceData?: any;
+    isFsxRegistered?: boolean;
+    windowsAuthentication?: boolean;
+    sqlServerAuthentication?: boolean;
+    windowsDomainUserAuthentication?: boolean;
 }
 
 export interface StorageInterface {

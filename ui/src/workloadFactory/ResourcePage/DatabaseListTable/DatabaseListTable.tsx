@@ -2,7 +2,8 @@ import { Table, useTable, TableTopBar, Typography, TooltipInfo, Button } from '@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { useTranslation } from 'react-i18next';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -17,10 +18,8 @@ import {
     setCdbPageData
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../store/authSlice';
-import ProtectionIcons from '../../../common/ProtectionIcons/ProtectionIcons';
 
 const DatabaseListTable = () => {
-    const { t } = useTranslation();
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
     const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
     const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
@@ -51,6 +50,19 @@ const DatabaseListTable = () => {
                 isProtected: protectionVal
             };
         });
+
+    const protectionTooltipText = (data: any) => (
+        <div className={styles.protectionTooltip}>
+            <Typography variant="Semibold_13" className={styles.textHeight}>
+                {GENERAL.PROTECTED_BY}:
+            </Typography>
+            {data.map((val: any, index: number) => (
+                <Typography key={index} variant="Regular_13" className={styles.textHeight}>
+                    {val}
+                </Typography>
+            ))}
+        </div>
+    );
 
     const notAvailable = () => (
         <Typography variant="Regular_13" className={styles.colText}>
@@ -96,19 +108,61 @@ const DatabaseListTable = () => {
             accessor: 'isProtected',
             filterOptions: 'auto',
             id: '4',
-            width: '22%',
+            width: '15%',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
+                const protectedByList = [];
+                const awsBackup = isAwsBackupEnabledText(rowData, '');
+                if (
+                    protectionData?.isFsxOntapSnapshotsEnabled &&
+                    String(protectionData?.isFsxOntapSnapshotsEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
+                ) {
+                    protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
+                }
+                if (awsBackup && String(awsBackup)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
+                    protectedByList.push(GENERAL.AWS_BACKUP);
+                }
+                if (
+                    protectionData?.isSqlNativeEnabled &&
+                    String(protectionData?.isSqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
+                ) {
+                    protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
+                }
+                if (
+                    protectionData?.isCRREnabled &&
+                    String(protectionData?.isCRREnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
+                ) {
+                    protectedByList.push(GENERAL.CRR_ENABLED);
+                }
 
                 return (
                     <>
                         {protectionData && (
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
-                                    <div className={styles.protectionIcons}>
-                                        <ProtectionIcons protectionData={protectionData} />
-                                    </div>
+                                    {cellData === GENERAL.PROTECTED && (
+                                        <ProtectedIcon
+                                            style={{
+                                                // @ts-ignore
+                                                '--icon-primary-color': 'var(--green-60)'
+                                            }}
+                                        />
+                                    )}
+                                    {cellData === GENERAL.NOT_PROTECTED && (
+                                        <NotProtectedIcon
+                                            style={{
+                                                // @ts-ignore
+                                                '--icon-primary-color': 'var(--grey-45)'
+                                            }}
+                                        />
+                                    )}
+                                    <Typography variant="Regular_14">{cellData}</Typography>
                                 </div>
+                                {protectedByList?.length > 0 && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                        {protectionTooltipText(protectedByList)}
+                                    </TooltipInfo>
+                                )}
                             </div>
                         )}
                         {!protectionData && notAvailable()}

@@ -154,7 +154,8 @@ enum RouteTags {
     ASSESSMENT = 'Well Architected',
     ONPREM_TCO = 'OnPremises TCO',
     NOTIFICATION = 'Notification',
-    LOGS_ANALYSIS = 'Logs Analysis'
+    LOGS_ANALYSIS = 'Logs Analysis',
+    REGISTER = 'Register'
 }
 
 enum HttpErrorCodes {
@@ -1764,6 +1765,15 @@ const CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES = [
 ];
 
 const WF_NOTIFICATION_RESOURCE_TYPE = 'DB';
+const SNAPCENTER_BACKUP_SNAPSHOT_COMMENT = 'creator=snapcenter';
+enum WF_NOTIFICATION_PRIORITY {
+    WF_CRITICAL = 'Critical',
+    WF_RECOMMENDATION = 'Recommendation',
+    WF_INFO = 'Info',
+    WF_WARNING = 'Warning',
+    WF_ERROR = 'Error',
+    WF_SUCCESS = 'Success'
+}
 
 export {
     WLMDB,
@@ -2121,6 +2131,8 @@ export {
     ORACLE_INSTANCE_STATE,
     POSTPONE_AGE,
     WF_NOTIFICATION_RESOURCE_TYPE,
+    WF_NOTIFICATION_PRIORITY,
     CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE,
-    CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES
+    CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES,
+    SNAPCENTER_BACKUP_SNAPSHOT_COMMENT
 };
