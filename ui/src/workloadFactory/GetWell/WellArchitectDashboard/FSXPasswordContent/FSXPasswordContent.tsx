@@ -1,5 +1,8 @@
 import { DsTypography, PasswordField, Popover, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import React, { useEffect } from 'react';
+import { DsRadioButton } from '@tlveng/wlm-ds';
 import styles from './FSXPasswordContent.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -9,11 +12,15 @@ import {
     setFsxAdminPassword,
     setSqlServerConfirmPassword,
     setSqlServerPassword,
-    setSqlServerUserName
+    setSqlServerUserName,
+    setSelectedAuthenticationType,
+    resetAllPasswords
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { isValidPassword, isValidSqlUsername } from '../../../../utils/utilityFunctions';
+import { AUTHENTICATION_TYPE } from '../../../../utils/consts';
+import { AppDispatch } from '../../../../store/store';
 
 interface PasswordContentProps {
     type: 'fsx' | 'sql';
@@ -35,29 +42,29 @@ const PasswordContent = ({
     username
 }: PasswordContentProps) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
+    const { selectedAuthenticationType } = useAppSelector(state => state.workloadFactoryResource);
+
     const tooltipText = () => (
         <DsTypography variant="Regular_13" className={styles.infoMsg}>
-            <DsTypography variant="Regular_13">The password must be:</DsTypography>
+            <DsTypography variant="Regular_13">{t('databases.update-credentials.password-info-heading')}</DsTypography>
             <div className={styles.list}>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <div className={styles.textWidth}>Between 8 and 50 characters in length.</div>
-                </div>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <div className={styles.textWidth}>At least one character and one digit.</div>
-                </div>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <div className={styles.textWidth}>Must not contain non-English letters or "admin".</div>
-                </div>
+                {(Array.isArray(t('databases.update-credentials.password-info-list', { returnObjects: true }))
+                    ? (t('databases.update-credentials.password-info-list', { returnObjects: true }) as string[])
+                    : []
+                ).map((item: string, index: number) => (
+                    <div className={styles.listItem} key={index}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{item}</div>
+                    </div>
+                ))}
             </div>
         </DsTypography>
     );
 
     const isValidConfirmPassword = (confirmPassword: string) => {
         if (confirmPassword.length > 0 && password !== confirmPassword) {
-            return 'Passwords do not match.';
+            return t('databases.update-credentials.passwords-not-match');
         }
     };
 
@@ -66,6 +73,8 @@ const PasswordContent = ({
             <DsTypography variant="Regular_14" style={{ width: '800px' }}>
                 {description}
             </DsTypography>
+
+            {type === 'sql' && authModeRadio()}
 
             <div className={styles.textArea}>
                 {type === 'fsx' && (
@@ -83,7 +92,6 @@ const PasswordContent = ({
                         error={useDelayedError(isValidSqlUsername(username))}
                     />
                 )}
-
                 <div className={styles.tooltipContainer}>
                     <PasswordField
                         label={GENERAL.PASSWORD}
@@ -104,7 +112,6 @@ const PasswordContent = ({
                         />
                     </div>
                 </div>
-
                 <PasswordField
                     label="Confirm password"
                     error={useDelayedError(isValidConfirmPassword(confirmPassword))}
@@ -153,6 +160,49 @@ const SQLServerPasswordContent = () => {
             description={GENERAL.SQL_PASSWORD_CONTENT}
             username={sqlServerUserName}
         />
+    );
+};
+
+const resetSqlAndWindowsPasswords = (dispatch: AppDispatch) => {
+    dispatch(resetAllPasswords());
+};
+
+// Function to render the authentication mode radio buttons for SQL Server
+const authModeRadio = () => {
+    const dispatch = useDispatch();
+    const { t } = useTranslation();
+    const { selectedAuthenticationType } = useAppSelector(state => state.workloadFactoryResource);
+
+    useEffect(() => {
+        if (!selectedAuthenticationType) {
+            dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
+        }
+    }, []);
+
+    return (
+        <div className={styles['radio-container']}>
+            <DsTypography variant="Semibold_14">{t('databases.register-flow.select-authentication-mode')}</DsTypography>
+            <DsRadioButton
+                id="select-sql-authentication"
+                variant="Default"
+                title={t('databases.register-flow.sql-server-authentication')}
+                isSelected={selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
+                onClick={() => {
+                    dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
+                    resetSqlAndWindowsPasswords(dispatch);
+                }}
+            />
+            <DsRadioButton
+                id="select-windows-authentication"
+                variant="Default"
+                title={t('databases.register-flow.windows-authentication')}
+                isSelected={selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                onClick={() => {
+                    dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
+                    resetSqlAndWindowsPasswords(dispatch);
+                }}
+            />
+        </div>
     );
 };
 

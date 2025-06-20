@@ -52,17 +52,17 @@ const DatabaseListTable = () => {
         });
 
     const protectionTooltipText = (data: any) => (
-            <div className={styles.protectionTooltip}>
-                <Typography variant="Semibold_13" className={styles.textHeight}>
-                    {GENERAL.PROTECTED_BY}:
+        <div className={styles.protectionTooltip}>
+            <Typography variant="Semibold_13" className={styles.textHeight}>
+                {GENERAL.PROTECTED_BY}:
+            </Typography>
+            {data.map((val: any, index: number) => (
+                <Typography key={index} variant="Regular_13" className={styles.textHeight}>
+                    {val}
                 </Typography>
-                {data.map((val: any, index: number) => (
-                    <Typography key={index} variant="Regular_13" className={styles.textHeight}>
-                        {val}
-                    </Typography>
-                ))}
-            </div>
-        );
+            ))}
+        </div>
+    );
 
     const notAvailable = () => (
         <Typography variant="Regular_13" className={styles.colText}>

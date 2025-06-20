@@ -45,7 +45,6 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    // const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
     const { password, confirmPassword } = useAppSelector(state => {
         if (dialogFrom === FROM_DIALOG.FSXADMIN) {
             return state.workloadFactoryResource.fsxAdminPasswords;

@@ -1,5 +1,5 @@
 import config from 'config';
-import Promise from 'bluebird';
+import throat from 'throat';
 import ms from 'ms';
 import { STORAGE_TYPE, database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
@@ -79,85 +79,86 @@ async function updateTcoInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
         logger.info('Updating instance recommendation preferences for TCO feature');
         const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE);
-        await Promise.map(
-            trackedEc2Instances,
-            async instance => {
-                const {
-                    cloud_provider_account_id: awsAccountId,
-                    instance_id: instanceId,
-                    account_id: accountId,
-                    credentials_id: credentialsId,
-                    region
-                } = instance;
-                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
-                try {
+        await Promise.all(
+            trackedEc2Instances.map(
+                throat(5, async instance => {
                     const {
-                        items: [ec2HostDetails]
-                    } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
-                        instanceId
-                    ]);
-                    const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
+                        cloud_provider_account_id: awsAccountId,
+                        instance_id: instanceId,
+                        account_id: accountId,
+                        credentials_id: credentialsId,
+                        region
+                    } = instance;
+                    setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                    try {
+                        const {
+                            items: [ec2HostDetails]
+                        } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
+                            instanceId
+                        ]);
+                        const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
 
-                    let { sqlServerInstances } = ec2HostDetails;
-                    if (sqlServerInstances !== undefined) {
-                        const { sqlServerDeploymentType, nodeIps } =
-                            fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
-                        const instanceIds = [instanceId];
-                        if (nodeIps && nodeIps.length > 0) {
-                            const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
-                                accountId,
-                                credentialsId,
-                                region,
-                                instanceId,
-                                nodeIps
+                        let { sqlServerInstances } = ec2HostDetails;
+                        if (sqlServerInstances !== undefined) {
+                            const { sqlServerDeploymentType, nodeIps } =
+                                fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
+                            const instanceIds = [instanceId];
+                            if (nodeIps && nodeIps.length > 0) {
+                                const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    instanceId,
+                                    nodeIps
+                                );
+
+                                partnerNodeDetails?.forEach(partnerNode => {
+                                    const { sqlServerInstances: partnerSqlServerInstances, ec2InstanceId } =
+                                        partnerNode;
+                                    if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
+                                        sqlServerInstances = sqlServerInstances?.concat(partnerSqlServerInstances);
+                                    }
+                                    instanceIds.push(ec2InstanceId);
+                                });
+                            }
+                            const ebsVolumeIds = compact(
+                                sqlServerInstances?.flatMap(server =>
+                                    server?.storage
+                                        ?.filter(storage => storage.type === STORAGE_TYPE.EBS)
+                                        .map(storage => storage.id)
+                                )
                             );
 
-                            partnerNodeDetails?.forEach(partnerNode => {
-                                const { sqlServerInstances: partnerSqlServerInstances, ec2InstanceId } = partnerNode;
-                                if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
-                                    sqlServerInstances = sqlServerInstances?.concat(partnerSqlServerInstances);
-                                }
-                                instanceIds.push(ec2InstanceId);
+                            await manageInstanceRecommendationPreReqs(
+                                awsAccountId,
+                                region,
+                                credentialsId,
+                                resourceArn,
+                                accountId,
+                                instanceIds,
+                                ebsVolumeIds,
+                                sqlServerDeploymentType!
+                            );
+                            await updateTrackedEc2Record(accountId, region, credentialsId, instanceId, TCO_FEATURE, {
+                                last_updated: new Date()
                             });
                         }
-                        const ebsVolumeIds = compact(
-                            sqlServerInstances?.flatMap(server =>
-                                server?.storage
-                                    ?.filter(storage => storage.type === STORAGE_TYPE.EBS)
-                                    .map(storage => storage.id)
-                            )
-                        );
-
-                        await manageInstanceRecommendationPreReqs(
-                            awsAccountId,
-                            region,
-                            credentialsId,
-                            resourceArn,
-                            accountId,
-                            instanceIds,
-                            ebsVolumeIds,
-                            sqlServerDeploymentType!
-                        );
-                        await updateTrackedEc2Record(accountId, region, credentialsId, instanceId, TCO_FEATURE, {
-                            last_updated: new Date()
-                        });
-                    }
-                } catch (error: any) {
-                    if (error?.Code && error.Code === 'InvalidInstanceID.NotFound') {
-                        await removeTrackedEc2Record(
-                            accountId,
-                            region,
-                            credentialsId,
-                            instance.instance_id,
-                            TCO_FEATURE
+                    } catch (error: any) {
+                        if (error?.Code && error.Code === 'InvalidInstanceID.NotFound') {
+                            await removeTrackedEc2Record(
+                                accountId,
+                                region,
+                                credentialsId,
+                                instance.instance_id,
+                                TCO_FEATURE
+                            );
+                        }
+                        logger.error(
+                            `Error while updating instance recommendation preferences for instance ${instanceId}: ${error}`
                         );
                     }
-                    logger.error(
-                        `Error while updating instance recommendation preferences for instance ${instanceId}: ${error}`
-                    );
-                }
-            },
-            { concurrency: 5 }
+                })
+            )
         );
         logger.info('Updating instance recommendation preferences completed');
     });

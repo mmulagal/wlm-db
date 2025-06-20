@@ -136,7 +136,6 @@ const DetectContent = () => {
             />
             <RadioButton
                 id="select-windows-authentication"
-                title="Windows authentication is not supported yet"
                 isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
                 onChange={() => {
                     dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));

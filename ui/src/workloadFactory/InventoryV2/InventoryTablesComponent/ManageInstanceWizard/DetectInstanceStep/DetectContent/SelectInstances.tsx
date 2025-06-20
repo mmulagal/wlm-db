@@ -9,6 +9,7 @@ import { ACTION_CTA } from '../../../../../../utils/consts';
 import { manageActionCol } from '../../../../InventoryUtilsV2';
 import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
 import { DsSelectFsx } from '../../../../../../common/FsxSelectField/fsxSelectField';
+import { isAlreadyDetectedCheck } from '../../ManageInstanceUtils';
 
 interface OptionType {
     id: number;
@@ -81,11 +82,7 @@ const SelectInstances = () => {
                 const { colText, disableMsg } = manageActionCol(row);
                 if (colText !== ACTION_CTA.MANAGE_INSTANCES || disableMsg !== '') return [];
 
-                const isAuthorized =
-                    (row?.sqlServerAuthentication ||
-                        row?.windowsAuthentication ||
-                        row?.windowsDomainUserAuthentication) &&
-                    (!row?.fsxId || (row?.fsxId && row?.isFsxRegistered));
+                const isAuthorized = isAlreadyDetectedCheck(row);
 
                 const isSelected = selectedOptions.some(opt => opt.id === row.id);
 

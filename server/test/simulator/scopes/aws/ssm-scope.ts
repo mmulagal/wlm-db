@@ -905,7 +905,9 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Get SQL server version and edition')
     .resolves(getSampleCommandResponse('getSqlServerVersionEditionDetails'))
     .on(SendCommandCommand, params => params.Comment === 'Check PowerShell 7 availability')
-    .resolves(getSampleCommandResponse('getPS7CheckDetails'));
+    .resolves(getSampleCommandResponse('getPS7CheckDetails'))
+    .on(SendCommandCommand, params => params.Comment === 'Validate Oracle Credentials')
+    .resolves(getSampleCommandResponse('validateOracleCredentials'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1318,6 +1320,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'getPS7CheckDetails',
             '{"scriptExecutionTime":486.0067,"status":"success","isPS7Available":true}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-validateOracleCredentials'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'validateOracleCredentials',
+            '{ "instances": [ { "oracleInstanceConnectivity": true, "oracleInstanceName": "ordbsdl", "oracleEdition": "19.0.0.0.0" } ], "fsxResults": [ { "ontapconnectivity": true, "fsxId": "fs-0d5efc3057c4f12cb" } ] }'
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

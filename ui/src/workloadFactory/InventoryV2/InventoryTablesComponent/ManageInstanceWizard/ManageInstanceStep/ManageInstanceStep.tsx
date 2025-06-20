@@ -9,7 +9,7 @@ import NoteComponent from './NoteComponent/NoteComponent';
 import PermissionListComponent from './PermissionListComponent/PermissionListComponent';
 import DetectHeader from '../DetectInstanceStep/DetectHeader/DetectHeader';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { ACTION_TYPE, INVENTORY_STATUS, MANAGE_STATES } from '../../../../../utils/consts';
+import { ACTION_TYPE, MANAGE_STATES } from '../../../../../utils/consts';
 import { GENERAL } from '../../../../../utils/appConstants';
 import {
     setBulkDetectedInstanceList,
@@ -20,6 +20,7 @@ import {
     checkOverallManageState,
     getPermissionState,
     hasMissingPowershell7,
+    isAlreadyDetectedCheck,
     mergeReadinessData,
     missingModules
 } from '../ManageInstanceUtils';
@@ -41,12 +42,10 @@ export const Content = () => {
     );
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
 
-    const isAlreadyDetected = useMemo(() => {
-        if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-            return true;
-        }
-        return false;
-    }, [manageSingleInstanceData]);
+    const isAlreadyDetected = useMemo(
+        () => isAlreadyDetectedCheck(manageSingleInstanceData),
+        [manageSingleInstanceData]
+    );
 
     const { data: policiesList } = useGetWlmdbPoliciesQuery({});
 

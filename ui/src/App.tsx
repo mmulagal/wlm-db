@@ -27,7 +27,7 @@ function App() {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     return (
-        <DsProvider theme="light">
+        <DsProvider theme={isDarkTheme ? 'dark' : 'light'}>
             <ThemeProvider isIframe theme={isDarkTheme ? 'dark' : 'light'}>
                 {loading && (
                     <div className="App">

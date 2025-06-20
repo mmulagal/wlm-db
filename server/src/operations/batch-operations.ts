@@ -1,4 +1,4 @@
-import Promise from 'bluebird';
+import throat from 'throat';
 import { HTTPAlias } from 'got';
 import { isNil, omitBy } from 'lodash-es';
 import { gotInstanceForBatchRequest } from '../utils/got';
@@ -13,34 +13,34 @@ const logger = getLogger();
 export default async function executeBatchApiCalls(requestBody: BatchRequestBodyType) {
     logger.info('Executing Batch Api calls', requestBody);
 
-    const allApiResponse: BatchResponseType = await Promise.map(
-        requestBody,
-        async singleRequest => {
-            const responseData: SingleBatchResponseType = {};
-            const { url, headers, payload, method } = singleRequest;
+    const allApiResponse: BatchResponseType = await Promise.all(
+        requestBody.map(
+            throat(BATCH_API_CONCURRENCY_LIMIT, async singleRequest => {
+                const responseData: SingleBatchResponseType = {};
+                const { url, headers, payload, method } = singleRequest;
 
-            try {
-                const response = await gotInstanceForBatchRequest[method.toLowerCase() as HTTPAlias](url, {
-                    headers: omitBy(
-                        {
-                            ...headers,
-                            [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource<string>(USER_TOKEN)
-                        },
-                        isNil
-                    ),
-                    ...(METHODS_WITH_PAYLOAD.includes(method) && { json: payload })
-                });
+                try {
+                    const response = await gotInstanceForBatchRequest[method.toLowerCase() as HTTPAlias](url, {
+                        headers: omitBy(
+                            {
+                                ...headers,
+                                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource<string>(USER_TOKEN)
+                            },
+                            isNil
+                        ),
+                        ...(METHODS_WITH_PAYLOAD.includes(method) && { json: payload })
+                    });
 
-                responseData.data = response || 'Success';
-                return responseData;
-            } catch (err: any) {
-                const errMsg = `Failed to execute the batch api call. ${err.message}`;
-                logger.error(errMsg);
-                responseData.error = errMsg;
-                return responseData;
-            }
-        },
-        { concurrency: BATCH_API_CONCURRENCY_LIMIT }
+                    responseData.data = response || 'Success';
+                    return responseData;
+                } catch (err: any) {
+                    const errMsg = `Failed to execute the batch api call. ${err.message}`;
+                    logger.error(errMsg);
+                    responseData.error = errMsg;
+                    return responseData;
+                }
+            })
+        )
     );
 
     return allApiResponse;

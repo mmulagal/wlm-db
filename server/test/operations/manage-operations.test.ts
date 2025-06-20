@@ -11,7 +11,8 @@ import '../simulator/scopes/aws/cloud-watch-logs-scope';
 import {
     manageSqlInstances,
     manageSqlServerV2,
-    validateAndStoreDiscoveredParameters
+    validateAndStoreDiscoveredParameters,
+    validateOracleCredentials
 } from '../../src/operations/manage-operations';
 import { faker } from '@faker-js/faker';
 
@@ -97,6 +98,37 @@ describe('Manage operations', () => {
             params
         );
         expect(response).toBeDefined();
+    });
+
+    it('Validate Oracle discovered resource credentials', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const fsxCredentials = {
+            resourceId: 'fs-0d5efc3057c4cb',
+            resourceType: 'FSX',
+            username: 'username',
+            password: 'password'
+        };
+        const oracleCredentials = [
+            {
+                resourceId: 'ordbsdl',
+                resourceType: 'ORACLE',
+                username: 'username',
+                password: 'password'
+            }
+        ];
+
+        const response = await validateOracleCredentials(
+            ACCOUNT_ID,
+            credentialsId,
+            TEST_REGION,
+            TEST_EC2_INSTANCE_ID,
+            fsxCredentials,
+            oracleCredentials,
+            [TEST_EC2_INSTANCE_ID]
+        );
+        expect(response).toEqual([
+            { resourceId: 'ordbsdl', databaseServerEdition: '19.0.0.0.0', resourceType: 'ORACLE' }
+        ]);
     });
 
     it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {

@@ -21,7 +21,7 @@ import {
 } from '../../../../utils/consts';
 import store, { AppDispatch } from '../../../../store/store';
 import { saveFsxInCredRegisteredObj, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
-import { ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
+import { InventoryTableInstanceDatInterface, ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
 import {
     BulkDetectedInstance,
     JobResponse,
@@ -848,3 +848,10 @@ export const updateDetectBulkResponse = (
     });
     return updatedInstances;
 };
+
+export const isAlreadyDetectedCheck = (data: InventoryTableInstanceDatInterface) =>
+    !!(
+        data &&
+        (data?.sqlServerAuthentication || data?.windowsAuthentication || data?.windowsDomainUserAuthentication) &&
+        (!data?.fsxId || (data?.fsxId && data?.isFsxRegistered))
+    );

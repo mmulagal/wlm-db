@@ -21,6 +21,7 @@ export interface WorkloadFactoryResourceEntities {
     isResourceRefresh: boolean;
     fsxAdminPasswords: any;
     sqlServerPasswords: any;
+    selectedAuthenticationType: string;
 }
 
 export type ResourceTrendMetric = {
@@ -33,6 +34,7 @@ export interface WorkloadFactoryResourceDetails {
     name: string;
     status: string;
     databaseCount: number;
+    databaseInstanceName?: string;
     databaseServer: {
         collation?: string;
         operatingSystem: string;
@@ -52,6 +54,11 @@ export interface WorkloadFactoryResourceDetails {
         writeIops: ResourceTrendMetric[];
         readLatency: ResourceTrendMetric[];
         writeLatency: ResourceTrendMetric[];
+    };
+    nodeTopology?: {
+        ec2Details: Array<{
+            id?: string;
+        }>;
     };
     topology: {
         awsAccount: string;

@@ -7,6 +7,7 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
+    AUTHENTICATION_TYPE,
     DETECT_HOST_VAR,
     FROM_DIALOG,
     RESET_PASSWORD_TYPE,
@@ -33,14 +34,11 @@ import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circ
 
 import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
-import { useRegisterResourceCredentialsMutation, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
+import { useRegisterResourceCredentialsBulkMutation, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
 import {
-    setFsxAdminConfirmPassword,
-    setFsxAdminPassword,
-    setSqlServerConfirmPassword,
-    setSqlServerPassword,
     setIsResourceRefresh,
-    setPasswordResetLoading
+    setPasswordResetLoading,
+    resetAllPasswords
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetGwValuesOnRefresh } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -71,8 +69,7 @@ const WellArchitectDashboard = () => {
     const { refreshTime } = useAppSelector(state => state.headers);
 
     const { refreshSandboxInstanceTime, sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
-
-    const [registerResourceCred] = useRegisterResourceCredentialsMutation();
+    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
 
     const {
         resourceLoading: resourceLoadingState,
@@ -152,40 +149,50 @@ const WellArchitectDashboard = () => {
 
     const createSqlPayload = () => {
         const state = store.getState();
+        const { selectedAuthenticationType } = state.workloadFactoryResource;
+        const credList = [];
         const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
         const { password } = sqlServerPasswords;
-        const credList = [];
         credList.push({
-            // @ts-ignore
             resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
-            resourceType: DETECT_HOST_VAR.MSSQL,
+            resourceType:
+                selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                    ? DETECT_HOST_VAR.MSSQL
+                    : DETECT_HOST_VAR.WINDOWS,
             username: sqlServerUserName,
             password
         });
-
         return { credentials: credList };
     };
 
     const resetPasswords = () => {
-        dispatch(setFsxAdminPassword(''));
-        dispatch(setFsxAdminConfirmPassword(''));
-        dispatch(setSqlServerPassword(''));
-        dispatch(setSqlServerConfirmPassword(''));
+        dispatch(resetAllPasswords());
     };
 
     const handleFSXAdminApply = async (value: string) => {
         dispatch(setPasswordResetLoading(true));
         try {
-            const result: any = await registerResourceCred({
-                credentialId: selectedResourceCredId,
-                regionId: selectedResourceRegionId,
-                instanceId:
-                    // @ts-ignore
-                    ec2InstanceId || resourceDetails?.nodeTopology?.ec2Details[0]?.id || resetDetails?.ec2InstanceId,
-                payload: value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload()
-            });
-            if (result && !result?.error) {
-                if (!result?.data?.fsxnError && !result?.data?.sqlError) {
+            const credList = value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload();
+            const payload = {
+                items: [
+                    {
+                        ...credList,
+                        ec2InstanceId:
+                            ec2InstanceId ||
+                            resourceDetails?.nodeTopology?.ec2Details[0]?.id ||
+                            resetDetails?.ec2InstanceId,
+                        region: selectedResourceRegionId,
+                        credentialsId: selectedResourceCredId
+                    }
+                ]
+            };
+            const result = await registerResourceCredBulk({ payload });
+            if (result && !result?.error && result?.data) {
+                if (
+                    result?.data?.length > 0 &&
+                    !result?.data?.[0]?.registerDetails?.[0]?.sqlServerError &&
+                    !result?.data?.[0]?.registerDetails?.[0]?.fsxnError
+                ) {
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
@@ -199,7 +206,8 @@ const WellArchitectDashboard = () => {
                         addNotification({
                             type: NOTIFICATION_TYPES.ERROR,
                             message:
-                                result?.data?.fsxnError ||
+                                result?.data?.[0]?.registerDetails?.[0]?.fsxnError ||
+                                result?.data?.[0]?.registerDetails?.[0]?.sqlServerError ||
                                 `Failed to update ${
                                     value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
                                 } password. `
@@ -247,6 +255,7 @@ const WellArchitectDashboard = () => {
                     handleFSXAdminApply(type);
                 }}
                 closeCallback={() => {
+                    resetPasswords();
                     closeDialog();
                 }}
                 dialogFrom={type === RESET_PASSWORD_TYPE.FSXADMIN ? FROM_DIALOG.FSXADMIN : FROM_DIALOG.SQLSERVER}

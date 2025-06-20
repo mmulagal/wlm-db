@@ -1,4 +1,3 @@
-import Promise from 'bluebird';
 import randomize from 'randomatic';
 import createError from 'http-errors';
 import { Static } from '@fastify/type-provider-typebox';

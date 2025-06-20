@@ -157,7 +157,8 @@ const initialState: WorkloadFactoryResourceEntities = {
         fsxId: '',
         ec2InstanceId: '',
         databaseInstanceName: ''
-    }
+    },
+    selectedAuthenticationType: ''
 };
 
 const workloadFactoryResourceSlice = createSlice({
@@ -228,6 +229,16 @@ const workloadFactoryResourceSlice = createSlice({
             state.selectedDatabaseInstanceName = action.payload.databaseInstanceName;
             state.selectedResourceCredId = action.payload.credentialId;
             state.selectedResourceRegionId = action.payload.regionId;
+        },
+        setSelectedAuthenticationType: (state, action: PayloadAction<any>) => {
+            state.selectedAuthenticationType = action.payload;
+        },
+        resetAllPasswords: state => {
+            state.fsxAdminPasswords.password = '';
+            state.fsxAdminPasswords.confirmPassword = '';
+            state.sqlServerPasswords.password = '';
+            state.sqlServerPasswords.confirmPassword = '';
+            state.sqlServerUserName = '';
         }
     }
 });
@@ -252,6 +263,8 @@ export const {
     setSelectedResourceRegionId,
     setSelectedHostname,
     setIsResourceRefresh,
-    setSelectedResourcePageHostData
+    setSelectedResourcePageHostData,
+    setSelectedAuthenticationType,
+    resetAllPasswords
 } = workloadFactoryResourceSlice.actions;
 export default workloadFactoryResourceSlice;

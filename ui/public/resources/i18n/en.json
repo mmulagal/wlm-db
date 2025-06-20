@@ -67,7 +67,7 @@
             "previous": "Previous",
             "next": "Next",
             "register": "Register",
-            "manage-detect-fail-message": "Workload Factory was unable to authenticate the SQL Server instance. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.",
+            "manage-detect-fail-message": "Workload Factory was unable to authenticate. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.",
             "bulk-instance-select-text": "Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials.",
             "register-instance-failed": "Register instance failed",
             "select-instance-page-content1": "Selecting multiple instances requires shared credentials.",
@@ -118,7 +118,7 @@
         "well-architect": {
             "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
             "view-and-fix": "View and fix",
-            "no-configurations-available": ">No configuration available.",
+            "no-configurations-available": "No configuration available.",
             "action-summary": "Action summary",
             "what-will-happen": "What will happen",
             "action-required": "Action required",
@@ -143,7 +143,7 @@
             "storage-tier-what-will-happen-content3": "Data movement: The data will move gradually from the capacity tier to the performance tier.",
             "file-system-headroom-action-summary": "Workload Factory recommends increasing the FSx for ONTAP file system capacity to maintain the right headroom. However, the required modify permissions are currently missing.",
             "log-drive-size-action-summary": "Workload Factory recommends updating the provisioned capacity for your SQL Server log volume and iSCSI LUN so that their sizing will be 25% of the user data volume.",
-            "log-drive-size-what-will-happen": "Log volume provisioned capacity update: The provisioned capacity of your SQL Server log volume and iSCSI LUN will be increased to maintain the right sizing elative to the user data volume.",
+            "log-drive-size-what-will-happen": "Log volume provisioned capacity update: The provisioned capacity of your SQL Server log volume and iSCSI LUN will be increased to maintain the right sizing relative to the user data volume.",
             "tempdb-drive-size-action-summary": "Workload Factory recommends updating the provisioned capacity for your SQL Server TempDB volume and iSCSI LUN so that their sizing will be 10% of the user data volume.",
             "tempdb-drive-size-what-will-happen": "TempDB volume provisioned capacity update: The provisioned capacity of your SQL Server TempDB volume and iSCSI LUN will be increased to maintain the right sizing relative to the user data volume.",
             "mpio-status-policy-action-summary": "Workload Factory recommends updating Microsoft Multipath I/O configuration to meet vendor best practices for SQL Server.",
@@ -180,6 +180,15 @@
             "file-system-headroom-option2-content3": "Choose File systems.",
             "file-system-headroom-option2-content4": "Select the FSx for ONTAP file system that you want to update SSD storage capacity.",
             "file-system-headroom-option2-content5": "Update storage capacity to the desired capacity."
+        },
+        "update-credentials": {
+            "password-info-heading": "The password must be:",
+            "password-info-list": [
+                "Between 8 and 50 characters in length.",
+                "At least one character, one digit and one special character required.",
+                "Must not contain non-English letters or 'admin'."
+            ],
+            "passwords-not-match": "Passwords do not match."
         }
     }
 }

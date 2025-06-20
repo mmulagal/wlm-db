@@ -634,13 +634,6 @@ export const inventoryApi = createApi({
                 return response;
             }
         }),
-        registerResourceCredentials: builder.mutation({
-            query: ({ credentialId, regionId, instanceId, payload }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/discover/resource-credentials`,
-                method: 'POST',
-                body: payload
-            })
-        }),
         registerResourceCredentialsBulk: builder.mutation({
             query: ({ payload }) => ({
                 url: 'v1/register-credentials',
@@ -1202,7 +1195,6 @@ export const {
     useLazyDiscoverOracleHostsQuery,
     useLazyDiscoverPgsqlHostsQuery,
     useLazyGetFsxCredentialStatusQuery,
-    useRegisterResourceCredentialsMutation,
     useRegisterResourceCredentialsBulkMutation,
     useGetMssqlInstanceDataMutation,
     usePrepareHostMutation

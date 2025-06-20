@@ -236,22 +236,54 @@ const getOracleInstanceData = `
         exit 0
     fi
 
+    is_default_auth() {
+        local ORACLE_SID="$1"
+        local result
+        result=$(sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                sqlplus -S / as sysdba 2>/dev/null <<EOSQL
+                WHENEVER SQLERROR EXIT SQL.SQLCODE
+                SET HEADING OFF
+                SET FEEDBACK OFF
+                SET VERIFY OFF
+                SET PAGESIZE 0
+                SELECT 'OK' FROM dual;
+                EXIT;
+EOSQL
+EOF
+)
+        if echo "$result" | grep -q "^OK"; then
+            echo "true"
+        else
+            echo "false"
+        fi
+}
+
     get_instance_details() {
         local ORACLE_SID="$1"
-        sudo -i -u oracle bash <<EOF
-            export ORACLE_SID="$ORACLE_SID"
-            sqlplus -S / as sysdba
-                SET HEADING OFF
-                SET LINESIZE 500
-                SELECT JSON_OBJECT(
-                        'instance_id' value INSTANCE_NUMBER,
-                        'instance_name' value INSTANCE_NAME,
-                        'host_name' value HOST_NAME,
-                        'version' value VERSION,
-                        'instance_state' value STATUS
-                    ) AS instance_info
-                FROM V\\$INSTANCE;
+        if [ "$isDefaultAuth" == "true" ]; then
+
+            sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                sqlplus -S / as sysdba
+                    SET HEADING OFF
+                    SET LINESIZE 500
+                    SELECT JSON_OBJECT(
+                            'instance_id' value INSTANCE_NUMBER,
+                            'instance_name' value INSTANCE_NAME,
+                            'host_name' value HOST_NAME,
+                            'version' value VERSION,
+                            'instance_state' value STATUS
+                        ) AS instance_info
+                    FROM V\\$INSTANCE;
 EOF
+        else
+            # instance name & id are same as ORACLE_SID, hostname is not available in /etc/oratab.
+            # version is not available in /etc/oratab, so setting it to undefined. checking pgrep -f "ora_pmon_$sid" earlier to ensure the instance is running.
+
+            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"OPEN\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
+            echo $result
+        fi
     }
 
     RESULTS="["  # start of the JSON array
@@ -261,6 +293,8 @@ EOF
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
             continue
         fi
+
+        isDefaultAuth=$(is_default_auth "$sid")
 
         { 
             INSTANCE_DETAILS=$(get_instance_details "$sid") 
@@ -322,4 +356,69 @@ EOF
     fi
 `;
 
-export { getOracleProtectionData, ORACLE_PERFORMANCE_METRICS, getOracleInstanceData };
+const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string) => `
+    ec2InstanceId="${ec2InstanceId}"
+    oracleSid="${dbSid}"
+
+    # Initialize result object if not already initialized
+    if [ -z "$resultObject" ]; then
+        resultObject='{ "instances": [], "fsxResults": [] }'
+    fi
+    
+    instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
+    oracleInstances=$(echo "$instanceCreds" | jq -c '.oracle')
+    matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSid" '.[] | select(.oracleinstancename == $sid)')
+    username=$(echo "$matchingOracleInstance" | jq -r '.username')
+    password=$(echo "$matchingOracleInstance" | jq -r '.password')
+
+    get_instance_db_version() {
+        sudo -i -u oracle bash <<EOF
+            set -e
+            export ORACLE_SID="$oracleSid"
+            sqlplus -S $username/$password as sysdba
+            WHENEVER SQLERROR EXIT SQL.SQLCODE
+            SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+            SELECT version FROM v\\$instance;
+EOF
+    }
+
+    dbVersion=$(get_instance_db_version)
+    if [ $? -ne 0 ]; then
+        result="{\\"oracleInstanceConnectivity\\": false, \\"oracleError\\": \\"Failed to connect to Oracle instance $oracleSid\\", \\"oracleInstanceName\\": \\"$oracleSid\\"}"
+    else
+        result="{\\"oracleInstanceConnectivity\\": true, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\"}"
+    fi
+    # Add result to instances array inside resultObject
+    resultObject=$(echo "$resultObject" | jq --argjson res "$result" '.instances += [$res]')
+`;
+
+const validateOracleInstanceFsxConnectivity = (fsxnId: string, region: string) => `
+    filesystemid="${fsxnId}"
+    region="${region}"
+    
+    ${checkCommandStatus}
+
+    # Initialize result object if not already initialized
+    if [ -z "$resultObject" ]; then
+        resultObject='{ "instances": [], "fsxResults": [] }'
+    fi
+
+    ${ontapRestApi}
+
+    result=$(ontap_request 'GET' '/cluster?fields=version')
+    if [ $? -ne 0 ] || [ -z "$result" ] || echo "$result" | grep -q 'error'; then
+        fsxResult="{\\"ontapconnectivity\\": false, \\"ontaperror\\": \\"ONTAP connectivity check failed or returned error.\\", \\"fsxId\\": \\"${fsxnId}\\"}"
+    else
+        fsxResult="{\\"ontapconnectivity\\": true, \\"fsxId\\": \\"${fsxnId}\\"}"
+    fi
+    # Add fsxResult to fsxResults array inside resultObject
+    resultObject=$(echo "$resultObject" | jq --argjson res "$fsxResult" '.fsxResults += [$res]')
+`;
+
+export {
+    getOracleProtectionData,
+    ORACLE_PERFORMANCE_METRICS,
+    getOracleInstanceData,
+    validateOracleInstanceConnectivity,
+    validateOracleInstanceFsxConnectivity
+};

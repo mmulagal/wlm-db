@@ -138,17 +138,17 @@ const DatabasesTable = () => {
     };
 
     const protectionTooltipText = (data: any) => (
-            <div className={styles.protectionTooltip}>
-                <DsTypography variant="Semibold_13" className={styles.textHeight}>
-                    {GENERAL.PROTECTED_BY}:
+        <div className={styles.protectionTooltip}>
+            <DsTypography variant="Semibold_13" className={styles.textHeight}>
+                {GENERAL.PROTECTED_BY}:
+            </DsTypography>
+            {data.map((val: any, index: number) => (
+                <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
+                    {val}
                 </DsTypography>
-                {data.map((val: any, index: number) => (
-                    <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
-                        {val}
-                    </DsTypography>
-                ))}
-            </div>
-        );
+            ))}
+        </div>
+    );
 
     const DatabasesColDefs: ColumnProps[] = [
         {
