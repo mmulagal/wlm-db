@@ -359,22 +359,54 @@ const discoverOracleHosts = `
         exit 0
     fi
 
+    is_default_auth() {
+        local ORACLE_SID="$1"
+        local result
+        result=$(sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                sqlplus -S / as sysdba 2>/dev/null <<EOSQL
+                WHENEVER SQLERROR EXIT SQL.SQLCODE
+                SET HEADING OFF
+                SET FEEDBACK OFF
+                SET VERIFY OFF
+                SET PAGESIZE 0
+                SELECT 'OK' FROM dual;
+                EXIT;
+EOSQL
+EOF
+)
+        if echo "$result" | grep -q "^OK"; then
+            echo "true"
+        else
+            echo "false"
+        fi
+}
+
     get_instance_details() {
         local ORACLE_SID="$1"
-        sudo -i -u oracle bash <<EOF
-            export ORACLE_SID="$ORACLE_SID"
-            sqlplus -S / as sysdba
-                SET HEADING OFF
-                SET LINESIZE 500
-                SELECT JSON_OBJECT(
-                        'instance_id' value INSTANCE_NUMBER,
-                        'instance_name' value INSTANCE_NAME,
-                        'host_name' value HOST_NAME,
-                        'version' value VERSION,
-                        'instance_state' value STATUS
-                    ) AS instance_info
-                FROM V\\$INSTANCE;
+        if [ "$isDefaultAuth" == "true" ]; then
+
+            sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                sqlplus -S / as sysdba
+                    SET HEADING OFF
+                    SET LINESIZE 500
+                    SELECT JSON_OBJECT(
+                            'instance_id' value INSTANCE_NUMBER,
+                            'instance_name' value INSTANCE_NAME,
+                            'host_name' value HOST_NAME,
+                            'version' value VERSION,
+                            'instance_state' value STATUS
+                        ) AS instance_info
+                    FROM V\\$INSTANCE;
 EOF
+        else
+            # instance name & id are same as ORACLE_SID, hostname is not available in /etc/oratab.
+            # version is not available in /etc/oratab, so setting it to undefined. checking pgrep -f "ora_pmon_$sid" earlier to ensure the instance is running.
+
+            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"OPEN\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
+            echo $result
+        fi
     }
 
     get_database_details() {
@@ -428,6 +460,8 @@ EOF
             continue
         fi
 
+        isDefaultAuth=$(is_default_auth "$sid")
+
         {
             INSTANCE_DETAILS=$(get_instance_details "$sid")
             DATABASE_DETAILS=$(get_database_details "$sid")
@@ -444,7 +478,14 @@ EOF
                 PDB_DATABASE_DETAILS="null"
             fi
 
-            ${getInstanceStorageDetails}
+
+            if [ "$isDefaultAuth" == "true" ]; then
+                ${getInstanceStorageDetails}
+            else
+                # TBD: exploring few ways to get storage details for non-default auth without using sql creds.
+                # For now, setting storageDetails to empty array.
+                storageDetails="[]"
+            fi
         } || {
             echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
             continue
