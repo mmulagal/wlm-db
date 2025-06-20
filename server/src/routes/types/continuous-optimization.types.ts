@@ -1,5 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import {
+    AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     DISMISS_STATUS_ENUM,
@@ -13,6 +14,12 @@ import {
     OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
 import { CLONE_ACTION } from '../../utils/consts';
+
+// Query parameter to fetch database, protection
+const ContinuousOptimizationQueryString = Type.Object({
+    fields: Type.Optional(Type.String({ enum: Object.values(AssessmentCategories) })),
+    nextToken: Type.Optional(Type.String())
+});
 
 const SizingViolationResponse = Type.Object({
     databases: Type.Optional(Type.Array(Type.String())),
@@ -654,5 +661,6 @@ export {
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
     dismissedConfigurationsResponseType,
-    BulkDismissConfigurationBodyType
+    BulkDismissConfigurationBodyType,
+    ContinuousOptimizationQueryString
 };

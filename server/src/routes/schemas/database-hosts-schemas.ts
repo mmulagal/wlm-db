@@ -15,7 +15,6 @@ import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostInstanceSummaryResponse,
     DatabaseHostOptionalInstanceSummaryParams,
-    DatabaseQueryString,
     PgSqlDbHostSummaryListResponse,
     PgSqlDbHostsSummaryResponse
 } from '../types/database-hosts.types';
@@ -185,7 +184,7 @@ const DatabasesListSchemaV2 = {
     description:
         'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
     params: DatabaseHostInstanceSummaryParams,
-    querystring: DatabaseQueryString,
+    querystring: DatabaseHostQueryString,
     response: {
         200: DatabasesListResponse
     }

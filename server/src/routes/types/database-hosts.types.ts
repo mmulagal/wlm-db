@@ -1,7 +1,16 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { InstanceStateName } from '@aws-sdk/client-ec2';
-import { BILLING, NOT_AVAILABLE, OFFLINE, ONLINE, PRICING, ServerState, UNKNOWN } from '../../utils/consts';
+import {
+    BILLING,
+    DatabaseHostsQueryFields,
+    NOT_AVAILABLE,
+    OFFLINE,
+    ONLINE,
+    PRICING,
+    ServerState,
+    UNKNOWN
+} from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 import { API_DESCRIPTION, API_DESCRIPTION_EXAMPLES } from '../../utils/schema-description-consts';
 
@@ -57,7 +66,7 @@ const CreateDatabaseParamsV2 = Type.Object({
 
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
-    fields: Type.Optional(Type.String()),
+    fields: Type.Optional(Type.String({ enum: Object.values(DatabaseHostsQueryFields) })),
     vpcId: Type.Optional(Type.String()),
     fsxId: Type.Optional(Type.String()),
     nextToken: Type.Optional(Type.String()),
@@ -562,12 +571,6 @@ type DatabaseHostSummaryForMultiInstanceListResponseType = Static<
     typeof DatabaseHostSummaryForMultiInstanceListResponse
 >;
 
-// Query parameter to fetch database, protection
-const DatabaseQueryString = Type.Object({
-    fields: Type.Optional(Type.String()),
-    nextToken: Type.Optional(Type.String())
-});
-
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -633,7 +636,6 @@ export {
     DatabaseInstanceTopologyType,
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
-    DatabaseQueryString,
     PgSqlDbHostsSummaryResponse,
     PgSqlDbHostSummaryListResponse,
     OracleDbHostSummaryListResponse
