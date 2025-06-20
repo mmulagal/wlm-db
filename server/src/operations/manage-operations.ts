@@ -87,6 +87,7 @@ import {
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
+const WINDOWS = 'windows';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -1463,9 +1464,9 @@ async function validateAndStoreDiscoveredParameters(
             if (instanceDetails) {
                 return {
                     databaseCount: instanceDetails.databaseCount,
-                    sqlServerEdition: instanceDetails.sqlServerEdition,
+                    databaseServerEdition: instanceDetails.sqlServerEdition,
                     manageReadiness: instanceDetails.manageReadiness,
-                    sqlServerError: instanceDetails.sqlServerError,
+                    databaseServerError: instanceDetails.sqlServerError,
                     requiredModuleError: instanceDetails.requiredModuleError,
                     fsxnError: instanceDetails.fsxnError
                 } as SingleRegisterCredentialsResponseType;
@@ -1577,7 +1578,7 @@ async function validateCredentials(
             // Platform Field:
             // This field is available for Windows instances and will have the value windows if the instance is running Windows.
             // For Linux-based instances, this field is null
-            if (Platform?.toLowerCase() === 'windows') {
+            if (Platform?.toLowerCase() === WINDOWS) {
                 isLinuxHost = false;
             } else {
                 isLinuxHost = true;
@@ -1759,7 +1760,7 @@ async function validateWindowsCredentials(
         parsedResponse.instances.forEach((instance: DatabaseInstanceRegistration) => {
             if (instance.sqlInstanceConnectivity === false) {
                 instancesToBeDeleted.push(sqlCredentials[0]?.resourceId ?? windowsUserCredentials[0]?.resourceId);
-                response.push({ resourceId: instance.sqlInstanceName, sqlServerError: instance?.sqlerror });
+                response.push({ resourceId: instance.sqlInstanceName, databaseServerError: instance?.sqlerror });
             } else {
                 const {
                     sqlPermissions = [],
@@ -1785,7 +1786,7 @@ async function validateWindowsCredentials(
                 response.push({
                     resourceId: sqlInstanceName,
                     resourceType: RESOURCESTYPE.MSSQL,
-                    sqlServerEdition: sqlEdition,
+                    databaseServerEdition: sqlEdition,
                     databaseCount: noOfDatabases,
                     ...(checkManageReadiness && {
                         manageReadiness: { ...manageReadiness, missingSqlCmd: !sqlInstanceConnectivity }
@@ -1901,14 +1902,14 @@ async function validateOracleCredentials(
                 response.push({
                     resourceId: instance.oracleInstanceName,
                     resourceType: RESOURCESTYPE.ORACLE,
-                    oracleServerError: instance.oracleError
+                    databaseServerError: instance.oracleError
                 });
             } else if (instance.oracleInstanceConnectivity === true) {
                 const { oracleInstanceName, oracleEdition } = instance;
                 response.push({
                     resourceId: oracleInstanceName,
                     resourceType: RESOURCESTYPE.ORACLE,
-                    oracleServerVersion: oracleEdition
+                    databaseServerEdition: oracleEdition
                 });
             }
         });
