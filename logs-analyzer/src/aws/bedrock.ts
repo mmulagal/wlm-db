@@ -23,7 +23,7 @@ export default async function streamMessages(
     });
 
     const response = await client.send(command);
-    const { stopReason } = response;
+    const { stopReason, usage } = response;
     const message: MessageObj = { content: [] };
 
     message.role = response?.output?.message?.role;
@@ -49,5 +49,5 @@ export default async function streamMessages(
         return {};
     });
 
-    return { stopReason, message };
+    return { stopReason, message, usage };
 }

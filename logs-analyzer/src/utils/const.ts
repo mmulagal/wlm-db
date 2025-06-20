@@ -7,8 +7,6 @@ This application uses AWS FSx for NetApp ONTAP as the underlying storage.
 You are given the following input:
 {
     "errorContext": "<error message along with 5 lines before and after the message>",
-    "errorCount": <number of occurrences>,
-    "severity": <error severity>,
     "errorMessage": "<error message>"
 }
 
@@ -18,7 +16,6 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
     {
         "error": "<errorMessage>",
         "cause": "<cause of the error>",
-        "count": <errorCount>,
         "sql": {
             "query": ["<SQL query to gather additional information>", ...]                    
             }
@@ -44,8 +41,6 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
 ### Example Input:
 {
     "errorContext": "2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 1.\n2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 2.\n2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 3.\n2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 4.\n2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 5.",
-    "errorCount": 50,
-    "severity": 14,
     "errorMessage":"2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 1."
 }
 
@@ -53,8 +48,6 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
     {
         "error": "Error: 18456, Severity: 14, State: 1.",
         "cause": "Login failed for user. This indicates that the SQL Server login attempt was unsuccessful, which can be due to incorrect credentials, disabled login, or insufficient permissions.",
-        "count": 50,
-        "severity": 14,
         "sql": {
          "query" : ["SELECT name, log_reuse_wait_desc, total_log_size_in_bytes, used_log_space_in_bytes, log_growth_percent_used FROM sys.databases WHERE name = 'STDDB1';", "SELECT * FROM sys.dm_tran_active_transactions;", "SELECT * FROM sys.dm_tran_database_transactions;"]
         
