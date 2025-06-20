@@ -1,5 +1,7 @@
-import { DsTypography, PasswordField, Popover, TextField } from '@netapp/design-system';
+import { DsTypography, PasswordField, Popover, RadioButton, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import React, { useEffect } from 'react';
 import styles from './FSXPasswordContent.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -9,11 +11,17 @@ import {
     setFsxAdminPassword,
     setSqlServerConfirmPassword,
     setSqlServerPassword,
-    setSqlServerUserName
+    setSqlServerUserName,
+    setSelectedAuthenticationType,
+    setWindowsServerUserName,
+    setWindowsServerPassword,
+    setWindowsServerConfirmPassword
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { isValidPassword, isValidSqlUsername } from '../../../../utils/utilityFunctions';
+import { AUTHENTICATION_TYPE } from '../../../../utils/consts';
+import { AppDispatch } from '../../../../store/store';
 
 interface PasswordContentProps {
     type: 'fsx' | 'sql';
@@ -35,29 +43,29 @@ const PasswordContent = ({
     username
 }: PasswordContentProps) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
+    const { selectedAuthenticationType } = useAppSelector(state => state.workloadFactoryResource);
+
     const tooltipText = () => (
         <DsTypography variant="Regular_13" className={styles.infoMsg}>
-            <DsTypography variant="Regular_13">The password must be:</DsTypography>
+            <DsTypography variant="Regular_13">{t('databases.update-credentials.password-info-heading')}</DsTypography>
             <div className={styles.list}>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <div className={styles.textWidth}>Between 8 and 50 characters in length.</div>
-                </div>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <div className={styles.textWidth}>At least one character and one digit.</div>
-                </div>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <div className={styles.textWidth}>Must not contain non-English letters or "admin".</div>
-                </div>
+                {(Array.isArray(t('databases.update-credentials.password-info-list', { returnObjects: true }))
+                    ? (t('databases.update-credentials.password-info-list', { returnObjects: true }) as string[])
+                    : []
+                ).map((item: string, index: number) => (
+                    <div className={styles.listItem} key={index}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{item}</div>
+                    </div>
+                ))}
             </div>
         </DsTypography>
     );
 
     const isValidConfirmPassword = (confirmPassword: string) => {
         if (confirmPassword.length > 0 && password !== confirmPassword) {
-            return 'Passwords do not match.';
+            return t('update-credentials.passwords-not-match');
         }
     };
 
@@ -66,6 +74,8 @@ const PasswordContent = ({
             <DsTypography variant="Regular_14" style={{ width: '800px' }}>
                 {description}
             </DsTypography>
+
+            {type === 'sql' && authModeRadio()}
 
             <div className={styles.textArea}>
                 {type === 'fsx' && (
@@ -77,13 +87,14 @@ const PasswordContent = ({
                         value={username}
                         className={styles.textField}
                         isDisabled={false}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            dispatch(setSqlServerUserName(e.target.value))
-                        }
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                                ? dispatch(setSqlServerUserName(e.target.value))
+                                : dispatch(setWindowsServerUserName(e.target.value));
+                        }}
                         error={useDelayedError(isValidSqlUsername(username))}
                     />
                 )}
-
                 <div className={styles.tooltipContainer}>
                     <PasswordField
                         label={GENERAL.PASSWORD}
@@ -104,7 +115,6 @@ const PasswordContent = ({
                         />
                     </div>
                 </div>
-
                 <PasswordField
                     label="Confirm password"
                     error={useDelayedError(isValidConfirmPassword(confirmPassword))}
@@ -138,21 +148,94 @@ const FSXPasswordContent = () => {
 
 const SQLServerPasswordContent = () => {
     const dispatch = useDispatch();
+    const { selectedAuthenticationType } = useAppSelector(state => state.workloadFactoryResource);
     const { password: sqlPassword, confirmPassword: sqlConfirmPassword } = useAppSelector(
         state => state.workloadFactoryResource.sqlServerPasswords
     );
-    const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
+    const { password: windowsPassword, confirmPassword: windowsConfirmPassword } = useAppSelector(
+        state => state.workloadFactoryResource.windowsServerPasswords
+    );
+    const { sqlServerUserName, windowsServerUserName } = useAppSelector(state => state.workloadFactoryResource);
+
+    // Mapping authentication types to their respective password and username handlers to be sent to the PasswordContent component
+    const authMap = {
+        [AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION]: {
+            password: sqlPassword,
+            confirmPassword: sqlConfirmPassword,
+            username: sqlServerUserName,
+            setPassword: (value: string) => dispatch(setSqlServerPassword(value)),
+            setConfirmPassword: (value: string) => dispatch(setSqlServerConfirmPassword(value))
+        },
+        [AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION]: {
+            password: windowsPassword,
+            confirmPassword: windowsConfirmPassword,
+            username: windowsServerUserName,
+            setPassword: (value: string) => dispatch(setWindowsServerPassword(value)),
+            setConfirmPassword: (value: string) => dispatch(setWindowsServerConfirmPassword(value))
+        }
+    };
+
+    const { password, confirmPassword, username, setPassword, setConfirmPassword } =
+        authMap[selectedAuthenticationType] || authMap[AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION];
 
     return (
         <PasswordContent
             type="sql"
-            password={sqlPassword}
-            confirmPassword={sqlConfirmPassword}
-            setPassword={(value: string) => dispatch(setSqlServerPassword(value))}
-            setConfirmPassword={(value: string) => dispatch(setSqlServerConfirmPassword(value))}
+            password={password}
+            confirmPassword={confirmPassword}
+            setPassword={setPassword}
+            setConfirmPassword={setConfirmPassword}
             description={GENERAL.SQL_PASSWORD_CONTENT}
-            username={sqlServerUserName}
+            username={username}
         />
+    );
+};
+
+const resetSqlAndWindowsPasswords = (dispatch: AppDispatch) => {
+    dispatch(setSqlServerUserName(''));
+    dispatch(setSqlServerPassword(''));
+    dispatch(setSqlServerConfirmPassword(''));
+    dispatch(setWindowsServerUserName(''));
+    dispatch(setWindowsServerPassword(''));
+    dispatch(setWindowsServerConfirmPassword(''));
+};
+
+// Function to render the authentication mode radio buttons for SQL Server
+const authModeRadio = () => {
+    const dispatch = useDispatch();
+    const { t } = useTranslation();
+    const { selectedAuthenticationType } = useAppSelector(state => state.workloadFactoryResource);
+
+    useEffect(() => {
+        if (!selectedAuthenticationType) {
+            dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
+        }
+    }, []);
+
+    return (
+        <div className={styles['radio-container']}>
+            <DsTypography variant="Semibold_14">{t('databases.register-flow.select-authentication-mode')}</DsTypography>
+            <RadioButton
+                id="select-sql-authentication"
+                isChecked={selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
+                onChange={() => {
+                    dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
+                    resetSqlAndWindowsPasswords(dispatch);
+                }}
+                children={t('databases.register-flow.sql-server-authentication')}
+                className=""
+            />
+            <RadioButton
+                id="select-windows-authentication"
+                isChecked={selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                onChange={() => {
+                    dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
+                    resetSqlAndWindowsPasswords(dispatch);
+                }}
+                children={t('databases.register-flow.windows-authentication')}
+                className=""
+            />
+        </div>
     );
 };
 

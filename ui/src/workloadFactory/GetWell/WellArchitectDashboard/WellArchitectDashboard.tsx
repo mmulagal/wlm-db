@@ -7,6 +7,7 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
+    AUTHENTICATION_TYPE,
     DETECT_HOST_VAR,
     FROM_DIALOG,
     RESET_PASSWORD_TYPE,
@@ -40,7 +41,11 @@ import {
     setSqlServerConfirmPassword,
     setSqlServerPassword,
     setIsResourceRefresh,
-    setPasswordResetLoading
+    setPasswordResetLoading,
+    setWindowsServerPassword,
+    setWindowsServerConfirmPassword,
+    setWindowsServerUserName,
+    setSqlServerUserName
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetGwValuesOnRefresh } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -151,16 +156,30 @@ const WellArchitectDashboard = () => {
 
     const createSqlPayload = () => {
         const state = store.getState();
-        const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
-        const { password } = sqlServerPasswords;
+        const { selectedAuthenticationType } = state.workloadFactoryResource;
         const credList = [];
-        credList.push({
-            resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
-            resourceType: DETECT_HOST_VAR.MSSQL,
-            username: sqlServerUserName,
-            password
-        });
-
+        // create payload based on the selected authentication type
+        if (selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
+            const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
+            const { password } = sqlServerPasswords;
+            credList.push({
+                // @ts-ignore
+                resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
+                resourceType: DETECT_HOST_VAR.MSSQL,
+                username: sqlServerUserName,
+                password
+            });
+        } else if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+            const { windowsServerPasswords, windowsServerUserName } = state.workloadFactoryResource;
+            const { password } = windowsServerPasswords;
+            credList.push({
+                // @ts-ignore
+                resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
+                resourceType: DETECT_HOST_VAR.WINDOWS,
+                username: windowsServerUserName,
+                password
+            });
+        }
         return { credentials: credList };
     };
 
@@ -169,6 +188,10 @@ const WellArchitectDashboard = () => {
         dispatch(setFsxAdminConfirmPassword(''));
         dispatch(setSqlServerPassword(''));
         dispatch(setSqlServerConfirmPassword(''));
+        dispatch(setSqlServerUserName(''));
+        dispatch(setWindowsServerUserName(''));
+        dispatch(setWindowsServerPassword(''));
+        dispatch(setWindowsServerConfirmPassword(''));
     };
 
     const handleFSXAdminApply = async (value: string) => {
@@ -257,6 +280,7 @@ const WellArchitectDashboard = () => {
                     handleFSXAdminApply(type);
                 }}
                 closeCallback={() => {
+                    resetPasswords();
                     closeDialog();
                 }}
                 dialogFrom={type === RESET_PASSWORD_TYPE.FSXADMIN ? FROM_DIALOG.FSXADMIN : FROM_DIALOG.SQLSERVER}

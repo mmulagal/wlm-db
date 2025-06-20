@@ -151,13 +151,19 @@ const initialState: WorkloadFactoryResourceEntities = {
         password: '',
         confirmPassword: ''
     },
+    windowsServerPasswords: {
+        password: '',
+        confirmPassword: ''
+    },
     passwordResetLoading: false,
     sqlServerUserName: '',
+    windowsServerUserName: '',
     instanceDetailsData: {
         fsxId: '',
         ec2InstanceId: '',
         databaseInstanceName: ''
-    }
+    },
+    selectedAuthenticationType: ''
 };
 
 const workloadFactoryResourceSlice = createSlice({
@@ -169,6 +175,9 @@ const workloadFactoryResourceSlice = createSlice({
         },
         setSqlServerUserName: (state, action: PayloadAction<any>) => {
             state.sqlServerUserName = action.payload;
+        },
+        setWindowsServerUserName: (state, action: PayloadAction<any>) => {
+            state.windowsServerUserName = action.payload;
         },
         setPasswordResetLoading: (state, action: PayloadAction<any>) => {
             state.passwordResetLoading = action.payload;
@@ -184,6 +193,12 @@ const workloadFactoryResourceSlice = createSlice({
         },
         setSqlServerConfirmPassword: (state, action: PayloadAction<any>) => {
             state.sqlServerPasswords.confirmPassword = action.payload;
+        },
+        setWindowsServerPassword: (state, action: PayloadAction<any>) => {
+            state.windowsServerPasswords.password = action.payload;
+        },
+        setWindowsServerConfirmPassword: (state, action: PayloadAction<any>) => {
+            state.windowsServerPasswords.confirmPassword = action.payload;
         },
         setResourceLoading: (state, action: PayloadAction<any>) => {
             state.resourceLoading = action.payload;
@@ -228,6 +243,9 @@ const workloadFactoryResourceSlice = createSlice({
             state.selectedDatabaseInstanceName = action.payload.databaseInstanceName;
             state.selectedResourceCredId = action.payload.credentialId;
             state.selectedResourceRegionId = action.payload.regionId;
+        },
+        setSelectedAuthenticationType: (state, action: PayloadAction<any>) => {
+            state.selectedAuthenticationType = action.payload;
         }
     }
 });
@@ -235,11 +253,14 @@ const workloadFactoryResourceSlice = createSlice({
 export const {
     setInstanceDetailsData,
     setSqlServerUserName,
+    setWindowsServerUserName,
     setPasswordResetLoading,
     setFsxAdminPassword,
     setFsxAdminConfirmPassword,
     setSqlServerPassword,
     setSqlServerConfirmPassword,
+    setWindowsServerPassword,
+    setWindowsServerConfirmPassword,
     setResourceLoading,
     setResourceDetails,
     setDatabaseListLoading,
@@ -252,6 +273,7 @@ export const {
     setSelectedResourceRegionId,
     setSelectedHostname,
     setIsResourceRefresh,
-    setSelectedResourcePageHostData
+    setSelectedResourcePageHostData,
+    setSelectedAuthenticationType
 } = workloadFactoryResourceSlice.actions;
 export default workloadFactoryResourceSlice;

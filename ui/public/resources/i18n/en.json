@@ -118,6 +118,15 @@
         "well-architect": {
             "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
             "view-and-fix": "View and fix"
+        },
+        "update-credentials": {
+            "password-info-heading": "The password must be:",
+            "password-info-list": [
+                "Between 8 and 50 characters in length.",
+                "At least one character, one digit and one special character required.",
+                "Must not contain non-English letters or 'admin'."
+            ],
+            "password-did-not-match": "Passwords do not match."
         }
     }
 }

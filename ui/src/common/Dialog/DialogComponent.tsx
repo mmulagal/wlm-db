@@ -1,7 +1,7 @@
 import { Button, DialogContent, DialogFooter, DialogHeader, DialogLayout, useDialog } from '@netapp/design-system';
 import { ReactNode } from 'react';
 import { useAppSelector } from '../../store/storeHooks';
-import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, AUTHENTICATION_TYPE, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 import { isValidPassword, isValidSqlUsername } from '../../utils/utilityFunctions';
 
@@ -45,17 +45,23 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    // const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
+    const { selectedAuthenticationType } = useAppSelector(state => state.workloadFactoryResource);
     const { password, confirmPassword } = useAppSelector(state => {
         if (dialogFrom === FROM_DIALOG.FSXADMIN) {
             return state.workloadFactoryResource.fsxAdminPasswords;
         }
         if (dialogFrom === FROM_DIALOG.SQLSERVER) {
-            return state.workloadFactoryResource.sqlServerPasswords;
+            return selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                ? state.workloadFactoryResource.sqlServerPasswords
+                : state.workloadFactoryResource.windowsServerPasswords;
         }
         return { password: '', confirmPassword: '' };
     });
-    const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
+    const userName = useAppSelector(state =>
+        selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+            ? state.workloadFactoryResource.sqlServerUserName
+            : state.workloadFactoryResource.windowsServerUserName
+    );
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
 
     // To show loader on primary button in load config and save config dialog
@@ -108,10 +114,10 @@ const DialogComponent = ({
         if (
             (dialogFrom === FROM_DIALOG.SQLSERVER &&
                 ((password.length === 0 && confirmPassword.length === 0) ||
-                    sqlServerUserName.length === 0 ||
+                    userName.length === 0 ||
                     password !== confirmPassword ||
                     isValidPassword(password))) ||
-            isValidSqlUsername(sqlServerUserName)
+            isValidSqlUsername(userName)
         ) {
             return true;
         }
