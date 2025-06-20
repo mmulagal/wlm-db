@@ -1490,7 +1490,9 @@ async function fetchDriftAssessmentPerHost(
     logger.info('Fetching drift assessment per host', { accountId, credentialsId, region, databaseHostId, fields });
 
     if (isEmpty(resourceDetail)) {
-        const { items = [] } = await getResources(
+        ({
+            items: [resourceDetail]
+        } = await getResources(
             accountId,
             databaseHostId,
             credentialsId,
@@ -1499,8 +1501,7 @@ async function fetchDriftAssessmentPerHost(
             undefined,
             undefined,
             true
-        );
-        [resourceDetail] = items;
+        ));
     }
     if (isEmpty(resourceDetail)) {
         const infoMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
