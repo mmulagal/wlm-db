@@ -1,4 +1,4 @@
-import Promise from 'bluebird';
+import throat from 'throat';
 import { describeRegions } from '../../lib/aws/ec2';
 import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
@@ -86,37 +86,37 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                 }
             });
             if (regions && QueueUrl) {
-                await Promise.map(
-                    regions,
-                    async ({ RegionName: code }) => {
-                        if (code) {
-                            const policyStatement = {
-                                Version: '2012-10-17',
-                                Statement: [
-                                    {
-                                        Sid: 'AllowSNSNotifications',
-                                        Effect: 'Allow',
-                                        Principal: {
-                                            AWS: '*'
-                                        },
-                                        Action: ['SNS:Publish', 'SNS:Subscribe'],
-                                        Resource: `arn:aws:sns:${code}:${awsAccountId}:${queueName}`
-                                    }
-                                ]
-                            };
-                            const wlmdbTopicArn = await checkAndCreateTopic(code, queueName, policyStatement);
+                await Promise.all(
+                    regions.map(
+                        throat(3, async ({ RegionName: code }) => {
+                            if (code) {
+                                const policyStatement = {
+                                    Version: '2012-10-17',
+                                    Statement: [
+                                        {
+                                            Sid: 'AllowSNSNotifications',
+                                            Effect: 'Allow',
+                                            Principal: {
+                                                AWS: '*'
+                                            },
+                                            Action: ['SNS:Publish', 'SNS:Subscribe'],
+                                            Resource: `arn:aws:sns:${code}:${awsAccountId}:${queueName}`
+                                        }
+                                    ]
+                                };
+                                const wlmdbTopicArn = await checkAndCreateTopic(code, queueName, policyStatement);
 
-                            const accountId = QueueUrl?.split('/')[3];
-                            const queueArn = getQueueArn(accountId, queueName);
+                                const accountId = QueueUrl?.split('/')[3];
+                                const queueArn = getQueueArn(accountId, queueName);
 
-                            await subscribeTopic(code, {
-                                Protocol: 'sqs',
-                                TopicArn: wlmdbTopicArn,
-                                Endpoint: queueArn
-                            });
-                        }
-                    },
-                    { concurrency: 3 }
+                                await subscribeTopic(code, {
+                                    Protocol: 'sqs',
+                                    TopicArn: wlmdbTopicArn,
+                                    Endpoint: queueArn
+                                });
+                            }
+                        })
+                    )
                 );
             }
         }
