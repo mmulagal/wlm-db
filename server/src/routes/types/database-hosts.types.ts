@@ -14,6 +14,7 @@ import {
 import { CredentialsIdParams } from './generic.types';
 import { API_DESCRIPTION, API_DESCRIPTION_EXAMPLES } from '../../utils/schema-description-consts';
 
+const allowedFields = Object.values(DatabaseHostsQueryFields);
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC, minLength: 1 })
 });
@@ -66,7 +67,14 @@ const CreateDatabaseParamsV2 = Type.Object({
 
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
-    fields: Type.Optional(Type.String({ enum: Object.values(DatabaseHostsQueryFields) })),
+    fields: Type.Optional(
+        Type.String({
+            description: `Comma separated list of fields to include in the response. Allowed fields: ${allowedFields.join(
+                ', '
+            )}`,
+            pattern: `^(${allowedFields.join('|')})(,(${allowedFields.join('|')}))*$`
+        })
+    ),
     vpcId: Type.Optional(Type.String()),
     fsxId: Type.Optional(Type.String()),
     nextToken: Type.Optional(Type.String()),

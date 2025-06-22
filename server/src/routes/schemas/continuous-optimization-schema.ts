@@ -22,19 +22,14 @@ import {
     BulkOptimizeCloneBody,
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
-    ContinuousOptimizationQueryString
+    ContinuousOptimizationQueryString,
+    AssessmentQueryStringPerAccount
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
     tags: [RouteTags.RESOURCE],
     params: CredentialsIdParams
 };
-
-const AssessmentQueryStringPerAccount = Type.Object({
-    fields: Type.Optional(Type.String()),
-    nextToken: Type.Optional(Type.String()),
-    pageSize: Type.Optional(Type.Integer())
-});
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,

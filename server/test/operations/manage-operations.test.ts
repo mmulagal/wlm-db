@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -14,7 +15,6 @@ import {
     validateAndStoreDiscoveredParameters,
     validateOracleCredentials
 } from '../../src/operations/manage-operations';
-import { faker } from '@faker-js/faker';
 
 const TEST_EC2_INSTANCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
