@@ -235,61 +235,72 @@ async function runOsPatchAssessment(
         isPartOfCluster
     });
 
-    const clusterNodeDetails = isPartOfCluster
-        ? await getAllClusterNodeDetails(accountId, credentialsId, region, databaseHostId, nodeInstanceId)
-        : [{ ec2InstanceId: nodeInstanceId }];
-    const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
-    if (!isEmpty(clusterNodeInstanceIds)) {
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-        const metadataObject = metadata as unknown as Metadata;
-        await checkIfWindowsUpdateCatalogReachable(accountId, credentialsId, region, databaseHostId, metadataObject); // Check if Windows Update Catalog is reachable
+    try {
+        const clusterNodeDetails = isPartOfCluster
+            ? await getAllClusterNodeDetails(accountId, credentialsId, region, databaseHostId, nodeInstanceId)
+            : [{ ec2InstanceId: nodeInstanceId }];
+        const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
+        if (!isEmpty(clusterNodeInstanceIds)) {
+            const [{ metadata = {} } = {}] =
+                (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+            const metadataObject = metadata as unknown as Metadata;
+            await checkIfWindowsUpdateCatalogReachable(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                metadataObject
+            ); // Check if Windows Update Catalog is reachable
 
-        const isPatchBaselineInProgress = await checkIfPatchBaselineInProgress(
-            credentialsId,
-            region,
-            clusterNodeInstanceIds
-        );
-        if (!isPatchBaselineInProgress) {
-            const patchBaselinResponse = await runAwsPatchBaseline(credentialsId, region, clusterNodeInstanceIds);
-
-            patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
-                if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
-                    throw createError(
-                        'Failed to run operating system patch baseline on the database host in the cluster.'
-                    );
-                }
-                return false;
-            }); // If any of the instances failed to run the patch baseline, throw an error
-
-            const response = await getInstancesPatchStatus(credentialsId, region, clusterNodeInstanceIds);
-
-            const hostOsPatchAssessment = response?.map(
-                ({
-                    BaselineId: baselineId,
-                    CriticalNonCompliantCount: criticalNonCompliantCount,
-                    OtherNonCompliantCount: otherNonCompliantCount,
-                    InstanceId: ec2InstanceId,
-                    OperationStartTime: operationStartTime,
-                    OperationEndTime: operationEndTime,
-                    SecurityNonCompliantCount: securityNonCompliantCount,
-                    missingPatchDetails
-                }) => ({
-                    baselineId: baselineId ?? '',
-                    criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
-                    otherNonCompliantCount: otherNonCompliantCount ?? 0,
-                    ec2InstanceId: ec2InstanceId ?? '',
-                    operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
-                    operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
-                    securityNonCompliantCount: securityNonCompliantCount ?? 0,
-                    missingPatchDetails
-                })
+            const isPatchBaselineInProgress = await checkIfPatchBaselineInProgress(
+                credentialsId,
+                region,
+                clusterNodeInstanceIds
             );
+            if (!isPatchBaselineInProgress) {
+                const patchBaselinResponse = await runAwsPatchBaseline(credentialsId, region, clusterNodeInstanceIds);
 
-            return hostOsPatchAssessment;
+                patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
+                    if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
+                        throw createError(
+                            'Failed to run operating system patch baseline on the database host in the cluster.'
+                        );
+                    }
+                    return false;
+                }); // If any of the instances failed to run the patch baseline, throw an error
+
+                const response = await getInstancesPatchStatus(credentialsId, region, clusterNodeInstanceIds);
+
+                const hostOsPatchAssessment = response?.map(
+                    ({
+                        BaselineId: baselineId,
+                        CriticalNonCompliantCount: criticalNonCompliantCount,
+                        OtherNonCompliantCount: otherNonCompliantCount,
+                        InstanceId: ec2InstanceId,
+                        OperationStartTime: operationStartTime,
+                        OperationEndTime: operationEndTime,
+                        SecurityNonCompliantCount: securityNonCompliantCount,
+                        missingPatchDetails
+                    }) => ({
+                        baselineId: baselineId ?? '',
+                        criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
+                        otherNonCompliantCount: otherNonCompliantCount ?? 0,
+                        ec2InstanceId: ec2InstanceId ?? '',
+                        operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
+                        operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
+                        securityNonCompliantCount: securityNonCompliantCount ?? 0,
+                        missingPatchDetails
+                    })
+                );
+
+                return hostOsPatchAssessment;
+            }
+            throw createError(`${PATCH_ASSESSMENT_IN_PROGRESS} on ${clusterNodeInstanceIds?.join(',')} in ${region}`);
         }
-        throw createError(`${PATCH_ASSESSMENT_IN_PROGRESS} on ${clusterNodeInstanceIds?.join(',')} in ${region}`);
+        throw createError('No instances found to run the host OS patch baseline');
+    } catch (error) {
+        throw new Error(`${error}`);
     }
-    throw createError('No instances found to run the host OS patch baseline');
 }
 
 async function updatePatchBaselineStatusForHost(

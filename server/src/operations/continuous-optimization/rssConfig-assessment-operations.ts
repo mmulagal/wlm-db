@@ -157,91 +157,96 @@ async function runRssConfigAssessment(
     metadata?: Metadata
 ) {
     logger.info('Running RSS Config assessment', { accountId, credentialsId, region, activeNodeInstanceId });
-    const ssmCommand = GET_RSS_CONFIG_DETAILS();
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        [ssmCommand],
-        activeNodeInstanceId,
-        'Get network adapters configuration details',
-        accountId
-    );
-    const parsedResponse = sqlResponseParsing(response);
-    const { adapters: rssConfigAdapters, vcpuCount, tcpOffloadState } = parsedResponse;
+    try {
+        const ssmCommand = GET_RSS_CONFIG_DETAILS();
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [ssmCommand],
+            activeNodeInstanceId,
+            'Get network adapters configuration details',
+            accountId
+        );
+        const parsedResponse = sqlResponseParsing(response);
+        const { adapters: rssConfigAdapters, vcpuCount, tcpOffloadState } = parsedResponse;
 
-    const recommendedReceiveQueues = vcpuCount > 8 ? 8 : vcpuCount;
-    let isAtleastOneAdapterWithBaseProcessorNumber2 = false;
-    let rssAdapters = []; // Will contain adapters that are not optimized
-    let rssConfigOptimizedStatus = AssessmentStatus.OPTIMIZED;
-    for (const rssConfigAdapter of rssConfigAdapters) {
-        const { adapterName, rssEnabled, rssProfile, baseProcessorNumber, numberOfReceiveQueues } = rssConfigAdapter;
-        const recommendedBaseProcessorNumber = vcpuCount >= 4 ? 2 : baseProcessorNumber;
-        if (baseProcessorNumber === 2) {
-            isAtleastOneAdapterWithBaseProcessorNumber2 = true;
-        }
-        // Best Practices details here : https://jira.ngage.netapp.com/browse/DBS-3872
-        if (
-            !rssEnabled ||
-            rssProfile !== NUMASTATIC ||
-            baseProcessorNumber !== recommendedBaseProcessorNumber ||
-            numberOfReceiveQueues !== recommendedReceiveQueues
-        ) {
-            rssAdapters.push({
-                adapterName,
-                rssEnabled,
-                rssProfile,
-                baseProcessorNumber,
-                numberOfReceiveQueues
-            });
-        }
-    }
-
-    const adaptersToRemove: string[] = [];
-    if (
-        vcpuCount >= 4 &&
-        rssAdapters.length > 0 &&
-        rssConfigAdapters.length > 1 &&
-        isAtleastOneAdapterWithBaseProcessorNumber2
-    ) {
-        // In case of multiple adapters, if atleast one adapter has baseProcessorNumber as 2, then remove all other adapters from the unoptimized list if properties other than baseProcessorNumber are set to best practices as not all the adapters need not be having baseProcessorNumber as 2
-        for (const adapter of rssAdapters) {
-            const { rssEnabled, rssProfile, numberOfReceiveQueues, baseProcessorNumber, adapterName } = adapter;
+        const recommendedReceiveQueues = vcpuCount > 8 ? 8 : vcpuCount;
+        let isAtleastOneAdapterWithBaseProcessorNumber2 = false;
+        let rssAdapters = []; // Will contain adapters that are not optimized
+        let rssConfigOptimizedStatus = AssessmentStatus.OPTIMIZED;
+        for (const rssConfigAdapter of rssConfigAdapters) {
+            const { adapterName, rssEnabled, rssProfile, baseProcessorNumber, numberOfReceiveQueues } =
+                rssConfigAdapter;
+            const recommendedBaseProcessorNumber = vcpuCount >= 4 ? 2 : baseProcessorNumber;
+            if (baseProcessorNumber === 2) {
+                isAtleastOneAdapterWithBaseProcessorNumber2 = true;
+            }
+            // Best Practices details here : https://jira.ngage.netapp.com/browse/DBS-3872
             if (
-                rssEnabled &&
-                rssProfile === NUMASTATIC &&
-                numberOfReceiveQueues === recommendedReceiveQueues &&
-                baseProcessorNumber !== 2
+                !rssEnabled ||
+                rssProfile !== NUMASTATIC ||
+                baseProcessorNumber !== recommendedBaseProcessorNumber ||
+                numberOfReceiveQueues !== recommendedReceiveQueues
             ) {
-                adaptersToRemove.push(adapterName);
+                rssAdapters.push({
+                    adapterName,
+                    rssEnabled,
+                    rssProfile,
+                    baseProcessorNumber,
+                    numberOfReceiveQueues
+                });
             }
         }
-    }
 
-    rssAdapters = rssAdapters.filter(adapter => !adaptersToRemove.includes(adapter.adapterName));
-    if (isDemo()) {
-        rssAdapters = rssAdapters.filter(adapter => !metadata?.isRssConfigOptimized?.includes(adapter.adapterName));
-    }
+        const adaptersToRemove: string[] = [];
+        if (
+            vcpuCount >= 4 &&
+            rssAdapters.length > 0 &&
+            rssConfigAdapters.length > 1 &&
+            isAtleastOneAdapterWithBaseProcessorNumber2
+        ) {
+            // In case of multiple adapters, if atleast one adapter has baseProcessorNumber as 2, then remove all other adapters from the unoptimized list if properties other than baseProcessorNumber are set to best practices as not all the adapters need not be having baseProcessorNumber as 2
+            for (const adapter of rssAdapters) {
+                const { rssEnabled, rssProfile, numberOfReceiveQueues, baseProcessorNumber, adapterName } = adapter;
+                if (
+                    rssEnabled &&
+                    rssProfile === NUMASTATIC &&
+                    numberOfReceiveQueues === recommendedReceiveQueues &&
+                    baseProcessorNumber !== 2
+                ) {
+                    adaptersToRemove.push(adapterName);
+                }
+            }
+        }
 
-    if (rssAdapters.length > 0 || tcpOffloadState !== 'Disabled') {
-        rssConfigOptimizedStatus = AssessmentStatus.NOT_OPTIMIZED;
-    }
-    let recommendedAdapterSettings;
-    if (rssConfigOptimizedStatus === AssessmentStatus.NOT_OPTIMIZED) {
-        recommendedAdapterSettings = {
-            recommendedRssProfile: NUMASTATIC,
-            recommendedBaseProcessorNumber: vcpuCount >= 4 ? 2 : 0,
-            recommendedReceiveQueues
+        rssAdapters = rssAdapters.filter(adapter => !adaptersToRemove.includes(adapter.adapterName));
+        if (isDemo()) {
+            rssAdapters = rssAdapters.filter(adapter => !metadata?.isRssConfigOptimized?.includes(adapter.adapterName));
+        }
+
+        if (rssAdapters.length > 0 || tcpOffloadState !== 'Disabled') {
+            rssConfigOptimizedStatus = AssessmentStatus.NOT_OPTIMIZED;
+        }
+        let recommendedAdapterSettings;
+        if (rssConfigOptimizedStatus === AssessmentStatus.NOT_OPTIMIZED) {
+            recommendedAdapterSettings = {
+                recommendedRssProfile: NUMASTATIC,
+                recommendedBaseProcessorNumber: vcpuCount >= 4 ? 2 : 0,
+                recommendedReceiveQueues
+            };
+        }
+
+        return {
+            rssConfigFinding: rssConfigOptimizedStatus,
+            rssAdapters,
+            recommendedAdapterSettings,
+            tcpOffloadState,
+            totalObjectsInViolation: rssAdapters?.length,
+            totalObjectsAssessed: rssConfigAdapters?.length
         };
+    } catch (error) {
+        throw new Error(`${error}`);
     }
-
-    return {
-        rssConfigFinding: rssConfigOptimizedStatus,
-        rssAdapters,
-        recommendedAdapterSettings,
-        tcpOffloadState,
-        totalObjectsInViolation: rssAdapters?.length,
-        totalObjectsAssessed: rssConfigAdapters?.length
-    };
 }
 
 export { calculateRssConfigDrift, runRssConfigAssessment, managedHostsRssConfigAssessment };
