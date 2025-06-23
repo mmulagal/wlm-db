@@ -14,7 +14,7 @@ const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'AWS.Tools.SimpleSystemsManagement',
   'NetApp.ONTAP',
   'AWS.Tools.BedrockRuntime',
-  'AWS.Tools.CloudWatch',
+  'AWS.Tools.CloudWatch'
 `;
 
 const SQL_PERMISSIONS: string = `

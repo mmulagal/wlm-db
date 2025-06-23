@@ -46,7 +46,7 @@ const RegisterCredentialsSchema = {
     ...RegisterBaseRequest,
     params: AccountIdParams,
     body: BulkRegisterCredentialsRequestBody,
-    summary: 'Register credentials for FSxN and SQL Server/ PostgreSQL/Oracle instances',
+    summary: 'Register credentials',
     description: 'Register credentials for FSxN and SQL Server/ PostgreSQL/Oracle instances',
     response: {
         200: RegisterCredentialsResponse
