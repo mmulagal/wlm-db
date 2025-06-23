@@ -271,28 +271,7 @@ const invokeCommandWithCredSSP = `
             Sqlcmd -S $using:serverInstanceName -Q $sqlquery -y 0 $extraArguments 2> $null
         }
 
-        $job = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -AsJob
-
-        # Check job status and wait for completion
-        $timeout = 30 # Timeout in seconds
-        $elapsedTime = 0
-        $interval = 1 # Check every 1 second
-
-        while ($job.State -eq 'Running' -and $elapsedTime -lt $timeout) {
-            Wait-Job -Job $job -Timeout $interval | Out-Null
-            $elapsedTime += $interval
-        }
-
-        if ($job.State -ne 'Completed') {
-            # If the job is still running after the timeout, stop and remove it
-            Stop-Job -Job $job | Out-Null
-            Remove-Job -Force -Job $job | Out-Null
-            Throw "The Invoke-Command job did not complete successfully within the timeout period. This could be due to invalid credentials or other issues."
-        }
-
-        $sqlresult = Receive-Job -Job $job
-        Remove-Job -Force -Job $job | Out-Null
-        return $sqlresult
+        return Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -ErrorAction Stop
     }
 `;
 
