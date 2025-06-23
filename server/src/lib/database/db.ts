@@ -290,17 +290,19 @@ async function listResources(
     });
 }
 
-async function countResources(accountId: string, credentialsId?: string, region?: string, resourceType?: string) {
+async function countResources(accountId?: string, credentialsId?: string, region?: string, resourceType?: string) {
     logger.info('Counting managed resources', { accountId, credentialsId, region, resourceType });
 
-    accountId = checkAccount(accountId);
+    if (accountId) {
+        accountId = checkAccount(accountId);
+    }
 
     return prisma.client.resource.aggregate({
         _count: {
             id: true
         },
         where: {
-            account_id: accountId,
+            ...(accountId && { account_id: accountId }),
             ...(credentialsId && { credentials_id: credentialsId }),
             ...(region && { region }),
             ...(resourceType && { resource_type: resourceType })

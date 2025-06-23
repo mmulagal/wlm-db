@@ -1478,6 +1478,260 @@ Function Get-FCIName {
 }
 `;
 
+const trendGraphCreateScript = (databaseHostId: string, ec2InstanceId: string) => `
+Start-Transcript -Path "C:\\cfn\\log\\instance_performance_collection.log.txt" -Append | Out-Null
+
+$moduleFound = Get-Module -ListAvailable -Name AWS.Tools.CloudWatch
+
+# Initialize result as an array to collect results for each batch
+$result = @()
+
+if (-not $moduleFound) {
+    $result = @{
+        success  = $false
+        response = $null
+        error    = "AWS.Tools.CloudWatch not found."
+    }
+    $result | ConvertTo-Json -Depth 5
+}
+elseif ($moduleFound) {   
+    try {
+        Import-Module AWS.Tools.CloudWatch -ErrorAction Stop
+        $WarningPreference = "SilentlyContinue"
+
+        $databaseHostId = '${databaseHostId}'
+        $ec2InstanceId = '${ec2InstanceId}'
+
+        # Fetch all SQL instances from the registry
+        Function FetchAllRunningSQLInstances {
+            $sqlServiceList = Get-WmiObject win32_service | Where-Object {
+                $_.DisplayName -like 'sql server (*' -and $_.State -eq 'Running'
+            }
+
+            $finalInstancesList = @()
+
+            ForEach ($sqlService in $sqlServiceList) {
+                $instanceName = $sqlService.Name -Replace "MSSQL\$", ""
+                $finalInstancesList += $instanceName
+            }
+            return $finalInstancesList
+        }
+
+        $cpuUtilquery = @"
+SET NOCOUNT ON; SET QUOTED_IDENTIFIER ON; WITH CPUUsage AS (
+    SELECT
+        DATEADD(ms, -1 * (rb.timestamp - si.ms_ticks), GETDATE()) AS EventTime,
+        CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]', 'int') AS INT) AS SystemIdle,
+        CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]', 'int') AS INT) AS SQLProcessUtilization
+    FROM
+        sys.dm_os_ring_buffers AS rb
+    CROSS JOIN
+        sys.dm_os_sys_info AS si
+    CROSS APPLY
+        (SELECT CONVERT(XML, rb.record) AS record) AS x
+    WHERE
+        rb.ring_buffer_type = N'RING_BUFFER_SCHEDULER_MONITOR'
+)
+SELECT
+    MAX(100 - SystemIdle) AS MaxCPUUtilizationPercentage
+FROM
+    CPUUsage
+WHERE
+    EventTime >= DATEADD(hour, -6, GETDATE())
+FOR JSON PATH
+"@
+
+        $performanceQuery = @"
+SET NOCOUNT ON;
+DECLARE @StartTime DATETIME
+DECLARE @TimeInSeconds FLOAT
+
+-- Set start time to 6 hours ago
+SET @StartTime = DATEADD(HOUR, -6, GETDATE())
+SET @TimeInSeconds = DATEDIFF(SECOND, @StartTime, GETDATE())
+
+SELECT
+    READ_IOPS,
+    WRITE_IOPS,
+    READ_THROUGHPUT,
+    WRITE_THROUGHPUT,
+    READ_LATENCY,
+    WRITE_LATENCY,
+    SERVER_IO_LATENCY
+FROM (
+    SELECT
+        MAX(CASE WHEN num_of_reads = 0 THEN 0 ELSE CAST(num_of_reads AS FLOAT)/@TimeInSeconds END) AS READ_IOPS,
+        MAX(CASE WHEN num_of_writes = 0 THEN 0 ELSE CAST(num_of_writes AS FLOAT)/@TimeInSeconds END) AS WRITE_IOPS,
+        MAX(CASE WHEN num_of_bytes_read = 0 THEN 0 ELSE CAST(num_of_bytes_read AS FLOAT)/@TimeInSeconds/1024 END) AS READ_THROUGHPUT,
+        MAX(CASE WHEN num_of_bytes_written = 0 THEN 0 ELSE CAST(num_of_bytes_written AS FLOAT)/@TimeInSeconds/1024 END) AS WRITE_THROUGHPUT,
+        MAX(CASE WHEN num_of_reads = 0 THEN 0 ELSE io_stall_read_ms / num_of_reads END) AS READ_LATENCY,
+        MAX(CASE WHEN num_of_writes = 0 THEN 0 ELSE io_stall_write_ms / num_of_writes END) AS WRITE_LATENCY,
+        MAX(CASE WHEN (num_of_reads + num_of_writes) = 0 THEN 0 ELSE CAST(io_stall AS FLOAT) / (num_of_reads + num_of_writes) END) AS SERVER_IO_LATENCY
+    FROM sys.dm_io_virtual_file_stats(null,null)
+) AS subquery
+FOR JSON PATH;
+"@
+
+        $combinedMetrics = @()
+
+        $credsFromParameterStore = $null
+        try {
+            $credsFromParameterStore = (Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json
+        }
+        catch {
+            $credsFromParameterStore = $null
+        }
+
+        $instancesList = FetchAllRunningSQLInstances
+
+        foreach ($instanceName in $instancesList) {
+            $metrics = @()
+            $sqlCredential = $credsFromParameterStore.sql.Where({ $_.sqlInstanceName -eq $instanceName })[0]
+
+            $sqlCmdParams = @()
+            if (-Not [string]::IsNullOrEmpty($sqlCredential) -and -Not [string]::IsNullOrEmpty($sqlCredential.username) -and -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
+                $sqlCmdParams += @("-U", $sqlCredential.username, "-P", $sqlCredential.password)
+            }
+            if ($instanceName -ne "MSSQLSERVER") {
+                $sqlCmdParams += @("-S", "$env:computerName\\$instanceName")
+            }
+
+            try {
+                $cpuResponse = sqlcmd @sqlCmdParams -Q $cpuUtilquery -y 0
+                $cpuJsonResponse = $cpuResponse -join "\`n" | ConvertFrom-Json
+            }
+            catch {
+                $cpuError = $_.Exception.Message
+            }
+
+            try {
+                $perfResponse = sqlcmd @sqlCmdParams -Q $performanceQuery -y 0
+                $perfJsonResponse = $perfResponse -join "\`n" | ConvertFrom-Json
+            }
+            catch {
+                $perfError = $_.Exception.Message
+            }
+
+            if ($cpuJsonResponse) {
+                $metrics += @{
+                    MetricName      = "cpuUsed"
+                    Value           = $cpuJsonResponse.MaxCPUUtilizationPercentage
+                    Unit            = "Percent"
+                    SqlInstanceName = $instanceName
+                }
+            }
+
+            if ($perfJsonResponse) {
+                $metrics += @{
+                    MetricName      = "readIops"
+                    Value           = $perfJsonResponse.READ_IOPS
+                    Unit            = "None"
+                    SqlInstanceName = $instanceName
+                }
+                $metrics += @{
+                    MetricName      = "writeIops"
+                    Value           = $perfJsonResponse.WRITE_IOPS
+                    Unit            = "None"
+                    SqlInstanceName = $instanceName
+                }
+                $metrics += @{
+                    MetricName      = "readThroughput"
+                    Value           = $perfJsonResponse.READ_THROUGHPUT
+                    Unit            = "Kilobytes/Second"
+                    SqlInstanceName = $instanceName
+                }
+                $metrics += @{
+                    MetricName      = "writeThroughput"
+                    Value           = $perfJsonResponse.WRITE_THROUGHPUT
+                    Unit            = "Kilobytes/Second"
+                    SqlInstanceName = $instanceName
+                }
+                $metrics += @{
+                    MetricName      = "readLatency"
+                    Value           = $perfJsonResponse.READ_LATENCY
+                    Unit            = "Milliseconds"
+                    SqlInstanceName = $instanceName
+                }
+                $metrics += @{
+                    MetricName      = "writeLatency"
+                    Value           = $perfJsonResponse.WRITE_LATENCY
+                    Unit            = "Milliseconds"
+                    SqlInstanceName = $instanceName
+                }
+                $metrics += @{
+                    MetricName      = "serverIOLatency"
+                    Value           = $perfJsonResponse.SERVER_IO_LATENCY
+                    Unit            = "Milliseconds"
+                    SqlInstanceName = $instanceName
+                }
+            }
+
+            # Output the metrics for verification if any exist
+            if ($metrics.Count -gt 0) {
+                Write-Output "Metrics created for instance $instanceName. \`n"
+                $combinedMetrics += $metrics
+            }
+            else {
+                Write-Output "Metrics creation skipped for instance $instanceName due to errors. \`n"
+                if ($cpuError) { Write-Output "CPU Error: $cpuError" }
+                if ($perfError) { Write-Output "Performance Error: $perfError" }
+            }
+        }
+
+        $batchSize = 20
+        $metricDataArray = @()
+
+        foreach ($metric in $combinedMetrics) {
+            $metricDataArray += @{
+                MetricName = $metric.MetricName
+                Value      = $metric.Value
+                Unit       = $metric.Unit
+                Dimensions = @(
+                    @{
+                        Name  = "sqlInstanceName"
+                        Value = $metric.SqlInstanceName
+                    },
+                    @{
+                        Name  = "databaseHostId"
+                        Value = $databaseHostId
+                    }
+                )
+            }
+        }
+
+        # Send in batches of 20
+        $batchResponse = ""
+        for ($i = 0; $i -lt $metricDataArray.Count; $i += $batchSize) {
+            $batch = $metricDataArray[$i..([Math]::Min($i + $batchSize - 1, $metricDataArray.Count - 1))]
+            try {
+                Write-CWMetricData -Namespace "netapp/wlmdb/performance" -MetricData $batch
+                $response = "Successfully sent batch $($i / $batchSize + 1)"
+                $batchResponse += "$response\`n"
+       
+            }
+            catch {
+                $response = "Error sending batch $($i / $batchSize + 1): $($_.Exception.Message)"
+                $batchResponse += "$response\`n"
+            }
+        }
+        $result += @{
+            success  = $true
+            response = $batchResponse
+            error    = $_.Exception.Message
+        }
+    }
+    catch {
+        $result = @{
+            success  = $false
+            response = $null
+            error    = $_.Exception.Message
+        }
+    }
+}
+$result | ConvertTo-Json -Depth 5
+exit 0
+`;
+
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -1497,5 +1751,6 @@ export {
     CHECK_SCRIPT_AVAILABILITY_AND_VERSION,
     sqlQueryExecutionWithAuth,
     compressResponse,
-    GET_FCI_NAME
+    GET_FCI_NAME,
+    trendGraphCreateScript
 };

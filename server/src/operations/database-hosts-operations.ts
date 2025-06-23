@@ -10,6 +10,8 @@ import {
 } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
+import throat from 'throat';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { listDatabaseInstances, listResources } from '../lib/database/db';
 import {
     TopologyResponseType,
@@ -55,7 +57,9 @@ import {
     DEFAULT_INSTANCE_NAME,
     MSSQL_SYSTEM_DATABASES,
     PGSQL_DEFAULT_INSTANCE_NAME,
-    ORACLE_INSTANCE_NAME
+    ORACLE_INSTANCE_NAME,
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
+    MSSQL
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -100,7 +104,7 @@ import {
 } from './aws/cloud-watch-operations';
 import { assessMssqlServerPerformance, getEc2Hostname, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
-import { callSsmExecution } from './aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
 import getDatabaseInstanceTopology from '../utils/sql-utils';
@@ -110,6 +114,8 @@ import {
     getOracleDatabaseInstancesDetails,
     getOracleDatabaseInstancesSummary
 } from './workloads/oracle/oracle-operations';
+import { trendGraphCreateScript } from './workloads/mssql/ssm-script-utils';
+import { getResources } from './database/database-operations';
 
 const logger = getLogger();
 
@@ -2319,6 +2325,108 @@ async function getAllClusterNodeDetails(
     );
 }
 
+async function triggerInstancePerformanceAssessment(initiatedBy: string) {
+    logger.info('Trigger instance performance assessment per account', { initiatedBy });
+
+    const { items: allmanagedResources } = await getResources(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        MSSQL,
+        undefined,
+        undefined,
+        false,
+        true
+    );
+    if (isEmpty(allmanagedResources)) {
+        logger.info('No successfully managed MSSQL database hosts found.');
+        return;
+    }
+
+    await Promise.all(
+        allmanagedResources.map(
+            throat(3, async (resource: ResourceDetails) => {
+                const {
+                    metadata,
+                    resource_id: databaseHostId,
+                    region,
+                    credentials_id: credentialsId,
+                    cloud_provider_account_id: accountId
+                } = resource;
+                try {
+                    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+                    const nodeIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
+
+                    logger.info('Triggering instance performance assessment for', {
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        nodeIds
+                    });
+
+                    await Promise.all(
+                        nodeIds.map(async nodeId => {
+                            try {
+                                const connectionStatus = await getSSMConnectionStatus(
+                                    credentialsId,
+                                    region!,
+                                    nodeId,
+                                    accountId!
+                                );
+                                if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+                                    const command = trendGraphCreateScript(databaseHostId, nodeId);
+                                    const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
+                                    const response = await callSsmExecution(
+                                        credentialsId,
+                                        region!,
+                                        [command],
+                                        nodeId,
+                                        ssmComment,
+                                        accountId!,
+                                        true,
+                                        CUSTOM_SSM_EXECUTION_TIMEOUT
+                                    );
+                                    logger.info('Instance performance assessment response', {
+                                        accountId,
+                                        region,
+                                        nodeId,
+                                        response
+                                    });
+                                } else {
+                                    logger.error('SSM connection not established for node', {
+                                        accountId,
+                                        region,
+                                        nodeId
+                                    });
+                                }
+                            } catch (error: any) {
+                                logger.error('Error while triggering performance assessment for ', {
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    databaseHostId,
+                                    nodeId,
+                                    error: error.message
+                                });
+                            }
+                        })
+                    );
+                } catch (error: any) {
+                    logger.error('Error while triggering performance assessment for ', {
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        error: error.message
+                    });
+                }
+            })
+        )
+    );
+}
+
 export {
     getDatabaseHostsSummaryV2,
     getDatabaseHostSummaryV2,
@@ -2328,5 +2436,6 @@ export {
     getAllClusterNodeDetails,
     getInstanceOntapDetails,
     getEc2ResourceInfo,
-    isInstanceAppConsistentBackupEnabled
+    isInstanceAppConsistentBackupEnabled,
+    triggerInstancePerformanceAssessment
 };

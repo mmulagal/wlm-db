@@ -13,7 +13,8 @@ const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'AWS.Tools.FSx',
   'AWS.Tools.SimpleSystemsManagement',
   'NetApp.ONTAP',
-  'AWS.Tools.BedrockRuntime'
+  'AWS.Tools.BedrockRuntime',
+  'AWS.Tools.CloudWatch',
 `;
 
 const SQL_PERMISSIONS: string = `
@@ -38,7 +39,7 @@ const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
 
 const MINIMUM_PREPREQUISITES = {
     SQL_PERMISSIONS: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE'],
-    MODULES: ['AWS.Tools.SimpleSystemsManagement']
+    MODULES: ['AWS.Tools.SimpleSystemsManagement', 'AWS.Tools.CloudWatch']
 };
 
 const FEATURE_PREPREQUISITES = {

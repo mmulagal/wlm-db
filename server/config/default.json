@@ -96,7 +96,8 @@
     },
     "redis": {
         "endpoint": "127.0.0.1:6379",
-        "cron-job-interval": "24h"
+        "well-architected-assessment-job-interval": "24h",
+        "performance-assessment-cron-job-interval": "6h"
     },
     "reporting": {
         "bucket-name": "staging.reports.data-services.tlveng.netapp.com"

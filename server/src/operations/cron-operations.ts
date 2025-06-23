@@ -11,6 +11,7 @@ import {
     CONTINUOUS_ASSESSMENT_FEATURE,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
+    INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE,
     TCO_FEATURE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
@@ -40,6 +41,7 @@ import { DriftAssessmentJob, Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import { purgeOlderAssessmentRecords } from './database/instance-config-operations';
 import { listAllManagedInstances } from './database/database-operations';
+import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
 
 const logger = getLogger();
 
@@ -301,7 +303,11 @@ function scheduledAssessment() {
 
         logQueueMetrics(driftAssessmentQueue);
 
-        logger.info(`Drift assessment job added to queue with interval ${config.get('redis.cron-job-interval')}.`);
+        logger.info(
+            `Drift assessment job added to queue with interval ${config.get(
+                'redis.well-architected-assessment-job-interval'
+            )}.`
+        );
 
         getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
             const driftAssessmentWorker = new Worker(
@@ -339,6 +345,67 @@ function purgeOlderDeployments() {
     deleteOlderDeployments(Date.now() - Number(purgeAfter));
 }
 
+function scheduledInstanceResourceAssessment() {
+    let redisConnection: IORedis;
+    try {
+        redisConnection = getRedisConnection();
+        const InstancePerformanceAssessmentQueue = new Queue(INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE, {
+            connection: redisConnection
+        });
+
+        InstancePerformanceAssessmentQueue.on('error', error => {
+            logger.error('Queue error:', error);
+        });
+
+        logQueueMetrics(InstancePerformanceAssessmentQueue);
+
+        const contOpt = 'INSTANCE_PERFORMANCE_ASSESSMENT';
+        InstancePerformanceAssessmentQueue.upsertJobScheduler(
+            contOpt,
+            {
+                pattern: '0 2,8,14,20 * * *' // Run every 6 hours starting at 2 AM
+            },
+            {
+                name: contOpt,
+                opts: {
+                    removeOnComplete: true,
+                    removeOnFail: true
+                }
+            }
+        );
+
+        logQueueMetrics(InstancePerformanceAssessmentQueue);
+
+        logger.info(
+            `Instance performance assessment job added to queue with interval ${config.get(
+                'redis.performance-assessment-cron-job-interval'
+            )}.`
+        );
+
+        getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+            const instancePerformanceWorker = new Worker(
+                INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE,
+                async () => {
+                    try {
+                        await triggerInstancePerformanceAssessment(AssessmentTriggeredBy.SYSTEM);
+                    } catch (error) {
+                        logger.error('Error triggering instance performance assessment', error);
+                    }
+                },
+                {
+                    connection: redisConnection
+                }
+            );
+
+            instancePerformanceWorker.on('completed', job => {
+                logger.debug(job.id, 'is completed.');
+            });
+        });
+    } catch (error: any) {
+        logger.error(`Error while processing instance performance assessment cron job. ${error}.`);
+    }
+}
+
 async function initiateCronOperations() {
     logger.info('Initializing cron jobs');
     try {
@@ -352,6 +419,7 @@ async function initiateCronOperations() {
             updateManagedInstanceRecommendationPreferences();
             scheduledAssessment();
             purgeOlderDeployments();
+            scheduledInstanceResourceAssessment();
         }
     } catch (error) {
         logger.error('Failed to initialize cron jobs', error);
@@ -370,5 +438,6 @@ export {
     scheduledAssessment,
     purgeAssessmentData,
     purgeOlderDeployments,
-    initiateCronOperations
+    initiateCronOperations,
+    scheduledInstanceResourceAssessment
 };

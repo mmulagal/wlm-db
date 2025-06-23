@@ -228,7 +228,7 @@ async function getDeployments(
 }
 
 async function getResources(
-    accountId: string,
+    accountId?: string,
     resourceId?: string,
     credentialsId?: string | string[],
     region?: string | string[],

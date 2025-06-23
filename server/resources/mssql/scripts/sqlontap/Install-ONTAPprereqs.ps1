@@ -50,7 +50,8 @@ $moduleList = @(
     'AWS.Tools.EC2',
     'AWS.Tools.FSX',
     'AWS.Tools.Common',
-    'AWS.Tools.Installer'
+    'AWS.Tools.Installer',
+    'AWS.Tools.CloudWatch'
 )
 
 foreach ($module in $moduleList) {
@@ -90,6 +91,7 @@ while ($installPSModulesTries -le 2) {
             Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber
             Install-Module -Name AWS.Tools.SimpleSystemsManagement -Force -AllowClobber
             Install-Module -Name SqlServer -Force -AllowClobber
+            Install-Module -Name AWS.Tools.CloudWatch -Force -AllowClobber
             Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion # remove this skip publisher check once the module is signed
 
             $modulesInstalled = $True
@@ -125,6 +127,7 @@ while ($installPSModulesTries -le 2) {
             Install-Module -Name AWS.Tools.EC2 -Force -AllowClobber -Repository 'AWS'
             Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber -Repository 'AWS'
             Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber -Repository 'AWS'
+            Install-Module -Name AWS.Tools.CloudWatch -Force -AllowClobber -Repository 'AWS'
             Install-Module -Name SqlServer -Force -AllowClobber -Repository 'AWS'
             Install-Module -Name netapp.ontap -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -Repository 'AWS'
 
