@@ -482,7 +482,7 @@ export const getPrimaryClusterNode = (
 
                 const bothNodes = [host, partnerNode];
                 const ec2Details: Array<{ id: string; name: string }> = [];
-                bothNodes?.map((perNode: DiscoverHostInterface) => {
+                bothNodes?.forEach((perNode: DiscoverHostInterface) => {
                     if (perNode?.ec2InstanceId) {
                         ec2Details.push({
                             id: perNode?.ec2InstanceId || '',
