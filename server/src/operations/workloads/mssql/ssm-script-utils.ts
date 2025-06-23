@@ -467,7 +467,7 @@ const validateSQLInstanceConnectivity = (
 
                     ${
                         windowsUser
-                            ? '$sqlresult = Invoke-CommandWithCredSSP -sqlquery $sqlquery -extraArguments -r1'
+                            ? '$sqlresult = Invoke-CommandWithCredSSP -sqlquery $sqlquery -instanceName $serverInstanceName -extraArguments -r1'
                             : '$sqlresult = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $sqlquery -y 0 -r1 2> $null'
                     }
 
