@@ -125,38 +125,6 @@ router.get(
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/discover/resource-credentials`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, {
-                databaseCount: 10,
-                sqlServerEdition: 'Standard',
-                sqlServerError: '',
-                fsxnError: '',
-                "manageReadiness": { 
-                    "assessment" : { 
-                        "missingSqlPermissions": [],
-                        "missingModules": []
-                    },
-                    "remediation": {
-                        "missingSqlPermissions": [],
-                        "missingModules": []
-                    },
-                    "dbcreation": {
-                        "missingSqlPermissions": [],
-                        "missingModules": []
-                    },
-                    "sandbox": {
-                        "missingSqlPermissions":[],
-                        "missingModules": []
-                    }
-                }
-            });
-        }, 5000);
-    }
-);
-
-router.post(
     `${BASE_URL}/v1/register-credentials`,
     async (req: {}, res: any) => {
         setTimeout(() => {
@@ -171,8 +139,8 @@ router.post(
                             {
                                 "resourceId": "fs-0420e46c6ee7561ed",
                                 "databaseCount": "5",
-                                "sqlServerEdition": "a",
-                                "sqlServerError": "",
+                                "databaseServerEdition": "a",
+                                "databaseServerError": "",
                                 "fsxnError": "",
                                 "requiredModuleError": "",
                                 "manageReadiness": []

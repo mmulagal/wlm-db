@@ -157,11 +157,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             const result = await registerResourceCredBulk({ payload });
             if (result && !result?.error && result?.data) {
                 if (
-                    result?.data?.[0]?.registerDetails?.[0]?.sqlServerError ||
+                    result?.data?.[0]?.registerDetails?.[0]?.databaseServerError ||
                     result?.data?.[0]?.registerDetails?.[0]?.fsxnError
                 ) {
                     const error = [];
-                    error.push(result?.data?.[0]?.registerDetails?.[0]?.sqlServerError || '');
+                    error.push(result?.data?.[0]?.registerDetails?.[0]?.databaseServerError || '');
                     error.push(result?.data?.[0]?.registerDetails?.[0]?.fsxnError || '');
                     dispatch(
                         addNotification({

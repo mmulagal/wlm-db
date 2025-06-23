@@ -803,13 +803,14 @@ export const updateDetectBulkResponse = (
                 (d: any) => d.resourceId === instance?.data?.databaseInstanceName
             );
             sqlAuthSuccess =
-                !!sqlDetail && !(sqlDetail.sqlServerError || sqlDetail.fsxnError || sqlDetail.requiredModuleError);
+                !!sqlDetail && !(sqlDetail.databaseServerError || sqlDetail.fsxnError || sqlDetail.requiredModuleError);
         }
 
         if (isFsxRegisterRequired) {
             const fsxDetail = res.registerDetails?.find((d: any) => d.resourceId === instance?.data?.fsxId);
             fsxSuccess =
-                (fsxDetail && !(fsxDetail.sqlServerError || fsxDetail.fsxnError || fsxDetail.requiredModuleError)) ??
+                (fsxDetail &&
+                    !(fsxDetail.databaseServerError || fsxDetail.fsxnError || fsxDetail.requiredModuleError)) ??
                 false;
         }
 

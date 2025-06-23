@@ -190,7 +190,7 @@ const WellArchitectDashboard = () => {
             if (result && !result?.error && result?.data) {
                 if (
                     result?.data?.length > 0 &&
-                    !result?.data?.[0]?.registerDetails?.[0]?.sqlServerError &&
+                    !result?.data?.[0]?.registerDetails?.[0]?.databaseServerError &&
                     !result?.data?.[0]?.registerDetails?.[0]?.fsxnError
                 ) {
                     dispatch(
@@ -207,7 +207,7 @@ const WellArchitectDashboard = () => {
                             type: NOTIFICATION_TYPES.ERROR,
                             message:
                                 result?.data?.[0]?.registerDetails?.[0]?.fsxnError ||
-                                result?.data?.[0]?.registerDetails?.[0]?.sqlServerError ||
+                                result?.data?.[0]?.registerDetails?.[0]?.databaseServerError ||
                                 `Failed to update ${
                                     value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
                                 } password. `

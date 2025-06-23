@@ -112,15 +112,15 @@ export interface ExtendedManageStates extends ManageStates {
 }
 
 export type RegisterResourceCredResult = {
-    data?: { sqlServerError?: string; fsxnError?: string; manageReadiness?: ManageReadinessData };
+    data?: { databaseServerError?: string; fsxnError?: string; manageReadiness?: ManageReadinessData };
     error?: any;
 };
 
 export interface RegisterDetail {
     resourceId: string;
     databaseCount: string;
-    sqlServerEdition: string;
-    sqlServerError: string;
+    databaseServerEdition: string;
+    databaseServerError: string;
     fsxnError: string;
     requiredModuleError: string;
     manageReadiness: ManageReadinessData; // Adjust type if you have a specific structure
