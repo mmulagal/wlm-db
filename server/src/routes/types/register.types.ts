@@ -159,8 +159,8 @@ const SingleRegisterCredentialsResponse = Type.Object({
     resourceId: Type.Optional(Type.String()),
     resourceType: Type.Optional(Type.String()),
     databaseCount: Type.Optional(Type.String()),
-    sqlServerEdition: Type.Optional(Type.String()),
-    sqlServerError: Type.Optional(Type.String()),
+    databaseServerEdition: Type.Optional(Type.String()),
+    databaseServerError: Type.Optional(Type.String()),
     fsxnError: Type.Optional(Type.String()),
     requiredModuleError: Type.Optional(Type.String()),
     manageReadiness: Type.Optional(
@@ -173,9 +173,7 @@ const SingleRegisterCredentialsResponse = Type.Object({
             dbcreation: ManageReadinessObject,
             sandbox: ManageReadinessObject
         })
-    ),
-    oracleServerError: Type.Optional(Type.String()),
-    oracleServerVersion: Type.Optional(Type.String())
+    )
 });
 
 const RegisterCredentialsResponse = Type.Array(
