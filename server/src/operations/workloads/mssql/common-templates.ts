@@ -245,7 +245,7 @@ const disableCredSSP = `
 const invokeCommandWithCredSSP = `
     Function Invoke-CommandWithCredSSP {
         param (
-            [Parameter(Mandatory = $false)]
+            [Parameter(Mandatory = $true)]
             [string]$sqlquery,
             [Parameter(Mandatory = $false)]
             [string]$instanceName,
