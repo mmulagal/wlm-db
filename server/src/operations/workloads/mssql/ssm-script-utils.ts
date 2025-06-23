@@ -382,7 +382,6 @@ const validateSQLInstanceConnectivity = (
     if($ssmmodulePath -is [System.Array]) {
         $ssmmodulePath = $ssmmodulePath[0]
     }
-
     Import-Module -Name $ssmmodulePath
 
     if ($responseObject -eq $null) {
