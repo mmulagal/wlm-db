@@ -177,17 +177,20 @@ const SingleRegisterCredentialsResponse = Type.Object({
     )
 });
 
-const RegisterCredentialsResponse = Type.Array(
-    Type.Object({
-        ec2InstanceId: Type.String(),
-        credentialsId: Type.String({ description: 'Workload factory credentials ID' }),
-        region: Type.String({ description: 'AWS region' }),
-        errorMessage: Type.Optional(
-            Type.String({ description: 'Error details, if any, of a failed credentials registration.' })
-        ),
-        registerDetails: Type.Array(SingleRegisterCredentialsResponse)
-    })
-);
+const RegisterCredentialsResponse = Type.Object({
+    items: Type.Array(
+        Type.Object({
+            ec2InstanceId: Type.String(),
+            credentialsId: Type.String({ description: 'Workload factory credentials ID' }),
+            region: Type.String({ description: 'AWS region' }),
+            errorMessage: Type.Optional(
+                Type.String({ description: 'Error details, if any, of a failed credentials registration.' })
+            ),
+            registerDetails: Type.Array(SingleRegisterCredentialsResponse)
+        })
+    )
+});
+
 type RegisterCredentialsResponseType = Static<typeof RegisterCredentialsResponse>;
 
 type SingleRegisterCredentialsResponseType = Static<typeof SingleRegisterCredentialsResponse>;

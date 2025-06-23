@@ -1346,7 +1346,9 @@ async function registerResourceCredentials(
         throw new Error('No credentials to be registered.');
     }
 
-    const response: RegisterCredentialsResponseType = [];
+    const response: RegisterCredentialsResponseType = {
+        items: []
+    };
 
     await Promise.all(
         credentialsTobeValidated.map(
@@ -1362,7 +1364,7 @@ async function registerResourceCredentials(
                     true
                 );
 
-                response.push({
+                response.items.push({
                     ec2InstanceId,
                     credentialsId,
                     region,

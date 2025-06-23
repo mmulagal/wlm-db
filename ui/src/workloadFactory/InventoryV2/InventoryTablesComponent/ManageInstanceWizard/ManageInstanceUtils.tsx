@@ -776,7 +776,7 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
 
 export const updateDetectBulkResponse = (
     newSelectedMultiDetectInstances: BulkDetectedInstance[],
-    result: { data: RegisterResourceCredBulkResultItem[] },
+    result: { data: { items: RegisterResourceCredBulkResultItem[] } },
     dispatch: AppDispatch
 ) => {
     const updatedInstances = newSelectedMultiDetectInstances?.map((instance: any) => {
@@ -786,7 +786,7 @@ export const updateDetectBulkResponse = (
             !instance?.data?.windowsDomainUserAuthentication;
         const isFsxRegisterRequired = instance?.data?.fsxId && !instance?.data?.isFsxRegistered;
 
-        const res = result.data.find(
+        const res = result?.data?.items?.find(
             (r: any) =>
                 r.credentialsId === instance?.data?.credentialId &&
                 r.region === instance?.data?.regionId &&
