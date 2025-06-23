@@ -162,3 +162,15 @@
         max-width: unset !important;
     }
 }
+
+.detectInstancetable {
+    .extraDiv {
+        height: 40px;
+        background: var(--content-background);
+        margin-top: -40px;
+        position: relative;
+        z-index: 2;
+        position: sticky;
+        top: -40px;
+    }
+}

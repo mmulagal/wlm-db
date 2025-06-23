@@ -94,7 +94,8 @@ const DetectedInstanceTable = () => {
     });
 
     return (
-        <div className={styles.table}>
+        <div className={styles.detectInstancetable}>
+            <div className={styles.extraDiv} />
             <Table
                 // @ts-ignore
                 tableProps={tableProps}
