@@ -778,7 +778,7 @@ async function fetchUnmanagedHostsInformationV2(
                     node1InstanceId: ec2Instance.ec2InstanceId
                 },
                 clusterNodeDetails,
-                databaseInstanceDetails: [],
+                database_instances: [],
                 co_relation_id: null,
                 ebsVolumeIds: [],
                 ec2UsageOperation: ec2Instance.ec2UsageOperation
@@ -805,7 +805,7 @@ async function fetchUnmanagedHostsInformationV2(
 
                     resourceDetails.ebsVolumeIds = resourceDetails.ebsVolumeIds?.concat(ebsVolumeIds);
 
-                    resourceDetails.databaseInstanceDetails?.push({
+                    resourceDetails.database_instances?.push({
                         database_instance_id: sqlServerInstance.serverGuid || '',
                         database_instance_name: sqlServerInstance.sqlServerInstance,
                         database_type: RESOURCESTYPE.MSSQL,
@@ -1547,7 +1547,7 @@ async function getPgSqlResourceDetails(
                 node1InstanceId: ec2Instance.ec2InstanceId
             },
             clusterNodeDetails: ec2Instance?.pgsqlServerInstances?.[0]?.nodes || [],
-            databaseInstanceDetails: [],
+            database_instances: [],
             co_relation_id: null,
             ebsVolumeIds: [],
             ec2UsageOperation: ec2Instance.ec2UsageOperation
@@ -1567,7 +1567,7 @@ async function getPgSqlResourceDetails(
 
             resourceDetails.ebsVolumeIds = resourceDetails.ebsVolumeIds?.concat(ebsVolumeIds);
 
-            resourceDetails.databaseInstanceDetails?.push({
+            resourceDetails.database_instances?.push({
                 database_instance_id: pgsqlServerInstance.pgsqlServerInstanceId || '',
                 database_instance_name: pgsqlServerInstance.pgsqlServerInstanceName || PGSQL_DEFAULT_INSTANCE_NAME,
                 database_type: RESOURCESTYPE.PGSQL,
@@ -2001,7 +2001,7 @@ async function getOracleResourceDetails(
                 creationDate: Date.now(),
                 node1InstanceId: ec2Instance.ec2InstanceId
             },
-            databaseInstanceDetails: [],
+            database_instances: [],
             co_relation_id: null,
             ebsVolumeIds: [],
             ec2UsageOperation: ec2Instance.ec2UsageOperation
@@ -2023,7 +2023,7 @@ async function getOracleResourceDetails(
                     ? 'RUNNING'
                     : oracleDbInstance.instanceState;
 
-            resourceDetails.databaseInstanceDetails?.push({
+            resourceDetails.database_instances?.push({
                 database_instance_id: oracleDbInstance.instanceId || '',
                 database_instance_name: oracleDbInstance.instanceName || '',
                 database_type: RESOURCESTYPE.ORACLE,

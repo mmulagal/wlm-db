@@ -109,54 +109,58 @@ const ACTIVE_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
 const STANDBY_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
 
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+const DAYS = 7;
+const getLastNDays = (n: number) =>
+    Array.from({ length: n }, (_, i) => new Date(Date.now() - i * 24 * 60 * 60 * 1000));
+
 const CLOUD_WATCH_METRICS_RESPONSE = {
     MetricDataResults: [
         {
             Id: 'm1',
             Label: 'cpuUsed',
-            Timestamps: Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)),
+            Timestamps: getLastNDays(DAYS),
             Values: [55, 35, 75, 28, 52, 67, 48]
         },
         {
             Id: 'm2',
             Label: 'readThroughput',
-            Timestamps: Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)),
+            Timestamps: getLastNDays(DAYS),
             Values: [560, 880, 760, 960, 640, 480, 360]
         },
         {
             Id: 'm3',
             Label: 'readLatency',
-            Timestamps: Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)),
+            Timestamps: getLastNDays(DAYS),
             Values: [4.333333333, 4.5, 5.1, 3.8, 4.2, 4.0, 3.9]
         },
         {
             Id: 'm4',
             Label: 'writeThroughput',
-            Timestamps: Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)),
+            Timestamps: getLastNDays(DAYS),
             Values: [440, 280, 600, 180, 540, 200, 320]
         },
         {
             Id: 'm5',
             Label: 'writeLatency',
-            Timestamps: Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)),
+            Timestamps: getLastNDays(DAYS),
             Values: [5.3, 5.0, 4.9, 5.5, 6.1, 4.8, 5.2]
         },
         {
             Id: 'm6',
             Label: 'writeIops',
-            Timestamps: Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)),
+            Timestamps: getLastNDays(DAYS),
             Values: [135, 155, 140, 160, 130, 150, 120]
         },
         {
             Id: 'm7',
             Label: 'readIops',
-            Timestamps: Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)),
+            Timestamps: getLastNDays(DAYS),
             Values: [195, 165, 185, 175, 190, 170, 180]
         },
         {
             Id: 'm8',
             Label: 'serverIOLatency',
-            Timestamps: Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)),
+            Timestamps: getLastNDays(DAYS),
             Values: [1, 2, 1, 1, 1, 1, 2]
         }
     ]

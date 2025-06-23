@@ -1,4 +1,4 @@
-import { prepareWFNotificationRequest } from '../../src/operations/wf-notification-operations';
+import prepareWFNotificationRequest from '../../src/operations/wf-notification-operations';
 import '../simulator/scopes/cloud-manager/workload-factory-notification-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';

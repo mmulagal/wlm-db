@@ -24,8 +24,8 @@ const SingleRegisterCredentialsSchema = {
     tags: [RouteTags.REGISTER],
     params: RegisterInstanceParams,
     body: RegisterCredentialsRequestBody,
-    summary: 'Discover credentials',
-    description: 'Store the credentials for a given discovered resource in SSM Parameter Store',
+    summary: '(Deprecated) Discover credentials',
+    description: '(Deprecated) Use /v1/register-credentials instead.',
     response: {
         200: SingleRegisterCredentialsResponse
     }
@@ -46,8 +46,8 @@ const RegisterCredentialsSchema = {
     ...RegisterBaseRequest,
     params: AccountIdParams,
     body: BulkRegisterCredentialsRequestBody,
-    summary: 'Register credentials for FSxN and SQL Server/ PostgreSQL/Oracle instances',
-    description: 'Register credentials for FSxN and SQL Server/ PostgreSQL/Oracle instances',
+    summary: 'Register credentials',
+    description: 'Register credentials for FSxN and SQL Server/PostgreSQL/Oracle instances',
     response: {
         200: RegisterCredentialsResponse
     }

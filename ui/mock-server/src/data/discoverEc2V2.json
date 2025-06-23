@@ -88,12 +88,12 @@
                     ],
                     "manageReadiness": { 
                         "assessment" : { 
-                            "missingSqlPermissions": ["test"],
-                            "missingModules": []
+                            "missingSqlPermissions": [],
+                            "missingModules": ["Powershell 7"]
                         },
                         "remediation": {
-                            "missingSqlPermissions": ["test"],
-                            "missingModules": []
+                            "missingSqlPermissions": [],
+                            "missingModules": ["test"]
                         },
                         "dbcreation": {
                             "missingSqlPermissions": ["test"],

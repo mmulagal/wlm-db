@@ -157,12 +157,12 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             const result = await registerResourceCredBulk({ payload });
             if (result && !result?.error && result?.data) {
                 if (
-                    result?.data?.[0]?.registerDetails?.[0]?.sqlServerError ||
-                    result?.data?.[0]?.registerDetails?.[0]?.fsxnError
+                    result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
+                    result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
                 ) {
                     const error = [];
-                    error.push(result?.data?.[0]?.registerDetails?.[0]?.sqlServerError || '');
-                    error.push(result?.data?.[0]?.registerDetails?.[0]?.fsxnError || '');
+                    error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError || '');
+                    error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError || '');
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
@@ -178,9 +178,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         manageSingleInstanceData
                     );
                     dispatch(setInventoryTableData(updatedInventoryTableData));
-                    if (result?.data?.[0]?.registerDetails?.[0]?.manageReadiness) {
+                    if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
                         dispatch(
-                            setManageSingleInstanceReadiness(result?.data?.[0]?.registerDetails?.[0]?.manageReadiness)
+                            setManageSingleInstanceReadiness(
+                                result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
+                            )
                         );
                     }
                     goToNextStep();

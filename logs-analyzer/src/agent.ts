@@ -99,8 +99,7 @@ const logGroupName = 'netapp/wlmdb/ssm-response';
 const logStreamSuffix = 'aws-runPowerShellScript/stdout';
 const logStreamName = `${INSTANCE_ID}-logs-analyzer/${JOB_ID}/${logStreamSuffix}`;
 const CW_OUTPUT_PATH = `${logGroupName}/${logStreamName}`;
-
-const remediationRecommendation: {
+interface RemediationRecommendation {
     error: string;
     cause: string;
     count: number;
@@ -109,7 +108,21 @@ const remediationRecommendation: {
     firstOccurrence?: number;
     lastOccurrence?: number;
     errorCode?: string;
-}[] = [];
+    tokenUsage?: {
+        causeIdentification?: {
+            input: number;
+            output: number;
+            total: number;
+        };
+        remediationRecommendation?: {
+            input: number;
+            output: number;
+            total: number;
+        };
+    };
+}
+
+const remediationRecommendation: RemediationRecommendation[] = [];
 
 initiateLogsAnalysis(
     `Analyze the SQL profiles logs available in ${LOGS_FOLDER} and provide remediation recommendations for the errors found in the logs.`
@@ -144,9 +157,15 @@ async function initiateLogsAnalysis(inputText: string) {
 
     try {
         logger.info('Step 3: Streaming messages and handling tool use.');
-        const { stopReason, message } = await streamMessages(client, MODEL_ID, messages, toolConfig, INFERENCE_CONFIG);
+        const { stopReason, message, usage } = await streamMessages(
+            client,
+            MODEL_ID,
+            messages,
+            toolConfig,
+            INFERENCE_CONFIG
+        );
         messages.push(message);
-
+        const { inputTokens, outputTokens, totalTokens } = usage || {};
         if (stopReason === 'tool_use') {
             await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, INFERENCE_CONFIG);
         }
@@ -169,7 +188,24 @@ async function initiateLogsAnalysis(inputText: string) {
                 conversationFilePath,
                 remediationFilePath,
                 statusFilePath,
-                remediationRecommendation
+                remediationRecommendation,
+                totalTokens: {
+                    tokenUsageForIntentIdentification: {
+                        input: inputTokens,
+                        output: outputTokens,
+                        total: totalTokens
+                    },
+                    totalTokensForRemediation: {
+                        input: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'input'),
+                        output: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'output'),
+                        total: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'total')
+                    },
+                    totalTokensForCauseIdentification: {
+                        input: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'input'),
+                        output: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'output'),
+                        total: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'total')
+                    },
+                }
             }
         };
 
@@ -185,6 +221,17 @@ async function initiateLogsAnalysis(inputText: string) {
             `Log analysis completed for ${LOGS_FOLDER}. Output files are saved in ${outputDir} of the database node. Log analysis results are available in Cloud watch logs at ${CW_OUTPUT_PATH}`
         );
     }
+}
+
+function sumTokenUsage(
+    recommendations: RemediationRecommendation[],
+    key: 'causeIdentification' | 'remediationRecommendation',
+    type: 'input' | 'output' | 'total'
+): number {
+    return recommendations.reduce((sum, rec) => {
+        const tokenUsage = rec?.tokenUsage?.[key]?.[type];
+        return sum + (tokenUsage || 0);
+    }, 0);
 }
 
 async function handleToolUse(
@@ -251,21 +298,28 @@ async function analyzeErrorLogs(
     await Promise.all(
         errorLogs.map(logChunk =>
             pLimit(5)(async () => {
-                const { firstOccurrence, lastOccurrence, errorCode, severity } = logChunk;
+                const { firstOccurrence, lastOccurrence, errorCode, severity, errorContext, errorMessage, errorCount } =
+                    logChunk;
+
+                const minimalErrorObject = {
+                    errorContext,
+                    errorMessage
+                };
+
                 const response = await streamMessages(
                     client,
                     MODEL_ID,
                     [
                         {
                             role: ConversationRole.USER,
-                            content: [{ text: prompt + JSON.stringify(logChunk) }]
+                            content: [{ text: prompt + JSON.stringify(minimalErrorObject) }]
                         }
                     ],
                     undefined,
                     inferenceConfig
                 );
 
-                const { message } = response;
+                const { message, usage: { totalTokens: total = 0, outputTokens: output, inputTokens: input } = {} } = response;
                 if (message.role === ConversationRole.ASSISTANT) {
                     const { content: [{ text }] = [] } = message;
                     if (text) {
@@ -273,7 +327,13 @@ async function analyzeErrorLogs(
                             firstOccurrence,
                             lastOccurrence,
                             errorCode,
-                            severity
+                            severity,
+                            errorCount,
+                            tokenUsageForCauseIdentification: {
+                                input,
+                                output,
+                                total
+                            }
                         });
                         errorLogsWithScripts.push(...data);
                     }
@@ -351,20 +411,16 @@ async function checkAndExecuteAdditionalScript(
 
     const uniqueQueryMap = new Map();
     errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScriptAndDetails) => {
-        const { error, cause, count, severity, sql = [], firstOccurrence, lastOccurrence, errorCode } = logWithScript;
+        const {
+            sql = []
+        } = logWithScript;
         const queryKey = createHash('sha256')
             .update(sql.map((queryEntry: { query: string }) => queryEntry?.query).join('|'))
             .digest('hex');
 
-        if (!uniqueQueryMap.has(queryKey)) {
-            uniqueQueryMap.set(queryKey, [
-                { error, cause, count, severity, sql, firstOccurrence, lastOccurrence, errorCode }
-            ]);
-        } else {
-            uniqueQueryMap
-                .get(queryKey)
-                .push({ error, count, severity, cause, firstOccurrence, lastOccurrence, errorCode });
-        }
+        const arr = uniqueQueryMap.get(queryKey) || [];
+        arr.push(logWithScript);
+        uniqueQueryMap.set(queryKey, arr);
     });
 
     await Promise.all(
@@ -377,45 +433,17 @@ async function checkAndExecuteAdditionalScript(
                             ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
                             : await runBashScript(getBashScript(sql));
                     const errorAndCauseWithAdditionalInfo = value.map(
-                        ({
-                            error,
-                            cause,
-                            count,
-                            severity,
-                            firstOccurrence,
-                            lastOccurrence,
-                            errorCode
-                        }: ErrorLogWithScriptAndDetails) => ({
-                            error,
-                            cause,
-                            count,
-                            severity,
+                        (value: ErrorLogWithScriptAndDetails) => ({
+                            ...value,
                             additionalInfo: response,
-                            firstOccurrence,
-                            lastOccurrence,
-                            errorCode
                         })
                     );
                     result.push(...errorAndCauseWithAdditionalInfo);
                 } else {
                     const errorAndCauseWithAdditionalInfo = value.map(
-                        ({
-                            error,
-                            cause,
-                            count,
-                            severity,
-                            firstOccurrence,
-                            lastOccurrence,
-                            errorCode
-                        }: ErrorLogWithScriptAndDetails) => ({
-                            error,
-                            cause,
-                            count,
-                            severity,
-                            additionalInfo: 'No additional script executed.',
-                            firstOccurrence,
-                            lastOccurrence,
-                            errorCode
+                        (value: ErrorLogWithScriptAndDetails) => ({
+                            ...value,
+                            additionalInfo: 'No additional script executed.'
                         })
                     );
                     result.push(...errorAndCauseWithAdditionalInfo);
@@ -443,10 +471,22 @@ async function recommendRemediation(
     await Promise.all(
         result.map(errorWithInfo =>
             LIMIT_3(async () => {
-                const { firstOccurrence, lastOccurrence, errorCode, error, cause, additionalInfo, severity, count } = errorWithInfo;
+                const {
+                    firstOccurrence,
+                    lastOccurrence,
+                    errorCode,
+                    error,
+                    cause,
+                    additionalInfo,
+                    severity,
+                    count,
+                    tokenUsageForCauseIdentification: causeIdentification
+                } = errorWithInfo;
                 const minimalErrorObject = {
-                    error, cause, additionalInfo
-                } // Minimal error object to send to the model to save tokens
+                    error,
+                    cause,
+                    additionalInfo
+                }; // Minimal error object to send to the model to save tokens
                 const response = await streamMessages(
                     client,
                     MODEL_ID,
@@ -459,8 +499,7 @@ async function recommendRemediation(
                     undefined,
                     inferenceConfig
                 );
-
-                const { message } = response;
+                const { message, usage: { totalTokens: total = 0, inputTokens: input = 0, outputTokens: output = 0 } = {} } = response;
                 const { content: [{ text }] = [] } = message;
                 if (text) {
                     const { remediation } = JSON.parse(text);
@@ -472,7 +511,15 @@ async function recommendRemediation(
                         remediation,
                         firstOccurrence,
                         lastOccurrence,
-                        errorCode
+                        errorCode,
+                        tokenUsage: {
+                            causeIdentification,
+                            remediationRecommendation: {
+                                input,
+                                output, // Assuming no output tokens for remediation recommendation
+                                total
+                            }
+                        }
                     });
                 } else {
                     logger.error('No text found in the response.');
@@ -553,7 +600,6 @@ async function analyzeDatabaseApplicationLogs(
 
     // Analyze the error logs to identify the cause of the errors and find out if any additional scripts need to be run
     const { errorLogsWithScripts } = await analyzeErrorLogs(dbType, client, errorLogs, inferenceConfig);
-
     if (!isEmpty(errorLogsWithScripts)) {
         const { result } = await checkAndExecuteAdditionalScript(
             dbType,

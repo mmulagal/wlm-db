@@ -1320,7 +1320,8 @@ enum DatabaseHostsQueryFields {
     INSTANCE_DETAILS = 'instanceDetails',
     DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology',
     DATABASES_WITH_PROTECTION = 'databasesWithProtection',
-    DATABASES = 'databases'
+    DATABASES = 'databases',
+    DATABASE_SERVER = 'databaseServer' // This has to be removed once the UI is updated to remove the databaseServer field
 }
 
 enum ServerState {
@@ -1775,6 +1776,8 @@ enum WF_NOTIFICATION_PRIORITY {
     WF_SUCCESS = 'Success'
 }
 
+const INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE = 'WLMDB-InstancePerformanceAssessmentQueue';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -2134,5 +2137,6 @@ export {
     WF_NOTIFICATION_PRIORITY,
     CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE,
     CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES,
-    SNAPCENTER_BACKUP_SNAPSHOT_COMMENT
+    SNAPCENTER_BACKUP_SNAPSHOT_COMMENT,
+    INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE
 };

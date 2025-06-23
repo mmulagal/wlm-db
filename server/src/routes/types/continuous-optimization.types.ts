@@ -1,5 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import {
+    AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     DISMISS_STATUS_ENUM,
@@ -13,6 +14,27 @@ import {
     OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
 import { CLONE_ACTION } from '../../utils/consts';
+
+const allowedFields = Object.values(AssessmentCategories);
+// Query parameter to fetch database, protection
+const ContinuousOptimizationQueryString = Type.Object({
+    fields: Type.Optional(
+        Type.String({
+            description: `Comma separated list of fields to include in the response. Allowed fields: ${allowedFields.join(
+                ', '
+            )}`,
+            pattern: `^(${allowedFields.join('|')})(,(${allowedFields.join('|')}))*$`
+        })
+    ),
+    nextToken: Type.Optional(Type.String())
+});
+
+const AssessmentQueryStringPerAccount = Type.Composite([
+    ContinuousOptimizationQueryString,
+    Type.Object({
+        pageSize: Type.Optional(Type.Integer())
+    })
+]);
 
 const SizingViolationResponse = Type.Object({
     databases: Type.Optional(Type.Array(Type.String())),
@@ -654,5 +676,7 @@ export {
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
     dismissedConfigurationsResponseType,
-    BulkDismissConfigurationBodyType
+    BulkDismissConfigurationBodyType,
+    ContinuousOptimizationQueryString,
+    AssessmentQueryStringPerAccount
 };

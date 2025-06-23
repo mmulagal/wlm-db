@@ -20,7 +20,7 @@ import { useAppSelector } from '../../../../../../store/storeHooks';
 const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
     const { t } = useTranslation();
     const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [disableAll, setDisableAll] = useState(false);
+    const [disableAll] = useState(false);
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     const items: AccordionItem[] = [
@@ -184,7 +184,12 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.powershell-modules'),
-                            values: ['AWS.Tools.FSx', 'AWS.Tools.SimpleSystemsManagement', 'PowerShell 7']
+                            values: [
+                                'AWS.Tools.FSx',
+                                'AWS.Tools.SimpleSystemsManagement',
+                                'PowerShell 7',
+                                'AWS.Tools.CloudWatch'
+                            ]
                         }
                     ]}
                     policies={policiesList}

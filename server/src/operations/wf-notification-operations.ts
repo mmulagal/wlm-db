@@ -1,30 +1,10 @@
 import createError from 'http-errors';
 import { WLMDB_RESOURCE_CLASS, WF_NOTIFICATION_RESOURCE_TYPE, WF_NOTIFICATION_PRIORITY } from '../utils/consts';
-import sendWFNotification from '../lib/cloud-manager/wf-notification';
+import { sendWFNotification, WFNotification } from '../lib/cloud-manager/wf-notification';
 import getLogger from '../utils/logger';
 import { isNonEmptyObject } from '../utils/utils';
 
 const logger = getLogger();
-
-// Notification interface
-export interface WFNotification {
-    content: string;
-    subject: string;
-    resourceType?: string;
-    resourceId: string;
-    workload?: string;
-    priority?: string;
-    resourceName: string;
-    timestamp?: number;
-    notificationType: string;
-    actionRequired?: boolean;
-    persist?: boolean;
-    ttl?: number;
-    action?: string;
-    userId?: string;
-    service?: string;
-    link?: string;
-}
 
 /**
  * Prepares and sends a notification using the Workload Factory notification service.
@@ -34,7 +14,7 @@ export interface WFNotification {
  * @param service - Service name (e.g., 'wlmdb')
  * @returns The response from the notification service
  */
-export async function prepareWFNotificationRequest(
+export default async function prepareWFNotificationRequest(
     accountId: string,
     notificationData: WFNotification,
     userId: string = '*',

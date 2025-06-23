@@ -1,6 +1,8 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { PGSQL_DEFAULT_INSTANCE_NAME, SqlServerDeploymentModel } from '../../utils/consts';
+import { DatabaseHostsQueryFields, PGSQL_DEFAULT_INSTANCE_NAME, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
+
+const allowedFields = Object.values(DatabaseHostsQueryFields);
 
 const DiscoverQuery = Type.Object({
     pageSize: Type.Number({
@@ -209,7 +211,14 @@ const SqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
         description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
     }),
-    fields: Type.Optional(Type.String())
+    fields: Type.Optional(
+        Type.String({
+            description: `Comma separated list of fields to include in the response. Allowed fields: ${allowedFields.join(
+                ', '
+            )}`,
+            pattern: `^(${allowedFields.join('|')})(,(${allowedFields.join('|')}))*$`
+        })
+    )
 });
 
 const pgSqlServerNode = Type.Object({

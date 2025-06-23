@@ -208,13 +208,13 @@ async function getEbsVolumeUtilization(region: string, credentialsId: string, eb
     ]);
 
     const totalEbsRead =
-        dataEbsReadDatapoints?.reduce((acc, curr) => {
+        dataEbsReadDatapoints?.reduce((acc: any, curr: { Sum: any }) => {
             acc += curr?.Sum ?? 0;
             return acc;
         }, 0) || 0; // data points obtained are aggregated over the periods of 6 hour each. So, sum them up to get the total read/write in the last 14 day
 
     const totalEbsWrite =
-        dataEbsWriteDatapoints?.reduce((acc, curr) => {
+        dataEbsWriteDatapoints?.reduce((acc: any, curr: { Sum: any }) => {
             acc += curr?.Sum ?? 0;
             return acc;
         }, 0) || 0;
@@ -262,11 +262,20 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
             getMetricStatistics(credentialsId, region, paramsNetworkOut)
         ]);
     const peakCpuUtilizationPercentage =
-        cpuDatapoints?.reduce((acc, curr) => (curr.Maximum && curr.Maximum > acc ? curr.Maximum : acc), 0) || 0;
+        cpuDatapoints?.reduce(
+            (acc: number, curr: { Maximum: number }) => (curr.Maximum && curr.Maximum > acc ? curr.Maximum : acc),
+            0
+        ) || 0;
     const maxAverageBytesIn =
-        networkInDatapoints?.reduce((acc, curr) => (curr.Average && curr.Average > acc ? curr.Average : acc), 0) || 0;
+        networkInDatapoints?.reduce(
+            (acc: number, curr: { Average: number }) => (curr.Average && curr.Average > acc ? curr.Average : acc),
+            0
+        ) || 0;
     const maxAverageBytesOut =
-        networkOutDatapoints?.reduce((acc, curr) => (curr.Average && curr.Average > acc ? curr.Average : acc), 0) || 0;
+        networkOutDatapoints?.reduce(
+            (acc: number, curr: { Average: number }) => (curr.Average && curr.Average > acc ? curr.Average : acc),
+            0
+        ) || 0;
 
     const averageNetworkBandwidthBytesPerSec = (maxAverageBytesIn + maxAverageBytesOut) / paramsNetworkIn.Period;
     const averageNetworkBandwidthGbps = averageNetworkBandwidthBytesPerSec / (1024 * 1024 * 1024); // Convert to Gbps
@@ -296,28 +305,28 @@ async function getSqlInstanceUtilizationAndPerformance(
         instanceNames.map(
             throat(3, async instanceName => {
                 const params = getSqlInstanceMetricDataQueries(databaseHostId, instanceName);
-                const performanceMetricsData = await getCloudWatchMetrics(credentialsId, region, params, accountId);
+                const performanceMetricsData = await getCloudWatchMetrics(credentialsId, region, params, accountId, {
+                    useCache: true
+                });
                 const formattedPerformanceMetricsData: Record<string, any> = {};
-                (performanceMetricsData.MetricDataResults ?? [])
-                    .filter(result => Boolean(result.Label))
-                    .forEach(result => {
+                (performanceMetricsData ?? [])
+                    .filter((result: { Label: string }) => Boolean(result.Label))
+                    .forEach((result: { Label: string; Timestamps?: Date[]; Values?: number[] }) => {
                         const unit =
                             result.Label === 'readIops' || result.Label === 'writeIops'
                                 ? 'IOPS'
-                                : getUnitForMetric(result.Label!);
+                                : getUnitForMetric(result.Label);
 
                         const timestamps = result.Timestamps ?? [];
-                        const values = result.Values?.map((v: number) => Number(v.toFixed(3))) ?? []; // rounding off the value to 3 decimal places
+                        const values = result.Values?.map(v => +v.toFixed(3)) ?? [];
 
-                        const entries = timestamps
+                        formattedPerformanceMetricsData[result.Label] = timestamps
                             .map((timestamp, idx) => ({
                                 timestamp,
                                 value: values[idx] ?? null,
                                 unit: unit ? String(unit) : undefined
                             }))
-                            .reverse(); // Reverse to have the most recent data first for UI display
-
-                        formattedPerformanceMetricsData[result.Label!] = entries;
+                            .reverse();
                     });
                 finalFormattedPerformanceMetricsData[instanceName] = formattedPerformanceMetricsData;
             })

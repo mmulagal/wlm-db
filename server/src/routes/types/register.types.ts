@@ -31,7 +31,8 @@ const BulkManageMsSqlRequestBody = Type.Object({
                     Type.Literal('Powershell 7'),
                     Type.Literal('AWS.Tools.SimpleSystemsManagement'),
                     Type.Literal('AWS.Tools.FSx'),
-                    Type.Literal('NetApp.ONTAP')
+                    Type.Literal('NetApp.ONTAP'),
+                    Type.Literal('AWS.Tools.CloudWatch')
                 ],
                 { description: 'List of modules to install' }
             )
@@ -159,8 +160,8 @@ const SingleRegisterCredentialsResponse = Type.Object({
     resourceId: Type.Optional(Type.String()),
     resourceType: Type.Optional(Type.String()),
     databaseCount: Type.Optional(Type.String()),
-    sqlServerEdition: Type.Optional(Type.String()),
-    sqlServerError: Type.Optional(Type.String()),
+    databaseServerEdition: Type.Optional(Type.String()),
+    databaseServerError: Type.Optional(Type.String()),
     fsxnError: Type.Optional(Type.String()),
     requiredModuleError: Type.Optional(Type.String()),
     manageReadiness: Type.Optional(
@@ -173,22 +174,23 @@ const SingleRegisterCredentialsResponse = Type.Object({
             dbcreation: ManageReadinessObject,
             sandbox: ManageReadinessObject
         })
-    ),
-    oracleServerError: Type.Optional(Type.String()),
-    oracleServerVersion: Type.Optional(Type.String())
+    )
 });
 
-const RegisterCredentialsResponse = Type.Array(
-    Type.Object({
-        ec2InstanceId: Type.String(),
-        credentialsId: Type.String({ description: 'Workload factory credentials ID' }),
-        region: Type.String({ description: 'AWS region' }),
-        errorMessage: Type.Optional(
-            Type.String({ description: 'Error details, if any, of a failed credentials registration.' })
-        ),
-        registerDetails: Type.Array(SingleRegisterCredentialsResponse)
-    })
-);
+const RegisterCredentialsResponse = Type.Object({
+    items: Type.Array(
+        Type.Object({
+            ec2InstanceId: Type.String(),
+            credentialsId: Type.String({ description: 'Workload factory credentials ID' }),
+            region: Type.String({ description: 'AWS region' }),
+            errorMessage: Type.Optional(
+                Type.String({ description: 'Error details, if any, of a failed credentials registration.' })
+            ),
+            registerDetails: Type.Array(SingleRegisterCredentialsResponse)
+        })
+    )
+});
+
 type RegisterCredentialsResponseType = Static<typeof RegisterCredentialsResponse>;
 
 type SingleRegisterCredentialsResponseType = Static<typeof SingleRegisterCredentialsResponse>;

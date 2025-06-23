@@ -189,9 +189,9 @@ const WellArchitectDashboard = () => {
             const result = await registerResourceCredBulk({ payload });
             if (result && !result?.error && result?.data) {
                 if (
-                    result?.data?.length > 0 &&
-                    !result?.data?.[0]?.registerDetails?.[0]?.sqlServerError &&
-                    !result?.data?.[0]?.registerDetails?.[0]?.fsxnError
+                    result?.data?.items?.length > 0 &&
+                    !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
+                    !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
                 ) {
                     dispatch(
                         addNotification({
@@ -206,8 +206,8 @@ const WellArchitectDashboard = () => {
                         addNotification({
                             type: NOTIFICATION_TYPES.ERROR,
                             message:
-                                result?.data?.[0]?.registerDetails?.[0]?.fsxnError ||
-                                result?.data?.[0]?.registerDetails?.[0]?.sqlServerError ||
+                                result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
+                                result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
                                 `Failed to update ${
                                     value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
                                 } password. `
