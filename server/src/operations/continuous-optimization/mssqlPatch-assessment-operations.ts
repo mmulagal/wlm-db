@@ -330,7 +330,7 @@ async function runMSSQLPatchAssessment(
             return patchAssessmentObjects;
         }
     } catch (error) {
-        throw new Error(`${error}`);
+        throw error instanceof Error ? error : new Error(`${error}`);
     }
     throw createError('No instances found to run the mssql patch assessment');
 }

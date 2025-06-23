@@ -299,7 +299,7 @@ async function runOsPatchAssessment(
         }
         throw createError('No instances found to run the host OS patch baseline');
     } catch (error) {
-        throw new Error(`${error}`);
+        throw error instanceof Error ? error : new Error(`${error}`);
     }
 }
 
