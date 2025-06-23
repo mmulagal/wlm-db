@@ -453,7 +453,7 @@ export const getPrimaryClusterNode = (
                 return;
             }
             // To find partner node in a cluster
-            const partnerNode = newDiscoveredHostData.filter((perHost: DiscoverHostInterface) => {
+            let partnerNode = newDiscoveredHostData.filter((perHost: DiscoverHostInterface) => {
                 const isSameCluster = host?.nodesList?.every(
                     (val: string) =>
                         perHost?.ec2InstanceId !== host?.ec2InstanceId &&
@@ -479,6 +479,28 @@ export const getPrimaryClusterNode = (
                     testedNodes.push(partnerNode?.ec2InstanceId);
                     isManagedNode2 = managedHostsList.includes(partnerNode?.ec2InstanceId);
                 }
+
+                const bothNodes = [host, partnerNode];
+                const ec2Details: Array<{ id: string; name: string }> = [];
+                bothNodes?.map((perNode: DiscoverHostInterface) => {
+                    if (perNode?.ec2InstanceId) {
+                        ec2Details.push({
+                            id: perNode?.ec2InstanceId || '',
+                            name: perNode?.ec2InstanceName || ''
+                        });
+                    }
+                });
+
+                const updatedHost = {
+                    ...host,
+                    ec2Details
+                };
+                if (partnerNode) {
+                    partnerNode = {
+                        ...partnerNode,
+                        ec2Details
+                    };
+                }
                 // To check if node or partner node is already in managed host. Ignore other node if is already available in Managed host.
 
                 if (isManagedNode1 || isManagedNode2) {
@@ -491,16 +513,24 @@ export const getPrimaryClusterNode = (
                             )
                         );
                     }
-                    if (host?.ec2InstanceId) {
+                    if (updatedHost?.ec2InstanceId) {
                         removeRows.push(
-                            uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
+                            uniqueHostRow(
+                                updatedHost?.ec2InstanceId,
+                                updatedHost?.credentialId || '',
+                                updatedHost?.regionId || ''
+                            )
                         );
                     }
                 } else {
-                    const combinedData = combineClusterData(host, partnerNode, removeRows);
+                    const combinedData = combineClusterData(updatedHost, partnerNode, removeRows);
                     if (combinedData) {
                         clusterDiscoveredHost[
-                            uniqueHostRow(combinedData?.key, host?.credentialId || '', host?.regionId || '')
+                            uniqueHostRow(
+                                combinedData?.key,
+                                updatedHost?.credentialId || '',
+                                updatedHost?.regionId || ''
+                            )
                         ] = combinedData?.data;
                         // clusterDiscoveredHost = {...clusterDiscoveredHost, [combinedData?.key] : combinedData?.data};
                     }
@@ -940,7 +970,7 @@ export const formatDiscoveredRows = (
         loading: false,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
-        ec2Details,
+        ec2Details: discoveredRow?.ec2Details || ec2Details,
         hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE,
         // **** Below values will get from Instances API *****
         // estimatedUsageCost: {}, // Initially it will be blank
@@ -2130,7 +2160,7 @@ export const getEc2DetailsForUnmanagedHost = (
     instanceRow: InstancesObjectInterface,
     inventoryRow: InventoryTableData
 ) => {
-    const ec2Details: Array<EC2DetailsInterface> = [];
+    let ec2Details: Array<EC2DetailsInterface> = [];
     let instanceId = '';
     if (inventoryRow?.hostType === DBType.POSTGRESQL) {
         instanceId = inventoryRow?.ec2InstanceId || '';
@@ -2139,6 +2169,13 @@ export const getEc2DetailsForUnmanagedHost = (
             name: inventoryRow?.ec2InstanceName || '',
             instanceType: inventoryRow?.hostType || ''
         });
+    } else if (
+        inventoryRow?.ec2Details &&
+        inventoryRow?.ec2Details?.length > 1 &&
+        !instanceRow?.data?.clusterNodeDetails
+    ) {
+        instanceId = inventoryRow?.ec2Details?.[0]?.id || '';
+        ec2Details = inventoryRow?.ec2Details;
     } else if (instanceRow?.data?.nodeTopology?.ec2Details && instanceRow?.data?.nodeTopology?.ec2Details?.length > 0) {
         instanceId = instanceRow?.data?.nodeTopology?.ec2Details?.[0]?.id || '';
         ec2Details.push(instanceRow?.data?.nodeTopology?.ec2Details?.[0]);
