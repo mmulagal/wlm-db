@@ -206,6 +206,11 @@ const enableCredSSP = `
     if (-not (Is-CredSSPEnabled)) {
         try {
             $ServerName = '*'
+            $isPartOfDomain = (Get-WmiObject Win32_ComputerSystem).PartofDomain
+            if ($isPartOfDomain -eq $True) {
+                $domain = (Get-WmiObject Win32_ComputerSystem).Domain
+                $ServerName = "*.$domain"
+            }
             Start-Transcript -Path C:\\cfn\\log\\EnableCredSSP.ps1.txt -Append | Out-Null
             Enable-WSManCredSSP -Role Client -DelegateComputer $ServerName -Force | Out-Null
             Enable-WSManCredSSP -Role Server -Force | Out-Null
@@ -243,6 +248,8 @@ const invokeCommandWithCredSSP = `
             [Parameter(Mandatory = $true)]
             [string]$sqlquery,
             [Parameter(Mandatory = $false)]
+            [string]$instanceName,
+            [Parameter(Mandatory = $false)]
             [string]$extraArguments
         )
 
@@ -250,6 +257,10 @@ const invokeCommandWithCredSSP = `
             $extraArguments = $extraArguments
         } else {
             $extraArguments = ''
+        }
+
+        if ($instanceName -ne $null) {
+            $serverInstanceName = $instanceName
         }
 
         $securePassword = ConvertTo-SecureString -String $sqlCredential.password -AsPlainText -Force
@@ -263,9 +274,9 @@ const invokeCommandWithCredSSP = `
         $job = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -AsJob
 
         # Check job status and wait for completion
-        $timeout = 10 # Timeout in seconds
+        $timeout = 30 # Timeout in seconds
         $elapsedTime = 0
-        $interval = 2 # Check every 2 seconds
+        $interval = 1 # Check every 1 second
 
         while ($job.State -eq 'Running' -and $elapsedTime -lt $timeout) {
             Wait-Job -Job $job -Timeout $interval | Out-Null
