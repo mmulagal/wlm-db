@@ -1068,9 +1068,17 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface, type: 
     if (type === GENERAL.MICROSOFT_SQL_SERVER_TYPE && discoveredRow?.sqlServerInstances) {
         for (let i = 0; i < discoveredRow?.sqlServerInstances?.length; i++) {
             const val = discoveredRow?.sqlServerInstances[i];
-            if (val?.sqlServerName) {
+            // For Failover or AOAG cluster, we will take sqlServerName as name
+            if (
+                val?.sqlServerName &&
+                (val?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE ||
+                    val?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG)
+            ) {
                 name = val?.sqlServerName;
                 break;
+            } else if (!name && val?.sqlServerName) {
+                // For other instances, we will take sqlServerInstance as name but still check for FCI or AOAG name
+                name = val?.sqlServerName;
             }
         }
     } else if (type === GENERAL.POSTGRESQL_TYPE && discoveredRow?.pgsqlServerInstances) {
@@ -3227,7 +3235,7 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
 export const renderCellData = (cellData: any, rowData: any, styles: any) => (
     <>
         {cellData && (
-            <DsTypography variant="Regular_13" className={styles.colText}>
+            <DsTypography variant="Regular_13" className={styles.colText} title={cellData}>
                 {cellData}
             </DsTypography>
         )}

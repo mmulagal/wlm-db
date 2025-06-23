@@ -85,7 +85,10 @@ const InventoryV2 = () => {
                     instanceNameListText: instanceNameList.join(', '),
                     vpcIdAndNameText,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                    nameForSorting: inventoryTableData[key]?.name?.toLowerCase()
+                    nameForSorting: inventoryTableData[key]?.name?.toLowerCase(),
+                    serverAllInstallationModeText: inventoryTableData[key]?.serverAllInstallationMode
+                        ? inventoryTableData[key]?.serverAllInstallationMode.join(', ')
+                        : inventoryTableData[key]?.serverInstallationMode
                 };
                 hostTableRows.push(rowData);
 

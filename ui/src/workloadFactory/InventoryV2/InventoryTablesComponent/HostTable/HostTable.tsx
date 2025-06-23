@@ -196,9 +196,9 @@ const HostTable = () => {
         {
             id: '3',
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'serverInstallationMode',
+            accessor: 'serverAllInstallationModeText',
             width: '236px',
-            filterOptions: getFilterOptions(hostTableRows, 'serverInstallationMode'),
+            filterOptions: getFilterOptions(hostTableRows, 'serverAllInstallationModeText'),
             renderCell: (cellData: string, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
