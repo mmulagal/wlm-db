@@ -320,7 +320,7 @@ async function createOrUpdateChildJobs(
         undefined,
         childJobName
     );
-    if (!childJob && parentJob.name !== `Deploying ${logicalResourceId} `) {
+    if (!childJob && parentJob.name !== `Deploying ${logicalResourceId}`) {
         logger.info('Create child level job:', {
             parentJobId: parentJob.id,
             parentJobName: parentJob.name,
@@ -343,7 +343,7 @@ async function createOrUpdateChildJobs(
             }
         ]);
     } else if (
-        (childJob && parentJob.name !== `Deploying ${logicalResourceId} `) ||
+        (childJob && parentJob.name !== `Deploying ${logicalResourceId}`) ||
         (childJob && childJobName === childJob.name)
     ) {
         // https://jira.ngage.netapp.com/browse/DBS-1942
@@ -478,7 +478,7 @@ async function processCloudFormationMessages() {
                                                 });
 
                                                 // Create master job
-                                                const masterJobName = `${trackdatabaseType} deployment with stack ${stackName} `;
+                                                const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
                                                 logger.info('Creating master job:', masterJobName);
                                                 const stackUrl = deployedStackUrl(region, stackName);
                                                 await createJobs(accountId, [
@@ -489,7 +489,7 @@ async function processCloudFormationMessages() {
                                                         type: JOBTYPE.DEPLOYMENT,
                                                         status: JOBSTATUS.IN_PROGRESS,
                                                         resource_name: trackresourceName,
-                                                        name: `${masterJobName}; href:${stackUrl} `,
+                                                        name: `${masterJobName};href:${stackUrl}`,
                                                         start_time: new Date(messageTimestamp)
                                                     }
                                                 ]);
@@ -519,7 +519,7 @@ async function processCloudFormationMessages() {
                                                     });
 
                                                     // Update master job with completion status
-                                                    const masterJobName = `${trackdatabaseType} deployment with stack ${stackName} `;
+                                                    const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
                                                     const [masterJob] = await listJobs(
                                                         accountId,
                                                         credentialsId,
