@@ -1342,13 +1342,4 @@ const DialogContent = ({
     return <div className={styles.dialogContent}>{setContent()}</div>;
 };
 
-DialogContent.defaultProps = {
-    recommendationOptions: undefined,
-    missingPermissions: undefined,
-    recommendedSizeInGib: undefined,
-    bulkRecommendationOptions: undefined,
-    missingPatchList: undefined,
-    operation: undefined
-};
-
 export default DialogContent;
