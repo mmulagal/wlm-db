@@ -11,7 +11,6 @@ import { GENERAL } from '../../../../utils/appConstants';
 
 type TagComponentProps = {
     tagHeight: string;
-    // eslint-disable-next-line react/require-default-props
     type?: string;
 };
 
