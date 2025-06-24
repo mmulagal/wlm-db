@@ -49,7 +49,10 @@ import {
     ASSESSMENT_AWS_BACKUP_DATA,
     ASSESSMENT_CLONE_CONFIG_DATA,
     ASSESSMENT_CRR_CONFIG_DATA,
-    ASSESSMENT_MAXDOP_CONFIG_DATA
+    ASSESSMENT_MAXDOP_CONFIG_DATA,
+    MSSQL_ASSESMENT_CONFIG_DATA,
+    MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
+    MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA
 } from '../utils/demo-utils/demoInventoryData';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
@@ -230,7 +233,7 @@ async function createDeploymentMockDataInDB(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    await createAssessmentData(accountId, credentialsId, region, resourceId, instanceId);
+    await createAssessmentData(accountId, credentialsId, region, resourceId, instanceId, DEFAULT_INSTANCE_NAME);
 
     const jobData = await createJobMockData(
         accountId,
@@ -880,7 +883,8 @@ async function createAssessmentData(
     credentialsId: string,
     region: string,
     resourceId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    databaseInstanceName: string = DEFAULT_INSTANCE_NAME
 ) {
     const instanceConfigDataRecord = {
         account_id: accountId,
@@ -890,7 +894,8 @@ async function createAssessmentData(
         database_instance_id: databaseInstanceId,
         creation_time: new Date(Date.now()),
         config_data_type: AssessmentCategories.STORAGE,
-        config_data: ASSESMENT_CONFIG_DATA
+        config_data:
+            databaseInstanceName === DEFAULT_INSTANCE_NAME ? MSSQL_ASSESMENT_CONFIG_DATA : ASSESMENT_CONFIG_DATA
     };
     const instanceCRRConfigDataRecord = {
         account_id: accountId,
@@ -920,7 +925,10 @@ async function createAssessmentData(
         database_instance_id: databaseInstanceId,
         creation_time: new Date(Date.now()),
         config_data_type: AssessmentCategories.MAXDOP,
-        config_data: ASSESSMENT_MAXDOP_CONFIG_DATA
+        config_data:
+            databaseInstanceName === DEFAULT_INSTANCE_NAME
+                ? MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA
+                : ASSESSMENT_MAXDOP_CONFIG_DATA
     };
     const instanceCloneConfigDataRecord = {
         account_id: accountId,
@@ -930,7 +938,10 @@ async function createAssessmentData(
         database_instance_id: databaseInstanceId,
         creation_time: new Date(Date.now()),
         config_data_type: AssessmentCategories.CLONE,
-        config_data: ASSESSMENT_CLONE_CONFIG_DATA
+        config_data:
+            databaseInstanceName === DEFAULT_INSTANCE_NAME
+                ? MSSQL_ASSESSMENT_CLONE_CONFIG_DATA
+                : ASSESSMENT_CLONE_CONFIG_DATA
     };
     await createDatabaseInstanceConfigData([
         instanceConfigDataRecord,

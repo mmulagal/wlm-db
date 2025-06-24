@@ -14,7 +14,7 @@ The script gathers information such as OS edition, CPU count, RAM size, network 
 The collected data is output in JSON format, which can be used for further analysis or reporting.
 
 .PREREQUISITES
-# - PowerShell 5.0 or later
+# - PowerShell 3.0 or later
 # - Necessary permissions to access WMI and SQL Server on the remote computer
 # - Network connectivity to the remote computer
 
@@ -23,11 +23,6 @@ The collected data is output in JSON format, which can be used for further analy
 2. Open PowerShell with administrative privileges.
 3. Navigate to the directory where the script is downloaded.
 4. Run the script with the required parameters.
-5. Script should be run with a Windows local login OR domain login that has admin rights on the system. Domain login is needed for cluster configuration.
-6. User should have admin privileges on SQL Server instance to get full report.
-7. If the Windows login does not have required access to the SQL Server instance, provide the local SQL user credentials for collection with '-SqlUserName' parameter.
-8. Collection should not have any performance impact on the SQL Server instance and finishes within few minutes.
-9. Script collects configuration information of the host node and partner node in case of FCI/AOAG. Most of the performance stats are captured from historic counter data in SQL Server(4hrs). Memory usage is point-in-time. 
 
 .PARAMETER instanceNames
 (Optional) Array of SQL Server instance names to query. If not specified, the script will attempt to gather information from all available SQL Server instances on the remote computer.
@@ -617,7 +612,25 @@ ForEach ($instance in $finalInstancesList) {
         }
         { $instanceResults['isHadrEnabled'] -eq 1 } {
             $instanceResults['deploymentType'] = 'AOAG'
-             $isReadReplicaQuery = "SET NOCOUNT ON;SELECT 
+            $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [primary] FOR JSON PATH; "
+            $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+            $isReadReplicaExistsQuery = "SET NOCOUNT ON;SELECT 
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM sys.dm_hadr_availability_replica_states ars
+                    WHERE ars.is_local = 1
+                ) 
+                THEN 'True'
+                ELSE 'False'
+            END
+        "
+            # Many instances may not have read replicas, but have HADR enabled, so we need to check if read replica exists otherwise assign deploymentType as Standalone
+            $checkIfReadReplicaExists = Invoke-SQLQuery -Query $isReadReplicaExistsQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
+            
+            # If the query returns a false, set the deploymentType standalone
+        if ($checkIfReadReplicaExists -match 'True') {
+            $isReadReplicaQuery = "SET NOCOUNT ON;SELECT 
             CASE 
                 WHEN EXISTS (
                     SELECT 1
@@ -627,32 +640,31 @@ ForEach ($instance in $finalInstancesList) {
                 THEN 'True'
                 ELSE 'False'
             END
-        "
-        $instanceResults["isReadReplica"] = Invoke-SQLQuery -Query $isReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
-        $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [primary] FOR JSON PATH; "
-        $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
-        $aoagReadReplicaQuery = "SET NOCOUNT ON; SELECT  
-        d.name AS databaseName,
-        drs.replica_id AS replicaId,
-        ar.replica_server_name AS replicaServerName,
-        drs.synchronization_state_desc AS syncStateDesc,
-        ars.role_desc AS replicaRole
-        FROM 
-            sys.dm_hadr_database_replica_states drs
-        JOIN 
-            sys.databases d ON d.database_id = drs.database_id
-        JOIN 
-            sys.dm_hadr_availability_replica_states ars ON drs.replica_id = ars.replica_id
-        JOIN 
-            sys.availability_replicas ar ON ars.replica_id = ar.replica_id
-        WHERE 
-            ars.role_desc = 'SECONDARY' AND drs.is_local = 1
-        ORDER BY 
-            d.name FOR JSON PATH;  
-        "
+            "
+            $instanceResults["isReadReplica"] = Invoke-SQLQuery -Query $isReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
+        
+            $aoagReadReplicaQuery = "SET NOCOUNT ON; SELECT  
+            d.name AS databaseName,
+            drs.replica_id AS replicaId,
+            ar.replica_server_name AS replicaServerName,
+            drs.synchronization_state_desc AS syncStateDesc,
+            ars.role_desc AS replicaRole
+            FROM 
+                sys.dm_hadr_database_replica_states drs
+            JOIN 
+                sys.databases d ON d.database_id = drs.database_id
+            JOIN 
+                sys.dm_hadr_availability_replica_states ars ON drs.replica_id = ars.replica_id
+            JOIN 
+                sys.availability_replicas ar ON ars.replica_id = ar.replica_id
+            WHERE 
+                ars.role_desc = 'SECONDARY' AND drs.is_local = 1
+            ORDER BY 
+                d.name FOR JSON PATH;  
+         "
         $instanceResults["aoagReadReplica"] = Invoke-SQLQuery -Query $aoagReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
         
-         $aoagPartnerInstanceQuery = " SET NOCOUNT ON;
+        $aoagPartnerInstanceQuery = " SET NOCOUNT ON;
             SELECT DISTINCT
                 ar.replica_server_name
             FROM 
@@ -672,6 +684,9 @@ ForEach ($instance in $finalInstancesList) {
             $partnerInstanceResults = Get-AoagPartnerDetails -instanceName $name
             $results += $partnerInstanceResults
          }
+        } else {
+            $instanceResults['deploymentType'] = 'standalone'
+        }
 
         break
         }

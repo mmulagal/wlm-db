@@ -1763,7 +1763,8 @@ async function fetchDriftAssessmentPerAccount(
         undefined,
         undefined,
         pageSize,
-        nextToken
+        nextToken,
+        true
     );
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId} in region ${region}.`);

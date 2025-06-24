@@ -1818,7 +1818,7 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
-      "verifyMpioTimeoutSettingResponse": {
+    "verifyMpioTimeoutSettingResponse": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-verifyMpioTimeoutSetting",
@@ -2119,34 +2119,6 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
-    "getInstalledSQLVersionCommandResponse": {
-        "$metadata": {
-            "httpStatusCode": 200,
-            "requestId": "e61c4445-17d7-466a-9492-92dabeb73c48",
-            "attempts": 1,
-            "totalRetryDelay": 0
-        },
-        "CloudWatchOutputConfig": {
-            "CloudWatchLogGroupName": "",
-            "CloudWatchOutputEnabled": false
-        },
-        "CommandId": "0262158e-87fc-4528-b00f-5e3b2e35b5fe",
-        "Comment": "Get MaxDOP and VCPU details",
-        "DocumentName": "AWS-RunPowerShellScript",
-        "DocumentVersion": "$DEFAULT",
-        "ExecutionElapsedTime": "PT2.193S",
-        "ExecutionEndDateTime": "2025-01-14T10:12:59.186Z",
-        "ExecutionStartDateTime": "2025-01-14T10:12:57.186Z",
-        "InstanceId": "i-05978dd409ce8e0e6",
-        "PluginName": "aws:runPowerShellScript",
-        "ResponseCode": 0,
-        "StandardErrorContent": "",
-        "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"version\":\"Microsoft SQL Server 2019 (RTM-CU19) (KB5023049) - 15.0.4298.1 (X64) \\n\\tJan 27 2023 16:44:09 \\n\\tCopyright (C) 2019 Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 \\u003cX64\\u003e (Build 17763: ) (Hypervisor)\\n\"}]\r\n",
-        "StandardOutputUrl": "",
-        "Status": "Success",
-        "StatusDetails": "Success"
-    },
     "snapshotListResponse": {
         "errors": {
             "snapshotSchedules": {},
@@ -2239,7 +2211,6 @@
             "74a8a789-c5dd-11ef-b315-11b9ce95d982": {
                 "create_time": "2025-03-10T10:14:23+00:00",
                 "comment": "creator=snapcenter"
-
             },
             "438cc269-edeb-11ef-994b-3b81e03bea3e": {
                 "create_time": "2025-03-10T10:17:03+00:00"
@@ -2422,6 +2393,11 @@
                     "protocol": "NFS"
                 }
             ]
+        }
+    ],
+    "getInstalledSqlVersion": [
+        {
+            "version": "Microsoft SQL Server 2019 (RTM-CU19) (KB5023049) - 15.0.4298.1 (X64) \n\tJan 27 2023 16:44:09 \n\tCopyright (C) 2019 Microsoft Corporation\n\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 17763: ) (Hypervisor)\n"
         }
     ]
 }

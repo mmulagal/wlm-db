@@ -2326,7 +2326,7 @@ async function getAllClusterNodeDetails(
 }
 
 async function triggerInstancePerformanceAssessment(initiatedBy: string) {
-    logger.info('Trigger instance performance assessment per account', { initiatedBy });
+    logger.info('Trigger instance performance assessment for all hosts', { initiatedBy });
 
     const { items: allmanagedResources } = await getResources(
         undefined,
