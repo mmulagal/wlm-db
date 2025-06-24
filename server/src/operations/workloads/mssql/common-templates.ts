@@ -250,7 +250,9 @@ const invokeCommandWithCredSSP = `
             [Parameter(Mandatory = $false)]
             [string]$instanceName,
             [Parameter(Mandatory = $false)]
-            [string]$extraArguments
+            [string]$extraArguments,
+            [Parameter(Mandatory = $false)]
+            [boolean]$isMultiQuery = $false
         )
 
         if ($extraArguments -ne $null) {
@@ -271,7 +273,15 @@ const invokeCommandWithCredSSP = `
             Sqlcmd -S $using:serverInstanceName -Q $sqlquery -y 0 $extraArguments 2> $null
         }
 
-        return Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -ErrorAction Stop
+        $output = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -ErrorAction Stop
+
+        if ($isMultiQuery) {
+            return $output | ForEach-Object {
+                # Split the output on two or more spaces to isolate the desired part of the string.
+                $_ -split '\\s{2,}' | Select-Object -Last 1
+            }
+        }
+        return $output
     }
 `;
 

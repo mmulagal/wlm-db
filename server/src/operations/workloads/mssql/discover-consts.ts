@@ -1,5 +1,5 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
-import { compressResponse } from './common-templates';
+import { compressResponse, disableCredSSP, enableCredSSP, invokeCommandWithCredSSP } from './common-templates';
 import { GOOGLE_DNS, DISCOVER_OPERATION_LOG_PATH } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
@@ -292,7 +292,7 @@ const HOST_AND_SQL_INFO_PS1 = [
    return $SMBConnections
   }
 
-  Function GetSQLInstanceDriveDetails($serverInstance, $sqlUsername, $sqlPassword) {
+  Function GetSQLInstanceDriveDetails($serverInstance, $sqlUsername, $sqlPassword, $authType = 'sql') {
     $sqlInstancePaths = $null
     $sqlInstanceDriveLetterOrPathList = @()
 
@@ -304,12 +304,19 @@ const HOST_AND_SQL_INFO_PS1 = [
     } catch {
       if (-Not [string]::IsNullOrEmpty($sqlUsername) -And -Not [string]::IsNullOrEmpty($sqlPassword)) {
         try {
-          $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance 2> $null
-          if($sqlInstancePaths -eq $null) { 
-            $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance 2> $null
+          if ($authType -eq 'domain') {
+            $sqlInstancePaths = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT physical_name FROM sys.master_files" -instanceName $serverInstance -extraArguments -h -1 -b -C -W 2> $null
+            if($sqlInstancePaths -eq $null) { 
+              $sqlInstancePaths = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases" -instanceName $serverInstance -extraArguments -h -1 -b -C -W 2> $null
+            }
+          } else {
+            $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance 2> $null
+            if($sqlInstancePaths -eq $null) { 
+              $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance 2> $null
+            }
           }
         } catch {
-          # Handle the case where the registry key does not exist}
+          # Handle the case where the registry key does not exist
         }
       }
     }
@@ -452,6 +459,8 @@ const HOST_AND_SQL_INFO_PS1 = [
     
   try {
     $responseObject = @{}
+    ${enableCredSSP}
+    ${invokeCommandWithCredSSP}
     $instanceSectionStartTime = Get-Date
     $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $DiskTargetInfoMap = GetDiskDriveDetails
@@ -582,12 +591,21 @@ const HOST_AND_SQL_INFO_PS1 = [
           } catch {
             $responseObject['windowsAuthentication'] = $False
             try {           
-              $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
+              # Although this is 'domain', we are assigning to 'sqlCredential', as Invoke-CommandWithCredSSP will use this variable to run the query
+              $sqlCredential = $credsFromParameterStore.domain.Where({$_.sqlInstanceName -eq $instanceName -or $_.sqlInstanceName -eq 'MSSQLSERVER'})[0]
               if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                  $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
-                  $deploymentTypeCheck = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH"  2> $null
-                  $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
-                  $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
+                  $editionDBCountMachineInfoGuid = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" -instanceName $serverInstance -isMultiQuery $true 2> $null
+                  $deploymentTypeCheck = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH" -instanceName $serverInstance 2> $null
+                  $existingPermissions = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -instanceName $serverInstance 2> $null
+                  $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password 'domain'
+              } else {
+                $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
+                if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
+                    $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
+                    $deploymentTypeCheck = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH"  2> $null
+                    $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
+                    $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
+                    }
                   }
                 }
                 catch {
@@ -679,6 +697,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       Write-Information "Failed to compress the response because the response is either null or empty. $response"
       return $response
     }
+    ${disableCredSSP}
     ${compressResponse}
     return (Deflate-String $response)
   } catch {
