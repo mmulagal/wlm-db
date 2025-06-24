@@ -268,7 +268,8 @@ export const updateInventoryDataforCompletedInstance = (
         // Only process if subJob is COMPLETED and WARNING
         if (subJob.status === JOB_MONITORING_STATUS.COMPLETED || subJob.status === JOB_MONITORING_STATUS.WARNING) {
             const { metadata } = subJob;
-            const resourceId = subJob.resourceName || subJob.metadata?.resourceId;
+            const instanceId = subJob.resourceName;
+            const resourceId = subJob.metadata?.resourceId;
             const credentialsId = subJob.credentialsId || subJob.metadata?.credentialsId;
             const regionCode = subJob.region?.code || subJob.metadata?.region;
             // Find the matching row in bulkDetectedInstanceList
@@ -276,7 +277,7 @@ export const updateInventoryDataforCompletedInstance = (
                 const rowCredId = row?.credentialsId || row?.data?.credentialId;
                 const rowRegion = row?.region || row?.data?.regionId;
                 const rowInstanceId = row?.ec2InstanceId || row?.data?.ec2InstanceId;
-                return rowCredId === credentialsId && rowRegion === regionCode && rowInstanceId === resourceId;
+                return rowCredId === credentialsId && rowRegion === regionCode && rowInstanceId === instanceId;
             });
             // Get only databaseInstanceNames that are COMPLETED under instanceManagementStatus
             const completedDbNames = (metadata?.instanceManagementStatus || [])
@@ -290,7 +291,7 @@ export const updateInventoryDataforCompletedInstance = (
             if (matchedRow) {
                 (completedDbNames || []).forEach((dbInstanceName: string) => {
                     const uniqueIdSuccess = uniqueHostRow(
-                        `${resourceId}_${dbInstanceName}`,
+                        `${instanceId}_${dbInstanceName}`,
                         credentialsId || '',
                         regionCode || ''
                     );
