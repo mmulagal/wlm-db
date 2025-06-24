@@ -190,6 +190,13 @@
                 "costOptimization": "Cost Optimization",
                 "costEfficiency": "Cost Efficiency",
                 "operationalExcellence": "Operational Excellence"
+            },
+            "valueCard": {
+                "well-architected-instances": "Well-architected instances",
+                "not-optimized-instances": "Not-optimized instances",
+                "severity": "Severity",
+                "analysis-state": "Analysis state",
+                "instances": "Instances"
             }
         },
         "update-credentials": {
