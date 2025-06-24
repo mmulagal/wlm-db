@@ -1176,6 +1176,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
 
     $destinationPath = "C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules\\"
 
+
     # Check if any module is not installed
     function Check-ModuleInstalled {
         param(
@@ -1184,9 +1185,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
         )
 
         foreach ($module in $moduleNames) {
-            if (-not (Get-Module -ListAvailable -Name $module)) {
-                return $false
-            }
+            if (-not (Get-Module -ListAvailable -Name $module)) { return $false }
         }
         return $true
     }
@@ -1200,12 +1199,18 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
             if (-not (Test-Path $destinationPath)) {
                 $null = New-Item -ItemType Directory -Path $destinationPath
             }
-
+            
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\aws_ssm.zip"
             $Null = Expand-Archive -Path "$Env:Temp\\aws_ssm.zip" -DestinationPath $Env:Temp -Force
-            $Null = Copy-Item -Path "$Env:Temp\\aws_ssm\\*" -Destination $destinationPath -Recurse
 
+            foreach ($module in @("AWS.Tools.Common", "AWS.Tools.SimpleSystemsManagement")) {
+                $modulePath = "$destinationPath\\$module"
+                if (-not (Test-Path -Path $modulePath)) {
+                    $null = New-Item -ItemType Directory -Path $modulePath
+                    $Null = Copy-Item -Path "$Env:Temp\\aws_ssm\\$module\\*" -Destination $modulePath -Recurse
+                }
+            
             # Ensure the modules are available for use
             $allInstalled = Check-ModuleInstalled -moduleNames $moduleNames
 
@@ -1215,10 +1220,10 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
                 $responseObject.add('installStatus', "All modules are installed")
             }
         } catch {
-            $responseObject.add('installFailure', $_.Exception.Message)
+            $responseObject['installFailure'] = $_.Exception.Message
         }
     } else {
-        $responseObject.add('installStatus', "All modules are already installed")
+        $responseObject['installStatus'] = "All modules are already installed"
     }
 `;
 
