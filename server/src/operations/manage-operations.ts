@@ -717,30 +717,19 @@ async function manageSqlInstance(
             error: error.message
         });
     } finally {
-        if (instanceManagementStatus.every(elem => elem.status === JOBSTATUS.FAILED)) {
-            jobStatus = JOBSTATUS.FAILED;
-        } else if (instanceManagementStatus.every(elem => elem.status === JOBSTATUS.COMPLETED)) {
-            jobStatus = JOBSTATUS.COMPLETED;
-        } else {
-            jobStatus = JOBSTATUS.WARNING;
-        }
-
         const errorMessage = instanceManagementStatus
             .filter(elem => elem.status === JOBSTATUS.FAILED)
             .map(elem => `${elem.databaseInstanceName}: ${elem.errorMessage}`)
             .join(', ');
-        await updateJobDetails(accountId, hostJobId, {
-            status: jobStatus,
-            error: errorMessage,
-            endTime: Date.now(),
-            metadata: {
-                ec2InstanceId,
-                databaseInstanceNames,
-                modulesToInstall,
-                instanceManagementStatus,
-                resourceId
-            }
-        });
+        const jobMetadata = {
+            ec2InstanceId,
+            databaseInstanceNames,
+            modulesToInstall,
+            instanceManagementStatus,
+            resourceId
+        };
+        await updateParentJobStatus(accountId, hostJobId, false, errorMessage, jobMetadata);
+
         await updateParentJobStatus(accountId, parentManageJobId);
     }
 }

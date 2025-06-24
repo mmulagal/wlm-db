@@ -827,8 +827,12 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
         if ($destinationPathExists -eq $False) {
             New-Item -ItemType Directory -Path $destinationPath -Force
         }
-    
-        Copy-Item "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
+
+        $nugetDestinationPath = Join-Path -Path $destinationPath -ChildPath "Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
+        $nugetDestinationPathExists = Test-Path -Path $nugetDestinationPath
+        if ($nugetDestinationPathExists -eq $False) {
+            Copy-Item "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
+        }
     
         $sourcelocation = "$Env:Temp\\dependent-packages\\aws"
         Import-PackageProvider -Name NuGet
