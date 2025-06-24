@@ -1,5 +1,6 @@
 import { DsTypography } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Tagmage } from '../../../../assets/tag.svg';
 
 import styles from './TagComponent.module.scss';
@@ -10,10 +11,12 @@ import { GENERAL } from '../../../../utils/appConstants';
 
 type TagComponentProps = {
     tagHeight: string;
+    // eslint-disable-next-line react/require-default-props
     type?: string;
 };
 
 const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
+    const { t } = useTranslation();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const [tagData, setTagData] = useState<any>([]);
 
@@ -26,7 +29,9 @@ const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
             case 'NTFS allocation unit size':
             case 'OS type':
             case 'Tiering policy':
-                setTagData(['Performance efficiency']);
+                setTagData([
+                    { label: t('databases.well-architect.tags.performanceEfficiency'), value: 'performanceEfficiency' }
+                ]);
                 break;
 
             case 'Thin provisioning':
@@ -36,35 +41,43 @@ const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
             case 'Snapshot copy reserve':
             case 'Snapshot autodelete':
             case 'Space management':
-                setTagData(['Cost optimization', 'Operational excellence']);
+                setTagData([
+                    { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' },
+                    { label: t('databases.well-architect.tags.operationalExcellence'), value: 'operationalExcellence' }
+                ]);
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-                setTagData(['Operational excellence']);
+                setTagData([
+                    { label: t('databases.well-architect.tags.operationalExcellence'), value: 'operationalExcellence' }
+                ]);
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
             case 'Space allocation':
             case 'Space reservation':
             case 'Multipath I/O Timeout':
-                setTagData(['Reliability']);
+                setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                setTagData(['Reliability']);
+                setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-                setTagData(['Cost efficiency']);
+                setTagData([{ label: t('databases.well-architect.tags.costEfficiency'), value: 'costEfficiency' }]);
                 break;
 
             case GENERAL.OPERATING_SYSTEM_PATCH:
-                setTagData(['Security']);
+                setTagData([{ label: t('databases.well-architect.tags.security'), value: 'security' }]);
                 break;
 
             case 'Multipath I/O Policy':
-                setTagData(['Performance efficiency', 'Reliability']);
+                setTagData([
+                    { label: t('databases.well-architect.tags.performanceEfficiency'), value: 'performanceEfficiency' },
+                    { label: t('databases.well-architect.tags.reliability'), value: 'reliability' }
+                ]);
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
@@ -72,48 +85,56 @@ const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
             case 'Data files':
             case 'Log files':
-                setTagData(['Performance efficiency', 'Operational excellence']);
+                setTagData([
+                    { label: t('databases.well-architect.tags.performanceEfficiency'), value: 'performanceEfficiency' },
+                    { label: t('databases.well-architect.tags.operationalExcellence'), value: 'operationalExcellence' }
+                ]);
                 break;
 
             case GENERAL.MICROSOFT_SQL_PATCH:
-                setTagData(['Reliability', 'Security']);
+                setTagData([
+                    { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                    { label: t('databases.well-architect.tags.security'), value: 'security' }
+                ]);
                 break;
 
             case GENERAL.LICENSE_SQL_SERVER:
             case 'Tiering minimum cooling days':
-                setTagData(['Cost optimization']);
+                setTagData([{ label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' }]);
                 break;
             case ASSESSMENT_CONFIG_NAMES.CRR:
             case 'Cross-Region Replication (CRR)':
-                setTagData(['Reliability']);
+                setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                 break;
 
             case 'ONTAP':
             case 'Operating system':
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 setTagData([
-                    'Performance efficiency',
-                    'Operational excellence',
-                    'Cost optimization',
-                    'Reliability',
-                    'Security'
+                    { label: t('databases.well-architect.tags.performanceEfficiency'), value: 'performanceEfficiency' },
+                    { label: t('databases.well-architect.tags.operationalExcellence'), value: 'operationalExcellence' },
+                    { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' },
+                    { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                    { label: t('databases.well-architect.tags.security'), value: 'security' }
                 ]);
                 break;
+            default:
+                setTagData([{ label: t('databases.well-architect.tags.noTagsAvailable'), value: '' }]);
         }
-    }, [selectedConfig]);
+    }, [selectedConfig, t, type]);
     return (
         <div className={styles.tagComponent} style={{ height: tagHeight }}>
             <div className={styles.topSection}>
                 <Tagmage />
                 <DsTypography variant="Semibold_14" style={{ position: 'relative', top: '-2px' }}>
-                    Tags
+                    {t('databases.well-architect.tags.title')}
                 </DsTypography>
             </div>
 
             <div className={styles.mainSection}>
-                {tagData?.map((tag: string, index: number) => (
-                    <div key={index}>
-                        <Tag text={tag} />
+                {tagData?.map((tag: { label: string; value: string }) => (
+                    <div key={tag.value || tag.label}>
+                        <Tag text={tag.label} />
                     </div>
                 ))}
             </div>
