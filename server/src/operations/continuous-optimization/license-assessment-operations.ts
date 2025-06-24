@@ -136,33 +136,38 @@ async function runLicenseAssessment(
     activeNodeInstanceId: string
 ) {
     logger.info('Run license assessment', { accountId, credentialsId, region, activeNodeInstanceId });
-    const sqlServerInstances = await getSqlServerVersionAndEdition(
-        accountId,
-        credentialsId,
-        region,
-        activeNodeInstanceId
-    );
-    const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
-    if (
-        sqlServerInstances.some(
-            ({ sqlServerEngineEdition, sqlServerEdition }) =>
-                sqlServerEngineEdition === ENT_ENGINE_EDITION && isNonFreeEnterpriseEdition(sqlServerEdition!)
-        )
-    ) {
-        return getLicenseRecommendations(
+    try {
+        const sqlServerInstances = await getSqlServerVersionAndEdition(
             accountId,
             credentialsId,
             region,
-            activeNodeInstanceId,
-            sqlServerInstances,
-            sqlServerDeploymentType
+            activeNodeInstanceId
         );
+        const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
+        if (
+            sqlServerInstances.some(
+                ({ sqlServerEngineEdition, sqlServerEdition }) =>
+                    sqlServerEngineEdition === ENT_ENGINE_EDITION && isNonFreeEnterpriseEdition(sqlServerEdition!)
+            )
+        ) {
+            return getLicenseRecommendations(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                sqlServerInstances,
+                sqlServerDeploymentType
+            );
+        }
+        return {
+            licenseFinding: FINDING.OPTIMIZED,
+            recommendedLicenseType: SQL_STD,
+            sqlServerInstances
+        };
+    } catch (error) {
+        logger.error('Error while running license assessment', { error });
+        throw error instanceof Error ? error : new Error(`${error}`);
     }
-    return {
-        licenseFinding: FINDING.OPTIMIZED,
-        recommendedLicenseType: SQL_STD,
-        sqlServerInstances
-    };
 }
 
 export { calculateLicenseDrift, managedHostsLicenseAssessment };
