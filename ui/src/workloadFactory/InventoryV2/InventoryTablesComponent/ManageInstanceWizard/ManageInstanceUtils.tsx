@@ -280,18 +280,21 @@ export const updateInventoryDataforCompletedInstance = (
             });
             // Get only databaseInstanceNames that are COMPLETED under instanceManagementStatus
             const completedDbNames = (metadata?.instanceManagementStatus || [])
-                .filter((item: any) => item.status === JOB_MONITORING_STATUS.COMPLETED)
+                .filter(
+                    (item: any) =>
+                        item.status === JOB_MONITORING_STATUS.COMPLETED || item.status === JOB_MONITORING_STATUS.WARNING
+                )
                 .map((item: any) => item.databaseInstanceName);
 
             // Check if the unique row is present in inProgressInstances before updating
             if (matchedRow) {
                 (completedDbNames || []).forEach((dbInstanceName: string) => {
-                    const uniqueId = uniqueHostRow(
+                    const uniqueIdSuccess = uniqueHostRow(
                         `${resourceId}_${dbInstanceName}`,
                         credentialsId || '',
                         regionCode || ''
                     );
-                    if (inProgressInstances.has(uniqueId)) {
+                    if (inProgressInstances.has(uniqueIdSuccess)) {
                         // Call updateInstanceStatus for this row
                         const updatedInventoryTableData = updateInstanceStatus(
                             'manage',
@@ -313,12 +316,17 @@ export const updateInventoryDataforCompletedInstance = (
         const { ec2InstanceId } = metadata;
         const credentialsId = subJob.credentialsId || metadata.credentialsId;
         const region = subJob.region?.code || metadata.region;
-        // Only include COMPLETED databaseInstanceNames
-        const completedDbNames = (metadata.instanceManagementStatus || [])
-            .filter((item: any) => item.status === JOB_MONITORING_STATUS.COMPLETED)
+        // Include COMPLETED, WARNING, FAILED databaseInstanceNames to stop loading on inventory page
+        const allDbNames = (metadata.instanceManagementStatus || [])
+            .filter(
+                (item: any) =>
+                    item.status === JOB_MONITORING_STATUS.COMPLETED ||
+                    item.status === JOB_MONITORING_STATUS.WARNING ||
+                    item.status === JOB_MONITORING_STATUS.FAILED
+            )
             .map((item: any) => item.databaseInstanceName);
 
-        return completedDbNames.map((dbInstanceName: string) =>
+        return allDbNames.map((dbInstanceName: string) =>
             uniqueHostRow(`${ec2InstanceId}_${dbInstanceName}`, credentialsId, region)
         );
     });
