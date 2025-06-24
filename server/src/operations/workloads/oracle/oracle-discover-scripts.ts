@@ -267,11 +267,11 @@ EOF
         local credsAvailable="$4"
         local ORACLE_HOME="$5"
         
-        if [ credsAvailable == "true" ]; then
+        if [ "$credsAvailable" == "true" ]; then
             dataDirectories=$(get_data_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
         else
             dataDirectories=$(get_data_directories_without_creds "$ORACLE_SID" "$ORACLE_HOME")
-            if $? -ne 0 ]; then
+            if [ $? -ne 0 ]; then
                 dataDirectories=""    
             fi
         fi
