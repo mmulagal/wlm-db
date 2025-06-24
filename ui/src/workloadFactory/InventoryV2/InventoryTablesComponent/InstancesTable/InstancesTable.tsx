@@ -5,6 +5,7 @@ import {
     DsTypography,
     Popover,
     postBlueXPMessage,
+    TooltipInfo,
     useDialog
 } from '@netapp/design-system';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -353,6 +354,16 @@ const InstancesTable = () => {
         [instanceTableRows]
     );
 
+    const protectionTooltipText = (data: any) => (
+        <div className={styles.protectionTooltipMessage}>
+            {data.map((val: any, index: number) => (
+                <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
+                    {val}
+                </DsTypography>
+            ))}
+        </div>
+    );
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'Instance name',
@@ -595,6 +606,19 @@ const InstancesTable = () => {
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
                     loading = true;
                 }
+                const protectedByList = [];
+
+                if (
+                    (rowData?.protection?.isSqlNativeEnabled ?? false) ||
+                    (rowData?.protection?.isAwsBackupEnabled?.fsxn ?? false) ||
+                    (rowData?.protection?.isCRREnabled ?? false) ||
+                    (rowData?.protection?.isFsxOntapSnapshotsEnabled ?? false)
+                ) {
+                    protectedByList.push(t('databases.general.storage-consistent'));
+                }
+                if (rowData?.protection?.isAppConsistentBackupEnabled ?? false) {
+                    protectedByList.push(t('databases.general.application-consistent'));
+                }
                 return (
                     <>
                         {cellData && (
@@ -618,6 +642,11 @@ const InstancesTable = () => {
                                     )}
                                     <DsTypography variant="Regular_14">{cellData}</DsTypography>
                                 </div>
+                                {protectedByList?.length > 0 && (
+                                    <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                        {protectionTooltipText(protectedByList)}
+                                    </TooltipInfo>
+                                )}
                             </div>
                         )}
                         {!cellData && loading && <DsFlashingDotsLoader />}

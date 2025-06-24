@@ -2,12 +2,11 @@ import { Popover } from '@netapp/design-system';
 import { FC, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './ProtectionIcons.module.scss';
-import { ReactComponent as CameraIcon } from '../../assets/ic_camera.svg';
-import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
-import { ReactComponent as BackupIcon } from '../../assets/ic_backup.svg';
-import { ReactComponent as ImmutableFilesIcon } from '../../assets/ic_immutable_files.svg';
-import { ReactComponent as ImmutableSnapshotIcon } from '../../assets/ic_immutable_snapshot.svg';
-import { ReactComponent as ArpAiIcon } from '../../assets/ic_arp_ai.svg';
+import { ReactComponent as LocalSnapshots_StorageConsistent } from '../../assets/Local snapshots - Storage consistent.svg';
+import { ReactComponent as LocalSnapshot_ApplicationConsistent } from '../../assets/Local snapshots - Application consistent.svg';
+import { ReactComponent as RemoteReplication } from '../../assets/ic_copy.svg';
+import { ReactComponent as FSx_ONTAP_backup } from '../../assets/FSx for ONTAP backup.svg';
+import { ReactComponent as Native_SQL_Server_Backup } from '../../assets/SQL.svg';
 
 interface IconConfig {
     Icon: React.FC<React.SVGProps<SVGSVGElement>>;
@@ -31,38 +30,29 @@ const ProtectionIcons = ({ protectionData }: { protectionData: ProtectionData })
     const { t } = useTranslation();
     const iconsConfig = [
         {
-            Icon: CameraIcon,
+            Icon: LocalSnapshots_StorageConsistent,
             tooltipValue: protectionData?.isFsxOntapSnapshotsEnabled ?? false,
-            tooltipLabel: t('databases.general.local-snapshots')
+            tooltipLabel: t('databases.general.local-snapshots-storage-consistent')
         },
         {
-            Icon: CopyIcon,
+            Icon: LocalSnapshot_ApplicationConsistent,
+            tooltipValue: protectionData?.isAppConsistentBackupEnabled ?? false,
+            tooltipLabel: t('databases.general.local-snapshots-application-consistent')
+        },
+        {
+            Icon: RemoteReplication,
             tooltipValue: protectionData?.isCRREnabled ?? false,
             tooltipLabel: t('databases.general.remote-replications')
         },
         {
-            Icon: BackupIcon,
+            Icon: FSx_ONTAP_backup,
             tooltipValue: protectionData?.isAwsBackupEnabled?.fsxn ?? false,
             tooltipLabel: t('databases.general.fsx-for-ontap-backup')
         },
         {
-            Icon: ImmutableFilesIcon,
+            Icon: Native_SQL_Server_Backup,
             tooltipValue: protectionData?.isSqlNativeEnabled ?? false,
-            tooltipLabel: t('databases.general.native-sql-server-backup')
-        },
-        {
-            Icon: ImmutableSnapshotIcon,
-            tooltipValue:
-                (protectionData?.isSqlNativeEnabled ?? false) ||
-                (protectionData?.isAwsBackupEnabled?.fsxn ?? false) ||
-                (protectionData?.isCRREnabled ?? false) ||
-                (protectionData?.isFsxOntapSnapshotsEnabled ?? false),
-            tooltipLabel: t('databases.general.storage-consistent')
-        },
-        {
-            Icon: ArpAiIcon,
-            tooltipValue: protectionData?.isAppConsistentBackupEnabled ?? false,
-            tooltipLabel: t('databases.general.application-consistent')
+            tooltipLabel: t('databases.general.sql-native-backup')
         }
     ];
     return (
@@ -85,7 +75,7 @@ const IconWithTooltip: FC<IconConfig> = ({ Icon, tooltipValue, tooltipLabel, ...
 const ProtectionTooltipItem = ({ label, value }: { label: string; value: boolean | number }) => {
     const { t } = useTranslation();
     return (
-        <div>
+        <div className={styles.protectionTooltip}>
             <div className={styles.protectionLabel}>{label}</div>
             <div className={styles.protectionStatus}>
                 <span
