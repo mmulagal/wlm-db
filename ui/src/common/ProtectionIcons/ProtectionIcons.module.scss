@@ -1,6 +1,9 @@
-[class*='Popover-module_base'] {
-    padding: 0px 0px !important;
-    max-width: unset !important;
+[class*='protectionIcons'],
+[class*='protectionTooltipPopOver'] {
+    [class*='Popover-module_base'] {
+        padding: 0px 0px !important;
+        max-width: unset !important;
+    }
 }
 
 .protectionTooltip {

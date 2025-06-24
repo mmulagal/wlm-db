@@ -64,6 +64,7 @@ import { updateResourceId } from '../../../../store/authSlice';
 
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import styles from '../InventoryTable.module.scss';
+import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
@@ -607,16 +608,19 @@ const InstancesTable = () => {
                     loading = true;
                 }
                 const protectedByList = [];
-
+                const protection = rowData?.protection ?? {};
                 if (
-                    (rowData?.protection?.isSqlNativeEnabled ?? false) ||
-                    (rowData?.protection?.isAwsBackupEnabled?.fsxn ?? false) ||
-                    (rowData?.protection?.isCRREnabled ?? false) ||
-                    (rowData?.protection?.isFsxOntapSnapshotsEnabled ?? false)
+                    [
+                        protection?.isSqlNativeEnabled,
+                        protection?.isAwsBackupEnabled?.fsxn,
+                        protection?.isCRREnabled,
+                        protection?.isFsxOntapSnapshotsEnabled
+                    ].some(Boolean)
                 ) {
                     protectedByList.push(t('databases.general.storage-consistent'));
                 }
-                if (rowData?.protection?.isAppConsistentBackupEnabled ?? false) {
+
+                if (protection?.isAppConsistentBackupEnabled) {
                     protectedByList.push(t('databases.general.application-consistent'));
                 }
                 return (
@@ -643,9 +647,11 @@ const InstancesTable = () => {
                                     <DsTypography variant="Regular_14">{cellData}</DsTypography>
                                 </div>
                                 {protectedByList?.length > 0 && (
-                                    <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                        {protectionTooltipText(protectedByList)}
-                                    </TooltipInfo>
+                                    <div className={commonStyles.protectionTooltipPopOver}>
+                                        <TooltipInfo className={styles['tooltip-icon']} trigger="click">
+                                            {protectionTooltipText(protectedByList)}
+                                        </TooltipInfo>
+                                    </div>
                                 )}
                             </div>
                         )}

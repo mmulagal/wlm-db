@@ -2,6 +2,7 @@ import { Table, useTable, TableTopBar, Typography, TooltipInfo, Button } from '@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import commonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -103,7 +104,7 @@ const DatabaseListTable = () => {
                         {protectionData && (
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
-                                    <div className={styles.protectionIcons}>
+                                    <div className={commonStyles.protectionIcons}>
                                         <ProtectionIcons protectionData={protectionData} />
                                     </div>
                                 </div>

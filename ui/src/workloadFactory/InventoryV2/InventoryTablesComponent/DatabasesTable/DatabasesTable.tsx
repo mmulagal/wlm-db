@@ -2,6 +2,7 @@ import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -210,7 +211,7 @@ const DatabasesTable = () => {
                         {protectionData && (
                             <div className={styles.colTextProtection}>
                                 <div className={styles.protection}>
-                                    <div className={styles.protectionIcons}>
+                                    <div className={commonStyles.protectionIcons}>
                                         <ProtectionIcons protectionData={protectionData} />
                                     </div>
                                 </div>
