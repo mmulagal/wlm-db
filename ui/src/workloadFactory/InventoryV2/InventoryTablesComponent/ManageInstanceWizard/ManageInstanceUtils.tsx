@@ -451,7 +451,7 @@ export const callManageMultiInstanceApi = async (
 
             const manageInstanceMsg = (
                 <DsTypography variant="Regular_14">
-                    {`${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`}
+                    {`${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]} ${inProgressIDList?.length} ${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}`}
                     <Button
                         Component="button"
                         variant="text"

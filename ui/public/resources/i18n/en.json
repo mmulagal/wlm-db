@@ -71,7 +71,7 @@
             "bulk-instance-select-text": "Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials.",
             "register-instance-failed": "Register instance failed",
             "select-instance-page-content1": "Selecting multiple instances requires shared credentials.",
-            "select-instance-page-content2": "Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials, or a group of instances that are already authenticated.",
+            "select-instance-page-content2": "Select multiple unauthenticated Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials, or multiple authenticated instances.",
             "manage-instance-page-content1": "This prerequisite check validates that your SQL Server instance meets the required prerequisites and is prepared for management in Workload Factory.",
             "manage-instance-page-content2": "To complete instance registration, ensure that all prerequisites for at least one capability are fully met.",
             "prerequisites-list": "Prerequisites list",
