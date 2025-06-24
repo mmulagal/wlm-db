@@ -8,6 +8,8 @@ import { AuditStatus, HttpErrorCodes } from '../../utils/consts';
 
 import { getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
 import {
+    AVG_TOKEN_COUNT_PER_ERROR,
+    BEDROCK_PRICE,
     LOGS_ANALYZER_BUNDLE_PATH,
     LOGS_ANALYZER_MODEL_IDS,
     LOGS_ANALYZER_PACKAGE_NAME,
@@ -438,4 +440,32 @@ async function getLogsAnalysisReport(
     logger.error(errorMessage);
     throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
 }
-export { triggerLogsAnalysis, handleLogsAnalysis, getLogsAnalysisReport };
+
+async function calculateLogsAnalysisPrice(region: string) {
+    logger.info('Calculating logs analysis price:', { region });
+    // Placeholder for pricing calculation logic
+    // This function should ideally interact with AWS Pricing API to get the cost based on region and logs count, but https://github.com/aws/aws-cli/issues/9567 SDK does not return cost of output tokens
+    /* {
+        ServiceCode: "AmazonBedrock",
+        Filters: [
+            {
+                Type: 'TERM_MATCH',
+                Field: 'region',
+                Value: "us-east-1"
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'provider',
+                Value: 'Anthropic' // Example instance type, adjust as needed
+            }
+        ],
+    }; */
+    // As of June 25, the pricing information for Bedrock is static across regions where Bedrock is available in https://aws.amazon.com/bedrock/pricing/
+    const costPerError =
+        (AVG_TOKEN_COUNT_PER_ERROR.INPUT / 1000) * BEDROCK_PRICE.INPUT_1K_TOKENS +
+        (AVG_TOKEN_COUNT_PER_ERROR.OUTPUT / 1000) * BEDROCK_PRICE.OUTPUT_1K_TOKENS;
+    return {
+        costPerError
+    };
+}
+export { triggerLogsAnalysis, handleLogsAnalysis, getLogsAnalysisReport, calculateLogsAnalysisPrice };
