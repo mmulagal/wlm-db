@@ -14,5 +14,6 @@ Install-Module -Name AWS.Tools.FSX -Force -AllowClobber
 Install-Module -Name AWS.Tools.EC2 -Force -AllowClobber
 Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber
 Install-Module -Name AWS.Tools.CloudWatch -AllowClobber
+Install-Module -Name AWS.Tools.BedrockRuntime -AllowClobber
 Install-Module -Name netapp.ontap -RequiredVersion $PSToolkitRequiredVersion
 

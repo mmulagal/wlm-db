@@ -39,7 +39,7 @@ const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
 
 const MINIMUM_PREPREQUISITES = {
     SQL_PERMISSIONS: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE'],
-    MODULES: ['AWS.Tools.SimpleSystemsManagement', 'AWS.Tools.CloudWatch']
+    MODULES: ['AWS.Tools.SimpleSystemsManagement', 'AWS.Tools.CloudWatch', 'AWS.Tools.BedrockRuntime']
 };
 
 const FEATURE_PREPREQUISITES = {

@@ -32,7 +32,8 @@ const BulkManageMsSqlRequestBody = Type.Object({
                     Type.Literal('AWS.Tools.SimpleSystemsManagement'),
                     Type.Literal('AWS.Tools.FSx'),
                     Type.Literal('NetApp.ONTAP'),
-                    Type.Literal('AWS.Tools.CloudWatch')
+                    Type.Literal('AWS.Tools.CloudWatch'),
+                    Type.Literal('AWS.Tools.BedrockRuntime')
                 ],
                 { description: 'List of modules to install' }
             )

@@ -512,6 +512,11 @@ Resources:
                   - ec2:CreateTags
                   - ec2:AuthorizeSecurityGroupIngress
                 Resource: '*'
+              - Sid: BedrockStatement
+                Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: '*'
               - Sid: SSMGetPutParameter
                 Effect: Allow
                 Action:
