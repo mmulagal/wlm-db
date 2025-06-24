@@ -221,21 +221,7 @@ EOF
     echo $result
 `;
 
-const getOracleInstanceData = `
-    # Check if oratab exists
-    if [ ! -f /etc/oratab ]; then
-        echo "[]"
-        exit 0
-    fi
-
-    # Parse /etc/oratab, ignoring comment lines (#), lines starting with (+) and blank lines
-    SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
-
-    if [ -z "$SIDS" ]; then
-        echo "No SIDs found in /etc/oratab."
-        exit 0
-    fi
-
+const defaultAuthDetectModule = `
     is_default_auth() {
         local ORACLE_SID="$1"
         local result
@@ -258,6 +244,24 @@ EOF
             echo "false"
         fi
 }
+`;
+
+const getOracleInstanceData = `
+    # Check if oratab exists
+    if [ ! -f /etc/oratab ]; then
+        echo "[]"
+        exit 0
+    fi
+
+    # Parse /etc/oratab, ignoring comment lines (#), lines starting with (+) and blank lines
+    SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
+
+    if [ -z "$SIDS" ]; then
+        echo "No SIDs found in /etc/oratab."
+        exit 0
+    fi
+
+    ${defaultAuthDetectModule}
 
     get_instance_details() {
         local ORACLE_SID="$1"
@@ -347,12 +351,19 @@ EOF
 EOF
     }
 
-    backup_sets=$(areBackupSetsAvailable)
-    backup_pieces=$(areBackupPiecesAvailable)
+    ${defaultAuthDetectModule}
 
-    is_native_protection_enabled="false"
-    if [[ "$backup_sets" == "true" ]] || [[ "$backup_pieces" == "true" ]]; then
-        is_native_protection_enabled="true"
+    if [ "$isDefaultAuth" == "true" ]; then
+        backup_sets=$(areBackupSetsAvailable)
+        backup_pieces=$(areBackupPiecesAvailable)
+
+        is_native_protection_enabled="false"
+        if [[ "$backup_sets" == "true" ]] || [[ "$backup_pieces" == "true" ]]; then
+            is_native_protection_enabled="true"
+        fi
+    else
+        # If default auth is not used, we cannot check for native protection status.
+        is_native_protection_enabled="undefined"
     fi
 `;
 
