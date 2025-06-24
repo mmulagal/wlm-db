@@ -179,7 +179,17 @@
             "file-system-headroom-option2-content2": "Open the Amazon FSx console.",
             "file-system-headroom-option2-content3": "Choose File systems.",
             "file-system-headroom-option2-content4": "Select the FSx for ONTAP file system that you want to update SSD storage capacity.",
-            "file-system-headroom-option2-content5": "Update storage capacity to the desired capacity."
+            "file-system-headroom-option2-content5": "Update storage capacity to the desired capacity.",
+            "tags": {
+                "title": "Tags",
+                "noTagsAvailable": "No tags available",
+                "reliability": "Reliability",
+                "security": "Security",
+                "performanceEfficiency": "Performance Efficiency",
+                "costOptimization": "Cost Optimization",
+                "costEfficiency": "Cost Efficiency",
+                "operationalExcellence": "Operational Excellence"
+            }
         },
         "update-credentials": {
             "password-info-heading": "The password must be:",
