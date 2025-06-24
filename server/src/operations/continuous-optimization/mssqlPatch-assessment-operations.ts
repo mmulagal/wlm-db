@@ -228,106 +228,110 @@ async function runMSSQLPatchAssessment(
         sqlAuthEnabled,
         instanceName
     });
+    try {
+        let clusterNodeDetails;
+        if (isPartOfCluster) {
+            clusterNodeDetails = await getAllClusterNodeDetails(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                nodeInstanceId
+            );
+        } else {
+            // Get the EC2 instance name for standalone
+            const { Reservations = [] } = await describeInstance(credentialsId, region, {
+                InstanceIds: [nodeInstanceId]
+            });
+            const ec2Name = getResourceNameFromTags(Reservations?.[0]?.Instances?.[0]?.Tags);
+            clusterNodeDetails = [{ ec2InstanceId: nodeInstanceId, ec2InstanceName: ec2Name || 'Unknown' }];
+        }
 
-    let clusterNodeDetails;
-    if (isPartOfCluster) {
-        clusterNodeDetails = await getAllClusterNodeDetails(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            nodeInstanceId
-        );
-    } else {
-        // Get the EC2 instance name for standalone
-        const { Reservations = [] } = await describeInstance(credentialsId, region, {
-            InstanceIds: [nodeInstanceId]
-        });
-        const ec2Name = getResourceNameFromTags(Reservations?.[0]?.Instances?.[0]?.Tags);
-        clusterNodeDetails = [{ ec2InstanceId: nodeInstanceId, ec2InstanceName: ec2Name || 'Unknown' }];
-    }
+        const clusterNodeInstanceIds = compact(clusterNodeDetails?.map(({ ec2InstanceId }) => ec2InstanceId));
 
-    const clusterNodeInstanceIds = compact(clusterNodeDetails?.map(({ ec2InstanceId }) => ec2InstanceId));
+        if (!isEmpty(clusterNodeInstanceIds)) {
+            const { releaseDate: currentVersionReleaseDate, versionYear: sqlServerYear } = await getTheMSSqlversion(
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                sqlAuthEnabled,
+                instanceName,
+                accountId
+            );
 
-    if (!isEmpty(clusterNodeInstanceIds)) {
-        const { releaseDate: currentVersionReleaseDate, versionYear: sqlServerYear } = await getTheMSSqlversion(
-            credentialsId,
-            region,
-            activeNodeInstanceId,
-            sqlAuthEnabled,
-            instanceName,
-            accountId
-        );
+            const [availableCriticalSQLPatches, instanceInstalledPatchDetails] = await Promise.all([
+                getAvailablePatches(credentialsId, region, activeNodeInstanceId, sqlServerYear),
+                getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds, accountId)
+            ]);
 
-        const [availableCriticalSQLPatches, instanceInstalledPatchDetails] = await Promise.all([
-            getAvailablePatches(credentialsId, region, activeNodeInstanceId, sqlServerYear),
-            getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds, accountId)
-        ]);
+            const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];
 
-        const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];
+            // Map ec2InstanceId to ec2InstanceName for quick lookup
+            const ec2InstanceNameMap = new Map(
+                clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => [ec2InstanceId, ec2InstanceName])
+            );
 
-        // Map ec2InstanceId to ec2InstanceName for quick lookup
-        const ec2InstanceNameMap = new Map(
-            clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => [ec2InstanceId, ec2InstanceName])
-        );
+            // Create the MSSQLPatchAssessmentObject structure
+            const patchAssessmentObjects: MSSQLPatchAssessmentObject[] = instanceInstalledPatchDetailsList.map(
+                ({ instanceId, installedPatches }) => {
+                    const installedPatchKbNumbers = new Set(
+                        installedPatches
+                            .map((patch: InstalledPatches) => extractKbNumber(patch.DisplayName))
+                            .filter((kbNumber: string | null) => kbNumber !== null)
+                    );
 
-        // Create the MSSQLPatchAssessmentObject structure
-        const patchAssessmentObjects: MSSQLPatchAssessmentObject[] = instanceInstalledPatchDetailsList.map(
-            ({ instanceId, installedPatches }) => {
-                const installedPatchKbNumbers = new Set(
-                    installedPatches
-                        .map((patch: InstalledPatches) => extractKbNumber(patch.DisplayName))
-                        .filter((kbNumber: string | null) => kbNumber !== null)
-                );
+                    const missingPatchDetails: PatchDetail[] = [];
+                    let criticalMissingPatchesCount = 0;
+                    let importantMissingPatchesCount = 0;
 
-                const missingPatchDetails: PatchDetail[] = [];
-                let criticalMissingPatchesCount = 0;
-                let importantMissingPatchesCount = 0;
+                    for (const availablePatch of availableCriticalSQLPatches) {
+                        if (
+                            !installedPatchKbNumbers.has(availablePatch.KbNumber) &&
+                            availablePatch.ReleaseDate &&
+                            new Date(availablePatch.ReleaseDate) >= new Date(currentVersionReleaseDate)
+                        ) {
+                            const {
+                                Classification: classification = '',
+                                MsrcSeverity: severity = '',
+                                ReleaseDate: releaseDate,
+                                Title: title = '',
+                                KbNumber: kbId = ''
+                            } = availablePatch;
 
-                for (const availablePatch of availableCriticalSQLPatches) {
-                    if (
-                        !installedPatchKbNumbers.has(availablePatch.KbNumber) &&
-                        availablePatch.ReleaseDate &&
-                        new Date(availablePatch.ReleaseDate) >= new Date(currentVersionReleaseDate)
-                    ) {
-                        const {
-                            Classification: classification = '',
-                            MsrcSeverity: severity = '',
-                            ReleaseDate: releaseDate,
-                            Title: title = '',
-                            KbNumber: kbId = ''
-                        } = availablePatch;
+                            const patchDetail: PatchDetail = {
+                                classification,
+                                severity,
+                                releaseDate: typeof releaseDate === 'string' ? releaseDate : releaseDate?.toISOString(),
+                                title,
+                                kbId
+                            };
 
-                        const patchDetail: PatchDetail = {
-                            classification,
-                            severity,
-                            releaseDate: typeof releaseDate === 'string' ? releaseDate : releaseDate?.toISOString(),
-                            title,
-                            kbId
-                        };
+                            missingPatchDetails.push(patchDetail);
 
-                        missingPatchDetails.push(patchDetail);
-
-                        if (patchDetail.severity === 'Critical') {
-                            criticalMissingPatchesCount += 1;
-                        } else if (patchDetail.severity === 'Important') {
-                            importantMissingPatchesCount += 1;
+                            if (patchDetail.severity === 'Critical') {
+                                criticalMissingPatchesCount += 1;
+                            } else if (patchDetail.severity === 'Important') {
+                                importantMissingPatchesCount += 1;
+                            }
                         }
                     }
+
+                    return {
+                        ec2InstanceId: instanceId,
+                        ec2InstanceName: ec2InstanceNameMap.get(instanceId) || 'Unknown',
+                        criticalMissingPatchesCount,
+                        importantMissingPatchesCount,
+                        missingPatchesCount: missingPatchDetails.length,
+                        missingPatchDetails
+                    };
                 }
+            );
 
-                return {
-                    ec2InstanceId: instanceId,
-                    ec2InstanceName: ec2InstanceNameMap.get(instanceId) || 'Unknown',
-                    criticalMissingPatchesCount,
-                    importantMissingPatchesCount,
-                    missingPatchesCount: missingPatchDetails.length,
-                    missingPatchDetails
-                };
-            }
-        );
-
-        return patchAssessmentObjects;
+            return patchAssessmentObjects;
+        }
+    } catch (error) {
+        logger.error('Error while running MSSQL patch assessment', { error });
+        throw error instanceof Error ? error : new Error(`${error}`);
     }
     throw createError('No instances found to run the mssql patch assessment');
 }
