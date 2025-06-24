@@ -330,6 +330,7 @@ async function runMSSQLPatchAssessment(
             return patchAssessmentObjects;
         }
     } catch (error) {
+        logger.error('Error while running MSSQL patch assessment', { error });
         throw error instanceof Error ? error : new Error(`${error}`);
     }
     throw createError('No instances found to run the mssql patch assessment');

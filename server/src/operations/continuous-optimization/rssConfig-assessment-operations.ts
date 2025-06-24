@@ -245,6 +245,7 @@ async function runRssConfigAssessment(
             totalObjectsAssessed: rssConfigAdapters?.length
         };
     } catch (error) {
+        logger.error('Error while running RSS Config assessment', { error });
         throw error instanceof Error ? error : new Error(`${error}`);
     }
 }

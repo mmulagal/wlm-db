@@ -165,6 +165,7 @@ async function runLicenseAssessment(
             sqlServerInstances
         };
     } catch (error) {
+        logger.error('Error while running license assessment', { error });
         throw error instanceof Error ? error : new Error(`${error}`);
     }
 }
