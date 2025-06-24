@@ -2352,19 +2352,11 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
                     resource_id: databaseHostId,
                     region,
                     credentials_id: credentialsId,
-                    cloud_provider_account_id: accountId
+                    account_id: accountId
                 } = resource;
                 try {
                     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
                     const nodeIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
-
-                    logger.info('Triggering instance performance assessment for', {
-                        accountId,
-                        credentialsId,
-                        region,
-                        databaseHostId,
-                        nodeIds
-                    });
 
                     await Promise.all(
                         nodeIds.map(async nodeId => {
@@ -2376,6 +2368,13 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
                                     accountId!
                                 );
                                 if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+                                    logger.info('Triggering instance performance assessment for', {
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        databaseHostId,
+                                        nodeId
+                                    });
                                     const command = trendGraphCreateScript(databaseHostId, nodeId);
                                     const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
                                     const response = await callSsmExecution(
