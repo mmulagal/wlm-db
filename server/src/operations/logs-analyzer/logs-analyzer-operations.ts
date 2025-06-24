@@ -243,6 +243,13 @@ async function handleLogsAnalysis(
         );
         const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
         const [{ path: logsPath } = {}] = parsedResponse?.[databaseInstanceName] || [];
+        if (!logsPath) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Could not fetch logs path for the database instance ${databaseInstanceName} on the remote machine.`
+            );
+        }
+
         const logsAnalyserScriptCommand =
             databaseType === DATABASE_TYPE.mssql
                 ? getWindowsPrepareScript({
