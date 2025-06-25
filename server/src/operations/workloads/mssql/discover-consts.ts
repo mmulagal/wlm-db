@@ -697,7 +697,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       Write-Information "Failed to compress the response because the response is either null or empty. $response"
       return $response
     }
-    # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
+    # disableCredSSP is removed as most of the machines are part of the domain, and we are enabling CredSSP at the domain level.
     ${compressResponse}
     return (Deflate-String $response)
   } catch {
