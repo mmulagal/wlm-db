@@ -214,7 +214,7 @@ if($sqlAuthEnabled) {
 }
 
 #Get default collation and default version of SQL server
-$defaultDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "$defaultDrivesQuery" -InstanceName "$executableInstanceName"
+$defaultDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "$defaultDrivesQuery" -InstanceName "$executableInstanceName" -IsMultiQuery $True
 
 Write-Output $defaultDrives | ConvertTo-Json
 `;
@@ -355,8 +355,8 @@ if($sqlAuthEnabled) {
 }
 
 #Get default collation and default version of SQL server
-$defaultSqlCollation = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryCollation" -InstanceName "$executableInstanceName"
-$sqlVersion = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryVersion" -InstanceName "$executableInstanceName"
+$defaultSqlCollation = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryCollation" -InstanceName "$executableInstanceName" -IsMultiQuery $True
+$sqlVersion = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryVersion" -InstanceName "$executableInstanceName" -IsMultiQuery $True
 
 Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 
@@ -1277,14 +1277,17 @@ Function Call-SqlCmd {
         [string]$InstanceName,
 
         [Parameter(Mandatory = $false)]
-        [string]$ExtraArguments
+        [string]$ExtraArguments,
+
+        [Parameter(Mandatory = $false)]
+        [boolean]$IsMultiQuery = $False
 
     )
     $sqlresponse = $null
     if ($sqlCredential.useDomainAuth -eq $True) {
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
-        $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $Query -instanceName $InstanceName -extraArguments $ExtraArguments
+        $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $Query -instanceName $InstanceName -extraArguments $ExtraArguments -IsMultiQuery $IsMultiQuery;
         ${disableCredSSP}
     } elseif ($sqlCredential.useSqlAuth -eq $True) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {

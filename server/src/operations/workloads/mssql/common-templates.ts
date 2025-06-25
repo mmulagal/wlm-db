@@ -252,7 +252,7 @@ const invokeCommandWithCredSSP = `
             [Parameter(Mandatory = $false)]
             [string]$extraArguments,
             [Parameter(Mandatory = $false)]
-            [boolean]$isMultiQuery = $false
+            [boolean]$IsMultiQuery = $False
         )
 
         if ($extraArguments -ne $null) {
@@ -275,7 +275,7 @@ const invokeCommandWithCredSSP = `
 
         $output = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -ErrorAction Stop
 
-        if ($isMultiQuery) {
+        if ($IsMultiQuery) {
             return $output | ForEach-Object {
                 # Split the output on two or more spaces to isolate the desired part of the string.
                 $_ -split '\\s{2,}' | Select-Object -Last 1
