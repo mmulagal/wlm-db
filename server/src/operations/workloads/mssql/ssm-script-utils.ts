@@ -319,7 +319,7 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
                 $responseObject[$instance] = $_.Exception.Message
             }
         }
-        # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
+        # disableCredSSP is removed as most machines will be part of the domain and we are enabling CredSSP at the domain level.
         $response = $responseObject | ConvertTo-Json -Depth 5
 
         if([string]::IsNullOrEmpty($response)) {
