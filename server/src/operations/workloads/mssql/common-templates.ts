@@ -252,7 +252,7 @@ const invokeCommandWithCredSSP = `
             [Parameter(Mandatory = $false)]
             [string]$extraArguments,
             [Parameter(Mandatory = $false)]
-            [boolean]$IsMultiQuery = $False
+            [boolean]$IsMultiQuery = $false
         )
 
         if ($extraArguments -ne $null) {
