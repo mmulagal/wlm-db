@@ -143,6 +143,10 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                         label: ''
                     },
                     {
+                        id: MenuItems.notifications,
+                        label: ''
+                    },
+                    {
                         id: MenuItems.credentials,
                         label: ''
                     },
