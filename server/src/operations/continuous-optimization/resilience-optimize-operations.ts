@@ -310,6 +310,7 @@ async function setSnapshotPolicyForVolumes(
                 'STORAGE',
                 instanceMetadata || ({} as DatabaseInstanceMetadata)
             );
+            jobStatus = JOBSTATUS.COMPLETED;
         }
         if (!isDemoFlow && missingVolumes.length > 0) {
             jobError = `Volumes UUIDs: ${missingVolumes.join(', ')} are not found for database instance: ${
