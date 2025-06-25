@@ -2208,6 +2208,7 @@ async function getDatabaseInstancesSummary(
         if (shouldQueryDatabasesWithProtection && getProtection && databases?.[instanceName]) {
             let isSqlNativeEnabled: string | boolean = 'N/A';
             let isFsxOntapSnapshotsEnabled: string | boolean = 'N/A';
+            let isAppConsistentBackupEnabled: string | boolean | undefined = 'N/A';
             const isAwsBackupEnabled: { fsxn: string | boolean } = {
                 fsxn: 'N/A'
             };
@@ -2219,6 +2220,7 @@ async function getDatabaseInstancesSummary(
                         isSqlNativeEnabled: any;
                         isFsxOntapSnapshotsEnabled: any;
                         isAwsBackupEnabled: { fsxn: any };
+                        isAppConsistentBackupEnabled?: boolean | string;
                     };
                 }) => {
                     if (database.protection.isSqlNativeEnabled === true) {
@@ -2243,6 +2245,15 @@ async function getDatabaseInstancesSummary(
                     ) {
                         isAwsBackupEnabled.fsxn = false;
                     }
+                    if (
+                        database.protection.isAppConsistentBackupEnabled === false ||
+                        database.protection.isAppConsistentBackupEnabled === 'N/A'
+                    ) {
+                        isAppConsistentBackupEnabled = false;
+                    } else {
+                        isAppConsistentBackupEnabled =
+                            isAppConsistentBackupEnabled && database.protection.isAppConsistentBackupEnabled;
+                    }
                 }
             );
             if (!protectionData) {
@@ -2252,7 +2263,8 @@ async function getDatabaseInstancesSummary(
                 isSqlNativeEnabled,
                 isFsxOntapSnapshotsEnabled,
                 isAwsBackupEnabled,
-                protectedDatabases
+                protectedDatabases,
+                isAppConsistentBackupEnabled
             };
             databaseInstanceDetails.protection = protectionData;
         }
