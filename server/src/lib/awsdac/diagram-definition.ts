@@ -189,7 +189,7 @@ async function execAwsdac(
         return { error: `Failed to create input config file: ${inputFile}` };
     }
 
-    const cliCommand = `${AWSDAC_MODULE_DIR}/awsdacArm ${inputFile} -o ${outputFile}`;
+    const cliCommand = `${AWSDAC_MODULE_DIR}/awsdac ${inputFile} -o ${outputFile}`;
     try {
         await execute(cliCommand);
     } catch (error) {
