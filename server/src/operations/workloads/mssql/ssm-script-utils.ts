@@ -9,7 +9,6 @@ import {
     ontapRestRequest,
     ontapRestRequestBootstrap,
     enableCredSSP,
-    disableCredSSP,
     invokeCommandWithCredSSP
 } from './common-templates';
 import { REQUIRED_PS_MODULES_FOR_MANAGEMENT } from './discover-consts';
@@ -214,7 +213,7 @@ if($sqlAuthEnabled) {
 }
 
 #Get default collation and default version of SQL server
-$defaultDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "$defaultDrivesQuery" -InstanceName "$executableInstanceName"
+$defaultDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "$defaultDrivesQuery" -InstanceName "$executableInstanceName" -IsMultiQuery $True
 
 Write-Output $defaultDrives | ConvertTo-Json
 `;
@@ -320,7 +319,7 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
                 $responseObject[$instance] = $_.Exception.Message
             }
         }
-        ${disableCredSSP}
+        # disableCredSSP is removed as most machines will be part of the domain and we are enabling CredSSP at the domain level.
         $response = $responseObject | ConvertTo-Json -Depth 5
 
         if([string]::IsNullOrEmpty($response)) {
@@ -355,8 +354,8 @@ if($sqlAuthEnabled) {
 }
 
 #Get default collation and default version of SQL server
-$defaultSqlCollation = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryCollation" -InstanceName "$executableInstanceName"
-$sqlVersion = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryVersion" -InstanceName "$executableInstanceName"
+$defaultSqlCollation = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryCollation" -InstanceName "$executableInstanceName" -IsMultiQuery $True
+$sqlVersion = Call-SqlCmd -SqlCredential $sqlCredential -Query "$queryVersion" -InstanceName "$executableInstanceName" -IsMultiQuery $True
 
 Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 
@@ -508,7 +507,7 @@ const validateSQLInstanceConnectivity = (
                     }
                 }
             }
-            ${windowsUser ? `${disableCredSSP}` : ''}
+            # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
            
         }
     } catch {
@@ -1111,7 +1110,7 @@ const getMappedOntapVolumesScript = (
                 $instanceRespones[$serverInstanceName] = "error: $_"
             }
         }
-        ${disableCredSSP}
+        # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
         $response = $instanceRespones | ConvertTo-Json -Depth 10
 
         if([string]::IsNullOrEmpty($response)) {
@@ -1277,15 +1276,18 @@ Function Call-SqlCmd {
         [string]$InstanceName,
 
         [Parameter(Mandatory = $false)]
-        [string]$ExtraArguments
+        [string]$ExtraArguments,
+
+        [Parameter(Mandatory = $false)]
+        [boolean]$IsMultiQuery = $False
 
     )
     $sqlresponse = $null
     if ($sqlCredential.useDomainAuth -eq $True) {
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
-        $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $Query -instanceName $InstanceName -extraArguments $ExtraArguments
-        ${disableCredSSP}
+        $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $Query -instanceName $InstanceName -extraArguments $ExtraArguments -IsMultiQuery $IsMultiQuery;
+        # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
     } elseif ($sqlCredential.useSqlAuth -eq $True) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0;
@@ -1440,7 +1442,7 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                 $responseObject[$serverInstanceName] = "error: $_.Exception.Message"
             }
         }
-        ${disableCredSSP}
+        # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
         $response = $responseObject | ConvertTo-Json -Depth 5
 
         if([string]::IsNullOrEmpty($response)) {

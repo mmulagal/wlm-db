@@ -1,5 +1,5 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
-import { compressResponse, disableCredSSP, enableCredSSP, invokeCommandWithCredSSP } from './common-templates';
+import { compressResponse, enableCredSSP, invokeCommandWithCredSSP } from './common-templates';
 import { GOOGLE_DNS, DISCOVER_OPERATION_LOG_PATH } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
@@ -593,7 +593,7 @@ const HOST_AND_SQL_INFO_PS1 = [
               # Although this is 'domain', we are assigning to 'sqlCredential', as Invoke-CommandWithCredSSP will use this variable to run the query
               $sqlCredential = $credsFromParameterStore.domain.Where({$_.sqlInstanceName -eq $instanceName -or $_.sqlInstanceName -eq 'MSSQLSERVER'})[0]
               if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                  $editionDBCountMachineInfoGuid = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" -instanceName $serverInstance -isMultiQuery $true 2> $null
+                  $editionDBCountMachineInfoGuid = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" -instanceName $serverInstance -IsMultiQuery $True 2> $null
                   $deploymentTypeCheck = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH" -instanceName $serverInstance 2> $null
                   $existingPermissions = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -instanceName $serverInstance 2> $null
                   $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password 'domain'
@@ -696,7 +696,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       Write-Information "Failed to compress the response because the response is either null or empty. $response"
       return $response
     }
-    ${disableCredSSP}
+    # disableCredSSP is removed as most of the machines are part of the domain, and we are enabling CredSSP at the domain level.
     ${compressResponse}
     return (Deflate-String $response)
   } catch {
