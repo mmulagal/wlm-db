@@ -61,7 +61,7 @@ const DatabaseHostOverviewApiV2 = () => {
             }).unwrap();
 
             const dataUrl = await blobToDataURL(response);
-            console.log('Diagram Data URL:', dataUrl);
+
             dispatch(setDiagramImageData(dataUrl));
         } catch (error) {
             return null;

@@ -2199,7 +2199,6 @@ export const blobToDataURL = (blob: Blob): Promise<string> => {
                 return reject(new Error('Invalid or empty blob'));
             }
 
-            // wrap in setTimeout to let event loop catch up (fix for React strict mode)
             setTimeout(() => {
                 const reader = new FileReader();
 
