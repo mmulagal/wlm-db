@@ -34,8 +34,8 @@ const ActionComponent = ({ manageChecks }: ActionComponentProps) => {
         <div className={styles.actionComponent}>
             <DsTypography variant="Semibold_16">{t('databases.general.action-required')}</DsTypography>
 
-            {wizardOperationType === ACTION_TYPE.BULK ? (
-                <div className={styles.selectContainer}>
+            <div className={styles.selectContainer}>
+                {manageChecks?.installMissingAWS && (
                     <DsCheckbox
                         id="wlm-db-install-missing-aws"
                         title={t('databases.register-flow.missing-modules-title')}
@@ -44,10 +44,12 @@ const ActionComponent = ({ manageChecks }: ActionComponentProps) => {
                             setState({ installMissingAWS: !installMissingAWS });
                         }}
                         isSelected={installMissingAWS}
-                        isDisabled={false}
+                        isDisabled={!manageChecks?.installMissingAWS}
                         className={styles.checkboxContainer}
                     />
+                )}
 
+                {manageChecks?.installMissingPowershell && (
                     <DsCheckbox
                         id="wlm-db-install-missing-powershell"
                         title={t('databases.register-flow.missing-powershell-title')}
@@ -56,41 +58,11 @@ const ActionComponent = ({ manageChecks }: ActionComponentProps) => {
                             setState({ installMissingPowershell: !installMissingPowershell });
                         }}
                         isSelected={installMissingPowershell}
-                        isDisabled={false}
+                        isDisabled={!manageChecks?.installMissingPowershell}
                         className={styles.checkboxContainer}
                     />
-                </div>
-            ) : (
-                <div className={styles.selectContainer}>
-                    {manageChecks?.installMissingAWS && (
-                        <DsCheckbox
-                            id="wlm-db-install-missing-aws"
-                            title={t('databases.register-flow.missing-modules-title')}
-                            onSelect={() => {
-                                dispatch(setInstallType({ installMissingAWS: !installMissingAWS }));
-                                setState({ installMissingAWS: !installMissingAWS });
-                            }}
-                            isSelected={installMissingAWS}
-                            isDisabled={!manageChecks?.installMissingAWS}
-                            className={styles.checkboxContainer}
-                        />
-                    )}
-
-                    {manageChecks?.installMissingPowershell && (
-                        <DsCheckbox
-                            id="wlm-db-install-missing-powershell"
-                            title={t('databases.register-flow.missing-powershell-title')}
-                            onSelect={() => {
-                                dispatch(setInstallType({ installMissingPowershell: !installMissingPowershell }));
-                                setState({ installMissingPowershell: !installMissingPowershell });
-                            }}
-                            isSelected={installMissingPowershell}
-                            isDisabled={!manageChecks?.installMissingPowershell}
-                            className={styles.checkboxContainer}
-                        />
-                    )}
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

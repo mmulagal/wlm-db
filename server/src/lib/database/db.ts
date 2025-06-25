@@ -5,6 +5,7 @@ import { prisma } from '../../utils/prisma-utils';
 import { checkAccount, isDemo, getInstancesWithResourceForDemo } from '../../utils/utils';
 import { TCO_FEATURE } from '../../utils/consts';
 import { Deployment, Event, Resource, Config, DatabaseInstanceRecord, ListDatabaseInstancesRecord } from './db-types';
+import { ResourceDetails } from '../../utils/common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -257,7 +258,7 @@ async function listResources(
     region = region ? (isArray(region) ? region : [region]) : undefined;
     credentialIds = credentialIds ? (isArray(credentialIds) ? credentialIds : [credentialIds]) : undefined;
 
-    return prisma.client.resource.findMany({
+    const response = await prisma.client.resource.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(resourceId && { resource_id: resourceId }),
@@ -288,6 +289,28 @@ async function listResources(
             }
         })
     });
+
+    if (!isEmpty(response) && isDemoFlow && includeDatabaseInstances) {
+        for (const resource of response as ResourceDetails[]) {
+            if (Array.isArray(resource.database_instances)) {
+                resource.database_instances = resource.database_instances
+                    .filter((instance: any) => instance.resource_id === resource.resource_id)
+                    .map((instance: any) => {
+                        if (instance.database_instance_name && resource.resource_name) {
+                            return {
+                                ...instance,
+                                database_instance_name: instance.database_instance_name
+                                    .replace(resource.resource_name, '')
+                                    .trim()
+                            };
+                        }
+                        return instance;
+                    });
+            }
+        }
+    }
+
+    return response;
 }
 
 async function countResources(accountId?: string, credentialsId?: string, region?: string, resourceType?: string) {

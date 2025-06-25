@@ -174,3 +174,9 @@
         top: -40px;
     }
 }
+
+.dialogContainer {
+    [class*='DialogLayout-module_header'] {
+        color: var(--text-primary) !important;
+    }
+}

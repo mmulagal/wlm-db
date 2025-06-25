@@ -41,15 +41,17 @@ const MultiInstanceHeader = () => {
 
     const handleManageDialog = () => {
         setDialog(
-            <DialogComponent
-                header={t('databases.register-flow.multiinstance-header-dialog-heading')}
-                content={<DetectedInstanceTable />}
-                primaryButton={t('databases.general.close')}
-                callback={() => {}}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-            />
+            <div className={styles.dialogContainer}>
+                <DialogComponent
+                    header={t('databases.register-flow.multiinstance-header-dialog-heading')}
+                    content={<DetectedInstanceTable />}
+                    primaryButton={t('databases.general.close')}
+                    callback={() => {}}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                />
+            </div>
         );
     };
     return (

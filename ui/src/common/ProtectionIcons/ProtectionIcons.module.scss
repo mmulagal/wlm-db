@@ -1,25 +1,40 @@
-.protectionLabel {
-    font-weight: 500;
+[class*='protectionIcons'],
+[class*='protectionTooltipPopOver'] {
+    [class*='Popover-module_base'] {
+        padding: 0px 0px !important;
+        max-width: unset !important;
+    }
 }
 
-.protectionStatus {
-    display: flex;
-    align-items: center;
-    margin-top: 12px;
-}
+.protectionTooltip {
+    display: inline-flex;
+    padding: 16px 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
 
-.protectionIcon {
-    width: 10px;
-    height: 10px;
-    display: inline-block;
-    border-radius: 2px;
-    margin-right: 8px;
-}
+    .protectionLabel {
+        font-weight: 500;
+    }
 
-.protected {
-    background: var(--green-60);
-}
+    .protectionStatus {
+        display: flex;
+        align-items: center;
 
-.notProtected {
-    background: var(--orange-60);
+        .protectionIcon {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            border-radius: 2px;
+            margin-right: 8px;
+        }
+
+        .protected {
+            background: var(--green-60);
+        }
+
+        .notProtected {
+            background: var(--orange-60);
+        }
+    }
 }

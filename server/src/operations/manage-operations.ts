@@ -461,8 +461,8 @@ async function manageSqlInstance(
                         (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
                     );
 
-                    if (!sqlInstanceInfo) {
-                        throw new Error('SQL Server instance not found.');
+                    if (!sqlInstanceInfo || !sqlInstanceInfo.serverGuid || !sqlInstanceInfo.sqlServerDeploymentType) {
+                        throw new Error('SQL Server instance not found or required details are missing.');
                     }
 
                     if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
@@ -638,12 +638,12 @@ async function manageSqlInstance(
                                 credentialsId,
                                 resourceId,
                                 region,
-                                databaseInstanceId: serverGuid!,
+                                databaseInstanceId: serverGuid,
                                 databaseInstanceName: dbInstanceName,
                                 fsxnIds: storageInfo.id,
                                 isDefault: sqlInstanceInfo.isDefaultInstance,
                                 source: RESOURCE_SOURCE.DISCOVER,
-                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
+                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
                                 fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
                                 storageProtocol: storageProtocols ? storageProtocols.join() : '',
                                 databaseType: DatabaseTypes.MS_SQL_SERVER
@@ -717,30 +717,19 @@ async function manageSqlInstance(
             error: error.message
         });
     } finally {
-        if (instanceManagementStatus.every(elem => elem.status === JOBSTATUS.FAILED)) {
-            jobStatus = JOBSTATUS.FAILED;
-        } else if (instanceManagementStatus.every(elem => elem.status === JOBSTATUS.COMPLETED)) {
-            jobStatus = JOBSTATUS.COMPLETED;
-        } else {
-            jobStatus = JOBSTATUS.WARNING;
-        }
-
         const errorMessage = instanceManagementStatus
             .filter(elem => elem.status === JOBSTATUS.FAILED)
             .map(elem => `${elem.databaseInstanceName}: ${elem.errorMessage}`)
             .join(', ');
-        await updateJobDetails(accountId, hostJobId, {
-            status: jobStatus,
-            error: errorMessage,
-            endTime: Date.now(),
-            metadata: {
-                ec2InstanceId,
-                databaseInstanceNames,
-                modulesToInstall,
-                instanceManagementStatus,
-                resourceId
-            }
-        });
+        const jobMetadata = {
+            ec2InstanceId,
+            databaseInstanceNames,
+            modulesToInstall,
+            instanceManagementStatus,
+            resourceId
+        };
+        await updateParentJobStatus(accountId, hostJobId, false, errorMessage, jobMetadata);
+
         await updateParentJobStatus(accountId, parentManageJobId);
     }
 }

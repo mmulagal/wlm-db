@@ -368,14 +368,11 @@ async function activeSqlNodeDetails(
     const { metadata, resource_name: sqlServerName } = resourceDetail;
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
-    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(
-        credentialsId,
-        region,
+    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(credentialsId, region, {
         node1InstanceId,
         node2InstanceId,
-        undefined,
         accountId
-    );
+    });
     logger.info('instancesDetails', instancesDetails);
     const sqlAuthEnabled =
         instancesDetails && instanceDetail
@@ -2160,8 +2157,10 @@ async function optimizeOperatingSystemSettings(
     const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
         region,
-        node1InstanceId,
-        node2InstanceId
+        {
+            node1InstanceId,
+            node2InstanceId
+        }
     );
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {

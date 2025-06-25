@@ -15,11 +15,11 @@ const TooltipCard = ({
         {listObj?.map((item: any, index: number) => (
             <div key={index}>
                 <div className={styles.row}>
-                    <div className={styles.col}>
+                    <div className={styles.colKey}>
                         <DsTypography variant="Regular_13">{item.key}</DsTypography>
                     </div>
 
-                    <div className={styles.col}>
+                    <div className={styles.colValue}>
                         {registerFlow && (item?.value === MANAGE_STATES.READY ? <Success /> : <Cross />)}
                         <DsTypography variant="Regular_13">{item?.value}</DsTypography>
                     </div>

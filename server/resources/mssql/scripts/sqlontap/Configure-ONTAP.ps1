@@ -51,6 +51,13 @@ $ScriptsPath = Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -
 $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 $username = $SsmParameter.fsx.username
 $password = $SsmParameter.fsx.password
+
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
+$pair = "$($username):$($password)"
+$bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+$base64 = [System.Convert]::ToBase64String($bytes)
+
 # Get FSx certificate
 $isprivatesubnet = $False
 $certuri = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
@@ -81,11 +88,7 @@ catch {
     $isprivatesubnet = $True
     $restcert = ''
 }
-$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-$region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
-$pair = "$($username):$($password)"
-$bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
-$base64 = [System.Convert]::ToBase64String($bytes)
+
 
 #get management IP
 $nodeiqn = (Get-InitiatorPort).NodeAddress

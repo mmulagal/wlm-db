@@ -569,10 +569,6 @@ const getRunningSqlServers = {
     commands: [GET_RUNNING_SQL_SERVERS()]
 };
 
-const getInstalledSQLVersion = {
-    commands: [GET_INSTALLED_MSSQL_VERSION('MSSQLSERVER', false)]
-};
-
 const getInstalledSQLPatches = {
     commands: [GET_INSTALLED_SQL_PATCHES()]
 };
@@ -814,8 +810,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
     .on(SendCommandCommand, { Parameters: getRunningSqlServers })
     .resolves(listSendCommandCommandResponse.getRunningSqlServersCommand)
-    .on(SendCommandCommand, { Parameters: getInstalledSQLVersion })
-    .resolves(listSendCommandCommandResponse.getInstalledSQLVersionCommand)
     .on(SendCommandCommand, { Parameters: getInstalledSQLPatches })
     .resolves(listSendCommandCommandResponse.getInstalledSQLPatchesCommand)
     .on(SendCommandCommand, params => {
@@ -907,7 +901,12 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Check PowerShell 7 availability')
     .resolves(getSampleCommandResponse('getPS7CheckDetails'))
     .on(SendCommandCommand, params => params.Comment === 'Validate Oracle Credentials')
-    .resolves(getSampleCommandResponse('validateOracleCredentials'));
+    .resolves(getSampleCommandResponse('validateOracleCredentials'))
+    .on(SendCommandCommand, params => {
+        const commentString = /# Get the installed SQL Server version/;
+        return commentString.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getInstalledSqlServerVersionCommand'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1150,10 +1149,6 @@ ssmMock
     })
     .resolves(getCommandInvocationResponse.getInstalledSQLPatchesCommandResponse)
     .on(GetCommandInvocationCommand, {
-        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-InstalledSQLVersionCommand'
-    })
-    .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse)
-    .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-crrAssessmentCommand'
     })
     .resolves(getCommandInvocationResponse.getCRRAssessmentCommandResponse)
@@ -1329,6 +1324,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'validateOracleCredentials',
             '{ "instances": [ { "oracleInstanceConnectivity": true, "oracleInstanceName": "ordbsdl", "oracleEdition": "19.0.0.0.0" } ], "fsxResults": [ { "ontapconnectivity": true, "fsxId": "fs-0d5efc3057c4f12cb" } ] }'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getInstalledSqlServerVersionCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeNetworkAdapters',
+            JSON.stringify(getCommandInvocationResponse.getInstalledSqlVersion)
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

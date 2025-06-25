@@ -1,0 +1,129 @@
+name: Epic
+description: Create a new epic to group related stories and tasks.
+title: "[EPIC]: "
+labels: ["Epic"]
+assignees:
+  - shaswats
+projects: ["TLVeng/41"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🗂️ Epic
+
+        Please provide comprehensive details for this epic.
+
+  - type: input
+    id: contact
+    attributes:
+      label: "Contact Details"
+      description: "Who is the main point of contact for this epic?"
+      placeholder: "e.g., email@netapp.com"
+    validations:
+      required: false
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Epic Summary"
+      description: "Briefly describe the purpose and scope of this epic."
+      placeholder: "Describe the high-level goal of this epic."
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: "Background and Motivation"
+      description: |
+        Provide context for this epic, including current status, gaps, what is needed, and why.
+      placeholder: |
+        **Current status and gaps:**
+        Describe the current situation and any existing gaps or limitations.
+
+        **What is needed:**
+        Explain what is required to address the gaps.
+
+        **Why:**
+        Justify why this epic is important and the value it brings.
+    validations:
+      required: false
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: "Use Case"
+      description: "Describe the primary use case(s) for this epic."
+      placeholder: "Who will use this and how?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: requirement
+    attributes:
+      label: "Requirement"
+      description: "List the key requirements for this epic."
+      placeholder: |
+        - Requirement 1
+        - Requirement 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "What must be true for this epic to be considered complete?"
+      placeholder: |
+        - [ ] Acceptance criterion 1
+        - [ ] Acceptance criterion 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: goals
+    attributes:
+      label: "Goals / Objectives"
+      description: "List the goals or objectives for this epic."
+      placeholder: |
+        - Goal 1
+        - Goal 2
+    validations:
+      required: false
+
+  - type: textarea
+    id: success-metrics
+    attributes:
+      label: "Success Metrics"
+      description: "How will you measure the success of this epic?"
+      placeholder: "e.g., 100% test coverage, user adoption rate, etc."
+    validations:
+      required: false
+
+  - type: textarea
+    id: related-stories
+    attributes:
+      label: "Related Stories / Tasks"
+      description: "List related stories or tasks (use issue numbers if possible)."
+      placeholder: "#123, #124, #125"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      description: "How important is this epic?"
+      options:
+        - "High"
+        - "Medium"
+        - "Low"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context"
+      description: "Any other information or context about this epic."

@@ -190,3 +190,19 @@
         top: -3px;
     }
 }
+
+.protectionIcons {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    cursor: pointer;
+
+    svg {
+        position: relative;
+        top: 2px;
+    }
+}
+
+.protectionTooltipPopOver {
+    display: contents;
+}

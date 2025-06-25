@@ -120,12 +120,10 @@ async function handleOptimizeRssOptimization(
     }
 
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-    const { activeNodeInstanceId = '' } = await getActiveSqlNode(
-        credentialsId,
-        region,
+    const { activeNodeInstanceId = '' } = await getActiveSqlNode(credentialsId, region, {
         node1InstanceId,
         node2InstanceId
-    );
+    });
 
     try {
         if (activeNodeInstanceId) {

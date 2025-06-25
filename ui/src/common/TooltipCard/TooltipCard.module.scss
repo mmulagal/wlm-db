@@ -12,11 +12,17 @@
     .row {
         display: flex;
         gap: 32px;
-        justify-content: space-between;
         margin-top: 6px;
         margin-bottom: 12px;
 
-        .col {
+        .colKey {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 330px;
+        }
+
+        .colValue {
             display: flex;
             align-items: center;
             gap: 8px;

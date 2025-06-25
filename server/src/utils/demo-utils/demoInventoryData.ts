@@ -2375,11 +2375,205 @@ const ASSESSMENT_CLONE_CONFIG_DATA = {
     ]
 };
 
+const MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA = { status: 'optimized', current: '4', recommendedMaxDOP: '4' };
+
+const MSSQL_ASSESSMENT_CLONE_CONFIG_DATA = {
+    status: 'optimized',
+    oldClones: 0,
+    cloneDetails: [],
+    oldCloneDetails: [],
+    oldCloneDatabaseNames: []
+};
+
+const MSSQL_ASSESMENT_CONFIG_DATA = {
+    os: {
+        'mpio-enabled': true,
+        'mpio-timeout': '60',
+        'mpio-iscsi-count': '5',
+        'ntfs-allocation-details': [
+            {
+                BlockSize: 65536,
+                DriveLetter: 'S:'
+            },
+            {
+                BlockSize: 65536,
+                DriveLetter: 'T:'
+            }
+        ],
+        'mpio-load-balance-policy': 'RR',
+        'ntfs-allocation-unit-size': 65536,
+        'mpio-load-balance-policy-details': [
+            {
+                disk: 'Disk 3',
+                policy: 'RRWS',
+                accessPath: 'T:\\'
+            },
+            {
+                disk: 'Disk 1',
+                policy: 'RRWS',
+                accessPath: 'S:\\'
+            }
+        ]
+    },
+    luns: [
+        {
+            name: '/vol/wlmdb_sqldata_1750140716368/sqldata',
+            'os-type': 'windows_2008',
+            'space-reservation-enabled': true,
+            'space-allocation-allocated': true
+        },
+        {
+            name: '/vol/wlmdb_sqltemp_1750140716368/tempdb',
+            'os-type': 'windows_2008',
+            'space-reservation-enabled': true,
+            'space-allocation-allocated': true
+        }
+    ],
+    errors: {},
+    layout: {
+        'user-database-layout': {
+            log: [
+                {
+                    name: 'msdb',
+                    lunPath: '/vol/wlmdb_sqldata_1750140716368/sqldata',
+                    lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
+                    svmName: 'wlmdb_sqlsvm_1750140716368',
+                    sizeInMb: 23.8125,
+                    diskNumber: 1,
+                    accessPaths: ['S:\\', '\\\\?\\Volume{68d026b4-dc23-4799-aecb-2bb59d251e32}\\'],
+                    databaseDetails: [
+                        {
+                            name: 'msdb',
+                            sizeInMb: 23.8125
+                        }
+                    ],
+                    lunSerialNumber: 'lWB5g?XW76m/',
+                    ontapVolumeName: 'wlmdb_sqldata_1750140716368',
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620'
+                }
+            ],
+            data: [
+                {
+                    name: 'msdb',
+                    lunPath: '/vol/wlmdb_sqldata_1750140716368/sqldata',
+                    lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
+                    svmName: 'wlmdb_sqlsvm_1750140716368',
+                    sizeInMb: 16.875,
+                    diskNumber: 1,
+                    accessPaths: ['S:\\', '\\\\?\\Volume{68d026b4-dc23-4799-aecb-2bb59d251e32}\\'],
+                    databaseDetails: [
+                        {
+                            name: 'msdb',
+                            sizeInMb: 16.875
+                        }
+                    ],
+                    lunSerialNumber: 'lWB5g?XW76m/',
+                    ontapVolumeName: 'wlmdb_sqldata_1750140716368',
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620'
+                }
+            ],
+            tempDb: [
+                {
+                    name: 'tempdev',
+                    lunPath: '/vol/wlmdb_sqltemp_1750140716368/tempdb',
+                    lunUuid: 'c8bcdf6e-060c-4cb9-b07e-d8036108379f',
+                    svmName: 'wlmdb_sqlsvm_1750140716368',
+                    sizeInMb: 8,
+                    diskNumber: 3,
+                    accessPaths: ['T:\\', '\\\\?\\Volume{f3a06d64-ba64-40e9-af09-123ca22ac071}\\'],
+                    lunSerialNumber: 'lWB5g?XW76mb',
+                    ontapVolumeName: 'wlmdb_sqltemp_1750140716368',
+                    ontapVolumeUuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620'
+                }
+            ]
+        },
+        'tempdb-files-location': 'separate-drive',
+        'default-log-files-location': 'shared-drive',
+        'default-data-files-location': 'shared-drive'
+    },
+    sizing: {
+        'performance-tier': [
+            {
+                volumeName: 'wlmdb_sqldata_1750140716368',
+                performanceTierPercent: 100
+            },
+            {
+                volumeName: 'wlmdb_sqltemp_1750140716368',
+                performanceTierPercent: 100
+            }
+        ],
+        'data-log-drive-details': [
+            {
+                lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
+                svmName: 'wlmdb_sqlsvm_1750140716368',
+                diskNumber: 1,
+                databaseName: 'msdb',
+                logAccessPath: 'S:\\',
+                dataAccessPath: 'S:\\',
+                logDriveLetter: 'S:',
+                dataDriveLetter: 'S:',
+                ontapVolumeName: 'wlmdb_sqldata_1750140716368',
+                ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620',
+                diskSerialNumber: 'lWB5g?XW76m/',
+                logDriveTotalSizeMB: 204782,
+                dataDriveTotalSizeMB: 204782
+            }
+        ],
+        'data-tempdb-drive-details': {
+            lunUuid: 'c8bcdf6e-060c-4cb9-b07e-d8036108379f',
+            svmName: 'wlmdb_sqlsvm_1750140716368',
+            diskNumber: 3,
+            dataDriveLetter: 'S:',
+            ontapVolumeName: 'wlmdb_sqltemp_1750140716368',
+            ontapVolumeUuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620',
+            tempdbDrivePath: 'T:\\mssql\\data\\tempdb.mdf',
+            diskSerialNumber: 'lWB5g?XW76mb',
+            tempdbDriveLetter: 'T:',
+            dataDriveTotalSizeMB: 204782,
+            tempdbDriveTotalSizeMB: 20462
+        }
+    },
+    volumes: [
+        {
+            name: 'wlmdb_sqldata_1750140716368',
+            uuid: 'af03a358-4b44-11f0-a105-fda4bda8e620',
+            autosize: 'on',
+            'autosize-mode': 'grow',
+            'thin-provision': true,
+            'tiering-policy': 'snapshot_only',
+            'snapshot-policy': 'daily_weekretention',
+            'space-guarantee': 'none',
+            'fractional-reserve': 0,
+            'snapshot-autodelete': true,
+            'snapshot-copy-reserve': 0,
+            'tiering-min-cooling-days': 7
+        },
+        {
+            name: 'wlmdb_sqltemp_1750140716368',
+            uuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620',
+            autosize: 'on',
+            'autosize-mode': 'grow',
+            'thin-provision': true,
+            'tiering-policy': 'snapshot_only',
+            'snapshot-policy': 'daily_weekretention',
+            'space-guarantee': 'none',
+            'fractional-reserve': 0,
+            'snapshot-autodelete': true,
+            'snapshot-copy-reserve': 0,
+            'tiering-min-cooling-days': 7
+        }
+    ],
+    filesystemId: 'fs-07a22f282fd4f5a20'
+};
+
 export {
     inventoryDemoData,
     ASSESMENT_CONFIG_DATA,
     ASSESSMENT_CRR_CONFIG_DATA,
     ASSESSMENT_AWS_BACKUP_DATA,
     ASSESSMENT_MAXDOP_CONFIG_DATA,
-    ASSESSMENT_CLONE_CONFIG_DATA
+    ASSESSMENT_CLONE_CONFIG_DATA,
+    MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,
+    MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
+    MSSQL_ASSESMENT_CONFIG_DATA
 };

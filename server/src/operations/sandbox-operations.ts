@@ -101,13 +101,11 @@ async function getSandboxDetails(
     const { metadata, resource_id: resourceId, resource_name: resourceName } = resourceDetails;
     const { node1InstanceId, node2InstanceId, sandboxes } = metadata as unknown as Metadata;
 
-    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(
-        credentialsId,
-        region!,
+    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(credentialsId, region, {
         node1InstanceId,
         node2InstanceId,
         resourceId
-    );
+    });
 
     if (isEmpty(managedInstances)) {
         managedInstances = await listDatabaseInstances(accountId, {
@@ -3418,7 +3416,11 @@ async function runSandboxPreValidations(
         destResourceDetail.metadata as unknown as Metadata;
 
     let [srcStatus, destStatus] = await Promise.all([
-        getActiveSqlNode(credentialsId, region, srcNode1, srcNode2, source.host),
+        getActiveSqlNode(credentialsId, region, {
+            node1InstanceId: srcNode1,
+            node2InstanceId: srcNode2,
+            resourceId: source.host
+        }),
         source.host === dest.host
             ? Promise.resolve(
                   {} as {
@@ -3429,7 +3431,11 @@ async function runSandboxPreValidations(
                       instancesDetails: { instanceId: string; state: string }[];
                   }
               )
-            : getActiveSqlNode(credentialsId, region, destNode1, destNode2, dest.host)
+            : getActiveSqlNode(credentialsId, region, {
+                  node1InstanceId: destNode1,
+                  node2InstanceId: destNode2,
+                  resourceId: dest.host
+              })
     ]);
 
     if (source.host === dest.host) {

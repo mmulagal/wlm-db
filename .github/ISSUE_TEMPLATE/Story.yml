@@ -1,0 +1,80 @@
+name: Story
+description: Create a new user story.
+title: "[STORY]: "
+labels: ["Story"]
+assignees:
+  - shaswats
+projects: ["TLVeng/41"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📖 User Story
+
+        Please provide details for this user story.
+
+  - type: input
+    id: contact
+    attributes:
+      label: "Contact Details"
+      description: "Who is the main point of contact for this story?"
+      placeholder: "e.g., email@netapp.com"
+    validations:
+      required: false
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Story Summary"
+      description: "Briefly describe the user story."
+      placeholder: "As a [user], I want to [do something] so that [benefit]."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "What are the requirements for this story to be considered complete?"
+      placeholder: |
+        - [ ] User can...
+        - [ ] System responds with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-journey
+    attributes:
+      label: "User Journey / Use Case"
+      description: "Describe the user journey or use case for this story."
+      placeholder: "Step-by-step description of how the user will interact with this feature."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      description: "How important is this story?"
+      options:
+        - "High"
+        - "Medium"
+        - "Low"
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: "Dependencies"
+      description: "List any dependencies or blockers for this story."
+      placeholder: "e.g., Waiting for backend API"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context"
+      description: "Any other information or context about this story."

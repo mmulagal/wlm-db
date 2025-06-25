@@ -467,7 +467,7 @@ async function createDatabaseInstances(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    await createAssessmentData(accountId, credentialsId, region, resourceId, databaseInstanceId);
+    await createAssessmentData(accountId, credentialsId, region, resourceId, databaseInstanceId, databaseInstanceName);
 
     return databaseInstanceId;
 }

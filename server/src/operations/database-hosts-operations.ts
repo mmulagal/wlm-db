@@ -1132,15 +1132,24 @@ async function getDatabaseHostSummaryV2(
         };
     });
     const errormessages: { [index: string]: string } = {};
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
+    if (!credentialsId || !region) {
+        const error = `Credentials ID or region is not available for resource ${resourceId} in account ${accountId}.`;
+        logger.error(error);
+        throw createError(HttpErrorCodes.FAILED_DEPENDENCY, error);
+    }
+
     let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
-        region!,
-        node1InstanceId,
-        node2InstanceId,
-        resourceId,
-        accountId,
-        resourceType
+        region,
+        {
+            node1InstanceId,
+            node2InstanceId,
+            resourceId,
+            accountId,
+            resourceType: resourceType as DatabaseTypes,
+            sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
+        }
     );
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
@@ -2326,7 +2335,7 @@ async function getAllClusterNodeDetails(
 }
 
 async function triggerInstancePerformanceAssessment(initiatedBy: string) {
-    logger.info('Trigger instance performance assessment per account', { initiatedBy });
+    logger.info('Trigger instance performance assessment for all hosts', { initiatedBy });
 
     const { items: allmanagedResources } = await getResources(
         undefined,

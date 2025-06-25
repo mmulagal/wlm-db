@@ -50,7 +50,7 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
     if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Unable to get mssql env data');
     }
-    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId, region!, node1InstanceId);
+    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId, region, { node1InstanceId });
     let activeNodeInstanceIp;
     if (activeNodeInstanceId) {
         const activeInstanceDetails = await describeInstance(credentialsId, region, {

@@ -437,7 +437,8 @@ async function updateParentJobStatus(
     accountId: string,
     parentId: string,
     isSandboxJob: boolean = false,
-    errorMsg?: string
+    errorMsg?: string,
+    jobMetadata?: any
 ) {
     logger.info('Updating parent job', { accountId, parentId, isSandboxJob });
 
@@ -488,7 +489,8 @@ async function updateParentJobStatus(
         const modifiedJobData = {
             status: jobStatus,
             endTime: Date.now(),
-            ...errorField
+            ...errorField,
+            metadata: jobMetadata || parentJob.metadata || {}
         };
 
         if (jobStatus !== JOBSTATUS.IN_PROGRESS) {

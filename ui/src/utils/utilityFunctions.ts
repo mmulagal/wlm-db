@@ -6,6 +6,7 @@ import numeral from 'numeral';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import classNames from 'classnames';
+import { TFunction } from 'i18next';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
@@ -472,9 +473,16 @@ export const isValidPassword = (password: string) => {
     }
 };
 
-export const isValidSqlUsername = (username: string) => {
-    if (/[^A-Za-z0-9_]/.test(username)) {
-        return 'Username should not contain special characters.';
+export const isValidSqlUsername = (username: string, t: TFunction) => {
+    const state = store.getState();
+    const { selectedAuthenticationType } = state.workloadFactoryResource;
+    if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+        // Allow backslash for Windows authentication
+        if (/[^A-Za-z0-9_\\]/.test(username)) {
+            return t('databases.update-credentials.username-invalid-windows');
+        }
+    } else if (/[^A-Za-z0-9_]/.test(username)) {
+        return t('databases.update-credentials.username-invalid-sql');
     }
 };
 
