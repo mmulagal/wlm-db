@@ -729,8 +729,6 @@ async function manageSqlInstance(
             resourceId
         };
         await updateParentJobStatus(accountId, hostJobId, false, errorMessage, jobMetadata);
-
-        await updateParentJobStatus(accountId, parentManageJobId);
     }
 }
 
@@ -781,6 +779,8 @@ async function installAndManageSqlInstances(
             })
         )
     );
+
+    await updateParentJobStatus(accountId, parentManageJobId);
 }
 
 async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstanceManageMsSqlRequestBodyType[]) {

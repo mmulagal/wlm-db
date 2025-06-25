@@ -2367,7 +2367,7 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
 
     await Promise.all(
         allmanagedResources.map(
-            throat(3, async (resource: ResourceDetails) => {
+            throat(1, async (resource: ResourceDetails) => {
                 const {
                     metadata,
                     resource_id: databaseHostId,

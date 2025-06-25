@@ -893,7 +893,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
 
     await Promise.all(
         Object.entries(managedInstancesGroupedByAccountId).map(
-            throat(3, async ([accountId, managedInstances]) => {
+            throat(1, async ([accountId, managedInstances]) => {
                 if (isEmpty(managedInstances)) {
                     const errorMessage = `No managed instances found for account ${accountId}.`;
                     logger.info(errorMessage);
@@ -913,7 +913,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     try {
                         await Promise.all(
                             managedInstances.map(
-                                throat(3, async managedInstance => {
+                                throat(1, async managedInstance => {
                                     try {
                                         const {
                                             configurations: instanceConfigurations,
