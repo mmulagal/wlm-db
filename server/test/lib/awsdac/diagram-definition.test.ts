@@ -115,8 +115,14 @@ describe('generateDiagramDefinition with sample JSON input', () => {
         expect(diagram.Diagram.Links[0]).toEqual({
             Source: 'SQLServer1',
             SourcePosition: 'S',
+            SourceArrowHead: {
+                Type: 'Default'
+            },
             Target: 'FSx1',
-            TargetPosition: 'NW'
+            TargetPosition: 'N',
+            TargetArrowHead: {
+                Type: 'Default'
+            }
         });
     });
 });

@@ -147,7 +147,7 @@ function generateDiagramDefinition(
                 Type: 'Default'
             },
             Target: isFSxMultiAZ ? 'FSxStack' : fsxName,
-            TargetPosition: i < totalInstances / 2 ? 'NW' : 'NE',
+            TargetPosition: totalInstances === 1 ? 'N' : i < totalInstances / 2 ? 'NW' : 'NE',
             TargetArrowHead: {
                 Type: 'Default'
             }
