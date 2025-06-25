@@ -35,7 +35,7 @@
             "not_protected": "Not protected"
         },
         "register-flow": {
-            "register-bulk-disable-tooltip": "Register multiple instances will be applicable for Microsoft SQL Server not registered instances only.",
+            "register-bulk-disable-tooltip": "No instances are eligible for registration at this time.",
             "register-multiple-instances": "Register multiple instances",
             "drop_down_tooltip": "Multiple instances must share the same status: authenticated or unauthenticated.",
             "note": "Note",
@@ -84,7 +84,7 @@
             "detect-instance-table-col": {
                 "instance-name": "Instance name",
                 "host-name": "Host name",
-                "authenticated-status": "Authenticated status",
+                "authenticated-status": "Authentication status",
                 "readiness-status": "Readiness status",
                 "prerequisite-check": "Prerequisite check"
             },
