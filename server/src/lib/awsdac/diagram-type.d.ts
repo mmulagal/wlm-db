@@ -29,8 +29,14 @@ interface Resource {
 interface Link {
     Source: string;
     SourcePosition: string;
+    SourceArrowHead?: {
+        Type: string;
+    };
     Target: string;
     TargetPosition: string;
+    TargetArrowHead?: {
+        Type: string;
+    };
     Type?: string;
 }
 

@@ -143,8 +143,14 @@ function generateDiagramDefinition(
         baseDiagram.Diagram.Links.push({
             Source: sqlServerName,
             SourcePosition: 'S',
+            SourceArrowHead: {
+                Type: 'Default'
+            },
             Target: isFSxMultiAZ ? 'FSxStack' : fsxName,
-            TargetPosition: i < totalInstances / 2 ? 'NW' : 'NE'
+            TargetPosition: i < totalInstances / 2 ? 'NW' : 'NE',
+            TargetArrowHead: {
+                Type: 'Default'
+            }
         });
     });
 
