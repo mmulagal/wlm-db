@@ -1,15 +1,21 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useLazyGetDatabaseListV2Query, useLazyGetResourceDetailsV2Query } from '../../../utils/apiService';
+import {
+    useGenerateDiagramMutation,
+    useLazyGetDatabaseListV2Query,
+    useLazyGetResourceDetailsV2Query
+} from '../../../utils/apiService';
 import {
     resetWorkloadFactoryResourceData,
     setDatabaseList,
     setDatabaseListLoading,
+    setDiagramImageData,
     setIsResourceRefresh,
     setResourceDetails,
     setResourceLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { blobToDataURL } from '../../../utils/utilityFunctions';
 
 const DatabaseHostOverviewApiV2 = () => {
     const dispatch = useDispatch();
@@ -31,6 +37,7 @@ const DatabaseHostOverviewApiV2 = () => {
 
     const [resourceDetailsApi] = useLazyGetResourceDetailsV2Query();
     const [databaseListApi] = useLazyGetDatabaseListV2Query();
+    const [generateDiagramAPI] = useGenerateDiagramMutation();
 
     useEffect(() => {
         if (!visitedTabs.Overview) {
@@ -44,6 +51,22 @@ const DatabaseHostOverviewApiV2 = () => {
             dispatch(setIsResourceRefresh(false));
         }
     }, [isResourceRefresh]);
+
+    const runGenerateDiagramApi = async () => {
+        try {
+            const response: any = await generateDiagramAPI({
+                credentialId: selectedResourceCredId || credIdFromJM, // || condition is for when coming from JM
+                regionId: selectedResourceRegionId || regionFromJM, // || condition is for when coming from JM
+                databaseHostId: selectedResourceId || getWellResourceId // || condition is for when coming from JM
+            }).unwrap();
+
+            const dataUrl = await blobToDataURL(response);
+            console.log('Diagram Data URL:', dataUrl);
+            dispatch(setDiagramImageData(dataUrl));
+        } catch (error) {
+            return null;
+        }
+    };
 
     const runResourceDetailsApi = async () => {
         try {

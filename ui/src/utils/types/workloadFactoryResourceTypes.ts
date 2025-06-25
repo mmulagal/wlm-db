@@ -5,6 +5,7 @@ export interface InstanceDetailsData {
 }
 
 export interface WorkloadFactoryResourceEntities {
+    imageDataUrl: string;
     instanceDetailsData: InstanceDetailsData;
     sqlServerUserName: string;
     passwordResetLoading: boolean;

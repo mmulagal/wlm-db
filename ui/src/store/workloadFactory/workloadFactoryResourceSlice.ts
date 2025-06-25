@@ -158,13 +158,17 @@ const initialState: WorkloadFactoryResourceEntities = {
         ec2InstanceId: '',
         databaseInstanceName: ''
     },
-    selectedAuthenticationType: ''
+    selectedAuthenticationType: '',
+    imageDataUrl: ''
 };
 
 const workloadFactoryResourceSlice = createSlice({
     name: 'workloadFactoryResource',
     initialState,
     reducers: {
+        setDiagramImageData: (state, action: PayloadAction<string>) => {
+            state.imageDataUrl = action.payload;
+        },
         setInstanceDetailsData: (state, action: PayloadAction<any>) => {
             state.instanceDetailsData = action.payload;
         },
@@ -244,6 +248,7 @@ const workloadFactoryResourceSlice = createSlice({
 });
 
 export const {
+    setDiagramImageData,
     setInstanceDetailsData,
     setSqlServerUserName,
     setPasswordResetLoading,

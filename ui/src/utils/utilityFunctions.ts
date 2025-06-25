@@ -2191,3 +2191,35 @@ export const rounded = (value: number) => roundedFormatter.format(value);
 export const twoFractionDigits = (value: number) => twoDecimalFormatter.format(value);
 
 export const fourFractionDigits = (value: number) => fourDecimalFormatter.format(value);
+
+export const blobToDataURL = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        try {
+            if (!blob || blob.size === 0) {
+                return reject(new Error('Invalid or empty blob'));
+            }
+
+            // wrap in setTimeout to let event loop catch up (fix for React strict mode)
+            setTimeout(() => {
+                const reader = new FileReader();
+
+                reader.onloadend = () => {
+                    const result = reader.result;
+                    if (result && typeof result === 'string') {
+                        resolve(result);
+                    } else {
+                        reject(new Error('Could not convert blob to base64'));
+                    }
+                };
+
+                reader.onerror = () => {
+                    reject(new Error('FileReader failed'));
+                };
+
+                reader.readAsDataURL(blob);
+            }, 0);
+        } catch (err) {
+            reject(err);
+        }
+    });
+};

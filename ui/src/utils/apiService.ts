@@ -408,6 +408,13 @@ export const workloadFactoryResourceApiV2 = createApi({
                 url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
             })
         }),
+        generateDiagram: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/generate-diagram`,
+                method: 'POST',
+                responseHandler: response => response.blob()
+            })
+        }),
         getDatabaseListV2: builder.query({
             query: ({ credentialId, region, id, sqlInstanceId, fields = false }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}/databases${
@@ -1165,8 +1172,12 @@ export const {
     useGetPGSQLTerraformSetupMutation
 } = databaseHomeApi;
 
-export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
-    workloadFactoryResourceApiV2;
+export const {
+    useLazyGetResourceDetailsV2Query,
+    useGenerateDiagramMutation,
+    useGetDatabaseListV2Query,
+    useLazyGetDatabaseListV2Query
+} = workloadFactoryResourceApiV2;
 
 export const {
     useGetJobsListQuery,
