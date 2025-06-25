@@ -200,7 +200,7 @@
                 "Must not contain non-English letters or 'admin'."
             ],
             "passwords-not-match": "Passwords do not match.",
-            "username-invalid-windows": "Username should not contain special characters except '\\'.",
+            "username-invalid-windows": "Username should not contain special characters except backslash (\\), period (.), and at sign (@).",
             "username-invalid-sql": "Username should not contain special characters."
         }
     }
