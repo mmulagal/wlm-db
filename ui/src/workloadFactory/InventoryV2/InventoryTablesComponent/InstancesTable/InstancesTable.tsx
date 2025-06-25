@@ -648,7 +648,7 @@ const InstancesTable = () => {
                                 </div>
                                 {protectedByList?.length > 0 && (
                                     <div className={commonStyles.protectionTooltipPopOver}>
-                                        <TooltipInfo className={styles['tooltip-icon']} trigger="click">
+                                        <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
                                             {protectionTooltipText(protectedByList)}
                                         </TooltipInfo>
                                     </div>
