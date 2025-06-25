@@ -76,6 +76,15 @@ import { SQL_SERVER_VERSION_TO_YEAR } from './discover-consts';
 const logger = getLogger();
 const isDemoFlow = isDemo();
 
+type activeSqlNodeParams = {
+    node1InstanceId: string;
+    node2InstanceId?: string;
+    resourceId?: string;
+    accountId?: string;
+    resourceType?: DatabaseTypes;
+    sqlDeploymentType?: SqlServerDeploymentModel;
+};
+
 async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
 
@@ -154,14 +163,12 @@ async function getDataBasesSummary(
 
     const { region, metadata } = resourceDetail;
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-    if (!activeNodeInstanceId) {
+    if (!activeNodeInstanceId && credentialsId && region) {
         let instanceName;
-        ({ activeNodeInstanceId, instanceName } = await getActiveSqlNode(
-            credentialsId!,
-            region!,
+        ({ activeNodeInstanceId, instanceName } = await getActiveSqlNode(credentialsId, region, {
             node1InstanceId,
-            node2InstanceId!
-        ));
+            node2InstanceId
+        }));
 
         databaseInstances = [instanceName];
     }
@@ -283,12 +290,10 @@ async function getAllResourceUtilisation(resourceId: string, metricType?: string
     if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
     }
-    const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
-        credentialsId!,
-        region!,
+    const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(credentialsId, region, {
         node1InstanceId,
-        node2InstanceId!
-    );
+        node2InstanceId: node2InstanceId ?? ''
+    });
 
     const sqlServerInstanceName = getOriginalDatabaseInstanceName(instanceName);
     const { [sqlServerInstanceName]: response } = await getAllResourceUtilisationDetails(
@@ -323,12 +328,10 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
     }
-    const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
-        credentialsId!,
-        region!,
+    const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(credentialsId!, region, {
         node1InstanceId,
-        node2InstanceId!
-    );
+        node2InstanceId: node2InstanceId ?? ''
+    });
 
     return getResourceUtilisationDetails(credentialsId, region, metricType, activeNodeInstanceId!, instanceName);
 }
@@ -445,12 +448,17 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     logger.info('Get tables list for resource:', resourceId, databaseName);
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
 
-    const { activeNodeInstanceId } = await getActiveSqlNode(
-        credentialsId!,
-        region!,
-        node1InstanceId!,
-        node2InstanceId!
-    );
+    if (!credentialsId || !region) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Failed to get tables summary, invalid credentials or region'
+        );
+    }
+
+    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId, region, {
+        node1InstanceId: node1InstanceId ?? '',
+        node2InstanceId: node2InstanceId ?? ''
+    });
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get tables summary');
@@ -489,12 +497,17 @@ async function getServerSummary(resourceId: string) {
 
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
 
-    const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
-        credentialsId!,
-        region!,
-        node1InstanceId!,
-        node2InstanceId!
-    );
+    if (!credentialsId || !region) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Failed to get tables summary, invalid credentials or region'
+        );
+    }
+
+    const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(credentialsId, region, {
+        node1InstanceId: node1InstanceId ?? '',
+        node2InstanceId: node2InstanceId ?? ''
+    });
     if (credentialsId && region && activeNodeInstanceId) {
         const sqlServerInstanceName = getOriginalDatabaseInstanceName(instanceName);
         const { [sqlServerInstanceName]: response } = await getServerDetails(
@@ -753,7 +766,11 @@ async function getServerIOLatency(resourceId: string, activeNodeInstanceId: stri
     }
 }
 
-async function getActiveSqlInstanceName(credentialsId: string, region: string, nodeIds: string[]) {
+async function getActiveSqlInstanceName(
+    credentialsId: string,
+    region: string,
+    { nodeIds, sqlDeploymentType }: { nodeIds: string[]; sqlDeploymentType: SqlServerDeploymentModel }
+) {
     logger.info('Fetch active MSSQL instance Name', { credentialsId, region });
 
     const commands = [INSTANCE_DETAILS];
@@ -774,18 +791,22 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
                 const { sql, domain } = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
 
+                let selectedInstance = instancesDetails.find(
+                    (instance: InstanceDetails) =>
+                        instance.instanceState === SQL_SERVICE_STATE.RUNNING && !instance.instanceName.includes('$')
+                )?.instanceName;
+
                 instancesDetails.forEach(obj => {
                     (obj as any).isDefault = !obj.instanceName.includes('$');
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                     obj.sqlAuthEnabled = getSqlAuthEnabledStatus(obj.instanceName, sql, domain);
                 });
                 let isDefaultInstance = true;
-                let selectedInstance = instancesDetails.find(
-                    (instance: InstanceDetails) =>
-                        instance.instanceState === SQL_SERVICE_STATE.RUNNING && !instance.instanceName.includes('$')
-                )?.instanceName;
 
-                if (!selectedInstance) {
+                // Issue: DBS-6183, In case of FCI, when node2 is active, we still show the node 1 as active.
+                // RCA: When the default instance is not running, we check whether there are any other instances in running state. If yes, we consider the node as active - but those instances are standalone.
+                // Fix: The check mentioned RCA can happen only in case of non - FCI
+                if (!selectedInstance && sqlDeploymentType !== SqlServerDeploymentModel.SQL_FCI_SHORT) {
                     const runningInstances = instancesDetails.filter(
                         ({ instanceState }: { instanceState: string }) => instanceState === SQL_SERVICE_STATE.RUNNING
                     );
@@ -999,11 +1020,7 @@ interface ActiveSqlNodeDetails {
 async function getActiveSqlNode(
     credentialsId: string,
     region: string,
-    node1InstanceId: string,
-    node2InstanceId?: string,
-    resourceId?: string,
-    accountId?: string,
-    resourceType: string = DatabaseTypes.MS_SQL_SERVER
+    { node1InstanceId, node2InstanceId, resourceId, accountId, resourceType, sqlDeploymentType }: activeSqlNodeParams
 ) {
     logger.info('Getting active SQL node', {
         credentialsId,
@@ -1011,7 +1028,8 @@ async function getActiveSqlNode(
         node1InstanceId,
         node2InstanceId,
         resourceId,
-        resourceType
+        resourceType,
+        sqlDeploymentType
     });
     try {
         let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId, accountId);
@@ -1041,7 +1059,10 @@ async function getActiveSqlNode(
             }
 
             const { instanceName, instancesDetails = [] } =
-                (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
+                (await getActiveSqlInstanceName(credentialsId, region, {
+                    nodeIds: [node1InstanceId],
+                    sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
+                })) || {};
             if (instanceName) {
                 return {
                     isSSMConnected: true,
@@ -1063,7 +1084,10 @@ async function getActiveSqlNode(
             connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId, accountId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const { instanceName, instancesDetails = [] } =
-                    (await getActiveSqlInstanceName(credentialsId, region, [node2InstanceId])) || {};
+                    (await getActiveSqlInstanceName(credentialsId, region, {
+                        nodeIds: [node2InstanceId],
+                        sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
+                    })) || {};
                 if (instanceName) {
                     return {
                         isSSMConnected: true,
@@ -1436,14 +1460,10 @@ async function getSqlServerVersionAndEdition(
 ) {
     logger.info('Get SQL server version and edition:', { accountId, credentialsId, region, activeNodeInstanceId });
 
-    const { instancesDetails } = await getActiveSqlNode(
-        credentialsId,
-        region,
-        activeNodeInstanceId,
-        undefined,
-        undefined,
+    const { instancesDetails } = await getActiveSqlNode(credentialsId, region, {
+        node1InstanceId: activeNodeInstanceId,
         accountId
-    );
+    });
 
     if (isEmpty(instancesDetails)) {
         logger.warn('No active SQL instances found while fetching version and edition');

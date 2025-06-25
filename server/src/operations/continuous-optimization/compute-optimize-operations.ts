@@ -91,12 +91,10 @@ async function handleComputeRemediation(
     try {
         const [{ resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-        ({ activeNodeInstanceId = '' } = await getActiveSqlNode(
-            credentialsId,
-            region,
+        ({ activeNodeInstanceId = '' } = await getActiveSqlNode(credentialsId, region, {
             node1InstanceId,
             node2InstanceId
-        ));
+        }));
 
         if (activeNodeInstanceId) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);

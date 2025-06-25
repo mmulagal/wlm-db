@@ -123,14 +123,12 @@ async function getAvailableSnapshotPolicyList(
         });
 
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-        const { activeNodeInstanceId = '' } = await getActiveSqlNode(
-            credentialsId,
-            region,
+        const { activeNodeInstanceId = '' } = await getActiveSqlNode(credentialsId, region, {
             node1InstanceId,
             node2InstanceId,
             resourceId,
             accountId
-        );
+        });
 
         const fsxId = fsxnIds?.split(',')[0];
         const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(

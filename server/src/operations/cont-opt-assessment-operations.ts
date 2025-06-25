@@ -215,14 +215,12 @@ async function initiateHostLevelAssessmentDataCollection(
     );
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
-    const { activeNodeInstanceId = '', instanceName } = await getActiveSqlNode(
-        credentialsId,
-        region,
+    const { activeNodeInstanceId = '', instanceName } = await getActiveSqlNode(credentialsId, region, {
         node1InstanceId,
         node2InstanceId,
         resourceId,
         accountId
-    );
+    });
     if (metadata && activeNodeInstanceId) {
         let licenseAssessment;
         let licenseErrorMessage;
