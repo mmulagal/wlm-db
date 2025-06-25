@@ -9,7 +9,6 @@ import {
     ontapRestRequest,
     ontapRestRequestBootstrap,
     enableCredSSP,
-    disableCredSSP,
     invokeCommandWithCredSSP
 } from './common-templates';
 import { REQUIRED_PS_MODULES_FOR_MANAGEMENT } from './discover-consts';
@@ -320,7 +319,7 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
                 $responseObject[$instance] = $_.Exception.Message
             }
         }
-        ${disableCredSSP}
+        # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
         $response = $responseObject | ConvertTo-Json -Depth 5
 
         if([string]::IsNullOrEmpty($response)) {
@@ -508,7 +507,7 @@ const validateSQLInstanceConnectivity = (
                     }
                 }
             }
-            ${windowsUser ? `${disableCredSSP}` : ''}
+            # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
            
         }
     } catch {
@@ -1111,7 +1110,7 @@ const getMappedOntapVolumesScript = (
                 $instanceRespones[$serverInstanceName] = "error: $_"
             }
         }
-        ${disableCredSSP}
+        # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
         $response = $instanceRespones | ConvertTo-Json -Depth 10
 
         if([string]::IsNullOrEmpty($response)) {
@@ -1288,7 +1287,7 @@ Function Call-SqlCmd {
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
         $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $Query -instanceName $InstanceName -extraArguments $ExtraArguments -IsMultiQuery $IsMultiQuery;
-        ${disableCredSSP}
+        # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
     } elseif ($sqlCredential.useSqlAuth -eq $True) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0;
@@ -1444,7 +1443,7 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                 $responseObject[$serverInstanceName] = "error: $_.Exception.Message"
             }
         }
-        ${disableCredSSP}
+        # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
         $response = $responseObject | ConvertTo-Json -Depth 5
 
         if([string]::IsNullOrEmpty($response)) {

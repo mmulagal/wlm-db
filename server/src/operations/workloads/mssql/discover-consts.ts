@@ -1,5 +1,5 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
-import { compressResponse, disableCredSSP, enableCredSSP, invokeCommandWithCredSSP } from './common-templates';
+import { compressResponse, enableCredSSP, invokeCommandWithCredSSP } from './common-templates';
 import { GOOGLE_DNS, DISCOVER_OPERATION_LOG_PATH } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
@@ -697,7 +697,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       Write-Information "Failed to compress the response because the response is either null or empty. $response"
       return $response
     }
-    ${disableCredSSP}
+    # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
     ${compressResponse}
     return (Deflate-String $response)
   } catch {
