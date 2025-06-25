@@ -82,7 +82,10 @@ const SelectInstances = () => {
                 const { colText, disableMsg } = manageActionCol(row);
                 if (colText !== ACTION_CTA.MANAGE_INSTANCES || disableMsg !== '') return [];
 
-                const isAuthorized = isAlreadyDetectedCheck(row);
+                const isAlreadySelectedAndAuthorized = selectedMultiDetectInstances.some(
+                    (item: any) => item?.id === row?.id && item?.authorized
+                );
+                const isAuthorized = isAlreadySelectedAndAuthorized ? true : isAlreadyDetectedCheck(row);
 
                 const isSelected = selectedOptions.some(opt => opt.id === row.id);
 

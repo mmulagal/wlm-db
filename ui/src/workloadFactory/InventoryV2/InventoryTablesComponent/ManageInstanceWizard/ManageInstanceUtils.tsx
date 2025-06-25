@@ -391,7 +391,7 @@ export const callManageMultiInstanceApi = async (
     bulkDetectedInstanceList
         ?.filter(
             (instance: BulkDetectedInstance) =>
-                instance.authorized && isAllowManage(instance?.data?.manageReadiness || {})
+                instance.authorized && isAllowManage(instance?.manageReadiness || instance?.data?.manageReadiness || {})
         )
         .forEach((instance: BulkDetectedInstance) => {
             let installModules: Array<string> = [];
@@ -517,9 +517,8 @@ export const handleMultiInstanceManage = (
         Array.isArray(bulkDetectedInstanceList) &&
         bulkDetectedInstanceList.some(
             (instance: any) =>
-                instance.authorized &&
-                instance?.data?.manageReadiness &&
-                isAllowManage(instance.data.manageReadiness || {})
+                (instance.authorized && instance?.manageReadiness && isAllowManage(instance.manageReadiness || {})) ||
+                (instance?.data?.manageReadiness && isAllowManage(instance?.data?.manageReadiness || {}))
         );
 
     if (anyInstanceReady) {
