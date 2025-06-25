@@ -1580,11 +1580,7 @@ async function validateCredentials(
             // Platform Field:
             // This field is available for Windows instances and will have the value windows if the instance is running Windows.
             // For Linux-based instances, this field is null
-            if (Platform?.toLowerCase() === WINDOWS) {
-                isLinuxHost = false;
-            } else {
-                isLinuxHost = true;
-            }
+            isLinuxHost = Platform?.toLowerCase() !== WINDOWS;
         }
         const isOracleInstance = oracleCredentials.some(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
         let response;
@@ -1605,7 +1601,7 @@ async function validateCredentials(
                 region,
                 instanceId,
                 fsxCredentials,
-                newSqlCredentials,
+                sqlCredentials,
                 windowsUserCredentials,
                 instanceIds,
                 checkManageReadiness
