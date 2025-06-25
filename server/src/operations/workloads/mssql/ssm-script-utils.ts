@@ -1210,7 +1210,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
                     $null = New-Item -ItemType Directory -Path $modulePath
                     $Null = Copy-Item -Path "$Env:Temp\\aws_ssm\\$module\\*" -Destination $modulePath -Recurse
                 }
-            
+            }
             # Ensure the modules are available for use
             $allInstalled = Check-ModuleInstalled -moduleNames $moduleNames
 
