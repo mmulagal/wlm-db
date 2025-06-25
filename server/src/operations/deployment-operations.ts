@@ -105,7 +105,7 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
-import { getServicesWithNoEndpoint, enableVpcDnsAttributes } from './aws/ec2-operations';
+import { validateVpcEndpoints, enableVpcDnsAttributes } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
@@ -138,6 +138,48 @@ const { getPreSignedUrl } = preSignedUrl;
 interface InitializationScript {
     name: string;
     url: string;
+}
+
+async function endpointsValidationResults(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    deploymentMode: string,
+    privateSubnet1Cidr: string,
+    privateSubnet2Cidr: string
+) {
+    logger.info('Fetch VPC endpoints results', credentialsId, region);
+    const { vpcId = '', vpcCidr = '', routeTable1Id = '', routeTable2Id = '' } = networkConfiguration;
+    const subnetDetails = [
+        {
+            subnetId: networkConfiguration.privateSubnet1Id,
+            cidr: privateSubnet1Cidr as string,
+            routeTableId: routeTable1Id
+        },
+        ...(deploymentMode === FCI && networkConfiguration.privateSubnet2Id
+            ? [
+                  {
+                      subnetId: networkConfiguration.privateSubnet2Id,
+                      cidr: privateSubnet2Cidr as string,
+                      routeTableId: routeTable2Id
+                  }
+              ]
+            : [])
+    ];
+    const { servicesWithNoEndpoint = [], missingRoutesInS3 = [] } =
+        credentialsId && region
+            ? await validateVpcEndpoints(
+                  credentialsId,
+                  region,
+                  { vpcId, vpcCidr },
+
+                  subnetDetails
+              )
+            : {};
+    return {
+        servicesWithNoEndpoint,
+        missingRoutesInS3
+    };
 }
 
 async function getSubnetsCidr(
@@ -205,19 +247,22 @@ async function formatTemplateParameters(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
-    const routeTables =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.routeTable1Id!]
-            : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
-    const { servicesWithNoEndpoint, missingRoutesInS3 } =
-        credentialsId && region
-            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
-            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
-
     const { privateSubnet1Cidr, privateSubnet2Cidr } =
         credentialsId && region
             ? await getSubnetsCidr(credentialsId!, region!, networkConfiguration, sqlConfiguration.sqlDeploymentMode)
             : { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
+
+    const { servicesWithNoEndpoint = [], missingRoutesInS3 = [] } =
+        credentialsId && region
+            ? await endpointsValidationResults(
+                  credentialsId,
+                  region,
+                  networkConfiguration,
+                  sqlConfiguration.sqlDeploymentMode,
+                  privateSubnet1Cidr as string,
+                  privateSubnet2Cidr as string
+              )
+            : {};
 
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
@@ -1138,21 +1183,24 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
-    const routeTables =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.routeTable1Id!]
-            : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
-    const { servicesWithNoEndpoint, missingRoutesInS3 } =
-        credentialsId && region
-            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
-            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
-
     const { privateSubnet1Cidr, privateSubnet2Cidr } = await getSubnetsCidr(
         credentialsId!,
         region!,
         networkConfiguration,
         sqlConfiguration.sqlDeploymentMode
     );
+
+    const { servicesWithNoEndpoint = [], missingRoutesInS3 = [] } =
+        credentialsId && region
+            ? await endpointsValidationResults(
+                  credentialsId,
+                  region,
+                  networkConfiguration,
+                  sqlConfiguration.sqlDeploymentMode,
+                  privateSubnet1Cidr as string,
+                  privateSubnet2Cidr as string
+              )
+            : {};
 
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
@@ -1866,22 +1914,22 @@ async function formatPgSqlTemplateParameters(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
-    logger.info('AWS Account ID', awsAccountId);
-
-    const routeTables =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.routeTable1Id!]
-            : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
-    const { servicesWithNoEndpoint, missingRoutesInS3 } =
-        credentialsId && region
-            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
-            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
-
     const { privateSubnet1Cidr, privateSubnet2Cidr } =
         credentialsId && region
             ? await getSubnetsCidr(credentialsId!, region!, networkConfiguration, sqlConfiguration.sqlDeploymentMode)
             : { privateSubnet1Cidr: '', privateSubnet2Cidr: '' };
 
+    const { servicesWithNoEndpoint = [], missingRoutesInS3 = [] } =
+        credentialsId && region
+            ? await endpointsValidationResults(
+                  credentialsId,
+                  region,
+                  networkConfiguration,
+                  sqlConfiguration.sqlDeploymentMode,
+                  privateSubnet1Cidr as string,
+                  privateSubnet2Cidr as string
+              )
+            : {};
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
@@ -2055,21 +2103,24 @@ async function createCfTemplateForPgsqlDeployment(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
-    const routeTables =
-        sqlConfiguration.sqlDeploymentMode === STANDALONE
-            ? [networkConfiguration.routeTable1Id!]
-            : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
-    const { servicesWithNoEndpoint, missingRoutesInS3 } =
-        credentialsId && region
-            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
-            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
-
     const { privateSubnet1Cidr, privateSubnet2Cidr } = await getSubnetsCidr(
         credentialsId!,
         region!,
         networkConfiguration,
         sqlConfiguration.sqlDeploymentMode
     );
+
+    const { servicesWithNoEndpoint = [], missingRoutesInS3 = [] } =
+        credentialsId && region
+            ? await endpointsValidationResults(
+                  credentialsId,
+                  region,
+                  networkConfiguration,
+                  sqlConfiguration.sqlDeploymentMode,
+                  privateSubnet1Cidr as string,
+                  privateSubnet2Cidr as string
+              )
+            : {};
 
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
@@ -2120,16 +2171,10 @@ async function createCfTemplateForPgsqlDeployment(
     const amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
     templateParams += `&param_${EBS_VOLUME_SIZE}=${amiSize}`;
 
-    templateParamsAsList.push(
-        {
-            ParameterKey: TEMPLATE_USERNAME_MAPPING.FSxAdminUsername,
-            ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
-        }
-        // {
-        //     ParameterKey: TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName,
-        //     ParameterValue: sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
-        // }
-    );
+    templateParamsAsList.push({
+        ParameterKey: TEMPLATE_USERNAME_MAPPING.FSxAdminUsername,
+        ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+    });
 
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!servicesWithNoEndpoint.includes(key)) {

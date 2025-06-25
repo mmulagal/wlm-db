@@ -15,7 +15,7 @@
             "Groups": [
                 {
                     "GroupName": "default",
-                    "GroupId": "sg-05f4939d6670b405f"
+                    "GroupId": "sg-ad2b38d1"
                 }
             ],
             "InterfaceType": "interface",
@@ -53,7 +53,7 @@
                     "Value": "fs-0f3b8ed8a601288ae"
                 }
             ],
-            "VpcId": "vpc-046f7e26255458373"
+            "VpcId": "vpc-84b3afe6"
         },
         {
             "Attachment": {
@@ -70,7 +70,7 @@
             "Groups": [
                 {
                     "GroupName": "default",
-                    "GroupId": "sg-3924c15c"
+                    "GroupId": "sg-077853a8fc19fc6fc"
                 }
             ],
             "InterfaceType": "interface",
@@ -125,7 +125,7 @@
             "Groups": [
                 {
                     "GroupName": "default",
-                    "GroupId": "sg-3924c15c"
+                    "GroupId": "sg-077853a8fc19fc6fc"
                 }
             ],
             "InterfaceType": "interface",

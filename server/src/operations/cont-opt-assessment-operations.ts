@@ -1728,8 +1728,10 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         handleAssessment(accountId, managedInstance, jobId, initiatedBy, fields);
 
         return { jobId };
-    } catch (error) {
-        logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
+    } catch (error: any) {
+        const errorMessage = `Error while triggering drift assessment for account ${accountId}, host ${databaseHostId}, instance ${databaseInstanceId}: ${error.message}`;
+        logger.error(errorMessage);
+        throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 }
 
