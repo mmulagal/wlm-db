@@ -305,18 +305,6 @@
         height: 14px !important;
     }
 
-    .protectionIcons {
-        display: flex;
-        gap: 32px;
-        align-items: center;
-        cursor: pointer;
-
-        svg {
-            position: relative;
-            top: 2px;
-        }
-    }
-
     .protectionTooltipMessage {
         padding: 16px 24px;
         box-shadow: 2px 2px 6px 0px var(--border);
