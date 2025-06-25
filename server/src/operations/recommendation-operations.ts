@@ -381,7 +381,9 @@ async function handleInstanceRecommendation(
                     ?.filter(({ instanceType }) => instanceType !== existingInstanceType)
                     ?.map(({ instanceType, pricingDetails }) => {
                         const basePrice = pricingDetails?.NA?.pricePerUnit;
-                        const price = pricingDetails[recommendedSqlLicenseType]?.pricePerUnit;
+                        const price = isAwsLicenseIncluded
+                            ? pricingDetails[recommendedSqlLicenseType]?.pricePerUnit
+                            : basePrice + monthlySqlByolCostPerHost! / HOURS_IN_MONTH;
                         const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(basePrice);
                         const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(price);
                         return {
