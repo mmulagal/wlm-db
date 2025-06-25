@@ -198,7 +198,9 @@
                 "At least one character, one digit and one special character required.",
                 "Must not contain non-English letters or 'admin'."
             ],
-            "passwords-not-match": "Passwords do not match."
+            "passwords-not-match": "Passwords do not match.",
+            "username-invalid-windows": "Username should not contain special characters except '\\'.",
+            "username-invalid-sql": "Username should not contain special characters."
         }
     }
 }

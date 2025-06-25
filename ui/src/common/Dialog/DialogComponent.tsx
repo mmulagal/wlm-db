@@ -1,5 +1,6 @@
 import { Button, DialogContent, DialogFooter, DialogHeader, DialogLayout, useDialog } from '@netapp/design-system';
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../store/storeHooks';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
@@ -35,6 +36,7 @@ const DialogComponent = ({
     testId
 }: DialogProps) => {
     const { closeDialog } = useDialog();
+    const { t } = useTranslation();
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
@@ -110,7 +112,7 @@ const DialogComponent = ({
                     sqlServerUserName.length === 0 ||
                     password !== confirmPassword ||
                     isValidPassword(password))) ||
-            isValidSqlUsername(sqlServerUserName)
+            isValidSqlUsername(sqlServerUserName, t)
         ) {
             return true;
         }
