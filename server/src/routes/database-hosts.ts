@@ -16,10 +16,12 @@ import {
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
     PgSqlDbHostDetailsSchema,
-    PgSqlDbHostsSummarySchema
+    PgSqlDbHostsSummarySchema,
+    DatabaseHostDiagramSchema
 } from './schemas/database-hosts-schemas';
 import { DatabaseTypes } from '../utils/consts';
 import castRequest from './utils';
+import getDiagramOfDatabaseHost from '../operations/diagrams/diagram-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const PGSQL_API_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
@@ -144,6 +146,31 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     fields
                 );
                 return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/generate-diagram`,
+            { schema: DatabaseHostDiagramSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId }
+                } = castRequest(request);
+                const response = await getDiagramOfDatabaseHost(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    request.id
+                );
+
+                if (response.error) {
+                    return reply.code(500).send({ error: response.error });
+                }
+
+                return reply
+                    .header('Content-Type', 'image/png')
+                    .header('Content-Disposition', 'attachment; filename="diagram.png"')
+                    .send(response.file);
             }
         )
         .get(
