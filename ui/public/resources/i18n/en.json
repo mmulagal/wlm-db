@@ -202,6 +202,14 @@
             "passwords-not-match": "Passwords do not match.",
             "username-invalid-windows": "Username should not contain special characters except backslash (\\), period (.), and at sign (@).",
             "username-invalid-sql": "Username should not contain special characters."
+        },
+        "bluexp-menu": {
+            "api-hub": "API Hub",
+            "workload-factory-notification": "Workload Factory notification setup",
+            "links": "Links",
+            "monitoring-github": "Monitoring GitHub repository",
+            "subscribe-to-rss": "Subscribe to RSS",
+            "workload-factory-credentials": "Workload Factory credentials"
         }
     }
 }
