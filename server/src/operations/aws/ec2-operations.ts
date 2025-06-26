@@ -65,6 +65,8 @@ import describeAutoscalingInstances from '../../lib/aws/auto-scaling';
 
 const logger = getLogger();
 
+const isDemoFlow = isDemo();
+
 type KeyPairType = Static<typeof KeyPairsSchema>;
 
 async function getVpcsList(credentialsId: string, region: string, fields?: string) {
@@ -411,7 +413,7 @@ async function getInstanceTypes(region: string, credentialsId?: string) {
         architecture: ProcessorInfo?.SupportedArchitectures
     }));
 
-    if (isDemo() && region === 'ap-southeast-5') {
+    if (isDemoFlow && region === 'ap-southeast-5') {
         // Filtering m6i* & c6i* instances for malaysia region, TODO: as DBS extends support for more regions, this call should be modified to be an actual AWS API call & not a static list
         filteredInstances = filteredInstances.filter(
             ({ instanceType }) => instanceType?.startsWith('m6i') || instanceType?.startsWith('c6i')
@@ -659,7 +661,7 @@ async function validateVpcEndpoints(
     //     }
     // ];
 
-    if (endpointsWithIssues?.length) {
+    if (!isDemoFlow && endpointsWithIssues?.length) {
         const combinedIssues = (endpointsWithIssues || []).reduce((acc, issue) => {
             if (!issue) {
                 return acc;
@@ -1015,7 +1017,7 @@ async function getInstanceDetailsByPrivateIp(
                     ec2InstanceId: InstanceId,
                     ec2InstancePrivateIpAddress: PrivateIpAddress,
                     ec2InstanceType: InstanceType,
-                    ec2InstanceName: isDemo() ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(Tags),
+                    ec2InstanceName: isDemoFlow ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(Tags),
                     ec2UsageOperation: UsageOperation
                 });
             }
