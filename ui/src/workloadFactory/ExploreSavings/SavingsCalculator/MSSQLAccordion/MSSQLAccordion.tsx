@@ -205,7 +205,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         LoadRecommendedConfig(dispatch, data, false);
         setTimeout(() => {
             dispatch(setIsLoadConfig(false));
-        }, 5);
+        }, 2000);
     };
 
     const setCSS = () => {
