@@ -32,7 +32,7 @@ interface tokenResponse {
 }
 
 async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }> {
-    logger.info('Getting workload factory service token:');
+    logger.debug('Getting workload factory service token:');
 
     try {
         if (!process.env.TEST && hasCache(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN)) {

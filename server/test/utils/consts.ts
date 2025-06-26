@@ -110,8 +110,7 @@ const STANDBY_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
 
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 const DAYS = 7;
-const getLastNDays = (n: number) =>
-    Array.from({ length: n }, (_, i) => new Date(Date.now() - i * 24 * 60 * 60 * 1000));
+const getLastNDays = (n: number) => Array.from({ length: n }, (_, i) => new Date(Date.now() - i * 24 * 60 * 60 * 1000));
 
 const CLOUD_WATCH_METRICS_RESPONSE = {
     MetricDataResults: [

@@ -1,4 +1,8 @@
-import { handleLogsAnalysis, triggerLogsAnalysis } from '../../src/operations/logs-analyzer/logs-analyzer-operations';
+import {
+    calculateLogsAnalysisPrice,
+    handleLogsAnalysis,
+    triggerLogsAnalysis
+} from '../../src/operations/logs-analyzer/logs-analyzer-operations';
 
 import {
     createResource,
@@ -85,5 +89,10 @@ describe('Logs Analyzer Operations', () => {
         const result =
             (await handleLogsAnalysis(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, managedInstance, jobId)) || [];
         expect((result?.[0] as any)?.status)?.toBeDefined();
+    });
+
+    it('Should calculate logs analysis cost', async () => {
+        const response = await calculateLogsAnalysisPrice(TEST_REGION);
+        expect(response).toHaveProperty('costPerError');
     });
 });
