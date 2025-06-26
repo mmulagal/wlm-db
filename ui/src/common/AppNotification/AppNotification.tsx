@@ -66,6 +66,24 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
         };
     }, [notifications, onClose]);
 
+    const renderAdditionalText = (text: string) => {
+        // Simple URL regex
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        if (urlRegex.test(text)) {
+            // Replace URLs in the text with anchor tags
+            return text.split(urlRegex).map((part, i) =>
+                urlRegex.test(part) ? (
+                    <a key={i} href={part} target="_blank" rel="noopener noreferrer">
+                        {part}
+                    </a>
+                ) : (
+                    part
+                )
+            );
+        }
+        return text;
+    };
+
     return (
         <div
             className={styles['app-notification-container']}
@@ -152,7 +170,7 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                                     onClose={() => {
                                         onClose(idx, totalCount);
                                     }}
-                                    moreInfo={notification.additionalText}
+                                    moreInfo={renderAdditionalText(notification.additionalText)}
                                     type={notification?.notificationType?.toLowerCase()}
                                     variant="primary"
                                     key={idx}
