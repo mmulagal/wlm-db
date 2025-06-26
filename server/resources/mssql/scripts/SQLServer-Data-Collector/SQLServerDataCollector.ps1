@@ -14,7 +14,7 @@ The script gathers information such as OS edition, CPU count, RAM size, network 
 The collected data is output in JSON format, which can be used for further analysis or reporting.
 
 .PREREQUISITES
-# - PowerShell 3.0 or later
+# - PowerShell 5.0 or later
 # - Necessary permissions to access WMI and SQL Server on the remote computer
 # - Network connectivity to the remote computer
 
@@ -23,6 +23,11 @@ The collected data is output in JSON format, which can be used for further analy
 2. Open PowerShell with administrative privileges.
 3. Navigate to the directory where the script is downloaded.
 4. Run the script with the required parameters.
+5. Script should be run with a Windows local login OR domain login that has admin rights on the system. Domain login is needed for cluster configuration.
+6. User should have admin privileges on SQL Server instance to get full report.
+7. If the Windows login does not have required access to the SQL Server instance, provide the local SQL user credentials for collection with '-SqlUserName' parameter.
+8. Collection should not have any performance impact on the SQL Server instance and finishes within few minutes.
+9. Script collects configuration information of the host node and partner node in case of FCI/AOAG. Most of the performance stats are captured from historic counter data in SQL Server(4hrs). Memory usage is point-in-time.
 
 .PARAMETER instanceNames
 (Optional) Array of SQL Server instance names to query. If not specified, the script will attempt to gather information from all available SQL Server instances on the remote computer.
