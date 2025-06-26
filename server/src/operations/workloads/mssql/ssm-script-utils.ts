@@ -283,6 +283,9 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
 
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
+        if ($isAtleastOneCredentialIsOfDomain) {
+            Enable-CredSSP
+        }
         $instances | ForEach-Object {
             $instance = $_
             $instanceName = "$env:COMPUTERNAME"
@@ -422,6 +425,7 @@ const validateSQLInstanceConnectivity = (
                     ? `
                     ${enableCredSSP} 
                     ${invokeCommandWithCredSSP}
+                    Enable-CredSSP
                 `
                     : ''
             }
@@ -640,6 +644,9 @@ const getMappedOntapVolumesScript = (
         $instanceRespones = @{}
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
+        if ($isAtleastOneCredentialIsOfDomain) {
+            Enable-CredSSP
+        }
         $sqlInstances | ForEach-Object {
             try {
                 $sqlCredential = $_.sqlCredential
@@ -1286,6 +1293,7 @@ Function Call-SqlCmd {
     if ($sqlCredential.useDomainAuth -eq $True) {
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
+        Enable-CredSSP
         $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $Query -instanceName $InstanceName -extraArguments $ExtraArguments -IsMultiQuery $IsMultiQuery;
         # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
     } elseif ($sqlCredential.useSqlAuth -eq $True) {
@@ -1394,6 +1402,7 @@ const getSqlCredentials = (sqlAuthEnabled: boolean) => `
                     Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
                 }
                 $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
+                $isAtleastOneCredentialIsOfDomain = $sqlCredentials.domain.Count -gt 0
             } catch {
                 $sqlCredentials = $null
             }
@@ -1409,6 +1418,9 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
         ${getSqlCredentials(sqlAuthEnabled)}
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
+        if ($isAtleastOneCredentialIsOfDomain) {
+            Enable-CredSSP
+        }
         $sqlInstances | ForEach-Object {
             $serverInstanceName = $_
             $instanceName = "$env:COMPUTERNAME"

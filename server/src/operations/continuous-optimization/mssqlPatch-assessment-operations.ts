@@ -275,7 +275,7 @@ async function runMSSQLPatchAssessment(
             const patchAssessmentObjects: MSSQLPatchAssessmentObject[] = instanceInstalledPatchDetailsList.map(
                 ({ instanceId, installedPatches }) => {
                     const installedPatchKbNumbers = new Set(
-                        installedPatches
+                        (Array.isArray(installedPatches) ? installedPatches : [])
                             .map((patch: InstalledPatches) => extractKbNumber(patch.DisplayName))
                             .filter((kbNumber: string | null) => kbNumber !== null)
                     );
@@ -286,7 +286,7 @@ async function runMSSQLPatchAssessment(
 
                     for (const availablePatch of availableCriticalSQLPatches) {
                         if (
-                            !installedPatchKbNumbers.has(availablePatch.KbNumber) &&
+                            !installedPatchKbNumbers.has(availablePatch?.KbNumber ?? '') &&
                             availablePatch.ReleaseDate &&
                             new Date(availablePatch.ReleaseDate) >= new Date(currentVersionReleaseDate)
                         ) {

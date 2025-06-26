@@ -1373,6 +1373,9 @@ async function registerResourceCredentials(
         throw new Error('No credentials to be registered.');
     }
 
+    // Remove duplicates based on ec2InstanceId
+    credentialsTobeValidated = uniqBy(credentialsTobeValidated, 'ec2InstanceId');
+
     const response: RegisterCredentialsResponseType = {
         items: []
     };
@@ -1570,7 +1573,7 @@ async function validateCredentials(
     fsxCredentials: RegisterCredentialsType | undefined,
     sqlCredentials: RegisterCredentialsType[],
     windowsUserCredentials: RegisterCredentialsType[],
-    oracleCredentials: RegisterCredentialsType[] = [],
+    oracleCredentials: RegisterCredentialsType[],
     instanceIds: string[],
     checkManageReadiness: boolean = false
 ) {
@@ -1585,6 +1588,7 @@ async function validateCredentials(
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
 
+    // TODO: Revisit this logic, as it is not clear why we are trying to delete SSM parameters when we haven't set any.
     const ssmParameters = [`${SSM_PARAM_PREFIX}${fsxCredentials?.resourceId}`];
     instanceIds.forEach(instance => ssmParameters.push(`${SSM_PARAM_PREFIX}${instance}`));
 
@@ -1602,7 +1606,7 @@ async function validateCredentials(
         region,
         instanceId,
         fsxCredentials,
-        newSqlCredentials,
+        newSqlCredentials ?? oracleCredentials,
         windowsUserCredentials,
         instanceIds
     );

@@ -202,25 +202,26 @@ const enableCredSSP = `
         }
     }
 
-    # Enable CredSSP
-    if (-not (Is-CredSSPEnabled)) {
-        try {
-            $ServerName = '*'
-            $isPartOfDomain = (Get-WmiObject Win32_ComputerSystem).PartofDomain
-            if ($isPartOfDomain -eq $True) {
-                $domain = (Get-WmiObject Win32_ComputerSystem).Domain
-                $ServerName = "*.$domain"
-            }
-            Start-Transcript -Path C:\\cfn\\log\\EnableCredSSP.ps1.txt -Append | Out-Null
-            Enable-WSManCredSSP -Role Client -DelegateComputer $ServerName -Force | Out-Null
-            Enable-WSManCredSSP -Role Server -Force | Out-Null
+    Function Enable-CredSSP {
+        if (-not (Is-CredSSPEnabled)) {
+            try {
+                $ServerName = '*'
+                $isPartOfDomain = (Get-WmiObject Win32_ComputerSystem).PartofDomain
+                if ($isPartOfDomain -eq $True) {
+                    $domain = (Get-WmiObject Win32_ComputerSystem).Domain
+                    $ServerName = "*.$domain"
+                }
+                Start-Transcript -Path C:\\cfn\\log\\EnableCredSSP-ManageOps.txt -Append | Out-Null
+                Enable-WSManCredSSP -Role Client -DelegateComputer $ServerName -Force | Out-Null
+                Enable-WSManCredSSP -Role Server -Force | Out-Null
 
-            # Verify CredSSP is enabled
-            if (-not (Is-CredSSPEnabled)) {
-                throw "Failed to enable CredSSP."
+                # Verify CredSSP is enabled
+                if (-not (Is-CredSSPEnabled)) {
+                    throw "Failed to enable CredSSP."
+                }
+            } catch {
+                Write-Error "Error enabling CredSSP: $($_.Exception.Message)"
             }
-        } catch {
-            Write-Error "Error enabling CredSSP: $($_.Exception.Message)"
         }
     }
 `;
@@ -228,7 +229,7 @@ const enableCredSSP = `
 const disableCredSSP = `
     try {
         # Disable CredSSP
-        Start-Transcript -Path C:\\cfn\\log\\DisableCredSSP.ps1.txt -Append | Out-Null
+        Start-Transcript -Path C:\\cfn\\log\\DisableCredSSP-ManageOps.txt -Append | Out-Null
         $ErrorActionPreference = "Stop"
 
         Disable-WSManCredSSP Client | Out-Null
