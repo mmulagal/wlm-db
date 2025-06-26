@@ -3,7 +3,7 @@ import { ConversationRole } from '@aws-sdk/client-bedrock-runtime';
 interface ErrorLg {
     errorContext: string;
     errorMessage: string;
-    errorCount: number;
+    count: number;
     severity: string;
     firstOccurrence?: number;
     lastOccurrence?: number;

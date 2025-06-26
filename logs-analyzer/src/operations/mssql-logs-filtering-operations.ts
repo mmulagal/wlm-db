@@ -123,7 +123,7 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLog
             return {
                 errorContext,
                 errorMessage,
-                errorCount: groupedLogs[key].length,
+                count: groupedLogs[key].length,
                 firstOccurrence: groupedLogs[key]?.[0]?.timestamp
                     ? new Date(groupedLogs[key][0].timestamp).getTime()
                     : undefined,

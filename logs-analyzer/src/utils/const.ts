@@ -143,7 +143,7 @@ This application uses AWS FSx for NetApp ONTAP as the underlying storage.
 You are given the following input:
 {
     "errorContext": "<error message along with 5 lines before and after the message>",
-    "errorCount": <number of occurrences>,
+    "count": <number of occurrences>,
     "severity": "<error severity>"
 }
 
@@ -153,7 +153,7 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
     {
         "error": "<errorContext>",
         "cause": "<cause of the error>",
-        "count": <errorCount>,
+        "count": <count of occurrences>,
         "severity": "<error severity>",
         "sql": {
             "query": ["<SQL query to gather additional information>", ...]                    
@@ -173,7 +173,7 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
 ### Example Input:
 {
     "errorContext": "ERROR:  could not connect to server: Connection refused",
-    "errorCount": 50,
+    "count": 50,
     "severity": "ERROR"
 }
 
