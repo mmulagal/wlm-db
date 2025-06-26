@@ -1673,7 +1673,8 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'bedrock:GetFoundationModelAvailability',
     'bedrock:ListInferenceProfiles',
     'logs:PutRetentionPolicy',
-    'cloudwatch:GetMetricData'
+    'cloudwatch:GetMetricData',
+    'cloudwatch:GetMetricStatistics'
 ];
 
 const AWS_ERROR_CODES = {
