@@ -2,7 +2,6 @@ import { DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import styles from './ValueCard.module.scss';
 import { ReactComponent as Edit } from '../../../../assets/ic_edit.svg';
-import { GENERAL } from '../../../../utils/appConstants';
 
 type ValueCardProps = {
     optimizationScore?: string;
@@ -38,7 +37,7 @@ const ValueCard = ({
                             {optimizedInstances}
                         </DsTypography>
                         <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.valueCard.well-architected-instances')}
+                            {t('databases.well-architect.well-architected-instances')}
                         </DsTypography>
                     </div>
 
@@ -47,33 +46,30 @@ const ValueCard = ({
                             {notOptimizedInstances}
                         </DsTypography>
                         <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.valueCard.not-optimized-instances')}
+                            {t('databases.well-architect.not-optimized-instances')}
                         </DsTypography>
                     </div>
 
                     <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
                         <DsTypography variant="Semibold_14">{severity}</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.valueCard.severity')}
-                        </DsTypography>
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.severity')}</DsTypography>
                     </div>
 
                     <div className={styles.block}>
                         <div className={styles.configState}>
                             <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
                             <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div onClick={() => handleEdit(type)}>
                                         <Edit />
                                     </div>
                                 }
-                            />
+                            >
+                                {t('databases.general.manage-analysis-state')}
+                            </Popover>
                         </div>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.valueCard.analysis-state')}
-                        </DsTypography>
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.analysis-state')}</DsTypography>
                     </div>
                 </div>
             )}
@@ -83,9 +79,7 @@ const ValueCard = ({
                         <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                             {instances}
                         </DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.valueCard.instances')}
-                        </DsTypography>
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.instances')}</DsTypography>
                     </div>
 
                     <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
@@ -94,16 +88,12 @@ const ValueCard = ({
                             <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
                         </div>
 
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.valueCard.analysis-state')}
-                        </DsTypography>
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.analysis-state')}</DsTypography>
                     </div>
 
                     <div className={styles.block}>
                         <DsTypography variant="Semibold_14">{severity}</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.valueCard.severity')}
-                        </DsTypography>
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.severity')}</DsTypography>
                     </div>
                 </div>
             )}

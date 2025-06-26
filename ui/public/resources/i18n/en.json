@@ -33,7 +33,8 @@
             "storage-consistent": "Storage consistent protection",
             "application-consistent": "Application consistent protection",
             "protected": "Protected",
-            "not_protected": "Not protected"
+            "not_protected": "Not protected",
+            "manage-analysis-state": "Manage Analysis State"
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "No instances are eligible for registration at this time.",
@@ -191,13 +192,11 @@
                 "costEfficiency": "Cost Efficiency",
                 "operationalExcellence": "Operational Excellence"
             },
-            "valueCard": {
-                "well-architected-instances": "Well-architected instances",
-                "not-optimized-instances": "Not-optimized instances",
-                "severity": "Severity",
-                "analysis-state": "Analysis state",
-                "instances": "Instances"
-            }
+            "well-architected-instances": "Well-architected instances",
+            "not-optimized-instances": "Not-optimized instances",
+            "severity": "Severity",
+            "analysis-state": "Analysis state",
+            "instances": "Instances"
         },
         "update-credentials": {
             "password-info-heading": "The password must be:",
