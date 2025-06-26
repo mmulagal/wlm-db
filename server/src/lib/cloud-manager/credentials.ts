@@ -75,7 +75,7 @@ interface wfCredentials {
     metadata: { name: string; arn: string };
 }
 async function getWfCredentialDetails(credentialsId: string, accountId?: string) {
-    logger.info('Getting workload factory credential details for ', { credentialsId, accountId });
+    logger.debug('Getting workload factory credential details for ', { credentialsId, accountId });
 
     if (!process.env.TEST && hasCache(WF_USER_CRED_TYPE, credentialsId)) {
         return readFromCacheByKey(WF_USER_CRED_TYPE, credentialsId);

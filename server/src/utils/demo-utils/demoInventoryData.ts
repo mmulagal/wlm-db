@@ -18,6 +18,10 @@ const MANAGE_READINESS = {
         missingSqlPermissions: [],
         missingModules: []
     }
+    // logsanalyzer: {
+    //     missingSqlPermissions: [],
+    //     missingModules: []
+    // }
 };
 function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlResponseBodyType {
     return {

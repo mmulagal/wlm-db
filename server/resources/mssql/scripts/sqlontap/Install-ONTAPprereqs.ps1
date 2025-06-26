@@ -51,7 +51,8 @@ $moduleList = @(
     'AWS.Tools.FSX',
     'AWS.Tools.Common',
     'AWS.Tools.Installer',
-    'AWS.Tools.CloudWatch'
+    'AWS.Tools.CloudWatch',
+    'AWS.Tools.BedrockRuntime'
 )
 
 foreach ($module in $moduleList) {
@@ -93,6 +94,7 @@ while ($installPSModulesTries -le 2) {
             Install-Module -Name SqlServer -Force -AllowClobber
             Install-Module -Name AWS.Tools.CloudWatch -Force -AllowClobber
             Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion # remove this skip publisher check once the module is signed
+            Install-Module -Name AWS.Tools.BedrockRuntime -Force -AllowClobber
 
             $modulesInstalled = $True
             break
@@ -130,6 +132,7 @@ while ($installPSModulesTries -le 2) {
             Install-Module -Name AWS.Tools.CloudWatch -Force -AllowClobber -Repository 'AWS'
             Install-Module -Name SqlServer -Force -AllowClobber -Repository 'AWS'
             Install-Module -Name netapp.ontap -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -Repository 'AWS'
+            Install-Module -Name AWS.Tools.BedrockRuntime -Force -AllowClobber -Repository 'AWS'
 
             $modulesInstalled = $True
             break

@@ -130,6 +130,14 @@ resource "aws_iam_role_policy" "ec2_iam_role_policy" {
         Resource = "*"
       },
       {
+        Sid    = "BedrockStatement"
+        Effect = "Allow"
+        Action = [
+          "bedrock:InvokeModel"
+        ]
+        Resource = "*"
+      },
+      {
         Sid    = "SSMGetPutParameter"
         Effect = "Allow"
         Action = [

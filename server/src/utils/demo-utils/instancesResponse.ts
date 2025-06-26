@@ -16,6 +16,10 @@ const MANAGE_READINESS = {
         missingSqlPermissions: [],
         missingModules: []
     }
+    // logsanalyzer: {
+    //     missingSqlPermissions: [],
+    //     missingModules: []
+    // }
 };
 
 function instanceDemoData(fsxId: string, ec2InstanceId: string) {

@@ -3296,6 +3296,10 @@ const DEMO_REGISTER_RESPONSE = {
             missingSqlPermissions: [],
             missingModules: []
         }
+        // logsanalyzer: {
+        //     missingSqlPermissions: [],
+        //     missingModules: []
+        // }
     }
 };
 

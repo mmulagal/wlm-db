@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import { cloneDeep, compact, groupBy, isEmpty } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
+import throat from 'throat';
 import {
     ENT_ENGINE_EDITION,
     FINDING,
@@ -117,7 +118,9 @@ async function getLicenseRecommendations(
 
     const enterpriseUsageResults = await Promise.all(
         runningEnterpriseEditionSqlServerInstances.map(sqlServerInstance =>
-            isUsingEnterpriseConfiguration(accountId, credentialsId, region, instanceId, sqlServerInstance)
+            throat(5, async () => {
+                isUsingEnterpriseConfiguration(accountId, credentialsId, region, instanceId, sqlServerInstance);
+            })
         )
     );
     const usingEnterpriseConfiguration = enterpriseUsageResults.some(result => result);

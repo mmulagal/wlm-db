@@ -142,6 +142,7 @@ const SqlServerInstanceInfo = Type.Object({
             remediation: ManageReadinessObject,
             dbcreation: ManageReadinessObject,
             sandbox: ManageReadinessObject
+            // logsanalyzer: Type.Optional(ManageReadinessObject)
         })
     )
 });
