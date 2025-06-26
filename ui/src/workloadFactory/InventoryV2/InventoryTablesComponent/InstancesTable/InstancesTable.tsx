@@ -5,6 +5,7 @@ import {
     DsTypography,
     Popover,
     postBlueXPMessage,
+    TooltipInfo,
     useDialog
 } from '@netapp/design-system';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -63,6 +64,7 @@ import { updateResourceId } from '../../../../store/authSlice';
 
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import styles from '../InventoryTable.module.scss';
+import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
@@ -353,6 +355,16 @@ const InstancesTable = () => {
         [instanceTableRows]
     );
 
+    const protectionTooltipText = (data: any) => (
+        <div className={styles.protectionTooltipMessage}>
+            {data.map((val: any, index: number) => (
+                <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
+                    {val}
+                </DsTypography>
+            ))}
+        </div>
+    );
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'Instance name',
@@ -595,6 +607,22 @@ const InstancesTable = () => {
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
                     loading = true;
                 }
+                const protectedByList = [];
+                const protection = rowData?.protection ?? {};
+                if (
+                    [
+                        protection?.isSqlNativeEnabled,
+                        protection?.isAwsBackupEnabled?.fsxn,
+                        protection?.isCRREnabled,
+                        protection?.isFsxOntapSnapshotsEnabled
+                    ].some(Boolean)
+                ) {
+                    protectedByList.push(t('databases.general.storage-consistent'));
+                }
+
+                if (protection?.isAppConsistentBackupEnabled) {
+                    protectedByList.push(t('databases.general.application-consistent'));
+                }
                 return (
                     <>
                         {cellData && (
@@ -618,6 +646,13 @@ const InstancesTable = () => {
                                     )}
                                     <DsTypography variant="Regular_14">{cellData}</DsTypography>
                                 </div>
+                                {protectedByList?.length > 0 && (
+                                    <div className={commonStyles.protectionTooltipPopOver}>
+                                        <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                            {protectionTooltipText(protectedByList)}
+                                        </TooltipInfo>
+                                    </div>
+                                )}
                             </div>
                         )}
                         {!cellData && loading && <DsFlashingDotsLoader />}

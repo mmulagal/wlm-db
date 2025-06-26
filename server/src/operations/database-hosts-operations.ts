@@ -1132,15 +1132,24 @@ async function getDatabaseHostSummaryV2(
         };
     });
     const errormessages: { [index: string]: string } = {};
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
+    if (!credentialsId || !region) {
+        const error = `Credentials ID or region is not available for resource ${resourceId} in account ${accountId}.`;
+        logger.error(error);
+        throw createError(HttpErrorCodes.FAILED_DEPENDENCY, error);
+    }
+
     let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
-        region!,
-        node1InstanceId,
-        node2InstanceId,
-        resourceId,
-        accountId,
-        resourceType
+        region,
+        {
+            node1InstanceId,
+            node2InstanceId,
+            resourceId,
+            accountId,
+            resourceType: resourceType as DatabaseTypes,
+            sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
+        }
     );
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
@@ -2208,6 +2217,7 @@ async function getDatabaseInstancesSummary(
         if (shouldQueryDatabasesWithProtection && getProtection && databases?.[instanceName]) {
             let isSqlNativeEnabled: string | boolean = 'N/A';
             let isFsxOntapSnapshotsEnabled: string | boolean = 'N/A';
+            let isAppConsistentBackupEnabled: string | boolean | undefined = 'N/A';
             const isAwsBackupEnabled: { fsxn: string | boolean } = {
                 fsxn: 'N/A'
             };
@@ -2219,6 +2229,7 @@ async function getDatabaseInstancesSummary(
                         isSqlNativeEnabled: any;
                         isFsxOntapSnapshotsEnabled: any;
                         isAwsBackupEnabled: { fsxn: any };
+                        isAppConsistentBackupEnabled?: boolean | string;
                     };
                 }) => {
                     if (database.protection.isSqlNativeEnabled === true) {
@@ -2243,6 +2254,15 @@ async function getDatabaseInstancesSummary(
                     ) {
                         isAwsBackupEnabled.fsxn = false;
                     }
+                    if (
+                        database.protection.isAppConsistentBackupEnabled === false ||
+                        database.protection.isAppConsistentBackupEnabled === 'N/A'
+                    ) {
+                        isAppConsistentBackupEnabled = false;
+                    } else {
+                        isAppConsistentBackupEnabled =
+                            isAppConsistentBackupEnabled && database.protection.isAppConsistentBackupEnabled;
+                    }
                 }
             );
             if (!protectionData) {
@@ -2252,7 +2272,8 @@ async function getDatabaseInstancesSummary(
                 isSqlNativeEnabled,
                 isFsxOntapSnapshotsEnabled,
                 isAwsBackupEnabled,
-                protectedDatabases
+                protectedDatabases,
+                isAppConsistentBackupEnabled
             };
             databaseInstanceDetails.protection = protectionData;
         }
@@ -2346,7 +2367,7 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
 
     await Promise.all(
         allmanagedResources.map(
-            throat(3, async (resource: ResourceDetails) => {
+            throat(1, async (resource: ResourceDetails) => {
                 const {
                     metadata,
                     resource_id: databaseHostId,

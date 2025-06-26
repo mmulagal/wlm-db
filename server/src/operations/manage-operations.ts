@@ -461,8 +461,8 @@ async function manageSqlInstance(
                         (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
                     );
 
-                    if (!sqlInstanceInfo) {
-                        throw new Error('SQL Server instance not found.');
+                    if (!sqlInstanceInfo || !sqlInstanceInfo.serverGuid || !sqlInstanceInfo.sqlServerDeploymentType) {
+                        throw new Error('SQL Server instance not found or required details are missing.');
                     }
 
                     if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
@@ -638,12 +638,12 @@ async function manageSqlInstance(
                                 credentialsId,
                                 resourceId,
                                 region,
-                                databaseInstanceId: serverGuid!,
+                                databaseInstanceId: serverGuid,
                                 databaseInstanceName: dbInstanceName,
                                 fsxnIds: storageInfo.id,
                                 isDefault: sqlInstanceInfo.isDefaultInstance,
                                 source: RESOURCE_SOURCE.DISCOVER,
-                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
+                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
                                 fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
                                 storageProtocol: storageProtocols ? storageProtocols.join() : '',
                                 databaseType: DatabaseTypes.MS_SQL_SERVER
@@ -729,8 +729,6 @@ async function manageSqlInstance(
             resourceId
         };
         await updateParentJobStatus(accountId, hostJobId, false, errorMessage, jobMetadata);
-
-        await updateParentJobStatus(accountId, parentManageJobId);
     }
 }
 
@@ -781,6 +779,8 @@ async function installAndManageSqlInstances(
             })
         )
     );
+
+    await updateParentJobStatus(accountId, parentManageJobId);
 }
 
 async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstanceManageMsSqlRequestBodyType[]) {
@@ -1580,11 +1580,7 @@ async function validateCredentials(
             // Platform Field:
             // This field is available for Windows instances and will have the value windows if the instance is running Windows.
             // For Linux-based instances, this field is null
-            if (Platform?.toLowerCase() === WINDOWS) {
-                isLinuxHost = false;
-            } else {
-                isLinuxHost = true;
-            }
+            isLinuxHost = Platform?.toLowerCase() !== WINDOWS;
         }
         const isOracleInstance = oracleCredentials.some(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
         let response;
@@ -1605,7 +1601,7 @@ async function validateCredentials(
                 region,
                 instanceId,
                 fsxCredentials,
-                newSqlCredentials,
+                sqlCredentials,
                 windowsUserCredentials,
                 instanceIds,
                 checkManageReadiness

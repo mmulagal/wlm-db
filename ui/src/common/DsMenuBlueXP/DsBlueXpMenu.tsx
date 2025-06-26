@@ -16,6 +16,7 @@ export interface DsBlueXpMenuProps {
 export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) => {
     enum MenuItems {
         links = 'links',
+        notifications = 'notifications',
         credentials = 'credentials',
         hub = 'hub',
         gitRepo = 'gitRepo',
@@ -50,6 +51,16 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                                     onClick={() => navigateTo('/fsxhome/links')}
                                 >
                                     Links
+                                </DsTypography>
+                            );
+                        case MenuItems.notifications:
+                            return (
+                                <DsTypography
+                                    variant="Semibold_13"
+                                    className={styles.blueMenuItem}
+                                    onClick={() => navigateTo('/fsxhome/notification-setup')}
+                                >
+                                    Workload factory notification setup
                                 </DsTypography>
                             );
                         case MenuItems.hub:
@@ -129,6 +140,10 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                 items: [
                     {
                         id: MenuItems.links,
+                        label: ''
+                    },
+                    {
+                        id: MenuItems.notifications,
                         label: ''
                     },
                     {

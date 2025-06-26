@@ -35,8 +35,7 @@ import {
     mockPGSqlStandaloneDeploymentStack,
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
-    enableMPIOJobData,
-    mockResourceAssessmentData
+    enableMPIOJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -56,6 +55,11 @@ import {
 } from '../utils/demo-utils/demoInventoryData';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
+import {
+    mockResourceAssessmentData,
+    mockResourceAssessmentDataAllOptimized,
+    optimizedResourceName
+} from '../utils/demo-utils/hostAssementsData';
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
@@ -192,7 +196,9 @@ async function createDeploymentMockDataInDB(
         sandboxCreated: true,
         storageProtocol,
         ...(createSandbox && prepareDemoSandboxMetadata(resourceName, instanceId)),
-        assessment: mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData
+        assessment: optimizedResourceName.includes(resourceName)
+            ? (mockResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData)
+            : (mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData)
     };
 
     if (sqlDeploymentMode === 'FCI') {

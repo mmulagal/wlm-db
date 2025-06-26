@@ -105,37 +105,7 @@ import {
 const isDemoFlow = isDemo();
 const logger = getLogger();
 
-async function updateAssessmentResultsInHostMetadata(
-    driftAssessmentData: DriftAssessmentResponseType,
-    resourceDetails: ResourceDetails
-) {
-    const {
-        account_id: accountId,
-        credentials_id: credentialsId,
-        resource_id: databaseHostId,
-        metadata
-    } = resourceDetails as unknown as ResourceDetails;
-    (metadata as unknown as Metadata).assessmentResults = {
-        license: driftAssessmentData.license || undefined,
-        compute: driftAssessmentData.compute || undefined,
-        hostOsPatch: driftAssessmentData.hostOsPatch || undefined,
-        rssConfig: driftAssessmentData.rssConfig || undefined,
-        mssqlPatch: driftAssessmentData.mssqlPatch || undefined
-    };
-    try {
-        await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
-    } catch (error) {
-        logger.error('Error while updating assessment results in resource metadata', {
-            accountId,
-            databaseHostId,
-            error
-        });
-    }
-}
-async function updateAssesmentResultsInInstanceMetadata(
-    managedInstance: DatabaseInstancesIncludingResource,
-    updateInHost?: boolean
-) {
+async function updateAssesmentResultsInInstanceMetadata(managedInstance: DatabaseInstancesIncludingResource) {
     const {
         account_id: accountId,
         region,
@@ -147,10 +117,9 @@ async function updateAssesmentResultsInInstanceMetadata(
         accountId,
         credentialsId,
         databaseHostId,
-        databaseInstanceId,
-        updateInHost
+        databaseInstanceId
     });
-    const [driftAssessmentData, instanceDetails, [resourceDetails]] = await Promise.all([
+    const [driftAssessmentData, instanceDetails] = await Promise.all([
         fetchDriftAssessment(
             accountId,
             credentialsId,
@@ -160,12 +129,7 @@ async function updateAssesmentResultsInInstanceMetadata(
             undefined,
             managedInstance
         ),
-        managedInstance ?? getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId),
-        updateInHost
-            ? managedInstance.resource && !isEmpty(managedInstance.resource)
-                ? [managedInstance.resource]
-                : getResources(accountId, databaseHostId, credentialsId, region).then(({ items = [] }) => items)
-            : Promise.resolve([])
+        managedInstance ?? getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId)
     ]);
     const { metadata } = instanceDetails as unknown as DatabaseInstance;
 
@@ -179,9 +143,6 @@ async function updateAssesmentResultsInInstanceMetadata(
             databaseInstanceId,
             error
         });
-    }
-    if (updateInHost) {
-        await updateAssessmentResultsInHostMetadata(driftAssessmentData, resourceDetails);
     }
 }
 async function initiateHostLevelAssessmentDataCollection(
@@ -207,22 +168,41 @@ async function initiateHostLevelAssessmentDataCollection(
         sqlAuthEnabled
     });
 
-    const [{ metadata, cloud_provider_account_id: awsAccountId, resource_id: resourceId }] = await listResources(
-        accountId,
-        databaseHostId,
-        credentialsId,
-        region
-    );
+    const {
+        items: [resource]
+    } = await getResources(accountId, databaseHostId, credentialsId, region, undefined, undefined, undefined, true);
+
+    const {
+        metadata,
+        cloud_provider_account_id: awsAccountId,
+        resource_id: resourceId,
+        database_instances: managedInstances = []
+    } = resource;
+    const managedInstance = managedInstances.find(instance => instance.database_instance_id === databaseInstanceId);
+
+    if (!managedInstance) {
+        logger.error('Managed instance not found for the given databaseInstanceId', {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            credentialsId,
+            region
+        });
+
+        throw createError(
+            HttpErrorCodes.VALIDATION_ERROR,
+            `Managed instance not found for the given databaseInstanceId ${databaseInstanceId}.`
+        );
+    }
+
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
-    const { activeNodeInstanceId = '', instanceName } = await getActiveSqlNode(
-        credentialsId,
-        region,
+    const { activeNodeInstanceId = '', instanceName } = await getActiveSqlNode(credentialsId, region, {
         node1InstanceId,
         node2InstanceId,
         resourceId,
         accountId
-    );
+    });
     if (metadata && activeNodeInstanceId) {
         let licenseAssessment;
         let licenseErrorMessage;
@@ -352,6 +332,7 @@ async function initiateHostLevelAssessmentDataCollection(
 
         if (hasAssessmentOrError) {
             const existingAssessmentData = (metadata as unknown as Metadata).assessment || {};
+
             (metadata as unknown as Metadata).assessment = {
                 license: licenseAssessment || (!licenseErrorMessage ? existingAssessmentData?.license : undefined),
                 compute: computeAssessment || (!computeErrorMessage ? existingAssessmentData?.compute : undefined),
@@ -380,6 +361,26 @@ async function initiateHostLevelAssessmentDataCollection(
                         (!mssqlPatchAssessment ? existingAssessmentData?.errors?.mssqlPatch : undefined)
                 },
                 lastAssessedDate: new Date().getTime().toString()
+            };
+
+            const assessmentResults = await fetchDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                'license,compute,host-os-patch,rss-config,mssql-patch',
+                {
+                    ...managedInstance,
+                    resource
+                }
+            );
+            (metadata as unknown as Metadata).assessmentResults = {
+                license: assessmentResults.license || undefined,
+                compute: assessmentResults.compute || undefined,
+                hostOsPatch: assessmentResults.hostOsPatch || undefined,
+                rssConfig: assessmentResults.rssConfig || undefined,
+                mssqlPatch: assessmentResults.mssqlPatch || undefined
             };
 
             await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
@@ -766,8 +767,6 @@ async function triggerAssessment(
     parentJobId: string,
     fields?: string
 ) {
-    logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
-
     let errorMessage = '';
     const {
         account_id: accountId,
@@ -777,6 +776,16 @@ async function triggerAssessment(
         database_instance_id: databaseInstanceId,
         resource
     } = managedInstance;
+
+    logger.info('Triggering drift assessment ', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        parentJobId,
+        fields
+    });
 
     let activeNodeInstanceId;
     let newDatabaseInstanceDetails;
@@ -895,7 +904,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
 
     await Promise.all(
         Object.entries(managedInstancesGroupedByAccountId).map(
-            throat(3, async ([accountId, managedInstances]) => {
+            throat(1, async ([accountId, managedInstances]) => {
                 if (isEmpty(managedInstances)) {
                     const errorMessage = `No managed instances found for account ${accountId}.`;
                     logger.info(errorMessage);
@@ -915,7 +924,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     try {
                         await Promise.all(
                             managedInstances.map(
-                                throat(3, async managedInstance => {
+                                throat(1, async managedInstance => {
                                     try {
                                         const {
                                             configurations: instanceConfigurations,
@@ -1046,8 +1055,8 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         // Lets update assessment result in instance metadata
                         // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
                         await Promise.all(
-                            managedInstances.map(async (managedInstance, index) => {
-                                await updateAssesmentResultsInInstanceMetadata(managedInstance, index === 0);
+                            managedInstances.map(async managedInstance => {
+                                await updateAssesmentResultsInInstanceMetadata(managedInstance);
                             })
                         );
                     }
@@ -1671,7 +1680,7 @@ async function handleAssessment(
         // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
         await updateParentJobStatus(accountId, masterAssessmentJobId);
         // Lets update assessment result in instance metadata
-        await updateAssesmentResultsInInstanceMetadata(managedInstance, true);
+        await updateAssesmentResultsInInstanceMetadata(managedInstance);
     }
     if (initiatedBy === AssessmentTriggeredBy.USER) {
         const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;
@@ -1730,8 +1739,10 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         handleAssessment(accountId, managedInstance, jobId, initiatedBy, fields);
 
         return { jobId };
-    } catch (error) {
-        logger.error(`Error while fetching database instance details ${accountId}, ${databaseHostId}, ${error}`);
+    } catch (error: any) {
+        const errorMessage = `Error while triggering drift assessment for account ${accountId}, host ${databaseHostId}, instance ${databaseInstanceId}: ${error.message}`;
+        logger.error(errorMessage);
+        throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 }
 

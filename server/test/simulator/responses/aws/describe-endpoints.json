@@ -32,12 +32,12 @@
         {
             "VpcEndpointId": "vpce-0583307c1aea1a02b",
             "VpcEndpointType": "Interface",
-            "VpcId": "vpc-059a145321d63b5ab",
+            "VpcId": "vpc-84b3afe6",
             "ServiceName": "com.amazonaws.ap-southeast-1.cloudformation",
             "State": "available",
             "PolicyDocument": "{\n  \"Statement\": [\n    {\n      \"Action\": \"*\", \n      \"Effect\": \"Allow\", \n      \"Principal\": \"*\", \n      \"Resource\": \"*\"\n    }\n  ]\n}",
             "RouteTableIds": [],
-            "SubnetIds": ["subnet-009b1323071fa30e4"],
+            "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Groups": [
                 {
                     "GroupId": "sg-077853a8fc19fc6fc",
@@ -50,7 +50,7 @@
             },
             "PrivateDnsEnabled": true,
             "RequesterManaged": false,
-            "NetworkInterfaceIds": ["eni-025add5e6e29453e5"],
+            "NetworkInterfaceIds": ["eni-0f536a2c38e431a6a"],
             "DnsEntries": [
                 {
                     "DnsName": "vpce-0583307c1aea1a02b-2ihd6xos.cloudformation.ap-southeast-1.vpce.amazonaws.com",

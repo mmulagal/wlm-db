@@ -89,7 +89,7 @@ const PasswordContent = ({
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             dispatch(setSqlServerUserName(e.target.value))
                         }
-                        error={useDelayedError(isValidSqlUsername(username))}
+                        error={useDelayedError(isValidSqlUsername(username, t))}
                     />
                 )}
                 <div className={styles.tooltipContainer}>

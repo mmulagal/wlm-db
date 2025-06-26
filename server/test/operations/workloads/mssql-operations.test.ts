@@ -79,7 +79,13 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get databases summary', async () => {
-        const resp = await getDataBasesSummary('36E53042-04E8-40C9-AE69-26E56CB0D216');
+        const resp = await getDataBasesSummary(
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            undefined,
+            undefined,
+            undefined,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286'
+        );
         expect(resp).toEqual(mssqlResponse.databaseSummaryResponse);
     });
 

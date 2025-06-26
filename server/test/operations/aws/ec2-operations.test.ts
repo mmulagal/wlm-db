@@ -8,7 +8,6 @@ import {
     tagEc2Resource,
     getVpcSecurityGroups,
     getVpcEndpoints,
-    getServicesWithNoEndpoint,
     enableVpcDnsAttributes,
     isEbsAwsBackupEnabled,
     getInstanceDetailsByPrivateIp,
@@ -16,7 +15,8 @@ import {
     getInstanceTypesFromInstanceRequirements,
     waitForInstanceToBeStopped,
     instanceTypeChangePreReqs,
-    getAmazonLinux2023AmiList
+    getAmazonLinux2023AmiList,
+    validateVpcEndpoints
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -96,10 +96,13 @@ describe('EC2 Operations', () => {
     });
 
     it('Get services without endpoints', async () => {
-        const response = await getServicesWithNoEndpoint(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445', [
-            'rtb-1',
-            'rtb-2'
-        ]);
+        const response = await validateVpcEndpoints(
+            credentialsId,
+            DEFAULT_AWS_REGION,
+            { vpcId: 'vpc-84b3afe6', vpcCidr: '172.31.0.0/16' },
+
+            [{ subnetId: 'subnet-f4484e80', cidr: '172.31.0.0/16', routeTableId: 'rtb-1' }]
+        );
         expect(response).toBeDefined();
     });
 

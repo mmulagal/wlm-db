@@ -154,6 +154,27 @@ const DatabaseHostDetailsSchemaV2 = {
     }
 };
 
+const DatabaseHostDiagramSchema = {
+    ...resourceRequest,
+    summary: 'Generate architecture diagram of a database server',
+    description: 'Generate and fetch an architecture diagram for a database server.',
+    params: DatabaseHostSummaryParams,
+    response: {
+        200: {
+            type: 'object',
+            properties: {
+                file: { type: 'string', format: 'binary', description: 'file of type image/png' }
+            }
+        },
+        500: {
+            type: 'object',
+            properties: {
+                error: { type: 'string', description: 'Error message if diagram generation fails' }
+            }
+        }
+    }
+};
+
 const PgSqlDbHostDetailsSchema = {
     ...resourceRequest,
     summary: 'Fetch Postgresql database server details',
@@ -193,6 +214,7 @@ const DatabasesListSchemaV2 = {
 export {
     DatabasesCreateSchema,
     DatabaseHostsSummarySchemaV2,
+    DatabaseHostDiagramSchema,
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema,
     DatabasesListSchemaV2,

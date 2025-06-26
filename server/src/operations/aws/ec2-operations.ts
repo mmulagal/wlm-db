@@ -13,7 +13,8 @@ import {
     _InstanceType,
     ImageState,
     PlatformValues,
-    CpuManufacturer
+    CpuManufacturer,
+    DescribeNetworkInterfacesRequest
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import ms from 'ms';
@@ -555,15 +556,146 @@ async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId
     return { securityGroups };
 }
 
-async function getServicesWithNoEndpoint(
+async function validateVpcEndpoints(
     credentialsId: string,
     region: string,
-    vpcId: string,
-    routeTableIds: string[]
+    vpcDetails: { vpcId: string; vpcCidr: string },
+    subnetDetails: Array<{ subnetId: string; cidr: string; routeTableId: string }>
 ) {
-    logger.info('Get services with no endpoint ', credentialsId, region, vpcId, routeTableIds);
+    logger.info(
+        'Validating VPC endpoints for subnets association, https ingress rules, services with no endpoints',
+        credentialsId,
+        region,
+        vpcDetails,
+        subnetDetails
+    );
 
-    const endpoints = await getVpcEndpoints(credentialsId, region, vpcId);
+    const { vpcId, vpcCidr: vpcCidrBlock } = vpcDetails;
+
+    const enetInterfaces: DescribeNetworkInterfacesRequest = {
+        Filters: [
+            {
+                Name: 'interface-type',
+                Values: ['vpc_endpoint']
+            },
+            {
+                Name: 'vpc-id',
+                Values: [vpcId]
+            }
+        ]
+    };
+
+    const [endpoints, vpcSecurityGroups, vpcNetworkInterfaces] = await Promise.all([
+        getVpcEndpoints(credentialsId, region, vpcId),
+        getVpcSecurityGroups(credentialsId, region, vpcId),
+        getNetworkInterfacesList(credentialsId, region, enetInterfaces)
+    ]);
+
+    const endpointsWithIssues = compact(
+        endpoints
+            ?.filter(endpoint => endpoint.VpcEndpointType === 'Interface' && endpoint.VpcEndpointId)
+            .map(endpoint => {
+                const missingSubnets = subnetDetails
+                    .filter(s => !endpoint.SubnetIds?.includes(s.subnetId))
+                    .map(s => s.subnetId);
+
+                const securityGroupCidrs = vpcNetworkInterfaces
+                    ?.filter(ni => endpoint.NetworkInterfaceIds?.includes(ni.id || ''))
+                    .flatMap(ni => ni.securityGroups || [])
+                    .flatMap(
+                        sgId =>
+                            vpcSecurityGroups.securityGroups
+                                .find(sg => sg.id === sgId)
+                                ?.ipPermissions?.filter(
+                                    ({
+                                        FromPort,
+                                        ToPort,
+                                        IpProtocol
+                                    }: {
+                                        FromPort: number;
+                                        ToPort: number;
+                                        IpProtocol: string;
+                                    }) => FromPort === 443 && ToPort === 443 && IpProtocol === 'tcp'
+                                )
+                                .flatMap(
+                                    ({ IpRanges }: { IpRanges?: Array<{ CidrIp: string }> }) =>
+                                        IpRanges?.map(range => range.CidrIp) || []
+                                ) || []
+                    );
+
+                const missingCidrs = securityGroupCidrs.includes(vpcCidrBlock)
+                    ? []
+                    : subnetDetails
+                          .filter(subnet => !securityGroupCidrs.includes(subnet.cidr))
+                          .map(subnet => ({ subnetId: subnet.subnetId, cidrBlock: subnet.cidr }));
+
+                return (
+                    (missingSubnets.length || missingCidrs.length) && {
+                        serviceName: endpoint.ServiceName!,
+                        VpcEndpointId: endpoint.VpcEndpointId!,
+                        missingSubnets,
+                        missingCidrs
+                    }
+                );
+            })
+    );
+
+    // Example for endpointsWithIssues
+    // const endpointsWithIssues = [
+    //     {
+    //         serviceName: 'com.amazonaws.us-east-1.ssm',
+    //         VpcEndpointId: 'vpce-1234567890abcdef0',
+    //         missingSubnets: ['subnet-12345', 'subnet-67890'],
+    //         missingCidrs: [
+    //             { subnetId: 'subnet-12345', cidrBlock: '10.0.1.0/24' },
+    //             { subnetId: 'subnet-67890', cidrBlock: '10.0.2.0/24' }
+    //         ]
+    //     },
+    //     {
+    //         serviceName: 'com.amazonaws.us-east-1.ec2',
+    //         VpcEndpointId: 'vpce-abcdef1234567890',
+    //         missingSubnets: ['subnet-54321'],
+    //         missingCidrs: []
+    //     }
+    // ];
+
+    if (endpointsWithIssues?.length) {
+        const combinedIssues = (endpointsWithIssues || []).reduce((acc, issue) => {
+            if (!issue) {
+                return acc;
+            }
+            const key = `${issue.missingSubnets.sort().join(',')}|${(issue.missingCidrs || [])
+                .map(c => c.cidrBlock)
+                .sort()
+                .join(',')}`;
+            acc[key] = acc[key] || {
+                services: [],
+                missingSubnets: issue.missingSubnets,
+                missingCidrs: issue.missingCidrs
+            };
+            acc[key].services.push(issue.serviceName);
+            return acc;
+        }, {} as Record<string, { services: string[]; missingSubnets: string[]; missingCidrs?: Array<{ subnetId: string; cidrBlock: string }> }>);
+
+        const errorMessages = Object.values(combinedIssues).map(({ services, missingSubnets, missingCidrs }) => {
+            const subnetsMsg = missingSubnets.length
+                ? ` are not associated with subnet(s) ${missingSubnets.join(', ')}.`
+                : '';
+            const cidrsMsg = missingCidrs?.length
+                ? `Ingress HTTPS rule is missing the following CIDRs: ${missingCidrs.map(c => c.cidrBlock).join(', ')}`
+                : '';
+            return `Services: ${services.join(', ')}, ${subnetsMsg} ${cidrsMsg}`;
+        });
+
+        logger.error('Validation issues found with VPC endpoints:', errorMessages);
+
+        throw createError(
+            HttpErrorCodes.VALIDATION_ERROR,
+            `Validation issues found with VPC endpoints:\n${errorMessages.join(
+                '\n'
+            )}. \nRefer https://repost.aws/knowledge-center/vpc-fix-gateway-or-interface-endpoint for more details.`
+        );
+    }
 
     // If s3 gateway exists, then find if all routetables are associated with the endpoint. If not create new s3 endpoint
     const routeTableIdsInS3Endpoint =
@@ -572,6 +704,8 @@ async function getServicesWithNoEndpoint(
                   .filter(endpoint => endpoint.ServiceName?.includes('s3'))
                   .flatMap(endpoint => endpoint.RouteTableIds)
             : [];
+
+    const routeTableIds = subnetDetails.map(subnet => subnet.routeTableId);
     const missingRoutesInS3 =
         routeTableIds && !isEmpty(routeTableIds)
             ? [...new Set(routeTableIds.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0))]
@@ -1018,7 +1152,6 @@ async function getAmazonLinux2023AmiList(credentialsId: string, region: string):
     const { Images: amisList } = amis || {};
     return (amisList || []).map(image => image.ImageId);
 }
-
 export {
     getVpcsList,
     getAmiList,
@@ -1031,7 +1164,7 @@ export {
     getCostAllocationTagEC2Resource,
     getVpcEndpoints,
     getVpcSecurityGroups,
-    getServicesWithNoEndpoint,
+    validateVpcEndpoints,
     enableVpcDnsAttributes,
     isEbsAwsBackupEnabled,
     getInstanceTypesFromInstanceRequirementsForManagedInstances,

@@ -71,7 +71,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.powershell-modules'),
-                            values: ['AWS.Tools.SimpleSystemsManagement']
+                            values: ['AWS.Tools.SimpleSystemsManagement', 'AWS.Tools.CloudWatch']
                         }
                     ]}
                     policies={policiesList}
@@ -184,12 +184,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.powershell-modules'),
-                            values: [
-                                'AWS.Tools.FSx',
-                                'AWS.Tools.SimpleSystemsManagement',
-                                'PowerShell 7',
-                                'AWS.Tools.CloudWatch'
-                            ]
+                            values: ['AWS.Tools.FSx', 'AWS.Tools.SimpleSystemsManagement', 'PowerShell 7']
                         }
                     ]}
                     policies={policiesList}

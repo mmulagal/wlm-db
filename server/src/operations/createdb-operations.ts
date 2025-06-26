@@ -256,7 +256,7 @@ async function getDriveInfoFromSSM(
     ) {
         // Check SSM Connection status
         ({ isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName, instancesDetails } =
-            await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId));
+            await getActiveSqlNode(credentialsId, region, { node1InstanceId, node2InstanceId }));
     }
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
@@ -647,7 +647,7 @@ async function invokeSSMForDatabaseDeployment(
             standbyNodeInstanceId,
             instanceName: sqlInstanceName,
             instancesDetails
-        } = await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId));
+        } = await getActiveSqlNode(credentialsId, region, { node1InstanceId, node2InstanceId }));
         if (!isSSMConnected || activeNodeInstanceId === undefined || sqlInstanceName === undefined) {
             const errorMessage = `Error while creating database for ${accountId} ${resourceId} due to SSM connection issues.`;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
@@ -1791,7 +1791,7 @@ async function getCollationDetails(
 
         // Check SSM Connection status
         const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName, instancesDetails } =
-            await getActiveSqlNode(credentialsId, region, node1InstanceId, node2InstanceId);
+            await getActiveSqlNode(credentialsId, region, { node1InstanceId, node2InstanceId });
 
         if (!isSSMConnected && activeNodeInstanceId === undefined) {
             const errorMessage = `Unable to get collation details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;

@@ -6,6 +6,7 @@ import numeral from 'numeral';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import classNames from 'classnames';
+import { TFunction } from 'i18next';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
@@ -472,9 +473,16 @@ export const isValidPassword = (password: string) => {
     }
 };
 
-export const isValidSqlUsername = (username: string) => {
-    if (/[^A-Za-z0-9_]/.test(username)) {
-        return 'Username should not contain special characters.';
+export const isValidSqlUsername = (username: string, t: TFunction) => {
+    const state = store.getState();
+    const { selectedAuthenticationType } = state.workloadFactoryResource;
+    if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+        // Allow backslash, @, and . for Windows authentication
+        if (/[^A-Za-z0-9_\\@.]/.test(username)) {
+            return t('databases.update-credentials.username-invalid-windows');
+        }
+    } else if (/[^A-Za-z0-9_]/.test(username)) {
+        return t('databases.update-credentials.username-invalid-sql');
     }
 };
 
@@ -2183,3 +2191,34 @@ export const rounded = (value: number) => roundedFormatter.format(value);
 export const twoFractionDigits = (value: number) => twoDecimalFormatter.format(value);
 
 export const fourFractionDigits = (value: number) => fourDecimalFormatter.format(value);
+
+export const blobToDataURL = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        try {
+            if (!blob || blob.size === 0) {
+                return reject(new Error('Invalid or empty blob'));
+            }
+
+            setTimeout(() => {
+                const reader = new FileReader();
+
+                reader.onloadend = () => {
+                    const result = reader.result;
+                    if (result && typeof result === 'string') {
+                        resolve(result);
+                    } else {
+                        reject(new Error('Could not convert blob to base64'));
+                    }
+                };
+
+                reader.onerror = () => {
+                    reject(new Error('FileReader failed'));
+                };
+
+                reader.readAsDataURL(blob);
+            }, 0);
+        } catch (err) {
+            reject(err);
+        }
+    });
+};
