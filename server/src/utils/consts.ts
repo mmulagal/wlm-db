@@ -1672,7 +1672,9 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'fsx:UpdateVolume',
     'bedrock:GetFoundationModelAvailability',
     'bedrock:ListInferenceProfiles',
-    'logs:PutRetentionPolicy'
+    'logs:PutRetentionPolicy',
+    'cloudwatch:GetMetricData',
+    'cloudwatch:GetMetricStatistics'
 ];
 
 const AWS_ERROR_CODES = {
