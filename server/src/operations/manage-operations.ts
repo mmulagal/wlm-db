@@ -426,9 +426,8 @@ async function manageSqlInstance(
             const isAlreadyManaged = alreadyManagedDatabaseInstances.some(
                 elem => elem.database_instance_name === sqlInst.sqlServerInstance
             );
-            const hasFsxnStorage = (sqlInst.storage || []).some((storage: any) => storage.type === STORAGE_TYPE.FSXN);
             const isSupportedDeployment = sqlInst.sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_AOAG_SHORT;
-            return !isAlreadyManaged && hasFsxnStorage && isSupportedDeployment;
+            return !isAlreadyManaged && isSupportedDeployment;
         });
 
         const fciInstanceDetails = await getPartnerNodeDetails(
@@ -457,54 +456,93 @@ async function manageSqlInstance(
                     let instanceJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
                     let instanceErrorMessage = '';
                     let partnerEc2InstanceId;
-                    const sqlInstanceInfo = sqlServerInstances?.find(
-                        (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
-                    );
-
-                    if (!sqlInstanceInfo || !sqlInstanceInfo.serverGuid || !sqlInstanceInfo.sqlServerDeploymentType) {
-                        throw new Error('SQL Server instance not found or required details are missing.');
-                    }
-
-                    if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
-                        const fciInstance = fciInstanceDetails.find(
-                            instance => instance.databaseInstanceName === dbInst
-                        );
-                        partnerEc2InstanceId = fciInstance?.partnerEc2InstanceId;
-
-                        if (fciInstanceDetails.length === 0 || !fciInstance || !partnerEc2InstanceId) {
-                            throw new Error('FCI instance details not found or partner EC2 instance ID is missing.');
-                        }
-
-                        resourceId = generateSqlResourceId(node1InstanceId, partnerEc2InstanceId);
-                        const {
-                            items: [resourceDetails]
-                        } = await getResources(
-                            accountId,
-                            resourceId,
-                            credentialsId,
-                            region,
-                            undefined,
-                            undefined,
-                            undefined,
-                            true
-                        );
-                        isResourceTobeCreated = !resourceDetails;
-                        if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
-                            alreadyManagedDatabaseInstances = resourceDetails.database_instances;
-                        }
-                    }
-
-                    if (
-                        !sqlInstanceInfo ||
-                        alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)
-                    ) {
-                        const errorMsg = !sqlInstanceInfo
-                            ? 'SQL Server instance not found.'
-                            : 'Instance is already registered.';
-                        throw new Error(errorMsg);
-                    }
-
                     try {
+                        let sqlInstanceInfo = sqlServerInstances?.find(
+                            (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
+                        );
+
+                        // If the current node is not active for FCI, then serverGuid will be empty and check on the partner node is handled later.
+                        if (
+                            !sqlInstanceInfo?.sqlServerDeploymentType ||
+                            (sqlInstanceInfo.sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_FCI_SHORT &&
+                                !sqlInstanceInfo.serverGuid)
+                        ) {
+                            throw new Error(
+                                'SQL Server instance not found or the required details (e.g., server GUID, deployment type) are missing.'
+                            );
+                        }
+                        // If the current node is not active for FCI, then storage will be empty and check on the partner node is handled later.
+                        if (
+                            !isEmpty(sqlInstanceInfo.storage) &&
+                            !sqlInstanceInfo.storage?.some(storage => storage.type === STORAGE_TYPE.FSXN)
+                        ) {
+                            throw new Error('SQL Server instance is not hosted on FSx for NetApp.');
+                        }
+
+                        // If the SQL Server instance is part of an FCI, get the partner EC2 instance ID.
+                        if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+                            const fciInstance = fciInstanceDetails.find(
+                                instance => instance.databaseInstanceName === dbInst
+                            );
+                            partnerEc2InstanceId = fciInstance?.partnerEc2InstanceId;
+
+                            if (!fciInstance || !partnerEc2InstanceId) {
+                                throw new Error('FCI instance details or partner EC2 instance ID is missing.');
+                            }
+
+                            // If the SQL Server instance is not found on the current node, check the partner node.
+                            if (!sqlInstanceInfo.serverGuid) {
+                                const partnerNodeDiscoverDetails = await getHostAndSqlServerInfo(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    undefined,
+                                    undefined,
+                                    [partnerEc2InstanceId]
+                                );
+                                sqlInstanceInfo = partnerNodeDiscoverDetails.items[0]?.sqlServerInstances?.find(
+                                    (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
+                                );
+
+                                if (!sqlInstanceInfo?.serverGuid || !sqlInstanceInfo?.sqlServerDeploymentType) {
+                                    throw new Error(
+                                        'SQL Server instance not found on the partner node, required details are missing (e.g., server GUID, deployment type).'
+                                    );
+                                }
+                                if (!sqlInstanceInfo.storage?.some(storage => storage.type === STORAGE_TYPE.FSXN)) {
+                                    throw new Error('SQL Server instance is not hosted on FSx for NetApp.');
+                                }
+                            }
+
+                            resourceId = generateSqlResourceId(node1InstanceId, partnerEc2InstanceId);
+                            const {
+                                items: [resourceDetails]
+                            } = await getResources(
+                                accountId,
+                                resourceId,
+                                credentialsId,
+                                region,
+                                undefined,
+                                undefined,
+                                undefined,
+                                true
+                            );
+                            isResourceTobeCreated = !resourceDetails;
+                            alreadyManagedDatabaseInstances = resourceDetails?.database_instances || [];
+                        } else if (!sqlInstanceInfo.serverGuid) {
+                            throw new Error('SQL Server server GUID is missing.');
+                        }
+
+                        if (
+                            !sqlInstanceInfo ||
+                            alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)
+                        ) {
+                            const errorMsg = !sqlInstanceInfo
+                                ? 'SQL Server instance not found.'
+                                : 'Instance is already registered.';
+                            throw new Error(errorMsg);
+                        }
+
                         const {
                             windowsAuthentication,
                             sqlServerAuthentication,
