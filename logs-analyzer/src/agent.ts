@@ -298,7 +298,7 @@ async function analyzeErrorLogs(
     await Promise.all(
         errorLogs.map(logChunk =>
             pLimit(5)(async () => {
-                const { firstOccurrence, lastOccurrence, errorCode, severity, errorContext, errorMessage, errorCount } =
+                const { firstOccurrence, lastOccurrence, errorCode, severity, errorContext, errorMessage, count } =
                     logChunk;
 
                 const minimalErrorObject = {
@@ -328,7 +328,7 @@ async function analyzeErrorLogs(
                             lastOccurrence,
                             errorCode,
                             severity,
-                            errorCount,
+                            count,
                             tokenUsageForCauseIdentification: {
                                 input,
                                 output,

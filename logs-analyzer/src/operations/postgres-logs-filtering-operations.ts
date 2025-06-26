@@ -84,7 +84,7 @@ async function getUniquePostgresErrors(logs: PostgresLog[], uniqueLogsCountToCon
             return {
                 errorContext,
                 errorMessage,
-                errorCount: groupedLogs[key].length,
+                count: groupedLogs[key].length,
                 severity
             };
         });
