@@ -329,7 +329,8 @@ async function updateUserDBIntoResourceData(
                 },
                 isFsxOntapSnapshotsEnabled: false,
                 isSqlNativeEnabled: false,
-                isCRREnabled: false
+                isCRREnabled: false,
+                isAppConsistentBackupEnabled: false
             },
             collation: SQL_DEFAULT_COLLATION
         };
@@ -364,7 +365,8 @@ async function updateUserDBIntoInstanceTable(
                 },
                 isFsxOntapSnapshotsEnabled: false,
                 isSqlNativeEnabled: false,
-                isCRREnabled: false
+                isCRREnabled: false,
+                isAppConsistentBackupEnabled: false
             },
             collation: SQL_DEFAULT_COLLATION
         };
@@ -985,7 +987,8 @@ function prepareDemoSandboxMetadata(
             isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
             isFsxOntapSnapshotsEnabled: false,
             isSqlNativeEnabled: false,
-            isCRREnabled: false
+            isCRREnabled: false,
+            isAppConsistentBackupEnabled: false
         },
         collation: SQL_DEFAULT_COLLATION
     });
