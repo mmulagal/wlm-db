@@ -27,7 +27,7 @@ describe('notificationSlice', () => {
     it('should add a notification', () => {
         const notificationPayload: NewNotificationPayload = {
             children: 'Notification message',
-            type: 'success',
+            notificationType: 'success',
             id: 'notificationId'
         };
 

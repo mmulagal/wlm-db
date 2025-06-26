@@ -18,7 +18,7 @@ export enum NOTIFICATION_TYPES {
 
 export interface NewNotificationPayload {
     children: ReactNode;
-    type: NotificationType;
+    notificationType: NotificationType;
     id: string | undefined;
     onClose?: MouseEventHandler<HTMLButtonElement>;
 }

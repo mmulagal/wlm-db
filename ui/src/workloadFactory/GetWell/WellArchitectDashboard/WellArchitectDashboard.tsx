@@ -195,7 +195,7 @@ const WellArchitectDashboard = () => {
                 ) {
                     dispatch(
                         addNotification({
-                            type: NOTIFICATION_TYPES.SUCCESS,
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
                             message: `${
                                 value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
                             } password updated successfully`
@@ -204,7 +204,7 @@ const WellArchitectDashboard = () => {
                 } else {
                     dispatch(
                         addNotification({
-                            type: NOTIFICATION_TYPES.ERROR,
+                            notificationType: NOTIFICATION_TYPES.ERROR,
                             message:
                                 result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
                                 result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
@@ -217,7 +217,7 @@ const WellArchitectDashboard = () => {
             } else {
                 dispatch(
                     addNotification({
-                        type: NOTIFICATION_TYPES.ERROR,
+                        notificationType: NOTIFICATION_TYPES.ERROR,
                         message:
                             result?.error?.data?.message ||
                             `Failed to update ${
@@ -229,7 +229,7 @@ const WellArchitectDashboard = () => {
         } catch (error) {
             dispatch(
                 addNotification({
-                    type: NOTIFICATION_TYPES.ERROR,
+                    notificationType: NOTIFICATION_TYPES.ERROR,
                     message: error || 'Failed to update fsxadmin password. '
                 })
             );

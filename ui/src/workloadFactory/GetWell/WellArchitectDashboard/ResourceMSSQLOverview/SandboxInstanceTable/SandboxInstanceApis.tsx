@@ -85,7 +85,7 @@ const SandboxInstanceApis = () => {
         } catch (error) {
             dispatch(
                 addNotification({
-                    type: NOTIFICATION_TYPES.ERROR,
+                    notificationType: NOTIFICATION_TYPES.ERROR,
                     message: error || 'Error fetching sandbox instance list'
                 })
             );
