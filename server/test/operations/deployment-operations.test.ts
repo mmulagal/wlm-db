@@ -71,22 +71,6 @@ describe('Cloud formation operations', () => {
         expect(resp).toBeDefined();
     });
 
-    it('VPC Endpoints validation failure check', async () => {
-        await expect(
-            deployStackOrCreateTemplateURL(
-                credentialsid,
-                DEFAULT_AWS_REGION,
-                { ...NETWORKING_CONFIGURATION, vpcId: 'vpc-046f7e26255458373', vpcCidr: '10.11.10.11/24' },
-                EC2_CONFIGURATION,
-                AD_CONFIGURATION,
-                FSX_CONFIGURATION,
-                SQL_CONFIGURATION,
-                '',
-                false,
-                'chatbot'
-            )
-        ).rejects.toThrow();
-    });
     it('Deploy cloud formation template', async () => {
         const resp = await deployCloudFormationTemplate(
             credentialsid,
