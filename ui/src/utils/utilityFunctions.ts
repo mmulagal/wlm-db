@@ -2192,8 +2192,8 @@ export const twoFractionDigits = (value: number) => twoDecimalFormatter.format(v
 
 export const fourFractionDigits = (value: number) => fourDecimalFormatter.format(value);
 
-export const blobToDataURL = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
+export const blobToDataURL = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
         try {
             if (!blob || blob.size === 0) {
                 return reject(new Error('Invalid or empty blob'));
@@ -2203,7 +2203,7 @@ export const blobToDataURL = (blob: Blob): Promise<string> => {
                 const reader = new FileReader();
 
                 reader.onloadend = () => {
-                    const result = reader.result;
+                    const { result } = reader;
                     if (result && typeof result === 'string') {
                         resolve(result);
                     } else {
@@ -2221,4 +2221,3 @@ export const blobToDataURL = (blob: Blob): Promise<string> => {
             reject(err);
         }
     });
-};

@@ -1489,6 +1489,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
 export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
     const state = store.getState();
     const initialStateForm = state.mssqlForm;
+    const onPremSelectedRegion = state.exploreSavings.selectedOnPremRegion;
     let result = { ...initialStateForm, selectConfig: SELECT_CONFIG.STANDARD_CREATE };
 
     // mssql instance data
@@ -1604,6 +1605,17 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                 }
             };
         }
+    }
+
+    // OnPrem Region
+    if (onPremSelectedRegion) {
+        result = {
+            ...result,
+            regionAndVpc: {
+                ...result.regionAndVpc,
+                selectedRegion: onPremSelectedRegion
+            }
+        };
     }
 
     return result;

@@ -12,6 +12,7 @@ import {
     setSqlServerCollation,
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
+import store from '../../../store/store';
 import { GENERAL } from '../../../utils/appConstants';
 import { DEAFULT_INSTANCE_VALUE, FORM_OPTIONS } from '../../../utils/consts';
 import { formatSize, generateOptionType, isFsxnExisting } from '../../../utils/utilityFunctions';
@@ -95,6 +96,8 @@ export const selectFsxThroughput = (
     defaultVal: string,
     dispatch: any
 ) => {
+    const state = store.getState();
+    const throughputVal = state.mssqlForm.throughput;
     const throughput = selectedExistingFsxnName?.data?.throughput || 0;
     if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName && throughput !== 0) {
         let val = '';
@@ -106,7 +109,7 @@ export const selectFsxThroughput = (
         const option = generateOptionType(val, val, '', false, '');
         dispatch(setThroughputValue(option));
     } else {
-        if (!defaultVal) {
+        if (!defaultVal || throughputVal?.value) {
             return;
         }
         const option = generateOptionType(defaultVal, defaultVal, '', false, '');
@@ -115,11 +118,13 @@ export const selectFsxThroughput = (
 };
 
 export const selectFsxIops = (selectedFsxnType: string, selectedExistingFsxnName: any, dispatch: any) => {
+    const state = store.getState();
+    const provisionedIOPSval = state.mssqlForm.provisionedIOPS.IOPSValue;
     const iops = selectedExistingFsxnName?.data?.iops || 0;
     if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName && iops !== 0) {
         dispatch(setProvisionedType(GENERAL.USER_PROVISIONED));
         dispatch(setProvisionedIOPSValue(iops));
-    } else {
+    } else if (!provisionedIOPSval) {
         dispatch(setProvisionedType(GENERAL.AUTOMATIC));
         dispatch(setProvisionedIOPSValue(''));
     }

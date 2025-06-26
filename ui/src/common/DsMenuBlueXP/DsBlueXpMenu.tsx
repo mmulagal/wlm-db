@@ -1,6 +1,6 @@
 import { ReactComponent as MenuIcon } from '@netapp/icons/ic_menu.svg';
 import { ReactComponent as ExternalLinkIcon } from '@netapp/icons/ic_external_link.svg';
-
+import { useTranslation } from 'react-i18next';
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import styles from './DsBlueXpMenu.module.scss';
 
@@ -14,6 +14,7 @@ export interface DsBlueXpMenuProps {
 // DsMenu
 
 export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) => {
+    const { t } = useTranslation();
     enum MenuItems {
         links = 'links',
         notifications = 'notifications',
@@ -50,7 +51,7 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                                     className={styles.blueMenuItem}
                                     onClick={() => navigateTo('/fsxhome/links')}
                                 >
-                                    Links
+                                    {t('databases.bluexp-menu.links')}
                                 </DsTypography>
                             );
                         case MenuItems.notifications:
@@ -60,7 +61,7 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                                     className={styles.blueMenuItem}
                                     onClick={() => navigateTo('/fsxhome/notification-setup')}
                                 >
-                                    Workload factory notification setup
+                                    {t('databases.bluexp-menu.workload-factory-notification')}
                                 </DsTypography>
                             );
                         case MenuItems.hub:
@@ -72,7 +73,7 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                                     rel="noopener noreferrer"
                                 >
                                     <DsTypography variant="Semibold_13" className={styles.extenalLink}>
-                                        API Hub
+                                        {t('databases.bluexp-menu.api-hub')}
                                         <ExternalLinkIcon />
                                     </DsTypography>
                                 </a>
@@ -86,7 +87,7 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                                     rel="noopener noreferrer"
                                 >
                                     <DsTypography variant="Semibold_13" className={styles.extenalLink}>
-                                        Monitoring GitHub repository
+                                        {t('databases.bluexp-menu.monitoring-github')}
                                         <ExternalLinkIcon />
                                     </DsTypography>
                                 </a>
@@ -100,7 +101,7 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                                     rel="noopener noreferrer"
                                 >
                                     <DsTypography variant="Semibold_13" className={styles.extenalLink}>
-                                        Subscribe to RSS
+                                        {t('databases.bluexp-menu.subscribe-to-rss')}
                                         <svg
                                             width="16"
                                             height="16"
@@ -132,7 +133,7 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                                     className={styles.blueMenuItem}
                                     onClick={() => navigateTo('/fsxhome/credentials')}
                                 >
-                                    Workload Factory credentials
+                                    {t('databases.bluexp-menu.workload-factory-credentials')}
                                 </DsTypography>
                             );
                     }
