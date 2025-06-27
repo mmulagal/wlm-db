@@ -36,6 +36,21 @@ interface WFNotification {
     service?: string;
 }
 
+interface ChannelProperty {
+    key: string;
+    value: string;
+}
+
+interface NotificationChannel {
+    type: string;
+    active: boolean;
+    channelProperties: ChannelProperty[];
+}
+
+interface ChannelsApiResponse {
+    channels: NotificationChannel[];
+}
+
 async function sendWFNotification(accountId: string, requestBody: WFNotification) {
     logger.info('Sending workload factory notification:', { accountId, requestBody });
     try {
@@ -55,4 +70,21 @@ async function sendWFNotification(accountId: string, requestBody: WFNotification
     }
 }
 
-export { sendWFNotification, WFNotification };
+// TODO: We may have to remove this if its not supported with the service token
+async function getChannels(accountId: string) {
+    logger.info('Get Channels:', { accountId });
+    try {
+        const { token } = await getWfServiceToken();
+        return gotInstanceForInternalRequest
+            .get(`${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/notification/v1/channels`, {
+                headers: {
+                    [HEADERS.AUTHORIZATION]: token
+                }
+            })
+            .json<ChannelsApiResponse>();
+    } catch (err) {
+        throw createError(500, `Error occurred while getting notification channels, ${err}`);
+    }
+}
+
+export { sendWFNotification, WFNotification, getChannels };

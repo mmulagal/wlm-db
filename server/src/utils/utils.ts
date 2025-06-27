@@ -5,6 +5,7 @@
 import { attempt, trimEnd, trimStart, camelCase, isEmpty, isObject } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import CIDR from 'ip-cidr';
 import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
@@ -1183,6 +1184,22 @@ function isNonEmptyObject(obj: any) {
     return isObject(obj) && !isEmpty(obj);
 }
 
+function isCidrContained(outerCidr: string, innerCidr: string): boolean {
+    logger.debug('Checking if CIDR is contained', { outerCidr, innerCidr });
+    const outer = new CIDR(outerCidr);
+    const inner = new CIDR(innerCidr);
+
+    // Check prefix length
+    const outerPrefix = parseInt(outerCidr.split('/')[1], 10);
+    const innerPrefix = parseInt(innerCidr.split('/')[1], 10);
+    if (innerPrefix < outerPrefix) {
+        return false;
+    }
+
+    // Check if inner's network address is within outer's range
+    return outer.contains(inner.address);
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1252,5 +1269,6 @@ export {
     isNonEmptyObject,
     getUnitForMetric,
     assessMssqlServerPerformance,
-    getSqlInstanceMetricDataQueries
+    getSqlInstanceMetricDataQueries,
+    isCidrContained
 };

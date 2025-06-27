@@ -21,6 +21,8 @@ import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm
 import { listSsmCommands } from '../../lib/aws/ssm';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { updateResourceMetaData } from '../database/database-operations';
+import { describeInstance } from '../../lib/aws/ec2';
+import { getResourceNameFromTags } from '../../utils/utils';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
@@ -236,11 +238,32 @@ async function runOsPatchAssessment(
     });
 
     try {
-        const clusterNodeDetails = isPartOfCluster
-            ? await getAllClusterNodeDetails(accountId, credentialsId, region, databaseHostId, nodeInstanceId)
-            : [{ ec2InstanceId: nodeInstanceId }];
-        const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
+        let clusterNodeDetails;
+        if (isPartOfCluster) {
+            clusterNodeDetails = await getAllClusterNodeDetails(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                nodeInstanceId
+            );
+        } else {
+            // Get the EC2 instance name for standalone
+            const { Reservations = [] } = await describeInstance(credentialsId, region, {
+                InstanceIds: [nodeInstanceId]
+            });
+            const ec2Name = getResourceNameFromTags(Reservations?.[0]?.Instances?.[0]?.Tags);
+            clusterNodeDetails = [{ ec2InstanceId: nodeInstanceId, ec2InstanceName: ec2Name || 'Unknown' }];
+        }
+
+        const clusterNodeInstanceIds = compact(clusterNodeDetails?.map(({ ec2InstanceId }) => ec2InstanceId));
+
         if (!isEmpty(clusterNodeInstanceIds)) {
+            // Map ec2InstanceId to ec2InstanceName for quick lookup
+            const ec2InstanceNameMap = new Map(
+                clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => [ec2InstanceId, ec2InstanceName])
+            );
+
             const [{ metadata = {} } = {}] =
                 (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
             const metadataObject = metadata as unknown as Metadata;
@@ -286,6 +309,7 @@ async function runOsPatchAssessment(
                         criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
                         otherNonCompliantCount: otherNonCompliantCount ?? 0,
                         ec2InstanceId: ec2InstanceId ?? '',
+                        ec2InstanceName: ec2InstanceNameMap.get(ec2InstanceId ?? '') || 'Unknown',
                         operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
                         operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
                         securityNonCompliantCount: securityNonCompliantCount ?? 0,
