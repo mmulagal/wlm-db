@@ -232,7 +232,7 @@ async function getDriveInfoFromSSM(
         node1InstanceId,
         node2InstanceId,
         forSandbox,
-        instanceDetail
+        instanceDetail: instanceDetail?.database_instance_name
     });
 
     let isSSMConnected;
@@ -352,16 +352,15 @@ async function getDriveInfo(
     databaseInstanceId?: string,
     activeNodeDetails?: ActiveSqlNodeDetails
 ): Promise<DriveInfoResponseBodyType> {
-    logger.info(
-        'Fetching drive details and storage capacity of the database host',
+    logger.info('Fetching drive details and storage capacity of the database host', {
         accountId,
         databaseHostId,
         credentialsId,
         region,
         forSandbox,
         databaseInstanceId,
-        activeNodeDetails
-    );
+        activeNodeDetails: activeNodeDetails?.activeNodeInstanceId
+    });
 
     const {
         items: [resourceDetail]

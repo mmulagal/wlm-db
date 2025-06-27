@@ -216,7 +216,7 @@ async function setSnapshotPolicyForVolumes(
     instanceMetadata?: DatabaseInstanceMetadata,
     volumesToOptimize?: OntapVolumeType[]
 ) {
-    logger.info('Setting snapshot policy for volumes of instace: ', { instanceRecord, snapshotPolicy });
+    logger.info('Setting snapshot policy for volumes of instace: ', { instance: instanceRecord.name, snapshotPolicy });
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
     let jobError = '';
     let subJobId = null;

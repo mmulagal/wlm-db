@@ -1,6 +1,6 @@
 import { format } from 'util';
 import { readFileSync } from 'fs';
-import log4js, { Configuration, Layout, PatternLayout } from 'log4js';
+import log4js, { Configuration, Layout, levels, PatternLayout } from 'log4js';
 import config from 'config';
 import { isObject, isArray, isPlainObject, isEmpty, isString, isObjectLike } from 'lodash-es';
 import { context, trace } from '@opentelemetry/api';
@@ -62,7 +62,6 @@ function initialize() {
             ? config.get<string>('log4js.local-config-file')
             : config.get<string>('log4js.config-file');
     const configuration: Configuration = JSON.parse(readFileSync(path).toString());
-
     Object.values(configuration.appenders).forEach(appender => {
         if (appender.type === 'console' || appender.type === 'file') {
             if (isPatternLayout(appender.layout)) {
@@ -78,8 +77,11 @@ function initialize() {
                         format(
                             ...loggingEvent.data.map(log => {
                                 try {
+                                    const logLevel = loggingEvent.level;
                                     return isObject(log)
-                                        ? stringifyObject(hideSecretsValues(structuredClone(log)))
+                                        ? logLevel === levels.DEBUG
+                                            ? stringifyObject(structuredClone(log))
+                                            : stringifyObject(hideSecretsValues(structuredClone(log)))
                                         : log;
                                 } catch (error) {
                                     // TODO: Remove me: Temporary catch to identify #<Promise> could not be cloned

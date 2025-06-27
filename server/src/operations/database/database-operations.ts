@@ -336,7 +336,7 @@ async function listAllManagedInstances(accountId?: string) {
 }
 
 async function updateInstanceMetadata(accountId: string, instanceId: string, metaData: any) {
-    logger.info('Update instance metadata', { accountId, instanceId, metaData });
+    logger.info('Update instance metadata', { accountId, instanceId });
     return updateDatabaseInstance({ accountId, instanceId, metaData });
 }
 
@@ -348,12 +348,12 @@ async function updateDatabaseInstanceConfigurations(
     instanceId: string,
     updatedConfigs: any
 ) {
-    logger.info('Update instance configurations', { accountId, instanceId, updatedConfigs });
+    logger.info('Update instance configurations', { accountId, instanceId });
     return updateDatabaseInstance({ accountId, credentialsId, region, databaseHostId, instanceId, updatedConfigs });
 }
 
 async function updateResourceMetaData(accountId: string, credentialsId: string, resourceId: string, metaData?: any) {
-    logger.info('Update resource metadata', { accountId, resourceId, metaData });
+    logger.info('Update resource metadata', { accountId, resourceId });
     return updateResource({ accountId, credentialsId, resourceId, metaData });
 }
 
@@ -364,7 +364,7 @@ async function updateDatabaseHostConfigurations(
     resourceId: string,
     updatedConfigs: any
 ) {
-    logger.info('Update host configurations', { accountId, resourceId, updatedConfigs });
+    logger.info('Update host configurations', { accountId, resourceId });
     return updateResource({ accountId, credentialsId, region, resourceId, updatedConfigs });
 }
 

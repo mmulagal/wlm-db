@@ -1509,7 +1509,10 @@ async function fetchCrrBackupDetails(
     volumeRecords: VolumeRecord[],
     volumeDBMap: any
 ) {
-    logger.info('Fetching CRR backup details', { instanceDetails, volumeDBMap, volumeRecords });
+    logger.info('Fetching CRR backup details', {
+        instanceNames: instanceDetails.map(instance => instance.database_instance_name),
+        volumeRecordsLength: volumeRecords.length
+    });
     if (isEmpty(instanceDetails)) {
         logger.warn('Instance details array is empty. Returning an empty mapping.');
         return [];
@@ -2398,7 +2401,7 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
                                     });
                                     const command = trendGraphCreateScript(databaseHostId, nodeId);
                                     const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
-                                    const response = await callSsmExecution(
+                                    await callSsmExecution(
                                         credentialsId,
                                         region!,
                                         [command],
@@ -2411,8 +2414,7 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
                                     logger.info('Instance performance assessment response', {
                                         accountId,
                                         region,
-                                        nodeId,
-                                        response
+                                        nodeId
                                     });
                                 } else {
                                     logger.error('SSM connection not established for node', {
