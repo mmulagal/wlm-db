@@ -608,8 +608,8 @@ async function validateVpcEndpoints(
 
     const subnetsWithIgwRoutes = subnetDetails
         .filter(subnet => {
-            const associatedRouteTable = routeTables?.RouteTables?.find(routeTable =>
-                routeTable.Associations?.some(association => association.SubnetId === subnet.subnetId)
+            const associatedRouteTable = routeTables?.RouteTables?.find(
+                routeTable => routeTable.RouteTableId === subnet.routeTableId
             );
 
             return associatedRouteTable?.Routes?.some(route => route.GatewayId?.startsWith('igw-')) || false;
