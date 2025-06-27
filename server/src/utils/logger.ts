@@ -1,6 +1,6 @@
 import { format } from 'util';
 import { readFileSync } from 'fs';
-import log4js, { Configuration, Layout, levels, PatternLayout } from 'log4js';
+import log4js, { Configuration, Layout, PatternLayout } from 'log4js';
 import config from 'config';
 import { isObject, isArray, isPlainObject, isEmpty, isString, isObjectLike } from 'lodash-es';
 import { context, trace } from '@opentelemetry/api';
@@ -77,9 +77,9 @@ function initialize() {
                         format(
                             ...loggingEvent.data.map(log => {
                                 try {
-                                    const logLevel = loggingEvent.level;
+                                    const logLevel = loggingEvent.level.levelStr.toUpperCase();
                                     return isObject(log)
-                                        ? logLevel === levels.DEBUG
+                                        ? logLevel === 'DEBUG'
                                             ? stringifyObject(structuredClone(log))
                                             : stringifyObject(hideSecretsValues(structuredClone(log)))
                                         : log;
