@@ -215,6 +215,22 @@ const enableCredSSP = `
                 Enable-WSManCredSSP -Role Client -DelegateComputer $ServerName -Force | Out-Null
                 Enable-WSManCredSSP -Role Server -Force | Out-Null
 
+                # Enable-WSManCredSSP is unreliable, so setting from registry.
+                $parentkey = "hklm:\SOFTWARE\Policies\Microsoft\Windows"
+                $key = "$parentkey\CredentialsDelegation"
+                $freshkey = "$key\AllowFreshCredentials"
+                $ntlmkey = "$key\AllowFreshCredentialsWhenNTLMOnly"
+                New-Item -Path $parentkey -Name 'CredentialsDelegation' -Force | Out-Null
+                New-Item -Path $key -Name 'AllowFreshCredentials' -Force | Out-Null
+                New-Item -Path $key -Name 'AllowFreshCredentialsWhenNTLMOnly' -Force | Out-Null
+                New-ItemProperty -Path $key -Name AllowFreshCredentials -Value 1 -PropertyType Dword -Force | Out-Null
+                New-ItemProperty -Path $key -Name ConcatenateDefaults_AllowFresh -Value 1 -PropertyType Dword -Force | Out-Null
+                New-ItemProperty -Path $key -Name AllowFreshCredentialsWhenNTLMOnly -Value 1 -PropertyType Dword -Force | Out-Null
+                New-ItemProperty -Path $key -Name ConcatenateDefaults_AllowFreshNTLMOnly -Value 1 -PropertyType Dword -Force | Out-Null
+                New-ItemProperty -Path $freshkey -Name 1 -Value "WSMAN/$ServerName" -PropertyType String -Force | Out-Null 
+                New-ItemProperty -Path $ntlmkey -Name 1 -Value "WSMAN/$ServerName" -PropertyType String -Force | Out-Null 
+
+
                 # Verify CredSSP is enabled
                 if (-not (Is-CredSSPEnabled)) {
                     throw "Failed to enable CredSSP."
