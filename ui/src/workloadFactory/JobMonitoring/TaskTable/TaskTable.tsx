@@ -6,7 +6,7 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { JOB_MONITORING_STATUS, JOB_MONITORING_TYPE, WLF_TABS } from '../../../utils/consts';
+import { JOB_MONITORING_STATUS, JOB_MONITORING_TYPE, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { GENERAL } from '../../../utils/appConstants';
@@ -16,7 +16,8 @@ import {
     setCredIdFromJM,
     setGwPageLoadInstanceData,
     setLandingFrom,
-    setRegionFromJM
+    setRegionFromJM,
+    setSelectedWellArchitectTab
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 
 const TaskTable = ({ taskList = [] }: any) => {
@@ -39,6 +40,7 @@ const TaskTable = ({ taskList = [] }: any) => {
 
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
         if (rowData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
             dispatch(setCredIdFromJM(rowData?.credentialsId));
             dispatch(setRegionFromJM(rowData?.region?.code));

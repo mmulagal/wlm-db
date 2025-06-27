@@ -11,7 +11,13 @@ import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { CREATE_RESOURCE, JOB_MONITORING_STATUS, JOB_MONITORING_TYPE, WLF_TABS } from '../../../utils/consts';
+import {
+    CREATE_RESOURCE,
+    JOB_MONITORING_STATUS,
+    JOB_MONITORING_TYPE,
+    WELL_ARCHITECTED_TABS,
+    WLF_TABS
+} from '../../../utils/consts';
 import {
     expandTableRow,
     formatDateWithTime,
@@ -26,7 +32,8 @@ import {
     setCredIdFromJM,
     setGwPageLoadInstanceData,
     setLandingFrom,
-    setRegionFromJM
+    setRegionFromJM,
+    setSelectedWellArchitectTab
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import useResize from '../../../common/hooks/useResize';
 
@@ -66,6 +73,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
 
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
         if (subJobsData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
             dispatch(setCredIdFromJM(rowData?.credentialsId));
             dispatch(setRegionFromJM(rowData?.region?.code));
