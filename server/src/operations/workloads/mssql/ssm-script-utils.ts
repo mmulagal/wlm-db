@@ -1585,19 +1585,6 @@ FOR JSON PATH;
 
         $combinedMetrics = @()
 
-        Function Is-CredSSPEnabled {
-            try {
-                $credsspStatus = Get-WSManCredSSP
-                if ($credsspStatus -match "The machine is configured to allow delegating fresh credentials") {               
-                    return $true
-                } else {
-                    return $false
-                }
-            } catch {
-                Write-Host "Error checking CredSSP status: $($_.Exception.Message)"
-                return $false
-            }
-        }
         $credsFromParameterStore = $null
         try {
             $credsFromParameterStore = (Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json
@@ -1627,41 +1614,9 @@ FOR JSON PATH;
                 {
                     $windowsAuth = $true
                     $DomainCreds = (New-Object PSCredential($sqlCredential.username,(ConvertTo-SecureString $sqlCredential.password -AsPlainText -Force)))
-                    if ((-not $credsspSet) -And (-not (Is-CredSSPEnabled))) {
-                        try {
-                            $ServerName = '*'
-                            $isPartOfDomain = (Get-WmiObject Win32_ComputerSystem).PartofDomain
-                            if ($isPartOfDomain -eq $True) {
-                                $domain = (Get-WmiObject Win32_ComputerSystem).Domain
-                                $ServerName = "*.$domain"
-                            }
-                            Enable-WSManCredSSP -Role Client -DelegateComputer $ServerName -Force | Out-Null
-                            Enable-WSManCredSSP -Role Server -Force | Out-Null
-                            # Sometimes Enable-WSManCredSSP doesn't get it right, so we set some registry entries by hand
-                            $parentkey = "hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows"
-                            $key = "$parentkey\\CredentialsDelegation"
-                            $freshkey = "$key\\AllowFreshCredentials"
-                            $ntlmkey = "$key\\AllowFreshCredentialsWhenNTLMOnly"
-                            New-Item -Path $parentkey -Name 'CredentialsDelegation' -Force | Out-Null
-                            New-Item -Path $key -Name 'AllowFreshCredentials' -Force | Out-Null
-                            New-Item -Path $key -Name 'AllowFreshCredentialsWhenNTLMOnly' -Force | Out-Null
-                            New-ItemProperty -Path $key -Name AllowFreshCredentials -Value 1 -PropertyType Dword -Force | Out-Null
-                            New-ItemProperty -Path $key -Name ConcatenateDefaults_AllowFresh -Value 1 -PropertyType Dword -Force | Out-Null
-                            New-ItemProperty -Path $key -Name AllowFreshCredentialsWhenNTLMOnly -Value 1 -PropertyType Dword -Force | Out-Null
-                            New-ItemProperty -Path $key -Name ConcatenateDefaults_AllowFreshNTLMOnly -Value 1 -PropertyType Dword -Force | Out-Null
-                            New-ItemProperty -Path $freshkey -Name 1 -Value "WSMAN/$ServerName" -PropertyType String -Force | Out-Null
-                            New-ItemProperty -Path $ntlmkey -Name 1 -Value "WSMAN/$ServerName" -PropertyType String -Force | Out-Null
-
-                            # Verify CredSSP is enabled
-                            if (-not (Is-CredSSPEnabled)) {
-                                Write-Host "Enabling CredSSP failed"
-                                throw "Failed to enable CredSSP."
-                            } else {    
-                                $credsspSet = $true
-                            }
-                        } catch {
-                            Write-Error "Error enabling CredSSP: $($_.Exception.Message)"
-                        }
+                    ${enableCredSSP} 
+                    ${invokeCommandWithCredSSP}
+                    Enable-CredSSP
             }
                 }
             }       
@@ -1674,11 +1629,7 @@ FOR JSON PATH;
                     $cpu = {
                         sqlcmd @Using:sqlCmdParams -Q $Using:cpuUtilquery -y 0
                          } 
-                    $cpuOut = Invoke-Command -ScriptBlock $cpu -ComputerName $ENV:ComputerName -Credential $DomainCreds -Authentication Credssp
-                    $cpuResponse = $cpuOut | ForEach-Object {
-                        # Split the output to isolate the desired part of the string as it is multipart Query
-                        $_ -split '\\s{2,}' | Select-Object -Last 1
-                    }                    
+                    $cpuResponse = Invoke-CommandWithCredSSP -ScriptBlock $cpu -ComputerName $ENV:ComputerName -Credential $DomainCreds -Authentication Credssp -IsMultiQuery $True                 
                 }
                 else {
                     $cpuResponse = sqlcmd @sqlCmdParams -Q $cpuUtilquery -y 0
@@ -1695,11 +1646,7 @@ FOR JSON PATH;
                     $performanceQuery = {
                         sqlcmd @Using:sqlCmdParams -Q $Using:performanceQuery -y 0
                     }
-                    $perfOut = Invoke-Command -ScriptBlock $performanceQuery -ComputerName $ENV:ComputerName -Credential $DomainCreds -Authentication Credssp 
-                    $perfResponse = $perfOut | ForEach-Object {
-                        # Split the output to isolate the desired part of the string as it is multipart Query
-                        $_ -split '\\s{2,}' | Select-Object -Last 1
-                    }   
+                    $perfResponse  = Invoke-CommandWithCredSSP -ScriptBlock $performanceQuery -ComputerName $ENV:ComputerName -Credential $DomainCreds -Authentication Credssp -IsMultiQuery $True 
                 }
                 else {
                     $perfResponse = sqlcmd @sqlCmdParams -Q $performanceQuery -y 0
