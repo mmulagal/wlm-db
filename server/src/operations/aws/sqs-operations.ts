@@ -273,7 +273,11 @@ async function modifyMasterJobStatus(
             resourceType: `${databaseType} host`,
             priority: isFailed ? WF_NOTIFICATION_PRIORITY.WF_ERROR : WF_NOTIFICATION_PRIORITY.WF_SUCCESS
         };
-        await prepareWFNotificationRequest(accountId, notificationData);
+        try {
+            await prepareWFNotificationRequest(accountId, notificationData);
+        } catch (err: any) {
+            logger.error('Failed to send notification for job status update', err);
+        }
     }
 
     logger.debug('Update job response:', response);

@@ -56,7 +56,6 @@ type CronJobOptions = {
     queueName: string;
     jobName: string;
     cronPattern: string;
-    logIntervalConfigKey: string;
     workerProcessor: (job?: any) => Promise<void>;
     onJobErrorMessage: string;
 };
@@ -298,14 +297,7 @@ function purgeOlderDeployments() {
     deleteOlderDeployments(Date.now() - Number(purgeAfter));
 }
 
-function scheduleCronJob({
-    queueName,
-    jobName,
-    cronPattern,
-    logIntervalConfigKey,
-    workerProcessor,
-    onJobErrorMessage
-}: CronJobOptions) {
+function scheduleCronJob({ queueName, jobName, cronPattern, workerProcessor, onJobErrorMessage }: CronJobOptions) {
     let redisConnection: IORedis;
     try {
         redisConnection = getRedisConnection();
@@ -331,7 +323,7 @@ function scheduleCronJob({
 
         logQueueMetrics(queue);
 
-        logger.info(`${jobName} job added to queue with interval ${config.get(logIntervalConfigKey)}.`);
+        logger.info(`${jobName} job added to queue with interval.`);
 
         getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
             const worker = new Worker(
@@ -340,7 +332,7 @@ function scheduleCronJob({
                     try {
                         await workerProcessor();
                     } catch (error) {
-                        logger.error(onJobErrorMessage, job, error);
+                        logger.error(`job error ${jobName}`, { onJobErrorMessage, job, error });
                     }
                 },
                 { connection: redisConnection }
@@ -373,7 +365,6 @@ async function initiateCronOperations() {
                 queueName: DRIFT_ASSESSMENT_QUEUE,
                 jobName: 'CONTINUOUS_OPTIMIZATION_DRIFT_ASSESSMENT',
                 cronPattern: '0 0 0 * * *', // Run every day at midnight
-                logIntervalConfigKey: 'redis.well-architected-assessment-job-interval',
                 workerProcessor: async () => {
                     await triggerDriftAssessmentDataCollection(AssessmentTriggeredBy.SYSTEM);
                 },
@@ -384,7 +375,6 @@ async function initiateCronOperations() {
                 queueName: INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE,
                 jobName: 'INSTANCE_PERFORMANCE_ASSESSMENT',
                 cronPattern: '0 2,8,14,20 * * *', // Run every 6 hours starting at 2 AM
-                logIntervalConfigKey: 'redis.performance-assessment-cron-job-interval',
                 workerProcessor: async () => {
                     await triggerInstancePerformanceAssessment(AssessmentTriggeredBy.SYSTEM);
                 },
@@ -395,7 +385,6 @@ async function initiateCronOperations() {
                 queueName: WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_QUEUE,
                 jobName: 'WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION',
                 cronPattern: WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN, // Every 7 days at 5am for prod, Every 1 hour for staging
-                logIntervalConfigKey: 'redis.well-architected-assessment-notification-job-interval',
                 workerProcessor: async () => {
                     await processWellArchitectedAssessmentNotifications(AssessmentTriggeredBy.SYSTEM);
                 },
