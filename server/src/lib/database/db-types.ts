@@ -77,6 +77,7 @@ interface ListDatabaseInstancesRecord {
     isDefault?: boolean;
     credentialsId?: string;
     region?: string | null;
+    databaseType?: string;
 }
 
 export { Deployment, Event, Resource, Config, DatabaseInstanceRecord, ListDatabaseInstancesRecord };

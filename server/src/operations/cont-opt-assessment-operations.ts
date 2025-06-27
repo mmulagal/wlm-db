@@ -30,7 +30,10 @@ import {
     HttpErrorCodes,
     RESOURCESTYPE,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
-    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT
+    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+    WF_NOTIFICATION_PRIORITY,
+    NOTIFICATION_TYPE,
+    DatabaseTypes
 } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
@@ -101,9 +104,33 @@ import {
     checkAndUpdatePostponedEndTime,
     updateFieldsBasedOnDismissedConfigurations
 } from './continuous-optimization/assessment-utils';
+import prepareWFNotificationRequest from './wf-notification-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
+
+interface NotificationData {
+    content: string;
+    subject: string;
+    resourceType: string;
+    resourceId: string;
+    priority: string;
+    resourceName: string;
+    notificationType: string;
+}
+
+interface InstanceAssessmentDetails {
+    resourceId: string;
+    databaseInstanceId: string;
+    notOptimized: boolean;
+    details?: any;
+}
+
+interface AccountAssessmentSummary {
+    wellArchitectedCount: number;
+    notOptimizedCount: number;
+    instances: InstanceAssessmentDetails[];
+}
 
 async function updateAssesmentResultsInInstanceMetadata(managedInstance: DatabaseInstancesIncludingResource) {
     const {
@@ -145,6 +172,7 @@ async function updateAssesmentResultsInInstanceMetadata(managedInstance: Databas
         });
     }
 }
+
 async function initiateHostLevelAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
@@ -885,7 +913,10 @@ async function triggerAssessment(
 async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?: string) {
     logger.info('Trigger drift assessment per account', { initiatedBy });
 
-    const allManagedInstances = (await listAllManagedInstances()) as DatabaseInstancesIncludingResource[];
+    const allManagedInstances = (await listAllManagedInstances(undefined, {
+        databaseType: DatabaseTypes.MS_SQL_SERVER
+    })) as DatabaseInstancesIncludingResource[];
+
     if (isEmpty(allManagedInstances)) {
         logger.info('No successfully managed database instances found.');
         return;
@@ -1821,6 +1852,207 @@ async function fetchDriftAssessmentPerAccount(
     };
 }
 
+// Recursive function to check for any "not-optimized" status in the assessment results.
+// It checks both arrays and objects, looking for the specific status in any nested structure.
+// Returns true if any "not-optimized" status is found, otherwise false.
+// This is used to determine if an instance has any assessment results that are not optimized.
+function hasNotOptimizedStatus(obj: any): boolean {
+    if (Array.isArray(obj)) {
+        return obj.some(hasNotOptimizedStatus);
+    }
+    if (obj && typeof obj === 'object') {
+        if (obj.status === AssessmentStatus.NOT_OPTIMIZED) {
+            return true;
+        }
+        return Object.values(obj).some(hasNotOptimizedStatus);
+    }
+    return false;
+}
+
+/**
+ * Processes well-architected assessment notifications for all managed Microsoft SQL Server instances.
+ *
+ * Logic Overview:
+ * 1. Fetch all managed MSSQL database instances.
+ * 2. Group instances by their account ID.
+ * 3. For each account:
+ *    a. Check if the account has any active notification channels (using getChannels).
+ *    b. If no active channel or error, skip processing for that account.
+ *    c. If active, process each managed instance in parallel (throttled to 3 at a time):
+ *       - Analyze the assessment results for each instance to determine if it is "well-architected" or "not optimized".
+ *       - Build an account-level summary (wellArchitectedCount, notOptimizedCount, and instance details).
+ * 4. After all accounts are processed, build notification messages for each instance in each account,
+ *    including subject and body with summary counts.
+ * 5. Send notifications for all instances, throttled to 3 concurrent sends at a time, with error handling for each send.
+ *
+ * Performance & Reliability:
+ * - Uses throttling (via throat) to avoid overloading downstream APIs.
+ * - Handles errors gracefully at each step, so one account or notification failure does not affect others.
+ * - Skips accounts with no managed instances or no active notification channels.
+ * - Splits logic into small, maintainable functions for clarity.
+ */
+
+async function processWellArchitectedAssessmentNotifications(initiatedBy: string) {
+    logger.info('Processing well-architected assessment notifications', { initiatedBy });
+
+    // Hash map to store per-account assessment summary
+    const accountAssessmentMap: Record<string, AccountAssessmentSummary> = {};
+
+    try {
+        const allManagedInstances = (await listAllManagedInstances(undefined, {
+            databaseType: DatabaseTypes.MS_SQL_SERVER
+        })) as DatabaseInstancesIncludingResource[];
+        if (isEmpty(allManagedInstances)) {
+            logger.info('No successfully managed database instances found.');
+            return;
+        }
+
+        // Group managed instances by account_id
+        const managedInstancesGroupedByAccountId = allManagedInstances.reduce(
+            (acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
+                const key = `${managedInstance.account_id}`;
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+                acc[key].push(managedInstance);
+                return acc;
+            },
+            {}
+        );
+
+        // Process all accounts in parallel (with concurrency limit) only for the accounts that have active notification channels
+        await Promise.all(
+            Object.entries(managedInstancesGroupedByAccountId).map(
+                throat(3, async ([accountId, managedInstances]) => {
+                    try {
+                        const summary = await processAccountInstances(accountId, managedInstances);
+                        if (summary) {
+                            accountAssessmentMap[accountId] = summary;
+                        }
+                    } catch (err) {
+                        logger.error(`Skipping account ${accountId} due to error processing instances.`, err);
+                    }
+                })
+            )
+        );
+
+        // Send notifications after processing all instances
+        await buildAndSendNotifications(accountAssessmentMap);
+    } catch (error) {
+        logger.error('Error processing well-architected assessment notifications:', error);
+    }
+}
+
+// Standalone function to process all managed instances for an account and return the summary
+async function processAccountInstances(
+    accountId: string,
+    managedInstances: DatabaseInstancesIncludingResource[]
+): Promise<AccountAssessmentSummary | undefined> {
+    if (isEmpty(managedInstances)) {
+        logger.info(`No managed instances found for account ${accountId}.`);
+        return undefined;
+    }
+
+    const summary: AccountAssessmentSummary = {
+        wellArchitectedCount: 0,
+        notOptimizedCount: 0,
+        instances: []
+    };
+
+    await Promise.all(
+        managedInstances.map(
+            throat(3, async managedInstance => {
+                try {
+                    const {
+                        resource_id: resourceId,
+                        database_instance_id: databaseInstanceId,
+                        metadata
+                    } = managedInstance;
+                    let assessmentResults: any | undefined;
+                    if (
+                        metadata &&
+                        typeof metadata === 'object' &&
+                        !Array.isArray(metadata) &&
+                        'assessmentResults' in metadata
+                    ) {
+                        assessmentResults = (metadata as { assessmentResults?: any }).assessmentResults;
+                    }
+                    if (!assessmentResults) {
+                        return;
+                    }
+
+                    const notOptimized = hasNotOptimizedStatus(assessmentResults);
+
+                    summary.instances.push({
+                        resourceId,
+                        databaseInstanceId,
+                        notOptimized
+                        // details: assessmentResults // can have this later on for future references
+                    });
+
+                    if (notOptimized) {
+                        summary.notOptimizedCount += 1;
+                    } else {
+                        summary.wellArchitectedCount += 1;
+                    }
+                } catch (error) {
+                    logger.error(`Error processing managed instance ${managedInstance?.resource_id}:`, error);
+                }
+            })
+        )
+    );
+
+    return summary;
+}
+
+// Helper to build notification data for all accounts and instances
+function buildNotificationsToSend(
+    accountAssessmentMap: Record<string, AccountAssessmentSummary>
+): Array<{ accountId: string; notificationData: NotificationData }> {
+    const notificationsToSend: Array<{ accountId: string; notificationData: NotificationData }> = [];
+
+    for (const [accountId, summary] of Object.entries(accountAssessmentMap)) {
+        const { wellArchitectedCount, notOptimizedCount } = summary;
+        const total = wellArchitectedCount + notOptimizedCount;
+        const subject = `${notOptimizedCount}/${total} instances in your account aren’t well-architected`;
+        const body = `All Microsoft SQL Server instances in your account ${accountId} have been analyzed for well-architected issues. Well-architected instances: ${wellArchitectedCount}, Not optimized instances: ${notOptimizedCount}. Review well-architected status findings and recommendations in the Databases inventory from the Workload Factory console.`;
+
+        notificationsToSend.push({
+            accountId,
+            notificationData: {
+                content: body,
+                subject,
+                resourceType: 'Microsoft SQL Server instance',
+                resourceId: accountId,
+                priority: WF_NOTIFICATION_PRIORITY.WF_RECOMMENDATION,
+                resourceName: accountId,
+                notificationType: NOTIFICATION_TYPE.WELL_ARCHITECTED
+            }
+        });
+    }
+
+    return notificationsToSend;
+}
+
+async function buildAndSendNotifications(accountAssessmentMap: Record<string, AccountAssessmentSummary>) {
+    const notificationsToSend = buildNotificationsToSend(accountAssessmentMap);
+
+    await Promise.all(
+        notificationsToSend.map(
+            throat(3, async ({ accountId, notificationData }) => {
+                try {
+                    await prepareWFNotificationRequest(accountId, notificationData);
+                } catch (error) {
+                    logger.error(
+                        `Failed to send notification for account ${accountId}, instance ${notificationData.resourceId}:`,
+                        error
+                    );
+                }
+            })
+        )
+    );
+}
+
 export {
     triggerDriftAssessmentDataCollection,
     fetchDriftAssessment,
@@ -1830,5 +2062,6 @@ export {
     fetchDriftAssessmentPerHost,
     calculateComputeDrift,
     fetchDriftAssessmentPerAccount,
-    initiateStorageAssessmentCollection
+    initiateStorageAssessmentCollection,
+    processWellArchitectedAssessmentNotifications
 };

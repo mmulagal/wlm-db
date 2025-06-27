@@ -1780,6 +1780,16 @@ enum WF_NOTIFICATION_PRIORITY {
 
 const AWSDAC_MODULE_DIR = `${process.cwd()}/resources/packages`;
 const INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE = 'WLMDB-InstancePerformanceAssessmentQueue';
+const WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_QUEUE = 'WLMDB-WellArchitectedAssessmentNotificationQueue';
+enum NOTIFICATION_TYPE {
+    DEPLOYMENT = 'Deployment',
+    WELL_ARCHITECTED = 'Well-architected'
+}
+const WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN: string = config.has(
+    'well-architected-assessment-notification'
+)
+    ? config.get('well-architected-assessment-notification')
+    : '0 5 */7 * *'; // Default to every 7 days at 5 AM if not set in config
 
 export {
     WLMDB,
@@ -2141,6 +2151,9 @@ export {
     CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE,
     CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES,
     SNAPCENTER_BACKUP_SNAPSHOT_COMMENT,
-    AWSDAC_MODULE_DIR,
-    INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE
+    INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE,
+    WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_QUEUE,
+    NOTIFICATION_TYPE,
+    WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN,
+    AWSDAC_MODULE_DIR
 };

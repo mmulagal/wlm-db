@@ -25,7 +25,8 @@ import {
     STORAGE_PROTOCOLS,
     DatabaseTypes,
     AuditStatus,
-    WF_NOTIFICATION_PRIORITY
+    WF_NOTIFICATION_PRIORITY,
+    NOTIFICATION_TYPE
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -268,7 +269,7 @@ async function modifyMasterJobStatus(
                 : `${databaseType} host Deployment with stack ${stackName} has been completed successfully`,
             resourceName: stackName,
             resourceId: stackName,
-            notificationType: 'Deployment',
+            notificationType: NOTIFICATION_TYPE.DEPLOYMENT,
             resourceType: `${databaseType} host`,
             priority: isFailed ? WF_NOTIFICATION_PRIORITY.WF_ERROR : WF_NOTIFICATION_PRIORITY.WF_SUCCESS
         };

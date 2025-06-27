@@ -25,6 +25,7 @@ import getLogger from '../../utils/logger';
 import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND } from '../../utils/consts';
 import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
+import { ListDatabaseInstancesRecord } from '../../lib/database/db-types';
 
 const logger = getLogger();
 
@@ -331,8 +332,8 @@ async function getInstanceInfo(
     return instanceDetail;
 }
 
-async function listAllManagedInstances(accountId?: string) {
-    return listDatabaseInstances(accountId);
+async function listAllManagedInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
+    return listDatabaseInstances(accountId, record);
 }
 
 async function updateInstanceMetadata(accountId: string, instanceId: string, metaData: any) {

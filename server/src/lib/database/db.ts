@@ -637,7 +637,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
 async function listDatabaseInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
     logger.info('List database instances for given account and record', { accountId, record });
 
-    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region } = record ?? {};
+    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region, databaseType } = record ?? {};
     accountId = accountId ? checkAccount(accountId) : '';
 
     let databaseInstances = await prisma.client.database_instances.findMany({
@@ -648,7 +648,8 @@ async function listDatabaseInstances(accountId?: string, record?: ListDatabaseIn
             ...(sqlInstanceId && { database_instance_id: sqlInstanceId }),
             ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
             ...(region && { region }),
-            ...(isDefault && { is_default: isDefault })
+            ...(isDefault && { is_default: isDefault }),
+            ...(databaseType && { database_type: databaseType })
         },
         orderBy: {
             id: 'asc'
