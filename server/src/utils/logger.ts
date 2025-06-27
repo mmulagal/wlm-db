@@ -62,7 +62,6 @@ function initialize() {
             ? config.get<string>('log4js.local-config-file')
             : config.get<string>('log4js.config-file');
     const configuration: Configuration = JSON.parse(readFileSync(path).toString());
-
     Object.values(configuration.appenders).forEach(appender => {
         if (appender.type === 'console' || appender.type === 'file') {
             if (isPatternLayout(appender.layout)) {

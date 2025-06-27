@@ -337,12 +337,11 @@ async function isFsxnAwsBackupEnabled(
     activeNodeInstanceId?: string,
     accountId?: string
 ) {
-    logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
+    logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled.', {
         credentialsId,
         region,
         fileSystemId,
-        volumeUuids,
-        volumeDBMap,
+        volumeUuidsLength: volumeUuids?.length,
         activeNodeInstanceId,
         accountId
     });
@@ -449,8 +448,7 @@ async function getOntapVolumesSnapshotCount(
         credentialsId,
         region,
         fileSystemId,
-        volumeDBMap,
-        volumeRecords
+        volumeRecordsLength: volumeRecords?.length
     });
 
     try {
@@ -516,7 +514,6 @@ async function getMappedOntapVolumes(
         accountId,
         executionTimeout,
         svmOntapUuid,
-        instanceOntapDetails,
         fields
     });
 

@@ -814,7 +814,7 @@ async function handleOnpremTcoDataUpload(
     jobId: string,
     data: OnPremCollectionObjectV1
 ) {
-    logger.info('Handling OnPrem TCO Data Upload', { accountId, databaseType, fileName, jobId, data });
+    logger.info('Handling OnPrem TCO Data Upload', { accountId, databaseType, fileName, jobId });
 
     let uploadJobStatus;
     let uploadJobError;
@@ -1252,7 +1252,7 @@ async function getOnPremResourceExploreSavings(
         accountId,
         onPrmResourceId,
         regionCode,
-        sqlInstanceData,
+        sqlInstanceCount: sqlInstanceData?.length,
         snapShotInfo
     });
 
