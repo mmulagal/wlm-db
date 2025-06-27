@@ -884,7 +884,8 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
       $PSToolkitRequiredVersion = '9.15.1.2407'
       $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
       $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
-  
+      
+      $unavailableModuleList = $unavailableModuleList | Where-Object { $_ -ne 'AWS.Tools.BedrockRuntime' }
       If ($unavailableModuleList.Count -gt 0) {
   
         #Check if private network
