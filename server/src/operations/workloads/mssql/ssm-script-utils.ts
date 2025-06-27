@@ -1334,7 +1334,7 @@ const CHECK_SCRIPT_AVAILABILITY_AND_VERSION = `
     
     if($isDatabaseCreatePossible -eq $True) {
         $result['isCreatePossible'] = $True;
-        $file = @(${SCRIPT_VERSON_FILE})
+        $file = "${SCRIPT_VERSON_FILE}"
         if (Test-Path $file -PathType Leaf) {
             # File exists
             $val = Get-Content $file | ConvertFrom-Json
