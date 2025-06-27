@@ -373,7 +373,7 @@ async function activeSqlNodeDetails(
         node2InstanceId,
         accountId
     });
-    logger.info('instancesDetails', { instanceIds: instancesDetails?.map(instance => instance.instanceName) });
+    logger.info('instancesDetails', { instanceIds: instancesDetails?.map(instance => instance?.instanceName) });
     const sqlAuthEnabled =
         instancesDetails && instanceDetail
             ? instancesDetails.some(
@@ -2960,7 +2960,7 @@ async function triggerAssessmentAfterOptimization(
         databaseHostId,
         serverNameWithHostName,
         parentJobId,
-        instanceId: instanceToAssess.id,
+        instanceId: instanceToAssess?.id,
         fields
     });
 
@@ -3036,8 +3036,8 @@ async function optimizeClone(
         region,
         databaseHostId,
         databaseInstanceId,
-        clone: clone.cloneDatabaseName,
-        cloneCount: configData.oldClones,
+        clone: clone?.cloneDatabaseName,
+        cloneCount: configData?.oldClones,
         sqlServerName,
         instanceName,
         volumeMapping,

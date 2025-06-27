@@ -409,8 +409,8 @@ async function initiateStorageAssessmentCollection(
         region,
         databaseHostId,
         parentJobId,
-        instanceName: instanceRecord.name,
-        fsxId: instanceRecord.fsxFileSystem
+        instanceName: instanceRecord?.name,
+        fsxId: instanceRecord?.fsxFileSystem
     });
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
@@ -535,8 +535,8 @@ async function initiateStorageAssessmentCollection(
             credentialsId,
             region,
             databaseHostId,
-            instanceName: instanceRecord.name,
-            fsxId: instanceRecord.fsxFileSystem,
+            instanceName: instanceRecord?.name,
+            fsxId: instanceRecord?.fsxFileSystem,
             error
         });
         errorMessage = `Error while initiating storage assessment collection. ${error}`;
@@ -574,11 +574,11 @@ async function driftAssessmentDataCollection(
         jobId,
         databaseHostId,
         fields,
-        instanceName: databaseInstanceRecord.name,
-        fsxId: databaseInstanceRecord.fsxFileSystem
+        instanceName: databaseInstanceRecord?.name,
+        fsxId: databaseInstanceRecord?.fsxFileSystem
     });
 
-    logger.debug(`Instance: ${databaseInstanceRecord.name}, ${databaseInstanceRecord.fsxFileSystem}`, {
+    logger.debug(`Instance: ${databaseInstanceRecord?.name}, ${databaseInstanceRecord?.fsxFileSystem}`, {
         dismissedConfigurations
     });
 

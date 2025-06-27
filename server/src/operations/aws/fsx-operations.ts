@@ -341,7 +341,7 @@ async function isFsxnAwsBackupEnabled(
         credentialsId,
         region,
         fileSystemId,
-        volumeUuidsLength: volumeUuids.length,
+        volumeUuidsLength: volumeUuids?.length,
         activeNodeInstanceId,
         accountId
     });
@@ -448,7 +448,7 @@ async function getOntapVolumesSnapshotCount(
         credentialsId,
         region,
         fileSystemId,
-        volumeRecordsLength: volumeRecords.length
+        volumeRecordsLength: volumeRecords?.length
     });
 
     try {

@@ -1510,8 +1510,8 @@ async function fetchCrrBackupDetails(
     volumeDBMap: any
 ) {
     logger.info('Fetching CRR backup details', {
-        instanceNames: instanceDetails.map(instance => instance.database_instance_name),
-        volumeRecordsLength: volumeRecords.length
+        instanceNames: instanceDetails.map(instance => instance?.database_instance_name),
+        volumeRecordsLength: volumeRecords?.length
     });
     if (isEmpty(instanceDetails)) {
         logger.warn('Instance details array is empty. Returning an empty mapping.');
@@ -2411,11 +2411,6 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
                                         true,
                                         CUSTOM_SSM_EXECUTION_TIMEOUT
                                     );
-                                    logger.info('Instance performance assessment response', {
-                                        accountId,
-                                        region,
-                                        nodeId
-                                    });
                                 } else {
                                     logger.error('SSM connection not established for node', {
                                         accountId,

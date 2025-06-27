@@ -77,7 +77,7 @@ function initialize() {
                         format(
                             ...loggingEvent.data.map(log => {
                                 try {
-                                    const logLevel = loggingEvent.level.levelStr.toUpperCase();
+                                    const logLevel = loggingEvent?.level?.levelStr?.toUpperCase();
                                     return isObject(log)
                                         ? logLevel === 'DEBUG'
                                             ? stringifyObject(structuredClone(log))
