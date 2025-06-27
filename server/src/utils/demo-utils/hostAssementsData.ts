@@ -381,6 +381,7 @@ const mockResourceAssessmentData = {
             {
                 baselineId: 'pb-03e4a480964bbb87f',
                 ec2InstanceId: 'i-0a1f31a39bd2d9362',
+                ec2InstanceName: 'SQLServer-Dev-02',
                 operationEndTime: 999,
                 operationStartTime: 1,
                 missingPatchDetails: [
@@ -406,6 +407,7 @@ const mockResourceAssessmentData = {
             {
                 baselineId: 'pb-03e4a480964bbb87f',
                 ec2InstanceId: 'i-0253886610c274a28',
+                ec2InstanceName: 'SQLServer-Dev-02',
                 operationEndTime: 819,
                 operationStartTime: 244,
                 missingPatchDetails: [
@@ -569,6 +571,7 @@ const mockResourceAssessmentDataAllOptimized = {
             {
                 baselineId: 'pb-03e4a480964bbb87f',
                 ec2InstanceId: 'i-0a1f31a39bd2d9362',
+                ec2InstanceName: 'SQLServer-Dev-02',
                 operationEndTime: 999,
                 operationStartTime: 1,
                 missingPatchDetails: [],
@@ -579,6 +582,7 @@ const mockResourceAssessmentDataAllOptimized = {
             {
                 baselineId: 'pb-03e4a480964bbb87f',
                 ec2InstanceId: 'i-0253886610c274a28',
+                ec2InstanceName: 'SQLServer-Dev-02',
                 operationEndTime: 819,
                 operationStartTime: 244,
                 missingPatchDetails: [],

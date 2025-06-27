@@ -1197,7 +1197,13 @@ export const formatOsPatchCardConfig = (
         criticalViolations += perInstance?.criticalNonCompliantCount || 0;
         securityViolations += perInstance?.securityNonCompliantCount || 0;
         otherViolations += perInstance?.otherNonCompliantCount || 0;
-        missingPatchList = [...missingPatchList, ...(perInstance?.missingPatchDetails || [])];
+        missingPatchList = [
+            ...missingPatchList,
+            ...(perInstance?.missingPatchDetails || []).map(patch => ({
+                ...patch,
+                instanceName: perInstance.ec2InstanceName
+            }))
+        ];
     });
 
     cardsData = {

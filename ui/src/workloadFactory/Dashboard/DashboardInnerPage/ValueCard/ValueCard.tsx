@@ -4,7 +4,6 @@ import styles from './ValueCard.module.scss';
 import { ReactComponent as Edit } from '../../../../assets/ic_edit.svg';
 
 type ValueCardProps = {
-    optimizationScore?: string;
     optimizedInstances?: string;
     notOptimizedInstances?: string;
     severity?: string;
@@ -61,7 +60,14 @@ const ValueCard = ({
                             <Popover
                                 trigger="hover"
                                 container={
-                                    <div onClick={() => handleEdit(type)}>
+                                    <div
+                                        onClick={() => handleEdit(type)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' || e.key === ' ') handleEdit(type);
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                    >
                                         <Edit />
                                     </div>
                                 }
