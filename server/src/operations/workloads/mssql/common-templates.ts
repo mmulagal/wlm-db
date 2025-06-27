@@ -216,10 +216,10 @@ const enableCredSSP = `
                 Enable-WSManCredSSP -Role Server -Force | Out-Null
 
                 # Enable-WSManCredSSP is unreliable, so setting from registry.
-                $parentkey = "hklm:\SOFTWARE\Policies\Microsoft\Windows"
-                $key = "$parentkey\CredentialsDelegation"
-                $freshkey = "$key\AllowFreshCredentials"
-                $ntlmkey = "$key\AllowFreshCredentialsWhenNTLMOnly"
+                $parentkey = "hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows"
+                $key = "$parentkey\\CredentialsDelegation"
+                $freshkey = "$key\\AllowFreshCredentials"
+                $ntlmkey = "$key\\AllowFreshCredentialsWhenNTLMOnly"
                 New-Item -Path $parentkey -Name 'CredentialsDelegation' -Force | Out-Null
                 New-Item -Path $key -Name 'AllowFreshCredentials' -Force | Out-Null
                 New-Item -Path $key -Name 'AllowFreshCredentialsWhenNTLMOnly' -Force | Out-Null
