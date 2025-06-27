@@ -1518,7 +1518,7 @@ const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
 const TCO_FEATURE = 'TCO';
 const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
 
-const CURRENT_SCRIPT_VERSION = '1.0.0';
+const CURRENT_SCRIPT_VERSION = '1.9.0';
 
 const PGSQL_VERSION = 'pgsql-version';
 const AMAZON_LINUX_AMI_PATH = '/aws/service/ami-amazon-linux-latest';
