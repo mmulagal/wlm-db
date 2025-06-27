@@ -77,11 +77,8 @@ function initialize() {
                         format(
                             ...loggingEvent.data.map(log => {
                                 try {
-                                    const logLevel = loggingEvent?.level?.levelStr?.toUpperCase();
                                     return isObject(log)
-                                        ? logLevel === 'DEBUG'
-                                            ? stringifyObject(structuredClone(log))
-                                            : stringifyObject(hideSecretsValues(structuredClone(log)))
+                                        ? stringifyObject(hideSecretsValues(structuredClone(log)))
                                         : log;
                                 } catch (error) {
                                     // TODO: Remove me: Temporary catch to identify #<Promise> could not be cloned
