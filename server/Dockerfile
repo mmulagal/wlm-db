@@ -52,14 +52,6 @@ USER netappuser
 
 RUN npm ci --omit=dev
 
-#Temporary fix for jsonwebtoken and node 24 compatibility scope begins https://github.com/auth0/node-jsonwebtoken/issues/992
-# Switch to root to adjust permissions and avoid Error: EACCES: permission denied, open '/opt/netapp/wlmdb/package-lock.json' while running npm upgrade
-USER root
-RUN chown netappuser:netappgroup /opt/netapp/wlmdb/package-lock.json
-USER netappuser
-RUN npm upgrade jwa
-#Temporary fix for jsonwebtoken and node 24 compatibility scope ends
-
 # prisma generate command after every change to Prisma schema to update the generated Prisma Client code.
 RUN npx prisma generate
 
