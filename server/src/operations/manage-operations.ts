@@ -1280,20 +1280,31 @@ function prepareParametersToStore(instanceIds: string[], credentials: RegisterCr
                     password
                 });
             } else {
-                instanceIds.forEach(instanceId =>
-                    acc.push({
-                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                        value: {
-                            sql: [
-                                {
-                                    sqlinstancename: resourceId,
-                                    username,
-                                    password
-                                }
-                            ]
-                        }
-                    })
-                );
+                instanceIds.forEach(instanceId => {
+                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                    if (instanceObject) {
+                        instanceObject.value.sql = [
+                            {
+                                sqlinstancename: resourceId,
+                                username,
+                                password
+                            }
+                        ];
+                    } else {
+                        acc.push({
+                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                            value: {
+                                sql: [
+                                    {
+                                        sqlinstancename: resourceId,
+                                        username,
+                                        password
+                                    }
+                                ]
+                            }
+                        });
+                    }
+                });
             }
         } else if (resourceType === RESOURCESTYPE.FSX) {
             acc.push({
@@ -1315,20 +1326,31 @@ function prepareParametersToStore(instanceIds: string[], credentials: RegisterCr
                     password
                 });
             } else {
-                instanceIds.forEach(instanceId =>
-                    acc.push({
-                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                        value: {
-                            domain: [
-                                {
-                                    sqlinstancename: resourceId,
-                                    username: escapeBackslash(username),
-                                    password
-                                }
-                            ]
-                        }
-                    })
-                );
+                instanceIds.forEach(instanceId => {
+                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                    if (instanceObject) {
+                        instanceObject.value.domain = [
+                            {
+                                sqlinstancename: resourceId,
+                                username,
+                                password
+                            }
+                        ];
+                    } else {
+                        acc.push({
+                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                            value: {
+                                domain: [
+                                    {
+                                        sqlinstancename: resourceId,
+                                        username: escapeBackslash(username),
+                                        password
+                                    }
+                                ]
+                            }
+                        });
+                    }
+                });
             }
         } else if (resourceType === RESOURCESTYPE.ORACLE) {
             const oracleItem = acc.find(el => el.value.oracle);
@@ -1552,10 +1574,18 @@ async function rewriteOrDeleteSSMParameter(
         await deleteSSMParameter(credentialsId, region, paramsToDelete);
     } else {
         // Rewrite parameter store after removing invalid credentials
-        const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
-        const latestWindowsUserCredentials = windowsUserCredentials.filter(
-            e => !instancesToBeDeleted.includes(e.resourceId)
-        );
+        const latestSqlCredentials = sqlCredentials
+            .filter(e => !instancesToBeDeleted.includes(e.resourceId))
+            .map(e => ({
+                ...e,
+                resourceId: `${e.resourceId.includes('_temp') ? e.resourceId.replace('_temp', '') : e.resourceId}`
+            }));
+        const latestWindowsUserCredentials = windowsUserCredentials
+            .filter(e => !instancesToBeDeleted.includes(e.resourceId))
+            .map(e => ({
+                ...e,
+                resourceId: `${e.resourceId.includes('_temp') ? e.resourceId.replace('_temp', '') : e.resourceId}`
+            }));
         const creds = prepareParametersToStore(instanceIds, [
             ...(fsxCredentials ? [fsxCredentials] : []),
             ...latestSqlCredentials,
@@ -1596,7 +1626,7 @@ async function validateCredentials(
         const errorMessage = `Unable to validate the credentials through SSM, for host ${instanceId}`;
         logger.error(errorMessage);
 
-        await deleteSSMParameter(credentialsId, region, ssmParameters);
+        // await deleteSSMParameter(credentialsId, region, ssmParameters);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
@@ -1836,18 +1866,18 @@ async function validateWindowsCredentials(
         });
     }
 
-    if (instancesToBeDeleted.length > 0) {
-        await rewriteOrDeleteSSMParameter(
-            credentialsId,
-            region,
-            instanceIds,
-            paramsToDelete,
-            instancesToBeDeleted,
-            fsxCredentials!,
-            newSqlCredentials,
-            windowsUserCredentials
-        );
-    }
+    // if (instancesToBeDeleted.length > 0) {
+    await rewriteOrDeleteSSMParameter(
+        credentialsId,
+        region,
+        instanceIds,
+        paramsToDelete,
+        instancesToBeDeleted,
+        fsxCredentials!,
+        newSqlCredentials,
+        windowsUserCredentials
+    );
+    // }
     return response;
 }
 
@@ -1955,18 +1985,18 @@ async function validateOracleCredentials(
         });
     }
 
-    if (instancesToBeDeleted.length > 0) {
-        await rewriteOrDeleteSSMParameter(
-            credentialsId,
-            region,
-            instanceIds,
-            paramsToDelete,
-            instancesToBeDeleted,
-            fsxCredentials!,
-            oracleCredentials,
-            []
-        );
-    }
+    // if (instancesToBeDeleted.length > 0) {
+    await rewriteOrDeleteSSMParameter(
+        credentialsId,
+        region,
+        instanceIds,
+        paramsToDelete,
+        instancesToBeDeleted,
+        fsxCredentials!,
+        oracleCredentials,
+        []
+    );
+    // }
     return response;
 }
 
@@ -2001,42 +2031,39 @@ async function verifyAndCreateCredentials(
         } else {
             const { sql, domain, oracle } = JSON.parse(existingParameters);
             if (sql) {
-                const newSqlInstances = databaseCredentials.map(e => e.resourceId);
+                databaseCredentials = databaseCredentials.map(e => ({ ...e, resourceId: `${e.resourceId}_temp` }));
                 sql.forEach((e: SqlCredential) => {
-                    if (!newSqlInstances.includes(e.sqlinstancename)) {
-                        databaseCredentials.push({
-                            resourceId: e.sqlinstancename,
-                            resourceType: RESOURCESTYPE.MSSQL,
-                            username: e.username,
-                            password: e.password
-                        });
-                    }
+                    databaseCredentials.push({
+                        resourceId: e.sqlinstancename,
+                        resourceType: RESOURCESTYPE.MSSQL,
+                        username: e.username,
+                        password: e.password
+                    });
                 });
             }
             if (domain) {
-                const newDomainUsers = windowsUserCredentials.map(e => e.resourceId);
+                windowsUserCredentials = windowsUserCredentials.map(e => ({
+                    ...e,
+                    resourceId: `${e.resourceId}_temp`
+                }));
                 domain.forEach((e: SqlCredential) => {
-                    if (!newDomainUsers.includes(e.sqlinstancename)) {
-                        windowsUserCredentials.push({
-                            resourceId: e.sqlinstancename,
-                            resourceType: RESOURCESTYPE.WINDOWS_USER,
-                            username: e.username,
-                            password: e.password
-                        });
-                    }
+                    windowsUserCredentials.push({
+                        resourceId: e.sqlinstancename,
+                        resourceType: RESOURCESTYPE.WINDOWS_USER,
+                        username: e.username,
+                        password: e.password
+                    });
                 });
             }
             if (oracle) {
-                const newOracleInstances = databaseCredentials.map(e => e.resourceId);
+                databaseCredentials = databaseCredentials.map(e => ({ ...e, resourceId: `${e.resourceId}_temp` }));
                 oracle.forEach((e: OracleCredential) => {
-                    if (!newOracleInstances.includes(e.oracleinstancename)) {
-                        databaseCredentials.push({
-                            resourceId: e.oracleinstancename,
-                            resourceType: RESOURCESTYPE.ORACLE,
-                            username: e.username,
-                            password: e.password
-                        });
-                    }
+                    databaseCredentials.push({
+                        resourceId: e.oracleinstancename,
+                        resourceType: RESOURCESTYPE.ORACLE,
+                        username: e.username,
+                        password: e.password
+                    });
                 });
             }
         }
@@ -2113,6 +2140,33 @@ async function verifyAndAddFSxOntapCredentials(
         }
     }
 }
+
+// async function removeTempTagAndRewriteSSMParameter(credentialsId: string, region: string, instanceIds: string[]) {
+//     logger.info('Remove temp tag and rewrite SSM parameter', { credentialsId, region, instanceIds });
+
+//     await Promise.all(
+//         instanceIds.map(async instanceId => {
+//             const path = `${SSM_PARAM_PREFIX}${instanceId}`;
+//             const getParameters = await getParameter(credentialsId, region, path);
+//             const ssmParametersToUpdate = JSON.parse(getParameters ?? '{}');
+//             if (!ssmParametersToUpdate) {
+//                 return;
+//             }
+//             Object.entries(ssmParametersToUpdate).forEach(([key, value]) => {
+//                 if (Array.isArray(value)) {
+//                     ssmParametersToUpdate[key] = value.map((cred: any) => {
+//                         if (cred.resourceId.endsWith('_temp')) {
+//                             cred.resourceId = cred.resourceId.replace('_temp', '');
+//                         }
+//                         return cred;
+//                     });
+//                 }
+//             });
+
+//             await ssmPutParameters(credentialsId, region, ssmParametersToUpdate);
+//         })
+//     );
+// }
 
 export {
     manageSqlInstances,
