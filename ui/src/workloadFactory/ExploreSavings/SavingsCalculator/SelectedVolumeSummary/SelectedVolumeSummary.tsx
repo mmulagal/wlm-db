@@ -16,23 +16,6 @@ const SelectedVolumeSummary = () => {
 
     const [columnsList, setCoulumnsList] = useState<ColumnProps[]>([]);
 
-    const getColumnsWidth = (volTypeList: Array<string>) => {
-        const typeLength = volTypeList.length;
-        let colWidth = '96.5px';
-        if (typeLength === 4) {
-            colWidth = '96.5px';
-        } else if (typeLength === 3) {
-            colWidth = '128px';
-        } else if (typeLength === 2) {
-            colWidth = '190px';
-        } else if (typeLength === 1) {
-            colWidth = '386px';
-        } else {
-            colWidth = '96.5px';
-        }
-        return colWidth;
-    };
-
     // For loading state
     const data = [
         { details: GENERAL.ES_TOTAL_VOLUMES, id: '1' },
@@ -61,13 +44,13 @@ const SelectedVolumeSummary = () => {
         }
     ];
 
-    const getColumnsList = (volTypeList: Array<string>, colWidth: string, ebsAvailable: any) => {
+    const getColumnsList = (volTypeList: Array<string>, ebsAvailable: any) => {
         const colList = [];
         colList.push({
             Header: GENERAL.ES_DETAILS,
             accessor: 'details',
             id: '1',
-            width: ebsAvailable.length === 0 ? '576px' : '190px',
+            width: ebsAvailable.length === 0 ? '576px' : '2fr',
             renderCell: (cellData: any, rowData: any) =>
                 ebsAvailable.length === 0 ? (
                     <DsTypography variant="Regular_14" style={{ minWidth: '146px', display: 'flex', gap: '24px' }}>
@@ -84,7 +67,7 @@ const SelectedVolumeSummary = () => {
                 Header: volType,
                 accessor: volType,
                 id,
-                width: colWidth,
+                width: '1fr',
                 renderCell: (cellData: any, rowData: any) =>
                     selectedHostDetails?.loading || getPartnerHostDetailsLoading ? (
                         <DsFlashingDotsLoader />
@@ -133,8 +116,7 @@ const SelectedVolumeSummary = () => {
             }
         });
 
-        const colWidth = getColumnsWidth(volTypeList);
-        getColumnsList(volTypeList, colWidth, mergedEbsResourceInfo);
+        getColumnsList(volTypeList, mergedEbsResourceInfo);
 
         setTimeout(() => {
             storageAmount = Object.keys(storageAmount).reduce((newObj: any, key) => {

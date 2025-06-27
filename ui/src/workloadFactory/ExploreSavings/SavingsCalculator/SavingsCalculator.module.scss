@@ -176,6 +176,11 @@
             width: 100%;
             padding: 0px 120px 0px;
             padding-top: 24px;
+
+            [class*='dsTypography-module_base'] {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
         }
 
         .contentArea {
@@ -224,14 +229,16 @@
         [class*='mssqlAccordion'] {
             width: 91%;
         }
-        [class*='Table-module_table'] {
-            grid-template-columns: 1fr 1fr 1fr;
-        }
-        [class*='Table-module_header-row'] {
-            grid-template-columns: 1fr 1fr;
-        }
-        [class*='Table-module_body'] {
-            grid-template-columns: 1fr 1fr;
+        [class*='instanceInformation'] {
+            [class*='Table-module_table'] {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            [class*='Table-module_header-row'] {
+                grid-template-columns: 1fr 1fr;
+            }
+            [class*='Table-module_body'] {
+                grid-template-columns: 1fr 1fr;
+            }
         }
         [class*='onPremRegion'] {
             width: 100%;
