@@ -778,11 +778,11 @@ const InstancesTable = () => {
                                         } else {
                                             dispatch(setManageSingleInstanceData(rowData));
                                             dispatch(setWizardOperationType('single'));
-                                            navigate('../manage-wizard');
+                                            navigate('../register-wizard');
                                             postBlueXPMessage({
                                                 type: BlueXPListeners.navigate,
                                                 payload: {
-                                                    pathname: './manage-wizard',
+                                                    pathname: './register-wizard',
                                                     replace: true
                                                 }
                                             });

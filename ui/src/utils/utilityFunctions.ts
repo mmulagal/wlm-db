@@ -1861,7 +1861,7 @@ export const setRoutePath = (path: string, search?: string) => {
 
             break;
         case 'Register Component':
-            path = 'manage-wizard';
+            path = 'register-wizard';
             break;
         default:
             path = 'redirect';
@@ -1897,7 +1897,7 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
         case '/fsxdb/jobMonitoring':
         case '/fsxdb/job-monitoring':
             return WLF_TABS.JOB_MONITORING;
-        case '/fsxdb/manage-wizard':
+        case '/fsxdb/register-wizard':
             return WLF_TABS.REGISTER_COMPONENT;
         default:
             return WLF_TABS.DASHBOARD;

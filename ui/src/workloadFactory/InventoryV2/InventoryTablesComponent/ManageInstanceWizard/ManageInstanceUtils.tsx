@@ -172,18 +172,14 @@ export const callManageSingleInstanceApi = async (
             );
             setTimeout(() => {
                 dispatch(setLandingFromWizard(true));
-                if (isWorkloadFactoryStatus) {
-                    navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
-                    postBlueXPMessage({
-                        type: BlueXPListeners.navigate,
-                        payload: {
-                            pathname: FORM_TO_WLF_NAVIGATE_INVENTORY,
-                            replace: true
-                        }
-                    });
-                } else {
-                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
-                }
+                navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: {
+                        pathname: './inventory',
+                        replace: true
+                    }
+                });
 
                 dispatch(
                     addNotification({
@@ -466,18 +462,14 @@ export const callManageMultiInstanceApi = async (
             );
             setTimeout(() => {
                 dispatch(setLandingFromWizard(true));
-                if (isWorkloadFactoryStatus) {
-                    navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
-                    postBlueXPMessage({
-                        type: BlueXPListeners.navigate,
-                        payload: {
-                            pathname: FORM_TO_WLF_NAVIGATE_INVENTORY,
-                            replace: true
-                        }
-                    });
-                } else {
-                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
-                }
+                navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: {
+                        pathname: './inventory',
+                        replace: true
+                    }
+                });
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
