@@ -924,7 +924,7 @@ async function isInstanceAppConsistentBackupEnabled(
 
         for (const db of volumeDBMap) {
             const { databaseName, ontapVolumeuuid } = db;
-            const { comment = '' } = ssmResponse[ontapVolumeuuid];
+            const { comment = '' } = ssmResponse?.[ontapVolumeuuid] ?? {};
             appConsistentBackupMap[databaseName] = isDemoFlow || comment === SNAPCENTER_BACKUP_SNAPSHOT_COMMENT;
         }
 
