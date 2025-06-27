@@ -283,7 +283,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                 : styles.savingsHeading
                         }
                     >
-                        <DsTypography variant="Regular_24" style={{ width: 'fit-content', maxWidth: 'fit-content' }}>
+                        <DsTypography variant="Regular_24" style={{ width: '100%' }}>
                             {GENERAL.SAVINGS_CALCULATOR}
                         </DsTypography>
                         {(!statusData || statusData?.isActive === false) &&
