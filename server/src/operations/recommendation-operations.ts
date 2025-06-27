@@ -117,10 +117,10 @@ async function getLicenseRecommendations(
     );
 
     const enterpriseUsageResults = await Promise.all(
-        runningEnterpriseEditionSqlServerInstances.map(sqlServerInstance =>
-            throat(5, async () => {
-                isUsingEnterpriseConfiguration(accountId, credentialsId, region, instanceId, sqlServerInstance);
-            })
+        runningEnterpriseEditionSqlServerInstances.map(
+            throat(5, async sqlServerInstance =>
+                isUsingEnterpriseConfiguration(accountId, credentialsId, region, instanceId, sqlServerInstance)
+            )
         )
     );
     const usingEnterpriseConfiguration = enterpriseUsageResults.some(result => result);
