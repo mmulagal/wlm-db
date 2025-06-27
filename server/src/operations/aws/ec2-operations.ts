@@ -14,7 +14,8 @@ import {
     ImageState,
     PlatformValues,
     CpuManufacturer,
-    DescribeNetworkInterfacesRequest
+    DescribeNetworkInterfacesRequest,
+    DescribeRouteTablesCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import ms from 'ms';
@@ -48,7 +49,7 @@ import {
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
-import { filterSqlAmis, getResourceNameFromTags, isDemo, sleep } from '../../utils/utils';
+import { filterSqlAmis, getResourceNameFromTags, isCidrContained, isDemo, sleep } from '../../utils/utils';
 import { getEbsVolumeUtilization, getInstanceUtilization } from './cloud-watch-operations';
 import {
     ResourceDetails,
@@ -574,6 +575,17 @@ async function validateVpcEndpoints(
 
     const { vpcId, vpcCidr: vpcCidrBlock } = vpcDetails;
 
+    const routeTableIds = subnetDetails.map(subnet => subnet.routeTableId);
+
+    const routeTableParams: DescribeRouteTablesCommandInput = {
+        Filters: [
+            {
+                Name: 'route-table-id',
+                Values: routeTableIds
+            }
+        ]
+    };
+
     const enetInterfaces: DescribeNetworkInterfacesRequest = {
         Filters: [
             {
@@ -587,18 +599,33 @@ async function validateVpcEndpoints(
         ]
     };
 
-    const [endpoints, vpcSecurityGroups, vpcNetworkInterfaces] = await Promise.all([
+    const [routeTables, endpoints, vpcSecurityGroups, vpcNetworkInterfaces] = await Promise.all([
+        describeRouteTable(credentialsId, region, routeTableParams),
         getVpcEndpoints(credentialsId, region, vpcId),
         getVpcSecurityGroups(credentialsId, region, vpcId),
         getNetworkInterfacesList(credentialsId, region, enetInterfaces)
     ]);
 
+    const subnetsWithIgwRoutes = subnetDetails
+        .filter(subnet => {
+            const associatedRouteTable = routeTables?.RouteTables?.find(routeTable =>
+                routeTable.Associations?.some(association => association.SubnetId === subnet.subnetId)
+            );
+
+            return associatedRouteTable?.Routes?.some(route => route.GatewayId?.startsWith('igw-')) || false;
+        })
+        .map(subnet => subnet.subnetId);
+
     const endpointsWithIssues = compact(
         endpoints
-            ?.filter(endpoint => endpoint.VpcEndpointType === 'Interface' && endpoint.VpcEndpointId)
+            ?.filter(
+                endpoint => endpoint.VpcEndpointType === 'Interface' && endpoint.VpcEndpointId && endpoint.SubnetIds
+            )
             .map(endpoint => {
                 const missingSubnets = subnetDetails
-                    .filter(s => !endpoint.SubnetIds?.includes(s.subnetId))
+                    .filter(
+                        s => !subnetsWithIgwRoutes.includes(s.subnetId) && !endpoint.SubnetIds?.includes(s.subnetId)
+                    )
                     .map(s => s.subnetId);
 
                 const securityGroupCidrs = vpcNetworkInterfaces
@@ -628,7 +655,11 @@ async function validateVpcEndpoints(
                 const missingCidrs = securityGroupCidrs.includes(vpcCidrBlock)
                     ? []
                     : subnetDetails
-                          .filter(subnet => !securityGroupCidrs.includes(subnet.cidr))
+                          .filter(
+                              subnet =>
+                                  !subnetsWithIgwRoutes.includes(subnet.subnetId) &&
+                                  !securityGroupCidrs.some(cidr => isCidrContained(cidr, subnet.cidr))
+                          )
                           .map(subnet => ({ subnetId: subnet.subnetId, cidrBlock: subnet.cidr }));
 
                 return (
@@ -707,7 +738,6 @@ async function validateVpcEndpoints(
                   .flatMap(endpoint => endpoint.RouteTableIds)
             : [];
 
-    const routeTableIds = subnetDetails.map(subnet => subnet.routeTableId);
     const missingRoutesInS3 =
         routeTableIds && !isEmpty(routeTableIds)
             ? [...new Set(routeTableIds.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0))]

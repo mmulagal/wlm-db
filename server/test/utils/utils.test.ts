@@ -22,7 +22,8 @@ import {
     decompressSSMResponse,
     divideArrayIntoChunks,
     extractVersionDetails,
-    getEc2Hostname
+    getEc2Hostname,
+    isCidrContained
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -206,5 +207,12 @@ ervisor)\n`;
         expect(hostname).toMatch(/^sqlnode-\d{5}$/);
         hostname = getEc2Hostname('UNKNOWN' as any, instance?.Tags);
         expect(hostname).toMatch(/^sqlnode-\d{5}$/);
+    });
+
+    it('should check if CIDR is contained within another CIDR', () => {
+        const cidr1 = '192.168.0.0/16';
+        const cidr2 = '192.168.1.0/24';
+        const result = isCidrContained(cidr1, cidr2);
+        expect(result).toBe(true);
     });
 });
