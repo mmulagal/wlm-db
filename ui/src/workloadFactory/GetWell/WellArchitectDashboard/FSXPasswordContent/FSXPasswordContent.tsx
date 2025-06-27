@@ -1,7 +1,7 @@
 import { DsTypography, PasswordField, Popover, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DsRadioButton } from '@tlveng/wlm-ds';
 import styles from './FSXPasswordContent.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -18,7 +18,7 @@ import {
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
-import { isValidPassword, isValidSqlUsername } from '../../../../utils/utilityFunctions';
+import { isValidSqlUsername } from '../../../../utils/utilityFunctions';
 import { AUTHENTICATION_TYPE } from '../../../../utils/consts';
 import { AppDispatch } from '../../../../store/store';
 
@@ -43,24 +43,7 @@ const PasswordContent = ({
 }: PasswordContentProps) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { selectedAuthenticationType } = useAppSelector(state => state.workloadFactoryResource);
-
-    const tooltipText = () => (
-        <DsTypography variant="Regular_13" className={styles.infoMsg}>
-            <DsTypography variant="Regular_13">{t('databases.update-credentials.password-info-heading')}</DsTypography>
-            <div className={styles.list}>
-                {(Array.isArray(t('databases.update-credentials.password-info-list', { returnObjects: true }))
-                    ? (t('databases.update-credentials.password-info-list', { returnObjects: true }) as string[])
-                    : []
-                ).map((item: string, index: number) => (
-                    <div className={styles.listItem} key={index}>
-                        <Bullet />
-                        <div className={styles.textWidth}>{item}</div>
-                    </div>
-                ))}
-            </div>
-        </DsTypography>
-    );
+    const [passwordTouched, setPasswordTouched] = useState(false);
 
     const isValidConfirmPassword = (confirmPassword: string) => {
         if (confirmPassword.length > 0 && password !== confirmPassword) {
@@ -95,22 +78,16 @@ const PasswordContent = ({
                 <div className={styles.tooltipContainer}>
                     <PasswordField
                         label={GENERAL.PASSWORD}
-                        error={useDelayedError(isValidPassword(password))}
+                        error={useDelayedError(
+                            passwordTouched && password.length === 0 ? t('databases.general.action-required') : false
+                        )}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             setPassword(e.target.value);
                         }}
+                        onBlur={() => setPasswordTouched(true)}
                         value={password}
                         className={styles.textField}
                     />
-                    <div className={styles.dialogFooterDialog}>
-                        <Popover
-                            popoverClass=""
-                            children={tooltipText()}
-                            trigger="hover"
-                            isAppendedToBody
-                            container={<TooltipIcon />}
-                        />
-                    </div>
                 </div>
                 <PasswordField
                     label="Confirm password"

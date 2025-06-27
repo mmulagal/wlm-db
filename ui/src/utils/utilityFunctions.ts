@@ -458,21 +458,6 @@ export const isValidUserName = (userName: string) => {
     }
 };
 
-export const isValidPassword = (password: string) => {
-    if (
-        password.length > 0 &&
-        (password.length < 8 ||
-            password.length > 50 ||
-            !/[A-Za-z]/.test(password) ||
-            !/\d/.test(password) ||
-            !/[!@#$%^&*]/.test(password) ||
-            /[^A-Za-z\d!@#$%^&*]/.test(password) ||
-            /admin/i.test(password))
-    ) {
-        return 'Check password criteria.';
-    }
-};
-
 export const isValidSqlUsername = (username: string, t: TFunction) => {
     const state = store.getState();
     const { selectedAuthenticationType } = state.workloadFactoryResource;

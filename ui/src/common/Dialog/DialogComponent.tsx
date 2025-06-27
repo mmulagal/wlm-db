@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../store/storeHooks';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
-import { isValidPassword, isValidSqlUsername } from '../../utils/utilityFunctions';
+import { isValidSqlUsername } from '../../utils/utilityFunctions';
 
 type DialogProps = {
     header: string | any;
@@ -110,17 +110,14 @@ const DialogComponent = ({
             (dialogFrom === FROM_DIALOG.SQLSERVER &&
                 ((password.length === 0 && confirmPassword.length === 0) ||
                     sqlServerUserName.length === 0 ||
-                    password !== confirmPassword ||
-                    isValidPassword(password))) ||
+                    password !== confirmPassword)) ||
             isValidSqlUsername(sqlServerUserName, t)
         ) {
             return true;
         }
         if (
             dialogFrom === FROM_DIALOG.FSXADMIN &&
-            ((password.length === 0 && confirmPassword.length === 0) ||
-                password !== confirmPassword ||
-                isValidPassword(password))
+            ((password.length === 0 && confirmPassword.length === 0) || password !== confirmPassword)
         ) {
             return true;
         }
