@@ -436,7 +436,7 @@ const validateSQLInstanceConnectivity = (
                         windowsUser
                             ? `
                             $domainList = $credobject.domain
-                            if ($domainList -eq $null) {
+                            if ($domainList -ne $null) {
                                 $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq "$sqlinstancename.ToLower()_temp" }
                                 if ($sqlCredentials -eq $null) {
                                     $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' }
@@ -448,7 +448,7 @@ const validateSQLInstanceConnectivity = (
                         `
                             : `
                             $sqlList = $credobject.sql
-                            if ($sqlList -eq $null) {
+                            if ($sqlList -ne $null) {
                                 $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq "$sqlinstancename.ToLower()_temp" }
                             } else {
                                 $sqlCredentials = $null
