@@ -436,14 +436,23 @@ const validateSQLInstanceConnectivity = (
                         windowsUser
                             ? `
                             $domainList = $credobject.domain
-                            $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
-                            if ($sqlCredentials -eq $null) {
-                                $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' }
+                            if ($domainList -ne $null) {
+                                $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq "$sqlinstancename.ToLower()_temp" }
+                                if ($sqlCredentials -eq $null) {
+                                    $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' }
+                                }
+                                } else {
+                                    $sqlCredentials = $null
+                                }                                
                             }
                         `
                             : `
                             $sqlList = $credobject.sql
-                            $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+                            if ($sqlList -ne $null) {
+                                $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq "$sqlinstancename.ToLower()_temp" }
+                            } else {
+                                $sqlCredentials = $null
+                            }
                         `
                     }
 
@@ -1594,21 +1603,50 @@ FOR JSON PATH;
         }
 
         $instancesList = FetchAllRunningSQLInstances
-
+        $credsspSet = $false
+        ${enableCredSSP} 
+        ${invokeCommandWithCredSSP}
         foreach ($instanceName in $instancesList) {
             $metrics = @()
-            $sqlCredential = $credsFromParameterStore.sql.Where({ $_.sqlInstanceName -eq $instanceName })[0]
-
             $sqlCmdParams = @()
-            if (-Not [string]::IsNullOrEmpty($sqlCredential) -and -Not [string]::IsNullOrEmpty($sqlCredential.username) -and -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                $sqlCmdParams += @("-U", $sqlCredential.username, "-P", $sqlCredential.password)
+            $sqlAuth = $false
+            $windowsAuth = $false
+            if($credsFromParameterStore.sql -ne $null){
+                $sqlCredential = $credsFromParameterStore.sql.Where({ $_.sqlInstanceName -eq $instanceName })[0]
+
+                if (-Not [string]::IsNullOrEmpty($sqlCredential) -and -Not [string]::IsNullOrEmpty($sqlCredential.username) -and -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
+                    $sqlAuth = $true
+                    $sqlCmdParams += @("-U", $sqlCredential.username, "-P", $sqlCredential.password)
+                }
+            } 
+            if($credsFromParameterStore.domain -ne $null){
+                $sqlCredential = $credsFromParameterStore.domain.Where({ $_.sqlInstanceName -eq $instanceName })[0]
+                if (-Not [string]::IsNullOrEmpty($sqlCredential) -and -Not [string]::IsNullOrEmpty($sqlCredential.username) -and -Not [string]::IsNullOrEmpty($sqlCredential.password)) 
+                {
+                    $windowsAuth = $true
+                    $DomainCreds = (New-Object PSCredential($sqlCredential.username,(ConvertTo-SecureString $sqlCredential.password -AsPlainText -Force)))
+                    if (-not $credsspSet) {
+                        Enable-CredSSP
+                    }
+                    $credsspSet = $true
             }
+                }
+            }       
             if ($instanceName -ne "MSSQLSERVER") {
                 $sqlCmdParams += @("-S", "$env:computerName\\$instanceName")
             }
 
             try {
-                $cpuResponse = sqlcmd @sqlCmdParams -Q $cpuUtilquery -y 0
+                if ($windowsAuth) {
+                    $cpu = {
+                        sqlcmd @Using:sqlCmdParams -Q $Using:cpuUtilquery -y 0
+                         } 
+                    $cpuResponse = Invoke-CommandWithCredSSP -ScriptBlock $cpu -ComputerName $ENV:ComputerName -Credential $DomainCreds -Authentication Credssp -IsMultiQuery $True                 
+                }
+                else {
+                    $cpuResponse = sqlcmd @sqlCmdParams -Q $cpuUtilquery -y 0
+                }
+                
                 $cpuJsonResponse = $cpuResponse -join "\`n" | ConvertFrom-Json
             }
             catch {
@@ -1616,7 +1654,16 @@ FOR JSON PATH;
             }
 
             try {
-                $perfResponse = sqlcmd @sqlCmdParams -Q $performanceQuery -y 0
+                if ($windowsAuth) {
+                    $performanceQuery = {
+                        sqlcmd @Using:sqlCmdParams -Q $Using:performanceQuery -y 0
+                    }
+                    $perfResponse  = Invoke-CommandWithCredSSP -ScriptBlock $performanceQuery -ComputerName $ENV:ComputerName -Credential $DomainCreds -Authentication Credssp -IsMultiQuery $True 
+                }
+                else {
+                    $perfResponse = sqlcmd @sqlCmdParams -Q $performanceQuery -y 0
+                }
+                
                 $perfJsonResponse = $perfResponse -join "\`n" | ConvertFrom-Json
             }
             catch {
