@@ -83,6 +83,12 @@ function hasDuplicateVolumeType(volumes: any[]) {
     return volumeTypes.length > uniqueVolumeTypes.size;
 }
 
+function isMultiAzDeployment(sqlServerDeploymentType: string) {
+    return [SqlServerDeploymentModel.SQL_AOAG_SHORT, SqlServerDeploymentModel.SQL_FCI_SHORT].includes(
+        sqlServerDeploymentType as SqlServerDeploymentModel
+    );
+}
+
 function getMarketingApiManualModeRequestBody(region: string, params: ManualStorageSavingsRequestBodyType) {
     logger.info('Handling marketing manual mode request body', params);
 
@@ -156,7 +162,7 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
     return {
         useCase: 'Low-latency',
         region,
-        deploymentType: sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ? 'Multi' : 'Single',
+        deploymentType: isMultiAzDeployment(sqlServerDeploymentType) ? 'Multi' : 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
             snapshotPercentageChange: snapshotFrequency === 'NoSnapShotStorage' ? 0 : monthlyChangeRatePercentage
