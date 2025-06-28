@@ -1604,7 +1604,8 @@ FOR JSON PATH;
 
         $instancesList = FetchAllRunningSQLInstances
         $credsspSet = $false
-
+        ${enableCredSSP} 
+        ${invokeCommandWithCredSSP}
         foreach ($instanceName in $instancesList) {
             $metrics = @()
             $sqlCmdParams = @()
@@ -1624,8 +1625,6 @@ FOR JSON PATH;
                 {
                     $windowsAuth = $true
                     $DomainCreds = (New-Object PSCredential($sqlCredential.username,(ConvertTo-SecureString $sqlCredential.password -AsPlainText -Force)))
-                    ${enableCredSSP} 
-                    ${invokeCommandWithCredSSP}
                     if (-not $credsspSet) {
                         Enable-CredSSP
                     }
