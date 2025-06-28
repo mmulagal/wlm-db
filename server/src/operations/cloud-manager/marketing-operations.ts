@@ -156,7 +156,11 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
     return {
         useCase: 'Low-latency',
         region,
-        deploymentType: sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ? 'Multi' : 'Single',
+        deploymentType:
+            sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ||
+            sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT
+                ? 'Multi'
+                : 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
             snapshotPercentageChange: snapshotFrequency === 'NoSnapShotStorage' ? 0 : monthlyChangeRatePercentage
