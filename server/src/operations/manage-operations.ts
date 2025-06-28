@@ -92,6 +92,7 @@ const WINDOWS = 'windows';
 const { getPreSignedUrl } = preSignedUrl;
 
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
+const TEMP = '_temp';
 
 async function installPowershell7(
     accountId: string,
@@ -1332,7 +1333,7 @@ function prepareParametersToStore(instanceIds: string[], credentials: RegisterCr
                         instanceObject.value.domain = [
                             {
                                 sqlinstancename: resourceId,
-                                username,
+                                username: escapeBackslash(username),
                                 password
                             }
                         ];
@@ -1584,13 +1585,13 @@ async function rewriteOrDeleteSSMParameter(
         .filter(e => !instancesToBeDeleted.includes(e.resourceId))
         .map(e => ({
             ...e,
-            resourceId: `${e.resourceId.includes('_temp') ? e.resourceId.replace('_temp', '') : e.resourceId}`
+            resourceId: `${e.resourceId.includes(TEMP) ? e.resourceId.replace(TEMP, '') : e.resourceId}`
         }));
     const latestWindowsUserCredentials = allWindowsUserCredentials
         .filter(e => !instancesToBeDeleted.includes(e.resourceId))
         .map(e => ({
             ...e,
-            resourceId: `${e.resourceId.includes('_temp') ? e.resourceId.replace('_temp', '') : e.resourceId}`
+            resourceId: `${e.resourceId.includes(TEMP) ? e.resourceId.replace(TEMP, '') : e.resourceId}`
         }));
     const creds = prepareParametersToStore(instanceIds, [
         ...(fsxCredentials ? [fsxCredentials] : []),
@@ -1843,7 +1844,7 @@ async function validateWindowsCredentials(
     if (sqlCredentials.length || windowsUserCredentials.length) {
         parsedResponse.instances.forEach((instance: DatabaseInstanceRegistration) => {
             if (instance.sqlInstanceConnectivity === false) {
-                instancesToBeDeleted.push(`${instance?.sqlInstanceName}_temp`);
+                instancesToBeDeleted.push(`${instance?.sqlInstanceName}${TEMP}`);
                 response.push({ resourceId: instance.sqlInstanceName, databaseServerError: instance?.sqlerror });
             } else {
                 const {
@@ -2042,10 +2043,10 @@ async function verifyAndCreateCredentials(
     }
 
     if (databaseCredentials.length || windowsUserCredentials.length) {
-        databaseCredentials = databaseCredentials.map(e => ({ ...e, resourceId: `${e.resourceId}_temp` }));
+        databaseCredentials = databaseCredentials.map(e => ({ ...e, resourceId: `${e.resourceId}${TEMP}` }));
         windowsUserCredentials = windowsUserCredentials.map(e => ({
             ...e,
-            resourceId: `${e.resourceId}_temp`
+            resourceId: `${e.resourceId}${TEMP}`
         }));
         const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
         if (!existingParameters) {
@@ -2055,58 +2056,25 @@ async function verifyAndCreateCredentials(
             const { sql, domain, oracle } = JSON.parse(existingParameters);
             if (sql) {
                 sql.forEach((e: SqlCredential) => {
-                    // Check if the object already exists in databaseCredentials
-                    const isDuplicate = databaseCredentials.some(
-                        cred =>
-                            cred.resourceId?.replace('_temp', '') === e.sqlinstancename &&
-                            cred.username === e.username &&
-                            cred.password === e.password
-                    );
-                    if (!isDuplicate) {
-                        databaseCredentials.push({
-                            resourceId: e.sqlinstancename,
-                            resourceType: RESOURCESTYPE.MSSQL,
-                            username: e.username,
-                            password: e.password
-                        });
+                    const credToAdd = checkAndAddExistingSSMParameter(e, databaseCredentials, RESOURCESTYPE.MSSQL);
+                    if (credToAdd) {
+                        databaseCredentials.push(credToAdd);
                     }
                 });
             }
             if (domain) {
                 domain.forEach((e: SqlCredential) => {
-                    // Check if the object already exists in databaseCredentials
-                    const isDuplicate = windowsUserCredentials.some(
-                        cred =>
-                            cred.resourceId?.replace('_temp', '') === e.sqlinstancename &&
-                            cred.username === e.username &&
-                            cred.password === e.password
-                    );
-                    if (!isDuplicate) {
-                        windowsUserCredentials.push({
-                            resourceId: e.sqlinstancename,
-                            resourceType: RESOURCESTYPE.WINDOWS_USER,
-                            username: e.username,
-                            password: e.password
-                        });
+                    const credToAdd = checkAndAddExistingSSMParameter(e, databaseCredentials, RESOURCESTYPE.MSSQL);
+                    if (credToAdd) {
+                        databaseCredentials.push(credToAdd);
                     }
                 });
             }
             if (oracle) {
                 oracle.forEach((e: OracleCredential) => {
-                    // Check if the object already exists in databaseCredentials
-                    const isDuplicate = databaseCredentials.some(
-                        cred =>
-                            cred.resourceId?.replace('_temp', '') === e.oracleinstancename &&
-                            cred.username === e.username &&
-                            cred.password === e.password
-                    );
-                    if (!isDuplicate) {
-                        databaseCredentials.push({
-                            resourceId: e.oracleinstancename,
-                            resourceType: RESOURCESTYPE.ORACLE,
-                            username: e.username,
-                            password: e.password
-                        });
+                    const credToAdd = checkAndAddExistingSSMParameter(e, databaseCredentials, RESOURCESTYPE.ORACLE);
+                    if (credToAdd) {
+                        databaseCredentials.push(credToAdd);
                     }
                 });
             }
@@ -2122,6 +2090,36 @@ async function verifyAndCreateCredentials(
     await ssmPutParameters(credentialsId, region, creds);
 
     return { allDatabaseCredentials: databaseCredentials, allWindowsUserCredentials: windowsUserCredentials };
+}
+
+function checkAndAddExistingSSMParameter(
+    currentCred: SqlCredential | OracleCredential,
+    allCreds: RegisterCredentialsType[],
+    type: RESOURCESTYPE
+) {
+    let instanceName: string | undefined;
+    if ('sqlinstancename' in currentCred) {
+        instanceName = currentCred.sqlinstancename;
+    } else if ('oracleinstancename' in currentCred) {
+        instanceName = currentCred.oracleinstancename;
+    }
+
+    // Check if the object already exists in databaseCredentials
+    const isDuplicate = allCreds.some(
+        cred =>
+            cred.resourceId?.replace(TEMP, '') === instanceName?.replace(TEMP, '') &&
+            cred.username === currentCred.username &&
+            cred.password === currentCred.password
+    );
+
+    if (!isDuplicate && instanceName) {
+        return {
+            resourceId: instanceName,
+            resourceType: type,
+            username: currentCred.username,
+            password: currentCred.password
+        };
+    }
 }
 
 async function deleteSSMParameter(credentialsId: string, region: string, ssmParameterNames: string[]) {
