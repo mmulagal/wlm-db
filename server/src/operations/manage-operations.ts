@@ -92,6 +92,7 @@ const WINDOWS = 'windows';
 const { getPreSignedUrl } = preSignedUrl;
 
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
+const TEMP = '_temp';
 
 async function installPowershell7(
     accountId: string,
@@ -1280,20 +1281,31 @@ function prepareParametersToStore(instanceIds: string[], credentials: RegisterCr
                     password
                 });
             } else {
-                instanceIds.forEach(instanceId =>
-                    acc.push({
-                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                        value: {
-                            sql: [
-                                {
-                                    sqlinstancename: resourceId,
-                                    username,
-                                    password
-                                }
-                            ]
-                        }
-                    })
-                );
+                instanceIds.forEach(instanceId => {
+                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                    if (instanceObject) {
+                        instanceObject.value.sql = [
+                            {
+                                sqlinstancename: resourceId,
+                                username,
+                                password
+                            }
+                        ];
+                    } else {
+                        acc.push({
+                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                            value: {
+                                sql: [
+                                    {
+                                        sqlinstancename: resourceId,
+                                        username,
+                                        password
+                                    }
+                                ]
+                            }
+                        });
+                    }
+                });
             }
         } else if (resourceType === RESOURCESTYPE.FSX) {
             acc.push({
@@ -1315,20 +1327,31 @@ function prepareParametersToStore(instanceIds: string[], credentials: RegisterCr
                     password
                 });
             } else {
-                instanceIds.forEach(instanceId =>
-                    acc.push({
-                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                        value: {
-                            domain: [
-                                {
-                                    sqlinstancename: resourceId,
-                                    username: escapeBackslash(username),
-                                    password
-                                }
-                            ]
-                        }
-                    })
-                );
+                instanceIds.forEach(instanceId => {
+                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                    if (instanceObject) {
+                        instanceObject.value.domain = [
+                            {
+                                sqlinstancename: resourceId,
+                                username: escapeBackslash(username),
+                                password
+                            }
+                        ];
+                    } else {
+                        acc.push({
+                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                            value: {
+                                domain: [
+                                    {
+                                        sqlinstancename: resourceId,
+                                        username: escapeBackslash(username),
+                                        password
+                                    }
+                                ]
+                            }
+                        });
+                    }
+                });
             }
         } else if (resourceType === RESOURCESTYPE.ORACLE) {
             const oracleItem = acc.find(el => el.value.oracle);
@@ -1531,7 +1554,9 @@ async function rewriteOrDeleteSSMParameter(
     instancesToBeDeleted: string[],
     fsxCredentials: RegisterCredentialsType,
     sqlCredentials: RegisterCredentialsType[],
-    windowsUserCredentials: RegisterCredentialsType[]
+    windowsUserCredentials: RegisterCredentialsType[],
+    allDatabaseCredentials: RegisterCredentialsType[] = [],
+    allWindowsUserCredentials: RegisterCredentialsType[] = []
 ) {
     logger.info('Calling rewriteOrDeleteSSMParameter', {
         credentialsId,
@@ -1544,25 +1569,36 @@ async function rewriteOrDeleteSSMParameter(
         windowsUserCredentials
     });
     if (
-        sqlCredentials.length === instancesToBeDeleted.length ||
-        windowsUserCredentials.length === instancesToBeDeleted.length
+        (isEmpty(allWindowsUserCredentials) &&
+            !isEmpty(sqlCredentials) &&
+            sqlCredentials.length === instancesToBeDeleted.length) ||
+        (isEmpty(allDatabaseCredentials) &&
+            !isEmpty(windowsUserCredentials) &&
+            windowsUserCredentials.length === instancesToBeDeleted.length)
     ) {
         // Delete the parameter store all credentials are invalid
         instanceIds.forEach(instanceId => paramsToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
         await deleteSSMParameter(credentialsId, region, paramsToDelete);
-    } else {
-        // Rewrite parameter store after removing invalid credentials
-        const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
-        const latestWindowsUserCredentials = windowsUserCredentials.filter(
-            e => !instancesToBeDeleted.includes(e.resourceId)
-        );
-        const creds = prepareParametersToStore(instanceIds, [
-            ...(fsxCredentials ? [fsxCredentials] : []),
-            ...latestSqlCredentials,
-            ...latestWindowsUserCredentials
-        ]);
-        await ssmPutParameters(credentialsId, region, creds);
     }
+    // Rewrite parameter store after removing invalid credentials
+    const latestSqlCredentials = allDatabaseCredentials
+        .filter(e => !instancesToBeDeleted.includes(e.resourceId))
+        .map(e => ({
+            ...e,
+            resourceId: `${e.resourceId.includes(TEMP) ? e.resourceId.replace(TEMP, '') : e.resourceId}`
+        }));
+    const latestWindowsUserCredentials = allWindowsUserCredentials
+        .filter(e => !instancesToBeDeleted.includes(e.resourceId))
+        .map(e => ({
+            ...e,
+            resourceId: `${e.resourceId.includes(TEMP) ? e.resourceId.replace(TEMP, '') : e.resourceId}`
+        }));
+    const creds = prepareParametersToStore(instanceIds, [
+        ...(fsxCredentials ? [fsxCredentials] : []),
+        ...latestSqlCredentials,
+        ...latestWindowsUserCredentials
+    ]);
+    await ssmPutParameters(credentialsId, region, creds);
 }
 
 async function validateCredentials(
@@ -1601,7 +1637,9 @@ async function validateCredentials(
     }
 
     const newSqlCredentials = cloneDeep(sqlCredentials);
-    await verifyAndCreateCredentials(
+    const newWindowsUserCredentials = cloneDeep(windowsUserCredentials);
+    const newOracleCredentials = cloneDeep(oracleCredentials);
+    const { allDatabaseCredentials, allWindowsUserCredentials } = await verifyAndCreateCredentials(
         credentialsId,
         region,
         instanceId,
@@ -1624,7 +1662,7 @@ async function validateCredentials(
             // For Linux-based instances, this field is null
             isLinuxHost = Platform?.toLowerCase() !== WINDOWS;
         }
-        const isOracleInstance = oracleCredentials.some(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
+        const isOracleInstance = newOracleCredentials.some(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
         let response;
         if (isLinuxHost || isOracleInstance) {
             response = await validateOracleCredentials(
@@ -1633,8 +1671,9 @@ async function validateCredentials(
                 region,
                 instanceId,
                 fsxCredentials,
-                oracleCredentials,
-                instanceIds
+                newOracleCredentials,
+                instanceIds,
+                allDatabaseCredentials
             );
         } else {
             response = await validateWindowsCredentials(
@@ -1643,10 +1682,12 @@ async function validateCredentials(
                 region,
                 instanceId,
                 fsxCredentials,
-                sqlCredentials,
-                windowsUserCredentials,
+                newSqlCredentials,
+                newWindowsUserCredentials,
                 instanceIds,
-                checkManageReadiness
+                checkManageReadiness,
+                allDatabaseCredentials,
+                allWindowsUserCredentials
             );
         }
 
@@ -1675,7 +1716,9 @@ async function validateCredentials(
             instancesToBeDeleted,
             fsxCredentials!,
             newSqlCredentials,
-            windowsUserCredentials
+            windowsUserCredentials,
+            allDatabaseCredentials,
+            allWindowsUserCredentials
         );
 
         throw createError(
@@ -1694,7 +1737,9 @@ async function validateWindowsCredentials(
     sqlCredentials: RegisterCredentialsType[],
     windowsUserCredentials: RegisterCredentialsType[],
     instanceIds: string[],
-    checkManageReadiness: boolean = false
+    checkManageReadiness: boolean = false,
+    allDatabaseCredentials: RegisterCredentialsType[] = [],
+    allWindowsUserCredentials: RegisterCredentialsType[] = []
 ) {
     logger.info('Validate Windows credentials', {
         accountId,
@@ -1799,7 +1844,7 @@ async function validateWindowsCredentials(
     if (sqlCredentials.length || windowsUserCredentials.length) {
         parsedResponse.instances.forEach((instance: DatabaseInstanceRegistration) => {
             if (instance.sqlInstanceConnectivity === false) {
-                instancesToBeDeleted.push(sqlCredentials[0]?.resourceId ?? windowsUserCredentials[0]?.resourceId);
+                instancesToBeDeleted.push(`${instance?.sqlInstanceName}${TEMP}`);
                 response.push({ resourceId: instance.sqlInstanceName, databaseServerError: instance?.sqlerror });
             } else {
                 const {
@@ -1836,18 +1881,20 @@ async function validateWindowsCredentials(
         });
     }
 
-    if (instancesToBeDeleted.length > 0) {
-        await rewriteOrDeleteSSMParameter(
-            credentialsId,
-            region,
-            instanceIds,
-            paramsToDelete,
-            instancesToBeDeleted,
-            fsxCredentials!,
-            newSqlCredentials,
-            windowsUserCredentials
-        );
-    }
+    // if (instancesToBeDeleted.length > 0) {
+    await rewriteOrDeleteSSMParameter(
+        credentialsId,
+        region,
+        instanceIds,
+        paramsToDelete,
+        instancesToBeDeleted,
+        fsxCredentials!,
+        newSqlCredentials,
+        windowsUserCredentials,
+        allDatabaseCredentials,
+        allWindowsUserCredentials
+    );
+    // }
     return response;
 }
 
@@ -1858,7 +1905,8 @@ async function validateOracleCredentials(
     instanceId: string,
     fsxCredentials: RegisterCredentialsType | undefined,
     oracleCredentials: RegisterCredentialsType[],
-    instanceIds: string[]
+    instanceIds: string[],
+    allDatabaseCredentials: RegisterCredentialsType[] = []
 ) {
     logger.info('Validate Oracle credentials', {
         accountId,
@@ -1955,18 +2003,19 @@ async function validateOracleCredentials(
         });
     }
 
-    if (instancesToBeDeleted.length > 0) {
-        await rewriteOrDeleteSSMParameter(
-            credentialsId,
-            region,
-            instanceIds,
-            paramsToDelete,
-            instancesToBeDeleted,
-            fsxCredentials!,
-            oracleCredentials,
-            []
-        );
-    }
+    // if (instancesToBeDeleted.length > 0) {
+    await rewriteOrDeleteSSMParameter(
+        credentialsId,
+        region,
+        instanceIds,
+        paramsToDelete,
+        instancesToBeDeleted,
+        fsxCredentials!,
+        oracleCredentials,
+        [],
+        allDatabaseCredentials
+    );
+    // }
     return response;
 }
 
@@ -1994,6 +2043,11 @@ async function verifyAndCreateCredentials(
     }
 
     if (databaseCredentials.length || windowsUserCredentials.length) {
+        databaseCredentials = databaseCredentials.map(e => ({ ...e, resourceId: `${e.resourceId}${TEMP}` }));
+        windowsUserCredentials = windowsUserCredentials.map(e => ({
+            ...e,
+            resourceId: `${e.resourceId}${TEMP}`
+        }));
         const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
         if (!existingParameters) {
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
@@ -2001,41 +2055,26 @@ async function verifyAndCreateCredentials(
         } else {
             const { sql, domain, oracle } = JSON.parse(existingParameters);
             if (sql) {
-                const newSqlInstances = databaseCredentials.map(e => e.resourceId);
                 sql.forEach((e: SqlCredential) => {
-                    if (!newSqlInstances.includes(e.sqlinstancename)) {
-                        databaseCredentials.push({
-                            resourceId: e.sqlinstancename,
-                            resourceType: RESOURCESTYPE.MSSQL,
-                            username: e.username,
-                            password: e.password
-                        });
+                    const credToAdd = checkAndAddExistingSSMParameter(e, databaseCredentials, RESOURCESTYPE.MSSQL);
+                    if (credToAdd) {
+                        databaseCredentials.push(credToAdd);
                     }
                 });
             }
             if (domain) {
-                const newDomainUsers = windowsUserCredentials.map(e => e.resourceId);
                 domain.forEach((e: SqlCredential) => {
-                    if (!newDomainUsers.includes(e.sqlinstancename)) {
-                        windowsUserCredentials.push({
-                            resourceId: e.sqlinstancename,
-                            resourceType: RESOURCESTYPE.WINDOWS_USER,
-                            username: e.username,
-                            password: e.password
-                        });
+                    const credToAdd = checkAndAddExistingSSMParameter(e, databaseCredentials, RESOURCESTYPE.MSSQL);
+                    if (credToAdd) {
+                        databaseCredentials.push(credToAdd);
                     }
                 });
             }
             if (oracle) {
-                const newOracleInstances = databaseCredentials.map(e => e.resourceId);
                 oracle.forEach((e: OracleCredential) => {
-                    if (!newOracleInstances.includes(e.oracleinstancename)) {
-                        databaseCredentials.push({
-                            resourceId: e.oracleinstancename,
-                            resourceType: RESOURCESTYPE.ORACLE,
-                            username: e.username,
-                            password: e.password
-                        });
+                    const credToAdd = checkAndAddExistingSSMParameter(e, databaseCredentials, RESOURCESTYPE.ORACLE);
+                    if (credToAdd) {
+                        databaseCredentials.push(credToAdd);
                     }
                 });
             }
@@ -2049,6 +2088,38 @@ async function verifyAndCreateCredentials(
     ]);
 
     await ssmPutParameters(credentialsId, region, creds);
+
+    return { allDatabaseCredentials: databaseCredentials, allWindowsUserCredentials: windowsUserCredentials };
+}
+
+function checkAndAddExistingSSMParameter(
+    currentCred: SqlCredential | OracleCredential,
+    allCreds: RegisterCredentialsType[],
+    type: RESOURCESTYPE
+) {
+    let instanceName: string | undefined;
+    if ('sqlinstancename' in currentCred) {
+        instanceName = currentCred.sqlinstancename;
+    } else if ('oracleinstancename' in currentCred) {
+        instanceName = currentCred.oracleinstancename;
+    }
+
+    // Check if the object already exists in databaseCredentials
+    const isDuplicate = allCreds.some(
+        cred =>
+            cred.resourceId?.replace(TEMP, '') === instanceName?.replace(TEMP, '') &&
+            cred.username === currentCred.username &&
+            cred.password === currentCred.password
+    );
+
+    if (!isDuplicate && instanceName) {
+        return {
+            resourceId: instanceName,
+            resourceType: type,
+            username: currentCred.username,
+            password: currentCred.password
+        };
+    }
 }
 
 async function deleteSSMParameter(credentialsId: string, region: string, ssmParameterNames: string[]) {

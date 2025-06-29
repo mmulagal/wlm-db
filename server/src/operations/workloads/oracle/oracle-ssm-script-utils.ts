@@ -359,6 +359,7 @@ EOF
 const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string) => `
     ec2InstanceId="${ec2InstanceId}"
     oracleSid="${dbSid}"
+    oracleSid_temp="${dbSid}_temp"
 
     # Initialize result object if not already initialized
     if [ -z "$resultObject" ]; then
@@ -367,7 +368,7 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
     
     instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
     oracleInstances=$(echo "$instanceCreds" | jq -c '.oracle')
-    matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSid" '.[] | select(.oracleinstancename == $sid)')
+    matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSid_temp" '.[] | select(.oracleinstancename == $sid)')
     username=$(echo "$matchingOracleInstance" | jq -r '.username')
     password=$(echo "$matchingOracleInstance" | jq -r '.password')
 
