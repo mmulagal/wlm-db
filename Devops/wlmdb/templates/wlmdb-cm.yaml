@@ -15,6 +15,7 @@ data:
   REDIS_SCHEME: rediss
   REDIS_ENDPOINT: {{ .Values.global.redisEndPoint }}
   S3_BUCKET_NAME: {{ .Values.global.s3BucketName }}
+  NODE_OPTIONS: --max-old-space-size=3200  
   {{ if eq .Values.global.environment "production" }}
   AUTH0_ENDPOINT: netapp-cloud-account.auth0.com
   CLOUD_MANAGER_ENDPOINT: api.bluexp.netapp.com
