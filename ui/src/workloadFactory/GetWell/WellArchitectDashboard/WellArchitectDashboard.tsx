@@ -154,7 +154,7 @@ const WellArchitectDashboard = () => {
         const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
         const { password } = sqlServerPasswords;
         credList.push({
-            resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
+            resourceId: selectedDatabaseInstanceName,
             resourceType:
                 selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
                     ? DETECT_HOST_VAR.MSSQL
