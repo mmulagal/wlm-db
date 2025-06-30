@@ -1639,9 +1639,6 @@ FOR JSON PATH;
 
             try {
                 if ($windowsAuth) {
-                    $cpu = {
-                        sqlcmd @Using:sqlCmdParams -Q $Using:cpuUtilquery -y 0
-                         } 
                     $cpuResponse = Invoke-CommandWithCredSSP -sqlquery $cpuUtilquery -instanceName $windowsInstanceName -IsMultiQuery $True                  
                 }
                 else {
@@ -1656,9 +1653,6 @@ FOR JSON PATH;
 
             try {
                 if ($windowsAuth) {
-                    $performanceQuery = {
-                        sqlcmd @Using:sqlCmdParams -Q $Using:performanceQuery -y 0
-                    }
                     $perfResponse  = Invoke-CommandWithCredSSP -sqlquery $performanceQuery -instanceName $windowsInstanceName -IsMultiQuery $True
                 }
                 else {
