@@ -1530,7 +1530,7 @@ elseif ($moduleFound) {
             $finalInstancesList = @()
 
             ForEach ($sqlService in $sqlServiceList) {
-                $instanceName = $sqlService.Name -Replace "MSSQL\$", ""
+                $instanceName = $sqlService.Name -Replace "MSSQL\\$", ""
                 $finalInstancesList += $instanceName
             }
             return $finalInstancesList
@@ -1613,9 +1613,8 @@ FOR JSON PATH;
 
             $windowsInstanceName =  $env:computerName 
             if ($instanceName -ne "MSSQLSERVER") {
-                $instanceName = $instanceName -replace '^MSSQL\$', ''
-                $sqlCmdParams += @("-S", "$env:computerName\$instanceName")
-                $windowsInstanceName = "$env:computerName\$instanceName"
+                $sqlCmdParams += @("-S", "$env:computerName\\$instanceName")
+                $windowsInstanceName = "$env:computerName\\$instanceName"
             }
 
             if($credsFromParameterStore.sql -ne $null){
