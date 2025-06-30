@@ -2064,9 +2064,13 @@ async function verifyAndCreateCredentials(
             }
             if (domain) {
                 domain.forEach((e: SqlCredential) => {
-                    const credToAdd = checkAndAddExistingSSMParameter(e, databaseCredentials, RESOURCESTYPE.MSSQL);
+                    const credToAdd = checkAndAddExistingSSMParameter(
+                        e,
+                        windowsUserCredentials,
+                        RESOURCESTYPE.WINDOWS_USER
+                    );
                     if (credToAdd) {
-                        databaseCredentials.push(credToAdd);
+                        windowsUserCredentials.push(credToAdd);
                     }
                 });
             }
