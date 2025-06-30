@@ -339,7 +339,7 @@ function scheduleCronJob({ queueName, jobName, cronPattern, workerProcessor, onJ
             );
 
             worker.on('completed', job => {
-                logger.debug(job.id, 'is completed.');
+                logger.debug(job.name, 'is completed.');
             });
         });
     } catch (error: any) {

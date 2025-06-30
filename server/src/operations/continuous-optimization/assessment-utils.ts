@@ -565,14 +565,18 @@ async function checkAndUpdatePostponedEndTime(
         credentialsId,
         region,
         databaseHostId,
-        dismissedConfigs,
+        dismissedConfigExists: Boolean(dismissedConfigs),
         databaseInstanceId
     });
 
-    const { updatedConfigs, isConfigUpdated } = processConfigEntries(
-        Object.entries(dismissedConfigs),
-        dismissedConfigs
-    );
+    let updatedConfigs = dismissedConfigs;
+    let isConfigUpdated = false;
+
+    if (dismissedConfigs) {
+        const result = processConfigEntries(Object.entries(dismissedConfigs), dismissedConfigs);
+        updatedConfigs = result.updatedConfigs;
+        isConfigUpdated = result.isConfigUpdated;
+    }
 
     if (isConfigUpdated) {
         if (databaseInstanceId) {
