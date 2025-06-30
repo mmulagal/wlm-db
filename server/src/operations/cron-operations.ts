@@ -9,6 +9,7 @@ import { deleteOlderJobs } from '../lib/database/job';
 import {
     ACCOUNT_ID,
     CONTINUOUS_ASSESSMENT_FEATURE,
+    DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE,
@@ -366,7 +367,7 @@ async function initiateCronOperations() {
             scheduleCronJob({
                 queueName: DRIFT_ASSESSMENT_QUEUE,
                 jobName: 'CONTINUOUS_OPTIMIZATION_DRIFT_ASSESSMENT',
-                cronPattern: '0 0 0 * * *', // Run every day at midnight
+                cronPattern: DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN,
                 workerProcessor: async () => {
                     await triggerDriftAssessmentDataCollection(AssessmentTriggeredBy.SYSTEM);
                 },

@@ -111,5 +111,6 @@
         "cache": {
             "ttl": "5m"
         }
-    }
+    },
+    "daily-drift-assessment-trigger": "30 10 * * *"
 }
