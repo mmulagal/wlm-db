@@ -1630,16 +1630,15 @@ FOR JSON PATH;
                     $credsspSet = $true
             }
                 }
+            $windowsInstanceName =  $env:computerName 
             if ($instanceName -ne "MSSQLSERVER") {
                 $sqlCmdParams += @("-S", "$env:computerName\\$instanceName")
+                $windowsInstanceName = "$env:computerName\\$instanceName"
             }
 
             try {
                 if ($windowsAuth) {
-                    $cpu = {
-                        sqlcmd @Using:sqlCmdParams -Q $Using:cpuUtilquery -y 0
-                         } 
-                    $cpuResponse = Invoke-CommandWithCredSSP -ScriptBlock $cpu -ComputerName $ENV:ComputerName -Credential $DomainCreds -Authentication Credssp -IsMultiQuery $True                 
+                    $cpuResponse = Invoke-CommandWithCredSSP -sqlquery $cpuUtilquery -instanceName $windowsInstanceName -IsMultiQuery $True                  
                 }
                 else {
                     $cpuResponse = sqlcmd @sqlCmdParams -Q $cpuUtilquery -y 0
@@ -1653,10 +1652,7 @@ FOR JSON PATH;
 
             try {
                 if ($windowsAuth) {
-                    $performanceQuery = {
-                        sqlcmd @Using:sqlCmdParams -Q $Using:performanceQuery -y 0
-                    }
-                    $perfResponse  = Invoke-CommandWithCredSSP -ScriptBlock $performanceQuery -ComputerName $ENV:ComputerName -Credential $DomainCreds -Authentication Credssp -IsMultiQuery $True 
+                    $perfResponse  = Invoke-CommandWithCredSSP -sqlquery $performanceQuery -instanceName $windowsInstanceName -IsMultiQuery $True
                 }
                 else {
                     $perfResponse = sqlcmd @sqlCmdParams -Q $performanceQuery -y 0
