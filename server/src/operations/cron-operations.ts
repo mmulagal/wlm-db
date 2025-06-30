@@ -338,9 +338,11 @@ function scheduleCronJob({ queueName, jobName, cronPattern, workerProcessor, onJ
                 { connection: redisConnection }
             );
 
-            worker.on('completed', job => {
-                logger.debug(job.name, 'is completed.');
-            });
+            logger.info(`Worker for ${worker.name} started.`);
+
+            // worker.on('completed', job => {
+            //     logger.debug(job.name, 'is completed.');
+            // });
         });
     } catch (error: any) {
         logger.error(`Error while processing ${jobName} cron job. ${error}.`);
