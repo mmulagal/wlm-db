@@ -37,7 +37,8 @@ import {
     getDescriptionForMatchingName,
     getQueueUrl,
     parsePgSqlInstanceInfo,
-    generateSqlResourceId
+    generateSqlResourceId,
+    sanitizeSnsSubject
 } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
@@ -254,6 +255,9 @@ async function modifyMasterJobStatus(
     const isCompleted = jobStatus === JOBSTATUS.COMPLETED;
 
     if (isFailed || isCompleted) {
+        const subjectContent = masterJob.name?.split(';')[0];
+        const rawSubject = isFailed ? `${subjectContent} is failed` : `${subjectContent} is completed`;
+
         if (isFailed) {
             updateLongRunningAuditGroup(AuditStatus.FAILED, [...new Set(combinedErrors)].join(','));
         } else {
@@ -264,9 +268,7 @@ async function modifyMasterJobStatus(
             content: isFailed
                 ? `The ${databaseType} deployment host has failed. See more details in job monitoring`
                 : `The ${databaseType} deployment host has been completed successfully`,
-            subject: isFailed
-                ? `${databaseType} host Deployment with stack ${stackName} has been failed. `
-                : `${databaseType} host Deployment with stack ${stackName} has been completed successfully`,
+            subject: sanitizeSnsSubject(rawSubject),
             resourceName: stackName,
             resourceId: stackName,
             notificationType: NOTIFICATION_TYPE.DEPLOYMENT,

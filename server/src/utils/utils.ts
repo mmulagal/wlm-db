@@ -1200,6 +1200,18 @@ function isCidrContained(outerCidr: string, innerCidr: string): boolean {
     return outer.contains(inner.address);
 }
 
+function sanitizeSnsSubject(subject: string): string {
+    // Remove all ASCII control characters (0-31 and 127)
+    // Intentionally removing control characters for SNS subject compliance
+    // eslint-disable-next-line no-control-regex
+    subject = subject.replace(/[\x00-\x1F\x7F]/g, '');
+    // Truncate to 99 characters
+    if (subject.length > 99) {
+        subject = subject.slice(0, 99);
+    }
+    return subject;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1270,5 +1282,6 @@ export {
     getUnitForMetric,
     assessMssqlServerPerformance,
     getSqlInstanceMetricDataQueries,
-    isCidrContained
+    isCidrContained,
+    sanitizeSnsSubject
 };
