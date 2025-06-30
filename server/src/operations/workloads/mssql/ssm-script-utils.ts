@@ -1610,6 +1610,14 @@ FOR JSON PATH;
             $sqlCmdParams = @()
             $sqlAuth = $false
             $windowsAuth = $false
+
+            $windowsInstanceName =  $env:computerName 
+            if ($instanceName -ne "MSSQLSERVER") {
+                $instanceName = $instanceName -replace '^MSSQL\$', ''
+                $sqlCmdParams += @("-S", "$env:computerName\$instanceName")
+                $windowsInstanceName = "$env:computerName\$instanceName"
+            }
+
             if($credsFromParameterStore.sql -ne $null){
                 $sqlCredential = $credsFromParameterStore.sql.Where({ $_.sqlInstanceName -eq $instanceName })[0]
 
@@ -1630,11 +1638,6 @@ FOR JSON PATH;
                     $credsspSet = $true
             }
                 }
-            $windowsInstanceName =  $env:computerName 
-            if ($instanceName -ne "MSSQLSERVER") {
-                $sqlCmdParams += @("-S", "$env:computerName\\$instanceName")
-                $windowsInstanceName = "$env:computerName\\$instanceName"
-            }
 
             try {
                 if ($windowsAuth) {
