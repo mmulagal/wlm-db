@@ -1631,7 +1631,6 @@ FOR JSON PATH;
                     $credsspSet = $true
             }
                 }
-            }       
             if ($instanceName -ne "MSSQLSERVER") {
                 $sqlCmdParams += @("-S", "$env:computerName\\$instanceName")
             }
