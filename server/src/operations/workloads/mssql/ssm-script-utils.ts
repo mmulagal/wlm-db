@@ -1634,7 +1634,7 @@ FOR JSON PATH;
             $windowsInstanceName =  $env:computerName 
             if ($instanceName -ne "MSSQLSERVER") {
                 $sqlCmdParams += @("-S", "$env:computerName\\$instanceName")
-                $windowsInstanceName = "$env:computerName\$instanceName"
+                $windowsInstanceName = "$env:computerName\\$instanceName"
             }
 
             try {
