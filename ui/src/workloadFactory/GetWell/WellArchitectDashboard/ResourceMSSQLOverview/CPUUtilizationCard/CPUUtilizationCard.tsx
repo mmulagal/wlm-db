@@ -1,12 +1,15 @@
-import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import styles from './CPUUtilizationCard.module.scss';
+import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import LineGraph from '../../LineGraph/LineGraph';
 import { twoFractionDigits } from '../../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
 const CPUUtilizationCard = () => {
+    const { t } = useTranslation();
     const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -19,9 +22,13 @@ const CPUUtilizationCard = () => {
     return (
         <div className={styles.cpuUtilization}>
             <div className={styles.headSection}>
-                <DsTypography variant="Regular_16" className={styles.title}>
-                    {GENERAL.CPU_UTILIZATION}
-                </DsTypography>
+                <div className={CommonStyles.textWithTooltip}>
+                    <DsTypography variant="Regular_16" className={styles.title}>
+                        {GENERAL.CPU_UTILIZATION}
+                    </DsTypography>
+
+                    <TooltipInfo>{t('databases.resource-overview.capacity-tooltip')}</TooltipInfo>
+                </div>
 
                 <div className={styles.rightTopValue}>{resourceLoading && <DsFlashingDotsLoader />}</div>
             </div>

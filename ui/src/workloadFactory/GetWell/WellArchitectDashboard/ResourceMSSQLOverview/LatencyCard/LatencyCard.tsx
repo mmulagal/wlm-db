@@ -1,11 +1,14 @@
-import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import styles from './LatencyCard.module.scss';
-import SeparatorComponent from '../../../../../common/SeparatorComponent/SeparatorComponent';
+import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import LineGraph from '../../LineGraph/LineGraph';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
 const LatencyCard = () => {
+    const { t } = useTranslation();
+
     const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -36,9 +39,12 @@ const LatencyCard = () => {
     return (
         <div className={styles.latencyCard}>
             <div className={styles.headSection}>
-                <DsTypography variant="Regular_16" className={styles.title}>
-                    Latency
-                </DsTypography>
+                <div className={CommonStyles.textWithTooltip}>
+                    <DsTypography variant="Regular_16" className={styles.title}>
+                        Latency
+                    </DsTypography>
+                    <TooltipInfo>{t('databases.resource-overview.latency-tooltip')}</TooltipInfo>
+                </div>
 
                 <div className={styles.rightTopValue}>
                     <DsTypography variant="Regular_20">{resourceLoading && <DsFlashingDotsLoader />}</DsTypography>
