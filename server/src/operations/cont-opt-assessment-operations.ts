@@ -1867,7 +1867,7 @@ function hasNotOptimizedStatus(obj: any): boolean {
         return obj.some(hasNotOptimizedStatus);
     }
     if (obj && typeof obj === 'object') {
-        if (obj.status === AssessmentStatus.NOT_OPTIMIZED) {
+        if (obj.status === AssessmentStatus.NOT_OPTIMIZED || obj.errorMessage) {
             return true;
         }
         return Object.values(obj).some(hasNotOptimizedStatus);
