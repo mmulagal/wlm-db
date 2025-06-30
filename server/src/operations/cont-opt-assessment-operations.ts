@@ -941,161 +941,175 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
 
     await Promise.all(
         Object.entries(managedInstancesGroupedByAccountId).map(
-            throat(1, async ([accountId, managedInstances]) => {
+            throat(3, async ([accountId, managedInstances]) => {
                 if (isEmpty(managedInstances)) {
                     const errorMessage = `No managed instances found for account ${accountId}.`;
                     logger.info(errorMessage);
                 } else {
-                    const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} registered instances in your account ${accountId} for best practice misalignments.`;
-                    const { id: parentJobId } = await registerJob(accountId, '', '', {
-                        name: jobDescription,
-                        description: jobDescription,
-                        resourceName: accountId,
-                        initiator: initiatedBy.toLocaleUpperCase(),
-                        startTime: Date.now(),
-                        status: JOBSTATUS.IN_PROGRESS,
-                        type: JOBTYPE.ASSESSMENT
-                    });
+                    let parentJobId: string = '';
                     const assessmentErrors: unknown[] = [];
                     let parentJobError = '';
                     try {
-                        await Promise.all(
-                            managedInstances.map(
-                                throat(1, async managedInstance => {
-                                    try {
+                        const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} registered instances in your account ${accountId} for best practice misalignments.`;
+                        ({ id: parentJobId = '' } =
+                            (await registerJob(accountId, '', '', {
+                                name: jobDescription,
+                                description: jobDescription,
+                                resourceName: accountId,
+                                initiator: initiatedBy.toLocaleUpperCase(),
+                                startTime: Date.now(),
+                                status: JOBSTATUS.IN_PROGRESS,
+                                type: JOBTYPE.ASSESSMENT
+                            })) ?? Promise.resolve({}));
+
+                        if (parentJobId && parentJobId !== '') {
+                            await Promise.all(
+                                managedInstances.map(
+                                    throat(3, async managedInstance => {
+                                        try {
+                                            const {
+                                                configurations: instanceConfigurations,
+                                                resource,
+                                                credentials_id: credentialsId,
+                                                region,
+                                                resource_id: resourceId,
+                                                database_instance_id: databaseInstanceId
+                                            } = managedInstance;
+                                            const instanceConfiguration = (
+                                                instanceConfigurations as unknown as DatabaseInstanceConfigurations
+                                            )?.dismissedConfigurations;
+                                            const hostDismissedConfigurations = (
+                                                resource?.configurations as unknown as DatabaseInstanceConfigurations
+                                            )?.dismissedConfigurations;
+                                            try {
+                                                await checkAndUpdatePostponedEndTime(
+                                                    accountId,
+                                                    credentialsId,
+                                                    region,
+                                                    resourceId,
+                                                    instanceConfiguration,
+                                                    databaseInstanceId
+                                                );
+                                            } catch (error) {
+                                                logger.error('Error while updating instance postponed end time', {
+                                                    accountId,
+                                                    credentialsId,
+                                                    region,
+                                                    resourceId,
+                                                    databaseInstanceId,
+                                                    error
+                                                });
+                                            }
+
+                                            try {
+                                                await checkAndUpdatePostponedEndTime(
+                                                    accountId,
+                                                    credentialsId,
+                                                    region,
+                                                    resourceId,
+                                                    hostDismissedConfigurations
+                                                );
+                                            } catch (error) {
+                                                logger.error('Error while updating instance postponed end time', {
+                                                    accountId,
+                                                    credentialsId,
+                                                    region,
+                                                    resourceId,
+                                                    error
+                                                });
+                                            }
+
+                                            await triggerAssessment(managedInstance, parentJobId, fields);
+                                        } catch (error) {
+                                            assessmentErrors.push(error);
+                                        }
+                                    })
+                                )
+                            );
+
+                            if (assessmentErrors.length === managedInstances.length) {
+                                const errorMessage = `No registered instances are online and running in account ${accountId}.`;
+                                logger.info(errorMessage);
+                                await updateJobDetails(accountId, parentJobId, {
+                                    status: JOBSTATUS.WARNING,
+                                    error: errorMessage,
+                                    endTime: Date.now()
+                                });
+                            } else {
+                                // Proceeding with compute and license assessment at host level
+                                const uniqueResMap = new Map(
+                                    managedInstances.map(({ resource, ...databaseInstanceDetails }) => [
+                                        `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
+                                        { resource, databaseInstanceDetails } // Separate keys for resource and databaseInstanceDetails
+                                    ])
+                                ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
+                                const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
+
+                                await Promise.all(
+                                    uniqueResources.map(async ({ resource, databaseInstanceDetails }) => {
                                         const {
-                                            configurations: instanceConfigurations,
-                                            resource,
+                                            account_id: wfAccountId,
                                             credentials_id: credentialsId,
                                             region,
-                                            resource_id: resourceId,
-                                            database_instance_id: databaseInstanceId
-                                        } = managedInstance;
-                                        const instanceConfiguration = (
-                                            instanceConfigurations as unknown as DatabaseInstanceConfigurations
-                                        )?.dismissedConfigurations;
-                                        const hostDismissedConfigurations = (
-                                            resource?.configurations as unknown as DatabaseInstanceConfigurations
-                                        )?.dismissedConfigurations;
-                                        try {
-                                            await checkAndUpdatePostponedEndTime(
-                                                accountId,
-                                                credentialsId,
-                                                region,
-                                                resourceId,
-                                                instanceConfiguration,
-                                                databaseInstanceId
-                                            );
-                                        } catch (error) {
-                                            logger.error('Error while updating instance postponed end time', {
-                                                accountId,
-                                                credentialsId,
-                                                region,
-                                                resourceId,
-                                                databaseInstanceId,
-                                                error
-                                            });
-                                        }
+                                            resource_id: databaseHostId,
+                                            resource_name: resourceName
+                                        } = resource;
+                                        const { database_instance_id: databaseInstanceId } = databaseInstanceDetails;
 
-                                        try {
-                                            await checkAndUpdatePostponedEndTime(
-                                                accountId,
-                                                credentialsId,
-                                                region,
-                                                resourceId,
-                                                hostDismissedConfigurations
-                                            );
-                                        } catch (error) {
-                                            logger.error('Error while updating instance postponed end time', {
-                                                accountId,
-                                                credentialsId,
-                                                region,
-                                                resourceId,
-                                                error
-                                            });
-                                        }
+                                        // require to get the sqlAuthEnabled flag for mssql patch assessment
+                                        const { newDatabaseInstanceDetails } = await getInstanceDetails(
+                                            accountId,
+                                            credentialsId,
+                                            region as string,
+                                            databaseHostId,
+                                            databaseInstanceId,
+                                            resource,
+                                            databaseInstanceDetails as unknown as DatabaseInstance
+                                        );
+                                        const { sqlAuthEnabled } = (newDatabaseInstanceDetails ||
+                                            {}) as DatabaseInstance;
 
-                                        await triggerAssessment(managedInstance, parentJobId, fields);
-                                    } catch (error) {
-                                        assessmentErrors.push(error);
-                                    }
-                                })
-                            )
-                        );
-
-                        if (assessmentErrors.length === managedInstances.length) {
-                            const errorMessage = `No registered instances are online and running in account ${accountId}.`;
-                            logger.info(errorMessage);
-                            await updateJobDetails(accountId, parentJobId, {
-                                status: JOBSTATUS.WARNING,
-                                error: errorMessage,
-                                endTime: Date.now()
-                            });
+                                        await initiateHostLevelAssessmentDataCollection(
+                                            wfAccountId,
+                                            credentialsId,
+                                            region!,
+                                            databaseHostId,
+                                            resourceName!,
+                                            parentJobId,
+                                            [
+                                                AssessmentCategories.LICENSE,
+                                                AssessmentCategories.COMPUTE,
+                                                AssessmentCategories.HOST_OS_PATCH,
+                                                AssessmentCategories.RSS_CONFIG,
+                                                AssessmentCategories.MSSQL_PATCH
+                                            ],
+                                            databaseInstanceId,
+                                            sqlAuthEnabled as boolean
+                                        );
+                                    })
+                                );
+                            }
                         } else {
-                            // Proceeding with compute and license assessment at host level
-                            const uniqueResMap = new Map(
-                                managedInstances.map(({ resource, ...databaseInstanceDetails }) => [
-                                    `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
-                                    { resource, databaseInstanceDetails } // Separate keys for resource and databaseInstanceDetails
-                                ])
-                            ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
-                            const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
-
-                            await Promise.all(
-                                uniqueResources.map(async ({ resource, databaseInstanceDetails }) => {
-                                    const {
-                                        account_id: wfAccountId,
-                                        credentials_id: credentialsId,
-                                        region,
-                                        resource_id: databaseHostId,
-                                        resource_name: resourceName
-                                    } = resource;
-                                    const { database_instance_id: databaseInstanceId } = databaseInstanceDetails;
-
-                                    // require to get the sqlAuthEnabled flag for mssql patch assessment
-                                    const { newDatabaseInstanceDetails } = await getInstanceDetails(
-                                        accountId,
-                                        credentialsId,
-                                        region as string,
-                                        databaseHostId,
-                                        databaseInstanceId,
-                                        resource,
-                                        databaseInstanceDetails as unknown as DatabaseInstance
-                                    );
-                                    const { sqlAuthEnabled } = (newDatabaseInstanceDetails || {}) as DatabaseInstance;
-
-                                    await initiateHostLevelAssessmentDataCollection(
-                                        wfAccountId,
-                                        credentialsId,
-                                        region!,
-                                        databaseHostId,
-                                        resourceName!,
-                                        parentJobId,
-                                        [
-                                            AssessmentCategories.LICENSE,
-                                            AssessmentCategories.COMPUTE,
-                                            AssessmentCategories.HOST_OS_PATCH,
-                                            AssessmentCategories.RSS_CONFIG,
-                                            AssessmentCategories.MSSQL_PATCH
-                                        ],
-                                        databaseInstanceId,
-                                        sqlAuthEnabled as boolean
-                                    );
-                                })
+                            logger.error(
+                                'Error while registering parent job for drift assessment',
+                                { accountId },
+                                parentJobError
                             );
                         }
                     } catch (error: any) {
                         logger.info('Error while triggering drift assessment for account', { accountId, error });
                         parentJobError = error.message;
                     } finally {
-                        await updateParentJobStatus(accountId, parentJobId, false, parentJobError);
-                        // Lets update assessment result in instance metadata
-                        // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
-                        await Promise.all(
-                            managedInstances.map(async managedInstance => {
-                                await updateAssesmentResultsInInstanceMetadata(managedInstance);
-                            })
-                        );
+                        if (parentJobId && parentJobId !== '') {
+                            await updateParentJobStatus(accountId, parentJobId, false, parentJobError);
+                            // Lets update assessment result in instance metadata
+                            // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
+                            await Promise.all(
+                                managedInstances.map(async managedInstance => {
+                                    await updateAssesmentResultsInInstanceMetadata(managedInstance);
+                                })
+                            );
+                        }
                     }
                 }
             })
