@@ -3,7 +3,7 @@ description: Report a bug related to backend/API functionality.
 title: "[BUG][API]: "
 labels: ["Bug", "Backend"]
 assignees:
-  - shaswats
+  - shaswatinetapp
 projects: ["TLVeng/41"]
 
 body:
@@ -14,32 +14,12 @@ body:
 
         Thank you for taking the time to help us improve! Please fill out the details below as thoroughly as possible.
 
-  - type: input
-    id: contact
-    attributes:
-      label: "Contact Details"
-      description: "If we need more information, how can we reach you?"
-      placeholder: "e.g., email@netapp.com"
-    validations:
-      required: false
-
   - type: textarea
     id: summary
     attributes:
       label: "Bug Summary"
       description: "Describe the bug and what you expected to happen."
-      placeholder: "A backend bug happened! Please describe what you observed and what you expected."
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected-actual
-    attributes:
-      label: "Expected vs. Actual Behavior"
-      description: "Describe what you expected to happen and what actually happened."
-      placeholder: |
-        **Expected:** The API should return a 200 OK.
-        **Actual:** The API returns a 500 Internal Server Error.
+      placeholder: "Describe the bug and what you expected to happen. Provide proper steps to reproduce the issue."
     validations:
       required: true
 
@@ -57,18 +37,6 @@ body:
       required: true
 
   - type: textarea
-    id: steps
-    attributes:
-      label: "Steps to Reproduce"
-      description: "List the steps to reproduce the issue."
-      placeholder: |
-        1. Go to...
-        2. Click on...
-        3. Observe...
-    validations:
-      required: true
-
-  - type: textarea
     id: curl
     attributes:
       label: "cURL Command"
@@ -78,24 +46,6 @@ body:
     validations:
       required: false
 
-  - type: textarea
-    id: screenshot
-    attributes:
-      label: "Screenshot"
-      description: "Attach a screenshot showing the issue (optional)."
-      placeholder: "Drag and drop or paste a screenshot here."
-    validations:
-      required: false
-
-  - type: checkboxes
-    id: generic-questions
-    attributes:
-      label: "General Questions"
-      description: "Please answer the following, if applicable:"
-      options:
-        - label: "Did this work before?"
-        - label: "Is the issue reproducible every time?"
-
   - type: dropdown
     id: environment
     attributes:
@@ -103,27 +53,11 @@ body:
       description: "Which environment did you encounter the bug in?"
       options:
         - "staging"
-        - "production"
+        - "prod"
+        - "staging-demo"
+        - "prod-demo"
     validations:
       required: true
-
-  - type: dropdown
-    id: is-demo
-    attributes:
-      label: "Is this a demo environment?"
-      description: "Did this bug occur in a demo environment?"
-      options:
-        - "true"
-        - "false"
-    validations:
-      required: true
-
-  - type: textarea
-    id: logs
-    attributes:
-      label: "Relevant Log Output or Stack Trace"
-      description: "Paste any relevant log output or stack trace here. This will be automatically formatted."
-      render: shell
 
   - type: textarea
     id: attachments
@@ -131,9 +65,3 @@ body:
       label: "Attachments"
       description: "Attach any relevant files (logs, HAR files, etc.)."
       placeholder: "Drag and drop files here."
-
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: "Additional Context"
-      description: "Any other information, configuration, or context about the problem."

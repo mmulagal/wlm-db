@@ -3,7 +3,7 @@ description: Report a bug related to the user interface.
 title: "[BUG][UI]: "
 labels: ["Bug", "UI"]
 assignees:
-  - shaswats
+  - shaswatinetapp
 projects: ["TLVeng/41"]
 
 body:
@@ -14,32 +14,12 @@ body:
 
         Thank you for helping us improve the user experience! Please provide as much detail as possible.
 
-  - type: input
-    id: contact
-    attributes:
-      label: "Contact Details"
-      description: "If we need more information, how can we reach you?"
-      placeholder: "e.g., email@netapp.com"
-    validations:
-      required: false
-
   - type: textarea
     id: summary
     attributes:
       label: "Bug Summary"
       description: "Briefly describe the UI bug."
-      placeholder: "A UI bug happened! Please describe what you observed."
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected-actual
-    attributes:
-      label: "Expected vs. Actual Behavior"
-      description: "What did you expect to happen, and what actually happened?"
-      placeholder: |
-        **Expected:** The button should be visible and clickable.
-        **Actual:** The button is hidden after submitting the form.
+      placeholder: "Describe the bug and what you expected to happen. Provide proper steps to reproduce the issue."
     validations:
       required: true
 
@@ -69,15 +49,6 @@ body:
     validations:
       required: true
 
-  - type: textarea
-    id: screenshot
-    attributes:
-      label: "Screenshot"
-      description: "Attach a screenshot showing the issue (if possible)."
-      placeholder: "Drag and drop or paste a screenshot here."
-    validations:
-      required: false
-
   - type: dropdown
     id: environment
     attributes:
@@ -85,29 +56,11 @@ body:
       description: "Which environment did you encounter the bug in?"
       options:
         - "staging"
-        - "production"
+        - "prod"
+        - "staging-demo"
+        - "prod-demo"
     validations:
       required: true
-
-  - type: dropdown
-    id: is-demo
-    attributes:
-      label: "Is this a demo environment?"
-      description: "Did this bug occur in a demo environment?"
-      options:
-        - "true"
-        - "false"
-    validations:
-      required: true
-
-  - type: checkboxes
-    id: generic-questions
-    attributes:
-      label: "General Questions"
-      description: "Please answer the following, if applicable:"
-      options:
-        - label: "Did this work before?"
-        - label: "Is the issue reproducible every time?"
 
   - type: textarea
     id: attachments
@@ -115,9 +68,3 @@ body:
       label: "Attachments"
       description: "Attach any relevant files (logs, HAR files, etc.)."
       placeholder: "Drag and drop files here."
-
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: "Additional Context"
-      description: "Any other information, logs, or context about the problem."
