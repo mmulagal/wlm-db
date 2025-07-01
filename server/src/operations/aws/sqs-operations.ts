@@ -542,11 +542,17 @@ async function processCloudFormationMessages() {
                                                         masterJob.id,
                                                         masterJobName
                                                     );
-                                                    const response = await updateJobDetails(accountId, masterJob.id, {
-                                                        status: JOBSTATUS.COMPLETED,
-                                                        endTime: new Date(messageTimestamp).valueOf()
-                                                    });
-                                                    logger.debug('Update master job response:', response);
+
+                                                    await modifyMasterJobStatus(
+                                                        accountId,
+                                                        credentialsId,
+                                                        region,
+                                                        trackdatabaseType,
+                                                        stackName,
+                                                        JOBSTATUS.COMPLETED,
+                                                        messageTimestamp,
+                                                        masterJob
+                                                    );
 
                                                     const {
                                                         Node1InstanceId: node1InstanceId,
