@@ -276,8 +276,8 @@ type UtilizationResponseType = Static<typeof UtilizationResponse>;
 
 const ResourcesUtilizationResponse = Type.Object({
     cpu: Type.Union([Type.Optional(TrendGraphResponse), Type.Optional(UtilizationResponse)]), // The union type is added as same schme is used for mssql, pgsql and oracle but pgsql and oracle does not support trend graph now,. Once they support trend graph, we can remove unused type
-    memory: UtilizationResponse,
-    disk: UtilizationResponse
+    memory: Type.Optional(UtilizationResponse),
+    disk: Type.Optional(UtilizationResponse)
 });
 type ResourcesUtilizationResponseType = Static<typeof ResourcesUtilizationResponse>;
 

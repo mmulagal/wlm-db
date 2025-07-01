@@ -303,7 +303,7 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
                     $query = $_.query
 
                     if ($sqlCredential.useDomainAuth -eq $True) {
-                        $sqlResponse = Invoke-CommandWithCredSSP -sqlquery $query -instanceName $instanceName
+                        $sqlResponse = Invoke-CommandWithCredSSP -sqlquery $query -instanceName $instanceName -IsMultiQuery $True
                     } elseif ($sqlCredential.useSqlAuth -eq $True) {
                         $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
                     }
