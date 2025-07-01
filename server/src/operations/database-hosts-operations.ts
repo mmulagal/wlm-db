@@ -2206,14 +2206,15 @@ async function getDatabaseInstancesSummary(
 
         const instanceResourceUtilizationData = resourceUtilizationData?.[instanceName];
         if (getResourceutilization) {
-            if (instanceResourceUtilizationData) {
-                databaseInstanceDetails.resourceUtilization = {
+            databaseInstanceDetails.resourceUtilization = {
+                ...(instanceResourceUtilizationData && {
                     memory: instanceResourceUtilizationData.memoryUtilization ?? {},
-                    disk: instanceResourceUtilizationData.diskUtilization ?? {},
-                    cpu: resourceTrendsData?.[instanceName]?.cpuUsed ?? []
-                };
-            }
+                    disk: instanceResourceUtilizationData.diskUtilization ?? {}
+                }),
+                cpu: resourceTrendsData?.[instanceName]?.cpuUsed ?? []
+            };
         }
+
         if (getProtection && protectionData) {
             databaseInstanceDetails.protection = protectionData?.[index];
         }
