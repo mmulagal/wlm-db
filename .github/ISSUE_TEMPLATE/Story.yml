@@ -3,7 +3,7 @@ description: Create a new user story.
 title: "[STORY]: "
 labels: ["Story"]
 assignees:
-  - shaswats
+  - shaswatinetapp
 projects: ["TLVeng/41"]
 
 body:
@@ -13,15 +13,6 @@ body:
         ## 📖 User Story
 
         Please provide details for this user story.
-
-  - type: input
-    id: contact
-    attributes:
-      label: "Contact Details"
-      description: "Who is the main point of contact for this story?"
-      placeholder: "e.g., email@netapp.com"
-    validations:
-      required: false
 
   - type: textarea
     id: summary
@@ -43,15 +34,6 @@ body:
     validations:
       required: true
 
-  - type: textarea
-    id: user-journey
-    attributes:
-      label: "User Journey / Use Case"
-      description: "Describe the user journey or use case for this story."
-      placeholder: "Step-by-step description of how the user will interact with this feature."
-    validations:
-      required: false
-
   - type: dropdown
     id: priority
     attributes:
@@ -72,9 +54,3 @@ body:
       placeholder: "e.g., Waiting for backend API"
     validations:
       required: false
-
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: "Additional Context"
-      description: "Any other information or context about this story."

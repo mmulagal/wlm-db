@@ -3,7 +3,7 @@ description: Create a new task for implementation or tracking.
 title: "[TASK]: "
 labels: ["Task"]
 assignees:
-  - shaswats
+  - shaswatinetapp
 projects: ["TLVeng/41"]
 
 body:
@@ -14,32 +14,12 @@ body:
 
         Please provide details for this task.
 
-  - type: input
-    id: contact
-    attributes:
-      label: "Contact Details"
-      description: "Who is the main point of contact for this task?"
-      placeholder: "e.g., email@netapp.com"
-    validations:
-      required: false
-
   - type: textarea
     id: summary
     attributes:
       label: "Task Summary"
       description: "Briefly describe the task to be completed."
       placeholder: "Describe the task here."
-    validations:
-      required: true
-
-  - type: textarea
-    id: acceptance-criteria
-    attributes:
-      label: "Acceptance Criteria"
-      description: "What are the requirements for this task to be considered complete?"
-      placeholder: |
-        - [ ] Requirement 1
-        - [ ] Requirement 2
     validations:
       required: true
 
@@ -63,9 +43,3 @@ body:
       placeholder: "e.g., Waiting for API update"
     validations:
       required: false
-
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: "Additional Context"
-      description: "Any other information or context about this task."
