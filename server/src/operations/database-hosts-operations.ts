@@ -2206,17 +2206,11 @@ async function getDatabaseInstancesSummary(
 
         const instanceResourceUtilizationData = resourceUtilizationData?.[instanceName];
         if (getResourceutilization) {
-            if (instanceResourceUtilizationData) {
-                databaseInstanceDetails.resourceUtilization = {
-                    memory: instanceResourceUtilizationData.memoryUtilization ?? {},
-                    disk: instanceResourceUtilizationData.diskUtilization ?? {},
-                    cpu: resourceTrendsData?.[instanceName]?.cpuUsed ?? []
-                };
-            }
-        }
-        // when there is no resource utilization data due to error cpu utilization is independently added to response
-        if (getResourceutilization && resourceTrendsData?.[instanceName] && !instanceResourceUtilizationData) {
             databaseInstanceDetails.resourceUtilization = {
+                ...(instanceResourceUtilizationData && {
+                    memory: instanceResourceUtilizationData.memoryUtilization ?? {},
+                    disk: instanceResourceUtilizationData.diskUtilization ?? {}
+                }),
                 cpu: resourceTrendsData?.[instanceName]?.cpuUsed ?? []
             };
         }
