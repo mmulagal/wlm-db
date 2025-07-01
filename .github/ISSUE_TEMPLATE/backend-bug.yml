@@ -14,15 +14,6 @@ body:
 
         Thank you for taking the time to help us improve! Please fill out the details below as thoroughly as possible.
 
-  - type: input
-    id: contact
-    attributes:
-      label: "Contact Details"
-      description: "If we need more information, how can we reach you?"
-      placeholder: "e.g., email@netapp.com"
-    validations:
-      required: false
-
   - type: textarea
     id: summary
     attributes:
@@ -103,18 +94,9 @@ body:
       description: "Which environment did you encounter the bug in?"
       options:
         - "staging"
-        - "production"
-    validations:
-      required: true
-
-  - type: dropdown
-    id: is-demo
-    attributes:
-      label: "Is this a demo environment?"
-      description: "Did this bug occur in a demo environment?"
-      options:
-        - "true"
-        - "false"
+        - "prod"
+        - "staging-demo"
+        - "prod-demo"
     validations:
       required: true
 
