@@ -2214,7 +2214,7 @@ async function getDatabaseInstancesSummary(
                 };
             }
         }
-        // when there is no resource utilization data due to error cpu utilization is independetly added to response
+        // when there is no resource utilization data due to error cpu utilization is independently added to response
         if (getResourceutilization && resourceTrendsData?.[instanceName] && !instanceResourceUtilizationData) {
             databaseInstanceDetails.resourceUtilization = {
                 cpu: resourceTrendsData?.[instanceName]?.cpuUsed ?? []
