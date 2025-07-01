@@ -1,0 +1,15 @@
+name: Test DUAL ISSUE
+on:
+    pull_request:
+        types: [opened, synchronize, edited, reopened]
+    workflow_dispatch:
+jobs:
+    Check_Jira_Issue_id:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Test PR task id
+              uses: TLVeng/actions/.github/actions/check_dual@main
+              with:
+                  github_token: ${{ secrets.GH_TOKEN }}
+                  jira_token: ${{ secrets.JIRA_TOKEN }}
