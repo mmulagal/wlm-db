@@ -132,7 +132,7 @@ async function initiateLogsAnalysis(inputText: string) {
     logger.info('Step 1: Initializing client and preparing messages.');
     const client = new BedrockRuntimeClient({
         region: MODEL_REGION,
-        retryMode: 'adaptive',
+        retryMode: 'standard',
         maxAttempts: 6
     });
     const uniqueQueryMap = new Map();
