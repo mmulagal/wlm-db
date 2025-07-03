@@ -12,7 +12,8 @@ import {
     countResources,
     listDatabaseInstances,
     updateDatabaseInstance,
-    updateResource
+    updateResource,
+    listDatabaseInstancesPaginated
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -369,6 +370,16 @@ async function updateDatabaseHostConfigurations(
     return updateResource({ accountId, credentialsId, region, resourceId, updatedConfigs });
 }
 
+async function getPaginatedDatabaseInstances(
+    accountId?: string,
+    record?: ListDatabaseInstancesRecord,
+    pageSize: number = 50,
+    nextToken?: string
+) {
+    logger.info('Get paginated database instances', { accountId, record, pageSize, nextToken });
+    return listDatabaseInstancesPaginated(accountId, record, pageSize, nextToken);
+}
+
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -385,5 +396,6 @@ export {
     updateInstanceMetadata,
     updateDatabaseInstanceConfigurations,
     updateResourceMetaData,
-    updateDatabaseHostConfigurations
+    updateDatabaseHostConfigurations,
+    getPaginatedDatabaseInstances
 };

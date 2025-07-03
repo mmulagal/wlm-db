@@ -9,6 +9,11 @@ import { ResourceDetails } from '../../utils/common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
+interface PaginatedDatabaseInstancesResponse {
+    items: any[];
+    nextToken?: string;
+    totalCount: number;
+}
 
 async function listDeployments(
     accountId?: string,
@@ -786,6 +791,66 @@ async function deleteOlderDeployments(olderDate: number) {
     });
 }
 
+async function listDatabaseInstancesPaginated(
+    accountId?: string,
+    record?: ListDatabaseInstancesRecord,
+    pageSize: number = 50,
+    nextToken?: string // This will be the last seen id as a string
+): Promise<PaginatedDatabaseInstancesResponse> {
+    logger.info('List paginated database instances for given account and record', {
+        accountId,
+        record,
+        pageSize,
+        nextToken
+    });
+
+    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region, databaseType } = record ?? {};
+    accountId = accountId ? checkAccount(accountId) : '';
+
+    const whereClause = {
+        ...(accountId && { account_id: accountId }),
+        ...(credentialsId && { credentials_id: credentialsId }),
+        ...(resourceId && { resource_id: resourceId }),
+        ...(sqlInstanceId && { database_instance_id: sqlInstanceId }),
+        ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
+        ...(region && { region }),
+        ...(isDefault && { is_default: isDefault }),
+        ...(databaseType && { database_type: databaseType })
+    };
+
+    const queryOptions: any = {
+        where: whereClause,
+        orderBy: { id: 'asc' },
+        include: { resource: true },
+        take: pageSize,
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
+    };
+
+    const [databaseInstances, totalCount] = await Promise.all([
+        prisma.client.database_instances.findMany(queryOptions),
+        prisma.client.database_instances.count({ where: whereClause })
+    ]);
+
+    let items = databaseInstances;
+
+    if (!isEmpty(items) && isDemoFlow) {
+        const filteredResource = await listResources(accountId, undefined, credentialsId);
+        items = await getInstancesWithResourceForDemo(items, filteredResource);
+    }
+
+    // Set nextToken as the last item's id if there are more items
+    const newNextToken = items.length === pageSize ? String(items[items.length - 1].id) : undefined;
+
+    return {
+        items,
+        nextToken: newNextToken,
+        totalCount
+    };
+}
+
 export {
     listDeployments,
     createDeployment,
@@ -815,5 +880,6 @@ export {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    deleteOlderDeployments
+    deleteOlderDeployments,
+    listDatabaseInstancesPaginated
 };

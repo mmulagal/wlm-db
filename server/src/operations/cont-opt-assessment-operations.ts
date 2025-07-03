@@ -37,7 +37,7 @@ import {
 } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
-import { listResources } from '../lib/database/db';
+import { listDatabaseInstancesPaginated, listResources } from '../lib/database/db';
 import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import {
     CloneDriftResponseType,
@@ -129,6 +129,8 @@ interface InstanceAssessmentDetails {
 interface AccountAssessmentSummary {
     wellArchitectedCount: number;
     notOptimizedCount: number;
+    credentialsId?: string;
+    region?: string;
     instances: InstanceAssessmentDetails[];
 }
 
@@ -1915,114 +1917,116 @@ function hasNotOptimizedStatus(obj: any): boolean {
 async function processWellArchitectedAssessmentNotifications(initiatedBy: string) {
     logger.info('Processing well-architected assessment notifications', { initiatedBy });
 
+    // Accumulate only the summary per account
     // Hash map to store per-account assessment summary
     const accountAssessmentMap: Record<string, AccountAssessmentSummary> = {};
+    let nextToken: string | undefined;
+    const PAGE_SIZE = 50;
 
     try {
-        const allManagedInstances = (await listAllManagedInstances(undefined, {
-            databaseType: DatabaseTypes.MS_SQL_SERVER
-        })) as DatabaseInstancesIncludingResource[];
-        if (isEmpty(allManagedInstances)) {
-            logger.info('No successfully managed database instances found.');
-            return;
-        }
+        do {
+            // This await is intentional: we process each page sequentially to avoid high memory usage and ensure order.
+            // Using await in the loop is appropriate here because each page must be processed before fetching the next.
+            // eslint-disable-next-line no-await-in-loop
+            const { items: managedInstances, nextToken: newNextToken } = await listDatabaseInstancesPaginated(
+                undefined,
+                { databaseType: DatabaseTypes.MS_SQL_SERVER },
+                PAGE_SIZE,
+                nextToken
+            );
 
-        // Group managed instances by account_id
-        const managedInstancesGroupedByAccountId = allManagedInstances.reduce(
-            (acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
-                const key = `${managedInstance.account_id}`;
-                if (!acc[key]) {
-                    acc[key] = [];
-                }
-                acc[key].push(managedInstance);
-                return acc;
-            },
-            {}
-        );
-
-        // Process all accounts in parallel (with concurrency limit) only for the accounts that have active notification channels
-        await Promise.all(
-            Object.entries(managedInstancesGroupedByAccountId).map(
-                throat(3, async ([accountId, managedInstances]) => {
-                    try {
-                        const summary = await processAccountInstances(accountId, managedInstances);
-                        if (summary) {
-                            accountAssessmentMap[accountId] = summary;
-                        }
-                    } catch (err) {
-                        logger.error(`Skipping account ${accountId} due to error processing instances.`, err);
+            // Group managedInstances by account_id for this page
+            const managedInstancesGroupedByAccountId = managedInstances.reduce(
+                (acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
+                    const key = `${managedInstance.account_id}`;
+                    if (!acc[key]) {
+                        acc[key] = [];
                     }
-                })
-            )
-        );
+                    acc[key].push(managedInstance);
+                    return acc;
+                },
+                {}
+            );
 
-        // Send notifications after processing all instances
+            // Process each account in this page and accumulate summary
+            // This await is intentional: we process each page sequentially to avoid high memory usage and ensure order.
+            // Using await in the loop is appropriate here because each page must be processed before fetching the next.
+            // eslint-disable-next-line no-await-in-loop
+            await Promise.all(
+                Object.entries(managedInstancesGroupedByAccountId).map(
+                    throat(3, async ([accountId, instances]) => {
+                        // Build or update summary for this account
+                        const summary = accountAssessmentMap[accountId] || {
+                            wellArchitectedCount: 0,
+                            notOptimizedCount: 0,
+                            instances: []
+                        };
+
+                        await Promise.all(
+                            instances.map(
+                                throat(3, async managedInstance => {
+                                    try {
+                                        const {
+                                            credentials_id: credentialsId,
+                                            region,
+                                            resource_id: resourceId,
+                                            database_instance_id: databaseInstanceId,
+                                            metadata
+                                        } = managedInstance;
+
+                                        // Safe check for assessmentResults in metadata
+                                        let assessmentResults: any | undefined;
+                                        if (
+                                            metadata &&
+                                            typeof metadata === 'object' &&
+                                            !Array.isArray(metadata) &&
+                                            'assessmentResults' in metadata
+                                        ) {
+                                            assessmentResults = (metadata as { assessmentResults?: any })
+                                                .assessmentResults;
+                                        }
+                                        if (!assessmentResults) {
+                                            return;
+                                        }
+
+                                        const notOptimized = hasNotOptimizedStatus(assessmentResults);
+
+                                        summary.instances.push({
+                                            resourceId,
+                                            databaseInstanceId,
+                                            notOptimized
+                                            // details: assessmentResults // can have this later on for future references
+                                        });
+                                        summary.credentialsId = credentialsId;
+                                        summary.region = region;
+                                        if (notOptimized) {
+                                            summary.notOptimizedCount += 1;
+                                        } else {
+                                            summary.wellArchitectedCount += 1;
+                                        }
+                                    } catch (error) {
+                                        logger.error(
+                                            `Error processing managed instance ${managedInstance?.resource_id}:`,
+                                            error
+                                        );
+                                    }
+                                })
+                            )
+                        );
+
+                        accountAssessmentMap[accountId] = summary;
+                    })
+                )
+            );
+
+            nextToken = newNextToken;
+        } while (nextToken);
+
+        // After all pages processed, send notifications using the accumulated summary
         await buildAndSendNotifications(accountAssessmentMap);
     } catch (error) {
         logger.error('Error processing well-architected assessment notifications:', error);
     }
-}
-
-// Standalone function to process all managed instances for an account and return the summary
-async function processAccountInstances(
-    accountId: string,
-    managedInstances: DatabaseInstancesIncludingResource[]
-): Promise<AccountAssessmentSummary | undefined> {
-    if (isEmpty(managedInstances)) {
-        logger.info(`No managed instances found for account ${accountId}.`);
-        return undefined;
-    }
-
-    const summary: AccountAssessmentSummary = {
-        wellArchitectedCount: 0,
-        notOptimizedCount: 0,
-        instances: []
-    };
-
-    await Promise.all(
-        managedInstances.map(
-            throat(3, async managedInstance => {
-                try {
-                    const {
-                        resource_id: resourceId,
-                        database_instance_id: databaseInstanceId,
-                        metadata
-                    } = managedInstance;
-                    let assessmentResults: any | undefined;
-                    if (
-                        metadata &&
-                        typeof metadata === 'object' &&
-                        !Array.isArray(metadata) &&
-                        'assessmentResults' in metadata
-                    ) {
-                        assessmentResults = (metadata as { assessmentResults?: any }).assessmentResults;
-                    }
-                    if (!assessmentResults) {
-                        return;
-                    }
-
-                    const notOptimized = hasNotOptimizedStatus(assessmentResults);
-
-                    summary.instances.push({
-                        resourceId,
-                        databaseInstanceId,
-                        notOptimized
-                        // details: assessmentResults // can have this later on for future references
-                    });
-
-                    if (notOptimized) {
-                        summary.notOptimizedCount += 1;
-                    } else {
-                        summary.wellArchitectedCount += 1;
-                    }
-                } catch (error) {
-                    logger.error(`Error processing managed instance ${managedInstance?.resource_id}:`, error);
-                }
-            })
-        )
-    );
-
-    return summary;
 }
 
 // Helper to build notification data for all accounts and instances
