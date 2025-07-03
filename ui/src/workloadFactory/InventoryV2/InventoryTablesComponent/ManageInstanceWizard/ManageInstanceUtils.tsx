@@ -827,9 +827,7 @@ export const updateDetectBulkResponse = (
         let manageReadiness = null;
         if (authorized) {
             const detail = res.registerDetails?.find(
-                (d: any) =>
-                    (isSqlAuthRequired && d.resourceId === instance?.data?.databaseInstanceName) ||
-                    (isFsxRegisterRequired && d.resourceId === instance?.data?.fsxId)
+                (d: any) => isSqlAuthRequired && d.resourceId === instance?.data?.databaseInstanceName
             );
             manageReadiness = detail?.manageReadiness || null;
         }
