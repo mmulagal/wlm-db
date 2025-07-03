@@ -13,6 +13,7 @@ import { compact, isEmpty } from 'lodash-es';
 import { execa } from 'execa';
 import pLimit from 'p-limit';
 import {
+    BEDROCK_RETRY,
     DATABASE_TYPE,
     MSSQL_ERROR_LOGS_ANALYZER_PROMPT,
     PGSQL_ERROR_LOGS_ANALYZER_PROMPT,
@@ -132,8 +133,8 @@ async function initiateLogsAnalysis(inputText: string) {
     logger.info('Step 1: Initializing client and preparing messages.');
     const client = new BedrockRuntimeClient({
         region: MODEL_REGION,
-        retryMode: 'standard',
-        maxAttempts: 6
+        retryMode: BEDROCK_RETRY.MODE,
+        maxAttempts: BEDROCK_RETRY.MAX_ATTEMPTS // https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html Standard retry mode for Bedrock client, Supports circuit-breaking to prevent the SDK from retrying during outages.Uses jittered exponential backoff in the event of failures.
     });
     const uniqueQueryMap = new Map();
     const messages: MessageObj[] = [
@@ -208,7 +209,7 @@ async function initiateLogsAnalysis(inputText: string) {
                         input: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'input'),
                         output: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'output'),
                         total: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'total')
-                    },
+                    }
                 }
             }
         };
@@ -323,7 +324,8 @@ async function analyzeErrorLogs(
                     inferenceConfig
                 );
 
-                const { message, usage: { totalTokens: total = 0, outputTokens: output, inputTokens: input } = {} } = response;
+                const { message, usage: { totalTokens: total = 0, outputTokens: output, inputTokens: input } = {} } =
+                    response;
                 if (message.role === ConversationRole.ASSISTANT) {
                     const { content: [{ text }] = [] } = message;
                     if (text) {
@@ -415,9 +417,7 @@ async function checkAndExecuteAdditionalScript(
 
     const uniqueQueryMap = new Map();
     errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScriptAndDetails) => {
-        const {
-            sql = []
-        } = logWithScript;
+        const { sql = [] } = logWithScript;
         const queryKey = createHash('sha256')
             .update(sql.map((queryEntry: { query: string }) => queryEntry?.query).join('|'))
             .digest('hex');
@@ -436,20 +436,16 @@ async function checkAndExecuteAdditionalScript(
                         databaseType === DATABASE_TYPE.MSSQL
                             ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
                             : await runBashScript(getBashScript(sql));
-                    const errorAndCauseWithAdditionalInfo = value.map(
-                        (value: ErrorLogWithScriptAndDetails) => ({
-                            ...value,
-                            additionalInfo: response,
-                        })
-                    );
+                    const errorAndCauseWithAdditionalInfo = value.map((val: ErrorLogWithScriptAndDetails) => ({
+                        ...val,
+                        additionalInfo: response
+                    }));
                     result.push(...errorAndCauseWithAdditionalInfo);
                 } else {
-                    const errorAndCauseWithAdditionalInfo = value.map(
-                        (value: ErrorLogWithScriptAndDetails) => ({
-                            ...value,
-                            additionalInfo: 'No additional script executed.'
-                        })
-                    );
+                    const errorAndCauseWithAdditionalInfo = value.map((val: ErrorLogWithScriptAndDetails) => ({
+                        ...val,
+                        additionalInfo: 'No additional script executed.'
+                    }));
                     result.push(...errorAndCauseWithAdditionalInfo);
                 }
             })
@@ -503,7 +499,10 @@ async function recommendRemediation(
                     undefined,
                     inferenceConfig
                 );
-                const { message, usage: { totalTokens: total = 0, inputTokens: input = 0, outputTokens: output = 0 } = {} } = response;
+                const {
+                    message,
+                    usage: { totalTokens: total = 0, inputTokens: input = 0, outputTokens: output = 0 } = {}
+                } = response;
                 const { content: [{ text }] = [] } = message;
                 if (text) {
                     const { remediation } = JSON.parse(text);

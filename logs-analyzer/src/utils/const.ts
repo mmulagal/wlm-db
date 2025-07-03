@@ -288,6 +288,10 @@ enum DATABASE_TYPE {
 
 const MSSQL_SEVERITY_THRESHOLD = 14; // Severity threshold for MSSQL errors
 
+const BEDROCK_RETRY = {
+    MODE: 'standard', // Standard retry mode for Bedrock client
+    MAX_ATTEMPTS: 6 // Maximum retry attempts for Bedrock client
+};
 export {
     MSSQL_ERROR_LOGS_ANALYZER_PROMPT,
     REMIDIATION_RECOMMENDATION_PROMPT,
@@ -296,5 +300,6 @@ export {
     DATABASE_TYPE,
     PGSQL_ERROR_PATTERN,
     MSSQL_ERROR_PATTERN,
-    MSSQL_SEVERITY_THRESHOLD
+    MSSQL_SEVERITY_THRESHOLD,
+    BEDROCK_RETRY
 };
