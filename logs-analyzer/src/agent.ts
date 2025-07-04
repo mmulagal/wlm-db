@@ -25,13 +25,13 @@ import TOOLS from './utils/tools';
 import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from './utils/utils';
 import logger from './utils/logging';
 import {
-    ErrorLg,
     ToolUse,
     ToolSpec,
     MessageObj,
     ErrorLogWithAdditionalInfo,
     AgentArgs,
-    ErrorLogWithScriptAndDetails
+    ErrorLogWithScriptAndDetails,
+    ErrorLog
 } from './utils/interfaces';
 
 const LIMIT_3 = pLimit(3); // Limit concurrency to 3
@@ -108,6 +108,11 @@ interface RemediationRecommendation {
     firstOccurrence?: number;
     lastOccurrence?: number;
     errorCode?: string;
+    uniqueErrorKey?: string;
+    hourlyErrorCounts?: Array<{
+        hour: number;
+        count: number;
+    }>;
     tokenUsage?: {
         causeIdentification?: {
             input: number;
@@ -285,7 +290,7 @@ async function handleToolUse(
 async function analyzeErrorLogs(
     databaseType: string,
     client: BedrockRuntimeClient,
-    errorLogs: ErrorLg[],
+    errorLogs: ErrorLog[],
     inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
 ) {
     logger.info('Analyzing error logs.', { databaseType });
@@ -298,12 +303,12 @@ async function analyzeErrorLogs(
     await Promise.all(
         errorLogs.map(logChunk =>
             pLimit(5)(async () => {
-                const { firstOccurrence, lastOccurrence, errorCode, severity, errorContext, errorMessage, count } =
+                const { firstOccurrence, lastOccurrence, errorCode, severity, context, error, count, uniqueErrorKey, hourlyErrorCounts } =
                     logChunk;
 
                 const minimalErrorObject = {
-                    errorContext,
-                    errorMessage
+                    errorContext: context,
+                    errorMessage: error
                 };
 
                 const response = await streamMessages(
@@ -330,6 +335,8 @@ async function analyzeErrorLogs(
                             errorCode,
                             severity,
                             count,
+                            uniqueErrorKey,
+                            hourlyErrorCounts,
                             tokenUsageForCauseIdentification: {
                                 input,
                                 output,
@@ -373,10 +380,11 @@ function parseSuggestedScriptsWithTimestamp(
                         error,
                         cause,
                         count,
+                        context,
                         sql: { query }
                     } = JSON.parse(message);
                     const filteredQueries = query.filter((queryEntry: string) => queryEntry !== 'NA');
-                    return { error, cause, count, sql: filteredQueries, ...additionalDetails };
+                    return { error, context, cause, count, sql: filteredQueries, ...additionalDetails };
                 } catch (error) {
                     logger.error('Failed to parse JSON:', { message, error });
                     return undefined;
@@ -475,7 +483,9 @@ async function recommendRemediation(
                     additionalInfo,
                     severity,
                     count,
-                    tokenUsageForCauseIdentification: causeIdentification
+                    tokenUsageForCauseIdentification: causeIdentification,
+                    uniqueErrorKey,
+                    hourlyErrorCounts
                 } = errorWithInfo;
                 const minimalErrorObject = {
                     error,
@@ -510,6 +520,8 @@ async function recommendRemediation(
                         firstOccurrence,
                         lastOccurrence,
                         errorCode,
+                        uniqueErrorKey,
+                        hourlyErrorCounts,
                         tokenUsage: {
                             causeIdentification,
                             remediationRecommendation: {

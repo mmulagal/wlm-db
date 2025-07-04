@@ -166,11 +166,11 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLog
                 .sort(([a], [b]) => Number(a) - Number(b))
                 .map(([hour, count]) => ({ hour: Number(hour), count }));
 
-            const [{ context: errorContext, error: errorMessage, severity }] = logsForError;
+            const [{ context, error, severity }] = logsForError;
             return {
                 uniqueErrorKey: key,
-                errorContext,
-                errorMessage,
+                error,
+                context,
                 count: groupedLogs[key].length,
                 firstOccurrence: groupedLogs[key]?.[0]?.timestamp
                     ? new Date(groupedLogs[key][0].timestamp).getTime()
