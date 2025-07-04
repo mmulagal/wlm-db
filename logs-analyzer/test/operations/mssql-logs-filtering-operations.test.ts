@@ -20,5 +20,6 @@ describe('readMsSqlLogsFile', () => {
         const response = await getUniqueErrorAndRespectiveCount(logs, 100);
 
         expect(response.uniqueErrorLogs).toBeDefined();
+        expect(response.uniqueErrorLogs[0]?.hourlyErrorCounts?.length).toBeGreaterThanOrEqual(1);
     });
 });
