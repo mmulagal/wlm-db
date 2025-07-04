@@ -1,6 +1,6 @@
 import { format } from 'util';
 import { readFileSync } from 'fs';
-import log4js, { Configuration, Layout, PatternLayout } from 'log4js';
+import log4js, { Configuration, Layout, LoggingEvent, PatternLayout } from 'log4js';
 import config from 'config';
 import { isObject, isArray, isPlainObject, isEmpty, isString, isObjectLike } from 'lodash-es';
 import { context, trace } from '@opentelemetry/api';
@@ -66,14 +66,16 @@ function initialize() {
         if (appender.type === 'console' || appender.type === 'file') {
             if (isPatternLayout(appender.layout)) {
                 const { layout: patternLayout } = appender;
-                patternLayout.tokens = {
+
+                // Explicit tokens
+                const explicitTokens = {
                     requestId: () => {
                         const requestId = getAsyncLocalStorageResource<string>(REQUEST_ID);
                         return requestId || 'system';
                     },
                     accountId: () => getAsyncLocalStorageResource<string>(ACCOUNT_ID) || 'unknown',
                     traceId: () => getTraceData()?.traceId || 'unknown',
-                    message: loggingEvent =>
+                    message: (loggingEvent: LoggingEvent) =>
                         format(
                             ...loggingEvent.data.map(log => {
                                 try {
@@ -89,6 +91,28 @@ function initialize() {
                             })
                         )
                 };
+
+                // Proxy to generically mask any other token
+                patternLayout.tokens = new Proxy(explicitTokens, {
+                    get(target, prop: PropertyKey) {
+                        if (typeof prop === 'string' && prop in target) {
+                            return target[prop as keyof typeof target];
+                        }
+                        // For symbol keys, convert to string and mask its value
+                        if (typeof prop === 'symbol') {
+                            const symbolKey = prop.toString();
+                            return (loggingEvent: any) => {
+                                const value = loggingEvent?.context?.[symbolKey] || loggingEvent?.[symbolKey] || '';
+                                return hideSecretsValues(value);
+                            };
+                        }
+                        // For any other token, mask its value
+                        return (loggingEvent: any) => {
+                            const value = loggingEvent?.context?.[prop] || loggingEvent?.[prop] || '';
+                            return hideSecretsValues(value);
+                        };
+                    }
+                });
             }
         }
     });
