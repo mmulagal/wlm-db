@@ -94,7 +94,7 @@ describe('Logs Analyzer Operations', () => {
     });
 
     it('should list logs analysis reports', async () => {
-        const { jobId } = await triggerLogsAnalysis(
+        await triggerLogsAnalysis(
             ACCOUNT_ID,
             TEST_CREDENTIALS_ID,
             TEST_REGION,
