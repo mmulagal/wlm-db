@@ -240,13 +240,41 @@ EOF
 EOF
 }
 
+get_data_directories_without_creds() {
+        local ORACLE_SID="$1"
+        local ORACLE_HOME="$2"
+        sudo -i -u oracle bash <<'EOF'
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            spFilePath="$ORACLE_HOME/dbs/spfile$ORACLE_SID.ora"
+            controlFilesPath=$(strings "$spFilePath" | grep -i control_files | sed "s/.*=//;s/'//g" | tr ',' '\n' | sed '/^$/d')
+
+            # Get the first control file path from the list, not all control files need to be checked as control files are usually exact copies of each other for an instance.
+            controlFile=$(echo "$controlFilesPath" | head -n 1)
+
+
+            # Data files entries are in the form of 'file_name = /path/to/datafile.dbf', so we will grep for '.dbf' to find data file paths and get the unique directories.
+            uniqueDataFileDirectories=$(strings $controlFile | grep -i '\\.dbf' | xargs -n1 dirname | sort | uniq)
+            echo "$uniqueDataFileDirectories"
+EOF
+}
+
     get_non_asm_nfs_or_iscsi_storage_details() {
         
         local ORACLE_SID="$1"
         local isCDB="$2"
         local pdbName="$3"
+        local credsAvailable="$4"
+        local ORACLE_HOME="$5"
         
-        dataDirectories=$(get_data_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
+        if [ "$credsAvailable" == "true" ]; then
+            dataDirectories=$(get_data_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
+        else
+            dataDirectories=$(get_data_directories_without_creds "$ORACLE_SID" "$ORACLE_HOME")
+            if [ $? -ne 0 ]; then
+                dataDirectories=""    
+            fi
+        fi
 
         dataDirectoryMappings="["
         
@@ -326,7 +354,7 @@ const getInstanceStorageDetails = `
     else
         if [ "$is_cdb" == "YES" ]; then
             for pdb_name in $pdb_names; do
-                pdbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "$pdb_name")
+                pdbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "$pdb_name" "true" "$oracle_home")
                 if [ "$storageDetails" == "[" ]; then
                     storageDetails+="$pdbStorageDetails"
                 else
@@ -334,11 +362,16 @@ const getInstanceStorageDetails = `
                 fi
             done
         else
-            singleInstanceDbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "null")
+            singleInstanceDbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "null" "true" "$oracle_home")
             storageDetails+="$singleInstanceDbStorageDetails"
         fi
     fi
     storageDetails+="]"
+`;
+
+const getStorageWithoutCreds = `
+    # TODO: Handle ASM setups without credentials.
+    storageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "NO" "null" "false" "$oracle_home")
 `;
 
 const discoverOracleHosts = `
@@ -352,10 +385,10 @@ const discoverOracleHosts = `
     FIRST=1      # flag to determine the first object
 
     # Parse /etc/oratab, ignoring comment lines (#), lines starting with (+) and blank lines
-    SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
-
-    if [ -z "$SIDS" ]; then
-        echo "No SIDs found in /etc/oratab."
+    # SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
+    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
+    if [ -z "$oratab_entries" ]; then
+        echo "No entries found in /etc/oratab."
         exit 0
     fi
 
@@ -453,7 +486,7 @@ EOF
 
     ${loadStorageDetectionModules}
 
-    for sid in $SIDS; do
+    while IFS=: read -r sid oracle_home; do
         # Check if the instance is running by checking for its PMON process.
         # Skip if the instance process is not running.
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
@@ -482,9 +515,7 @@ EOF
             if [ "$isDefaultAuth" == "true" ]; then
                 ${getInstanceStorageDetails}
             else
-                # TBD: exploring few ways to get storage details for non-default auth without using sql creds.
-                # For now, setting storageDetails to empty array.
-                storageDetails="[]"
+                ${getStorageWithoutCreds}
             fi
         } || {
             echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
@@ -501,7 +532,7 @@ EOF
             RESULTS+=", $JSON_OBJ"
         fi
 
-    done
+    done <<< "$oratab_entries"
 
     RESULTS+="]"  # end of the JSON array
     echo $RESULTS
