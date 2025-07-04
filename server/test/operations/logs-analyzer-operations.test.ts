@@ -21,7 +21,7 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/cloud-watch-logs-scope';
-import { getJobDetails } from '../../src/operations/database/job-operations';
+import { sleep } from '../../src/utils/utils';
 
 const TEST_RESOURCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
@@ -102,13 +102,7 @@ describe('Logs Analyzer Operations', () => {
             'f4b7c5d3-e1f6-4g2a-9b5d'
         );
 
-        let jobStatus = 'IN_PROGRESS';
-        do {
-            ({ status: jobStatus } = await getJobDetails(ACCOUNT_ID, jobId));
-        } while (jobStatus === 'IN_PROGRESS');
-        {
-            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds before checking again
-        }
+        await sleep(3000); // Wait for the job to complete
 
         const reports = await getLogsAnalysisReport(
             ACCOUNT_ID,
