@@ -21,7 +21,7 @@ import { createDatabaseInstanceConfigData } from '../../lib/database/database-in
 
 const logger = getLogger();
 
-async function calculateMaxDOPDrift(
+function calculateMaxDOPDrift(
     accountId: string,
     credentialsId: string,
     region: string,

@@ -1119,7 +1119,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
     );
 }
 
-async function hostLevelDriftData(
+function hostLevelDriftData(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -1155,7 +1155,7 @@ async function hostLevelDriftData(
         hostOsPatchAssessmentResponse,
         rssConfigResponse,
         mssqlPatchAssessmentResponse
-    ] = await Promise.all([
+    ] = [
         shouldCalculateComputeAssessment
             ? calculateComputeDrift(
                   accountId,
@@ -1165,7 +1165,7 @@ async function hostLevelDriftData(
                   databaseInstanceId,
                   metadata as unknown as Metadata
               )
-            : Promise.resolve({}),
+            : {},
         shouldCalculateLicenseAssessment
             ? calculateLicenseDrift(
                   accountId,
@@ -1175,7 +1175,7 @@ async function hostLevelDriftData(
                   databaseInstanceId,
                   metadata as unknown as Metadata
               )
-            : Promise.resolve({}),
+            : {},
         shouldCalculateHostOsPatchAssessment
             ? calculateHostOsPatchDrift(
                   accountId,
@@ -1184,10 +1184,10 @@ async function hostLevelDriftData(
                   databaseHostId,
                   metadata as unknown as Metadata
               )
-            : Promise.resolve({}),
+            : {},
         shouldCalculateRssConfigAssessment
             ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId, metadata as unknown as Metadata)
-            : Promise.resolve({}),
+            : {},
         shouldCalculateMSSQLPatchAssessment
             ? calculateMSSQLPatchDrift(
                   accountId,
@@ -1196,8 +1196,8 @@ async function hostLevelDriftData(
                   databaseHostId,
                   metadata as unknown as Metadata
               )
-            : Promise.resolve({})
-    ]);
+            : {}
+    ];
 
     return {
         computeAssessmentResponse: computeAssessmentResponse as ComputeDriftResponseType,
@@ -1295,7 +1295,6 @@ async function fetchDriftAssessment(
     const cloneAssessmentData = assessmentDataMap[AssessmentCategories.CLONE];
 
     const [
-        storageAssessmentResponse,
         maxDOPResponse,
         cloneResponse,
         {
@@ -1304,19 +1303,8 @@ async function fetchDriftAssessment(
             hostOsPatchAssessmentResponse,
             rssConfigResponse,
             mssqlPatchAssessmentResponse
-        },
-        resilienceAssessmentResponse
-    ] = await Promise.all([
-        shouldCalculateStorageAssessment
-            ? calculateStorageDrift(
-                  accountId,
-                  credentialsId,
-                  region,
-                  databaseHostId,
-                  databaseInstanceId,
-                  storageAssessmentData as unknown as StorageAssessment
-              )
-            : Promise.resolve({} as StorageParameterDriftResponseType),
+        }
+    ] = [
         shouldCalculateMaxDOPAssessment
             ? calculateMaxDOPDrift(
                   accountId,
@@ -1326,7 +1314,7 @@ async function fetchDriftAssessment(
                   databaseInstanceId,
                   maxDOPAssessmentData as unknown as MaxDOPAssesment
               )
-            : Promise.resolve({}),
+            : {},
         shouldCalculateCloneAssessment
             ? calculateCloneDrift(
                   accountId,
@@ -1336,7 +1324,7 @@ async function fetchDriftAssessment(
                   databaseInstanceId,
                   cloneAssessmentData as unknown as CloneAssessment
               )
-            : Promise.resolve({} as CloneDriftResponseType),
+            : ({} as CloneDriftResponseType),
         shouldCalculateComputeAssessment ||
         shouldCalculateLicenseAssessment ||
         shouldCalculateHostOsPatchAssessment ||
@@ -1351,13 +1339,26 @@ async function fetchDriftAssessment(
                   resourceMetadata as unknown as Metadata,
                   fieldsValues
               )
-            : Promise.resolve({
+            : {
                   computeAssessmentResponse: {} as ComputeDriftResponseType,
                   licenseAssessmentResponse: {} as LicenseDriftResponseType,
                   hostOsPatchAssessmentResponse: {} as HostOsPatchDriftResponseType,
                   rssConfigResponse: {} as RssConfigDriftResponseType,
                   mssqlPatchAssessmentResponse: {} as MSSQLPatchDriftResponseType
-              }),
+              }
+    ];
+
+    const [storageAssessmentResponse, resilienceAssessmentResponse] = await Promise.all([
+        shouldCalculateStorageAssessment
+            ? calculateStorageDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  storageAssessmentData as unknown as StorageAssessment
+              )
+            : Promise.resolve({} as StorageParameterDriftResponseType),
         shouldCalculateResilienceAssessment
             ? getResilienceDriftAssessment(
                   accountId,
@@ -1370,7 +1371,6 @@ async function fetchDriftAssessment(
               )
             : Promise.resolve({})
     ]);
-
     if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
         if (isDemoFlow) {
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;

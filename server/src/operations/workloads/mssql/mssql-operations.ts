@@ -1158,19 +1158,23 @@ async function getDatabaseEnvironmentDetails(
         );
     }
 
-    const databaseInstanceInfo = await listDatabaseInstances(accountId, {
-        credentialsId,
-        resourceId,
-        sqlInstanceName: databaseInstanceName
-    });
+    const databaseInstanceInfo = await listDatabaseInstances(
+        accountId,
+        {
+            credentialsId,
+            resourceId,
+            sqlInstanceName: databaseInstanceName
+        },
+        false
+    );
 
     if (!isEmpty(databaseInstanceInfo)) {
         isManagedDatabaseInstance = true;
-        isDefaultInstance = databaseInstanceInfo[0].is_default;
+        [{ is_default: isDefaultInstance }] = databaseInstanceInfo;
 
         // Currently the DB environment is expected to be on a single FSxN/SVM
-        fsxId = databaseInstanceInfo[0].fsxn_ids;
-        const temp = databaseInstanceInfo[0].fsx_svm_id || '';
+        [{ fsxn_ids: fsxId }] = databaseInstanceInfo;
+        const [{ fsx_svm_id: temp } = {}] = databaseInstanceInfo || [];
         svmId = temp![fsxId as keyof typeof temp];
     }
 
@@ -1211,8 +1215,9 @@ async function checkDatabaseExists(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         if (sqlInstanceId) {
-            const { userDatabase } = ((await listDatabaseInstances(accountId, { sqlInstanceId, credentialsId }))[0]
-                ?.metadata || {
+            const { userDatabase } = ((
+                await listDatabaseInstances(accountId, { sqlInstanceId, credentialsId }, false)
+            )[0]?.metadata || {
                 userDatabase: undefined
             }) as { userDatabase: any[] };
             return userDatabase?.some(db => db.name === databaseName) ?? false;

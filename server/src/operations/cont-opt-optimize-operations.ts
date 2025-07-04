@@ -1133,7 +1133,8 @@ async function optimizeSizing(
         credentialsId,
         databaseHostId,
         databaseInstanceId,
-        AssessmentCategories.STORAGE
+        AssessmentCategories.STORAGE,
+        1
     );
     const {
         config_data: configData,
@@ -2807,7 +2808,8 @@ async function optimizeMaxDop(
             credentialsId,
             databaseHostId,
             databaseInstanceId,
-            AssessmentCategories.MAXDOP
+            AssessmentCategories.MAXDOP,
+            1
         );
 
         const {
