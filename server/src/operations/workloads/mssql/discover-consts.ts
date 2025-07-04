@@ -584,7 +584,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['availablePsModules'] = $availablePsModuleList
 
       if ($sqlService.State -eq "Running") {
-        
+          $deploymentTypeCheckQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered, (SELECT CASE WHEN EXISTS (SELECT 1 FROM sys.dm_hadr_availability_replica_states ars WHERE ars.is_local = 1) THEN 'True' ELSE 'False' END) AS isReadReplicaCreated FOR JSON PATH
           $editionDBCountMachineInfoGuid = $null
           $existingPermissions = $null
           $sqlInstanceDriveLetterOrPathList = $null
@@ -593,7 +593,7 @@ const HOST_AND_SQL_INFO_PS1 = [
             $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"  2> $null
             $responseObject['windowsAuthentication'] = $?
             $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
-            $deploymentTypeCheck = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH" 2> $null
+            $deploymentTypeCheck = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q $deploymentTypeCheckQuery 2> $null
             $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance 
           } catch {
             $responseObject['windowsAuthentication'] = $False
@@ -602,14 +602,14 @@ const HOST_AND_SQL_INFO_PS1 = [
               $sqlCredential = $credsFromParameterStore.domain.Where({$_.sqlInstanceName -eq $instanceName -or $_.sqlInstanceName -eq 'MSSQLSERVER'})[0]
               if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
                   $editionDBCountMachineInfoGuid = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" -instanceName $serverInstance -IsMultiQuery $True 2> $null
-                  $deploymentTypeCheck = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH" -instanceName $serverInstance 2> $null
+                  $deploymentTypeCheck = Invoke-CommandWithCredSSP -sqlquery $deploymentTypeCheckQuery -instanceName $serverInstance 2> $null
                   $existingPermissions = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -instanceName $serverInstance 2> $null
                   $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password 'domain'
               } else {
                 $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
                 if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
                     $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
-                    $deploymentTypeCheck = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH"  2> $null
+                    $deploymentTypeCheck = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q $deploymentTypeCheckQuery  2> $null
                     $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
                     $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
                     }
@@ -645,11 +645,18 @@ const HOST_AND_SQL_INFO_PS1 = [
             $responseObject['sqlServerName'] = (Get-WmiObject -Class Win32_ComputerSystem).Name
             
             if($deploymentTypeCheck) {
-             $isHadrEnabled = $deploymentTypeCheck | ConvertFrom-Json | ForEach-Object { $_.IsHadrEnabled }
-             $isClustered = $deploymentTypeCheck | ConvertFrom-Json | ForEach-Object { $_.IsClustered }
+             $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
+             $isHadrEnabled = $deploymentTypeCheckParsed.IsHadrEnabled
+             $isClustered = $deploymentTypeCheckParsed.IsClustered
+             $isReadReplicaCreated = $deploymentTypeCheckParsed.isReadReplicaCreated
              }     
-            if($isHadrEnabled -eq $True) {
-              $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
+            if($isHadrEnabled -eq $True ) {
+              if($isReadReplicaCreated -eq $True) {
+                $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
+              } else{
+               $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
+               $responseObject['sqlServerNodes'] = hostname
+              }
             }
             elseif($isClustered -eq $True) {
               $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
