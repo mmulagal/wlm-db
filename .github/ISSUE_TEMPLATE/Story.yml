@@ -32,7 +32,7 @@ body:
         - [ ] User can...
         - [ ] System responds with...
     validations:
-      required: true
+      required: false
 
   - type: dropdown
     id: priority
@@ -44,7 +44,7 @@ body:
         - "Medium"
         - "Low"
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: dependencies
