@@ -5,6 +5,7 @@ import {
     setFsxCredentialStatus,
     setManagedAssessmentHostIdsList,
     setSelectedHeaderTab,
+    setStartProtection,
     setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';

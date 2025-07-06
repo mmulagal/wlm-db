@@ -5,6 +5,7 @@ interface OptionType {
 }
 
 export interface InventorySliceData {
+    protectionStatus: any;
     landingFromWizard: boolean;
     selectedMultiDetectInstances: OptionType[];
     wizardOperationType: string;

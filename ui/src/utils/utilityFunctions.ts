@@ -153,6 +153,18 @@ export const getTruncatedItems = (items: any) => {
     };
 };
 
+export const bxpRedirect = (isWorkloadFactory: boolean) => {
+    if (isWorkloadFactory) {
+        window.open(
+            'https://staging.console.bluexp.netapp.com/unified-backup-restore',
+            '_blank',
+            'noopener,noreferrer'
+        );
+    } else if (window.top) {
+        window.top.location.href = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
+    }
+};
+
 export const getFilterOptions = (data: any[], propName: string, renderLabel?: (val: any) => any) =>
     !data
         ? []

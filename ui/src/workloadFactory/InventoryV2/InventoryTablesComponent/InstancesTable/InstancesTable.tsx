@@ -17,10 +17,11 @@ import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
-import { getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import { bxpRedirect, getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
     DETECT_HOST_VAR,
+    FROM_DIALOG,
     INVENTORY_STATUS,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
@@ -36,6 +37,7 @@ import {
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setSelectedMultiDetectInstances,
+    setStartProtection,
     setTableManageColumnState,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -70,6 +72,8 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
+import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
+import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -277,6 +281,50 @@ const InstancesTable = () => {
                 credentialId: targettedHost?.credentialId,
                 regionId: targettedHost?.regionId
             })
+        );
+    };
+
+    const handleProtection = (rowData: any) => {
+        //No connector case
+        // setDialog(
+        //     <DialogComponent
+        //         header={t('databases.inventory.protect-header')}
+        //         content={<NoAgentDialog />}
+        //         primaryButton={t('databases.inventory.redirect')}
+        //         secondaryButton={GENERAL.CANCEL}
+        //         closeCallback={() => {
+        //             closeDialog();
+        //         }}
+        //         callback={() => {
+        //             bxpRedirect(isWorkloadFactory);
+        //         }}
+        //         customClass={styles.protectionDialog}
+        //     />
+        // );
+
+        //Single Connector case
+        setDialog(
+            <DialogComponent
+                header={
+                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                            {t('databases.inventory.step-1-out-of')}
+                        </DsTypography>
+                    </div>
+                }
+                content={<SingleAgentDialog />}
+                primaryButton={t('databases.inventory.start')}
+                secondaryButton={t('databases.inventory.cancel')}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                callback={() => {
+                    dispatch(setStartProtection('started'));
+                }}
+                customClass={styles.protectionDialog}
+                dialogFrom={FROM_DIALOG.SINGLE_AGENT}
+            />
         );
     };
 
@@ -828,12 +876,6 @@ const InstancesTable = () => {
                 }
 
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
-                    if (localStorage.getItem('protection') === 'true') {
-                        menu.push({
-                            id: 'protect',
-                            displayName: 'Protect'
-                        });
-                    }
                     menu.push(
                         {
                             id: 'viewInstance',
@@ -847,7 +889,10 @@ const InstancesTable = () => {
                             disabled: disableOption,
                             infoText: disableMessage
                         },
-
+                        // {
+                        //     id: 'protect',
+                        //     displayName: 'Protect'
+                        // },
                         {
                             id: 'viewDatabases',
                             displayName: 'View databases',
@@ -979,18 +1024,9 @@ const InstancesTable = () => {
                                         setOpenedRow(null);
 
                                         // Protect POC code
-                                        if (menuId === 'protect') {
-                                            if (isWorkloadFactory) {
-                                                window.open(
-                                                    'https://staging.console.bluexp.netapp.com/unified-backup-restore',
-                                                    '_blank',
-                                                    'noopener,noreferrer'
-                                                );
-                                            } else if (window.top) {
-                                                window.top.location.href =
-                                                    'https://staging.console.bluexp.netapp.com/unified-backup-restore';
-                                            }
-                                        }
+                                        // if (menuId === 'protect') {
+                                        //     handleProtection(rowData);
+                                        // }
 
                                         if (menuId === 'optimize') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));

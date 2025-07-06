@@ -122,7 +122,8 @@ export const FROM_DIALOG = {
     DISMISS: 'dismiss',
     OPTIMIZE: 'optimize',
     FSXADMIN: 'fsxadmin',
-    SQLSERVER: 'sqlserver'
+    SQLSERVER: 'sqlserver',
+    SINGLE_AGENT: 'single_agent'
 };
 
 export const DBType = {
