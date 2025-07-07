@@ -37,13 +37,10 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
 
             logger.debug(`Processing chunk from file: ${filePath}`);
 
-            const contextLines = 15;
-
             processErrorLogLines(
                 lines,
                 timestampLastLogProcessed,
                 errorSet,
-                contextLines,
                 pendingEntries,
                 linesToIgnore,
                 errorLogs
@@ -56,10 +53,10 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
                     pendingEntries,
                     timestampLastLogProcessed,
                     errorSet,
-                    0,
                     pendingEntries,
                     linesToIgnore,
-                    errorLogs
+                    errorLogs,
+                    true
                 );
             }
             logger.debug(`Finished reading SQL logs from file: ${filePath}`);
@@ -77,11 +74,12 @@ function processErrorLogLines(
     lines: string[],
     timestampLastLogProcessed: number,
     errorSet: Set<unknown>,
-    contextLines: number,
     pendingEntries: string[],
     linesToIgnore: Set<unknown>,
-    errorLogs: MsSqlErrorLog[]
+    errorLogs: MsSqlErrorLog[],
+    isProcessingLastChunk: boolean = false
 ) {
+    const contextLines = 15; // Number of lines to consider as context for each error
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
         line = line.replace(/[^\x20-\x7E]/g, ''); // Remove non-printable characters
@@ -96,7 +94,7 @@ function processErrorLogLines(
                 const start = Math.max(0, i - contextLines);
                 const end = Math.min(lines.length, contextLimit);
 
-                if (contextLimit > lines.length) {
+                if (!isProcessingLastChunk && contextLimit > lines.length) {
                     // if the error is towards the end of the file, we need to store it in pendingEntries so that we can process with the next chunk
                     pendingEntries.push(line);
                 } else {
@@ -177,8 +175,8 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLog
                     : undefined,
                 lastOccurrence:
                     Array.isArray(groupedLogs[key]) &&
-                    groupedLogs[key].length > 0 &&
-                    groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
+                        groupedLogs[key].length > 0 &&
+                        groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
                         ? new Date(groupedLogs[key][groupedLogs[key].length - 1].timestamp).getTime()
                         : undefined,
                 severity,
