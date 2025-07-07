@@ -469,7 +469,7 @@ async function initiateStorageAssessmentCollection(
         instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
 
         const lunNames = !isEmpty(lunRecords)
-            ? lunRecords?.map(lun => lun.name).filter(Boolean)
+            ? lunRecords?.map(lun => lun.name)
             : Object.values(instanceVolumeMapping)
                   ?.map(i => i.lunNames)
                   .flat() || [];
