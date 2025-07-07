@@ -1,14 +1,5 @@
 import { ConversationRole } from '@aws-sdk/client-bedrock-runtime';
 
-interface ErrorLg {
-    errorContext: string;
-    errorMessage: string;
-    count: number;
-    severity: string;
-    firstOccurrence?: number;
-    lastOccurrence?: number;
-    errorCode?: string;
-}
 
 interface Content {
     text?: string;
@@ -66,12 +57,18 @@ interface MsSqlErrorLog {
 
 interface ErrorLog {
     error: string;
+    context: string;
     cause: string;
     count: number;
     severity?: string | number;
     firstOccurrence?: number;
     lastOccurrence?: number;
     errorCode?: string;
+    uniqueErrorKey?: string;
+    hourlyErrorCounts?: Array<{
+        hour: number;
+        count: number;
+    }>;
     tokenUsageForCauseIdentification?: {
         input: number;
         output: number;
@@ -107,7 +104,7 @@ interface AgentArgs {
 export {
     MessageObj,
     ToolUse,
-    ErrorLg,
+    ErrorLog,
     ToolSpec,
     MsSqlErrorLog,
     ErrorLogWithAdditionalInfo,
