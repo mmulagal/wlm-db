@@ -1,6 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import getLogger, { hideSecretsValues } from '../../src/utils/logger';
-import { initializeDatabase } from '../../src/utils/prisma-utils';
+import { hideSecretsValues } from '../../src/utils/logger';
 
 const stars = '*******';
 
