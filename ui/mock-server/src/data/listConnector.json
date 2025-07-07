@@ -1,0 +1,92 @@
+{
+    "occms": [
+        {
+            "primaryCallbackUri": "http://18.212.61.189",
+            "status": "active",
+            "manualOverrideUris": [],
+            "automaticCallbackUris": [
+                "http://18.212.61.189",
+                "http://staging.console.bluexp.netapp.com",
+                "http://staging.console.bluexp.netapp.com/occmui",
+                "https://staging.console.bluexp.netapp.com",
+                "https://staging.console.bluexp.netapp.com/occmui",
+                "http://cbs",
+                "http://cbs/occmui",
+                "https://cbs",
+                "https://cbs/occmui",
+                "http://18.212.61.189/occmui",
+                "https://18.212.61.189",
+                "https://18.212.61.189/occmui",
+                "http://192.168.1.58",
+                "http://192.168.1.58/occmui",
+                "https://192.168.1.58",
+                "https://192.168.1.58/occmui",
+                "http://localhost",
+                "http://localhost/occmui",
+                "http://localhost:1337",
+                "http://localhost:1337/occmui",
+                "https://localhost",
+                "https://localhost/occmui",
+                "https://localhost:1337",
+                "https://localhost:1337/occmui"
+            ],
+            "agent": {
+                "agentId": "45DcVqv1FGr0PWglSJD5lrwL5jnargGsclients",
+                "name": "SNAPCENTERFEB13",
+                "provider": "aws",
+                "region": "us-east-1",
+                "network": "vpc-05b3f09720766cca5",
+                "subnet": "subnet-0a7f765a165a7d065",
+                "creatorUserId": "auth0|5f520a004a7a8200670ea908",
+                "status": "inactive",
+                "useDockerInfra": true,
+                "systemId": "1b7c2eb0-62c8-483e-a001-d3a3c4193b8e",
+                "clientInfraStatus": {}
+            }
+        },
+        {
+            "primaryCallbackUri": "http://18.138.225.45",
+            "status": "active",
+            "manualOverrideUris": [],
+            "automaticCallbackUris": [
+                "http://18.138.225.45",
+                "http://staging.console.bluexp.netapp.com",
+                "http://staging.console.bluexp.netapp.com/occmui",
+                "https://staging.console.bluexp.netapp.com",
+                "https://staging.console.bluexp.netapp.com/occmui",
+                "http://cbs",
+                "http://cbs/occmui",
+                "https://cbs",
+                "https://cbs/occmui",
+                "http://18.138.225.45/occmui",
+                "https://18.138.225.45",
+                "https://18.138.225.45/occmui",
+                "http://172.31.48.102",
+                "http://172.31.48.102/occmui",
+                "https://172.31.48.102",
+                "https://172.31.48.102/occmui",
+                "http://localhost",
+                "http://localhost/occmui",
+                "http://localhost:1337",
+                "http://localhost:1337/occmui",
+                "https://localhost",
+                "https://localhost/occmui",
+                "https://localhost:1337",
+                "https://localhost:1337/occmui"
+            ],
+            "agent": {
+                "agentId": "Bj0B7lOps8GiMMwsb11LB8E6RzTY4qZ8clients",
+                "name": "WLMDB2",
+                "provider": "aws",
+                "region": "ap-southeast-1",
+                "network": "vpc-84b3afe6",
+                "subnet": "subnet-0ef4f90e95f375a84",
+                "creatorUserId": "auth0|5f520a004a7a8200670ea908",
+                "status": "inactive",
+                "useDockerInfra": true,
+                "systemId": "786448cf-18d3-4e9f-a5e2-06f2cc373771",
+                "clientInfraStatus": {}
+            }
+        }
+    ]
+}

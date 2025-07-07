@@ -18,6 +18,7 @@ app.use('', routers.chatbot);
 app.use('', routers.createUserDb);
 app.use('', routers.exploreSavings);
 app.use('', routers.inventory);
+app.use('', routers.snapcenter);
 app.use('', routers.getwell);
 
 const server = app.listen(process.env.PORT || 8061, () => {

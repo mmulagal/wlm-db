@@ -120,6 +120,9 @@ const DialogComponent = ({
         if (dialogFrom === FROM_DIALOG.SINGLE_AGENT && protectionStatus === 'started') {
             return true;
         }
+        if (dialogFrom === FROM_DIALOG.LOADER) {
+            return true;
+        }
         // Condition to disable Apply in FSX Admin and SQL Server password dialogs
         if (
             (dialogFrom === FROM_DIALOG.SQLSERVER &&

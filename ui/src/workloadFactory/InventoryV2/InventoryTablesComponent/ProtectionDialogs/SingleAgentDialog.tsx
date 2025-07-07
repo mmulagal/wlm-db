@@ -10,7 +10,7 @@ import {
     AccordionCardContent,
     AccordionController
 } from '../../../../common/AccordionCard/AccordionCard';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
@@ -18,16 +18,19 @@ import { setStartProtection } from '../../../../store/workloadFactory/inventoryV
 import { bxpRedirect } from '../../../../utils/utilityFunctions';
 import StepTwoDialog from './StepTwoDialog';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
+import { setSelectedAgent } from '../../../../store/workloadFactory/snapcenterSlice';
+import { SNAPCENTER_STATUS } from '../../../../utils/consts';
 
-const SingleAgentDialog = () => {
+const SingleAgentDialog = ({ agents }: any) => {
     const { t } = useTranslation();
     const [step1Status, setStep1Status] = useState<'idle' | 'running' | 'done'>('idle');
     const [step2Status, setStep2Status] = useState<'idle' | 'running' | 'done'>('idle');
     const { setDialog, closeDialog } = useDialog();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { selectedAgent } = useAppSelector(state => state.snapCenter);
     const dispatch = useDispatch();
 
-    const isMultiConnector = false;
+    const isMultiConnector = agents && agents.length > 1;
 
     const { protectionStatus } = useAppSelector(state => state.inventoryV2);
 
@@ -87,26 +90,32 @@ const SingleAgentDialog = () => {
         }
     }, [step2Status]);
 
-    const generateDropDownValues = [
-        {
-            id: '1',
-            label: 'Agent name 1, active, US East (N. Virginia), us-east-1',
-            value: 'Agent name 1'
-        },
-        {
-            id: '2',
-            label: 'Agent name 2, active, US East (N. Virginia), us-east-1',
-            value: 'Agent name 2'
-        },
-        {
-            id: '3',
-            label: 'Agent name 3, active, US East (N. Virginia), us-east-1',
-            value: 'Agent name 3'
+    // map to dropdown format
+    const generateDropDownValues = useMemo(() => {
+        return agents.map((item: { agent: any }, index: number) => {
+            const agent = item.agent;
+            return {
+                id: (index + 1).toString(),
+                label: `${agent.name}, ${agent.status}, ${agent.region}`,
+                value: agent.name
+            };
+        });
+    }, [agents]);
+
+    useEffect(() => {
+        if (generateDropDownValues && generateDropDownValues.length > 0) {
+            // If no agent is selected, set the first agent as selected
+            if (!selectedAgent || selectedAgent.length === 0) {
+                dispatch(setSelectedAgent([generateDropDownValues[0]]));
+            }
         }
-    ];
+    }, [agents, generateDropDownValues]);
 
     const labelForDropDown = () => {
-        return 'Agent name 1';
+        if (selectedAgent && selectedAgent.length > 0) {
+            return selectedAgent[0].value;
+        }
+        return '';
     };
     return (
         <div className={styles.protectionDialogsAgent}>
@@ -122,7 +131,7 @@ const SingleAgentDialog = () => {
                         options={generateDropDownValues}
                         selectionType="single"
                         onSelect={(option: any) => {
-                            // dispatch(setHeaderSelectedMultiCred(option));
+                            dispatch(setSelectedAgent(option));
                         }}
                         formatOptionLabel={(option: any) => {
                             const value = option.label.split(', ');
@@ -132,17 +141,30 @@ const SingleAgentDialog = () => {
                                         {value[0]}
                                     </DsTypography>
                                     <div className={styles.row}>
-                                        <DsTypography variant="Regular_14" className={styles.optionText}>
-                                            {value[1]}
-                                        </DsTypography>
+                                        <div className={styles.status}>
+                                            {value[1].toLowerCase() === SNAPCENTER_STATUS.ACTIVE && (
+                                                <div
+                                                    className={`${styles.statusIcon} ${styles.circle} ${styles.online}`}
+                                                />
+                                            )}
+                                            {value[1].toLowerCase() === SNAPCENTER_STATUS.INACTIVE && (
+                                                <div
+                                                    className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`}
+                                                />
+                                            )}
+                                            <DsTypography variant="Regular_14" className={styles.optionText}>
+                                                {value[1].charAt(0).toUpperCase() + value[1].slice(1).toLowerCase()}
+                                            </DsTypography>
+                                        </div>
+
                                         <SeparatorComponent variant="vertical" height="13px" />
                                         <DsTypography variant="Regular_14" className={styles.optionText}>
                                             {value[2]}
                                         </DsTypography>
-                                        <SeparatorComponent variant="vertical" height="13px" />
+                                        {/* <SeparatorComponent variant="vertical" height="13px" />
                                         <DsTypography variant="Regular_14" className={styles.optionText}>
                                             {value[3]}
-                                        </DsTypography>
+                                        </DsTypography> */}
                                     </div>
                                 </div>
                             );
