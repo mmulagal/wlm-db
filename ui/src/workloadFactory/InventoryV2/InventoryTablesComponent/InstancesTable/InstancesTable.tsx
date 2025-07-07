@@ -74,7 +74,7 @@ import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
-import LoadingDialogContent from '../ProtectionDialogs/loadingDialogContent';
+import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -290,7 +290,7 @@ const InstancesTable = () => {
         setDialog(
             <DialogComponent
                 header={t('databases.inventory.protect-header')}
-                content={<LoadingDialogContent />}
+                content={<FetchingDialog />}
                 primaryButton={t('databases.inventory.redirect')}
                 secondaryButton={GENERAL.CANCEL}
                 closeCallback={() => {
