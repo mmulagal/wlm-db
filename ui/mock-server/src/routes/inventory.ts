@@ -123,7 +123,7 @@ router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
 });
 
 router.post(
-    `${BASE_URL}/v2/mssql/manage`,
+    `${BASE_URL}/v1/mssql/register`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, { jobId: '1234' });

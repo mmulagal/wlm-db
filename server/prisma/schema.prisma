@@ -51,6 +51,7 @@ model event {
   @@unique([deployment_id, event_id], name: "uk_wlmdb_event_deployment_id_event_id", map: "uk_wlmdb_event_deployment_id_event_id")
   @@index([event_id], map: "k_wlmdb_event_event_id")
   @@index([deployment_id], map: "k_wlmdb_event_deployment_id")
+  @@index([time], map: "k_wlmdb_event_time")
 }
 
 model resource {
@@ -200,6 +201,7 @@ model onprem_tco_reports {
   @@unique([account_id, resource_id, creation_time], name: "uk_wlmdb_onprem_tco_reports", map: "uk_wlmdb_onprem_tco_reports")
   @@index([account_id], name: "k_wlmdb_onprem_tco_reports_account_id")
   @@index([resource_id], map: "k_wlmdb_onprem_tco_reports_resource_id")
+  @@index([creation_time], map: "k_wlmdb_onprem_tco_reports_creation_time")
 }
 
 model logs_analysis_reports {
@@ -215,11 +217,14 @@ model logs_analysis_reports {
   job                job?          @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_job_unique_criteria_logs_analysis_reports")
   creation_time        DateTime      @default(now())
   version              String        @db.VarChar(64)
+  start_time           DateTime?     @db.DateTime(3)
+  end_time             DateTime?     @db.DateTime(3)
 
   @@unique([account_id, resource_id, database_instance_id, job_id], name: "uk_wlmdb_logs_analysis_reports", map: "uk_wlmdb_logs_analysis_reports")
   @@unique([job_id], name: "uk_wlmdb_logs_analysis_reports_job_id", map: "uk_wlmdb_logs_analysis_reports_job_id")
   @@index([account_id], name: "k_wlmdb_logs_analysis_reports_account_id")
   @@index([resource_id], map: "k_wlmdb_logs_analysis_reports_resource_id")
+  @@index([creation_time], map: "k_wlmdb_logs_analysis_reports_creation_time")
 }
 
 enum JOBSTATUS {

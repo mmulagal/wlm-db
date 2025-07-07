@@ -252,45 +252,34 @@ describe('Database instance operations', () => {
         });
 
         // Create 3 database instances for pagination
-        const instanceIds = [
-            'db-inst-1',
-            'db-inst-2',
-            'db-inst-3'
-        ];
-        await Promise.all(instanceIds.map(id =>
-            upsertDatabaseInstance(ACCOUNT_ID, {
-                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                region: DEFAULT_AWS_REGION,
-                resourceId: resource.resource_id,
-                databaseInstanceId: id,
-                databaseInstanceName: `DB_${id}`,
-                isDefault: true,
-                source: 'deployment',
-                sqlDeploymentType: 'FCI',
-                fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
-                fsxnIds: 'fs-0f53fbecdd3d85fb2',
-                databaseType: ''
-            })
-        ));
+        const instanceIds = ['db-inst-1', 'db-inst-2', 'db-inst-3'];
+        await Promise.all(
+            instanceIds.map(id =>
+                upsertDatabaseInstance(ACCOUNT_ID, {
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
+                    resourceId: resource.resource_id,
+                    databaseInstanceId: id,
+                    databaseInstanceName: `DB_${id}`,
+                    isDefault: true,
+                    source: 'deployment',
+                    sqlDeploymentType: 'FCI',
+                    fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
+                    fsxnIds: 'fs-0f53fbecdd3d85fb2',
+                    databaseType: ''
+                })
+            )
+        );
 
         // Page 1
         const pageSize = 2;
-        const page1 = await listDatabaseInstancesPaginated(
-            ACCOUNT_ID,
-            { resourceId: resource.resource_id },
-            pageSize
-        );
+        const page1 = await listDatabaseInstancesPaginated(ACCOUNT_ID, { resourceId: resource.resource_id }, pageSize);
         expect(page1.items.length).toEqual(pageSize);
         expect(page1.totalCount).toEqual(3);
         expect(page1.nextToken).toBeDefined();
 
         // Cleanup
-        await deleteDatabaseInstance(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            resource.resource_id,
-            instanceIds
-        );
+        await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, resource.resource_id, instanceIds);
         await deleteResource(ACCOUNT_ID, resource.resource_id);
     });
 });

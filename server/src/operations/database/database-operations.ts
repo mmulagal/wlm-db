@@ -182,7 +182,7 @@ async function getDeploymentStatusByName(accountId: string, name: string): Promi
                 deployment_status: deploymentStatus,
                 deployment_status_reason: reason
             }
-        ] = await listDeployments(accountId, undefined, name);
+        ] = await listDeployments(accountId, undefined, name, undefined, undefined, 1);
         return {
             deploymentId,
             deploymentName,

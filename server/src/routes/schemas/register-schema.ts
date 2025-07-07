@@ -69,7 +69,7 @@ const ManageMsSqlSchemaV2 = {
     params: AccountIdParams,
     body: MultiInstanceManageMsSqlRequestBody,
     summary: '(Deprecated) Register SQL Server instances',
-    description: 'Deprecated. Use /v2/mssql/manage instead.',
+    description: 'Deprecated. Use /v1/mssql/register instead.',
     response: {
         200: MultiHostManageResponseBody
     }

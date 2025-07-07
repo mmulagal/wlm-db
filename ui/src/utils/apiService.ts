@@ -74,6 +74,11 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const { accountId } = auth;
     const isDevMode = import.meta.env.VITE_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
+
+    //Specifically case for bluexp external api calls
+    if (api.endpoint === 'getConnectors') {
+        return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_BXP_URL;
+    }
     return `${apiHost}/accounts/${accountId}/wlmdb`;
 };
 
@@ -546,6 +551,19 @@ export const createUserDbApi = createApi({
     })
 });
 
+export const snapcenterAPI = createApi({
+    reducerPath: 'snapcenterApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => ({
+        getConnectors: builder.mutation({
+            query: ({ accountID }) => ({
+                url: `agents-mgmt/list-connectors/${accountID}`
+            })
+        })
+    })
+});
+
 export const inventoryApi = createApi({
     reducerPath: 'inventoryApi',
     baseQuery: dynamicBaseQuery,
@@ -808,7 +826,7 @@ export const inventoryApiV2 = createApi({
         }),
         manageBulkV2MssqlInstance: builder.mutation({
             query: ({ payload }) => ({
-                url: 'v2/mssql/manage',
+                url: 'v1/mssql/register',
                 method: 'POST',
                 body: payload
             })
@@ -1210,6 +1228,8 @@ export const {
     useGetMssqlInstanceDataMutation,
     usePrepareHostMutation
 } = inventoryApi;
+
+export const { useGetConnectorsMutation } = snapcenterAPI;
 
 export const {
     useLazyGetDatabaseHostsFullDataV2Query,

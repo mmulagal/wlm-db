@@ -122,7 +122,9 @@ export const FROM_DIALOG = {
     DISMISS: 'dismiss',
     OPTIMIZE: 'optimize',
     FSXADMIN: 'fsxadmin',
-    SQLSERVER: 'sqlserver'
+    SQLSERVER: 'sqlserver',
+    SINGLE_AGENT: 'single_agent',
+    LOADER: ''
 };
 
 export const DBType = {
@@ -642,6 +644,11 @@ export const INVENTORY_STATUS = {
     RUNNING_LOWER: 'running',
     REGISTERED: 'Registered',
     NOT_REGISTERED: 'Not registered'
+};
+
+export const SNAPCENTER_STATUS = {
+    ACTIVE: 'active',
+    INACTIVE: 'inactive'
 };
 
 export const WELL_ARCHITECT_FINDINGS = {

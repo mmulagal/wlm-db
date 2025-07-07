@@ -559,7 +559,7 @@ async function getMappedOntapVolumes(
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
-                const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
+                const { volumeDBMap, volumes, luns } = parsedResponse?.[iName] ?? {};
                 const normalizedVolumeDBMap = Array.isArray(volumeDBMap)
                     ? volumeDBMap
                     : volumeDBMap
@@ -570,10 +570,10 @@ async function getMappedOntapVolumes(
                     instancesResponse[iName] = {
                         volumeRecords: volumes.records,
                         volumeDBMap: normalizedVolumeDBMap,
-                        lunNames
+                        lunRecords: luns
                     };
                 } else {
-                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunNames: [] };
+                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunRecords: [] };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);

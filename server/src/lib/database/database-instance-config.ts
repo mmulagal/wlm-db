@@ -31,7 +31,9 @@ async function listDatabaseInstanceConfigData(
     credentialsId?: string,
     resourceId?: string,
     databaseInstanceId?: string,
-    configDataType?: string
+    configDataType?: string,
+    pageSize?: number,
+    nextToken?: string
 ) {
     logger.info('Listing database instance config data', {
         accountId,
@@ -39,7 +41,9 @@ async function listDatabaseInstanceConfigData(
         credentialsId,
         resourceId,
         databaseInstanceId,
-        configDataType
+        configDataType,
+        pageSize,
+        nextToken
     });
     accountId = checkAccount(accountId!);
 
@@ -55,7 +59,12 @@ async function listDatabaseInstanceConfigData(
         include: {
             database_instances: true,
             resource: true
-        }
+        },
+        ...(pageSize && pageSize > 0 && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 
     return results.sort((a, b) => {

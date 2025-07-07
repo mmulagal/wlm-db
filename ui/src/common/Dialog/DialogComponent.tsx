@@ -1,10 +1,20 @@
-import { Button, DialogContent, DialogFooter, DialogHeader, DialogLayout, useDialog } from '@netapp/design-system';
+import {
+    Button,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogLayout,
+    TooltipInfo,
+    useDialog
+} from '@netapp/design-system';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../store/storeHooks';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 import { isValidSqlUsername } from '../../utils/utilityFunctions';
+import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
+import { DsTypography } from '@tlveng/wlm-ds';
 
 type DialogProps = {
     header: string | any;
@@ -45,7 +55,7 @@ const DialogComponent = ({
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
-    const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
+    const { selectedOptimizeConfig, protectionStatus } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const { password, confirmPassword } = useAppSelector(state => {
         if (dialogFrom === FROM_DIALOG.FSXADMIN) {
@@ -74,7 +84,8 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.SAVE_CONFIG &&
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
             dialogFrom !== FROM_DIALOG.FSXADMIN &&
-            dialogFrom !== FROM_DIALOG.SQLSERVER
+            dialogFrom !== FROM_DIALOG.SQLSERVER &&
+            dialogFrom !== FROM_DIALOG.SINGLE_AGENT
         ) {
             closeDialog();
         }
@@ -105,6 +116,13 @@ const DialogComponent = ({
         dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
+        //SC integration step 1 dialog
+        if (dialogFrom === FROM_DIALOG.SINGLE_AGENT && protectionStatus === 'started') {
+            return true;
+        }
+        if (dialogFrom === FROM_DIALOG.LOADER) {
+            return true;
+        }
         // Condition to disable Apply in FSX Admin and SQL Server password dialogs
         if (
             (dialogFrom === FROM_DIALOG.SQLSERVER &&
@@ -153,6 +171,9 @@ const DialogComponent = ({
         if (customClass?.includes('innerPage')) {
             return styles.innerPageClass;
         }
+        if (customClass?.includes('protectionDialog')) {
+            return styles.protectionDialog;
+        }
         return customClass;
     };
 
@@ -161,6 +182,20 @@ const DialogComponent = ({
             <DialogHeader>{header}</DialogHeader>
             <DialogContent>{content}</DialogContent>
             <DialogFooter>
+                {/* Error condition will come here */}
+                {false && (
+                    <div className={styles.errorMsg}>
+                        <ErrorIcon className={styles.errorIcon} />
+                        <DsTypography variant="Semibold_14">Error:</DsTypography>&nbsp;
+                        <DsTypography variant="Regular_14" className={styles.errorMsgText}>
+                            'Error text'
+                        </DsTypography>
+                        <div className={styles.dialogFooterDialog}>
+                            <TooltipInfo>Text</TooltipInfo>
+                        </div>
+                    </div>
+                )}
+
                 {!hidePrimaryButton && (
                     <Button
                         variant="primary"
