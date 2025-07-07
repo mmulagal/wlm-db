@@ -626,6 +626,12 @@ interface VolumeRecord {
     clone?: Clone;
     svm?: SVM;
 }
+
+interface LunRecord {
+    uuid: string;
+    name: string;
+    serial_number: string;
+}
 interface VolumeDBMapEntry {
     ontapVolumeuuid: string;
     databaseName: string;
@@ -634,7 +640,8 @@ interface VolumeDBMapEntry {
 interface MappedOnTapVolumeResponse {
     volumeRecords: VolumeRecord[];
     volumeDBMap: VolumeDBMapEntry[];
-    lunNames: string[];
+    lunRecords: LunRecord[];
+    lunNames?: string[]; // Optional, used in some contexts
 }
 interface InstancesResponse {
     [key: string]: MappedOnTapVolumeResponse;

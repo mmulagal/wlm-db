@@ -882,6 +882,7 @@ const getMappedOntapVolumesScript = (
 
                     [string[]]$LunNames = @()
                     $VolumeLunMapping = @{}
+                    $LunDetails = @()
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
                         $Params += @{
@@ -896,6 +897,11 @@ const getMappedOntapVolumesScript = (
 
                         foreach ($record in $LunRecords) {
                             $LunNames += $record.name
+                            $LunDetails += @{
+                                "uuid" = $record.uuid
+                                "name" = $record.name
+                                "serial_number" = $record.serial_number
+                            }
                             foreach ($volumeId in $VolumeSerialMapping.Keys) {
                                 if ($VolumeSerialMapping[$volumeId] -eq $record.serial_number) {
                                     $lunName = $record.name -replace '^\\/vol\\/(.*?)\\/.*$', '$1'
@@ -909,6 +915,7 @@ const getMappedOntapVolumesScript = (
                     return @{
                         LunNames = $LunNames
                         VolumeLunMapping = $VolumeLunMapping
+                        LunDetails = $LunDetails
                     }
                 }
 
@@ -1118,7 +1125,7 @@ const getMappedOntapVolumesScript = (
                 $responseObject = @{}
                 $responseObject.add('volumes', $processedRecords)
                 $responseObject.add('volumeDBMap', $volumeDBMap)
-                $responseObject.add('lunNames', $lunResult.LunNames)
+                $responseObject.add('luns', $lunResult.LunDetails)
                 $instanceRespones[$serverInstanceName] = $responseObject
             } catch {
                 Write-Information "An error occurred while processing the records: $_.Exception.Message"
