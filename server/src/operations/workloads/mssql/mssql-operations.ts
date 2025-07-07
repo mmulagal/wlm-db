@@ -990,16 +990,27 @@ async function getNativeSQLBackedupDatabases(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
 
+        let commands = [sqlQueryExecutionWithAuth(instanceNames, SQL_BACKUPS, isSqlAuthEnabled)];
+        if (isDemoFlow) {
+            commands = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SQL_BACKUPS, false)];
+        }
+
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [sqlQueryExecutionWithAuth(instanceNames, SQL_BACKUPS, isSqlAuthEnabled)],
+            commands,
             activeNodeInstanceId,
             'Get native SQL backedup databases'
         );
 
         const cleanedResponse = response?.replaceAll('\r\n', '');
-        const parsedResponse = attempt(JSON.parse, cleanedResponse);
+        let parsedResponse = attempt(JSON.parse, cleanedResponse);
+        if (isDemoFlow) {
+            parsedResponse = instanceNames.reduce((result: { [key: string]: any }, name) => {
+                result[name] = parsedResponse;
+                return result;
+            }, {});
+        }
 
         logger.debug('SQL native protection status', parsedResponse);
         return parsedResponse instanceof Error ? undefined : parsedResponse;

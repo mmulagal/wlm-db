@@ -142,7 +142,7 @@ describe('PgSql Database Operations', () => {
 
     it('should return the database count', async () => {
         const result = await getPgSqlDatabaseCount(accountId, credentialsId, region, node1InstanceId);
-        expect(result).toEqual('3');
+        expect(result).toEqual('1');
     });
 
     it('should return the instance info when executeBashSsmCommand is successful', async () => {

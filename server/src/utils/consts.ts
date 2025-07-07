@@ -1793,6 +1793,9 @@ const WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN: string = config.has
 const DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN: string = config.has('daily-drift-assessment-trigger')
     ? config.get('daily-drift-assessment-trigger')
     : '0 0 0 * * *'; // Default to every 12 midnight everyday not set in config
+
+const DEMO_BYOL_INSTANCE_ID = 'i-p9o5n2m4l8k6byol';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -2158,5 +2161,6 @@ export {
     NOTIFICATION_TYPE,
     WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN,
     DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN,
-    AWSDAC_MODULE_DIR
+    AWSDAC_MODULE_DIR,
+    DEMO_BYOL_INSTANCE_ID
 };
