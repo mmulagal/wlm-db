@@ -1,0 +1,54 @@
+name: Test Item
+description: Create a specific test item (test case/scenario) for a feature or requirement.
+title: "[Test Item]: "
+labels: ["Test Item"]
+assignees:
+  - shaswatinetapp
+projects: ["TLVeng/41"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✅ Test Item
+
+        Please provide details for this specific test case or scenario.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "Briefly describe what is being tested."
+      placeholder: "e.g., Verify user can log in with valid credentials."
+    validations:
+      required: true
+
+  - type: textarea
+    id: preconditions
+    attributes:
+      label: "Preconditions"
+      description: "What needs to be set up before executing this test?"
+      placeholder: "e.g., User account exists, user is logged out."
+    validations:
+      required: false
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Test Steps"
+      description: "List the steps to execute this test."
+      placeholder: |
+        1. Go to login page
+        2. Enter valid credentials
+        3. Click 'Login'
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected Result"
+      description: "What is the expected outcome?"
+      placeholder: "e.g., User is redirected to the dashboard."
+    validations:
+      required: false

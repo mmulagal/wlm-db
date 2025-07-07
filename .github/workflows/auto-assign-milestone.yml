@@ -1,0 +1,42 @@
+name: Auto Assign Milestone
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  assign-milestone:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign current milestone to new issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.WLMDB_PROJECT_TOKEN }}
+          script: |
+            // Get the issue number
+            const issue_number = context.payload.issue.number;
+
+            // Fetch open milestones, sorted by due date (soonest first)
+            const milestones = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              sort: 'due_on',
+              direction: 'asc'
+            });
+
+            // Pick the first milestone (soonest due date)
+            const currentMilestone = milestones.data.length > 0 ? milestones.data[0] : null;
+
+            if (currentMilestone) {
+              // Assign the milestone to the issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue_number,
+                milestone: currentMilestone.number
+              });
+              console.log(`Assigned milestone "${currentMilestone.title}" to issue #${issue_number}`);
+            } else {
+              console.log('No open milestones found.');
+            }
