@@ -12,11 +12,11 @@ import { prepareForManage } from '../operations/discover-operations';
 import getLogger from '../utils/logger';
 import castRequest from './utils';
 import {
-    manageSqlInstances,
+    registerSqlInstances,
     manageSqlServerV2,
     registerResourceCredentials,
     validateAndStoreDiscoveredParameters
-} from '../operations/manage-operations';
+} from '../operations/register-operations';
 import { SingleRegisterCredentialsResponseType } from './types/register.types';
 
 const logger = getLogger();
@@ -74,12 +74,12 @@ export default function registerRoutes(fastify: FastifyInstance) {
     );
 
     // Manage job based
-    server.post('/v2/mssql/manage', { schema: JobBasedManageSchema }, async request => {
+    server.post('/v1/mssql/register', { schema: JobBasedManageSchema }, async request => {
         const {
             params: { accountId },
             body: { items }
         } = castRequest(request);
-        const response = await manageSqlInstances(accountId, items);
+        const response = await registerSqlInstances(accountId, items);
         return response;
     });
 

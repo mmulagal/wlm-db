@@ -345,7 +345,7 @@ async function getEbsVolumeDetails(credentialsId: string, region: string, node1I
     return ebsVolumesFiltered;
 }
 
-async function manageSqlInstance(
+async function registerSqlInstance(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -771,7 +771,7 @@ async function manageSqlInstance(
     }
 }
 
-async function installAndManageSqlInstances(
+async function installAndRegisterSqlInstances(
     accountId: string,
     parentManageJobId: string,
     resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]
@@ -804,7 +804,7 @@ async function installAndManageSqlInstances(
                     description: jobName,
                     metadata: { ec2InstanceId, region, credentialsId, databaseInstanceNames }
                 });
-                await manageSqlInstance(
+                await registerSqlInstance(
                     accountId,
                     credentialsId,
                     region,
@@ -976,7 +976,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
 
                     if (count <= 0) {
                         precheckErrorList.push(
-                            'Only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed.'
+                            'Only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be registered.'
                         );
                     }
 
@@ -1210,7 +1210,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                     );
                     manageResponse.push({ resourceId, instances: itemsStatus, credentialsId, region, ec2InstanceId });
                 } catch (error: any) {
-                    const err = `Unable to manage instance '${item.ec2InstanceId}'. Reason: ${error.message}`;
+                    const err = `Unable to register instance '${item.ec2InstanceId}'. Reason: ${error.message}`;
                     manageResponse.push({
                         hostErrorMessage: err,
                         credentialsId: item.credentialsId,
@@ -1227,7 +1227,10 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
     return { hosts: manageResponse };
 }
 
-async function manageSqlInstances(accountId: string, resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]) {
+async function registerSqlInstances(
+    accountId: string,
+    resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]
+) {
     logger.info('Register sql instances', { accountId, resourcesToBeManagedLength: resourcesToBeManaged.length });
 
     if (!resourcesToBeManaged?.length) {
@@ -1243,7 +1246,7 @@ async function manageSqlInstances(accountId: string, resourcesToBeManaged: Multi
         description: jobName
     });
 
-    installAndManageSqlInstances(accountId, jobId, resourcesToBeManaged);
+    installAndRegisterSqlInstances(accountId, jobId, resourcesToBeManaged);
 
     return { jobId };
 }
@@ -2168,7 +2171,7 @@ async function verifyAndAddFSxOntapCredentials(
             } catch (error: any) {
                 throw createError(
                     HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Unable to manage the instance. Reason: FSx for ONTAP storage '${fsxNId}' isn't registered with FSxN core service.`
+                    `Unable to register the instance. Reason: FSx for ONTAP storage '${fsxNId}' isn't registered with FSxN core service.`
                 );
             }
 
@@ -2190,7 +2193,7 @@ async function verifyAndAddFSxOntapCredentials(
 }
 
 export {
-    manageSqlInstances,
+    registerSqlInstances,
     registerResourceCredentials,
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
