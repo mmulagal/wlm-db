@@ -448,78 +448,64 @@ async function getLogsAnalysisReport(
 
     const reports = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId);
 
-    const aggregatedErrorMap = new Map<string, any>();
-    aggregateErrorCountAcrossReports(reports, aggregatedErrorMap, accountId, jobId);
+    const aggregatedReport = aggregateErrorCountAcrossReports(reports, accountId, jobId);
 
-    const newReport = Array.from(aggregatedErrorMap.values());
-    if (newReport && newReport.length > 0) {
-        return { remediationRecommendation: newReport };
+    if (aggregatedReport && aggregatedReport.length > 0) {
+        return { remediationRecommendation: aggregatedReport };
     }
     const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
     logger.error(errorMessage);
     throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
 }
 
-function aggregateErrorCountAcrossReports(
-    reports: LogsAnalysisReports[],
-    aggregatedErrorMap: Map<string, any>,
-    accountId: string,
-    jobId?: string
-) {
+function aggregateErrorCountAcrossReports(reports: LogsAnalysisReports[], accountId: string, jobId?: string) {
     // this function aggregates only the error count across all logs analysis reports/ token usage is not aggregated, it is not needed as of the initial implementation
     logger.info('Aggregating data across logs analysis reports:', { accountId, jobId, reportsCount: reports.length });
 
-    reports.forEach(report => {
-        const { logs_analysis_data: logsAnalysisData } = report as unknown as {
-            logs_analysis_data: LogsAnalysisReportObjectType[];
-        };
+    const aggregatedErrorMap = new Map<string, any>();
 
-        // logs_analysis_data is an array of LogsAnalysisReportObjectType
-        if (Array.isArray(logsAnalysisData)) {
-            logsAnalysisData.forEach(analysisResult => {
-                if (analysisResult?.status === 'success' && analysisResult?.data) {
-                    const { remediationRecommendation = [] } = analysisResult.data;
+    const logsAnalysisReports = reports.flatMap(
+        report => (report?.logs_analysis_data as LogsAnalysisReportObjectType[]) || []
+    );
 
-                    remediationRecommendation.forEach((item: RemediationRecommendationObjectType) => {
-                        const messageKey = getOrGenerateMessageKey(item);
-                        const existingItem = aggregatedErrorMap.get(messageKey!);
-                        if (!existingItem) {
-                            aggregatedErrorMap.set(messageKey!, {
-                                ...item,
-                                count: item.count
-                            });
-                        } else {
-                            existingItem.count += item.count;
-                            // Update lastOccurence with a more recent timestamp if available
-                            if (item.lastOccurrence && item.lastOccurrence > existingItem.lastOccurrence) {
-                                existingItem.lastOccurrence = item.lastOccurrence;
-                            }
+    const allRecommendations = logsAnalysisReports.flatMap(analysisResult => {
+        if (analysisResult?.status === 'success' && analysisResult?.data) {
+            return analysisResult.data.remediationRecommendation || [];
+        }
+        logger.warn(`Skipping analysis result with status: ${analysisResult?.status}`, {
+            message: analysisResult?.message,
+            accountId,
+            jobId
+        });
+        return [];
+    });
 
-                            // Update firstOccurrence with an oldest occurence timestamp
-                            if (item.firstOccurrence && item.firstOccurrence < existingItem.firstOccurrence) {
-                                existingItem.firstOccurrence = item.firstOccurrence;
-                            }
-                        }
-                    });
-                } else {
-                    logger.warn(`Skipping analysis result with status: ${analysisResult.status}`, {
-                        message: analysisResult.message,
-                        accountId,
-                        jobId
-                    });
-                }
+    for (const item of allRecommendations) {
+        const messageKey = getOrGenerateMessageKey(item);
+
+        if (messageKey == null) {
+            logger.warn('Skipping item due to null or undefined messageKey', { item });
+            return;
+        }
+
+        const existingItem = aggregatedErrorMap.get(messageKey);
+        if (!existingItem) {
+            aggregatedErrorMap.set(messageKey, {
+                ...item,
+                count: item.count
             });
         } else {
-            logger.error(
-                'Logs analysis data is not available for the selected instance: logs_analysis_data is not an array:',
-                { logsAnalysisData, accountId, jobId }
-            );
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                'Logs analysis data is not available for the selected instance.'
-            );
+            existingItem.count += item.count;
+            if (item.lastOccurrence && item.lastOccurrence > existingItem.lastOccurrence) {
+                existingItem.lastOccurrence = item.lastOccurrence;
+            }
+            if (item.firstOccurrence && item.firstOccurrence < existingItem.firstOccurrence) {
+                existingItem.firstOccurrence = item.firstOccurrence;
+            }
         }
-    });
+    }
+
+    return Array.from(aggregatedErrorMap.values());
 }
 
 function getOrGenerateMessageKey(item: RemediationRecommendationObjectType): string | null {
