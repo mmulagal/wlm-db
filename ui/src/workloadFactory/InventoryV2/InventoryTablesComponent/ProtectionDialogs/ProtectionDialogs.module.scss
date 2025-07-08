@@ -1,0 +1,266 @@
+.protectionDialogs {
+    max-width: 712px;
+    .topSection {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .midSection {
+        max-width: 696px;
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        gap: 8px;
+        margin-top: 32px;
+    }
+
+    .bottomSection {
+        margin-top: 32px;
+        width: 712px;
+        height: 272px;
+        padding: 24px;
+        background-color: var(--hover-background);
+
+        .row {
+            display: flex;
+            flex-direction: column;
+
+            .item {
+                display: flex;
+                gap: 16px;
+
+                .extraSpace {
+                    width: 16px;
+                }
+            }
+        }
+    }
+}
+
+.protectionDialogsAgent {
+    max-width: 712px;
+
+    .multiAgent {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        margin-bottom: 48px;
+
+        .selectBox {
+            width: 384px;
+        }
+
+        .optionLabel {
+            display: flex;
+            flex-direction: column;
+
+            .row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .status {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+
+                .statusIcon {
+                    width: 10px;
+                    height: 10px;
+                    align-self: center;
+                    &.circle {
+                        border-radius: 50%;
+                        // margin-top: 2px;
+                    }
+                    &.online {
+                        background-color: var(--green-60);
+                    }
+                    &.offline {
+                        background-color: var(--red-30);
+                    }
+                    &.unknown {
+                        background-color: var(--grey-25);
+                    }
+                }
+            }
+        }
+    }
+    .topSection {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .row {
+                display: flex;
+                align-items: flex-start;
+                gap: 16px;
+
+                .text {
+                    width: 672px;
+                }
+            }
+        }
+    }
+
+    .heading {
+        margin-top: 48px;
+        margin-bottom: 16px;
+    }
+
+    .accordionSectionProtect {
+        .titleClass {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+
+            .circleClass {
+                width: 32px;
+                height: 32px;
+                border: 1px solid var(--text-title);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--text-title);
+                font-weight: 600;
+                font-size: 14px;
+                flex-shrink: 0;
+            }
+
+            .loader-container {
+                position: relative;
+                width: 40px;
+                height: 40px;
+
+                .spinner {
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+
+                    svg {
+                        width: 100%;
+                        height: 100%;
+                        display: block;
+                    }
+                }
+
+                .center-circle {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 24px;
+                    height: 24px;
+                    background: var(--text-title);
+                    color: var(--content-background);
+                    border-radius: 50%;
+                    transform: translate(-50%, -50%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+        }
+        .secondAccordion {
+            margin-top: 4px;
+
+            .buttonClass {
+                margin-top: 8px;
+            }
+        }
+        .titleMainContent {
+            font-weight: 400;
+            margin-left: 12px;
+        }
+        [class*='_base'] {
+            background-color: var(--hover-background) !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        [class*='_header'] {
+            grid-template-columns: max-content 1fr max-content max-content max-content !important;
+        }
+
+        [class*='_header']:hover {
+            button {
+                span {
+                    svg {
+                        path {
+                            fill: var(--text-title);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.stepTwo {
+    .topSection {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+
+        .circleClass {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--notification-information);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--notification-information);
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+    }
+
+    .bottomSection {
+        margin-top: 32px;
+        width: 712px;
+        height: 200px;
+        padding: 24px 40px;
+        background-color: var(--hover-background);
+
+        .row {
+            display: flex;
+            flex-direction: column;
+
+            .item {
+                display: flex;
+                gap: 16px;
+
+                .extraSpace {
+                    width: 16px;
+                }
+            }
+        }
+    }
+}
+
+.loadingDialog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 650px;
+    height: 350px;
+}

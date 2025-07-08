@@ -63,7 +63,8 @@ import {
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
     DEFAULT_INSTANCE_NAME,
     STANDALONE,
-    ORACLE_INSTANCE_STATE
+    ORACLE_INSTANCE_STATE,
+    DEMO_BYOL_INSTANCE_ID
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -857,6 +858,21 @@ async function fetchUnmanagedHostsInformationV2(
             )
         )
     );
+
+    if (isDemoFlow && instances.includes(DEMO_BYOL_INSTANCE_ID)) {
+        // In demo flow update the sql edition for specific instance
+        response = response.map(item => {
+            if (item?.databaseInstancesSummary) {
+                item.databaseInstancesSummary = item.databaseInstancesSummary.map(instance => {
+                    if (instance?.databaseServer) {
+                        instance.databaseServer.serverEdition = 'Enterprise Edition (64-bit)';
+                    }
+                    return instance;
+                });
+            }
+            return item;
+        });
+    }
 
     if (errorInstances.length > 0) {
         response = response.concat(errorInstances);

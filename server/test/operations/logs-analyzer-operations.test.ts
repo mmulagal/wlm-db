@@ -1,5 +1,6 @@
 import {
     calculateLogsAnalysisPrice,
+    getLogsAnalysisReport,
     handleLogsAnalysis,
     triggerLogsAnalysis
 } from '../../src/operations/logs-analyzer/logs-analyzer-operations';
@@ -20,6 +21,7 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/cloud-watch-logs-scope';
+import { sleep } from '../../src/utils/utils';
 
 const TEST_RESOURCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
@@ -55,7 +57,7 @@ describe('Logs Analyzer Operations', () => {
             sqlDeploymentType: 'FCI',
             fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
             fsxnIds: 'fs-0f53fbecdd3d85fb2',
-            databaseType: '' // Add the missing property 'databaseType'
+            databaseType: 'MSSQL'
         });
     });
 
@@ -89,6 +91,30 @@ describe('Logs Analyzer Operations', () => {
         const result =
             (await handleLogsAnalysis(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, managedInstance, jobId)) || [];
         expect((result?.[0] as any)?.status)?.toBeDefined();
+    });
+
+    it('should list logs analysis reports', async () => {
+        await triggerLogsAnalysis(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            TEST_RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d'
+        );
+
+        await sleep(3000); // Wait for the job to complete
+
+        const reports = await getLogsAnalysisReport(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            TEST_RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d'
+        );
+
+        expect(reports).toBeDefined();
+        expect(reports).toHaveProperty('remediationRecommendation');
+        expect(reports.remediationRecommendation.length).toBeGreaterThan(0);
     });
 
     it('Should calculate logs analysis cost', async () => {

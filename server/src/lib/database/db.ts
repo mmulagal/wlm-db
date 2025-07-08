@@ -203,8 +203,14 @@ async function createEvent(params: Event) {
     });
 }
 
-async function listEvents(accountId?: string, deploymentName?: string, eventName?: string) {
-    logger.info('Listing events for a deployment', { accountId, deploymentName });
+async function listEvents(
+    accountId?: string,
+    deploymentName?: string,
+    eventName?: string,
+    pageSize?: number,
+    nextToken?: string
+) {
+    logger.info('Listing events for a deployment', { accountId, deploymentName, eventName, pageSize });
 
     accountId = accountId ? checkAccount(accountId) : '';
     return prisma.client.event.findMany({
@@ -217,7 +223,12 @@ async function listEvents(accountId?: string, deploymentName?: string, eventName
             {
                 time: 'desc'
             }
-        ]
+        ],
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 }
 
@@ -387,7 +398,7 @@ async function deleteResource(accountId: string, resourceId: string, credentials
     });
 }
 
-async function listConfig(accountId: string, id?: string) {
+async function listConfig(accountId: string, id?: string, pageSize: number = 100, nextToken?: string) {
     logger.info('Listing config', accountId, id);
 
     accountId = checkAccount(accountId);
@@ -406,7 +417,11 @@ async function listConfig(accountId: string, id?: string) {
             modified_time: true,
             database_type: true
         },
-        take: 100
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 }
 
@@ -639,7 +654,11 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
     });
 }
 
-async function listDatabaseInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
+async function listDatabaseInstances(
+    accountId?: string,
+    record?: ListDatabaseInstancesRecord,
+    shouldIncludeResource: boolean = true
+) {
     logger.info('List database instances for given account and record', { accountId, record });
 
     const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region, databaseType } = record ?? {};
@@ -660,7 +679,7 @@ async function listDatabaseInstances(accountId?: string, record?: ListDatabaseIn
             id: 'asc'
         },
         include: {
-            resource: true
+            resource: shouldIncludeResource
         }
     });
 

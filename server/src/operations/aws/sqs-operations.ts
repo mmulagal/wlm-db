@@ -125,7 +125,13 @@ async function getMatchingMasterJob(accountId: string, credentialsId: string, re
         undefined,
         'start_time',
         'desc',
-        `${stackName};href:`
+        `${stackName};href:`,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        1
     );
     if (masterJob) {
         return masterJob;
@@ -134,7 +140,21 @@ async function getMatchingMasterJob(accountId: string, credentialsId: string, re
     if (matchingMasterJob) {
         let [, masterJobName] = matchingMasterJob;
         masterJobName += ';href:';
-        [masterJob] = await listJobs(accountId, credentialsId, region, undefined, 'start_time', 'desc', masterJobName);
+        [masterJob] = await listJobs(
+            accountId,
+            credentialsId,
+            region,
+            undefined,
+            'start_time',
+            'desc',
+            masterJobName,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            1
+        );
         return masterJob;
     }
     logger.info('No matching master job found for stack ', stackName);
@@ -325,7 +345,13 @@ async function createOrUpdateChildJobs(
         parentJob.id,
         undefined,
         undefined,
-        childJobName
+        childJobName,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        1
     );
     if (!childJob && parentJob.name !== `Deploying ${logicalResourceId}`) {
         logger.info('Create child level job:', {
@@ -534,7 +560,13 @@ async function processCloudFormationMessages() {
                                                         undefined,
                                                         undefined,
                                                         undefined,
-                                                        masterJobName
+                                                        masterJobName,
+                                                        undefined,
+                                                        undefined,
+                                                        undefined,
+                                                        undefined,
+                                                        undefined,
+                                                        1
                                                     );
 
                                                     logger.info(
@@ -811,9 +843,7 @@ async function processCloudFormationMessages() {
                                                             accountId,
                                                             credentialsId,
                                                             region,
-                                                            masterJob.id,
-                                                            undefined,
-                                                            undefined
+                                                            masterJob.id
                                                         );
 
                                                         // Seen an instance where none of the subjobs were triggered due to perm issue.
@@ -1037,14 +1067,7 @@ async function processCloudFormationMessages() {
                                             }
 
                                             const subJobs =
-                                                (await listJobs(
-                                                    accountId,
-                                                    credentialsId,
-                                                    region,
-                                                    masterJob.id,
-                                                    undefined,
-                                                    undefined
-                                                )) || [];
+                                                (await listJobs(accountId, credentialsId, region, masterJob.id)) || [];
                                             const subJobStatus = subJobs.map(subJob => subJob.status);
                                             masterJobStatus = subJobStatus.includes(JOBSTATUS.IN_PROGRESS)
                                                 ? JOBSTATUS.IN_PROGRESS
@@ -1136,7 +1159,13 @@ async function processCloudFormationMessages() {
                                         masterJob?.id,
                                         undefined,
                                         undefined,
-                                        level2JobName
+                                        level2JobName,
+                                        undefined,
+                                        undefined,
+                                        undefined,
+                                        undefined,
+                                        undefined,
+                                        1
                                     );
                                     const level3JobName = `Deploying ${logicalResourceId}(${resourceType})`;
                                     if (!level2Job) {

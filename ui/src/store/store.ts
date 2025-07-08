@@ -15,7 +15,8 @@ import {
     exploreSavingsApi,
     inventoryApiV2,
     workloadFactoryResourceApiV2,
-    getWellApi
+    getWellApi,
+    snapcenterAPI
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -41,6 +42,7 @@ import sandboxSlice from './workloadFactory/sandboxSlice';
 import exploreSavingsSlice from './workloadFactory/exploreSavingsSlice';
 import createSandboxSlice from './workloadFactory/createSandboxSlice';
 import getWellOptimizeSlice from './workloadFactory/getWellOptimizeSlice';
+import snapCenterSlice from './workloadFactory/snapcenterSlice';
 // import postgressSlice from './mssql/postgressSlice';
 
 const rootReducer = combineReducers({
@@ -69,8 +71,10 @@ const rootReducer = combineReducers({
     [policiesApi.reducerPath]: policiesApi.reducer,
     [createUserDbApi.reducerPath]: createUserDbApi.reducer,
     [inventoryApi.reducerPath]: inventoryApi.reducer,
+    [snapcenterAPI.reducerPath]: snapcenterAPI.reducer,
     [inventoryApiV2.reducerPath]: inventoryApiV2.reducer,
     [sandboxSlice.reducerPath]: sandboxSlice.reducer,
+    [snapCenterSlice.reducerPath]: snapCenterSlice.reducer,
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
     [createSandboxSlice.reducerPath]: createSandboxSlice.reducer,
@@ -147,6 +151,7 @@ const store = configureStore({
             .concat(policiesApi.middleware)
             .concat(createUserDbApi.middleware)
             .concat(inventoryApi.middleware)
+            .concat(snapcenterAPI.middleware)
             .concat(inventoryApiV2.middleware)
             .concat(sandboxApi.middleware)
             .concat(exploreSavingsApi.middleware)

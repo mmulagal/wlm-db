@@ -40,7 +40,7 @@ interface Sandbox {
     sandbox_properties: { name: string; value: string }[];
 }
 
-async function calculateCloneDrift(
+function calculateCloneDrift(
     accountId: string,
     credentialsId: string,
     region: string,

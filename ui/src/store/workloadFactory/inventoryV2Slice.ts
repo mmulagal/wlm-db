@@ -103,13 +103,17 @@ const initialInventoryV2State: InventorySliceData = {
     wizardOperationType: '',
     selectedMultiDetectInstances: [],
     bulkDetectedInstanceList: [],
-    landingFromWizard: false
+    landingFromWizard: false,
+    protectionStatus: 'not started'
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setStartProtection: (state, action: PayloadAction<string>) => {
+            state.protectionStatus = action.payload;
+        },
         setLandingFromWizard: (state, action: PayloadAction<any>) => {
             state.landingFromWizard = action.payload;
         },
@@ -382,6 +386,7 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setStartProtection,
     setLandingFromWizard,
     setSelectedMultiDetectInstances,
     setWizardOperationType,

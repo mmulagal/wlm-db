@@ -37,59 +37,28 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
 
             logger.debug(`Processing chunk from file: ${filePath}`);
 
-            const contextLines = 15;
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i];
-                line = line.replace(/[^\x20-\x7E]/g, ''); // Remove non-printable characters
-                const match = MSSQL_ERROR_PATTERN.exec(line);
-
-                if (timestampLastLogProcessed && match?.groups) {
-                    const [, errorLogTimestamp] = match;
-                    const logTimestamp = new Date(errorLogTimestamp).getTime();
-                    if (logTimestamp >= timestampLastLogProcessed && !errorSet.has(line)) {
-                        const { timestamp, spid, errorCode, severity, state } = match.groups;
-                        const contextLimit = i + contextLines;
-                        const start = Math.max(0, i - contextLines);
-                        const end = Math.min(lines.length, contextLimit);
-
-                        if (contextLimit > lines.length) {
-                            // if the error is towards the end of the file, we need to store it in pendingEntries so that we can process with the next chunk
-                            pendingEntries.push(line);
-                        } else {
-                            const contextData = lines
-                                .slice(start, end)
-                                .map(currLine => currLine.replace(/[^\x20-\x7E]/g, ''))
-                                .filter(currentLine => currentLine.startsWith(timestamp) && currentLine.includes(spid));
-                            if (
-                                (severity && Number(severity) >= MSSQL_SEVERITY_THRESHOLD) ||
-                                (isEmpty(severity) && !linesToIgnore.has(line))
-                            ) {
-                                const context = contextData.join('\n');
-                                // unshift to push error to the beginning of the array so that the latest error logs are at the top
-                                errorLogs.unshift({
-                                    timestamp,
-                                    spid,
-                                    errorCode,
-                                    severity,
-                                    state,
-                                    context,
-                                    error: line
-                                });
-                                contextData.forEach(item => errorSet.add(item));
-                            } else {
-                                // remove associated lines with timestamp and spid as that of the error with severity less than the threshold
-                                contextData.forEach(item => linesToIgnore.add(item));
-                            }
-                        }
-                    }
-                }
-            }
-            // order logs by timestamp
-            errorLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            processErrorLogLines(
+                lines,
+                timestampLastLogProcessed,
+                errorSet,
+                pendingEntries,
+                linesToIgnore,
+                errorLogs
+            );
         });
 
         stream.on('end', () => {
+            if (pendingEntries.length > 0) {
+                processErrorLogLines(
+                    pendingEntries,
+                    timestampLastLogProcessed,
+                    errorSet,
+                    pendingEntries,
+                    linesToIgnore,
+                    errorLogs,
+                    true
+                );
+            }
             logger.debug(`Finished reading SQL logs from file: ${filePath}`);
             resolve(errorLogs);
         });
@@ -99,6 +68,66 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
             reject(err);
         });
     });
+}
+
+function processErrorLogLines(
+    lines: string[],
+    timestampLastLogProcessed: number,
+    errorSet: Set<unknown>,
+    pendingEntries: string[],
+    linesToIgnore: Set<unknown>,
+    errorLogs: MsSqlErrorLog[],
+    isProcessingLastChunk: boolean = false
+) {
+    const contextLines = 15; // Number of lines to consider as context for each error
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        line = line.replace(/[^\x20-\x7E]/g, ''); // Remove non-printable characters
+        const match = MSSQL_ERROR_PATTERN.exec(line);
+
+        if (timestampLastLogProcessed && match?.groups) {
+            const [, errorLogTimestamp] = match;
+            const logTimestamp = new Date(errorLogTimestamp).getTime();
+            if (logTimestamp >= timestampLastLogProcessed && !errorSet.has(line)) {
+                const { timestamp, spid, errorCode, severity, state } = match.groups;
+                const contextLimit = i + contextLines;
+                const start = Math.max(0, i - contextLines);
+                const end = Math.min(lines.length, contextLimit);
+
+                if (!isProcessingLastChunk && contextLimit > lines.length) {
+                    // if the error is towards the end of the file, we need to store it in pendingEntries so that we can process with the next chunk
+                    pendingEntries.push(line);
+                } else {
+                    const contextData = lines
+                        .slice(start, end)
+                        .map(currLine => currLine.replace(/[^\x20-\x7E]/g, ''))
+                        .filter(currentLine => currentLine.startsWith(timestamp) && currentLine.includes(spid));
+                    if (
+                        (severity && Number(severity) >= MSSQL_SEVERITY_THRESHOLD) ||
+                        (isEmpty(severity) && !linesToIgnore.has(line))
+                    ) {
+                        const context = contextData.join('\n');
+                        // unshift to push error to the beginning of the array so that the latest error logs are at the top
+                        errorLogs.unshift({
+                            timestamp,
+                            spid,
+                            errorCode,
+                            severity,
+                            state,
+                            context,
+                            error: line
+                        });
+                        contextData.forEach(item => errorSet.add(item));
+                    } else {
+                        // remove associated lines with timestamp and spid as that of the error with severity less than the threshold
+                        contextData.forEach(item => linesToIgnore.add(item));
+                    }
+                }
+            }
+        }
+    }
+    // order logs by timestamp
+    errorLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
 async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLogsCountToConsider: number) {
@@ -119,10 +148,27 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLog
     const uniqueErrorLogs = Object.keys(groupedLogs)
         .slice(0, uniqueLogsCountToConsider)
         .map(key => {
-            const [{ context: errorContext, error: errorMessage, severity }] = groupedLogs[key];
+            const logsForError = groupedLogs[key];
+            const logsByHour: { [hour: string]: number } = {};
+            logsForError.forEach(log => {
+                if (log.timestamp) {
+                    const date = new Date(log.timestamp);
+                    // Set to start of the hour
+                    date.setMinutes(0, 0, 0);
+                    const hourKey = date.getTime(); // Milliseconds since epoch at the start of the hour
+                    logsByHour[hourKey] = (logsByHour[hourKey] || 0) + 1;
+                }
+            });
+
+            const hourlyErrorCounts = Object.entries(logsByHour)
+                .sort(([a], [b]) => Number(a) - Number(b))
+                .map(([hour, count]) => ({ hour: Number(hour), count }));
+
+            const [{ context, error, severity }] = logsForError;
             return {
-                errorContext,
-                errorMessage,
+                uniqueErrorKey: key,
+                error,
+                context,
                 count: groupedLogs[key].length,
                 firstOccurrence: groupedLogs[key]?.[0]?.timestamp
                     ? new Date(groupedLogs[key][0].timestamp).getTime()
@@ -134,6 +180,7 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLog
                         ? new Date(groupedLogs[key][groupedLogs[key].length - 1].timestamp).getTime()
                         : undefined,
                 severity,
+                hourlyErrorCounts,
                 errorCode: !key.includes('-dummy') ? key : undefined // If the key contains '-dummy', it means it's a generated error code for internal grouping above, so we can set it to undefined
             };
         });

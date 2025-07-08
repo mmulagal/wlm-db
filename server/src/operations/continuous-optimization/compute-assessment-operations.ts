@@ -94,7 +94,7 @@ async function runComputeAssessment(
     }
 }
 
-async function calculateComputeDrift(
+function calculateComputeDrift(
     accountId: string,
     credentialsId: string,
     region: string,

@@ -579,7 +579,8 @@ async function fetchInstanceConfigurationAndVolumeMapping(
         credentialsId,
         databaseHostId,
         instanceId,
-        AssessmentCategories.CLONE
+        AssessmentCategories.CLONE,
+        1
     );
 
     const {
@@ -666,7 +667,16 @@ async function validateAndFilterDatabaseHosts<T extends { credentialsId: string;
 async function validateRequestDetails(accountId: string, credentialsId: string, region: string) {
     logger.info(`Validating request details: ${accountId}, ${credentialsId}, ${region}`);
 
-    const [resourceDetail] = await listResources(accountId, undefined, credentialsId, region);
+    const [resourceDetail] = await listResources(
+        accountId,
+        undefined,
+        credentialsId,
+        region,
+        undefined,
+        undefined,
+        undefined,
+        1
+    );
 
     if (isEmpty(resourceDetail)) {
         return false;

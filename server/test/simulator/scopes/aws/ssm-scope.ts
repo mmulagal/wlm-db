@@ -60,7 +60,8 @@ import {
     NATIVE_SQL_BACKUPS,
     DATABASES,
     GET_SANDBOXES,
-    SERVER_VERSION_EDITION_DETAILS
+    SERVER_VERSION_EDITION_DETAILS,
+    SQL_BACKUPS
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
     createVolumeClone,
@@ -233,9 +234,7 @@ const nativeSqlBackupParams = {
 };
 
 const nativeSqlBackupDatabasesParams = {
-    commands: [
-        'sqlcmd -Q "SET NOCOUNT ON; SELECT\n    DISTINCT backupset.database_name as backedupDatabases\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\' FOR JSON PATH\n" -y 0'
-    ]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SQL_BACKUPS, false)]
 };
 
 const getOntapSnapshotCountParams = {

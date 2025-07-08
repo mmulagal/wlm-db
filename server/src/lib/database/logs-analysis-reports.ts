@@ -15,6 +15,8 @@ interface LogsAnalysisReportObject {
     logs_analysis_data?: object;
     version: string;
     creation_time?: Date;
+    start_time?: Date;
+    end_time?: Date;
 }
 
 async function createLogsAnalysisReports(records: LogsAnalysisReportObject[]) {
@@ -64,7 +66,9 @@ async function listLogsAnalysisReports(
     databaseInstanceId: string,
     jobId?: string,
     sort: string = 'creation_time',
-    sortOrder: string = 'desc'
+    sortOrder: string = 'desc',
+    pageSize?: number,
+    nextToken?: string
 ) {
     logger.info('Listing logs analysis reports', {
         accountId,
@@ -86,7 +90,12 @@ async function listLogsAnalysisReports(
             {
                 [sort]: `${sortOrder}`
             }
-        ]
+        ],
+        ...(pageSize && pageSize > 0 && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 }
 
