@@ -11,16 +11,38 @@ import StorageSavingResource from '../../../ResourcePage/StorageSavingResource/S
 import { useAppSelector } from '../../../../store/storeHooks';
 import { getAggrStorageSavings } from '../../../../utils/utilityFunctions';
 import DatabaseHostOverviewApiV2 from '../../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
+import ResourceMSSQLPartialContainer from './ResourceMSSQLPartailContainer/ResourceMSSQLPartailContainer';
+
+const isPartialData = (resourceDetails: any) => {
+    const rwMetrics = resourceDetails?.performance?.rwMetrics;
+    return [
+        rwMetrics?.iops?.read,
+        rwMetrics?.iops?.write,
+        rwMetrics?.latency?.read,
+        rwMetrics?.latency?.write,
+        rwMetrics?.throughput?.read,
+        rwMetrics?.throughput?.write,
+        resourceDetails?.resourceUtilization?.cpu
+    ].every(arr => (Array.isArray(arr) && arr.length === 0) || (!Array.isArray(arr)));
+};
 
 const ResourceMSSQLOverview = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
 
     DatabaseHostOverviewApiV2();
     return (
+        <>
+        {/* Partial data warning here - based on condition 1. latency/throughput/iops read,write should be an array  2. creation of resource should be more than 6 hours 3.resource page should load fully*/}
+        {
+                 isPartialData(resourceDetails) && ((Date.now() - Number(resourceDetails?.databaseServer?.creationDate)) > (6 * 60 * 60 * 1000))&& !resourceLoading &&
+                    <div className={styles['resource-mssql-overview-partialDataContainer']}>
+                        <ResourceMSSQLPartialContainer />
+                    </div>    
+        }
         <div className={styles['resource-mssql-overview']}>
             <div className={styles.leftSide}>
                 <ResourceHeader />
-
+                
                 <div className={styles.commonBlock}>
                     <CPUUtilizationCard />
                     <LatencyCard />
@@ -57,6 +79,8 @@ const ResourceMSSQLOverview = () => {
                 <InformationSection />
             </div>
         </div>
+        </>
+        
     );
 };
 
