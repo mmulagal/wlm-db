@@ -562,8 +562,6 @@ async function registerSqlInstance(
                         if (!windowsAuthentication && !sqlServerAuthentication && !windowsDomainUserAuthentication) {
                             failureReason =
                                 'Unable to authenticate with the SQL Server instance. Windows authentication or SQL Server authentication is required.';
-                        } else if (!storageInfo) {
-                            failureReason = 'SQL Server instance is not hosted on FSx for NetApp.';
                         } else if (
                             sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
                         ) {
@@ -581,128 +579,135 @@ async function registerSqlInstance(
                         if (failureReason) {
                             throw new Error(failureReason);
                         }
+                        if (!storageInfo) {
+                            throw new Error('Storage information is missing for the SQL Server instance.');
+                        }
+
+                        // It could be that fsx credentials are already registered with storage services. Check and create ssm parameters if not already created.
+                        try {
+                            await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo.id);
+                        } catch (error: any) {
+                            throw new Error(`Error while verifying or adding FSx ONTAP credentials: ${error.message}`);
+                        }
+
                         let partnerPowershellInstallationResponse;
                         let partnerModulesInstallationResponse;
-                        if (storageInfo) {
-                            if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
-                                ({
-                                    powershellInstallationResponse: partnerPowershellInstallationResponse,
-                                    modulesInstallationResponse: partnerModulesInstallationResponse
-                                } = await powershellInstallations(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    partnerEc2InstanceId!,
-                                    hostJobId,
-                                    modulesToInstall
-                                ));
 
-                                // Check if the partner EC2 instance has the required PowerShell module installed.
-                                // If the module "AWS.Tools.SimpleSystemsManagement" is specified in the modulesToInstall list
-                                // and is not available in the partnerModulesInstallationResponse, throw an error with the failure reason.
-                                if (
-                                    partnerModulesInstallationResponse &&
-                                    modulesToInstall &&
-                                    modulesToInstall.includes('AWS.Tools.SimpleSystemsManagement') &&
-                                    !partnerModulesInstallationResponse.availablePSModules.includes(
-                                        'AWS.Tools.SimpleSystemsManagement'
-                                    )
-                                ) {
-                                    failureReason = partnerModulesInstallationResponse.failureInfo;
-                                    throw new Error(failureReason);
-                                }
-                            }
-                            let activeDirectoryDomainName: string | undefined;
-                            let activeDirectoryIpAddresses: string[] | undefined = [];
-                            if (isResourceTobeCreated) {
-                                if (adDetails && adDetails.includes(ACTIVE_DIRECTORY)) {
-                                    ({
-                                        domainName: activeDirectoryDomainName,
-                                        ipAddresses: activeDirectoryIpAddresses
-                                    } = JSON.parse(adDetails!)[ACTIVE_DIRECTORY]);
-                                }
-                                const ebsVolumesFiltered = await getEbsVolumeDetails(
-                                    credentialsId,
-                                    region,
-                                    node1InstanceId
-                                );
-
-                                await createResource(accountId, {
-                                    resourceId,
-                                    credentialsId,
-                                    storageType: STORAGE_TYPE.FSXN,
-                                    resourceName: sqlInstanceInfo.sqlServerName,
-                                    cloudProviderAccountId: awsAccountId!,
-                                    cloudProviderName: CloudProviders.AWS,
-                                    resourceType: RESOURCESTYPE.MSSQL,
-                                    coRelationId: storageInfo.id,
-                                    region,
-                                    metadata: {
-                                        creationDate: Date.now(),
-                                        node1InstanceId,
-                                        ...(partnerEc2InstanceId && { node2InstanceId: partnerEc2InstanceId }),
-                                        sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
-                                        source: RESOURCE_SOURCE.DISCOVER,
-                                        fsxSvmId: storageInfo.svmId,
-                                        storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                                        ...(activeDirectoryDomainName && {
-                                            activeDirectoryName: activeDirectoryDomainName
-                                        }),
-                                        ...(activeDirectoryIpAddresses && {
-                                            activeDirectoryAddress: activeDirectoryIpAddresses.join()
-                                        }),
-                                        ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
-                                    }
-                                });
-                                isResourceTobeCreated = false;
-                            }
-
-                            tagResources(
+                        if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+                            ({
+                                powershellInstallationResponse: partnerPowershellInstallationResponse,
+                                modulesInstallationResponse: partnerModulesInstallationResponse
+                            } = await powershellInstallations(
+                                accountId,
                                 credentialsId,
                                 region,
-                                awsAccountId!,
-                                accountId,
-                                storageInfo.id,
-                                node1InstanceId,
-                                partnerEc2InstanceId
+                                partnerEc2InstanceId!,
+                                hostJobId,
+                                modulesToInstall
+                            ));
+
+                            // Check if the partner EC2 instance has the required PowerShell module installed.
+                            // If the module "AWS.Tools.SimpleSystemsManagement" is specified in the modulesToInstall list
+                            // and is not available in the partnerModulesInstallationResponse, throw an error with the failure reason.
+                            if (
+                                partnerModulesInstallationResponse &&
+                                modulesToInstall &&
+                                modulesToInstall.includes('AWS.Tools.SimpleSystemsManagement') &&
+                                !partnerModulesInstallationResponse.availablePSModules.includes(
+                                    'AWS.Tools.SimpleSystemsManagement'
+                                )
+                            ) {
+                                failureReason = partnerModulesInstallationResponse.failureInfo;
+                                throw new Error(failureReason);
+                            }
+                        }
+                        let activeDirectoryDomainName: string | undefined;
+                        let activeDirectoryIpAddresses: string[] | undefined = [];
+                        if (isResourceTobeCreated) {
+                            if (adDetails && adDetails.includes(ACTIVE_DIRECTORY)) {
+                                ({ domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } =
+                                    JSON.parse(adDetails!)[ACTIVE_DIRECTORY]);
+                            }
+                            const ebsVolumesFiltered = await getEbsVolumeDetails(
+                                credentialsId,
+                                region,
+                                node1InstanceId
                             );
 
-                            const dbInstanceName = isDemoFlow
-                                ? sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
-                                    ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
-                                    : sqlInstanceInfo.sqlServerInstance
-                                : sqlInstanceInfo.sqlServerInstance;
-
-                            await upsertDatabaseInstance(accountId, {
-                                credentialsId,
+                            await createResource(accountId, {
                                 resourceId,
+                                credentialsId,
+                                storageType: STORAGE_TYPE.FSXN,
+                                resourceName: sqlInstanceInfo.sqlServerName,
+                                cloudProviderAccountId: awsAccountId!,
+                                cloudProviderName: CloudProviders.AWS,
+                                resourceType: RESOURCESTYPE.MSSQL,
+                                coRelationId: storageInfo.id,
                                 region,
-                                databaseInstanceId: serverGuid,
-                                databaseInstanceName: dbInstanceName,
-                                fsxnIds: storageInfo.id,
-                                isDefault: sqlInstanceInfo.isDefaultInstance,
-                                source: RESOURCE_SOURCE.DISCOVER,
-                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
-                                fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
-                                storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                                databaseType: DatabaseTypes.MS_SQL_SERVER
+                                metadata: {
+                                    creationDate: Date.now(),
+                                    node1InstanceId,
+                                    ...(partnerEc2InstanceId && { node2InstanceId: partnerEc2InstanceId }),
+                                    sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
+                                    source: RESOURCE_SOURCE.DISCOVER,
+                                    fsxSvmId: storageInfo.svmId,
+                                    storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                                    ...(activeDirectoryDomainName && {
+                                        activeDirectoryName: activeDirectoryDomainName
+                                    }),
+                                    ...(activeDirectoryIpAddresses && {
+                                        activeDirectoryAddress: activeDirectoryIpAddresses.join()
+                                    }),
+                                    ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
+                                }
                             });
-                            if (isDemoFlow) {
-                                await createAssessmentData(accountId, credentialsId, region, resourceId, serverGuid!);
-                            }
-                            const isWarning = [
-                                powershellInstallationResponse,
-                                partnerPowershellInstallationResponse
-                            ].some(status => status === JOBSTATUS.FAILED || status === JOBSTATUS.WARNING);
-
-                            instanceManagementStatus.push({
-                                databaseInstanceName: dbInst,
-                                databaseInstanceGuid: serverGuid,
-                                status: isWarning ? JOBSTATUS.WARNING : JOBSTATUS.COMPLETED
-                            });
-
-                            instanceJobStatus = JOBSTATUS.COMPLETED;
+                            isResourceTobeCreated = false;
                         }
+
+                        tagResources(
+                            credentialsId,
+                            region,
+                            awsAccountId!,
+                            accountId,
+                            storageInfo.id,
+                            node1InstanceId,
+                            partnerEc2InstanceId
+                        );
+
+                        const dbInstanceName = isDemoFlow
+                            ? sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
+                                ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
+                                : sqlInstanceInfo.sqlServerInstance
+                            : sqlInstanceInfo.sqlServerInstance;
+
+                        await upsertDatabaseInstance(accountId, {
+                            credentialsId,
+                            resourceId,
+                            region,
+                            databaseInstanceId: serverGuid,
+                            databaseInstanceName: dbInstanceName,
+                            fsxnIds: storageInfo.id,
+                            isDefault: sqlInstanceInfo.isDefaultInstance,
+                            source: RESOURCE_SOURCE.DISCOVER,
+                            sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
+                            fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
+                            storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                            databaseType: DatabaseTypes.MS_SQL_SERVER
+                        });
+                        if (isDemoFlow) {
+                            await createAssessmentData(accountId, credentialsId, region, resourceId, serverGuid!);
+                        }
+                        const isWarning = [powershellInstallationResponse, partnerPowershellInstallationResponse].some(
+                            status => status === JOBSTATUS.FAILED || status === JOBSTATUS.WARNING
+                        );
+
+                        instanceManagementStatus.push({
+                            databaseInstanceName: dbInst,
+                            databaseInstanceGuid: serverGuid,
+                            status: isWarning ? JOBSTATUS.WARNING : JOBSTATUS.COMPLETED
+                        });
+
+                        instanceJobStatus = JOBSTATUS.COMPLETED;
                     } catch (error: any) {
                         logger.error('Error while managing SQL instance', {
                             accountId,
