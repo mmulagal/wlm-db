@@ -87,6 +87,10 @@ try {
 
     Import-Module ActiveDirectory *>$null
 
+    if($DCName -eq "default" -or $DCName -eq "no-value") {
+        $DCName = ''
+    }
+
     if([string]::IsNullOrEmpty($DCName)) {
         #Try to fetch a Domain Controller name that can connect to the directory service if preferred DC is not passed 
         $DCName = (Get-ADDomainController -Discover -Domain $DomainName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty HostName)
