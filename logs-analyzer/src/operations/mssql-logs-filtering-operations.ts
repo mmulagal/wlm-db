@@ -37,14 +37,7 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
 
             logger.debug(`Processing chunk from file: ${filePath}`);
 
-            processErrorLogLines(
-                lines,
-                timestampLastLogProcessed,
-                errorSet,
-                pendingEntries,
-                linesToIgnore,
-                errorLogs
-            );
+            processErrorLogLines(lines, timestampLastLogProcessed, errorSet, pendingEntries, linesToIgnore, errorLogs);
         });
 
         stream.on('end', () => {
