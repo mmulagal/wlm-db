@@ -437,9 +437,9 @@ const validateSQLInstanceConnectivity = (
                             ? `
                             $domainList = $credobject.domain
                             if ($domainList -ne $null) {
-                                $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq "$($sqlinstancename.ToLower())_temp" }
+                                $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq "$($sqlinstancename.ToLower())_temp" } | Select-Object -First 1
                                 if ($sqlCredentials -eq $null) {
-                                    $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' }
+                                    $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' } | Select-Object -First 1
                                 }
                             } else {
                                 $sqlCredentials = $null
@@ -448,7 +448,7 @@ const validateSQLInstanceConnectivity = (
                             : `
                             $sqlList = $credobject.sql
                             if ($sqlList -ne $null) {
-                                $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq "$($sqlinstancename.ToLower())_temp" }
+                                $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq "$($sqlinstancename.ToLower())_temp" } | Select-Object -First 1
                             } else {
                                 $sqlCredentials = $null
                             }

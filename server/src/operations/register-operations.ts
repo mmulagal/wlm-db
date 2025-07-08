@@ -28,7 +28,7 @@ import {
     SSM_PARAM_PREFIX,
     SSM_PARAMETERS_BASE_PATH
 } from '../utils/consts';
-import { callSsmExecution, getSSMConnectionStatus, ssmPutParameters } from './aws/ssm-operations';
+import { callSsmExecution, getEc2SqlParameters, getSSMConnectionStatus, ssmPutParameters } from './aws/ssm-operations';
 import { describeInstance, paginateDescribeEbsVolumes } from '../lib/aws/ec2';
 import { getHostAndSqlServerInfo } from './discover-operations';
 import {
@@ -1584,24 +1584,100 @@ async function rewriteOrDeleteSSMParameter(
         await deleteSSMParameter(credentialsId, region, paramsToDelete);
     }
     // Rewrite parameter store after removing invalid credentials
-    const latestSqlCredentials = allDatabaseCredentials
-        .filter(e => !instancesToBeDeleted.includes(e.resourceId))
-        .map(e => ({
-            ...e,
-            resourceId: `${e.resourceId.includes(TEMP) ? e.resourceId.replace(TEMP, '') : e.resourceId}`
-        }));
-    const latestWindowsUserCredentials = allWindowsUserCredentials
-        .filter(e => !instancesToBeDeleted.includes(e.resourceId))
-        .map(e => ({
-            ...e,
-            resourceId: `${e.resourceId.includes(TEMP) ? e.resourceId.replace(TEMP, '') : e.resourceId}`
-        }));
+    const latestSqlCredentials = filterAndMapCredentials(allDatabaseCredentials, sqlCredentials, instancesToBeDeleted);
+    const latestWindowsUserCredentials = filterAndMapCredentials(
+        allWindowsUserCredentials,
+        windowsUserCredentials,
+        instancesToBeDeleted
+    );
+
     const creds = prepareParametersToStore(instanceIds, [
         ...(fsxCredentials ? [fsxCredentials] : []),
         ...latestSqlCredentials,
         ...latestWindowsUserCredentials
     ]);
-    await ssmPutParameters(credentialsId, region, creds);
+
+    if (!isEmpty(creds)) {
+        await ssmPutParameters(credentialsId, region, creds);
+    }
+
+    // This code is specific to the case where there are wrong creds already and even the validated credentials are wrong.
+    const cleanedUpdatedParams = compact(await cleanUpdatedParams(credentialsId, region, instanceIds));
+    if (!isEmpty(cleanedUpdatedParams)) {
+        await ssmPutParameters(credentialsId, region, cleanedUpdatedParams);
+    }
+}
+
+async function cleanUpdatedParams(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[]
+): Promise<(SSMParamterObject | undefined)[]> {
+    logger.info('Get existing SSM parameters', { credentialsId, region, instanceIds });
+
+    return Promise.all(
+        instanceIds.map(async instanceId => {
+            const { domain, sql } = await getEc2SqlParameters(credentialsId, region, instanceId);
+            domain?.forEach((item: SqlCredential) => {
+                item.sqlinstancename = item.sqlinstancename.replace(TEMP, '');
+            });
+            sql?.forEach((item: SqlCredential) => {
+                item.sqlinstancename = item.sqlinstancename.replace(TEMP, '');
+            });
+
+            if (isEmpty(domain) && isEmpty(sql)) {
+                return;
+            }
+
+            return {
+                path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                value: {
+                    ...(!isEmpty(domain) && { domain }),
+                    ...(!isEmpty(sql) && { sql })
+                }
+            } as SSMParamterObject;
+        })
+    );
+}
+
+function filterAndMapCredentials(
+    allCredentials: RegisterCredentialsType[],
+    userRequestedCredentials: RegisterCredentialsType[],
+    instancesToBeDeleted: string[]
+): RegisterCredentialsType[] {
+    logger.debug('Filter and map credentials', {
+        allCredentialsLength: allCredentials.length,
+        userRequestedCredentialsLength: userRequestedCredentials.length
+    });
+
+    const userRequestedCredentialsMap = new Map<string, RegisterCredentialsType>();
+    (userRequestedCredentials ?? []).forEach(e => {
+        const cleanId = e.resourceId.replace(TEMP, '');
+        if (!instancesToBeDeleted.includes(`${cleanId}${TEMP}`)) {
+            userRequestedCredentialsMap.set(cleanId, {
+                ...e,
+                resourceId: cleanId
+            });
+        }
+    });
+
+    // Filter allCredentials, but if a matching sqlinstancename exists in userRequestedCredentials, use that instead
+    let latestAllCredentials = allCredentials
+        .filter(creds => !instancesToBeDeleted.includes(creds.resourceId))
+        .map(creds => ({ ...creds, resourceId: creds.resourceId.replace(TEMP, '') }));
+
+    latestAllCredentials = uniqBy(latestAllCredentials, 'resourceId');
+    return latestAllCredentials.map(creds => {
+        const cleanId = creds.resourceId.replace(TEMP, '');
+        if (userRequestedCredentialsMap.has(cleanId)) {
+            return userRequestedCredentialsMap.get(cleanId)!;
+        }
+
+        return {
+            ...creds,
+            resourceId: cleanId
+        };
+    });
 }
 
 async function validateCredentials(
@@ -1884,7 +1960,6 @@ async function validateWindowsCredentials(
         });
     }
 
-    // if (instancesToBeDeleted.length > 0) {
     await rewriteOrDeleteSSMParameter(
         credentialsId,
         region,
@@ -1897,7 +1972,7 @@ async function validateWindowsCredentials(
         allDatabaseCredentials,
         allWindowsUserCredentials
     );
-    // }
+
     return response;
 }
 
@@ -2006,7 +2081,6 @@ async function validateOracleCredentials(
         });
     }
 
-    // if (instancesToBeDeleted.length > 0) {
     await rewriteOrDeleteSSMParameter(
         credentialsId,
         region,
@@ -2018,7 +2092,7 @@ async function validateOracleCredentials(
         [],
         allDatabaseCredentials
     );
-    // }
+
     return response;
 }
 
