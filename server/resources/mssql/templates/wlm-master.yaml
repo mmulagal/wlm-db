@@ -667,12 +667,7 @@ Resources:
           Fn::If:
             - HasPreferredDomainController
             - Ref: PreferredDomainController
-            - !Ref AWS::NoValue
-        OUPath: 
-          Fn::If:
-            - HasOUPath
-            - Ref: OUPath
-            - !Ref AWS::NoValue            
+            - !Ref AWS::NoValue          
       NotificationARNs:
         Fn::If:
         - IncludeNotification

@@ -269,11 +269,9 @@ Parameters:
     PreferredDomainController:
         Description: (optional) Preferred domain controller to use for AD join.
         Type: String
-        Default: 'no-value'
     OUPath:
         Description: (optional) Preferred organizational unit in the AD to join.
-        Type: String
-        Default: 'no-value'        
+        Type: String      
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
