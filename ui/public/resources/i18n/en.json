@@ -225,7 +225,7 @@
             "missing-modules-content-1": "Missing AWS PowerShell module: 'AWS.Tools.Cloudwatch'",
             "missing-modules-content-2": "Missing IAM permission - 'cloudwatch:GetMetricData'",
             "missing-modules-content-3": "Missing instance profile permission - 'cloudwatch:PutMetricData'",
-            "missing-modules-content-4": "Partial data displayed due to a missing module. For complete information, please install the required module."
+            "missing-modules-content-4": "Partial data displayed due to one of the following reasons:"
         },
         "inventory": {
             "protect-header": "Protect SQL server instance",

@@ -26,13 +26,13 @@ const ResourceMSSQLPartialContainer = () => {
                     <div className={styles.listItem}>
                         <Bullet />
                         <DsTypography variant="Regular_13" >
-                            {t('databases.resource-overview.missing-modules-content-1')}
+                            {t('databases.resource-overview.missing-modules-content-2')}
                         </DsTypography>
                     </div>
                     <div className={styles.listItem}>
                         <Bullet />
                         <DsTypography variant="Regular_13">
-                            {t('databases.resource-overview.missing-modules-content-1')}
+                            {t('databases.resource-overview.missing-modules-content-3')}
                         </DsTypography>
                     </div>
                 </div>
