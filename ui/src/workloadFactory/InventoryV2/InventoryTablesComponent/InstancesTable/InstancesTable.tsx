@@ -75,6 +75,7 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
+import { setConnectors } from '../../../../store/workloadFactory/snapcenterSlice';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -287,6 +288,13 @@ const InstancesTable = () => {
     };
 
     const handleProtection = async (rowData: any) => {
+        const existingConnectors = store.getState().snapCenter.data;
+
+        if (existingConnectors) {
+            // already in store, use directly
+            proceedWithProtection(existingConnectors);
+            return;
+        }
         setDialog(
             <DialogComponent
                 header={t('databases.inventory.protect-header')}
@@ -304,57 +312,62 @@ const InstancesTable = () => {
         const res = await getConnector({ accountID: store.getState().auth.accountId });
 
         if (res?.data?.occms) {
-            const activeAgents = res?.data?.occms.filter((item: any) => item.agent.status === 'active');
-            if (activeAgents.length === 0) {
-                setDialog(
-                    <DialogComponent
-                        header={t('databases.inventory.protect-header')}
-                        content={<NoAgentDialog />}
-                        primaryButton={t('databases.inventory.redirect')}
-                        secondaryButton={GENERAL.CANCEL}
-                        closeCallback={() => {
-                            closeDialog();
-                        }}
-                        callback={() => {
-                            bxpRedirect(isWorkloadFactory);
-                        }}
-                        customClass={styles.protectionDialog}
-                    />
-                );
-            }
-            if (activeAgents.length > 0) {
-                //Single Connector case
-                setDialog(
-                    <DialogComponent
-                        header={
-                            <div
-                                className={styles.headerClass}
-                                style={{ display: 'flex', justifyContent: 'space-between' }}
-                            >
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.inventory.protect-header')}
-                                </DsTypography>
-                                <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                    {t('databases.inventory.step-1-out-of')}
-                                </DsTypography>
-                            </div>
-                        }
-                        content={<SingleAgentDialog agents={activeAgents} />}
-                        primaryButton={t('databases.inventory.start')}
-                        secondaryButton={t('databases.inventory.cancel')}
-                        closeCallback={() => {
-                            closeDialog();
-                        }}
-                        callback={() => {
-                            dispatch(setStartProtection('started'));
-                        }}
-                        customClass={styles.protectionDialog}
-                        dialogFrom={FROM_DIALOG.SINGLE_AGENT}
-                    />
-                );
-            }
+            // save to store for next time
+            dispatch(setConnectors(res.data));
+            proceedWithProtection(res.data);
         } else {
             closeDialog();
+        }
+    };
+
+    const proceedWithProtection = (data: any) => {
+        const activeAgents = data?.occms?.filter((item: any) => item.agent.status === 'active') || [];
+
+        if (activeAgents.length === 0) {
+            setDialog(
+                <DialogComponent
+                    header={t('databases.inventory.protect-header')}
+                    content={<NoAgentDialog />}
+                    primaryButton={t('databases.inventory.redirect')}
+                    secondaryButton={GENERAL.CANCEL}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                    callback={() => {
+                        bxpRedirect(isWorkloadFactory);
+                    }}
+                    customClass={styles.protectionDialog}
+                />
+            );
+        }
+        if (activeAgents.length > 0) {
+            //Single Connector case
+            setDialog(
+                <DialogComponent
+                    header={
+                        <div
+                            className={styles.headerClass}
+                            style={{ display: 'flex', justifyContent: 'space-between' }}
+                        >
+                            <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-1-out-of')}
+                            </DsTypography>
+                        </div>
+                    }
+                    content={<SingleAgentDialog agents={activeAgents} />}
+                    primaryButton={t('databases.inventory.start')}
+                    secondaryButton={t('databases.inventory.cancel')}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                    callback={() => {
+                        dispatch(setStartProtection('started'));
+                    }}
+                    customClass={styles.protectionDialog}
+                    dialogFrom={FROM_DIALOG.SINGLE_AGENT}
+                />
+            );
         }
     };
 

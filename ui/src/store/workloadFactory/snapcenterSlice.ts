@@ -2,7 +2,8 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { SnapCenterEntities } from '../../utils/types/snapCenterTypes';
 
 export const initialSandboxState: SnapCenterEntities = {
-    selectedAgent: []
+    selectedAgent: [],
+    data: null
 };
 
 const snapCenterSlice = createSlice({
@@ -11,10 +12,16 @@ const snapCenterSlice = createSlice({
     reducers: {
         setSelectedAgent: (state, action: PayloadAction<any>) => {
             state.selectedAgent = action.payload;
+        },
+        setConnectors: (state, action) => {
+            state.data = action.payload;
+        },
+        clearConnectors: state => {
+            state.data = null;
         }
     }
 });
 
-export const { setSelectedAgent } = snapCenterSlice.actions;
+export const { setSelectedAgent, setConnectors, clearConnectors } = snapCenterSlice.actions;
 
 export default snapCenterSlice;
