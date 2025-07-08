@@ -956,8 +956,13 @@ ssmMock
     .resolves(getCommandInvocationResponse.nativeSqlBackupDatabasesInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapSnapshotCount' })
     .resolves(getCommandInvocationResponse.ontapSnapshotCountInvocationResponse)
-    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapMappedVolumes' })
-    .resolves(getCommandInvocationResponse.ontapMappedVolumesInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-ontapMappedVolumes' })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'ontapMappedVolumes',
+            JSON.stringify(getCommandInvocationResponse.getMappedVolumesResponse)
+        )
+    )
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-storageSummary' })
     .resolves(getCommandInvocationResponse.storageInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-performanceMetrics' })

@@ -799,6 +799,7 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
+    const fsxVolumeIdUuidMap: Map<string, string> = new Map();
     let fsxVolIds = volumes.map(volume => volume.VolumeId) || [];
     if (volumeUuids.length > fsxVolIds.length) {
         // If the number of volumeUuids is more than the number of fsx volumes, then repeating the fsxVolIds
@@ -814,13 +815,15 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
             volumeIds.push(sample(fsxVolIds) || '');
             uuidVolumeIdMap[VolumeId] = sample(volumeUuids) || '';
         }
+        fsxVolumeIdUuidMap.set(UUID, sample(fsxVolIds) || '');
     });
 
     logger.debug('List volume ids in an fsx response', volumeIds);
 
     return {
         volumeIds: compact(volumeIds),
-        uuidVolumeIdMap
+        uuidVolumeIdMap,
+        fsxVolumeIdUuidMap
     };
 }
 

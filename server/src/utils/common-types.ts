@@ -625,6 +625,7 @@ interface VolumeRecord {
     snapshot_count?: number;
     clone?: Clone;
     svm?: SVM;
+    fsxVolumeId?: string;
 }
 
 interface LunRecord {

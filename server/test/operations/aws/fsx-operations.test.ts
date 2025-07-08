@@ -71,6 +71,12 @@ describe('Testcases for Amazon FSx resources operations', () => {
             undefined,
             [DEFAULT_INSTANCE_NAME]
         );
+
+        const fsxVolumeIds = response?.[DEFAULT_INSTANCE_NAME]?.volumeRecords?.filter(
+            ({ fsxVolumeId }: { fsxVolumeId?: string }) => Boolean(fsxVolumeId)
+        );
+
+        expect(fsxVolumeIds?.length).toBeGreaterThan(0);
         expect(response?.[DEFAULT_INSTANCE_NAME]).toBeDefined();
     });
 
