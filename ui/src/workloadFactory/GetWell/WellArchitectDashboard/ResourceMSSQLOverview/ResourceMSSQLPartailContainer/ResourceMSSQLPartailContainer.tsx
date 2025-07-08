@@ -1,4 +1,4 @@
-import { DsTypography,Typography } from '@netapp/design-system';
+import {  DsTypography } from '@tlveng/wlm-ds';
 import { ReactComponent as Warning } from '../../../../../assets/warning.svg';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './ResourceMSSQLPartailContainer.module.scss';
@@ -16,21 +16,21 @@ const ResourceMSSQLPartialContainer = () => (
             <div className={styles.list}>
                 <div className={styles.listItem}>
                     <Bullet />
-                    <Typography variant="Regular_13" className={styles.textWidth}>
+                    <DsTypography variant="Regular_13">
                         {GENERAL.MISSING_MODULES[0]}
-                    </Typography>
+                    </DsTypography>
                 </div>
                 <div className={styles.listItem}>
                     <Bullet />
-                    <Typography variant="Regular_13" className={styles.textWidth}>
+                    <DsTypography variant="Regular_13" >
                         {GENERAL.MISSING_MODULES[1]}
-                    </Typography>
+                    </DsTypography>
                 </div>
                 <div className={styles.listItem}>
                     <Bullet />
-                    <Typography variant="Regular_13" className={styles.textWidth}>
+                    <DsTypography variant="Regular_13">
                         {GENERAL.MISSING_MODULES[2]}
-                    </Typography>
+                    </DsTypography>
                 </div>
             </div>
         </DsTypography>
