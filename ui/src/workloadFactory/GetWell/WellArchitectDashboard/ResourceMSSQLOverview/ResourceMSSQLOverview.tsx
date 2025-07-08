@@ -9,22 +9,11 @@ import ThroughputCard from './ThroughputCard/ThroughputCard';
 import InformationSection from '../../../ResourcePage/InformationSection/InformationSection';
 import StorageSavingResource from '../../../ResourcePage/StorageSavingResource/StorageSavingResource';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { getAggrStorageSavings } from '../../../../utils/utilityFunctions';
+import { getAggrStorageSavings,isPartialData } from '../../../../utils/utilityFunctions';
 import DatabaseHostOverviewApiV2 from '../../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
 import ResourceMSSQLPartialContainer from './ResourceMSSQLPartailContainer/ResourceMSSQLPartailContainer';
 
-const isPartialData = (resourceDetails: any) => {
-    const rwMetrics = resourceDetails?.performance?.rwMetrics;
-    return [
-        rwMetrics?.iops?.read,
-        rwMetrics?.iops?.write,
-        rwMetrics?.latency?.read,
-        rwMetrics?.latency?.write,
-        rwMetrics?.throughput?.read,
-        rwMetrics?.throughput?.write,
-        resourceDetails?.resourceUtilization?.cpu
-    ].every(arr => (Array.isArray(arr) && arr.length === 0) || (!Array.isArray(arr)));
-};
+
 const PARTIAL_DATA_THRESHOLD = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
 const ResourceMSSQLOverview = () => {
