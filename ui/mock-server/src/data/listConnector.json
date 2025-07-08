@@ -82,7 +82,7 @@
                 "network": "vpc-84b3afe6",
                 "subnet": "subnet-0ef4f90e95f375a84",
                 "creatorUserId": "auth0|5f520a004a7a8200670ea908",
-                "status": "inactive",
+                "status": "active",
                 "useDockerInfra": true,
                 "systemId": "786448cf-18d3-4e9f-a5e2-06f2cc373771",
                 "clientInfraStatus": {}

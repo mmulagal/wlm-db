@@ -304,7 +304,8 @@ const InstancesTable = () => {
         const res = await getConnector({ accountID: store.getState().auth.accountId });
 
         if (res?.data?.occms) {
-            if (res?.data?.occms?.length === 0) {
+            const activeAgents = res?.data?.occms.filter((item: any) => item.agent.status === 'active');
+            if (activeAgents.length === 0) {
                 setDialog(
                     <DialogComponent
                         header={t('databases.inventory.protect-header')}
@@ -321,7 +322,7 @@ const InstancesTable = () => {
                     />
                 );
             }
-            if (res?.data?.occms?.length > 0) {
+            if (activeAgents.length > 0) {
                 //Single Connector case
                 setDialog(
                     <DialogComponent
@@ -338,7 +339,7 @@ const InstancesTable = () => {
                                 </DsTypography>
                             </div>
                         }
-                        content={<SingleAgentDialog agents={res?.data?.occms} />}
+                        content={<SingleAgentDialog agents={activeAgents} />}
                         primaryButton={t('databases.inventory.start')}
                         secondaryButton={t('databases.inventory.cancel')}
                         closeCallback={() => {

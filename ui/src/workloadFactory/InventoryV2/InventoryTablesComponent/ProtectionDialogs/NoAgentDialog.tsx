@@ -5,6 +5,14 @@ import { Button } from '@netapp/design-system';
 
 const NoAgentDialog = () => {
     const { t } = useTranslation();
+
+    const learnMore = () => {
+        window.open(
+            'https://docs.netapp.com/us-en/bluexp-setup-admin/concept-connectors.html',
+            '_blank',
+            'noopener,noreferrer'
+        );
+    };
     return (
         <div className={styles.protectionDialogs}>
             <div className={styles.topSection}>
@@ -15,7 +23,9 @@ const NoAgentDialog = () => {
             <div className={styles.midSection}>
                 <DsTypography variant="Semibold_14">{t('databases.inventory.agent-req')}</DsTypography>
                 <DsTypography variant="Regular_14">{t('databases.inventory.agent-req-text')}</DsTypography>
-                <Button variant="link">Learn about BlueXP Agents</Button>
+                <Button variant="link" onClick={learnMore}>
+                    Learn about BlueXP Agents
+                </Button>
             </div>
 
             <div className={styles.bottomSection}>

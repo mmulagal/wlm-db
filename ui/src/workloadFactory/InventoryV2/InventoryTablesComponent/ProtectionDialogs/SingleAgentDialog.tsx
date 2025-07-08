@@ -117,6 +117,14 @@ const SingleAgentDialog = ({ agents }: any) => {
         }
         return '';
     };
+
+    const learnMore = () => {
+        window.open(
+            'https://docs.netapp.com/us-en/snapcenter/protect-scsql/concept_snapcenter_plug_in_for_microsoft_sql_server_overview.html',
+            '_blank',
+            'noopener,noreferrer'
+        );
+    };
     return (
         <div className={styles.protectionDialogsAgent}>
             {isMultiConnector && (
@@ -298,7 +306,7 @@ const SingleAgentDialog = ({ agents }: any) => {
                                 <DsTypography variant="Regular_14">
                                     {t('databases.inventory.plug-in-installation-text')}
                                 </DsTypography>
-                                <Button className={styles.buttonClass} variant="link">
+                                <Button className={styles.buttonClass} onClick={learnMore} variant="link">
                                     {t('databases.inventory.button-text')}
                                 </Button>
                             </AccordionCardContent>
