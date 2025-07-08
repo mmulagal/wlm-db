@@ -138,8 +138,9 @@ async function initiateLogsAnalysis(inputText: string) {
     logger.info('Step 1: Initializing client and preparing messages.');
     const client = new BedrockRuntimeClient({
         region: MODEL_REGION,
-        retryMode: BEDROCK_RETRY.MODE,
-        maxAttempts: BEDROCK_RETRY.MAX_ATTEMPTS // https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html Standard retry mode for Bedrock client, Supports circuit-breaking to prevent the SDK from retrying during outages.Uses jittered exponential backoff in the event of failures.
+        retryMode: BEDROCK_RETRY.MODE, // https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html
+        maxAttempts: BEDROCK_RETRY.MAX_ATTEMPTS, // Maximum retry attempts for Bedrock client
+        defaultsMode: 'in-region'
     });
     const uniqueQueryMap = new Map();
     const messages: MessageObj[] = [
@@ -308,8 +309,17 @@ async function analyzeErrorLogs(
     await Promise.all(
         errorLogs.map(logChunk =>
             pLimit(5)(async () => {
-                const { firstOccurrence, lastOccurrence, errorCode, severity, context, error, count, uniqueErrorKey, hourlyErrorCounts } =
-                    logChunk;
+                const {
+                    firstOccurrence,
+                    lastOccurrence,
+                    errorCode,
+                    severity,
+                    context,
+                    error,
+                    count,
+                    uniqueErrorKey,
+                    hourlyErrorCounts
+                } = logChunk;
 
                 const minimalErrorObject = {
                     errorContext: context,
