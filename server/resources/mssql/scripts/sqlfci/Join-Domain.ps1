@@ -37,6 +37,14 @@ $AdminUserPW = ConvertTo-SecureString ($ADAdminPassword) -AsPlainText -Force
 $Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ($AdminUserName, $AdminUserPW)
 Import-Module ActiveDirectory *>$null
 
+if($DCName -eq "default" -or $DCName -eq "no-value") {
+        $DCName = ''
+    }
+
+if($OUPath -eq "default" -or $OUPath -eq "no-value") {
+        $OUPath = ''
+    }    
+
 if([string]::IsNullOrEmpty($DCName)) {
     #Try to fetch a Domain Controller name that can connect to the directory service if preferred DC is not passed 
     $DCName = (Get-ADDomainController -Discover -Domain $DomainName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty HostName)
