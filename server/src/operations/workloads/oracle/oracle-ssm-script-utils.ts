@@ -374,7 +374,7 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
 
     # Initialize result object if not already initialized
     if [ -z "$resultObject" ]; then
-        resultObject='{ "instances": [], "fsxResults": [] }'
+        resultObject='{ "instances": [], "fsxResults": [], modulesInstallationResults: [] }'
     fi
     
     instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
@@ -412,7 +412,7 @@ const validateOracleInstanceFsxConnectivity = (fsxnId: string, region: string) =
 
     # Initialize result object if not already initialized
     if [ -z "$resultObject" ]; then
-        resultObject='{ "instances": [], "fsxResults": [] }'
+        resultObject='{ "instances": [], "fsxResults": [], modulesInstallationResults: [] }'
     fi
 
     ${ontapRestApi}
@@ -427,10 +427,153 @@ const validateOracleInstanceFsxConnectivity = (fsxnId: string, region: string) =
     resultObject=$(echo "$resultObject" | jq --argjson res "$fsxResult" '.fsxResults += [$res]')
 `;
 
+const checkOracleModuleAvailability = `
+    check_oracle_module_availability() {
+        local isAwsCliInstalled="false"
+        local isJqInstalled="false"
+
+        if command -v aws >/dev/null 2>&1; then
+            isAwsCliInstalled="true"
+        fi
+
+        if command -v jq >/dev/null 2>&1; then
+            isJqInstalled="true"
+        fi
+
+        result="{\\"isAwsCliInstalled\\": \\"$isAwsCliInstalled\\", \\"isJqInstalled\\": \\"$isJqInstalled\\"}"
+        echo $result
+    }
+`;
+
+const installOracleDependentModules = (signedUrls: string[], modulesToInstall: string) => `
+
+    if [ -z "$signedUrls" ]; then
+        echo "Signed URL is empty. Cannot install $moduleName."
+        exit 1
+    fi
+
+    awsCliSignedUrl="${signedUrls[0]}"
+    jqSignedUrl="${signedUrls[1]}"
+    moduleNames=("\${${modulesToInstall}[@]}")
+
+    install_unzip_if_missing() {
+        if ! command -v unzip >/dev/null 2>&1; then
+            if command -v yum >/dev/null 2>&1; then
+                sudo yum install -y unzip
+            elif command -v apt-get >/dev/null 2>&1; then
+                sudo apt-get update && sudo apt-get install -y unzip
+            else
+                # "No supported package manager found to install unzip."
+                exit 1
+            fi
+        fi
+    }
+
+    installationResults="["
+
+    for moduleName in "\${moduleNames[@]}"; do
+        if [ "$moduleName" == "AWS CLI" ]; then
+            if [ "$isAwsCliInstalled" == "true" ]; then
+                successMsg="AWS CLI already installed"
+            else
+                curl -sS -fSL "$awsCliSignedUrl" -o awscliv2.zip
+                if [ $? -ne 0 ]; then
+                    errorMsg="Failed to download AWS CLI from $awsCliSignedUrl"
+                else
+                    install_unzip_if_missing
+                    if [ $? -ne 0 ]; then
+                        errorMsg="Failed to install unzip"
+                        installationResults="$installationResults{\\"success\\": \\"\\", \\"error\\": \\"$errorMsg\\"},"
+                        continue
+                    fi
+
+                    unzip awscliv2.zip
+                    sudo ./aws/install
+                    if [ $? -ne 0 ]; then
+                        errorMsg="Failed to install AWS CLI"
+                    else
+                        successMsg="AWS CLI installed"
+                    fi
+                fi
+            fi
+            installationResults="$installationResults{\\"success\\": \\"$successMsg\\", \\"error\\": \\"$errorMsg\\"},"
+
+        elif [ "$moduleName" == "JQ" ]; then
+
+            if [ "$isJqInstalled" == "true" ]; then
+                successMsg="JQ already installed"
+            else
+                curl -sS -fSL "$jqSignedUrl" -o jq.zip
+                if [ $? -ne 0 ]; then
+                    errorMsg="Failed to download JQ from $jqSignedUrl"
+                else
+                    install_unzip_if_missing
+                    if [ $? -ne 0 ]; then
+                        errorMsg="Failed to install unzip"
+                        installationResults="$installationResults{\\"success\\": \\"\\", \\"error\\": \\"$errorMsg\\"},"
+                        continue
+                    fi
+
+                    unzip jq.zip
+                    cd jq/
+                    ./configure
+                    make
+                    sudo make install
+                    if [ $? -ne 0 ]; then
+                        errorMsg="Failed to install JQ"
+                    else
+                        successMsg="JQ installed"
+                    fi
+                fi
+            fi
+            installationResults="$installationResults{\\"success\\": \\"$successMsg\\", \\"error\\": \\"$errorMsg\\"},"
+        else
+            errorMsg="Unknown module: $moduleName"
+            installationResults="$installationResults{\\"success\\": \\"\\", \\"error\\": \\"$errorMsg\\"},"
+        fi
+    done
+
+    # Remove trailing comma and close array
+    installationResults="\${installationResults%,}]"
+
+    resultObject=$(echo "$resultObject" | jq --argjson res "$installationResults" '.modulesInstallationResults += $res')
+`;
+
+const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => `
+
+        if [ -z "$resultObject" ]; then
+            resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [] }'
+        fi
+
+        ${checkOracleModuleAvailability}
+    
+        modulesAvailability=$(check_oracle_module_availability)
+    
+        isAwsCliInstalled=$(echo "$modulesAvailability" | grep -o '"isAwsCliInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
+        isJqInstalled=$(echo "$modulesAvailability" | grep -o '"isJqInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
+        
+        modulesToInstall=()
+        if [ "$isAwsCliInstalled" != "true" ]; then
+            modulesToInstall+=("AWS CLI")
+        fi
+        if [ "$isJqInstalled" != "true" ]; then
+            modulesToInstall+=("JQ")
+        fi
+        if [ \${#modulesToInstall[@]} -eq 0 ]; then
+            installationResults="[{\\"success\\": \\"All required modules are already installed\\", \\"error\\": \\"\\"}]"
+            resultObject=$(echo "$resultObject" | jq --argjson res "$installationResults" '.modulesInstallationResults += $res')
+        else 
+            ${installOracleDependentModules(signedUrls, 'modulesToInstall')}
+        fi
+`;
+
 export {
     getOracleProtectionData,
     ORACLE_PERFORMANCE_METRICS,
     getOracleInstanceData,
     validateOracleInstanceConnectivity,
-    validateOracleInstanceFsxConnectivity
+    validateOracleInstanceFsxConnectivity,
+    checkOracleModuleAvailability,
+    installOracleDependentModules,
+    checkAndInstallRequiredOracleDependentModules
 };
