@@ -11,6 +11,7 @@ jobs:
       - name: Assign current milestone to new issue
         uses: actions/github-script@v7
         with:
+
           script: |
             // Get the issue number
             const issue_number = context.payload.issue.number;
@@ -39,3 +40,5 @@ jobs:
             } else {
               console.log('No open milestones found.');
             }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
