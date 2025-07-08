@@ -21,6 +21,7 @@ Metadata:
                   - ADDnsIpAddresses
                   - DomainMemberSGID
                   - PreferredDomainController
+                  - OUPath
             - Label:
                   default: Amazon EC2 Configuration
               Parameters:
@@ -120,6 +121,8 @@ Metadata:
                 default: Size of the EBS Volume in GiB.
             PreferredDomainController:
                 default: (optional) Preferred domain controller to use for AD join
+            OUPath:
+                default: (optional) Preferred organizational unit in the AD to join. For example, "OU=Workstations,DC=example,DC=com"                
 Parameters:
     ParentStackName:
         Description: Stack name for the parent CloudFormation stack.
@@ -267,16 +270,17 @@ Parameters:
         Description: (optional) Preferred domain controller to use for AD join.
         Type: String
         Default: 'no-value'
+    OUPath:
+        Description: (optional) Preferred organizational unit in the AD to join.
+        Type: String
+        Default: 'no-value'        
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
         - ''
     LogFeatureEnabled: !Equals
         - !Ref 'EnableCloudWatchLogFeature'
-        - 'true'
-    PreferredDomainControllerSet: !And
-        - !Not [!Equals [!Ref PreferredDomainController, '']]
-        - !Not [!Equals [!Ref PreferredDomainController, 'no-value']]
+        - 'true'  
 Rules:
     KeyPairsNotEmpty:
         Assertions:
@@ -688,9 +692,7 @@ Resources:
                                   - '''"'
                             waitAfterCompletion: 0
                         e-join-domain:
-                                command: !If
-                                    - PreferredDomainControllerSet
-                                    - !Join
+                                command: !Join
                                         - ''
                                         - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
                                             -DomainDNSName '
@@ -699,18 +701,10 @@ Resources:
                                           - !Ref 'ParentStackName'
                                           - "' -DomainAdminUser '"
                                           - !Ref 'DomainAdminUser'
-                                          - "' -DCName '"
+                                          - "' -DCName "
                                           - !Ref 'PreferredDomainController'
-                                          - '''"'
-                                    - !Join
-                                        - ''
-                                        - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
-                                            -DomainDNSName '
-                                          - !Ref 'DomainDNSName'
-                                          - "' -Parentstackname '"
-                                          - !Ref 'ParentStackName'
-                                          - "' -DomainAdminUser '"
-                                          - !Ref 'DomainAdminUser'
+                                          - "' -OUPath "
+                                          - !Ref 'OUPath'
                                           - '''"'
                                 waitAfterCompletion: forever                 
                         f-add-domadmin-user-to-group:
