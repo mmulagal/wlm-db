@@ -41,26 +41,22 @@ if([string]::IsNullOrEmpty($DCName)) {
     #Try to fetch a Domain Controller name that can connect to the directory service if preferred DC is not passed 
     $DCName = (Get-ADDomainController -Discover -Domain $DomainName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty HostName)
     }
-if([string]::IsNullOrEmpty($DCName)) {
-        #If not able to fetch with Get-ADDomainController join domain directly without passing Domain server
-        if ([string]::IsNullOrEmpty($OUPath)) {
-            # Join the computer to default OU 
-            Add-Computer -DomainName $DomainDNSName -Credential $Credentials -ErrorAction Stop
-        }
-        else {
-            # Join the computer to the specified OU 
-            Add-Computer -DomainName $DomainDNSName -OUPath $OUPath -Credential $Credentials -ErrorAction Stop
-        }       
-} else {
-        if ([string]::IsNullOrEmpty($OUPath)) {
-            # Join the computer to default OU using the preferred Domain Controller
-            Add-Computer -DomainName $DomainDNSName -Server $DCName -Credential $Credentials -ErrorAction Stop 
-        }
-        else {
-            # Join the computer to the specified OU using the preferred Domain Controller
-            Add-Computer -DomainName $DomainDNSName -Server $DCName -OUPath $OUPath -Credential $Credentials -ErrorAction Stop
-        }
- }
+if ([string]::IsNullOrEmpty($DCName) -and [string]::IsNullOrEmpty($OUPath)) {
+    # Join the computer to default OU 
+    Add-Computer -DomainName $DomainDNSName -Credential $Credentials -ErrorAction Stop
+}
+elseif ([string]::IsNullOrEmpty($DCName) -and -not [string]::IsNullOrEmpty($OUPath)) {
+    # Join the computer to the specified OU 
+    Add-Computer -DomainName $DomainDNSName -OUPath $OUPath -Credential $Credentials -ErrorAction Stop
+}
+elseif (-not [string]::IsNullOrEmpty($DCName) -and [string]::IsNullOrEmpty($OUPath)) {
+    # Join the computer to default OU using the preferred Domain Controller
+    Add-Computer -DomainName $DomainDNSName -Server $DCName -Credential $Credentials -ErrorAction Stop 
+}
+else {
+    # Join the computer to the specified OU using the preferred Domain Controller
+    Add-Computer -DomainName $DomainDNSName -Server $DCName -OUPath $OUPath -Credential $Credentials -ErrorAction Stop
+}
 }
 catch {
     $_ | Write-AWSLaunchWizardException
