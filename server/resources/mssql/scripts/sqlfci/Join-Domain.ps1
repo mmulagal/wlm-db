@@ -57,6 +57,7 @@ else {
     # Join the computer to the specified OU using the preferred Domain Controller
     Add-Computer -DomainName $DomainDNSName -Server $DCName -OUPath $OUPath -Credential $Credentials -ErrorAction Stop
 }
+
 }
 catch {
     $_ | Write-AWSLaunchWizardException
