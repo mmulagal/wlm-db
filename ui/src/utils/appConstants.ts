@@ -167,11 +167,6 @@ export const GENERAL = {
         'AWS CloudFormation',
         ' to complete this task.'
     ],
-    MISSING_MODULES:[
-        "Missing AWS PowerShell module: 'AWS.Tools.Cloudwatch'",
-        "Missing IAM permission - 'cloudwatch:GetMetricData'",
-        "Missing instance profile permission - 'cloudwatch:PutMetricData'"
-    ],
     MISSING_BLOCKED_PERMISSIONS: [
         'Creation failed due to ',
         'missing & blocked permissions. ',

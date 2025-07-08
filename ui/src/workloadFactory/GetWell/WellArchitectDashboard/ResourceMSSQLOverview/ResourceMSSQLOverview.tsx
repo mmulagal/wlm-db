@@ -25,6 +25,7 @@ const isPartialData = (resourceDetails: any) => {
         resourceDetails?.resourceUtilization?.cpu
     ].every(arr => (Array.isArray(arr) && arr.length === 0) || (!Array.isArray(arr)));
 };
+const PARTIAL_DATA_THRESHOLD = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
 const ResourceMSSQLOverview = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
@@ -34,7 +35,7 @@ const ResourceMSSQLOverview = () => {
         <>
         {/* Partial data warning here - based on condition 1. latency/throughput/iops read,write should be an array  2. creation of resource should be more than 6 hours 3.resource page should load fully*/}
         {
-                 isPartialData(resourceDetails) && ((Date.now() - Number(resourceDetails?.databaseServer?.creationDate)) > (6 * 60 * 60 * 1000))&& !resourceLoading &&
+                 isPartialData(resourceDetails) && ((Date.now() - Number(resourceDetails?.databaseServer?.creationDate)) > PARTIAL_DATA_THRESHOLD)&& !resourceLoading &&
                     <div className={styles['resource-mssql-overview-partialDataContainer']}>
                         <ResourceMSSQLPartialContainer />
                     </div>    
