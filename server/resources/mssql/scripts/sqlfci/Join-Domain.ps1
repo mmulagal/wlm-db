@@ -6,6 +6,9 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$DCName,
 
+    [Parameter(Mandatory = $false)]
+    [string]$OUPath,
+
     [Parameter(Mandatory=$true)]
     [string]$DomainAdminUser,
 
@@ -40,9 +43,23 @@ if([string]::IsNullOrEmpty($DCName)) {
     }
 if([string]::IsNullOrEmpty($DCName)) {
         #If not able to fetch with Get-ADDomainController join domain directly without passing Domain server
-        Add-Computer -DomainName $DomainDNSName -Credential $Credentials -ErrorAction Stop
+        if ([string]::IsNullOrEmpty($OUPath)) {
+            # Join the computer to default OU 
+            Add-Computer -DomainName $DomainDNSName -Credential $Credentials -ErrorAction Stop
+        }
+        else {
+            # Join the computer to the specified OU 
+            Add-Computer -DomainName $DomainDNSName -OUPath $OUPath -Credential $Credentials -ErrorAction Stop
+        }       
 } else {
-        Add-Computer -DomainName $DomainDNSName -Server $DCName -Credential $Credentials -ErrorAction Stop 
+        if ([string]::IsNullOrEmpty($OUPath)) {
+            # Join the computer to default OU using the preferred Domain Controller
+            Add-Computer -DomainName $DomainDNSName -Server $DCName -Credential $Credentials -ErrorAction Stop 
+        }
+        else {
+            # Join the computer to the specified OU using the preferred Domain Controller
+            Add-Computer -DomainName $DomainDNSName -Server $DCName -OUPath $OUPath -Credential $Credentials -ErrorAction Stop
+        }
  }
 }
 catch {
