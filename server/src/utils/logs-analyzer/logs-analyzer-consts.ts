@@ -25,6 +25,9 @@ const AVG_TOKEN_COUNT_PER_ERROR = {
     OUTPUT: 3500
 };
 
+const MSSQL_ERROR_PATTERN =
+    /(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{2}) (?<spid>\w+) +(?:Error: (?<errorCode>\d+), Severity: (?<severity>\d+), State: (?<state>\d+)|.*?\b(?:(?<keyword>deadlock|error|failed|bottleneck))\b(?<message>.*))/;
+
 export {
     MODEL_AVAILABILITY_STATUS,
     LOGS_ANALYZER_BUNDLE_PATH,
@@ -34,5 +37,6 @@ export {
     LOGS_COUNT_TO_CONSIDER,
     LOGS_ANALYZER_MODEL_IDS,
     BEDROCK_PRICE,
-    AVG_TOKEN_COUNT_PER_ERROR
+    AVG_TOKEN_COUNT_PER_ERROR,
+    MSSQL_ERROR_PATTERN
 };

@@ -1,12 +1,18 @@
 import { Type, Static } from '@fastify/type-provider-typebox';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
-import { DATABASE_TYPE, JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
+import {
+    DATABASE_TYPE,
+    JOBSTATUS,
+    JOBTYPE,
+    logs_analysis_reports as LogsAnalysisReports,
+    STORAGE_TYPE
+} from '@prisma/client';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
 import { AuditStatus, HttpErrorCodes } from '../../utils/consts';
 
-import { getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
+import { generateHash, getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
 import {
     AVG_TOKEN_COUNT_PER_ERROR,
     BEDROCK_PRICE,
@@ -15,7 +21,8 @@ import {
     LOGS_ANALYZER_PACKAGE_NAME,
     LOGS_ANALYZER_PACKAGE_VERSION,
     LOGS_COUNT_TO_CONSIDER,
-    MODEL_AVAILABILITY_STATUS
+    MODEL_AVAILABILITY_STATUS,
+    MSSQL_ERROR_PATTERN
 } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { listDatabaseInstances } from '../../lib/database/db';
 import { DatabaseInstance, DatabaseInstancesIncludingResource } from '../../utils/common-types';
@@ -27,7 +34,11 @@ import { getModelAvailability } from '../../lib/aws/bedrock';
 import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
 import { parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { InferenceConfigType, RemediationRecommendationObject } from '../../routes/types/logs-analyzer.types';
+import {
+    InferenceConfigType,
+    RemediationRecommendationObject,
+    RemediationRecommendationObjectType
+} from '../../routes/types/logs-analyzer.types';
 import getInferenceProfileFromModelId from '../aws/bedrock-operations';
 import {
     getLinuxBedrockAvailabilityCheckScript,
@@ -435,17 +446,96 @@ async function getLogsAnalysisReport(
         jobId
     });
 
-    const response = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId);
+    const reports = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId);
 
-    if (response && response.length > 0) {
-        const [{ logs_analysis_data: logsAnalysisData } = {}] = response;
-        const [{ data: { remediationRecommendation = [] } = {} }] =
-            (logsAnalysisData as LogsAnalysisReportObjectType[]) || [];
-        return { remediationRecommendation };
+    const aggregatedErrorMap = new Map<string, any>();
+    aggregateErrorCountAcrossReports(reports, aggregatedErrorMap, accountId, jobId);
+
+    const newReport = Array.from(aggregatedErrorMap.values());
+    if (newReport && newReport.length > 0) {
+        return { remediationRecommendation: newReport };
     }
     const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
     logger.error(errorMessage);
     throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+}
+
+function aggregateErrorCountAcrossReports(
+    reports: LogsAnalysisReports[],
+    aggregatedErrorMap: Map<string, any>,
+    accountId: string,
+    jobId?: string
+) {
+    // this function aggregates only the error count across all logs analysis reports/ token usage is not aggregated, it is not needed as of the initial implementation
+    logger.info('Aggregating data across logs analysis reports:', { accountId, jobId, reportsCount: reports.length });
+
+    reports.forEach(report => {
+        const { logs_analysis_data: logsAnalysisData } = report as unknown as {
+            logs_analysis_data: LogsAnalysisReportObjectType[];
+        };
+
+        // logs_analysis_data is an array of LogsAnalysisReportObjectType
+        if (Array.isArray(logsAnalysisData)) {
+            logsAnalysisData.forEach(analysisResult => {
+                if (analysisResult?.status === 'success' && analysisResult?.data) {
+                    const { remediationRecommendation = [] } = analysisResult.data;
+
+                    remediationRecommendation.forEach((item: RemediationRecommendationObjectType) => {
+                        const messageKey = getOrGenerateMessageKey(item);
+                        const existingItem = aggregatedErrorMap.get(messageKey!);
+                        if (!existingItem) {
+                            aggregatedErrorMap.set(messageKey!, {
+                                ...item,
+                                count: item.count
+                            });
+                        } else {
+                            existingItem.count += item.count;
+                            // Update lastOccurence with a more recent timestamp if available
+                            if (item.lastOccurrence && item.lastOccurrence > existingItem.lastOccurrence) {
+                                existingItem.lastOccurrence = item.lastOccurrence;
+                            }
+
+                            // Update firstOccurrence with an oldest occurence timestamp
+                            if (item.firstOccurrence && item.firstOccurrence < existingItem.firstOccurrence) {
+                                existingItem.firstOccurrence = item.firstOccurrence;
+                            }
+                        }
+                    });
+                } else {
+                    logger.warn(`Skipping analysis result with status: ${analysisResult.status}`, {
+                        message: analysisResult.message,
+                        accountId,
+                        jobId
+                    });
+                }
+            });
+        } else {
+            logger.error(
+                'Logs analysis data is not available for the selected instance: logs_analysis_data is not an array:',
+                { logsAnalysisData, accountId, jobId }
+            );
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                'Logs analysis data is not available for the selected instance.'
+            );
+        }
+    });
+}
+
+function getOrGenerateMessageKey(item: RemediationRecommendationObjectType): string | null {
+    // Return existing key if available
+    if (item.uniqueErrorKey) {
+        return item.uniqueErrorKey;
+    }
+
+    // Generate key from error pattern
+    const match = MSSQL_ERROR_PATTERN.exec(item.error);
+    if (match?.groups?.errorCode || match?.groups?.message) {
+        const keySource = (match.groups.errorCode || match.groups.message)?.replaceAll(/[^a-zA-Z0-9]/g, '_');
+        return generateHash(keySource).toLowerCase();
+    }
+
+    return null;
 }
 
 async function calculateLogsAnalysisPrice(region: string) {

@@ -1,6 +1,5 @@
 import { ConversationRole } from '@aws-sdk/client-bedrock-runtime';
 
-
 interface Content {
     text?: string;
     toolUse?: ToolUse;

@@ -40,6 +40,8 @@ const RemediationRecommendationObject = Type.Object({
         )
     )
 });
+type RemediationRecommendationObjectType = Static<typeof RemediationRecommendationObject>;
+
 type LogsAnalyzerBody = Static<typeof LogsAnalyzerBody>;
 
 export {
@@ -47,5 +49,6 @@ export {
     LogsAnalyzerParamsType,
     LogsAnalyzerBody,
     InferenceConfigType,
-    RemediationRecommendationObject
+    RemediationRecommendationObject,
+    RemediationRecommendationObjectType
 };
