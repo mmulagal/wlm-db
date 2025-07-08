@@ -289,7 +289,7 @@ enum DATABASE_TYPE {
 const MSSQL_SEVERITY_THRESHOLD = 14; // Severity threshold for MSSQL errors
 
 const BEDROCK_RETRY = {
-    MODE: 'adaptive', // Standard retry mode for Bedrock client
+    MODE: 'adaptive',
     MAX_ATTEMPTS: 6
 };
 export {
