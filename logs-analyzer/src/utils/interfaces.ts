@@ -57,7 +57,7 @@ interface MsSqlErrorLog {
 interface ErrorLog {
     error: string;
     context: string;
-    cause: string;
+    cause?: string;
     count: number;
     severity?: string | number;
     firstOccurrence?: number;
@@ -75,12 +75,9 @@ interface ErrorLog {
     };
 }
 
-interface ErrorLogWithAdditionalInfo extends ErrorLog {
-    additionalInfo?: string;
-}
-
 interface ErrorLogWithScriptAndDetails extends ErrorLog {
-    sql?: { query: string }[];
+    sql?: string[];
+    additionalInfo?: string;
 }
 
 interface AgentArgs {
@@ -100,13 +97,4 @@ interface AgentArgs {
     maxTokens: number;
 }
 
-export {
-    MessageObj,
-    ToolUse,
-    ErrorLog,
-    ToolSpec,
-    MsSqlErrorLog,
-    ErrorLogWithAdditionalInfo,
-    ErrorLogWithScriptAndDetails,
-    AgentArgs
-};
+export { MessageObj, ToolUse, ErrorLog, ToolSpec, MsSqlErrorLog, ErrorLogWithScriptAndDetails, AgentArgs };

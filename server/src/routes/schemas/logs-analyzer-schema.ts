@@ -22,7 +22,8 @@ const GetLogsAnalyzerSchema = {
     hide: process.env.NODE_ENV === 'production',
     params: LogsAnalyzerParams,
     querystring: Type.Object({
-        jobId: Type.Optional(Type.String())
+        jobId: Type.Optional(Type.String()),
+        reportId: Type.Optional(Type.String())
     }),
     summary: 'Get logs analysis for a specific database instance in a remote database host machine',
     response: {

@@ -31,6 +31,16 @@ const RemediationRecommendationObject = Type.Object({
     lastOccurrence: Type.Optional(Type.Number()),
     errorCode: Type.Optional(Type.String()),
     uniqueErrorKey: Type.Optional(Type.String()),
+    sql: Type.Optional(Type.Array(Type.String())),
+    additionalInfo: Type.Optional(
+        Type.Array(
+            Type.Object({
+                query: Type.Optional(Type.String()),
+                result: Type.Optional(Type.String()),
+                error: Type.Optional(Type.String())
+            })
+        )
+    ),
     hourlyErrorCounts: Type.Optional(
         Type.Array(
             Type.Object({

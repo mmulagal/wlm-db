@@ -435,7 +435,8 @@ async function getLogsAnalysisReport(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    jobId?: string
+    jobId?: string,
+    reportId?: string
 ) {
     logger.info('Getting logs analysis report:', {
         accountId,
@@ -443,10 +444,11 @@ async function getLogsAnalysisReport(
         region,
         databaseHostId,
         databaseInstanceId,
-        jobId
+        jobId,
+        reportId
     });
 
-    const reports = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId);
+    const reports = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId, reportId);
 
     const aggregatedReport = aggregateErrorCountAcrossReports(reports, accountId, jobId);
 
@@ -470,7 +472,18 @@ function aggregateErrorCountAcrossReports(reports: LogsAnalysisReports[], accoun
 
     const allRecommendations = logsAnalysisReports.flatMap(analysisResult => {
         if (analysisResult?.status === 'success' && analysisResult?.data) {
-            return analysisResult.data.remediationRecommendation || [];
+            return (
+                analysisResult.data.remediationRecommendation?.map((item: RemediationRecommendationObjectType) => ({
+                    ...item,
+                    additionalInfo: Array.isArray(item.additionalInfo)
+                        ? item.additionalInfo.map(({ query, result, error }) => ({
+                              query,
+                              result: typeof result === 'object' ? JSON.stringify(result) : result,
+                              error
+                          }))
+                        : []
+                })) || []
+            );
         }
         logger.warn(`Skipping analysis result with status: ${analysisResult?.status}`, {
             message: analysisResult?.message,
@@ -508,7 +521,7 @@ function aggregateErrorCountAcrossReports(reports: LogsAnalysisReports[], accoun
     return Array.from(aggregatedErrorMap.values());
 }
 
-function getOrGenerateMessageKey(item: RemediationRecommendationObjectType): string | null {
+function getOrGenerateMessageKey(item: RemediationRecommendationObjectType): string | undefined {
     // Return existing key if available
     if (item.uniqueErrorKey) {
         return item.uniqueErrorKey;
@@ -520,8 +533,6 @@ function getOrGenerateMessageKey(item: RemediationRecommendationObjectType): str
         const keySource = (match.groups.errorCode || match.groups.message)?.replaceAll(/[^a-zA-Z0-9]/g, '_');
         return generateHash(keySource).toLowerCase();
     }
-
-    return null;
 }
 
 async function calculateLogsAnalysisPrice(region: string) {

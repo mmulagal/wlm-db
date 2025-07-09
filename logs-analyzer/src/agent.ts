@@ -23,17 +23,15 @@ import {
 import streamMessages from './aws/bedrock';
 import collectLogs from './operations/logs-filtering-operations';
 import TOOLS from './utils/tools';
-import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from './utils/utils';
-import logger from './utils/logging';
 import {
-    ToolUse,
-    ToolSpec,
-    MessageObj,
-    ErrorLogWithAdditionalInfo,
-    AgentArgs,
-    ErrorLogWithScriptAndDetails,
-    ErrorLog
-} from './utils/interfaces';
+    getPowershellScript,
+    getBashScript,
+    runPowerShellScript,
+    deleteOlderFilesInDirectory,
+    safeParseJson
+} from './utils/utils';
+import logger from './utils/logging';
+import { ToolUse, ToolSpec, MessageObj, AgentArgs, ErrorLogWithScriptAndDetails, ErrorLog } from './utils/interfaces';
 
 const LIMIT_3 = pLimit(3); // Limit concurrency to 3
 logger.info('Starting logs analysis agent...');
@@ -102,7 +100,7 @@ const logStreamName = `${INSTANCE_ID}-logs-analyzer/${JOB_ID}/${logStreamSuffix}
 const CW_OUTPUT_PATH = `${logGroupName}/${logStreamName}`;
 interface RemediationRecommendation {
     error: string;
-    cause: string;
+    cause?: string;
     count: number;
     remediation: string;
     severity?: string | number;
@@ -110,6 +108,9 @@ interface RemediationRecommendation {
     lastOccurrence?: number;
     errorCode?: string;
     uniqueErrorKey?: string;
+    sql?: string[];
+    context?: string;
+    additionalInfo?: string;
     hourlyErrorCounts?: Array<{
         hour: number;
         count: number;
@@ -355,7 +356,8 @@ async function analyzeErrorLogs(
                                 input,
                                 output,
                                 total
-                            }
+                            },
+                            context
                         });
                         errorLogsWithScripts.push(...data);
                     }
@@ -397,7 +399,9 @@ function parseSuggestedScriptsWithTimestamp(
                         context,
                         sql: { query }
                     } = JSON.parse(message);
-                    const filteredQueries = query.filter((queryEntry: string) => queryEntry !== 'NA');
+                    const filteredQueries = query
+                        .filter((queryEntry: string) => queryEntry !== 'NA')
+                        .map((queryEntry: string) => queryEntry);
                     return { error, context, cause, count, sql: filteredQueries, ...additionalDetails };
                 } catch (error) {
                     logger.error('Failed to parse JSON:', { message, error });
@@ -430,13 +434,13 @@ async function checkAndExecuteAdditionalScript(
 ) {
     logger.info('Checking and executing additional scripts.', { databaseType, databaseInstanceName, sqlAuthEnabled });
 
-    const result: ErrorLogWithAdditionalInfo[] = [];
+    const result: ErrorLogWithScriptAndDetails[] = [];
 
     const uniqueQueryMap = new Map();
     errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScriptAndDetails) => {
         const { sql = [] } = logWithScript;
         const queryKey = createHash('sha256')
-            .update(sql.map((queryEntry: { query: string }) => queryEntry?.query).join('|'))
+            .update(sql.map((queryEntry: string) => queryEntry).join('|'))
             .digest('hex');
 
         const arr = uniqueQueryMap.get(queryKey) || [];
@@ -475,7 +479,7 @@ async function checkAndExecuteAdditionalScript(
 async function recommendRemediation(
     databaseType: string,
     client: BedrockRuntimeClient,
-    result: ErrorLogWithAdditionalInfo[],
+    result: ErrorLogWithScriptAndDetails[],
     inferenceConfig: InferenceConfiguration
 ) {
     logger.info('Recommending remediation for errors.', { databaseType });
@@ -499,7 +503,9 @@ async function recommendRemediation(
                     count,
                     tokenUsageForCauseIdentification: causeIdentification,
                     uniqueErrorKey,
-                    hourlyErrorCounts
+                    hourlyErrorCounts,
+                    context,
+                    sql
                 } = errorWithInfo;
                 const minimalErrorObject = {
                     error,
@@ -536,6 +542,9 @@ async function recommendRemediation(
                         errorCode,
                         uniqueErrorKey,
                         hourlyErrorCounts,
+                        context,
+                        sql,
+                        additionalInfo: formatAdditionalInfo(additionalInfo!),
                         tokenUsage: {
                             causeIdentification,
                             remediationRecommendation: {
@@ -552,6 +561,23 @@ async function recommendRemediation(
         )
     );
     return remediationRecommendation;
+}
+
+function formatAdditionalInfo(additionalInfo: string) {
+    logger.debug('Formatting additional info:', additionalInfo);
+    if (!additionalInfo) {
+        return [];
+    }
+    const additionalData = safeParseJson(additionalInfo);
+    return additionalData.map((Result: any) => {
+        const { Query: query, Result: result, Error: error } = Result;
+
+        return {
+            query,
+            error,
+            result: Array.isArray(result) ? result.join(',') : result
+        };
+    });
 }
 
 async function getDatabaseDetails(logsFolderPath: string) {

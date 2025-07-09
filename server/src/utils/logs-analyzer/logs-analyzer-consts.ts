@@ -26,8 +26,7 @@ const AVG_TOKEN_COUNT_PER_ERROR = {
 };
 
 const MSSQL_ERROR_PATTERN =
-    /(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{2}) (?<spid>\w+) +(?:Error: (?<errorCode>\d+), Severity: (?<severity>\d+), State: (?<state>\d+)|.*?\b(?:(?<keyword>deadlock|error|failed|bottleneck))\b(?<message>.*))/;
-
+    /(?:Error: (?<errorCode>\d+), Severity: (?<severity>\d+), State: (?<state>\d+)|.*?\b(?:(?<keyword>deadlock|error|failed|bottleneck))\b(?<message>.*))/;
 export {
     MODEL_AVAILABILITY_STATUS,
     LOGS_ANALYZER_BUNDLE_PATH,
