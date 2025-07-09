@@ -478,13 +478,13 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             name: 'PreferredDomainController',
             description: '(optional) Preferred domain controller to use to join AD Domain',
             type: 'String',
-            default: 'no-value'
+            default: 'default'
         },
         {
             name: 'OUPath',
             description: '(optional) Preferred organizational unit in the AD to join.',
             type: 'String',
-            default: 'no-value'
+            default: 'default'
         }        
     ];
 

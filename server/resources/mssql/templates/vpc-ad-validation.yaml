@@ -161,7 +161,7 @@ Parameters:
     PreferredDomainController:
         Description: (optional) Preferred domain controller to use for AD join
         Type: String
-        Default: 'no-value'
+        Default: default
 Conditions:
     isGovRegion: !Or
         - !Equals
@@ -182,9 +182,6 @@ Conditions:
     LogFeatureEnabled: !Equals
         - !Ref 'EnableCloudWatchLogFeature'
         - 'true'
-    PreferredDomainControllerSet: !And
-        - !Not [!Equals [!Ref PreferredDomainController, '']]
-        - !Not [!Equals [!Ref PreferredDomainController, 'no-value']]
 Resources:
     ValidationInstanceProfile:
         Type: AWS::IAM::InstanceProfile
@@ -404,44 +401,25 @@ Resources:
                                   - '"'
                             waitAfterCompletion: '0'
                         b-validate-ad:
-                            command: !If
-                                - PreferredDomainControllerSet
-                                - !Join
-                                    - ''
-                                    - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-Credentials.ps1 -DomainName '
-                                      - !Ref 'DomainDNSName'
-                                      - ' -UserName '
-                                      - !Ref 'DomainAdminUser'
-                                      - ' -isSecretManagerSupported  0'
-                                      - ' -Stackname '
-                                      - !Ref 'AWS::StackName'
-                                      - ' -Parentstackname '
-                                      - !Ref 'ParentStackName'
-                                      - ' -DCName '
-                                      - !Ref 'PreferredDomainController'
-                                      - ' -ResourceID ValidationNode1'
-                                      - ' -WaitHandler '
-                                      - '"'
-                                      - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
-                                      - '"'
-                                      - '"'
-                                - !Join
-                                    - ''
-                                    - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-Credentials.ps1 -DomainName '
-                                      - !Ref 'DomainDNSName'
-                                      - ' -UserName '
-                                      - !Ref 'DomainAdminUser'
-                                      - ' -isSecretManagerSupported  0'
-                                      - ' -Stackname '
-                                      - !Ref 'AWS::StackName'
-                                      - ' -Parentstackname '
-                                      - !Ref 'ParentStackName'
-                                      - ' -ResourceID ValidationNode1'
-                                      - ' -WaitHandler '
-                                      - '"'
-                                      - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
-                                      - '"'
-                                      - '"'
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe -Command "C:\cfn\scripts\validation\Validate-Credentials.ps1 -DomainName '
+                                  - !Ref 'DomainDNSName'
+                                  - ' -UserName '
+                                  - !Ref 'DomainAdminUser'
+                                  - ' -isSecretManagerSupported  0'
+                                  - ' -Stackname '
+                                  - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
+                                  - ' -DCName '
+                                  - !Ref 'PreferredDomainController'
+                                  - ' -ResourceID ValidationNode1'
+                                  - ' -WaitHandler '
+                                  - '"'
+                                  - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
+                                  - '"'
+                                  - '"'
                             waitAfterCompletion: '0'                 
                         c-validate-fsx:
                             command: !Join

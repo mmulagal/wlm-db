@@ -758,9 +758,9 @@ Resources:
                                   - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                  - "' -DCName "
+                                  - "' -DCName '"
                                   - !Ref 'PreferredDomainController'
-                                  - "' -OUPath "                                 
+                                  - "' -OUPath '"                                 
                                   - !Ref 'OUPath'
                                   - '''"'
                             waitAfterCompletion: forever                 
@@ -1415,9 +1415,9 @@ Resources:
                                   - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                  - "' -DCName "
+                                  - "' -DCName '"
                                   - !Ref 'PreferredDomainController'
-                                  - "' -OUPath "                                 
+                                  - "' -OUPath '"                                 
                                   - !Ref 'OUPath'
                                   - '''"'
                             waitAfterCompletion: forever                 
