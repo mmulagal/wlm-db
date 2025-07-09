@@ -10,6 +10,7 @@ import sandbox from './sandbox';
 import exploreSavings from './exploreSavings';
 import inventory from './inventory';
 import getwell from './getwell';
+import errorInvestigation from './errorInvestigation';
 import snapcenter from './snapcenter';
 
 const routes = {
@@ -25,6 +26,7 @@ const routes = {
     exploreSavings,
     inventory,
     getwell,
+    errorInvestigation,
     snapcenter
 };
 export default routes;

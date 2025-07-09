@@ -927,6 +927,10 @@ const InstancesTable = () => {
                     }
                     menu.push(
                         {
+                            id: 'investigateErrors',
+                            displayName: 'Investigate errors'
+                        },
+                        {
                             id: 'viewInstance',
                             displayName: 'Manage instance',
                             disabled: disableOption,
@@ -1092,6 +1096,22 @@ const InstancesTable = () => {
                                                 setSelectedWellArchitectTab(
                                                     WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
                                                 )
+                                            );
+                                            optimizeAction(rowData);
+                                        }
+
+                                        if (menuId === 'investigateErrors') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(
+                                                setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION)
+                                            );
+                                            dispatch(
+                                                setFSXId({
+                                                    fsxId: rowData?.fsxId,
+                                                    ec2InstanceId: rowData?.ec2InstanceId
+                                                })
                                             );
                                             optimizeAction(rowData);
                                         }

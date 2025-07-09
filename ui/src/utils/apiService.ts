@@ -1141,6 +1141,19 @@ export const getWellApi = createApi({
     })
 });
 
+export const errorInvestigationApi = createApi({
+    reducerPath: 'errorInvestigationApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => ({
+        getErrorInvestigationData: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`
+            })
+        })
+    })
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -1295,3 +1308,5 @@ export const {
     useOptimizeCloneCleanupMutation,
     useDismissMssqlAssessmentMutation
 } = getWellApi;
+
+export const { useGetErrorInvestigationDataMutation } = errorInvestigationApi;

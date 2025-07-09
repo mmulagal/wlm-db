@@ -52,6 +52,7 @@ import {
 } from '../../../store/workloadFactory/sandboxSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import store from '../../../store/store';
+import ErrorInvestigation from './ErrorInvestigation/ErrorInvestigation';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
@@ -219,6 +220,7 @@ const WellArchitectDashboard = () => {
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
                         message:
+                            // @ts-ignore
                             result?.error?.data?.message ||
                             `Failed to update ${
                                 value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
@@ -331,6 +333,7 @@ const WellArchitectDashboard = () => {
             <div className={styles['well-architect-tabs-content']}>
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW && <ResourceMSSQLOverview />}
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS && <GetWell />}
+                {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && <ErrorInvestigation />}
 
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && (
                     <div className={styles.databaseListTable}>

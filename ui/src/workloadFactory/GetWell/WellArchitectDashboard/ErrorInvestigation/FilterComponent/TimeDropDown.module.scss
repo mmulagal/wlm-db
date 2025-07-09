@@ -1,0 +1,181 @@
+.time-dropdown {
+    position: relative;
+    display: inline-block;
+    font-family: sans-serif;
+
+    .selected-time {
+        width: max-content;
+        min-width: 130px;
+        height: 20px;
+        border-radius: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 11px !important;
+        cursor: pointer;
+        background-color: var(--tag-3-bg);
+        color: var(--tag-3-text) !important;
+        font-weight: 500;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: 110%;
+        left: 0;
+
+        width: auto;
+        z-index: 10;
+
+        background-color: var(--background-content);
+        box-shadow: 4px 4px 12px var(--border-drop-shadow);
+    }
+
+    .dropdown-option {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 12px 24px 12px 24px;
+        cursor: pointer;
+    }
+
+    .dropdown-option:hover {
+        background-color: var(--background-hover);
+    }
+
+    .custom-panel {
+        margin-top: 8px;
+
+        background-color: var(--background-content);
+        box-shadow: 4px 4px 12px var(--border-drop-shadow);
+        position: absolute;
+        top: 110%;
+        z-index: 10;
+        width: 572px;
+        height: 172px;
+        display: flex;
+        flex-direction: column;
+
+        .timeSelect {
+            width: 120px;
+            [class*='dsTextFramePopover'] {
+                [class*='textFieldInput'] {
+                    border: 1px solid var(--field-border) !important;
+                }
+            }
+        }
+        .periodSelect {
+            width: 90px;
+            [class*='dsTextFramePopover'] {
+                [class*='textFieldInput'] {
+                    border: 1px solid var(--field-border) !important;
+                }
+            }
+        }
+    }
+
+    .time-range {
+        display: flex;
+        gap: 40px;
+        padding: 24px 40px 40px 40px;
+        height: 130px;
+        .custom-label {
+            display: flex;
+            gap: 16px;
+        }
+    }
+
+    .time-range label {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .time-range input {
+        width: 80px;
+        padding: 4px;
+    }
+
+    .time-range select {
+        width: 60px;
+        padding: 4px;
+    }
+
+    .custom-actions {
+        display: flex;
+
+        .button {
+            width: 286px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            background-color: var(--background-content);
+            box-shadow: 4px 4px 12px var(--border-drop-shadow);
+            color: var(--text-button-primary);
+            border-top: 0.5px solid var(--border);
+        }
+
+        .button:hover {
+            background-color: var(--background-hover);
+        }
+    }
+
+    .custom-actions button {
+        background: none;
+        border: none;
+        color: #1c1c1c;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    select {
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: white;
+        font-size: 14px;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    .time-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+    }
+
+    .selected-time {
+        background: #e3e6fb;
+        color: #1c1c1c;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .icon {
+        transition: transform 0.3s ease;
+        display: flex;
+        align-items: center;
+    }
+
+    .rotated {
+        transform: rotate(180deg);
+    }
+
+    .selected {
+        color: var(--text-button-primary);
+    }
+
+    .disabled {
+        background: #e0e0e0 !important;
+        color: #a7a7a7 !important;
+        cursor: not-allowed;
+    }
+}
