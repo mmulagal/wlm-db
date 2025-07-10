@@ -9,6 +9,7 @@ import {
     Typography,
     postBlueXPMessage
 } from '@netapp/design-system';
+//@ts-ignore
 import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useDispatch } from 'react-redux';
@@ -19,7 +20,6 @@ import styles from './HeaderComponent.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import {
-    apiDOCURL,
     checkValueSavedForCred,
     checkValueSavedForRegion,
     generateMultipleOptionType,
@@ -1447,6 +1447,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 </div>
                             </div>
 
+                            {/* Add based on noCred flag */}
+                            {/* <div className={styles.noCredBanner}>
+                                <NoCredBanner width={'83.5%'} />
+                            </div> */}
+
                             <Dashboard />
                         </div>
                     )}
@@ -1458,6 +1463,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <div className={styles.content}>{refreshComponent()}</div>
                                 </div>
                             </div>
+
+                            {/* Add based on noCred flag */}
+                            {/* <div className={styles.noCredBanner}>
+                                <NoCredBanner width={'87.3%'} />
+                            </div> */}
+
                             <InventoryV2 />
                         </>
                     )}
@@ -1490,6 +1501,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Add based on noCred flag */}
+                            {/* <div className={styles.noCredBanner}>
+                                <NoCredBanner width={'87.3%'} />
+                            </div> */}
+
                             <JobMonitoring
                                 dropDownValue={dropDownValue}
                                 setDropdownValue={setDropdownValue}
@@ -1521,6 +1538,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <div className={styles.content}>{refreshComponentSandbox()}</div>
                                 </div>
                             </div>
+
+                            {/* Add based on noCred flag */}
+                            {/* <div className={styles.noCredBanner}>
+                                <NoCredBanner width={'87.3%'} />
+                            </div> */}
+
                             <Sandbox />
                         </>
                     )}
@@ -1535,6 +1558,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <div className={styles.content}>{refreshComponent()}</div>
                                 </div>
                             </div>
+
+                            {/* Add based on noCred flag */}
+                            {/* <div className={styles.noCredBanner}>
+                                <NoCredBanner width={'87.3%'} />
+                            </div> */}
                             <ExploreSavings />
                         </>
                     )}

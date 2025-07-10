@@ -314,6 +314,12 @@
                 "23": "Indicates that the integrity of the entire database is in question because of a hardware or software problem.Severity level 23 errors occur rarely. If one occurs, run DBCC CHECKDB to determine the extent of the damage. The problem might be in the cache only and not on the disk itself. If so, restarting the instance of the Database Engine corrects the problem. To continue working, you must reconnect to the instance of the Database Engine; otherwise, use DBCC to repair the problem. In some cases, you may have to restore the database.",
                 "24": "Indicates a media failure. The system administrator may have to restore the database. You may also have to call your hardware vendor."
             }
+        },
+        "dashboard": {
+            "no-credentials": "No credentials",
+            "add-credentials": "Add credentials",
+            "learn-more": "Learn more",
+            "discover-database": "to discover databases."
         }
     }
 }
