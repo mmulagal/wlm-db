@@ -9,12 +9,12 @@ import {
 } from '@netapp/design-system';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector } from '../../store/storeHooks';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 import { isValidSqlUsername } from '../../utils/utilityFunctions';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
-import { DsTypography } from '@tlveng/wlm-ds';
 
 type DialogProps = {
     header: string | any;
@@ -116,7 +116,7 @@ const DialogComponent = ({
         dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
-        //SC integration step 1 dialog
+        // SC integration step 1 dialog
         if (dialogFrom === FROM_DIALOG.SINGLE_AGENT && protectionStatus === 'started') {
             return true;
         }

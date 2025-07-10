@@ -398,7 +398,7 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
                                                         <path
                                                             d="M4.5 5L0.602887 0.499999L8.39711 0.5L4.5 5Z"
                                                             fill="var(--text-secondary)"
-                                                        ></path>
+                                                         />
                                                     </svg>
                                                 </div>
                                             </div>

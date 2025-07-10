@@ -3,6 +3,7 @@ import {
     DsButton,
     DsFlashingDotsLoader,
     DsTypography,
+    DsTooltipInfo,
     Popover,
     postBlueXPMessage,
     TooltipInfo,
@@ -85,6 +86,8 @@ import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import { setConnectors } from '../../../../store/workloadFactory/snapcenterSlice';
+import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
+import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -390,7 +393,7 @@ const InstancesTable = () => {
             );
         }
         if (activeAgents.length > 0) {
-            //Single Connector case
+            // Single Connector case
             setDialog(
                 <DialogComponent
                     header={
@@ -662,9 +665,58 @@ const InstancesTable = () => {
             }
         },
         {
+            id: '6',
+            Header: 'FSxN Name',
+            accessor: 'fileSystemName',
+            isSortable: false,
+            filterOptions: getFilterOptions(updatedTableData, 'fileSystemName'),
+            width: '213px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <>
+                        {cellData && rowData?.fsxId ? (
+                            <div className={styles.fsxNameContainer}>
+                                <DsTooltipInfo
+                                    className={`${styles.fsxName} ${styles['tooltip-icon']}`}
+                                    trigger="hover"
+                                >
+                                    <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                        <DsTypography variant="Regular_13">{rowData?.fsxId}</DsTypography>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children="Copied"
+                                            container={
+                                                <CopyToClipboardCommon
+                                                    value={rowData?.fsxId}
+                                                    iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                </DsTooltipInfo>
+                                <div className={styles.fsxName}>
+                                    <DsTypography
+                                        className={styles.fsxNameText}
+                                        variant="Regular_13"
+                                        title={cellData || GENERAL.NOT_AVAILABLE}
+                                    >
+                                        {cellData || GENERAL.NOT_AVAILABLE}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        ) : (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {GENERAL.NOT_AVAILABLE}
+                            </DsTypography>
+                        )}
+                    </>
+                );
+            }
+        },
+        {
             Header: 'Well-architected status',
             accessor: 'optimizationStatus',
-            id: '6',
+            id: '7',
             width: '240px',
             filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
@@ -770,7 +822,7 @@ const InstancesTable = () => {
         {
             Header: 'Protection status',
             accessor: 'protectionText',
-            id: '7',
+            id: '8',
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
             renderCell: (cellData: string, rowData: any) => {
@@ -839,7 +891,7 @@ const InstancesTable = () => {
         {
             Header: 'Performance',
             accessor: 'performance.assessment',
-            id: '8',
+            id: '9',
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'performance.assessment'),
             renderCell: (cellData: string, rowData: any) => {
@@ -865,7 +917,7 @@ const InstancesTable = () => {
             }
         },
         {
-            id: '9',
+            id: '10',
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
@@ -878,7 +930,7 @@ const InstancesTable = () => {
             )
         },
         {
-            id: '10',
+            id: '11',
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
@@ -891,7 +943,7 @@ const InstancesTable = () => {
             )
         },
         {
-            id: '11',
+            id: '12',
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
@@ -904,7 +956,7 @@ const InstancesTable = () => {
             )
         },
         {
-            id: '12',
+            id: '13',
             Header: '',
             accessor: '',
             isSortable: false,

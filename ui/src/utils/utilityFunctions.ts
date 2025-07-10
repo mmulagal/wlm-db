@@ -2194,7 +2194,7 @@ export const isPartialData = (resourceDetails: any) => {
         rwMetrics?.throughput?.read,
         rwMetrics?.throughput?.write,
         resourceDetails?.resourceUtilization?.cpu
-    ].every(arr => (Array.isArray(arr) && arr.length === 0) || (!Array.isArray(arr)));
+    ].every(arr => (Array.isArray(arr) && arr.length === 0) || !Array.isArray(arr));
 };
 
 const roundedFormatter = Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });

@@ -139,7 +139,8 @@ const ErrorInvestigation = () => {
                         {filtersApplied > 0 ? (
                             <DsTypography variant="Semibold_16">
                                 {t('databases.log-analyzer.unique-errors')} ({errorCardsData?.length}/
-                                {errorInvestigationData?.length}) | {t('databases.log-analyzer.filters-applied')} ({filtersApplied})
+                                {errorInvestigationData?.length}) | {t('databases.log-analyzer.filters-applied')} (
+                                {filtersApplied})
                             </DsTypography>
                         ) : (
                             <DsTypography variant="Semibold_16">

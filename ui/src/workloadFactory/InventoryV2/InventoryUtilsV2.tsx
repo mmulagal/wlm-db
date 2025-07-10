@@ -401,6 +401,9 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     fileSystemDeploymentMode: getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType,
                     fsxId: perRow?.databaseInstanceTopology?.fileSystemId,
+                    fileSystemName: perRow?.databaseInstanceTopology?.fileSystemName
+                        ? perRow?.databaseInstanceTopology?.fileSystemName
+                        : GENERAL.NOT_AVAILABLE,
                     protection: perRow?.protection,
                     performance: perRow?.performance,
                     storage: perRow?.storage,
