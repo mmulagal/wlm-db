@@ -1001,7 +1001,34 @@ const InstancesTable = () => {
                             id: 'viewInstance',
                             displayName: 'Manage instance',
                             disabled: disableOption,
-                            infoText: disableMessage
+                            infoText: disableMessage,
+                            subMenu: [
+                                {
+                                    id: 'viewInstance',
+                                    displayName: 'Instance dashboard',
+                                    disabled: disableOption,
+                                    infoText: disableMessage
+                                },
+                                {
+                                    id: 'viewDatabases',
+                                    displayName: 'View databases',
+                                    disabled: disableOption,
+                                    infoText: disableMessage
+                                },
+
+                                {
+                                    id: 'createUserDb',
+                                    displayName: 'Create database',
+                                    disabled: disableOption || disableCreateDb,
+                                    infoText: disableMessage || disableCreateDbMsg
+                                },
+                                {
+                                    id: 'createSandbox',
+                                    displayName: 'Create sandbox',
+                                    disabled: disableOption,
+                                    infoText: disableMessage
+                                }
+                            ]
                         },
                         {
                             id: 'optimize',
@@ -1013,25 +1040,7 @@ const InstancesTable = () => {
                         //     id: 'protect',
                         //     displayName: 'Protect'
                         // },
-                        {
-                            id: 'viewDatabases',
-                            displayName: 'View databases',
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
 
-                        {
-                            id: 'createUserDb',
-                            displayName: 'Create database',
-                            disabled: disableOption || disableCreateDb,
-                            infoText: disableMessage || disableCreateDbMsg
-                        },
-                        {
-                            id: 'createSandbox',
-                            displayName: 'Create sandbox',
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
                         {
                             id: 'unManage',
                             displayName: 'Deregister'
