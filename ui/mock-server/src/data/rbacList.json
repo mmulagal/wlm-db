@@ -1,0 +1,53 @@
+{
+    "continue": "7c2e2f27-5caa-11f0-a796-5a9300e3e646",
+    "items": [
+        {
+            "auth0Id": "auth0|686cd1a640d5b8671725a2e2",
+            "description": "creating new tenancy user",
+            "id": "9c0fe333-b1d0-4be4-bcbb-35627beff9de",
+            "metadata": {},
+            "name": "Rashid Nadaf",
+            "ownerOrganizationId": "b54bbba4-57da-4983-9d83-4159bc516e6c",
+            "tags": [
+                {
+                    "internal:bxp:organizationId": "b54bbba4-57da-4983-9d83-4159bc516e6c"
+                },
+                {
+                    "internal:bxp:usergroupId": "ab70b27c-7379-4077-a97b-e2a81471c1d9"
+                },
+                {
+                    "internal:bxp:userType": "user"
+                },
+                {
+                    "internal:bxp:projectId": "72041340-74fe-4581-8189-1c266c8f4ee4"
+                },
+                {
+                    "internal:bxp:usergroupId": "fbfe5d06-23e5-474f-b48c-0ffbcbc44a86"
+                },
+                {
+                    "internal:bxp:organization:b54bbba4-57da-4983-9d83-4159bc516e6c:CMNotificationOptIn": "true"
+                },
+                {
+                    "internal:bxp:usergroupId": "2350b5b3-0b26-4cf3-8abe-69f83fdad2f7"
+                },
+                {
+                    "internal:bxp:lastLoginTime": "2025-07-09T09:23:02Z"
+                },
+                {
+                    "internal:bxp:ownerOrganizationId": "b54bbba4-57da-4983-9d83-4159bc516e6c"
+                },
+                {
+                    "internal:bxp:userId": "9c0fe333-b1d0-4be4-bcbb-35627beff9de"
+                }
+            ],
+            "type": "application/vnd.netapp.bxp.user",
+            "userType": "user",
+            "company": "NetApp",
+            "cloudManagerNotificationsOptIn": false,
+            "email": "jul08@netapp.com",
+            "roles": ["5e61af96-37db-4ab0-b3b4-40af23fe542f"],
+            "version": "1.0"
+        }
+    ],
+    "count": 1
+}
