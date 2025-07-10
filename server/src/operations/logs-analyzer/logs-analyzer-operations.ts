@@ -435,7 +435,15 @@ async function getLogsAnalysisReport(
         jobId
     });
 
-    const response = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId);
+    const response = await listLogsAnalysisReports(
+        accountId,
+        databaseHostId,
+        databaseInstanceId,
+        jobId,
+        undefined,
+        undefined,
+        1
+    );
 
     if (response && response.length > 0) {
         const [{ logs_analysis_data: logsAnalysisData } = {}] = response;
@@ -444,6 +452,52 @@ async function getLogsAnalysisReport(
         return { remediationRecommendation };
     }
     const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
+    logger.error(errorMessage);
+    throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+}
+
+async function listLogsAnalysisReportsIdentifiers(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Listing logs analysis report identifiers:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    const response = await listLogsAnalysisReports(
+        accountId,
+        databaseHostId,
+        databaseInstanceId,
+        undefined,
+        'creation_time',
+        'desc',
+        undefined,
+        undefined,
+        {
+            id: true,
+            creation_time: true
+        }
+    );
+
+    if (response && response.length > 0) {
+        const reports = response.map(({ id, creation_time: creationTime }) => ({
+            id,
+            creationTime: creationTime.getTime()
+        }));
+
+        return {
+            reports
+        };
+    }
+
+    const errorMessage = `No logs analysis reports found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
     logger.error(errorMessage);
     throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
 }
@@ -475,4 +529,10 @@ async function calculateLogsAnalysisPrice(region: string) {
         costPerError
     };
 }
-export { triggerLogsAnalysis, handleLogsAnalysis, getLogsAnalysisReport, calculateLogsAnalysisPrice };
+export {
+    triggerLogsAnalysis,
+    handleLogsAnalysis,
+    getLogsAnalysisReport,
+    listLogsAnalysisReportsIdentifiers,
+    calculateLogsAnalysisPrice
+};

@@ -1,6 +1,11 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
-import { LogsAnalyzerBody, LogsAnalyzerParams, RemediationRecommendationObject } from '../types/logs-analyzer.types';
+import {
+    LogsAnalyzerBody,
+    LogsAnalyzerParams,
+    RemediationRecommendationObject,
+    ReportIdentifier
+} from '../types/logs-analyzer.types';
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
@@ -35,4 +40,24 @@ const GetLogsAnalyzerSchema = {
     }
 };
 
-export { LogsAnalyzerSchema, GetLogsAnalyzerSchema };
+const ListLogsAnalyzerReportsSchema = {
+    tags: [RouteTags.LOGS_ANALYSIS],
+    description: 'List logs analysis reports for a specific database instance',
+    hide: process.env.NODE_ENV === 'production',
+    params: LogsAnalyzerParams,
+    querystring: Type.Object({
+        pageSize: Type.Optional(Type.Number()),
+        nextToken: Type.Optional(Type.String())
+    }),
+    summary: 'List logs analysis for a specific database instance',
+    response: {
+        200: Type.Object({
+            reports: Type.Array(ReportIdentifier)
+        }),
+        404: Type.Object({
+            message: Type.String()
+        })
+    }
+};
+
+export { LogsAnalyzerSchema, GetLogsAnalyzerSchema, ListLogsAnalyzerReportsSchema };

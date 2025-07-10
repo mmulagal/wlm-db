@@ -1,16 +1,11 @@
 import {
     calculateLogsAnalysisPrice,
     getLogsAnalysisReport,
-    handleLogsAnalysis,
+    listLogsAnalysisReportsIdentifiers,
     triggerLogsAnalysis
 } from '../../src/operations/logs-analyzer/logs-analyzer-operations';
 
-import {
-    createResource,
-    deleteResource,
-    listDatabaseInstances,
-    upsertDatabaseInstance
-} from '../../src/lib/database/db';
+import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import { ACCOUNT_ID } from '../utils/consts';
 
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -21,12 +16,13 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/cloud-watch-logs-scope';
-import { sleep } from '../../src/utils/utils';
+import waitForJobCompletion from '../utils/utils';
 
 const TEST_RESOURCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
 const TEST_REGION = 'ap-southeast-1';
 
+let JOB_ID: string | undefined;
 describe('Logs Analyzer Operations', () => {
     beforeAll(async () => {
         await createResource(ACCOUNT_ID, {
@@ -59,6 +55,14 @@ describe('Logs Analyzer Operations', () => {
             fsxnIds: 'fs-0f53fbecdd3d85fb2',
             databaseType: 'MSSQL'
         });
+
+        ({ jobId: JOB_ID } = await triggerLogsAnalysis(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            TEST_RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d'
+        ));
     });
 
     afterAll(async () => {
@@ -66,7 +70,7 @@ describe('Logs Analyzer Operations', () => {
         await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
     });
 
-    it.skip('should trigger logs analysis and return a jobId', async () => {
+    it('should trigger logs analysis and return a jobId', async () => {
         const result = await triggerLogsAnalysis(
             ACCOUNT_ID,
             TEST_CREDENTIALS_ID,
@@ -77,39 +81,15 @@ describe('Logs Analyzer Operations', () => {
         expect(result).toHaveProperty('jobId');
     });
 
-    it('should run logs analysis and return a jobId', async () => {
-        const [managedInstance] = await listDatabaseInstances(ACCOUNT_ID, {
-            sqlInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d'
-        });
-        const { jobId } = await triggerLogsAnalysis(
-            ACCOUNT_ID,
-            TEST_CREDENTIALS_ID,
-            TEST_REGION,
-            TEST_RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
-        );
-        const result =
-            (await handleLogsAnalysis(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, managedInstance, jobId)) || [];
-        expect((result?.[0] as any)?.status)?.toBeDefined();
-    });
-
     it('should list logs analysis reports', async () => {
-        await triggerLogsAnalysis(
-            ACCOUNT_ID,
-            TEST_CREDENTIALS_ID,
-            TEST_REGION,
-            TEST_RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
-        );
-
-        await sleep(3000); // Wait for the job to complete
-
+        await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
         const reports = await getLogsAnalysisReport(
             ACCOUNT_ID,
             TEST_CREDENTIALS_ID,
             TEST_REGION,
             TEST_RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            JOB_ID
         );
 
         expect(reports).toBeDefined();
@@ -120,5 +100,37 @@ describe('Logs Analyzer Operations', () => {
     it('Should calculate logs analysis cost', async () => {
         const response = await calculateLogsAnalysisPrice(TEST_REGION);
         expect(response).toHaveProperty('costPerError');
+    });
+
+    it('should list logs analysis report identifiers with pagination', async () => {
+        await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
+        const result = await listLogsAnalysisReportsIdentifiers(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            TEST_RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d'
+        );
+
+        expect(result).toBeDefined();
+        expect(Array.isArray(result.reports)).toBe(true);
+
+        const {
+            reports: [firstReport]
+        } = result;
+        expect(firstReport).toHaveProperty('id');
+        expect(firstReport).toHaveProperty('reportCreationTime');
+    });
+
+    it('should throw error when no reports exist for given parameters', async () => {
+        await expect(
+            listLogsAnalysisReportsIdentifiers(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                'non-existent-resource-id',
+                'non-existent-database-instance-id'
+            )
+        ).rejects.toThrow(/No logs analysis reports found/);
     });
 });
