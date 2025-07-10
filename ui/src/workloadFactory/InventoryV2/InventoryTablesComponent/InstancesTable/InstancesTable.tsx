@@ -15,7 +15,15 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useGetConnectorsMutation, useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
+import {
+    useDiscoverExistingFsxNMutation,
+    useGetConnectorsMutation,
+    useGetFsxDetailsMutation,
+    useGetRBACPrivilegesMutation,
+    useGetWorkSpaceIDMutation,
+    useListExistingHostsMutation,
+    useUnmanageMssqlInstanceMutation
+} from '../../../../utils/apiService';
 import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { bxpRedirect, getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
@@ -103,6 +111,11 @@ const InstancesTable = () => {
 
     const [unmanageApi] = useUnmanageMssqlInstanceMutation();
     const [getConnector] = useGetConnectorsMutation();
+    const [getFsxDetails] = useGetFsxDetailsMutation();
+    const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
+    const [getWorkSpaceID] = useGetWorkSpaceIDMutation();
+    const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
+    const [listExistingHosts] = useListExistingHostsMutation();
 
     useEffect(() => {
         setLoading(
@@ -292,7 +305,7 @@ const InstancesTable = () => {
 
         if (existingConnectors) {
             // already in store, use directly
-            proceedWithProtection(existingConnectors);
+            await handleFsxFlow(rowData, existingConnectors);
             return;
         }
         setDialog(
@@ -314,10 +327,45 @@ const InstancesTable = () => {
         if (res?.data?.occms) {
             // save to store for next time
             dispatch(setConnectors(res.data));
-            proceedWithProtection(res.data);
+            await handleFsxFlow(rowData, res.data);
         } else {
             closeDialog();
         }
+    };
+
+    const handleFsxFlow = async (rowData: any, connectorsData: any) => {
+        // First call the getFsxDetails API
+        const fsxRes = await getFsxDetails({ accountID: store.getState().auth.accountId });
+
+        // Check if fsxId from rowData exists in fetched fsx list
+        //@ts-ignore
+        const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
+
+        if (!fsxExists) {
+            const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+            // Call discoverExistingFsxN API with payload { fsxId }
+            const discoverRes = await discoverExistingFsxN({
+                accountID: store.getState().auth.accountId,
+                credentialID: rowData.credentialId,
+                workSpaceID: workSpaceRes?.data?.items[0]?.id,
+                regionID: rowData.regionId,
+                payload: [rowData.fsxId]
+            });
+            console.log(discoverRes);
+        }
+
+        const rbacRes = await getRBACPrivileges({ accountID: store.getState().auth.accountId });
+        console.log('RBAC Privileges:', rbacRes);
+
+        const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
+
+        // Check if the host exists by name
+        const hostExists = hostsRes?.data?.hosts?.some((host: any) => host.name === rowData.hostRow.name);
+
+        console.log('Is host managed already?', hostExists);
+
+        // Now proceed with protection flow as before
+        proceedWithProtection(connectorsData);
     };
 
     const proceedWithProtection = (data: any) => {
