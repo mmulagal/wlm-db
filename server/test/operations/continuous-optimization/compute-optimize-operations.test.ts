@@ -90,7 +90,9 @@ describe('Compute remediation operations', () => {
                     storage_type: 'FSXN',
                     co_relation_id: 'fs-f6082f35c1db',
                     resource_name: 'test-resource',
-                    configurations: {}
+                    configurations: {},
+                    assessment_data: null,
+                    assessment_results: null
                 }
             ],
             optimizeParentId,
@@ -122,7 +124,9 @@ describe('Compute remediation operations', () => {
                     storage_type: 'FSXN',
                     co_relation_id: 'fs-f6082f35c1db',
                     resource_name: 'test-resource',
-                    configurations: null
+                    configurations: null,
+                    assessment_data: null,
+                    assessment_results: null
                 }
             ],
             optimizeParentId,

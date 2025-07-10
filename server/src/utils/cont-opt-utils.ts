@@ -1,23 +1,24 @@
 import getLogger from './logger';
 import { listResources } from '../lib/database/db';
-import { Metadata } from './common-types';
-import { updateResourceMetaData } from '../operations/database/database-operations';
+import { ResourceAssessmentData } from './common-types';
+import { updateDatabaseHostAssessmentData } from '../operations/database/database-operations';
 
 const logger = getLogger();
 
-async function updateAsssementErrorInResourceMetadata(
+async function updateAssessmentErrorInResourceTable(
     accountId: string,
     databaseHostId: string,
     credentialsId: string,
     region: string,
     errorMessage: string,
-    assesmentType: string
+    assessmentType: string
 ) {
     try {
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const [{ assessment_data: assessmentData } = {}] =
+            (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        const existingAssessmentData = assessmentData as ResourceAssessmentData | undefined;
         let assessmentErrors = {};
-        switch (assesmentType) {
+        switch (assessmentType) {
             case 'compute':
                 assessmentErrors = { ...existingAssessmentData?.errors, compute: errorMessage };
                 break;
@@ -37,12 +38,12 @@ async function updateAsssementErrorInResourceMetadata(
                 assessmentErrors = { ...existingAssessmentData?.errors };
                 break;
         }
-        (metadata as unknown as Metadata).assessment = {
+        const newAssessmentData = {
             ...existingAssessmentData,
             errors: assessmentErrors,
             lastAssessedDate: new Date().getTime().toString()
         };
-        return updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        return updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     } catch (error: any) {
         logger.error('Error updating assessment error in resource metadata', {
             accountId,
@@ -50,10 +51,10 @@ async function updateAsssementErrorInResourceMetadata(
             credentialsId,
             region,
             errorMessage,
-            assesmentType,
+            assessmentType,
             error
         });
     }
 }
 
-export { updateAsssementErrorInResourceMetadata };
+export { updateAssessmentErrorInResourceTable };

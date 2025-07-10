@@ -14,7 +14,7 @@ import {
     managedHostMSSQLPatchAssessment,
     runMSSQLPatchAssessment
 } from '../../../src/operations/continuous-optimization/mssqlPatch-assessment-operations';
-import { Metadata } from '../../../src/utils/common-types';
+import { ResourceAssessmentData } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 
@@ -32,225 +32,225 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI',
-            assessment: {
-                mssqlPatch: [
-                    {
-                        ec2InstanceId: 'i-0a1f31a39bd2d9362',
-                        ec2InstanceName: 'SQLServer-Dev-02',
-                        missingPatchDetails: [
-                            {
-                                kbId: 'KB4583458',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB4583458)',
-                                severity: 'Important',
-                                releaseDate: '2021-01-12T18:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB4583459',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB4583459)',
-                                severity: 'Important',
-                                releaseDate: '2021-01-12T18:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5014356',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5014356)',
-                                severity: 'Important',
-                                releaseDate: '2022-06-14T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5021124',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
-                                severity: 'Important',
-                                releaseDate: '2023-02-14T18:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5021125',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
-                                severity: 'Important',
-                                releaseDate: '2023-03-05T19:18:30.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5029377',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
-                                severity: 'Important',
-                                releaseDate: '2023-10-10T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5029378',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
-                                severity: 'Important',
-                                releaseDate: '2023-10-10T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5035434',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
-                                severity: 'Important',
-                                releaseDate: '2024-04-09T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5036335',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
-                                severity: 'Important',
-                                releaseDate: '2024-04-09T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5040948',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
-                                severity: 'Important',
-                                releaseDate: '2024-07-09T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5040986',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
-                                severity: 'Important',
-                                releaseDate: '2024-07-09T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5042214',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
-                                severity: 'Important',
-                                releaseDate: '2024-09-10T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5046056',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
-                                severity: 'Important',
-                                releaseDate: '2024-10-08T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5046859',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
-                                severity: 'Important',
-                                releaseDate: '2024-11-12T18:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            }
-                        ],
-                        missingPatchesCount: 14,
-                        criticalMissingPatchesCount: 0,
-                        importantMissingPatchesCount: 14
-                    },
-                    {
-                        ec2InstanceId: 'i-0253886610c274a28',
-                        ec2InstanceName: 'SQLServer-QA-02',
-                        missingPatchDetails: [
-                            {
-                                kbId: 'KB4583458',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB4583458)',
-                                severity: 'Important',
-                                releaseDate: '2021-01-12T18:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB4583459',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB4583459)',
-                                severity: 'Important',
-                                releaseDate: '2021-01-12T18:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5014356',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5014356)',
-                                severity: 'Important',
-                                releaseDate: '2022-06-14T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5021124',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
-                                severity: 'Important',
-                                releaseDate: '2023-02-14T18:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5021125',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
-                                severity: 'Important',
-                                releaseDate: '2023-03-05T19:18:30.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5029377',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
-                                severity: 'Important',
-                                releaseDate: '2023-10-10T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5029378',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
-                                severity: 'Important',
-                                releaseDate: '2023-10-10T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5035434',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
-                                severity: 'Important',
-                                releaseDate: '2024-04-09T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5036335',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
-                                severity: 'Important',
-                                releaseDate: '2024-04-09T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5040948',
-                                title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
-                                severity: 'Important',
-                                releaseDate: '2024-07-09T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5040986',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
-                                severity: 'Important',
-                                releaseDate: '2024-07-09T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5042214',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
-                                severity: 'Important',
-                                releaseDate: '2024-09-10T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5046056',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
-                                severity: 'Important',
-                                releaseDate: '2024-10-08T17:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            },
-                            {
-                                kbId: 'KB5046859',
-                                title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
-                                severity: 'Important',
-                                releaseDate: '2024-11-12T18:00:00.000Z',
-                                classification: 'SecurityUpdates'
-                            }
-                        ],
-                        missingPatchesCount: 14,
-                        criticalMissingPatchesCount: 0,
-                        importantMissingPatchesCount: 14
-                    }
-                ]
-            }
+            sqlDeploymentType: 'FCI'
+        },
+        assessmentData: {
+            mssqlPatch: [
+                {
+                    ec2InstanceId: 'i-0a1f31a39bd2d9362',
+                    ec2InstanceName: 'SQLServer-Dev-02',
+                    missingPatchDetails: [
+                        {
+                            kbId: 'KB4583458',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB4583458)',
+                            severity: 'Important',
+                            releaseDate: '2021-01-12T18:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB4583459',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB4583459)',
+                            severity: 'Important',
+                            releaseDate: '2021-01-12T18:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5014356',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5014356)',
+                            severity: 'Important',
+                            releaseDate: '2022-06-14T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5021124',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
+                            severity: 'Important',
+                            releaseDate: '2023-02-14T18:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5021125',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
+                            severity: 'Important',
+                            releaseDate: '2023-03-05T19:18:30.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5029377',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
+                            severity: 'Important',
+                            releaseDate: '2023-10-10T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5029378',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
+                            severity: 'Important',
+                            releaseDate: '2023-10-10T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5035434',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
+                            severity: 'Important',
+                            releaseDate: '2024-04-09T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5036335',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
+                            severity: 'Important',
+                            releaseDate: '2024-04-09T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5040948',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
+                            severity: 'Important',
+                            releaseDate: '2024-07-09T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5040986',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
+                            severity: 'Important',
+                            releaseDate: '2024-07-09T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5042214',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
+                            severity: 'Important',
+                            releaseDate: '2024-09-10T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5046056',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
+                            severity: 'Important',
+                            releaseDate: '2024-10-08T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5046859',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
+                            severity: 'Important',
+                            releaseDate: '2024-11-12T18:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        }
+                    ],
+                    missingPatchesCount: 14,
+                    criticalMissingPatchesCount: 0,
+                    importantMissingPatchesCount: 14
+                },
+                {
+                    ec2InstanceId: 'i-0253886610c274a28',
+                    ec2InstanceName: 'SQLServer-QA-02',
+                    missingPatchDetails: [
+                        {
+                            kbId: 'KB4583458',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB4583458)',
+                            severity: 'Important',
+                            releaseDate: '2021-01-12T18:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB4583459',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB4583459)',
+                            severity: 'Important',
+                            releaseDate: '2021-01-12T18:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5014356',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5014356)',
+                            severity: 'Important',
+                            releaseDate: '2022-06-14T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5021124',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
+                            severity: 'Important',
+                            releaseDate: '2023-02-14T18:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5021125',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
+                            severity: 'Important',
+                            releaseDate: '2023-03-05T19:18:30.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5029377',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
+                            severity: 'Important',
+                            releaseDate: '2023-10-10T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5029378',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
+                            severity: 'Important',
+                            releaseDate: '2023-10-10T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5035434',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
+                            severity: 'Important',
+                            releaseDate: '2024-04-09T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5036335',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
+                            severity: 'Important',
+                            releaseDate: '2024-04-09T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5040948',
+                            title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
+                            severity: 'Important',
+                            releaseDate: '2024-07-09T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5040986',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
+                            severity: 'Important',
+                            releaseDate: '2024-07-09T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5042214',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
+                            severity: 'Important',
+                            releaseDate: '2024-09-10T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5046056',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
+                            severity: 'Important',
+                            releaseDate: '2024-10-08T17:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        },
+                        {
+                            kbId: 'KB5046859',
+                            title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
+                            severity: 'Important',
+                            releaseDate: '2024-11-12T18:00:00.000Z',
+                            classification: 'SecurityUpdates'
+                        }
+                    ],
+                    missingPatchesCount: 14,
+                    criticalMissingPatchesCount: 0,
+                    importantMissingPatchesCount: 14
+                }
+            ]
         }
     });
 
@@ -285,14 +285,14 @@ describe('MSSql Patch assessment operations', () => {
     });
 
     it('Should calculate mssql patch drift', async () => {
-        const [{ metadata = {} } = {}] =
+        const [{ assessment_data: assessmentData }] =
             (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
         const response = await calculateMSSQLPatchDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            metadata as unknown as Metadata
+            assessmentData as unknown as ResourceAssessmentData
         );
         expect(response.name).toEqual('mssql-patch');
     });

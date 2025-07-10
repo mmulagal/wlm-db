@@ -1,7 +1,7 @@
 import { createResource, listResources } from '../../src/lib/database/db';
-import { Metadata } from '../../src/utils/common-types';
+import { ResourceAssessmentData } from '../../src/utils/common-types';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION } from '../../src/utils/consts';
-import { updateAsssementErrorInResourceMetadata } from '../../src/utils/cont-opt-utils';
+import { updateAssessmentErrorInResourceTable } from '../../src/utils/cont-opt-utils';
 import { DEFAULT_AWS_CREDENTIALS_ID } from './consts';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
@@ -27,7 +27,7 @@ beforeAll(async () => {
 
 describe('Cont opt utils tests', () => {
     it(' Persist assessment error in database', async () => {
-        const response = await updateAsssementErrorInResourceMetadata(
+        const response = await updateAssessmentErrorInResourceTable(
             ACCOUNT_ID,
             RESOURCE_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
@@ -38,9 +38,9 @@ describe('Cont opt utils tests', () => {
 
         expect(response?.count).toEqual(1);
 
-        const [{ metadata = {} } = {}] =
+        const [{ assessment_data: assessmentData } = {}] =
             (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
-        const assessmentData = (metadata as unknown as Metadata).assessment;
-        expect(assessmentData?.errors?.compute).toEqual('Error in compute assessment');
+        const fetchedAssessmentData = assessmentData as unknown as ResourceAssessmentData;
+        expect(fetchedAssessmentData?.errors?.compute).toEqual('Error in compute assessment');
     });
 });

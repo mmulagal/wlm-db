@@ -13,7 +13,7 @@ import {
     calculateLicenseDrift,
     managedHostsLicenseAssessment
 } from '../../../src/operations/continuous-optimization/license-assessment-operations';
-import { Metadata } from '../../../src/utils/common-types';
+import { ResourceAssessmentData } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 
@@ -31,104 +31,104 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI',
-            assessment: {
-                license: {
-                    licenseFinding: 'OPTIMIZED',
-                    sqlServerInstances: [
-                        {
-                            nodeIps: ['172.31.41.12', '172.31.6.12'],
-                            storage: [
-                                {
-                                    id: 'fs-07a22f282fd4f5a20',
-                                    type: 'FSXN',
-                                    svmId: 'svm-05507971c4f713ba4',
-                                    protocol: 'iSCSI',
-                                    fileSystemStorageType: 'SSD'
-                                }
-                            ],
-                            serverGuid: 'DEDC70ED-97C6-4DA3-91B8-F150E97DD40D',
-                            databaseCount: '4',
-                            sqlServerName: 'MEGASQL',
-                            sqlServerNodes: ['sqlnode1-44317', 'sqlnode2-44317'],
-                            sqlServerState: 'Running',
-                            deploymentTypes: [
-                                {
-                                    type: 'MULTI_AZ_1',
-                                    zones: ['eu-south-2a', 'eu-south-2c']
-                                }
-                            ],
-                            sqlServerEdition: 'Standard Edition (64-bit)',
-                            sqlServerVersion: '15.0.2000.5',
-                            windowsOsVersion: 'Microsoft Windows Server 2022',
-                            isDefaultInstance: false,
-                            sqlServerInstance: 'MEGASQL',
-                            windowsClusterName: 'WLMWSFC-44317',
-                            windowsClusterNodes: [
-                                {
-                                    Node: 'sqlnode1-44317',
-                                    Address: '172.31.41.12'
-                                },
-                                {
-                                    Node: 'sqlnode2-44317',
-                                    Address: '172.31.6.12'
-                                }
-                            ],
-                            sqlServerProductYear: 2019,
-                            missingSqlPermissions: [],
-                            windowsAuthentication: true,
-                            sqlServerEngineEdition: 2,
-                            sqlServerAuthentication: false,
-                            sqlServerDeploymentType: 'FCI'
-                        },
-                        {
-                            nodeIps: ['172.31.41.12', '172.31.6.12'],
-                            storage: [
-                                {
-                                    id: 'fs-07a22f282fd4f5a20',
-                                    type: 'FSXN',
-                                    svmId: 'svm-05507971c4f713ba4',
-                                    protocol: 'iSCSI',
-                                    fileSystemStorageType: 'SSD'
-                                }
-                            ],
-                            serverGuid: '8C3CD553-6ACA-4285-A5C6-31D2464E13CA',
-                            databaseCount: '16',
-                            sqlServerName: 'SQLDATABASEZOID',
-                            sqlServerNodes: ['sqlnode1-44317', 'sqlnode2-44317'],
-                            sqlServerState: 'Running',
-                            deploymentTypes: [
-                                {
-                                    type: 'MULTI_AZ_1',
-                                    zones: ['eu-south-2a', 'eu-south-2c']
-                                }
-                            ],
-                            sqlServerEdition: 'Standard Edition (64-bit)',
-                            sqlServerVersion: '15.0.4298.1',
-                            windowsOsVersion: 'Microsoft Windows Server 2022',
-                            isDefaultInstance: true,
-                            sqlServerInstance: 'MSSQLSERVER',
-                            windowsClusterName: 'WLMWSFC-44317',
-                            windowsClusterNodes: [
-                                {
-                                    Node: 'sqlnode1-44317',
-                                    Address: '172.31.41.12'
-                                },
-                                {
-                                    Node: 'sqlnode2-44317',
-                                    Address: '172.31.6.12'
-                                }
-                            ],
-                            sqlServerProductYear: 2019,
-                            missingSqlPermissions: [],
-                            windowsAuthentication: true,
-                            sqlServerEngineEdition: 2,
-                            sqlServerAuthentication: false,
-                            sqlServerDeploymentType: 'FCI'
-                        }
-                    ],
-                    recommendedLicenseType: 'SQL std'
-                }
+            sqlDeploymentType: 'FCI'
+        },
+        assessmentData: {
+            license: {
+                licenseFinding: 'OPTIMIZED',
+                sqlServerInstances: [
+                    {
+                        nodeIps: ['172.31.41.12', '172.31.6.12'],
+                        storage: [
+                            {
+                                id: 'fs-07a22f282fd4f5a20',
+                                type: 'FSXN',
+                                svmId: 'svm-05507971c4f713ba4',
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        serverGuid: 'DEDC70ED-97C6-4DA3-91B8-F150E97DD40D',
+                        databaseCount: '4',
+                        sqlServerName: 'MEGASQL',
+                        sqlServerNodes: ['sqlnode1-44317', 'sqlnode2-44317'],
+                        sqlServerState: 'Running',
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['eu-south-2a', 'eu-south-2c']
+                            }
+                        ],
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerVersion: '15.0.2000.5',
+                        windowsOsVersion: 'Microsoft Windows Server 2022',
+                        isDefaultInstance: false,
+                        sqlServerInstance: 'MEGASQL',
+                        windowsClusterName: 'WLMWSFC-44317',
+                        windowsClusterNodes: [
+                            {
+                                Node: 'sqlnode1-44317',
+                                Address: '172.31.41.12'
+                            },
+                            {
+                                Node: 'sqlnode2-44317',
+                                Address: '172.31.6.12'
+                            }
+                        ],
+                        sqlServerProductYear: 2019,
+                        missingSqlPermissions: [],
+                        windowsAuthentication: true,
+                        sqlServerEngineEdition: 2,
+                        sqlServerAuthentication: false,
+                        sqlServerDeploymentType: 'FCI'
+                    },
+                    {
+                        nodeIps: ['172.31.41.12', '172.31.6.12'],
+                        storage: [
+                            {
+                                id: 'fs-07a22f282fd4f5a20',
+                                type: 'FSXN',
+                                svmId: 'svm-05507971c4f713ba4',
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        serverGuid: '8C3CD553-6ACA-4285-A5C6-31D2464E13CA',
+                        databaseCount: '16',
+                        sqlServerName: 'SQLDATABASEZOID',
+                        sqlServerNodes: ['sqlnode1-44317', 'sqlnode2-44317'],
+                        sqlServerState: 'Running',
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['eu-south-2a', 'eu-south-2c']
+                            }
+                        ],
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerVersion: '15.0.4298.1',
+                        windowsOsVersion: 'Microsoft Windows Server 2022',
+                        isDefaultInstance: true,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        windowsClusterName: 'WLMWSFC-44317',
+                        windowsClusterNodes: [
+                            {
+                                Node: 'sqlnode1-44317',
+                                Address: '172.31.41.12'
+                            },
+                            {
+                                Node: 'sqlnode2-44317',
+                                Address: '172.31.6.12'
+                            }
+                        ],
+                        sqlServerProductYear: 2019,
+                        missingSqlPermissions: [],
+                        windowsAuthentication: true,
+                        sqlServerEngineEdition: 2,
+                        sqlServerAuthentication: false,
+                        sqlServerDeploymentType: 'FCI'
+                    }
+                ],
+                recommendedLicenseType: 'SQL std'
             }
         }
     });
@@ -149,7 +149,7 @@ beforeAll(async () => {
 });
 describe('License assessment operations', () => {
     it('Should calculate license drift', async () => {
-        const [{ metadata = {} } = {}] =
+        const [{ assessment_data: assessmentData }] =
             (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
         const response = await calculateLicenseDrift(
             ACCOUNT_ID,
@@ -157,7 +157,7 @@ describe('License assessment operations', () => {
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
-            metadata as unknown as Metadata
+            assessmentData as unknown as ResourceAssessmentData
         );
 
         expect(response.name).toEqual('sql-license');

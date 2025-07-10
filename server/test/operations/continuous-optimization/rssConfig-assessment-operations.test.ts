@@ -8,7 +8,7 @@ import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope'
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import { createResource, listResources, upsertDatabaseInstance } from '../../../src/lib/database/db';
-import { Metadata } from '../../../src/utils/common-types';
+import { Metadata, ResourceAssessmentData } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 
@@ -26,13 +26,13 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI',
-            assessment: {
-                rssConfig: {
-                    rssAdapters: [],
-                    tcpOffloadState: 'Disabled',
-                    rssConfigFinding: 'optimized'
-                }
+            sqlDeploymentType: 'FCI'
+        },
+        assessmentData: {
+            rssConfig: {
+                rssAdapters: [],
+                tcpOffloadState: 'Disabled',
+                rssConfigFinding: 'optimized'
             }
         }
     });
@@ -84,7 +84,7 @@ describe('calculateRssConfigDrift', () => {
     });
 
     it('run RSS config assessment drift data', async () => {
-        const [{ metadata = {} } = {}] =
+        const [{ metadata = {}, assessment_data: assessmentData } = {}] =
             (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
 
         const rssConfigAssessmentResponse = await calculateRssConfigDrift(
@@ -92,7 +92,8 @@ describe('calculateRssConfigDrift', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            metadata as unknown as Metadata
+            metadata as unknown as Metadata,
+            assessmentData as unknown as ResourceAssessmentData
         );
         expect(rssConfigAssessmentResponse.name).toEqual('rss-config');
     });

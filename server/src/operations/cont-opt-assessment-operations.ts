@@ -22,7 +22,8 @@ import {
     ResourceDetails,
     StorageAssessment,
     WorkloadInstance,
-    CloneDetail
+    CloneDetail,
+    ResourceAssessmentData
 } from '../utils/common-types';
 import {
     AuditStatus,
@@ -58,8 +59,9 @@ import {
     getInstanceInfo,
     getResources,
     listAllManagedInstances,
-    updateInstanceMetadata,
-    updateResourceMetaData
+    updateDatabaseHostAssessmentData,
+    updateDatabaseHostAssessmentResults,
+    updateDatabaseInstanceAssessmentResults
 } from './database/database-operations';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -148,25 +150,27 @@ async function updateAssesmentResultsInInstanceMetadata(managedInstance: Databas
         databaseHostId,
         databaseInstanceId
     });
-    const [driftAssessmentData, instanceDetails] = await Promise.all([
-        fetchDriftAssessment(
+    const driftAssessmentData = await fetchDriftAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        undefined,
+        managedInstance as unknown as DatabaseInstance
+    );
+
+    try {
+        await updateDatabaseInstanceAssessmentResults(
             accountId,
             credentialsId,
             region,
             databaseHostId,
             databaseInstanceId,
-            undefined,
-            managedInstance
-        ),
-        managedInstance ?? getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId)
-    ]);
-    const { metadata } = instanceDetails as unknown as DatabaseInstance;
-
-    (metadata as unknown as DatabaseInstanceMetadata).assessmentResults = driftAssessmentData;
-    try {
-        await updateInstanceMetadata(accountId, databaseInstanceId, metadata);
+            driftAssessmentData
+        );
     } catch (error) {
-        logger.error('Error while updating assessment results in instance metadata', {
+        logger.error('Error while updating assessment results in instance table', {
             accountId,
             databaseHostId,
             databaseInstanceId,
@@ -206,7 +210,8 @@ async function initiateHostLevelAssessmentDataCollection(
         metadata,
         cloud_provider_account_id: awsAccountId,
         resource_id: resourceId,
-        database_instances: managedInstances = []
+        database_instances: managedInstances = [],
+        assessment_data: assessmentData
     } = resource;
     const managedInstance = managedInstances.find(instance => instance.database_instance_id === databaseInstanceId);
 
@@ -271,9 +276,8 @@ async function initiateHostLevelAssessmentDataCollection(
             if (computeAssessment) {
                 // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
                 let { finding, findingReasonCodes, recommendationOptions } = computeAssessment || {};
-                const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-                const { compute: { recommendationOptions: existingRecommendationOptions } = {} } =
-                    existingAssessmentData || {};
+                const existingRecommendationOptions =
+                    (assessmentData as ResourceAssessmentData)?.compute?.recommendationOptions ?? [];
                 if (
                     existingRecommendationOptions &&
                     !isEmpty(existingRecommendationOptions) &&
@@ -361,9 +365,8 @@ async function initiateHostLevelAssessmentDataCollection(
         ].some(item => !isEmpty(item));
 
         if (hasAssessmentOrError) {
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment || {};
-
-            (metadata as unknown as Metadata).assessment = {
+            const existingAssessmentData = (assessmentData as ResourceAssessmentData) || {};
+            const newAssessmentData = {
                 license: licenseAssessment || (!licenseErrorMessage ? existingAssessmentData?.license : undefined),
                 compute: computeAssessment || (!computeErrorMessage ? existingAssessmentData?.compute : undefined),
                 hostOsPatch:
@@ -405,15 +408,21 @@ async function initiateHostLevelAssessmentDataCollection(
                     resource
                 }
             );
-            (metadata as unknown as Metadata).assessmentResults = {
+            const newAssessmentResults = {
                 license: assessmentResults.license || undefined,
                 compute: assessmentResults.compute || undefined,
                 hostOsPatch: assessmentResults.hostOsPatch || undefined,
                 rssConfig: assessmentResults.rssConfig || undefined,
                 mssqlPatch: assessmentResults.mssqlPatch || undefined
             };
-
-            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+            await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
+            await updateDatabaseHostAssessmentResults(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                newAssessmentResults
+            );
         }
         if (!isEmpty(hostOsPatchAssessment)) {
             updatePatchBaselineStatusForHost(accountId, databaseHostId, hostOsPatchAssessment);
@@ -848,7 +857,7 @@ async function triggerAssessment(
             databaseHostId,
             databaseInstanceId,
             undefined,
-            managedInstance
+            managedInstance as unknown as DatabaseInstance
         );
 
         activeNodeInstanceId = instanceDetails.activeNodeInstanceId;
@@ -1074,7 +1083,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                                             region as string,
                                             databaseHostId,
                                             databaseInstanceId,
-                                            resource,
+                                            resource as unknown as ResourceDetails,
                                             databaseInstanceDetails as unknown as DatabaseInstance
                                         );
                                         const { sqlAuthEnabled } = (newDatabaseInstanceDetails ||
@@ -1135,6 +1144,7 @@ function hostLevelDriftData(
     databaseHostId: string,
     databaseInstanceId: string,
     metadata: Metadata,
+    assessmentData: ResourceAssessmentData,
     fieldsValues: string[]
 ) {
     logger.info('Fetching host level drift data', {
@@ -1172,7 +1182,7 @@ function hostLevelDriftData(
                   region,
                   databaseHostId,
                   databaseInstanceId,
-                  metadata as unknown as Metadata
+                  assessmentData
               )
             : {},
         shouldCalculateLicenseAssessment
@@ -1182,29 +1192,24 @@ function hostLevelDriftData(
                   region,
                   databaseHostId,
                   databaseInstanceId,
-                  metadata as unknown as Metadata
+                  assessmentData
               )
             : {},
         shouldCalculateHostOsPatchAssessment
-            ? calculateHostOsPatchDrift(
-                  accountId,
-                  credentialsId,
-                  region,
-                  databaseHostId,
-                  metadata as unknown as Metadata
-              )
+            ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId, assessmentData)
             : {},
         shouldCalculateRssConfigAssessment
-            ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId, metadata as unknown as Metadata)
-            : {},
-        shouldCalculateMSSQLPatchAssessment
-            ? calculateMSSQLPatchDrift(
+            ? calculateRssConfigDrift(
                   accountId,
                   credentialsId,
                   region,
                   databaseHostId,
-                  metadata as unknown as Metadata
+                  metadata as unknown as Metadata,
+                  assessmentData
               )
+            : {},
+        shouldCalculateMSSQLPatchAssessment
+            ? calculateMSSQLPatchDrift(accountId, credentialsId, region, databaseHostId, assessmentData)
             : {}
     ];
 
@@ -1243,7 +1248,7 @@ async function fetchDriftAssessment(
         database_instance_name: databaseInstanceName,
         fsxn_ids: fileSystemId,
         configurations: instanceConfigurations,
-        resource: { configurations: hostConfigurations, metadata: resourceMetadata }
+        resource: { configurations: hostConfigurations, metadata: resourceMetadata, assessment_data: assessmentData }
     } = instanceDetail as unknown as DatabaseInstance;
 
     if (isDemoFlow) {
@@ -1346,6 +1351,7 @@ async function fetchDriftAssessment(
                   databaseHostId,
                   databaseInstanceId,
                   resourceMetadata as unknown as Metadata,
+                  assessmentData as ResourceAssessmentData,
                   fieldsValues
               )
             : {
@@ -1533,8 +1539,7 @@ async function fetchDriftAssessment(
     // Get last assessed timestamp
     try {
         const [{ creation_time: latestInstanceLevelAssessedTime = 0 } = {}] = databaseInstanceConfigData;
-        const { assessment: { lastAssessedDate: latestHostLevelAssessedTime } = {} } =
-            resourceMetadata as unknown as Metadata;
+        const { lastAssessedDate: latestHostLevelAssessedTime } = assessmentData as ResourceAssessmentData;
         const latestAssessmentTimestamp = Math.max(
             latestInstanceLevelAssessedTime ? latestInstanceLevelAssessedTime.getTime() : 0,
             latestHostLevelAssessedTime ? Number(latestHostLevelAssessedTime) : 0
@@ -1589,7 +1594,11 @@ async function fetchDriftAssessmentPerHost(
         throw createError(HttpErrorCodes.NOT_FOUND, `${infoMessage}`);
     }
 
-    let { resource_name: databaseHostName, metadata } = resourceDetail;
+    let {
+        resource_name: databaseHostName,
+        metadata,
+        assessment_data: assessmentData
+    } = resourceDetail as unknown as ResourceDetails;
     databaseHostName ||= '';
 
     const driftAssessments: Array<{
@@ -1650,6 +1659,7 @@ async function fetchDriftAssessmentPerHost(
             databaseHostId,
             databaseInstanceId,
             metadata as unknown as Metadata,
+            assessmentData as ResourceAssessmentData,
             hostFieldsToQuery
         );
         computeAssessmentResponse = hostLevelData.computeAssessmentResponse as ComputeDriftResponseType;
@@ -1864,7 +1874,7 @@ async function fetchDriftAssessmentPerAccount(
                         region,
                         databaseHostId,
                         fields,
-                        resourceDetail
+                        resourceDetail as unknown as ResourceDetails
                     );
                     driftAssessmentPerAccount.push(drifAssessmentPerHost);
                 } catch (error) {

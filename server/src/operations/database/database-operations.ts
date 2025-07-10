@@ -380,6 +380,38 @@ async function getPaginatedDatabaseInstances(
     return listDatabaseInstancesPaginated(accountId, record, pageSize, nextToken);
 }
 
+async function updateDatabaseHostAssessmentData(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    updatedAssessmentData: any
+) {
+    logger.info('Update host configurations', { accountId, resourceId });
+    return updateResource({ accountId, credentialsId, resourceId, updatedAssessmentData });
+}
+
+async function updateDatabaseHostAssessmentResults(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceId: string,
+    updatedAssessmentResults: any
+) {
+    logger.info('Update host configurations', { accountId, resourceId });
+    return updateResource({ accountId, credentialsId, region, resourceId, updatedAssessmentResults });
+}
+
+async function updateDatabaseInstanceAssessmentResults(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    instanceId: string,
+    assessmentResults: any
+) {
+    logger.info('Update instance configurations', { accountId, instanceId });
+    return updateDatabaseInstance({ accountId, credentialsId, region, databaseHostId, instanceId, assessmentResults });
+}
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -397,5 +429,8 @@ export {
     updateDatabaseInstanceConfigurations,
     updateResourceMetaData,
     updateDatabaseHostConfigurations,
-    getPaginatedDatabaseInstances
+    getPaginatedDatabaseInstances,
+    updateDatabaseHostAssessmentData,
+    updateDatabaseHostAssessmentResults,
+    updateDatabaseInstanceAssessmentResults
 };

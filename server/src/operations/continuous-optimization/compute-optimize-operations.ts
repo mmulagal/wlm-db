@@ -1,7 +1,13 @@
 import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
 import { cloneDeep, compact, isEmpty } from 'lodash-es';
-import { DatabaseInstance, Metadata, NodeDetails, SsmSqlServerRunningStatus } from '../../utils/common-types';
+import {
+    DatabaseInstance,
+    Metadata,
+    NodeDetails,
+    ResourceAssessmentData,
+    SsmSqlServerRunningStatus
+} from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import {
@@ -37,7 +43,11 @@ import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from '../workloads/mssql/di
 import { calculateComputeDrift } from './compute-assessment-operations';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
-import { getInstanceInfo, updateResourceMetaData } from '../database/database-operations';
+import {
+    getInstanceInfo,
+    updateDatabaseHostAssessmentData,
+    updateResourceMetaData
+} from '../database/database-operations';
 import { AssessmentStatus } from '../../utils/continous-optimization-consts';
 
 interface ModifiedInstancesNodeDetails {
@@ -89,7 +99,7 @@ async function handleComputeRemediation(
     let completedWithError = false;
 
     try {
-        const [{ resource_id: databaseHostId, metadata }] = resourceDetails;
+        const [{ resource_id: databaseHostId, metadata, assessment_data: assessmentData }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         ({ activeNodeInstanceId = '' } = await getActiveSqlNode(credentialsId, region, {
             node1InstanceId,
@@ -304,8 +314,8 @@ async function handleComputeRemediation(
                 jobId
             );
             try {
-                const { assessment: { compute: { currentInstanceType: oldInstanceType = '' } = {} } = {} } =
-                    metadata as unknown as Metadata;
+                const { compute: { currentInstanceType: oldInstanceType = '' } = {} } =
+                    assessmentData as ResourceAssessmentData;
                 const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
                     accountId,
                     credentialsId,
@@ -395,20 +405,21 @@ async function handleComputeRemediation(
                 throw checkRunningResponse.error;
             }
 
-            // update metadata after successful optimization
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            const { compute: { recommendationOptions = [] } = {} } = existingAssessmentData || {};
-            (metadata as unknown as Metadata).assessment = {
+            // Update assessment data after successful optimization
+            const existingAssessmentData = assessmentData as ResourceAssessmentData;
+            const recommendationOptions = existingAssessmentData?.compute?.recommendationOptions ?? [];
+            const newAssessmentData: ResourceAssessmentData = {
                 ...existingAssessmentData,
                 compute: {
+                    ...existingAssessmentData.compute,
                     finding: AssessmentStatus.OPTIMIZED,
                     findingReasonCodes: [],
                     currentInstanceType: instanceType,
                     recommendationOptions
                 },
-                lastAssessedDate: new Date().getTime().toString()
+                lastAssessedDate: Date.now().toString()
             };
-            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+            await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
             jobStatus = JOBSTATUS.COMPLETED;
             if (isDemo()) {
                 const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
@@ -587,7 +598,7 @@ export default async function optimizeCompute(
 
     const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
 
-    const [{ resource_name: resourceName, metadata }] = resourceDetails;
+    const [{ resource_name: resourceName, metadata, assessment_data: assessmentData }] = resourceDetails;
 
     const { recommendationOptions } = await calculateComputeDrift(
         accountId,
@@ -595,7 +606,7 @@ export default async function optimizeCompute(
         region,
         databaseHostId,
         databaseInstanceId,
-        metadata as unknown as Metadata
+        assessmentData as ResourceAssessmentData
     );
     const recommendedInstanceTypes =
         recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];

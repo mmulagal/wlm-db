@@ -40,6 +40,7 @@ interface Resource {
     cloudProviderName?: string;
     region: string;
     metadata?: object;
+    assessmentData?: object;
 }
 
 interface Config {

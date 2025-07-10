@@ -185,8 +185,6 @@ interface Metadata {
     isLicenseOptimized?: boolean;
     isHostOsPatchOptimized?: boolean;
     isRssConfigOptimized?: string[];
-    assessment?: ResourceAssessmentData;
-    assessmentResults?: ResourceAssessmentResults;
 }
 
 interface DatabaseInstanceMetadata {
@@ -194,7 +192,6 @@ interface DatabaseInstanceMetadata {
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
     configsOptimized?: any;
-    assessmentResults?: any;
 }
 
 interface DatabaseInstanceConfigurations {
@@ -267,6 +264,8 @@ interface ResourceDetails {
     database_instances?: DatabaseInstance[];
     ec2UsageOperation?: string; // internal field used to store the ec2 usage operation for the unmanaged MSSQL resource
     configurations?: DatabaseInstanceConfigurations | JsonValue;
+    assessment_data?: ResourceAssessmentData | JsonValue;
+    assessment_results?: ResourceAssessmentResults | JsonValue;
 }
 
 interface DeploymentDetails {

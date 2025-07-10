@@ -14,7 +14,7 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/aws/compute-optimizer-scope';
-import { Metadata } from '../../../src/utils/common-types';
+import { Metadata, ResourceAssessmentData } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 
@@ -32,14 +32,14 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI',
-            assessment: {
-                compute: {
-                    finding: 'OPTIMIZED',
-                    findingReasonCodes: [],
-                    currentInstanceType: 'r7i.xlarge',
-                    recommendationOptions: []
-                }
+            sqlDeploymentType: 'FCI'
+        },
+        assessmentData: {
+            compute: {
+                finding: 'OPTIMIZED',
+                findingReasonCodes: [],
+                currentInstanceType: 'r7i.xlarge',
+                recommendationOptions: []
             }
         }
     });
@@ -60,15 +60,19 @@ beforeAll(async () => {
 });
 describe('Compute assessment operations', () => {
     it('Should calculate compute drift', async () => {
-        const [{ metadata = {} } = {}] =
+        const [resource = {}] =
             (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
+        const { assessment_data: assessmentData } = resource as {
+            metadata?: Metadata;
+            assessment_data?: ResourceAssessmentData;
+        };
         const response = await calculateComputeDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
-            metadata as unknown as Metadata
+            assessmentData as ResourceAssessmentData
         );
 
         expect(response.name).toEqual('compute-rightsizing');
