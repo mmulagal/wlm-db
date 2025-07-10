@@ -1,45 +1,48 @@
 import { DsSelect, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { useMemo } from 'react';
 import styles from './TimeSelect.module.scss';
-import { setSelectedDates } from '../../../../../store/workloadFactory/agenticAISlice';
+import {
+    setNoErrorsDetected,
+    setNoLogAnalyzerData,
+    setSelectedInvestigationDate
+} from '../../../../../store/workloadFactory/agenticAISlice';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { formatDateWithTime } from '../../../../../utils/utilityFunctions';
 
 const TimeSelect = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { selectedDates } = useAppSelector(state => state.agenticAI);
-    const dateOptions = [
-        { id: '1', value: 'June 24, 2025, 00:00', label: 'June 24, 2025, 00:00' },
-        { id: '2', value: 'June 23, 2025, 01:00', label: 'June 23, 2025, 01:00' },
-        { id: '3', value: 'June 22, 2025, 02:00', label: 'June 22, 2025, 02:00' },
-        { id: '4', value: 'June 21, 2025, 03:00', label: 'June 21, 2025, 03:00' }
-    ];
+    const { selectedInvestigationDate, investigationDates, investigationDatesLoading } = useAppSelector(
+        state => state.agenticAI
+    );
+    const dateOptions = useMemo(() => {
+        const options = investigationDates.map(date => ({
+            id: date.id,
+            value: date.reportCreationTime,
+            label: formatDateWithTime(date.reportCreationTime)
+        }));
+        dispatch(setSelectedInvestigationDate(options[0]));
+        return options;
+    }, [investigationDates]);
 
-    const labelForDate = () => {
-        if (selectedDates && selectedDates.length > 0 && selectedDates.length < 2) {
-            return `${selectedDates[0].value}`;
-        }
-        if (selectedDates && selectedDates.length > 1) {
-            return `${selectedDates.length} dates selected`;
-        }
-        return dateOptions[0].value;
-    };
     return (
         <div className={styles.timeSelect}>
             <DsTypography variant="Semibold_14">{t('databases.log-analyzer.investigation-date')}:</DsTypography>
             <div className={styles.selectField}>
                 <DsSelect
-                    isLoading={false}
+                    isLoading={investigationDatesLoading}
                     title=""
                     className={styles.multiSelect}
                     options={dateOptions}
-                    formatLabel={() => labelForDate()}
-                    selectionType="multi"
+                    selectionType="single"
                     isWithActions
                     variant="underline"
                     onSelect={(option: any) => {
-                        dispatch(setSelectedDates(option));
+                        dispatch(setNoLogAnalyzerData(false));
+                        dispatch(setNoErrorsDetected(false));
+                        dispatch(setSelectedInvestigationDate(option[0]));
                     }}
                     placeholder="No date selected"
                     isCleanable={false}
@@ -50,9 +53,9 @@ const TimeSelect = () => {
                         method: 'smart'
                     }}
                     selectedOptionIds={
-                        selectedDates && selectedDates.length > 0
-                            ? selectedDates.map((date: any) => date?.id)
-                            : [dateOptions[0].id]
+                        selectedInvestigationDate && selectedInvestigationDate?.id
+                            ? [selectedInvestigationDate?.id]
+                            : [dateOptions?.[0]?.id]
                     }
                 />
             </div>

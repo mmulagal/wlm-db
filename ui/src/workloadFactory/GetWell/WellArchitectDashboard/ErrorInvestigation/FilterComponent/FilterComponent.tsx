@@ -12,11 +12,19 @@ import { eiErrorCodesOptions, eiSeverityOptionList, eiTimeOptions } from '../Err
 
 const FilterComponent = () => {
     const { t } = useTranslation();
-    const { noData, selectedSeverity, selectedTimeFrame, selectedErrorCodes } = useAppSelector(
-        state => state.agenticAI
-    );
-    const loading = false;
     const dispatch = useDispatch();
+
+    const {
+        noData,
+        selectedSeverity,
+        selectedTimeFrame,
+        selectedErrorCodes,
+        investigationDatesLoading,
+        noErrorsDetected
+    } = useAppSelector(state => state.agenticAI);
+    const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
+    const loading = investigationDatesLoading || errorInvestigationLoading;
+
     const severityOptionList = [
         eiSeverityOptionList?.top5,
         eiSeverityOptionList?.all,
@@ -50,17 +58,23 @@ const FilterComponent = () => {
         <div className={styles.filterComponent}>
             <div className={styles.leftSide}>
                 <div className={styles.item}>
-                    <div className={loading || noData ? styles.disabled : ''}>
+                    <div className={loading || noData || noErrorsDetected ? styles.disabled : ''}>
                         <Union />
                     </div>
 
-                    <DsTypography className={loading || noData ? styles.disabled : ''} variant="Semibold_14">
+                    <DsTypography
+                        className={loading || noData || noErrorsDetected ? styles.disabled : ''}
+                        variant="Semibold_14"
+                    >
                         {t('databases.log-analyzer.filters')}:
                     </DsTypography>
                 </div>
 
                 <div className={styles.itemDropDownItem}>
-                    <DsTypography className={loading || noData ? styles.disabled : ''} variant="Regular_14">
+                    <DsTypography
+                        className={loading || noData || noErrorsDetected ? styles.disabled : ''}
+                        variant="Regular_14"
+                    >
                         {t('databases.log-analyzer.severity')}:
                     </DsTypography>
                     <TimeDropdown
@@ -71,13 +85,19 @@ const FilterComponent = () => {
                     />
                 </div>
                 <div className={styles.itemDropDownItem}>
-                    <DsTypography className={loading || noData ? styles.disabled : ''} variant="Regular_14">
+                    <DsTypography
+                        className={loading || noData || noErrorsDetected ? styles.disabled : ''}
+                        variant="Regular_14"
+                    >
                         {t('databases.log-analyzer.timeframe')}:
                     </DsTypography>
                     <TimeDropdown options={timeOptions} dropDownType="timeFrame" selectedValue={selectedTimeFrame} />
                 </div>
                 <div className={styles.itemDropDownItem}>
-                    <DsTypography className={loading || noData ? styles.disabled : ''} variant="Regular_14">
+                    <DsTypography
+                        className={loading || noData || noErrorsDetected ? styles.disabled : ''}
+                        variant="Regular_14"
+                    >
                         {t('databases.log-analyzer.error-codes')}:
                     </DsTypography>
                     <TimeDropdown
@@ -89,7 +109,7 @@ const FilterComponent = () => {
             </div>
             <div className={styles.rightSide}>
                 <DsButton
-                    isDisabled={loading || noData}
+                    isDisabled={loading || noData || noErrorsDetected}
                     type="text"
                     onClick={() => {
                         dispatch(

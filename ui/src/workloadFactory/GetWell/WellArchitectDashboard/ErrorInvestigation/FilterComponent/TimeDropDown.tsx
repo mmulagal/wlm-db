@@ -23,8 +23,11 @@ export type TimeDropdownProps = {
 const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: TimeDropdownProps) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const loading = false;
-    const { timeRange, noData } = useAppSelector(state => state.agenticAI);
+
+    const { timeRange, noData, investigationDatesLoading, noErrorsDetected } = useAppSelector(state => state.agenticAI);
+    const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
+    const loading = investigationDatesLoading || errorInvestigationLoading;
+
     const [showOptions, setShowOptions] = useState(false);
     const [showCustomTimeOption, setShowCustomTimeOption] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -77,14 +80,14 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
                 role="button"
                 tabIndex={0}
                 onClick={() => {
-                    if (!loading && !noData) {
+                    if (!loading && !noData && !noErrorsDetected) {
                         setShowOptions(!showOptions);
                     } else {
                         setShowOptions(false);
                     }
                 }}
                 onKeyDown={e => {
-                    if ((e.key === 'Enter' || e.key === ' ') && !loading && !noData) {
+                    if ((e.key === 'Enter' || e.key === ' ') && !loading && !noData && !noErrorsDetected) {
                         setShowOptions(!showOptions);
                         e.preventDefault();
                     }
@@ -93,7 +96,7 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
                 <span>
                     <DsTypography
                         className={
-                            loading || noData
+                            loading || noData || noErrorsDetected
                                 ? `${styles['selected-time']} ${styles.disabled}`
                                 : styles['selected-time']
                         }
@@ -103,12 +106,13 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
                         {selectedValue}
                     </DsTypography>
                 </span>
-                <span className={`${styles.icon} ${showOptions ? styles.rotated : ''}`}>
+                <span
+                    className={`${styles.icon} ${showOptions ? styles.rotated : ''} ${
+                        noData || noErrorsDetected || loading ? styles.iconDisable : ''
+                    }`}
+                >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
-                        <path
-                            d="M11.603 14.5C11.7769 14.483 11.9454 14.4173 12.0788 14.3029L16.2802 10.6995C16.5935 10.4307 16.5523 10.0281 16.2802 9.72634C16.008 9.42455 15.5009 9.42455 15.1456 9.72634L11.5021 12.8513L7.85442 9.72634C7.49915 9.42455 6.99199 9.42455 6.71983 9.72634C6.44766 10.0281 6.40651 10.4307 6.71983 10.6995L10.9212 14.3029C11.0546 14.4173 11.2231 14.483 11.397 14.5H11.603Z"
-                            fill="#1C1C1C"
-                        />
+                        <path d="M11.603 14.5C11.7769 14.483 11.9454 14.4173 12.0788 14.3029L16.2802 10.6995C16.5935 10.4307 16.5523 10.0281 16.2802 9.72634C16.008 9.42455 15.5009 9.42455 15.1456 9.72634L11.5021 12.8513L7.85442 9.72634C7.49915 9.42455 6.99199 9.42455 6.71983 9.72634C6.44766 10.0281 6.40651 10.4307 6.71983 10.6995L10.9212 14.3029C11.0546 14.4173 11.2231 14.483 11.397 14.5H11.603Z" />
                     </svg>
                 </span>
             </div>

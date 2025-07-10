@@ -231,47 +231,42 @@ const DatabasesTable = () => {
             isSortable: false,
             filterOptions: getFilterOptions(databaseTableRows, 'instanceRow.fileSystemName'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {cellData && rowData?.instanceRow?.fsxId ? (
-                            <div className={styles.fsxNameContainer}>
-                                <DsTooltipInfo
-                                    className={`${styles.fsxName} ${styles['tooltip-icon']}`}
-                                    trigger="hover"
-                                >
-                                    <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
-                                        <DsTypography variant="Regular_13">{rowData?.instanceRow?.fsxId}</DsTypography>
-                                        <Popover
-                                            popoverClass={styles['copy-popover']}
-                                            children="Copied"
-                                            container={
-                                                <CopyToClipboardCommon
-                                                    value={rowData?.instanceRow?.fsxId}
-                                                    iconProvided={<CopyIcon fill="#A7A7A7" />}
-                                                />
-                                            }
-                                        />
-                                    </div>
-                                </DsTooltipInfo>
-                                <div className={styles.fsxName}>
-                                    <DsTypography
-                                        className={styles.fsxNameText}
-                                        variant="Regular_13"
-                                        title={cellData || GENERAL.NOT_AVAILABLE}
-                                    >
-                                        {cellData || GENERAL.NOT_AVAILABLE}
-                                    </DsTypography>
+            renderCell: (cellData: any, rowData: any) => (
+                <>
+                    {cellData && rowData?.instanceRow?.fsxId ? (
+                        <div className={styles.fsxNameContainer}>
+                            <DsTooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
+                                <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                    <DsTypography variant="Regular_13">{rowData?.instanceRow?.fsxId}</DsTypography>
+                                    <Popover
+                                        popoverClass={styles['copy-popover']}
+                                        children="Copied"
+                                        container={
+                                            <CopyToClipboardCommon
+                                                value={rowData?.instanceRow?.fsxId}
+                                                iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                            />
+                                        }
+                                    />
                                 </div>
+                            </DsTooltipInfo>
+                            <div className={styles.fsxName}>
+                                <DsTypography
+                                    className={styles.fsxNameText}
+                                    variant="Regular_13"
+                                    title={cellData || GENERAL.NOT_AVAILABLE}
+                                >
+                                    {cellData || GENERAL.NOT_AVAILABLE}
+                                </DsTypography>
                             </div>
-                        ) : (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {GENERAL.NOT_AVAILABLE}
-                            </DsTypography>
-                        )}
-                    </>
-                );
-            }
+                        </div>
+                    ) : (
+                        <DsTypography variant="Regular_13" className={styles.colText}>
+                            {GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    )}
+                </>
+            )
         },
         {
             Header: 'Database Type',

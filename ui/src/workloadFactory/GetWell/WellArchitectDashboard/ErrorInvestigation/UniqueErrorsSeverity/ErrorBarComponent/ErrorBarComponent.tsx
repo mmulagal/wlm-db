@@ -9,7 +9,8 @@ type BarComponentType = {
     percentage?: number | any;
     width?: string;
     errorCount?: number;
-    severity: string;
+    severity?: string;
+    noFilteredData?: boolean;
 };
 
 const ErrorBarComponent = ({
@@ -17,13 +18,16 @@ const ErrorBarComponent = ({
     percentage = 50,
     width,
     errorCount = 0,
-    severity
+    severity = '',
+    noFilteredData = false
 }: BarComponentType) => {
     const { t } = useTranslation();
-    const { noData } = useAppSelector(state => state.agenticAI);
-    const loading = false;
+    const { noData, investigationDatesLoading } = useAppSelector(state => state.agenticAI);
+    const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
+    const loading = investigationDatesLoading || errorInvestigationLoading;
+
     const handleProgressBar = () => {
-        if (loading || noData) {
+        if (loading || noData || noFilteredData) {
             return (
                 <div
                     className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
@@ -86,29 +90,36 @@ const ErrorBarComponent = ({
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
                         <TooltipInfo
-                            trigger={loading || noData ? 'click' : 'hover'}
-                            className={loading || noData ? styles.disabled : ''}
+                            trigger={loading || noData || noFilteredData ? 'click' : 'hover'}
+                            className={loading || noData || noFilteredData ? styles.disabled : ''}
                         >
-                            {Number(severity) > 9
+                            {!severity
+                                ? t('databases.log-analyzer.n/a')
+                                : Number(severity) > 9
                                 ? t(`databases.log-analyzer.severity-description.${severity}`)
                                 : t('databases.log-analyzer.severity-description.0-9')}
                         </TooltipInfo>
                         <DsTypography variant="Semibold_14" style={{ marginLeft: '2px' }}>
-                            {t('databases.log-analyzer.severity')}:
+                            {t('databases.log-analyzer.severity')}
                         </DsTypography>
 
-                        {(!loading || noData) && <DsTypography variant="Semibold_14">{severity}</DsTypography>}
+                        {(!loading || noData || noFilteredData) && (
+                            <DsTypography variant="Semibold_14">{severity ? `: ${severity}` : ''}</DsTypography>
+                        )}
                     </div>
 
                     {loading && !noData && <DsFlashingDotsLoader />}
 
-                    {!loading && noData && (
-                        <DsTypography variant="Regular_14" style={{ marginLeft: '2px' }}>
-                            {t('databases.log-analyzer.n/a')}:
+                    {!loading && noData && noFilteredData && (
+                        <DsTypography
+                            variant="Regular_14"
+                            style={{ marginLeft: '2px', color: 'var(--text-secondary)' }}
+                        >
+                            {t('databases.log-analyzer.n/a')}
                         </DsTypography>
                     )}
 
-                    {!loading && !noData && (
+                    {!loading && !noData && !noFilteredData && (
                         <div className={styles.optimizeText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                 {`${errorCount}`}

@@ -75,7 +75,7 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const isDevMode = import.meta.env.VITE_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
 
-    //Specifically case for bluexp external api calls
+    // Specifically case for bluexp external api calls
     if (
         api.endpoint === 'getConnectors' ||
         api.endpoint === 'getFsxDetails' ||
@@ -1184,8 +1184,16 @@ export const errorInvestigationApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => ({
         getErrorInvestigationData: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId, instanceId, id }) => {
+                if (id) {
+                    return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis?id=${id}`;
+                }
+                return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`;
+            }
+        }),
+        getInvestigationDates: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/investigation-dates`
             })
         })
     })
@@ -1353,4 +1361,4 @@ export const {
     useDismissMssqlAssessmentMutation
 } = getWellApi;
 
-export const { useGetErrorInvestigationDataMutation } = errorInvestigationApi;
+export const { useGetErrorInvestigationDataMutation, useGetInvestigationDatesMutation } = errorInvestigationApi;

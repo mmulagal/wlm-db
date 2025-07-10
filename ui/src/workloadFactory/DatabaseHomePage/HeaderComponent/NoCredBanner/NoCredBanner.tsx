@@ -1,11 +1,11 @@
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
-import { ReactComponent as Warning } from '../../../../assets/warning.svg';
-import styles from './NoCredBanner.module.scss';
 import { Button } from '@netapp/design-system';
-import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as Warning } from '../../../../assets/warning.svg';
+import styles from './NoCredBanner.module.scss';
+import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const NoCredBanner = ({ width }: any) => {
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
@@ -30,7 +30,7 @@ const NoCredBanner = ({ width }: any) => {
         }
     };
     return (
-        <div className={styles.noCredBanner} style={{ width: width }}>
+        <div className={styles.noCredBanner} style={{ width }}>
             <div className={styles.firstSegment}>
                 <Warning />
                 <DsTypography variant="Regular_14">{t('databases.dashboard.no-credentials')}</DsTypography>

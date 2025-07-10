@@ -53,6 +53,7 @@ import {
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import store from '../../../store/store';
 import ErrorInvestigation from './ErrorInvestigation/ErrorInvestigation';
+import { resetEiData, setEiRefreshPage, setEiRefreshTimestamp } from '../../../store/workloadFactory/agenticAISlice';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
@@ -68,6 +69,7 @@ const WellArchitectDashboard = () => {
     } = useAppSelector(state => state.getWellOptimize);
 
     const { refreshTime } = useAppSelector(state => state.headers);
+    const { eiRefreshTimestamp } = useAppSelector(state => state.agenticAI);
 
     const { refreshSandboxInstanceTime, sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
@@ -117,6 +119,10 @@ const WellArchitectDashboard = () => {
             dispatch(setGwRefreshPage(true));
         } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.SANDBOXES && !sandboxInstanceLoading) {
             dispatch(setIsRefreshedSandboxInstance(true));
+        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION) {
+            dispatch(resetEiData({}));
+            dispatch(setEiRefreshTimestamp(getCurrentDateTime()));
+            dispatch(setEiRefreshPage(true));
         }
     };
 
@@ -129,6 +135,9 @@ const WellArchitectDashboard = () => {
         }
         if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
             return gwRefreshTimestamp;
+        }
+        if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION) {
+            return eiRefreshTimestamp;
         }
         return refreshSandboxInstanceTime;
     };

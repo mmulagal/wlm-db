@@ -4,6 +4,43 @@
     flex-direction: column;
     align-items: center;
 
+    .noErrorsDetected {
+        display: flex;
+        width: 87.3%;
+        height: 452px;
+        padding-top: 80px;
+        flex-direction: column;
+        align-items: center;
+        gap: 48px;
+        box-shadow: 2px 2px 6px 0px var(--border);
+        background-color: var(--content-background);
+        margin-bottom: 24px;
+
+        .noErrorBlock {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+
+            .noErrorHeader {
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+
+                svg {
+                    margin-top: 4px;
+                }
+            }
+
+            .noErrorText {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: center;
+            }
+        }
+    }
+
     .countText {
         margin-top: 38px;
         display: flex;

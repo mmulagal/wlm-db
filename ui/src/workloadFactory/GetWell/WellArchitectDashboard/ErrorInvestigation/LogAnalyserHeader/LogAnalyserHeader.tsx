@@ -4,12 +4,21 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as UniqueError } from '../../../../../assets/unique-errors.svg';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './LogAnalyserHeader.module.scss';
+import { useAppSelector } from '../../../../../store/storeHooks';
 
-const LogAnalyserHeader = () => {
+interface LogAnalyserHeaderProps {
+    uniqueErrors: number;
+    totalErrors: number;
+    lastScan: string;
+}
+
+const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps }) => {
     const { t } = useTranslation();
-    const loading = false;
-    const na = false;
-    const inProgress = false;
+
+    const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
+    const { investigationDatesLoading, scanInProgress, noData } = useAppSelector(state => state.agenticAI);
+    const loading = errorInvestigationLoading || investigationDatesLoading;
+
     return (
         <div className={styles.logHeader}>
             <div className={styles.cardContent}>
@@ -22,16 +31,16 @@ const LogAnalyserHeader = () => {
                         <DsFlashingDotsLoader />
                     ) : (
                         <DsTypography
-                            variant={na ? 'Regular_14' : 'Regular_32'}
-                            className={na ? styles.disabled : styles.titleText}
+                            variant={noData ? 'Regular_14' : 'Regular_32'}
+                            className={noData ? styles.disabled : styles.titleText}
                             style={{ paddingRight: '8px', lineHeight: 'unset' }}
                         >
-                            {na ? 'N/A' : '150'}
+                            {noData ? t('databases.log-analyzer.n/a') : headerData.uniqueErrors}
                         </DsTypography>
                     )}
                     <DsTypography
                         variant="Regular_14"
-                        className={na ? `${styles.label} ${styles.disabled}` : styles.label}
+                        className={noData ? `${styles.label} ${styles.disabled}` : styles.label}
                     >
                         {t('databases.log-analyzer.unique-errors')}
                     </DsTypography>
@@ -42,16 +51,16 @@ const LogAnalyserHeader = () => {
                         <DsFlashingDotsLoader />
                     ) : (
                         <DsTypography
-                            variant={na ? 'Regular_14' : 'Regular_32'}
-                            className={styles.titleText}
+                            variant={noData ? 'Regular_14' : 'Regular_32'}
+                            className={noData ? styles.disabled : styles.titleText}
                             style={{ paddingRight: '8px', lineHeight: 'unset' }}
                         >
-                            {na ? 'N/A' : '12,000'}
+                            {noData ? t('databases.log-analyzer.n/a') : headerData.totalErrors}
                         </DsTypography>
                     )}
                     <DsTypography
                         variant="Regular_14"
-                        className={na ? `${styles.label} ${styles.disabled}` : styles.label}
+                        className={noData ? `${styles.label} ${styles.disabled}` : styles.label}
                     >
                         {t('databases.log-analyzer.total-errors')}
                     </DsTypography>
@@ -63,15 +72,17 @@ const LogAnalyserHeader = () => {
                     ) : (
                         <DsTypography
                             variant="Regular_14"
-                            className={styles.titleText}
+                            className={noData ? styles.disabled : styles.titleText}
                             style={{ paddingRight: '8px', lineHeight: 'unset' }}
                         >
-                            {na ? 'N/A' : 'June 25, 2025 11:40'}
+                            {noData
+                                ? t('databases.log-analyzer.n/a')
+                                : headerData?.lastScan || t('databases.log-analyzer.n/a')}
                         </DsTypography>
                     )}
                     <DsTypography
                         variant="Regular_14"
-                        className={na ? `${styles.label} ${styles.disabled}` : styles.label}
+                        className={noData ? `${styles.label} ${styles.disabled}` : styles.label}
                         style={{ position: 'relative', top: '6px' }}
                     >
                         {t('databases.log-analyzer.last-scan')}
@@ -80,14 +91,14 @@ const LogAnalyserHeader = () => {
 
                 <div className={`${styles.column} `} style={{ borderRight: 'none', flex: '1 1 450px' }}>
                     <div className={styles.lastContainer}>
-                        {inProgress && (
+                        {scanInProgress && (
                             <div className={styles.inProgressContainer}>
                                 <DsFlashingDotsLoader />
                                 <DsTypography variant="Regular_14">{t('databases.log-analyzer.new-scan')}</DsTypography>
                                 <DsButton type="text">{t('databases.log-analyzer.stop-scan')}</DsButton>
                             </div>
                         )}
-                        {!inProgress && (
+                        {!scanInProgress && (
                             <div className={styles.tooltipContainer}>
                                 <TooltipInfo>
                                     <div className={styles.mainSection}>
@@ -111,14 +122,14 @@ const LogAnalyserHeader = () => {
                                 </TooltipInfo>
                                 <DsTypography
                                     variant="Semibold_14"
-                                    className={na || loading ? ` ${styles.disabled}` : ''}
+                                    className={noData || loading ? ` ${styles.disabled}` : ''}
                                 >
                                     {t('databases.log-analyzer.scan-details')}
                                 </DsTypography>
                             </div>
                         )}
 
-                        <DsButton variant="Default" isThin type="button">
+                        <DsButton variant="Default" isThin type="button" isDisabled={loading || scanInProgress}>
                             {t('databases.log-analyzer.scan-now')}
                         </DsButton>
                     </div>

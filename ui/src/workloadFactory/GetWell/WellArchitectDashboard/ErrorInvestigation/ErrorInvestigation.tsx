@@ -5,6 +5,8 @@ import styles from './ErrorInvestigation.module.scss';
 import FilterComponent from './FilterComponent/FilterComponent';
 import UniqueErrorsSeverity from './UniqueErrorsSeverity/UniqueErrorsSeverity';
 import { ReactComponent as TableView } from '../../../../assets/ic_table_view.svg';
+import { ReactComponent as NoErrorDetected } from '../../../../assets/no_error_detected.svg';
+import { ReactComponent as Success } from '../../../../assets/success.svg';
 import UniqueErrorGraph from './UniqueErrorGraph/UniqueErrorGraph';
 import AIInvestigation from './AIInvestigation/AIInvestigation';
 import ErrorCards from './ErrorCards/ErrorCards';
@@ -23,6 +25,7 @@ import {
     eiSeverityOptionList,
     eiTimeOptions
 } from './ErrorInvestigationUtility';
+import { formatDateWithTime } from '../../../../utils/utilityFunctions';
 
 const ErrorInvestigation = () => {
     const { t } = useTranslation();
@@ -33,16 +36,29 @@ const ErrorInvestigation = () => {
     const [errorCardsData, setErrorCardsData] = useState<ErrorInvestigationGetApiResponse[]>([]);
     const [selectedErrorData, setSelectedErrorData] = useState<ErrorInvestigationGetApiResponse | null>(null);
     const [uniqueErrBySeverity, setUniqueErrBySeverity] = useState<Array<{ severity: string; count: number }>>([]);
+    const [headerData, setheaderData] = useState({
+        uniqueErrors: 0,
+        totalErrors: 0,
+        lastScan: ''
+    });
     const [startTime, setStartTime] = useState(0);
     const [endTime, setEndTime] = useState(0);
 
     ErrorInvestigationApi();
-    const { errorInvestigationData, errorInvestigationLoading: loading } = useAppSelector(
+    const { errorInvestigationData, errorInvestigationLoading } = useAppSelector(
         state => state.agenticAI.errorInvestigation
     );
-    const { noData, selectedSeverity, selectedErrorCodes, selectedTimeFrame, timeRange } = useAppSelector(
-        state => state.agenticAI
-    );
+    const {
+        noData,
+        selectedSeverity,
+        selectedErrorCodes,
+        selectedTimeFrame,
+        timeRange,
+        investigationDates,
+        noErrorsDetected,
+        investigationDatesLoading
+    } = useAppSelector(state => state.agenticAI);
+    const loading = errorInvestigationLoading || investigationDatesLoading;
 
     useEffect(() => {
         const { startTime: newStartTime, endTime: newEndTime } = getStartAndEndTime(selectedTimeFrame, timeRange);
@@ -67,6 +83,19 @@ const ErrorInvestigation = () => {
             setSelectedErrorData(codesFiltered[0]);
             // Calculate unique errors by severity (top 5)
             setUniqueErrBySeverity(getUniqueErrBySeverity(timeFiltered));
+
+            // Set header data
+            const uniqueErrors = errorInvestigationData.length;
+            // Calculate totalErrors as the sum of all hourlyErrorCounts.count values
+            const totalErrors = errorInvestigationData.reduce((sum, err) => {
+                if (Array.isArray(err.hourlyErrorCounts)) {
+                    return sum + err.hourlyErrorCounts.reduce((acc, h) => acc + (h.count || 0), 0);
+                }
+                return sum;
+            }, 0);
+            const lastScan =
+                investigationDates.length > 0 ? formatDateWithTime(investigationDates[0]?.reportCreationTime) : '';
+            setheaderData({ uniqueErrors, totalErrors, lastScan });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [errorInvestigationData, selectedSeverity, selectedErrorCodes, selectedTimeFrame, timeRange]);
@@ -85,92 +114,121 @@ const ErrorInvestigation = () => {
     return (
         <div className={styles.errorInvestigation}>
             <TimeSelect />
-            <LogAnalyserHeader />
+            <LogAnalyserHeader headerData={headerData} />
 
             <FilterComponent />
-            <div className={styles.sectionTwo}>
-                <UniqueErrorsSeverity uniqueErrBySeverity={uniqueErrBySeverity} />
-                <UniqueErrorGraph startTime={startTime} endTime={endTime} />
-            </div>
 
-            {loading && (
+            {!loading && noErrorsDetected && (
+                <div className={styles.noErrorsDetected}>
+                    <div className={styles.noErrorBlock}>
+                        <NoErrorDetected />
+                        <div className={styles.noErrorHeader}>
+                            <Success />
+                            <DsTypography variant="Semibold_16">
+                                {t('databases.log-analyzer.no-errors-detected-header')}
+                            </DsTypography>
+                        </div>
+                        <div className={styles.noErrorText}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.no-errors-detected-content-1')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.no-errors-detected-content-2')}
+                            </DsTypography>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {!noErrorsDetected && (
                 <>
-                    <div className={styles.countTextLoading}>
-                        <DsTypography variant="Semibold_16">{t('databases.log-analyzer.unique-errors')}</DsTypography>
-                        <DsFlashingDotsLoader />
+                    <div className={styles.sectionTwo}>
+                        <UniqueErrorsSeverity uniqueErrBySeverity={uniqueErrBySeverity} />
+                        <UniqueErrorGraph startTime={startTime} endTime={endTime} />
                     </div>
 
-                    <div className={styles.loadingSection}>
-                        <div className={styles.contentSection}>
-                            <TableView />
-                            <div className={styles.loadingView}>
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.log-analyzer.loading-data')}
+                    {loading && (
+                        <>
+                            <div className={styles.countTextLoading}>
+                                <DsTypography variant="Semibold_16">
+                                    {t('databases.log-analyzer.unique-errors')}
                                 </DsTypography>
                                 <DsFlashingDotsLoader />
                             </div>
-                        </div>
-                    </div>
-                </>
-            )}
 
-            {noData && (
-                <>
-                    <div className={styles.countTextLoading}>
-                        <DsTypography variant="Semibold_16" style={{ color: '#a7a7a7' }}>
-                            {t('databases.log-analyzer.unique-errors')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.loadingSection}>
-                        <div className={`${styles.contentSection} ${styles.noDataSection}`}>
-                            <TableView />
-                            <div className={styles.loadingView}>
-                                <DsTypography variant="Regular_14">{t('databases.log-analyzer.n/a')}</DsTypography>
+                            <div className={styles.loadingSection}>
+                                <div className={styles.contentSection}>
+                                    <TableView />
+                                    <div className={styles.loadingView}>
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.log-analyzer.loading-data')}
+                                        </DsTypography>
+                                        <DsFlashingDotsLoader />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </>
-            )}
+                        </>
+                    )}
 
-            {!loading && !noData && (
-                <>
-                    <div className={styles.countText}>
-                        {filtersApplied > 0 ? (
-                            <DsTypography variant="Semibold_16">
-                                {t('databases.log-analyzer.unique-errors')} ({errorCardsData?.length}/
-                                {errorInvestigationData?.length}) | {t('databases.log-analyzer.filters-applied')} (
-                                {filtersApplied})
-                            </DsTypography>
-                        ) : (
-                            <DsTypography variant="Semibold_16">
-                                {t('databases.log-analyzer.unique-errors')}
-                            </DsTypography>
-                        )}
-                    </div>
+                    {!loading && (noData || errorCardsData.length === 0) && (
+                        <>
+                            <div className={styles.countTextLoading}>
+                                <DsTypography variant="Semibold_16" style={{ color: '#a7a7a7' }}>
+                                    {t('databases.log-analyzer.unique-errors')}
+                                </DsTypography>
+                            </div>
+                            <div className={styles.loadingSection}>
+                                <div className={`${styles.contentSection} ${styles.noDataSection}`}>
+                                    <TableView />
+                                    <div className={styles.loadingView}>
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.log-analyzer.n/a')}
+                                        </DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
-                    <div className={styles.sectionTwo} style={{ marginBottom: '40px' }}>
-                        <div className={styles.errorCardSection} style={{ height: rightHeight }} ref={rightRef}>
-                            {errorCardsData.map((error, index) => (
-                                <ErrorCards
-                                    key={error.errorCode || index}
-                                    errorCode={error.errorCode}
-                                    errorMessage={error.error}
-                                    severity={error.severity}
-                                    errorCount={error.count}
-                                    isSelected={selectedIndex === index}
-                                    onClick={() => handleCardClick(index)}
-                                />
-                            ))}
-                        </div>
-                        <div className={styles.aiInvestigationSection} ref={rightRef}>
-                            <AIInvestigation
-                                selectedErrorData={selectedErrorData}
-                                startTime={startTime}
-                                endTime={endTime}
-                            />
-                        </div>
-                    </div>
+                    {!loading && !noData && errorCardsData.length > 0 && (
+                        <>
+                            <div className={styles.countText}>
+                                {filtersApplied > 0 ? (
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.log-analyzer.unique-errors')} ({errorCardsData?.length}/
+                                        {errorInvestigationData?.length}) |{' '}
+                                        {t('databases.log-analyzer.filters-applied')} ({filtersApplied})
+                                    </DsTypography>
+                                ) : (
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.log-analyzer.unique-errors')}
+                                    </DsTypography>
+                                )}
+                            </div>
+
+                            <div className={styles.sectionTwo} style={{ marginBottom: '40px' }}>
+                                <div className={styles.errorCardSection} style={{ height: rightHeight }} ref={rightRef}>
+                                    {errorCardsData.map((error, index) => (
+                                        <ErrorCards
+                                            key={error.errorCode || index}
+                                            errorCode={error.errorCode}
+                                            errorMessage={error.error}
+                                            severity={error.severity}
+                                            errorCount={error.count}
+                                            isSelected={selectedIndex === index}
+                                            onClick={() => handleCardClick(index)}
+                                        />
+                                    ))}
+                                </div>
+                                <div className={styles.aiInvestigationSection} ref={rightRef}>
+                                    <AIInvestigation
+                                        selectedErrorData={selectedErrorData}
+                                        startTime={startTime}
+                                        endTime={endTime}
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </>
             )}
         </div>

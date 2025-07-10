@@ -2,10 +2,12 @@
 import React, { useEffect, useRef } from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Chart, registerables } from 'chart.js';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import styles from './UniqueErrorGraph.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { hexToRgb } from '../../../../../ui-components/Charts/chartCommon';
 import { ReactComponent as NoData } from '../../../../../assets/empty_table_message.svg';
+import { ReactComponent as LoadingEmptyGraph } from '../../../../../assets/loading_empty_graph.svg';
 import { getCustomRangeLabelsLineGraph, getMaxGraceValueLineGraph } from '../ErrorInvestigationUtility';
 
 Chart.register(...registerables);
@@ -19,7 +21,10 @@ interface ErrorLineGraphProps {
 const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
     const chartRef = useRef<HTMLCanvasElement>(null);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const { noData } = useAppSelector(state => state?.agenticAI);
+    const { noData, investigationDatesLoading } = useAppSelector(state => state?.agenticAI);
+    const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
+    const loading = errorInvestigationLoading || investigationDatesLoading;
+
     // Calculate correct number of points for the range, handling wrap-around
 
     const xLabels = getCustomRangeLabelsLineGraph(startTime, endTime);
@@ -37,7 +42,7 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
         gradient.addColorStop(1, `rgba(${colorAsRgb[0]},${colorAsRgb[1]},${colorAsRgb[2]}, 0)`);
 
         let chart;
-        if (noData) {
+        if (noData || loading) {
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -58,7 +63,13 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                                 display: false
                             },
                             ticks: {
-                                color: isDarkTheme ? '#858C95' : '#A7A7A7',
+                                color: loading
+                                    ? isDarkTheme
+                                        ? '#ffffff'
+                                        : '#1C1C1C'
+                                    : isDarkTheme
+                                    ? '#858C95'
+                                    : '#A7A7A7',
                                 font: {
                                     size: 13,
                                     lineHeight: '20px',
@@ -82,7 +93,13 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                             beginAtZero: true,
                             grace: 12,
                             ticks: {
-                                color: isDarkTheme ? '#858C95' : '#A7A7A7',
+                                color: loading
+                                    ? isDarkTheme
+                                        ? '#ffffff'
+                                        : '#1C1C1C'
+                                    : isDarkTheme
+                                    ? '#858C95'
+                                    : '#A7A7A7',
                                 font: {
                                     size: 13,
                                     lineHeight: '20px',
@@ -210,7 +227,7 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                                 display: false
                             },
                             ticks: {
-                                color: isDarkTheme ? '#ffffff' : '#404040',
+                                color: isDarkTheme ? '#ffffff' : '#1C1C1C',
                                 font: {
                                     size: 13,
                                     lineHeight: '20px',
@@ -233,7 +250,7 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                             beginAtZero: true,
                             grace: getMaxGraceValueLineGraph(errorCounts),
                             ticks: {
-                                color: isDarkTheme ? '#ffffff' : '#404040',
+                                color: isDarkTheme ? '#ffffff' : '#1C1C1C',
                                 font: {
                                     size: 13,
                                     lineHeight: '20px',
@@ -262,13 +279,22 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [startTime, endTime, noData, color, isDarkTheme]);
+    }, [startTime, endTime, noData, color, isDarkTheme, loading]);
 
     return (
         <>
             {noData && (
                 <div className={styles.noData}>
                     <NoData />
+                </div>
+            )}
+            {loading && (
+                <div className={styles.noData}>
+                    <LoadingEmptyGraph />
+                    <div className={styles.loadingText}>
+                        <DsTypography variant="Regular_14">Loading data</DsTypography>
+                        <DsFlashingDotsLoader />
+                    </div>
                 </div>
             )}
             <canvas ref={chartRef} width={600} height={220} className={styles['chart-canvas']} />

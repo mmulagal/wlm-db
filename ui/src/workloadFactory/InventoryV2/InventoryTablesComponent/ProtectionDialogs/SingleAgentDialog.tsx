@@ -91,14 +91,18 @@ const SingleAgentDialog = ({ agents }: any) => {
     }, [step2Status]);
 
     // map to dropdown format
-    const generateDropDownValues = useMemo(() => agents.map((item: { agent: any }, index: number) => {
-            const {agent} = item;
-            return {
-                id: (index + 1).toString(),
-                label: `${agent.name}, ${agent.status}, ${agent.region}`,
-                value: agent.name
-            };
-        }), [agents]);
+    const generateDropDownValues = useMemo(
+        () =>
+            agents.map((item: { agent: any }, index: number) => {
+                const { agent } = item;
+                return {
+                    id: (index + 1).toString(),
+                    label: `${agent.name}, ${agent.status}, ${agent.region}`,
+                    value: agent.name
+                };
+            }),
+        [agents]
+    );
 
     useEffect(() => {
         if (generateDropDownValues && generateDropDownValues.length > 0) {

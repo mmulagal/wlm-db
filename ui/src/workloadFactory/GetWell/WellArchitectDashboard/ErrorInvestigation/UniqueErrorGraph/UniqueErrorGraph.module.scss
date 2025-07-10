@@ -26,6 +26,13 @@
                 position: absolute;
                 left: 45%;
                 top: 40%;
+
+                .loadingText {
+                    margin-left: -30%;
+                    display: flex;
+                    flex-direction: row;
+                    gap: 8px;
+                }
             }
         }
 

@@ -342,7 +342,7 @@ const InstancesTable = () => {
         const fsxRes = await getFsxDetails({ accountID: store.getState().auth.accountId });
 
         // Check if fsxId from rowData exists in fetched fsx list
-        //@ts-ignore
+        // @ts-ignore
         const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
 
         if (!fsxExists) {
@@ -671,47 +671,42 @@ const InstancesTable = () => {
             isSortable: false,
             filterOptions: getFilterOptions(updatedTableData, 'fileSystemName'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {cellData && rowData?.fsxId ? (
-                            <div className={styles.fsxNameContainer}>
-                                <DsTooltipInfo
-                                    className={`${styles.fsxName} ${styles['tooltip-icon']}`}
-                                    trigger="hover"
-                                >
-                                    <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
-                                        <DsTypography variant="Regular_13">{rowData?.fsxId}</DsTypography>
-                                        <Popover
-                                            popoverClass={styles['copy-popover']}
-                                            children="Copied"
-                                            container={
-                                                <CopyToClipboardCommon
-                                                    value={rowData?.fsxId}
-                                                    iconProvided={<CopyIcon fill="#A7A7A7" />}
-                                                />
-                                            }
-                                        />
-                                    </div>
-                                </DsTooltipInfo>
-                                <div className={styles.fsxName}>
-                                    <DsTypography
-                                        className={styles.fsxNameText}
-                                        variant="Regular_13"
-                                        title={cellData || GENERAL.NOT_AVAILABLE}
-                                    >
-                                        {cellData || GENERAL.NOT_AVAILABLE}
-                                    </DsTypography>
+            renderCell: (cellData: any, rowData: any) => (
+                <>
+                    {cellData && rowData?.fsxId ? (
+                        <div className={styles.fsxNameContainer}>
+                            <DsTooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
+                                <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                    <DsTypography variant="Regular_13">{rowData?.fsxId}</DsTypography>
+                                    <Popover
+                                        popoverClass={styles['copy-popover']}
+                                        children="Copied"
+                                        container={
+                                            <CopyToClipboardCommon
+                                                value={rowData?.fsxId}
+                                                iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                            />
+                                        }
+                                    />
                                 </div>
+                            </DsTooltipInfo>
+                            <div className={styles.fsxName}>
+                                <DsTypography
+                                    className={styles.fsxNameText}
+                                    variant="Regular_13"
+                                    title={cellData || GENERAL.NOT_AVAILABLE}
+                                >
+                                    {cellData || GENERAL.NOT_AVAILABLE}
+                                </DsTypography>
                             </div>
-                        ) : (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {GENERAL.NOT_AVAILABLE}
-                            </DsTypography>
-                        )}
-                    </>
-                );
-            }
+                        </div>
+                    ) : (
+                        <DsTypography variant="Regular_13" className={styles.colText}>
+                            {GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    )}
+                </>
+            )
         },
         {
             Header: 'Well-architected status',

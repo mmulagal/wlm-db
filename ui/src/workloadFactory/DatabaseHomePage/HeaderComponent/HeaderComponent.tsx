@@ -9,7 +9,7 @@ import {
     Typography,
     postBlueXPMessage
 } from '@netapp/design-system';
-//@ts-ignore
+// @ts-ignore
 import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useDispatch } from 'react-redux';

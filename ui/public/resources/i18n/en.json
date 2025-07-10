@@ -296,6 +296,9 @@
             "remediation": "Remediation",
             "apply": "Apply",
             "cancel": "Cancel",
+            "no-errors-detected-header": "No errors were detected in the last scan.",
+            "no-errors-detected-content-1": "The latest scan found no issues, indicating the system is functioning properly.",
+            "no-errors-detected-content-2": "Regular scans help ensure any problems are quickly identified and resolved, maintaining system health and performance.",
             "severity-description": {
                 "0-9": "Informational messages that return status information or report errors that aren't severe. The Database Engine doesn't raise system errors with severities of 0 through 9.",
                 "10": "Informational messages that return status information or report errors that aren't severe. For compatibility reasons, the Database Engine converts severity 10 to severity 0 before returning the error information to the calling application.",

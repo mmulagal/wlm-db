@@ -14,10 +14,10 @@
     z-index: 10;
 
     .disabled {
-        color: #e0e0e0 !important   ;
+        color: var(--text-disabled) !important   ;
         svg {
             path {
-                fill: #e0e0e0 !important;
+                fill: var(--icon-secondary-disabled) !important;
             }
         }
     }

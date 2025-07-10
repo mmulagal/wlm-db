@@ -24,9 +24,15 @@ export interface AgenticAIEntities {
     selectedErrorCodes: [] | any;
     timeRange: TimeRange;
     noData: boolean;
-    selectedDates: [] | any;
+    selectedInvestigationDate: { id: string; value: string; label: string } | null;
+    investigationDatesLoading: boolean;
+    investigationDates: Array<{ id: string; reportCreationTime: string }> | [];
     errorInvestigation: {
         errorInvestigationData: Array<ErrorInvestigationGetApiResponse> | [];
         errorInvestigationLoading: boolean;
     };
+    eiRefreshTimestamp: string;
+    eiRefreshPage: boolean;
+    noErrorsDetected: boolean;
+    scanInProgress: boolean;
 }
