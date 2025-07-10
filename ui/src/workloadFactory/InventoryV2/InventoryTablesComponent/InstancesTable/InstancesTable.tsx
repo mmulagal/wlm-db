@@ -28,6 +28,7 @@ import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../Inve
 import { bxpRedirect, getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
+    DBType,
     DETECT_HOST_VAR,
     FROM_DIALOG,
     INVENTORY_STATUS,
@@ -518,6 +519,22 @@ const InstancesTable = () => {
         optimizeAction(rowData);
     };
 
+    const instanceNameHyperLink = (rowData: any, name: string) => {
+        if (
+            name &&
+            rowData?.hostType === DBType.MSSQL &&
+            (rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
+                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP)
+        ) {
+            return (
+                <DsButton onClick={() => resourceScreenNavigation(rowData)} type="text">
+                    {name}
+                </DsButton>
+            );
+        }
+        return name;
+    };
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'Instance name',
@@ -540,11 +557,7 @@ const InstancesTable = () => {
                             className={styles.textClass}
                             variant="Semibold_14"
                         >
-                            {name && (
-                                <DsButton onClick={() => resourceScreenNavigation(rowData)} type="text">
-                                    {name}
-                                </DsButton>
-                            )}
+                            {name && instanceNameHyperLink(rowData, name)}
                             {!name && GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                         <div className={styles.firstColText}>
