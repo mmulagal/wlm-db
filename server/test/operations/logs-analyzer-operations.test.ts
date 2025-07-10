@@ -119,7 +119,7 @@ describe('Logs Analyzer Operations', () => {
             reports: [firstReport]
         } = result;
         expect(firstReport).toHaveProperty('id');
-        expect(firstReport).toHaveProperty('reportCreationTime');
+        expect(firstReport).toHaveProperty('creationTime');
     });
 
     it('should throw error when no reports exist for given parameters', async () => {
