@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography, Popover } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
