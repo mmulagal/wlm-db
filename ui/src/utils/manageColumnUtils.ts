@@ -116,6 +116,9 @@ export const initialInstanceTableColState = {
         isHidden: false
     },
     12: {
+        isHidden: false
+    },
+    13: {
         isHidden: false,
         isRemovalDisabled: true
     }
@@ -152,6 +155,9 @@ export const initialDatabaseTableColState = {
         isHidden: false
     },
     10: {
+        isHidden: false
+    },
+    11: {
         isHidden: false
     }
 };

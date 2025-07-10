@@ -1,8 +1,7 @@
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import styles from './ProtectionDialogs.module.scss';
 
-const FetchingDialog = () => {
-    return (
+const FetchingDialog = () => (
         <div className={styles.loadingDialog}>
             <DsFlashingDotsLoader />
             <DsTypography
@@ -14,6 +13,5 @@ const FetchingDialog = () => {
             <DsTypography variant="Regular_14">this process may take up to 20 seconds.</DsTypography>
         </div>
     );
-};
 
 export default FetchingDialog;

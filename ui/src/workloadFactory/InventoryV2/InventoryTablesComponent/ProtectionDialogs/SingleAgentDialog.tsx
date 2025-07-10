@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import styles from './ProtectionDialogs.module.scss';
 import { DsSelect, DsTypography } from '@tlveng/wlm-ds';
 import { Button, useDialog } from '@netapp/design-system';
+import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import styles from './ProtectionDialogs.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { ReactComponent as Complete } from '../../../../assets/complete-tick.svg';
 
@@ -10,10 +12,8 @@ import {
     AccordionCardContent,
     AccordionController
 } from '../../../../common/AccordionCard/AccordionCard';
-import { useEffect, useMemo, useState } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { useDispatch } from 'react-redux';
 import { setStartProtection } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { bxpRedirect } from '../../../../utils/utilityFunctions';
 import StepTwoDialog from './StepTwoDialog';
@@ -91,16 +91,14 @@ const SingleAgentDialog = ({ agents }: any) => {
     }, [step2Status]);
 
     // map to dropdown format
-    const generateDropDownValues = useMemo(() => {
-        return agents.map((item: { agent: any }, index: number) => {
-            const agent = item.agent;
+    const generateDropDownValues = useMemo(() => agents.map((item: { agent: any }, index: number) => {
+            const {agent} = item;
             return {
                 id: (index + 1).toString(),
                 label: `${agent.name}, ${agent.status}, ${agent.region}`,
                 value: agent.name
             };
-        });
-    }, [agents]);
+        }), [agents]);
 
     useEffect(() => {
         if (generateDropDownValues && generateDropDownValues.length > 0) {
@@ -227,7 +225,7 @@ const SingleAgentDialog = ({ agents }: any) => {
                                 <div className={styles.titleClass}>
                                     {step1Status === 'running' ? (
                                         <div className={styles['loader-container']}>
-                                            <div className={styles['spinner']}>
+                                            <div className={styles.spinner}>
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
                                                     width="40"
@@ -272,7 +270,7 @@ const SingleAgentDialog = ({ agents }: any) => {
                                 <div className={styles.titleClass}>
                                     {step2Status === 'running' ? (
                                         <div className={styles['loader-container']}>
-                                            <div className={styles['spinner']}>
+                                            <div className={styles.spinner}>
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
                                                     width="40"

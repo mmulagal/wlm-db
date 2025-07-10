@@ -9,10 +9,9 @@ import ThroughputCard from './ThroughputCard/ThroughputCard';
 import InformationSection from '../../../ResourcePage/InformationSection/InformationSection';
 import StorageSavingResource from '../../../ResourcePage/StorageSavingResource/StorageSavingResource';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { getAggrStorageSavings,isPartialData } from '../../../../utils/utilityFunctions';
+import { getAggrStorageSavings, isPartialData } from '../../../../utils/utilityFunctions';
 import DatabaseHostOverviewApiV2 from '../../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
 import ResourceMSSQLPartialContainer from './ResourceMSSQLPartailContainer/ResourceMSSQLPartailContainer';
-
 
 const PARTIAL_DATA_THRESHOLD = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
@@ -22,55 +21,55 @@ const ResourceMSSQLOverview = () => {
     DatabaseHostOverviewApiV2();
     return (
         <>
-        {/* Partial data warning here - based on condition 1. latency/throughput/iops read,write should be an array  2. creation of resource should be more than 6 hours 3.resource page should load fully*/}
-        {
-                 isPartialData(resourceDetails) && ((Date.now() - Number(resourceDetails?.databaseServer?.creationDate)) > PARTIAL_DATA_THRESHOLD)&& !resourceLoading &&
+            {/* Partial data warning here - based on condition 1. latency/throughput/iops read,write should be an array  2. creation of resource should be more than 6 hours 3.resource page should load fully */}
+            {isPartialData(resourceDetails) &&
+                Date.now() - Number(resourceDetails?.databaseServer?.creationDate) > PARTIAL_DATA_THRESHOLD &&
+                !resourceLoading && (
                     <div className={styles['resource-mssql-overview-partialDataContainer']}>
                         <ResourceMSSQLPartialContainer />
-                    </div>    
-        }
-        <div className={styles['resource-mssql-overview']}>
-            <div className={styles.leftSide}>
-                <ResourceHeader />
-                
-                <div className={styles.commonBlock}>
-                    <CPUUtilizationCard />
-                    <LatencyCard />
-                </div>
+                    </div>
+                )}
+            <div className={styles['resource-mssql-overview']}>
+                <div className={styles.leftSide}>
+                    <ResourceHeader />
 
-                {/* <div className={styles.commonBlock}>
+                    <div className={styles.commonBlock}>
+                        <CPUUtilizationCard />
+                        <LatencyCard />
+                    </div>
+
+                    {/* <div className={styles.commonBlock}>
                     <DBDistributionSection />
                 </div> */}
 
-                <div className={styles.commonBlock}>
-                    <ProtectedDatabases />
-                    <CapacityUtilization />
-                </div>
+                    <div className={styles.commonBlock}>
+                        <ProtectedDatabases />
+                        <CapacityUtilization />
+                    </div>
 
-                <div className={styles.commonBlock}>
-                    <IOPSCard />
-                    <ThroughputCard />
-                </div>
+                    <div className={styles.commonBlock}>
+                        <IOPSCard />
+                        <ThroughputCard />
+                    </div>
 
-                {/* <div className={styles.commonBlock}>
+                    {/* <div className={styles.commonBlock}>
                     <StoragePerformance />
                 </div> */}
 
-                <div className={styles.barContainer}>
-                    <div className={styles.commonContainer}>
-                        <StorageSavingResource
-                            hostData={getAggrStorageSavings([resourceDetails])}
-                            hostsLoading={resourceLoading}
-                        />
+                    <div className={styles.barContainer}>
+                        <div className={styles.commonContainer}>
+                            <StorageSavingResource
+                                hostData={getAggrStorageSavings([resourceDetails])}
+                                hostsLoading={resourceLoading}
+                            />
+                        </div>
                     </div>
                 </div>
+                <div className={styles.rightSide}>
+                    <InformationSection />
+                </div>
             </div>
-            <div className={styles.rightSide}>
-                <InformationSection />
-            </div>
-        </div>
         </>
-        
     );
 };
 
