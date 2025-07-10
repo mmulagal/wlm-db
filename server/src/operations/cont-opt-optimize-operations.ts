@@ -66,7 +66,7 @@ import {
     STORAGE_OPTIMIZE_JOB_PARAM
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
-import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { listInstanceConfigIncludingResourceAndInstance } from './database/instance-config-operations';
 import {
     CloneDetailType,
     OptimizePerHostRequestBodyType,
@@ -1127,15 +1127,15 @@ async function optimizeSizing(
         throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
     }
 
-    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+    const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
         accountId,
         region,
         credentialsId,
-        databaseHostId,
+        resourceId: databaseHostId,
         databaseInstanceId,
-        AssessmentCategories.STORAGE,
-        1
-    );
+        configDataType: AssessmentCategories.STORAGE,
+        pageSize: 1
+    });
     const {
         config_data: configData,
         database_instances: { database_instance_name: instanceName = '' } = {},
@@ -2802,15 +2802,15 @@ async function optimizeMaxDop(
 
     let parentJobId = '';
     try {
-        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+        const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
             accountId,
             region,
             credentialsId,
-            databaseHostId,
+            resourceId: databaseHostId,
             databaseInstanceId,
-            AssessmentCategories.MAXDOP,
-            1
-        );
+            configDataType: AssessmentCategories.MAXDOP,
+            pageSize: 1
+        });
 
         const {
             config_data: configData,

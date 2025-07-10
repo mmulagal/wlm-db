@@ -109,7 +109,7 @@ import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
 import getDatabaseInstanceTopology from '../utils/sql-utils';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
-import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { listInstanceConfigIncludingResourceAndInstance } from './database/instance-config-operations';
 import {
     getOracleDatabaseInstancesDetails,
     getOracleDatabaseInstancesSummary
@@ -179,14 +179,14 @@ async function getUniqueCrrDetails(
         databaseInstanceId
     });
 
-    const crrConfigData = await listDatabaseInstanceConfigData(
+    const crrConfigData = await listInstanceConfigIncludingResourceAndInstance({
         accountId,
-        region!,
+        region,
         credentialsId,
-        databaseHostId,
+        resourceId: databaseHostId,
         databaseInstanceId,
-        AssessmentCategories.CRR
-    );
+        configDataType: AssessmentCategories.CRR
+    });
 
     const uniqueCrrConfigData = Object.values(
         crrConfigData.reduce((acc: Record<string, any>, entry: any) => {

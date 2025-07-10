@@ -1,8 +1,8 @@
 import {
     createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData,
     removeDatabaseInstanceConfigData
 } from '../../../src/lib/database/database-instance-config';
+import { listInstanceConfigIncludingResourceAndInstance } from '../../../src/operations/database/instance-config-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID } from '../../utils/consts';
 
 describe('database instance config operations', () => {
@@ -178,7 +178,7 @@ describe('database instance config operations', () => {
             }
         ];
         await createDatabaseInstanceConfigData(DatabaseInstanceConfigDataRecords);
-        const resp = await listDatabaseInstanceConfigData(ACCOUNT_ID);
+        const resp = await listInstanceConfigIncludingResourceAndInstance({ accountId: ACCOUNT_ID });
         expect(resp.length).toEqual(2);
         await removeDatabaseInstanceConfigData(undefined, ACCOUNT_ID);
     });
@@ -267,7 +267,7 @@ describe('database instance config operations', () => {
             }
         ];
         await createDatabaseInstanceConfigData(DatabaseInstanceConfigDataRecords);
-        const resp = await listDatabaseInstanceConfigData(ACCOUNT_ID);
+        const resp = await listInstanceConfigIncludingResourceAndInstance({ accountId: ACCOUNT_ID });
         const configIds = resp.map(config => config.id);
         const removeResp = await removeDatabaseInstanceConfigData(configIds);
         expect(removeResp.count).toBeGreaterThan(1);

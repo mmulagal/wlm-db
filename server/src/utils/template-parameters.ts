@@ -485,7 +485,7 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             description: '(optional) Preferred organizational unit in the AD to join.',
             type: 'String',
             default: 'default'
-        }        
+        }
     ];
 
     return PARAMETERS;

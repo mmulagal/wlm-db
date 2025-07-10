@@ -27,6 +27,7 @@ import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND } from
 import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { ListDatabaseInstancesRecord } from '../../lib/database/db-types';
+import { getNextToken } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -282,10 +283,7 @@ async function getResources(
         return {
             count: items?.length,
             items,
-            nextToken:
-                totalResourcesCount > Number(pageSize) && records.length >= Number(pageSize)
-                    ? items[items.length - 1].id
-                    : undefined
+            ...(pageSize && { nextToken: getNextToken(items, totalResourcesCount, pageSize) })
         };
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');

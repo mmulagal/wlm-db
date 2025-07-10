@@ -1212,6 +1212,20 @@ function sanitizeSnsSubject(subject: string): string {
     return subject;
 }
 
+function getNextToken<T extends { id: string }>(
+    items: T[],
+    totalResourcesCount: number,
+    pageSize: number
+): string | undefined {
+    logger.debug('Calculating next token', { items, totalResourcesCount, pageSize });
+
+    if (isEmpty(items) || !totalResourcesCount || !pageSize) {
+        return undefined;
+    }
+
+    return totalResourcesCount > pageSize && items.length >= pageSize ? items[items.length - 1]?.id : undefined;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1283,5 +1297,6 @@ export {
     assessMssqlServerPerformance,
     getSqlInstanceMetricDataQueries,
     isCidrContained,
-    sanitizeSnsSubject
+    sanitizeSnsSubject,
+    getNextToken
 };

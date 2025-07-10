@@ -51,10 +51,7 @@ import {
     RssConfigDriftResponseType,
     StorageParameterDriftResponseType
 } from '../routes/types/continuous-optimization.types';
-import {
-    createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData
-} from '../lib/database/database-instance-config';
+import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import {
     getInstanceInfo,
     getResources,
@@ -107,6 +104,7 @@ import {
     updateFieldsBasedOnDismissedConfigurations
 } from './continuous-optimization/assessment-utils';
 import prepareWFNotificationRequest from './wf-notification-operations';
+import { listInstanceConfigIncludingResourceAndInstance } from './database/instance-config-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -1289,13 +1287,13 @@ async function fetchDriftAssessment(
 
     let driftAssessmentData: DriftAssessmentResponseType = {};
 
-    const databaseInstanceConfigData = await listDatabaseInstanceConfigData(
+    const databaseInstanceConfigData = await listInstanceConfigIncludingResourceAndInstance({
         accountId,
         region,
         credentialsId,
-        databaseHostId,
+        resourceId: databaseHostId,
         databaseInstanceId
-    );
+    });
     // filter out the config data which is not required for assessment and listDatabaseInstanceConfigData returns in descending order of creation time
     const assessmentDataMap = databaseInstanceConfigData.reduce((acc, config) => {
         if (!acc[config.config_data_type]) {

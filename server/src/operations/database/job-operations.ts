@@ -26,7 +26,7 @@ import {
     JobSummaryQueryType
 } from '../../routes/types/jobs.types';
 import { GERERIC_JOB_ERROR_MESSAGE, JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
-import { getRegionDetails, isDemo, sleep } from '../../utils/utils';
+import { getNextToken, getRegionDetails, isDemo, sleep } from '../../utils/utils';
 import { RegionDetailsType } from '../../routes/types/generic.types';
 
 const logger = getLogger();
@@ -229,10 +229,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
     return {
         count: items?.length,
         items,
-        nextToken:
-            !isDemoFlow && totalParentJobIdCount > (limit || 50) && records.length >= (limit || 50)
-                ? items[items.length - 1].id
-                : undefined
+        ...(!isDemoFlow && { nextToken: getNextToken(items, totalParentJobIdCount, limit || 50) })
     };
 }
 

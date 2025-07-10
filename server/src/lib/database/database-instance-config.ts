@@ -1,20 +1,15 @@
+import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
+import {
+    CountDatabaseInstanceConfigRecordsParams,
+    DatabaseInstanceConfigData,
+    ListDatabaseInstanceConfigDataParams
+} from './db-types';
 
 const logger = getLogger();
 
-interface DatabaseInstanceConfigData {
-    account_id: string;
-    credentials_id: string;
-    region: string;
-    resource_id: string;
-    database_instance_id: string;
-    creation_time: Date;
-    last_updated?: Date;
-    config_data: object;
-    config_data_type: string;
-}
 async function createDatabaseInstanceConfigData(records: DatabaseInstanceConfigData[]) {
     logger.info('Creating database instance config data', { records });
     records.forEach(record => {
@@ -25,16 +20,19 @@ async function createDatabaseInstanceConfigData(records: DatabaseInstanceConfigD
     });
 }
 
-async function listDatabaseInstanceConfigData(
-    accountId?: string,
-    region?: string,
-    credentialsId?: string,
-    resourceId?: string,
-    databaseInstanceId?: string,
-    configDataType?: string,
-    pageSize?: number,
-    nextToken?: string
-) {
+async function listDatabaseInstanceConfigData({
+    accountId,
+    region,
+    credentialsId,
+    resourceId,
+    databaseInstanceId,
+    configDataType,
+    pageSize,
+    nextToken,
+    include,
+    select,
+    filters
+}: ListDatabaseInstanceConfigDataParams): Promise<any[]> {
     logger.info('Listing database instance config data', {
         accountId,
         region,
@@ -43,7 +41,9 @@ async function listDatabaseInstanceConfigData(
         databaseInstanceId,
         configDataType,
         pageSize,
-        nextToken
+        nextToken,
+        include,
+        select
     });
     accountId = checkAccount(accountId!);
 
@@ -54,12 +54,11 @@ async function listDatabaseInstanceConfigData(
             ...(credentialsId && { credentials_id: credentialsId }),
             ...(resourceId && { resource_id: resourceId }),
             ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
-            ...(configDataType && { config_data_type: configDataType })
+            ...(configDataType && { config_data_type: configDataType }),
+            ...filters
         },
-        include: {
-            database_instances: true,
-            resource: true
-        },
+        ...(include && !isEmpty(include) && { include }),
+        ...(select && !isEmpty(select) && { select }),
         ...(pageSize && pageSize > 0 && { take: pageSize }),
         ...(nextToken && {
             cursor: { id: nextToken },
@@ -136,9 +135,46 @@ async function removeAllButLatestDatabaseInstanceConfigData(
     });
 }
 
+async function countDatabaseInstanceConfigRecords({
+    accountId,
+    region,
+    credentialsId,
+    resourceId,
+    databaseInstanceId,
+    configDataType,
+    filters
+}: CountDatabaseInstanceConfigRecordsParams): Promise<number> {
+    logger.info('Counting database instance config records', {
+        accountId,
+        region,
+        credentialsId,
+        resourceId,
+        databaseInstanceId,
+        configDataType
+    });
+
+    const result = await prisma.client.database_instance_config_data.aggregate({
+        _count: {
+            id: true
+        },
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(region && { region }),
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(resourceId && { resource_id: resourceId }),
+            ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
+            ...(configDataType && { config_data_type: configDataType }),
+            ...filters
+        }
+    });
+
+    return result?._count?.id || 0;
+}
+
 export {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData,
     removeDatabaseInstanceConfigData,
-    removeAllButLatestDatabaseInstanceConfigData
+    removeAllButLatestDatabaseInstanceConfigData,
+    countDatabaseInstanceConfigRecords
 };
