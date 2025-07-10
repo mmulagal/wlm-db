@@ -57,7 +57,7 @@ body:
         - "staging-demo"
         - "prod-demo"
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: attachments

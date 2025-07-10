@@ -47,7 +47,7 @@ body:
         3. Click the 'Login' button
         4. Observe the error message
     validations:
-      required: true
+      required: false
 
   - type: dropdown
     id: environment
@@ -60,7 +60,7 @@ body:
         - "staging-demo"
         - "prod-demo"
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: attachments

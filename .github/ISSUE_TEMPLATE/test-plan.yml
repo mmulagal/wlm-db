@@ -1,0 +1,33 @@
+name: Test Plan
+description: Create a comprehensive test plan for a project or feature.
+title: "[Test Plan]: "
+labels: ["Test Plan"]
+assignees:
+  - shaswatinetapp
+projects: ["TLVeng/41"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📝 Test Plan
+
+        Please fill out the details below to outline the test plan for your project or feature.
+
+  - type: input
+    id: project
+    attributes:
+      label: "Project/Feature Name"
+      description: "What is the name of the project or feature this test plan covers?"
+      placeholder: "e.g., User Authentication Module"
+    validations:
+      required: false
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: "Objective/Scope"
+      description: "What is the purpose and scope of this test plan?"
+      placeholder: "State the main objectives and scope of testing."
+    validations:
+      required: false

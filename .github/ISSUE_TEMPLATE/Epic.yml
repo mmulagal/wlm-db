@@ -57,7 +57,7 @@ body:
         - Requirement 1
         - Requirement 2
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: acceptance-criteria
@@ -68,7 +68,7 @@ body:
         - [ ] Acceptance criterion 1
         - [ ] Acceptance criterion 2
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: goals
@@ -100,7 +100,7 @@ body:
         - "Medium"
         - "Low"
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: additional-context

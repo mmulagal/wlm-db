@@ -33,7 +33,7 @@ body:
         - "Medium"
         - "Low"
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: dependencies
