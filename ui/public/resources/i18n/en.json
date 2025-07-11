@@ -222,7 +222,7 @@
             "throughput-tooltip": "This chart shows the daily maximum values recorded over the past week, measured in kb/s (Kilobytes per second)",
             "capacity-tooltip": "This chart shows the daily maximum values recorded over the past week, measured in Percent (%)",
             "latency-tooltip": "This chart shows the daily maximum values recorded over the past week, measured in ms (Milliseconds)",
-            "missing-modules-content-1": "Missing AWS PowerShell module: 'AWS.Tools.Cloudwatch'",
+            "missing-modules-content-1": "Missing AWS PowerShell module: 'AWS.Tools.CloudWatch'",
             "missing-modules-content-2": "Missing IAM permission - 'cloudwatch:GetMetricData'",
             "missing-modules-content-3": "Missing instance profile permission - 'cloudwatch:PutMetricData'",
             "missing-modules-content-4": "Partial data displayed due to one of the following reasons:"

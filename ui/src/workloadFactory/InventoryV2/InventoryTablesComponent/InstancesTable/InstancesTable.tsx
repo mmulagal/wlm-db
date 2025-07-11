@@ -525,7 +525,7 @@ const InstancesTable = () => {
     const instanceNameHyperLink = (rowData: any, name: string) => {
         if (
             name &&
-            rowData?.hostType === DBType.MSSQL &&
+            rowData?.hostType === DBType.MSSQL && rowData?.managementStatus === INVENTORY_STATUS.REGISTERED &&
             (rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP)
         ) {
