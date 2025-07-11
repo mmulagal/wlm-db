@@ -13,7 +13,7 @@ import { ReactComponent as Thunder } from '../assets/thunder.svg';
 import { ReactComponent as Setting } from '../assets/settings.svg';
 import styles from './Marketing.module.scss';
 import CardComponent from './CardComponent/CardComponent';
-import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE,FORM_TO_WLF_NAVIGATE_INVENTORY } from '../utils/consts';
+import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE, FORM_TO_WLF_NAVIGATE_INVENTORY } from '../utils/consts';
 import { useAppSelector } from '../store/storeHooks';
 
 const Marketing = () => {
@@ -26,28 +26,6 @@ const Marketing = () => {
 
     const handleCloseModal = () => {
         setModalOpen(false);
-    };
-
-    const handleNavigation = () => {
-        if (isWorkloadFactory) {
-            navigate(WLF_TO_FORM_NAVIGATE);
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: {
-                    pathname: './mssql-deploy-wizard',
-                    replace: true
-                }
-            });
-        } else {
-            navigate('../../fsxdb/mssql-deploy-wizard');
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: {
-                    pathname: '../../fsxdb/mssql-deploy-wizard',
-                    replace: true
-                }
-            });
-        }
     };
 
     return (
@@ -76,7 +54,6 @@ const Marketing = () => {
 
                         <div className={styles.buttonSection}>
                             <DsButton
-                                // children=" Get Started"
                                 variant="Default"
                                 dropDown={{
                                     trigger: 'click',
@@ -136,8 +113,7 @@ const Marketing = () => {
                                         }
                                     ]
                                 }}
-                            // />
-                             >
+                            >
                                 Get Started
                             </DsButton>
                             <DsButton
@@ -154,7 +130,7 @@ const Marketing = () => {
                                             }
                                         });
                                     } else {
-                                        navigate('/fsxdb');
+                                        navigate('../../fsxdb/inventory');
                                         postBlueXPMessage({
                                             type: BlueXPListeners.navigate,
                                             payload: {

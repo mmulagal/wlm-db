@@ -22,7 +22,7 @@ const Dashboard = () => {
     const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
     const pgsqlHostDataLoading = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts.fullHostDataLoading);
     const savingsDataLoading = useAppSelector(state => state.inventoryV2.dashSandboxSavings.loading);
-    const { multiDataLoading, showNA } = useAppSelector(state => state.headers);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const hostStorageSavingsData = useMemo(
         () => getTotalManagedAggrStorageSavings(mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData),
