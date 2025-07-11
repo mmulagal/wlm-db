@@ -168,8 +168,8 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLog
                     : undefined,
                 lastOccurrence:
                     Array.isArray(groupedLogs[key]) &&
-                        groupedLogs[key].length > 0 &&
-                        groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
+                    groupedLogs[key].length > 0 &&
+                    groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
                         ? new Date(groupedLogs[key][groupedLogs[key].length - 1].timestamp).getTime()
                         : undefined,
                 severity,

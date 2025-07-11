@@ -26,7 +26,7 @@ export interface AgenticAIEntities {
     noData: boolean;
     selectedInvestigationDate: { id: string; value: string; label: string } | null;
     investigationDatesLoading: boolean;
-    investigationDates: Array<{ id: string; reportCreationTime: string }> | [];
+    investigationDates: Array<{ id: string; creationTime: string }> | [];
     errorInvestigation: {
         errorInvestigationData: Array<ErrorInvestigationGetApiResponse> | [];
         errorInvestigationLoading: boolean;
@@ -34,5 +34,8 @@ export interface AgenticAIEntities {
     eiRefreshTimestamp: string;
     eiRefreshPage: boolean;
     noErrorsDetected: boolean;
-    scanInProgress: boolean;
+    scanStatus: {
+        scanInProgress: boolean;
+        stopErrorInvestigationScan: boolean;
+    };
 }

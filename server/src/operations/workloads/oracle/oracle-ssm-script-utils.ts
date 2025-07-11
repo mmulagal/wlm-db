@@ -125,7 +125,8 @@ const getOracleProtectionData = (
     mountIp: string,
     junctionPath: string,
     protocol: string,
-    dbSid: string
+    dbSid: string,
+    ec2InstanceId: string
 ) => `
     #oracle protection script
  
@@ -135,18 +136,21 @@ const getOracleProtectionData = (
     ontapProtectionData=$(ontap_request 'GET' $endpoint)
     check_status "Failed to fetch protection data"
 
-    ${isOracleNativeProtectionEnabled(dbSid)}
+    ${isOracleNativeProtectionEnabled(ec2InstanceId, dbSid)}
     result=$(printf '{ "ontapProtectionDetails": %s, "isNativeProtectionEnabled": "%s" }' "$ontapProtectionData" "$is_native_protection_enabled")
     echo $result
 `;
 
-const ORACLE_PERFORMANCE_METRICS = (dbSid: string) => `
+const ORACLE_PERFORMANCE_METRICS = (ec2InstanceId: string, dbSid: string) => `
 oracleSid="${dbSid}"
+ec2InstanceId="${ec2InstanceId}"
+
+${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
 
 result=$(sudo -i -u oracle bash <<EOF
     set -e
     export ORACLE_SID="$oracleSid"
-    sqlplus -S / as sysdba
+    $sqlplus_command
     WHENEVER SQLERROR EXIT SQL.SQLCODE
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
     SET LINESIZE 500
@@ -246,7 +250,60 @@ EOF
 }
 `;
 
-const getOracleInstanceData = `
+const oracleUserAuthLoginCommand = `
+    get_oracle_user_auth_login_command() {
+        local oracleSidTemp="$1"
+        local ec2InstanceId="$2"
+
+        instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
+        oracleInstances=$(echo "$instanceCreds" | jq -c '.oracle')
+        matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSidTemp" '.[] | select(.oracleinstancename == $sid)')
+        username=$(echo "$matchingOracleInstance" | jq -r '.username')
+        password=$(echo "$matchingOracleInstance" | jq -r '.password')
+        
+        # Convert username to lowercase
+        usernameLowercase=$(echo "$username" | tr '[:upper:]' '[:lower:]')
+
+        oracleCredsAvailable="true"
+
+        if [ "$usernameLowercase" == "sys" ]; then
+            # For SYS user, we need to use AS SYSDBA
+            sqlplus_command="sqlplus -S $username/$password as sysdba"
+        else
+            sqlplus_command="sqlplus -S $username/$password"
+        fi
+
+        echo "$sqlplus_command|$oracleCredsAvailable"
+    }
+`;
+
+const getOracleDefaultOrUserAuthCommand = (ec2InstanceId: string, dbSid: string) => `
+    oracleSid="${dbSid}"
+    oracleSid_temp="${dbSid}_temp"
+    ec2InstanceId="${ec2InstanceId}"
+
+    ${defaultAuthDetectModule}
+    isDefaultAuth=$(is_default_auth "$oracleSid")
+
+    if [ "$isDefaultAuth" == "true" ]; then
+        sqlplus_command="sqlplus -S / as sysdba"
+    elif [ "$isDefaultAuth" == "false" ]; then
+        # If default auth is not used, we need to fetch the credentials from SSM.
+        ${oracleUserAuthLoginCommand}
+        
+        result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
+        sqlplus_command=$(echo "$result" | cut -d'|' -f1)
+        oracleCredsAvailable=$(echo "$result" | cut -d'|' -f2)
+    else
+        echo "Error: isDefaultAuth is undefined"
+        exit 1
+    fi
+`;
+
+const getOracleInstanceData = (ec2InstanceId: string) => `
+
+    ec2InstanceId="${ec2InstanceId}"
+    oracleCredsAvailable="false" 
     # Check if oratab exists
     if [ ! -f /etc/oratab ]; then
         echo "[]"
@@ -262,14 +319,15 @@ const getOracleInstanceData = `
     fi
 
     ${defaultAuthDetectModule}
+    ${oracleUserAuthLoginCommand}
 
     get_instance_details() {
         local ORACLE_SID="$1"
-        if [ "$isDefaultAuth" == "true" ]; then
+        if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
 
             sudo -i -u oracle bash <<EOF
                 export ORACLE_SID="$ORACLE_SID"
-                sqlplus -S / as sysdba
+                $sqlplus_command
                     SET HEADING OFF
                     SET LINESIZE 500
                     SELECT JSON_OBJECT(
@@ -299,6 +357,17 @@ EOF
         fi
 
         isDefaultAuth=$(is_default_auth "$sid")
+        if [ "$isDefaultAuth" == "true" ]; then
+            sqlplus_command="sqlplus -S / as sysdba"
+        elif [ "$isDefaultAuth" == "false" ]; then
+            # If default auth is not used, check if user auth credentials are available.
+            sid_temp="\${sid}_temp"
+            result=$(get_oracle_user_auth_login_command "$sid_temp" "$ec2InstanceId")
+            sqlplus_command=$(echo "$result" | cut -d'|' -f1)
+            oracleCredsAvailable=$(echo "$result" | cut -d'|' -f2)
+        else
+            continue
+        fi
 
         { 
             INSTANCE_DETAILS=$(get_instance_details "$sid") 
@@ -318,12 +387,17 @@ EOF
     echo "$RESULTS"
 `;
 
-const isOracleNativeProtectionEnabled = (dbSid: string) => `
+const isOracleNativeProtectionEnabled = (ec2InstanceId: string, dbSid: string) => `
     oracleSid="${dbSid}"
+    ec2InstanceId="${ec2InstanceId}"
+    oracleCredsAvailable="false"
+
+    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+
     areBackupSetsAvailable () {
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$oracleSid"
-            sqlplus -S / as sysdba
+            $sqlplus_command
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
                 when exists (select 1 from v\\$backup_set) then 'true' 
@@ -336,7 +410,7 @@ EOF
     areBackupPiecesAvailable () {
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="${dbSid}"
-            sqlplus -S / as sysdba
+            $sqlplus_command
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
                     when exists (
@@ -351,9 +425,8 @@ EOF
 EOF
     }
 
-    ${defaultAuthDetectModule}
 
-    if [ "$isDefaultAuth" == "true" ]; then
+    if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
         backup_sets=$(areBackupSetsAvailable)
         backup_pieces=$(areBackupPiecesAvailable)
 
@@ -362,7 +435,7 @@ EOF
             is_native_protection_enabled="true"
         fi
     else
-        # If default auth is not used, we cannot check for native protection status.
+        # If default auth isn't enabled or User Auth credentials aren't available, we cannot check for native protection status.
         is_native_protection_enabled="undefined"
     fi
 `;
@@ -376,18 +449,14 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
     if [ -z "$resultObject" ]; then
         resultObject='{ "instances": [], "fsxResults": [] }'
     fi
-    
-    instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
-    oracleInstances=$(echo "$instanceCreds" | jq -c '.oracle')
-    matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSid_temp" '.[] | select(.oracleinstancename == $sid)')
-    username=$(echo "$matchingOracleInstance" | jq -r '.username')
-    password=$(echo "$matchingOracleInstance" | jq -r '.password')
+
+    ${oracleUserAuthLoginCommand}
 
     get_instance_db_version() {
         sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
-            sqlplus -S $username/$password as sysdba
+            $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             SELECT version FROM v\\$instance;
@@ -432,5 +501,6 @@ export {
     ORACLE_PERFORMANCE_METRICS,
     getOracleInstanceData,
     validateOracleInstanceConnectivity,
-    validateOracleInstanceFsxConnectivity
+    validateOracleInstanceFsxConnectivity,
+    getOracleDefaultOrUserAuthCommand
 };

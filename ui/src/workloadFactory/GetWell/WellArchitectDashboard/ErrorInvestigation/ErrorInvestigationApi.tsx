@@ -5,7 +5,6 @@ import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
 import { useGetErrorInvestigationDataMutation, useGetInvestigationDatesMutation } from '../../../../utils/apiService';
 import { setLandingFromInnerPage } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
-    resetEiData,
     setEiRefreshPage,
     setEiRefreshTimestamp,
     setErrorInvestigationData,
@@ -35,34 +34,6 @@ const ErrorInvestigationApi = () => {
 
     const [errorInvestigationDatesApi] = useGetInvestigationDatesMutation();
     const [errorInvestigationGetApi] = useGetErrorInvestigationDataMutation();
-
-    const runInvestigationDatesApi = async () => {
-        dispatch(setEiRefreshTimestamp(getCurrentDateTime()));
-        try {
-            dispatch(setInvestigationDatesLoading(true));
-            const result: { data?: any; error?: any } = await errorInvestigationDatesApi({
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                databaseHostId: selectedResourceId,
-                instanceId: selectedDatabaseInstance
-            });
-            if (result && !result?.error && result?.data && result.data.length > 0) {
-                dispatch(setInvestigationDateData(result.data));
-                dispatch(setNoLogAnalyzerData(false));
-            } else {
-                if (result?.data && result.data.length === 0) {
-                    runErrorInvestigationApi();
-                } else {
-                    dispatch(setNoLogAnalyzerData(true));
-                }
-                dispatch(setInvestigationDateData([]));
-            }
-        } catch (error) {
-            dispatch(setNoLogAnalyzerData(true));
-        } finally {
-            dispatch(setInvestigationDatesLoading(false));
-        }
-    };
 
     const runErrorInvestigationApi = async () => {
         try {
@@ -109,6 +80,34 @@ const ErrorInvestigationApi = () => {
         }
     };
 
+    const runInvestigationDatesApi = async () => {
+        dispatch(setEiRefreshTimestamp(getCurrentDateTime()));
+        try {
+            dispatch(setInvestigationDatesLoading(true));
+            const result: { data?: any; error?: any } = await errorInvestigationDatesApi({
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance
+            });
+            if (result && !result?.error && result?.data?.reports && result.data.reports.length > 0) {
+                dispatch(setInvestigationDateData(result.data.reports));
+                dispatch(setNoLogAnalyzerData(false));
+            } else {
+                if (result?.data?.reports && result.data.reports.length === 0) {
+                    runErrorInvestigationApi();
+                } else {
+                    dispatch(setNoLogAnalyzerData(true));
+                }
+                dispatch(setInvestigationDateData([]));
+            }
+        } catch (error) {
+            dispatch(setNoLogAnalyzerData(true));
+        } finally {
+            dispatch(setInvestigationDatesLoading(false));
+        }
+    };
+
     const viewLogAction = async () => {
         dispatch(setNoErrorsDetected(false));
         dispatch(setNoLogAnalyzerData(false));
@@ -126,6 +125,7 @@ const ErrorInvestigationApi = () => {
             viewLogAction();
             dispatch(setEiRefreshPage(false));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [eiRefreshPage]);
 
     useEffect(() => {
@@ -143,6 +143,7 @@ const ErrorInvestigationApi = () => {
         if (selectedInvestigationDate && selectedResourceId && selectedDatabaseInstance) {
             runErrorInvestigationApi();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedInvestigationDate]);
 };
 

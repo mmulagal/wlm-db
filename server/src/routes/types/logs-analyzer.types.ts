@@ -31,8 +31,16 @@ const RemediationRecommendationObject = Type.Object({
     lastOccurrence: Type.Optional(Type.Number()),
     errorCode: Type.Optional(Type.String()),
     uniqueErrorKey: Type.Optional(Type.String()),
-    sql: Type.Optional(Type.String()),
-    additionalInfo: Type.Optional(Type.Any()),
+    sql: Type.Optional(Type.Array(Type.String())),
+    additionalInfo: Type.Optional(
+        Type.Array(
+            Type.Object({
+                query: Type.Optional(Type.String()),
+                result: Type.Optional(Type.String()),
+                error: Type.Optional(Type.String())
+            })
+        )
+    ),
     hourlyErrorCounts: Type.Optional(
         Type.Array(
             Type.Object({
@@ -42,6 +50,8 @@ const RemediationRecommendationObject = Type.Object({
         )
     )
 });
+type RemediationRecommendationObjectType = Static<typeof RemediationRecommendationObject>;
+
 type LogsAnalyzerBody = Static<typeof LogsAnalyzerBody>;
 
 const ReportIdentifier = Type.Object({
@@ -55,5 +65,6 @@ export {
     LogsAnalyzerBody,
     InferenceConfigType,
     RemediationRecommendationObject,
-    ReportIdentifier
+    ReportIdentifier,
+    RemediationRecommendationObjectType
 };

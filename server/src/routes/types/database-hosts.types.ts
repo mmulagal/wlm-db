@@ -357,7 +357,7 @@ const DatabasesResponse = Type.Object({
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
-    collation: Type.String({ minLength: 1 })
+    collation: Type.Optional(Type.String({ minLength: 1 }))
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
 
@@ -646,5 +646,6 @@ export {
     DatabaseHostOptionalInstanceSummaryParams,
     PgSqlDbHostsSummaryResponse,
     PgSqlDbHostSummaryListResponse,
-    OracleDbHostSummaryListResponse
+    OracleDbHostSummaryListResponse,
+    OracleDbHostsSummaryResponse
 };

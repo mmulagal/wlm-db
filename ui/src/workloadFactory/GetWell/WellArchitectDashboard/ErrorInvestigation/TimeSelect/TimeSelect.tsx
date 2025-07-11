@@ -1,7 +1,7 @@
 import { DsSelect, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './TimeSelect.module.scss';
 import {
     setNoErrorsDetected,
@@ -17,14 +17,17 @@ const TimeSelect = () => {
     const { selectedInvestigationDate, investigationDates, investigationDatesLoading } = useAppSelector(
         state => state.agenticAI
     );
-    const dateOptions = useMemo(() => {
+    const [dateOptions, setDateOptions] = useState<{ id: string; value: string; label: string }[]>([]);
+
+    useEffect(() => {
         const options = investigationDates.map(date => ({
             id: date.id,
-            value: date.reportCreationTime,
-            label: formatDateWithTime(date.reportCreationTime)
+            value: date.creationTime,
+            label: formatDateWithTime(date.creationTime)
         }));
         dispatch(setSelectedInvestigationDate(options[0]));
-        return options;
+        setDateOptions(options);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [investigationDates]);
 
     return (

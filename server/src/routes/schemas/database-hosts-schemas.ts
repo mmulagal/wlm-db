@@ -16,7 +16,8 @@ import {
     DatabaseHostInstanceSummaryResponse,
     DatabaseHostOptionalInstanceSummaryParams,
     PgSqlDbHostSummaryListResponse,
-    PgSqlDbHostsSummaryResponse
+    PgSqlDbHostsSummaryResponse,
+    OracleDbHostsSummaryResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams } from '../types/generic.types';
 
@@ -187,6 +188,18 @@ const PgSqlDbHostDetailsSchema = {
     }
 };
 
+const oracleDbHostDetailsSchema = {
+    ...resourceRequest,
+    summary: 'Fetch Oracle database server details',
+    description:
+        'Fetch Oracle database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network), storage savings, usage cost and databases in the server.',
+    params: DatabaseHostSummaryParams,
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: OracleDbHostsSummaryResponse
+    }
+};
+
 const DatabaseHostInstanceDetailsSchema = {
     ...resourceRequest,
     summary: 'Fetch database server instance details',
@@ -221,5 +234,6 @@ export {
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
     PgSqlDbHostsSummarySchema,
-    PgSqlDbHostDetailsSchema
+    PgSqlDbHostDetailsSchema,
+    oracleDbHostDetailsSchema
 };
