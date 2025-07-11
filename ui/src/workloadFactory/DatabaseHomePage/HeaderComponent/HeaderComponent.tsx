@@ -13,7 +13,7 @@ import {
 import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useDispatch } from 'react-redux';
-import { useNavigate, useNavigationType, NavigationType,useLocation } from 'react-router-dom';
+import { useNavigate, useNavigationType, NavigationType, useLocation } from 'react-router-dom';
 import styles from './HeaderComponent.module.scss';
 
 // @ts-ignore
@@ -234,8 +234,9 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
+            //Check for No cred
             if (location.state && location.state.allowDashboardNoCred) {
-                 setStatusChk(true);
+                setStatusChk(true);
                 return;
             }
             if (
@@ -1097,7 +1098,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 />
                             </div>
                         }
-                         >
+                    >
                         <div className={styles.noCredentialsTag}>No credentials</div>
                     </Popover>
                 ) : (
