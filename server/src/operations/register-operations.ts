@@ -20,6 +20,7 @@ import {
     DatabaseTypes,
     HttpErrorCodes,
     JQ_LINUX_RELATIVE_PATH,
+    MAKE_LINUX_RELATIVE_PATH,
     POWERSHELL_7_RELATIVE_PATH,
     PREPARE_PSMODULES_RELATIVE_PATH,
     PSMODULES_RELATIVE_PATH,
@@ -415,14 +416,6 @@ async function registerSqlInstance(
             if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
                 alreadyManagedDatabaseInstances = resourceDetails.database_instances;
             }
-        }
-
-        if (alreadyManagedDatabaseInstances.length === 0) {
-            alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
-                credentialsId,
-                resourceId,
-                region
-            });
         }
 
         // Filter SQL Server instances: not already managed, storage is FSXN, deployment is Standalone or FCI
@@ -1276,6 +1269,157 @@ async function registerDatabaseServerInstances(
     return { jobId };
 }
 
+async function registerOracleInstancesData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    alreadyRegisteredDatabaseInstances: any[],
+    oracleInstanceConfig: any
+) {
+    let instanceManagementStatus: {
+        databaseInstanceName: string;
+        databaseInstanceGuid?: string;
+        status: string;
+        errorMessage?: string;
+    } = {
+        databaseInstanceName: '',
+        status: ''
+    };
+
+    let { resourceId, dbInst, oracleServerInstances, node1InstanceId, hostJobId, awsAccountId, isResourceTobeCreated } =
+        oracleInstanceConfig;
+
+    let instanceJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
+    let instanceErrorMessage = '';
+    const oracleInstanceInfo = oracleServerInstances?.find(
+        (oracleInst: { instanceName: string }) => oracleInst.instanceName === dbInst
+    );
+
+    if (!oracleInstanceInfo || !oracleInstanceInfo.instanceId || !oracleInstanceInfo.instanceType) {
+        throw new Error('Oracle Server instance not found or required details are missing.');
+    }
+
+    if (alreadyRegisteredDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
+        const errorMsg = 'Instance is already registered.';
+        throw new Error(errorMsg);
+    }
+
+    try {
+        // ToDo: Add oracle server auth field here
+        const { instanceId, storage } = oracleInstanceInfo;
+        const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
+        const storageProtocols = [
+            ...new Set(
+                storage
+                    ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
+                    .flatMap((elem: any) =>
+                        Array.isArray(elem.mountDetails)
+                            ? elem.mountDetails.map((mountDetail: any) => mountDetail.protocol)
+                            : []
+                    )
+                    .filter(Boolean) // remove undefined/null
+            )
+        ];
+
+        // Combine all failure conditions for early exit
+        let failureReason: string | undefined;
+        const oracleServerAuthentication = true;
+        if (!oracleServerAuthentication) {
+            failureReason =
+                'Unable to authenticate with the Oracle Server instance. Oracle Server authentication is required.';
+        } else if (!storageInfo) {
+            failureReason = 'Oracle Server instance is not hosted on FSx for NetApp.';
+        }
+
+        if (failureReason) {
+            throw new Error(failureReason);
+        }
+
+        if (storageInfo) {
+            if (isResourceTobeCreated) {
+                await createResource(accountId, {
+                    resourceId,
+                    credentialsId,
+                    storageType: STORAGE_TYPE.FSXN,
+                    resourceName: oracleInstanceInfo.instanceName,
+                    cloudProviderAccountId: awsAccountId!,
+                    cloudProviderName: CloudProviders.AWS,
+                    resourceType: RESOURCESTYPE.ORACLE,
+                    coRelationId: storageInfo.id,
+                    region,
+                    metadata: {
+                        creationDate: Date.now(),
+                        node1InstanceId,
+                        oracleDeploymentType: oracleInstanceInfo.instanceType,
+                        source: RESOURCE_SOURCE.DISCOVER,
+                        fsxSvmId: storageInfo.svmId,
+                        storageProtocol: storageProtocols ? storageProtocols.join() : ''
+                    }
+                });
+                isResourceTobeCreated = false;
+            }
+
+            tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo.id, node1InstanceId);
+
+            const dbInstanceName = oracleInstanceInfo.instanceName;
+
+            await upsertDatabaseInstance(accountId, {
+                credentialsId,
+                resourceId,
+                region,
+                databaseInstanceId: instanceId,
+                databaseInstanceName: dbInstanceName,
+                fsxnIds: storageInfo.id,
+                isDefault: false, // Oracle instances do not have a default instance concept
+                source: RESOURCE_SOURCE.DISCOVER,
+                sqlDeploymentType: 'Standalone',
+                fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
+                storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                databaseType: DatabaseTypes.ORACLE
+            });
+
+            instanceManagementStatus = {
+                databaseInstanceName: dbInst,
+                databaseInstanceGuid: instanceId,
+                status: JOBSTATUS.COMPLETED
+            };
+
+            instanceJobStatus = JOBSTATUS.COMPLETED;
+        }
+    } catch (error: any) {
+        logger.error('Error while registering Oracle instance', {
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            dbInst,
+            error: error.message
+        });
+        instanceManagementStatus = {
+            databaseInstanceName: dbInst,
+            status: JOBSTATUS.FAILED,
+            errorMessage: `${error}`
+        };
+        instanceJobStatus = JOBSTATUS.FAILED;
+        instanceErrorMessage = `${error}`;
+    } finally {
+        await registerJob(accountId, credentialsId, region, {
+            type: JOBTYPE.REGISTER_RESOURCE,
+            status: instanceJobStatus,
+            resourceName: accountId,
+            parentJobId: hostJobId,
+            name: `Register instance ${dbInst}`,
+            startTime: Date.now(),
+            description: `Register instance ${dbInst}`,
+            error: instanceErrorMessage,
+            endTime: Date.now()
+        });
+    }
+
+    return instanceManagementStatus;
+}
+
 async function registerOracleInstance(
     accountId: string,
     credentialsId: string,
@@ -1298,7 +1442,7 @@ async function registerOracleInstance(
     });
 
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
-    const instanceManagementStatus: {
+    let instanceManagementStatus: {
         databaseInstanceName: string;
         databaseInstanceGuid?: string;
         status: string;
@@ -1337,155 +1481,26 @@ async function registerOracleInstance(
             }
         }
 
-        if (alreadyRegisteredDatabaseInstances.length === 0) {
-            alreadyRegisteredDatabaseInstances = await listDatabaseInstances(accountId, {
-                credentialsId,
-                resourceId,
-                region
-            });
-        }
-
-        await Promise.all(
+        instanceManagementStatus = await Promise.all(
             databaseInstanceNames.map(
                 throat(1, async dbInst => {
-                    let instanceJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
-                    let instanceErrorMessage = '';
-                    const oracleInstanceInfo = oracleServerInstances?.find(
-                        (oracleInst: { instanceName: string }) => oracleInst.instanceName === dbInst
+                    const oracleInstanceConfig = {
+                        resourceId,
+                        dbInst,
+                        oracleServerInstances,
+                        node1InstanceId,
+                        hostJobId,
+                        awsAccountId,
+                        isResourceTobeCreated
+                    };
+                    return registerOracleInstancesData(
+                        accountId,
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        alreadyRegisteredDatabaseInstances,
+                        oracleInstanceConfig
                     );
-
-                    if (!oracleInstanceInfo || !oracleInstanceInfo.instanceId || !oracleInstanceInfo.instanceType) {
-                        throw new Error('Oracle Server instance not found or required details are missing.');
-                    }
-
-                    if (
-                        !oracleInstanceInfo ||
-                        alreadyRegisteredDatabaseInstances.some(elem => elem.database_instance_name === dbInst)
-                    ) {
-                        const errorMsg = !oracleInstanceInfo
-                            ? 'Oracle Server instance not found.'
-                            : 'Instance is already registered.';
-                        throw new Error(errorMsg);
-                    }
-
-                    try {
-                        // ToDo: Add oracle server auth field here
-                        const { instanceId, storage } = oracleInstanceInfo;
-                        const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
-                        const storageProtocols = [
-                            ...new Set(
-                                storage
-                                    ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
-                                    .flatMap((elem: any) =>
-                                        Array.isArray(elem.mountDetails)
-                                            ? elem.mountDetails.map((mountDetail: any) => mountDetail.protocol)
-                                            : []
-                                    )
-                                    .filter(Boolean) // remove undefined/null
-                            )
-                        ];
-
-                        // Combine all failure conditions for early exit
-                        let failureReason: string | undefined;
-                        const oracleServerAuthentication = true;
-                        if (!oracleServerAuthentication) {
-                            failureReason =
-                                'Unable to authenticate with the Oracle Server instance. Oracle Server authentication is required.';
-                        } else if (!storageInfo) {
-                            failureReason = 'Oracle Server instance is not hosted on FSx for NetApp.';
-                        }
-
-                        if (failureReason) {
-                            throw new Error(failureReason);
-                        }
-
-                        if (storageInfo) {
-                            if (isResourceTobeCreated) {
-                                await createResource(accountId, {
-                                    resourceId,
-                                    credentialsId,
-                                    storageType: STORAGE_TYPE.FSXN,
-                                    resourceName: oracleInstanceInfo.instanceName,
-                                    cloudProviderAccountId: awsAccountId!,
-                                    cloudProviderName: CloudProviders.AWS,
-                                    resourceType: RESOURCESTYPE.ORACLE,
-                                    coRelationId: storageInfo.id,
-                                    region,
-                                    metadata: {
-                                        creationDate: Date.now(),
-                                        node1InstanceId,
-                                        oracleDeploymentType: oracleInstanceInfo.instanceType,
-                                        source: RESOURCE_SOURCE.DISCOVER,
-                                        fsxSvmId: storageInfo.svmId,
-                                        storageProtocol: storageProtocols ? storageProtocols.join() : ''
-                                    }
-                                });
-                                isResourceTobeCreated = false;
-                            }
-
-                            tagResources(
-                                credentialsId,
-                                region,
-                                awsAccountId!,
-                                accountId,
-                                storageInfo.id,
-                                node1InstanceId
-                            );
-
-                            const dbInstanceName = oracleInstanceInfo.instanceName;
-
-                            await upsertDatabaseInstance(accountId, {
-                                credentialsId,
-                                resourceId,
-                                region,
-                                databaseInstanceId: instanceId,
-                                databaseInstanceName: dbInstanceName,
-                                fsxnIds: storageInfo.id,
-                                isDefault: false, // Oracle instances do not have a default instance concept
-                                source: RESOURCE_SOURCE.DISCOVER,
-                                sqlDeploymentType: 'Standalone',
-                                fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
-                                storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                                databaseType: DatabaseTypes.ORACLE
-                            });
-
-                            instanceManagementStatus.push({
-                                databaseInstanceName: dbInst,
-                                databaseInstanceGuid: instanceId,
-                                status: JOBSTATUS.COMPLETED
-                            });
-
-                            instanceJobStatus = JOBSTATUS.COMPLETED;
-                        }
-                    } catch (error: any) {
-                        logger.error('Error while registering Oracle instance', {
-                            accountId,
-                            credentialsId,
-                            region,
-                            ec2InstanceId,
-                            dbInst,
-                            error: error.message
-                        });
-                        instanceManagementStatus.push({
-                            databaseInstanceName: dbInst,
-                            status: JOBSTATUS.FAILED,
-                            errorMessage: `${error}`
-                        });
-                        instanceJobStatus = JOBSTATUS.FAILED;
-                        instanceErrorMessage = `${error}`;
-                    } finally {
-                        await registerJob(accountId, credentialsId, region, {
-                            type: JOBTYPE.REGISTER_RESOURCE,
-                            status: instanceJobStatus,
-                            resourceName: accountId,
-                            parentJobId: hostJobId,
-                            name: `Register instance ${dbInst}`,
-                            startTime: Date.now(),
-                            description: `Register instance ${dbInst}`,
-                            error: instanceErrorMessage,
-                            endTime: Date.now()
-                        });
-                    }
                 })
             )
         );
@@ -2203,7 +2218,8 @@ async function validateOracleCredentials(
     const bucketname = getArtifactsRegionBucketName(region);
     const awsCliSignedUrl = await getPreSignedUrl(region, bucketname, AWS_CLI_LINUX_RELATIVE_PATH);
     const jqSignedUrl = await getPreSignedUrl(region, bucketname, JQ_LINUX_RELATIVE_PATH);
-    const signedUrls = [awsCliSignedUrl, jqSignedUrl];
+    const makeSignedUrl = await getPreSignedUrl(region, bucketname, MAKE_LINUX_RELATIVE_PATH);
+    const signedUrls = [awsCliSignedUrl, jqSignedUrl, makeSignedUrl];
 
     if (checkManageReadiness) {
         command += `${checkAndInstallRequiredOracleDependentModules(signedUrls)}\n`;

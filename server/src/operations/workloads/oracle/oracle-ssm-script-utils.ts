@@ -454,20 +454,8 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
 
     awsCliSignedUrl="${signedUrls[0]}"
     jqSignedUrl="${signedUrls[1]}"
+    makeSignedUrl="${signedUrls[2]}"
     moduleNames=("\${${modulesToInstall}[@]}")
-
-    install_unzip_if_missing() {
-        if ! command -v unzip >/dev/null 2>&1; then
-            if command -v yum >/dev/null 2>&1; then
-                sudo yum install -y unzip
-            elif command -v apt-get >/dev/null 2>&1; then
-                sudo apt-get update && sudo apt-get install -y unzip
-            else
-                # "No supported package manager found to install unzip."
-                exit 1
-            fi
-        fi
-    }
 
     installationResults="["
 
@@ -476,21 +464,17 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
             if [ "$isAwsCliInstalled" == "true" ]; then
                 successMsg="AWS CLI already installed"
             else
-                curl -sS -fSL "$awsCliSignedUrl" -o awscliv2.zip
+                curl -sS -fSL "$awsCliSignedUrl" -o awscliv2.tar.gz
+                download_dir=$(pwd)
                 if [ $? -ne 0 ]; then
                     errorMsg="Failed to download AWS CLI from $awsCliSignedUrl"
                 else
-                    install_unzip_if_missing
-                    if [ $? -ne 0 ]; then
-                        errorMsg="Failed to install unzip"
-                        installationResults="$installationResults{\\"success\\": \\"\\", \\"error\\": \\"$errorMsg\\"},"
-                        continue
-                    fi
-
-                    unzip awscliv2.zip
+                    tar -xzf awscliv2.tar.gz
                     sudo ./aws/install
                     if [ $? -ne 0 ]; then
                         errorMsg="Failed to install AWS CLI"
+                        cd $download_dir
+                        rm -rf awscliv2.tar.gz aws
                     else
                         successMsg="AWS CLI installed"
                     fi
@@ -503,24 +487,28 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
             if [ "$isJqInstalled" == "true" ]; then
                 successMsg="JQ already installed"
             else
-                curl -sS -fSL "$jqSignedUrl" -o jq.zip
+                curl -sS -fSL "$jqSignedUrl" -o jq-1.8.0.tar.gz
+                download_dir=$(pwd)
                 if [ $? -ne 0 ]; then
                     errorMsg="Failed to download JQ from $jqSignedUrl"
                 else
-                    install_unzip_if_missing
-                    if [ $? -ne 0 ]; then
-                        errorMsg="Failed to install unzip"
-                        installationResults="$installationResults{\\"success\\": \\"\\", \\"error\\": \\"$errorMsg\\"},"
-                        continue
+                    tar -xzf jq-1.8.0.tar.gz
+                    if ! command -v make >/dev/null 2>&1; then
+                        curl -sS -fSL "$makeSignedUrl" -o make-4.4.1.tar.gz
+                        tar -xzf make-4.4.1.tar.gz
+                        cd make-4.4.1/
+                        ./configure --disable-dependency-tracking
+                        sh build.sh
+                        sudo mv make /usr/local/bin/
+                        cd $download_dir
                     fi
-
-                    unzip jq.zip
-                    cd jq/
-                    ./configure
-                    make
-                    sudo make install
+                    cd jq-1.8.0/
+                    ./configure --disable-dependency-tracking
+                    make && sudo make install
                     if [ $? -ne 0 ]; then
                         errorMsg="Failed to install JQ"
+                        cd $download_dir
+                        rm -rf jq-1.8.0.tar.gz jq-1.8.0
                     else
                         successMsg="JQ installed"
                     fi
@@ -536,7 +524,13 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
     # Remove trailing comma and close array
     installationResults="\${installationResults%,}]"
 
-    resultObject=$(echo "$resultObject" | jq --argjson res "$installationResults" '.modulesInstallationResults += $res')
+    if [[ "$resultObject" =~ \\"modulesInstallationResults\\":\\ \\[\\] ]]; then
+        resultObject="\${resultObject/\\"modulesInstallationResults\\": \\[\\]/\\"modulesInstallationResults\\": \\$installationResults}"
+    else
+        currentResults=$(echo "\\$resultObject" | grep -o '"modulesInstallationResults": \\[[^]]*' | sed 's/"modulesInstallationResults": \\[//')
+        newResults="\${currentResults},\${installationResults:1:\${#installationResults}-2}" # remove [ and ] from installationResults
+        resultObject=$(echo "\\$resultObject" | sed "s/\\"modulesInstallationResults\\": \\[[^]]*\\]/\\"modulesInstallationResults\\": [\\$newResults]/")
+    fi
 `;
 
 const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => `
