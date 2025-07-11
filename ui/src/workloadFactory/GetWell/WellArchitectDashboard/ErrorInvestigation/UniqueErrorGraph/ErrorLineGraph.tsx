@@ -32,6 +32,22 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
     // Will update once we start getting actual values from the backend
     const errorCounts = Array.from({ length: xLabels.length }, () => Math.floor(Math.random() * 8)); // 24 hourly error counts
 
+    const disableColor = () => {
+        let tickColor;
+        if (loading) {
+            if (isDarkTheme) {
+                tickColor = '#ffffff';
+            } else {
+                tickColor = '#1C1C1C';
+            }
+        } else if (isDarkTheme) {
+            tickColor = '#858C95';
+        } else {
+            tickColor = '#A7A7A7';
+        }
+        return tickColor;
+    };
+
     useEffect(() => {
         const ctx = chartRef.current?.getContext('2d');
         if (!ctx) return;
@@ -63,21 +79,7 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                                 display: false
                             },
                             ticks: {
-                                color: (() => {
-                                    let tickColor;
-                                    if (loading) {
-                                        if (isDarkTheme) {
-                                            tickColor = '#ffffff';
-                                        } else {
-                                            tickColor = '#1C1C1C';
-                                        }
-                                    } else if (isDarkTheme) {
-                                        tickColor = '#858C95';
-                                    } else {
-                                        tickColor = '#A7A7A7';
-                                    }
-                                    return tickColor;
-                                })(),
+                                color: disableColor(),
                                 font: {
                                     size: 13,
                                     lineHeight: '20px',
@@ -101,21 +103,7 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                             beginAtZero: true,
                             grace: 12,
                             ticks: {
-                                color: (() => {
-                                    let tickColor;
-                                    if (loading) {
-                                        if (isDarkTheme) {
-                                            tickColor = '#ffffff';
-                                        } else {
-                                            tickColor = '#1C1C1C';
-                                        }
-                                    } else if (isDarkTheme) {
-                                        tickColor = '#858C95';
-                                    } else {
-                                        tickColor = '#A7A7A7';
-                                    }
-                                    return tickColor;
-                                })(),
+                                color: disableColor(),
                                 font: {
                                     size: 13,
                                     lineHeight: '20px',

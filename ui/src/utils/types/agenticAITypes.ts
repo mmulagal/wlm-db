@@ -34,6 +34,8 @@ export interface AgenticAIEntities {
     eiRefreshTimestamp: string;
     eiRefreshPage: boolean;
     noErrorsDetected: boolean;
-    scanInProgress: boolean;
-    stopErrorInvestigationScan: boolean;
+    scanStatus: {
+        scanInProgress: boolean;
+        stopErrorInvestigationScan: boolean;
+    };
 }

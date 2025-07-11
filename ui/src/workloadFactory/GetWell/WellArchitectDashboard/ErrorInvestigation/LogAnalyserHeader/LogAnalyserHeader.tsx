@@ -11,6 +11,7 @@ import { useLazyGetSubTaskListQuery, useScanErrorInvestigationMutation } from '.
 import {
     setEiRefreshPage,
     setScanInProgress,
+    setScanStatus,
     setStopErrorInvestigationScan
 } from '../../../../../store/workloadFactory/agenticAISlice';
 import { JOB_MONITORING_STATUS, LOG_ANALYZER_POLLING_INTERVAL, WLF_TABS } from '../../../../../utils/consts';
@@ -31,9 +32,8 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
     const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
         useAppSelector(state => state.getWellOptimize);
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
-    const { investigationDatesLoading, scanInProgress, noData, stopErrorInvestigationScan } = useAppSelector(
-        state => state.agenticAI
-    );
+    const { investigationDatesLoading, noData } = useAppSelector(state => state.agenticAI);
+    const { scanInProgress, stopErrorInvestigationScan } = useAppSelector(state => state.agenticAI.scanStatus);
     const loading = errorInvestigationLoading || investigationDatesLoading;
 
     const [scanErrorInvestigation] = useScanErrorInvestigationMutation();
@@ -56,10 +56,9 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
         }).then((res: any) => {
             const jobId = res?.data?.jobId;
             const state = store.getState();
-            const { stopErrorInvestigationScan: stopScan } = state.agenticAI;
+            const { stopErrorInvestigationScan: stopScan } = state.agenticAI.scanStatus;
             if (stopScan) {
-                dispatch(setScanInProgress(false));
-                dispatch(setStopErrorInvestigationScan(false));
+                dispatch(setScanStatus({ stopScan: false, inProgress: false }));
             } else if (jobId) {
                 const jobInterval = setInterval(() => {
                     getJobDetailApi({
@@ -67,11 +66,10 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                     }).then((jobRes: any) => {
                         const status = jobRes?.data?.status;
                         const state1 = store.getState();
-                        const { stopErrorInvestigationScan: stopScan1 } = state1.agenticAI;
+                        const { stopErrorInvestigationScan: stopScan1 } = state1.agenticAI.scanStatus;
                         if (stopScan1) {
                             clearInterval(jobInterval);
-                            dispatch(setScanInProgress(false));
-                            dispatch(setStopErrorInvestigationScan(false));
+                            dispatch(setScanStatus({ stopScan: false, inProgress: false }));
                         } else if (
                             status === JOB_MONITORING_STATUS.COMPLETED ||
                             status === JOB_MONITORING_STATUS.WARNING
@@ -101,7 +99,7 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                         message: t('databases.log-analyzer.scan-trigger-error')
                     })
                 );
-                dispatch(setScanInProgress(true));
+                dispatch(setScanInProgress(false));
             }
         });
     };

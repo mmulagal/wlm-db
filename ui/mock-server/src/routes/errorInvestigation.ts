@@ -15,7 +15,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/data
     setTimeout(() => {
         generateResponse(res, 200, ErrorInvestigationData);
         // generateResponse(res, 200, {remediationRecommendation: []});
-        // generateResponse(res, 500, {message: "Server Error: Unable to fetch logs analysis data."});
+        // generateResponse(res, 500, {message: 'Server Error: Unable to fetch logs analysis data.'});
     }, 7000);
 });
 
