@@ -564,6 +564,22 @@ function aggregateErrorCountAcrossReports(reports: LogsAnalysisReports[], accoun
             if (item.firstOccurrence && item.firstOccurrence < existingItem.firstOccurrence) {
                 existingItem.firstOccurrence = item.firstOccurrence;
             }
+            if (item.hourlyErrorCounts) {
+                const hourlyMap = new Map<number, number>();
+
+                (existingItem.hourlyErrorCounts || []).forEach(({ hour, count }: { hour: number; count: number }) => {
+                    hourlyMap.set(hour, count);
+                });
+
+                item.hourlyErrorCounts.forEach(({ hour, count }) => {
+                    const existingCount = hourlyMap.get(hour) || 0;
+                    hourlyMap.set(hour, existingCount + count);
+                });
+
+                existingItem.hourlyErrorCounts = Array.from(hourlyMap.entries())
+                    .map(([hour, count]) => ({ hour, count }))
+                    .sort((a, b) => a.hour - b.hour);
+            }
         }
     }
 
