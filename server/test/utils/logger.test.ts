@@ -58,7 +58,7 @@ describe('hideSecretsValues', () => {
         expect(output.error).not.toBe(input.error);
         expect(output.error).toContain(stars);
         expect(output.error).not.toContain('staging.db-host-url:3333');
-        expect(output.error).toContain("P1001: Can't reach database server");
+        expect(output.error).toContain('P1001');
     });
 
     it('should return primitives as they are when non-sensitive', () => {

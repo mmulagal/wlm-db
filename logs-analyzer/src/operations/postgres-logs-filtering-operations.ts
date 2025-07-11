@@ -80,10 +80,10 @@ async function getUniquePostgresErrors(logs: PostgresLog[], uniqueLogsCountToCon
     const uniqueErrorLogs = Object.keys(groupedLogs)
         .slice(0, uniqueLogsCountToConsider)
         .map(key => {
-            const [{ context: errorContext, message: errorMessage, severity }] = groupedLogs[key];
+            const [{ context, message, severity }] = groupedLogs[key];
             return {
-                errorContext,
-                errorMessage,
+                context,
+                error: message,
                 count: groupedLogs[key].length,
                 severity
             };

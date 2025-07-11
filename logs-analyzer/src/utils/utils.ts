@@ -164,7 +164,10 @@ const invokeCommandWithCredSSP = `
 
 const sqlQueryExecutionWithAuth = (sql: string[], databaseInstanceName: string, sqlAuthEnabled = false) => `
             $queries = @(
-                ${sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')}
+                ${
+                    // eslint-disable-next-line quotes
+                    sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')
+                }
             )
        
             ${getSqlCredentials(sqlAuthEnabled)}
@@ -254,7 +257,10 @@ function getBashScript(sql: string[]) {
 
         # Define the list of queries
         queries=(
-            ${sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')}
+            ${
+                // eslint-disable-next-line quotes
+                sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')
+            }
         )
 
         # Initialize an array to store the results
@@ -382,6 +388,15 @@ function generateHash(value: string) {
     return hash.digest('hex');
 }
 
+function safeParseJson(jsonString: string) {
+    try {
+        return JSON.parse(jsonString);
+    } catch (error) {
+        logger.warn(`Failed to parse JSON string: ${jsonString}`, error);
+        return jsonString;
+    }
+}
+
 export {
     getPowershellScript,
     getBashScript,
@@ -389,5 +404,6 @@ export {
     runBashScript,
     deflateString,
     deleteOlderFilesInDirectory,
-    generateHash
+    generateHash,
+    safeParseJson
 };

@@ -65,6 +65,7 @@ async function listLogsAnalysisReports(
     databaseHostId: string,
     databaseInstanceId: string,
     jobId?: string,
+    reportId?: string,
     sort: string = 'creation_time',
     sortOrder: string = 'desc',
     pageSize?: number,
@@ -74,7 +75,8 @@ async function listLogsAnalysisReports(
         accountId,
         databaseHostId,
         databaseInstanceId,
-        jobId
+        jobId,
+        reportId
     });
 
     accountId = checkAccount(accountId);
@@ -84,7 +86,8 @@ async function listLogsAnalysisReports(
             account_id: accountId,
             resource_id: databaseHostId,
             database_instance_id: databaseInstanceId,
-            ...(jobId && { job_id: jobId })
+            ...(jobId && { job_id: jobId }),
+            ...(reportId && { id: reportId })
         },
         orderBy: [
             {
