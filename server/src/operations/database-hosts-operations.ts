@@ -1259,6 +1259,8 @@ async function getDatabaseHostSummaryV2(
                                 instance.instanceState === ServerState.UP &&
                                 (instance.instanceName === resource.database_instance_name ||
                                     (resourceType === DatabaseTypes.PG_SQL &&
+                                        resourceId === resource?.resource?.resource_id) ||
+                                    (resourceType === DatabaseTypes.ORACLE &&
                                         resourceId === resource?.resource?.resource_id))
                         )
                     );

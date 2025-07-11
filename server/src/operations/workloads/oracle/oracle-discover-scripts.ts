@@ -1,3 +1,5 @@
+import { getOracleDefaultOrUserAuthCommand } from './oracle-ssm-script-utils';
+
 const loadStorageDetectionModules = `
 
     # Function to find mount point details for a given file or directory.
@@ -42,7 +44,7 @@ const loadStorageDetectionModules = `
 
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            sqlplus -S / as sysdba
+            $sqlplus_command
             SET HEADING OFF
             SET LINESIZE 500
             SET FEEDBACK OFF
@@ -62,7 +64,7 @@ EOF
         local diskgroupName="$2"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            sqlplus -S / as sysdba 
+            $sqlplus_command
             SET HEADING OFF
             SET LINESIZE 500
             SELECT d.name
@@ -77,7 +79,7 @@ EOF
         local diskName="$2"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            sqlplus -S / as sysdba
+            $sqlplus_command
             SET HEADING OFF
             SET LINESIZE 500
             SELECT path 
@@ -100,7 +102,7 @@ EOF
 
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            sqlplus -S / as sysdba
+            $sqlplus_command
             SET HEADING OFF
             SET LINESIZE 500
             SET FEEDBACK OFF
@@ -225,7 +227,7 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            sqlplus -s / as sysdba
+            $sqlplus_command
             SET HEADING OFF;
             SET FEEDBACK OFF;
             SET VERIFY OFF;
@@ -374,12 +376,150 @@ const getStorageWithoutCreds = `
     storageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "NO" "null" "false" "$oracle_home")
 `;
 
+const loadDatabaseDetectionModules = `
+    get_instance_details() {
+        local ORACLE_SID="$1"
+        if [ "$isDefaultAuth" == "true" ]; then
+
+            sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                $sqlplus_command
+                    SET HEADING OFF
+                    SET LINESIZE 500
+                    SELECT JSON_OBJECT(
+                            'instance_id' value INSTANCE_NUMBER,
+                            'instance_name' value INSTANCE_NAME,
+                            'host_name' value HOST_NAME,
+                            'version' value VERSION,
+                            'instance_state' value STATUS
+                        ) AS instance_info
+                    FROM V\\$INSTANCE;
+EOF
+        else
+            # instance name & id are same as ORACLE_SID, hostname is not available in /etc/oratab.
+            # version is not available in /etc/oratab, so setting it to undefined. checking pgrep -f "ora_pmon_$sid" earlier to ensure the instance is running.
+
+            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"OPEN\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
+            echo $result
+        fi
+    }
+
+    get_database_details() {
+        local ORACLE_SID="$1"
+        local jsonRes
+        jsonRes=$(sudo -i -u oracle bash <<EOF
+            set -e
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command
+                WHENEVER SQLERROR EXIT SQL.SQLCODE
+                SET HEADING OFF
+                SET LINESIZE 500
+                SELECT JSON_OBJECT(
+                    'name' value NAME,
+                    'database_id' value DBID,
+                    'created' value CREATED,
+                    'open_mode' value OPEN_MODE,
+                    'is_cdb' value CDB,
+                    'status' VALUE CASE
+                            WHEN open_mode = 'READ WRITE' THEN 'ONLINE'
+                            ELSE 'OFFLINE'
+                        END
+                )
+                FROM V\\$DATABASE;
+EOF
+) || return 1
+    
+        echo $jsonRes
+    }
+
+    get_pdb_databases_details() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command
+            SET HEADING OFF
+            SET LINESIZE 500
+            SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'pdb_id' value PDB_ID,
+                'pdb_name' value PDB_NAME,
+                'status' value STATUS
+            )
+        ) AS pdb_info
+            FROM DBA_PDBS;
+EOF
+    }
+
+    get_pdbs_sizes() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command
+            SET HEADING OFF
+            SET LINESIZE 500
+            SELECT JSON_OBJECTAGG(
+                    p.PDB_NAME VALUE ROUND(SUM(df.BYTES)/1024/1024/1024, 2)
+                ) AS pdb_sizes_json
+            FROM V\\$DATAFILE df
+            JOIN DBA_PDBS p ON df.CON_ID = p.CON_ID
+            GROUP BY p.PDB_NAME;
+EOF
+    }
+
+    get_cdb_or_single_instance_db_size() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command
+            SET HEADING OFF
+            SET LINESIZE 500
+            SELECT ROUND(SUM(BYTES)/1024/1024/1024, 2) AS db_size_gb
+            FROM   DBA_DATA_FILES;
+EOF
+    }
+
+    get_pdbs_active_status() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command
+            SET HEADING OFF
+            SET LINESIZE 500
+            SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'pdb_name' VALUE NAME,
+                    'open_mode' VALUE OPEN_MODE,
+                    'status' VALUE CASE
+                            WHEN open_mode = 'READ WRITE' THEN 'ONLINE'
+                            ELSE 'OFFLINE'
+                        END
+                    )
+                ) AS pdb_status_json
+            FROM V\\$PDBS;
+EOF
+    }
+
+    get_pdbs_count() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command
+            SET HEADING OFF
+            SET LINESIZE 500
+            SELECT COUNT(*) AS pdb_count FROM DBA_PDBS;
+EOF
+    }
+`;
+
 const discoverOracleHosts = `
     # Check if oratab exists
     if [ ! -f /etc/oratab ]; then
         echo "[]"
         exit 0
     fi
+
+    # Use default auth command for SQLPlus in discovery scripts
+    sqlplus_command="sqlplus -S / as sysdba"
 
     RESULTS="["  # start of the JSON array
     FIRST=1      # flag to determine the first object
@@ -414,76 +554,7 @@ EOF
             echo "false"
         fi
 }
-
-    get_instance_details() {
-        local ORACLE_SID="$1"
-        if [ "$isDefaultAuth" == "true" ]; then
-
-            sudo -i -u oracle bash <<EOF
-                export ORACLE_SID="$ORACLE_SID"
-                sqlplus -S / as sysdba
-                    SET HEADING OFF
-                    SET LINESIZE 500
-                    SELECT JSON_OBJECT(
-                            'instance_id' value INSTANCE_NUMBER,
-                            'instance_name' value INSTANCE_NAME,
-                            'host_name' value HOST_NAME,
-                            'version' value VERSION,
-                            'instance_state' value STATUS
-                        ) AS instance_info
-                    FROM V\\$INSTANCE;
-EOF
-        else
-            # instance name & id are same as ORACLE_SID, hostname is not available in /etc/oratab.
-            # version is not available in /etc/oratab, so setting it to undefined. checking pgrep -f "ora_pmon_$sid" earlier to ensure the instance is running.
-
-            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"OPEN\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
-            echo $result
-        fi
-    }
-
-    get_database_details() {
-        local ORACLE_SID="$1"
-        local jsonRes
-        jsonRes=$(sudo -i -u oracle bash <<EOF
-            set -e
-            export ORACLE_SID="$ORACLE_SID"
-            sqlplus -S / as sysdba
-                WHENEVER SQLERROR EXIT SQL.SQLCODE
-                SET HEADING OFF
-                SET LINESIZE 500
-                SELECT JSON_OBJECT(
-                    'name' value NAME,
-                    'database_id' value DBID,
-                    'created' value CREATED,
-                    'open_mode' value OPEN_MODE,
-                    'is_cdb' value CDB
-                )
-                FROM V\\$DATABASE;
-EOF
-) || return 1
-    
-        echo $jsonRes
-    }
-
-    get_pdb_databases_details() {
-        local ORACLE_SID="$1"
-        sudo -i -u oracle bash <<EOF
-            export ORACLE_SID="$ORACLE_SID"
-            sqlplus -S / as sysdba
-            SET HEADING OFF
-            SET LINESIZE 500
-            SELECT JSON_ARRAYAGG(
-            JSON_OBJECT(
-                'pdb_id' value PDB_ID,
-                'pdb_name' value PDB_NAME,
-                'status' value STATUS
-            )
-        ) AS pdb_info
-            FROM DBA_PDBS;
-EOF
-    }
-
+    ${loadDatabaseDetectionModules}
     ${loadStorageDetectionModules}
 
     while IFS=: read -r sid oracle_home; do
@@ -538,4 +609,175 @@ EOF
     echo $RESULTS
 `;
 
-export default discoverOracleHosts;
+const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: string) => `
+    # Function to get storage details for registered Oracle instances.
+    ec2InstanceId="${ec2InstanceId}"
+    dbSid="${dbSid}"
+    dbSid_temp="${dbSid}_temp"
+    oracleCredsAvailable="false"
+
+    # Check if oratab exists
+    if [ ! -f /etc/oratab ]; then
+        echo "[]"
+        exit 0
+    fi
+
+
+    # Parse /etc/oratab, ignoring comment lines (#), lines starting with (+) and blank lines
+    # SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
+    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
+    if [ -z "$oratab_entries" ]; then
+        echo "No entries found in /etc/oratab."
+        exit 0
+    fi
+
+    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+
+    while IFS=: read -r sid oracle_home; do
+        # Check if the instance is running by checking for its PMON process.
+        # Skip if the instance process is not running.
+        if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
+            continue
+        fi
+
+        if [ "$sid" != "$dbSid" ]; then
+            continue
+        fi
+
+        if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
+            ${loadStorageDetectionModules}
+            ${getInstanceStorageDetails}
+        else
+            ${getStorageWithoutCreds}
+        fi
+
+        results="{\\"storage_details\\": $storageDetails}"
+    done <<< "$oratab_entries"
+
+    echo $results
+`;
+
+const fetchOracleDatabasesCount = (ec2InstanceId: string, dbSid: string) => `
+    ec2InstanceId="${ec2InstanceId}"
+    dbSid="${dbSid}"
+    dbSid_temp="${dbSid}_temp"
+    oracleCredsAvailable="false"
+
+    # Check if oratab exists
+    if [ ! -f /etc/oratab ]; then
+        echo "[]"
+        exit 0
+    fi
+
+
+    # Parse /etc/oratab, ignoring comment lines (#), lines starting with (+) and blank lines
+    # SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
+    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
+    if [ -z "$oratab_entries" ]; then
+        echo "No entries found in /etc/oratab."
+        exit 0
+    fi
+
+    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+    ${loadDatabaseDetectionModules}
+
+    while IFS=: read -r sid oracle_home; do
+        # Check if the instance is running by checking for its PMON process.
+        # Skip if the instance process is not running.
+        if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
+            continue
+        fi
+
+        if [ "$sid" != "$dbSid" ]; then
+            continue
+        fi
+
+        isDefaultAuth=$(is_default_auth "$sid")
+
+        DATABASE_DETAILS=$(get_database_details "$sid")
+        
+        
+        is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
+
+
+        if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
+            if [ "$is_cdb" == "YES" ]; then
+                databasesCount=$(get_pdbs_count "$sid")
+            else
+                databasesCount=1
+            fi
+        else
+            databasesCount=0
+        fi
+        
+        results="{\\"databases_count\\": $databasesCount}"
+    done <<< "$oratab_entries"
+
+    echo $results
+`;
+
+const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
+    ec2InstanceId="${ec2InstanceId}"
+    dbSid="${dbSid}"
+    dbSid_temp="${dbSid}_temp"
+    oracleCredsAvailable="false"
+
+    # Check if oratab exists
+    if [ ! -f /etc/oratab ]; then
+        echo "[]"
+        exit 0
+    fi
+
+
+    # Parse /etc/oratab, ignoring comment lines (#), lines starting with (+) and blank lines
+    # SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
+    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
+    if [ -z "$oratab_entries" ]; then
+        echo "No entries found in /etc/oratab."
+        exit 0
+    fi
+
+    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+    ${loadDatabaseDetectionModules}
+
+    while IFS=: read -r sid oracle_home; do
+        # Check if the instance is running by checking for its PMON process.
+        # Skip if the instance process is not running.
+        if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
+            continue
+        fi
+
+        if [ "$sid" != "$dbSid" ]; then
+            continue
+        fi
+
+        isDefaultAuth=$(is_default_auth "$sid")
+        
+        if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
+            DATABASE_DETAILS=$(get_database_details "$sid")
+            root_db_size=$(get_cdb_or_single_instance_db_size "$sid")
+            is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
+
+            if [ "$is_cdb" == "YES" ]; then
+                pdbs_size=$(get_pdbs_sizes "$sid")
+                pdbs_status=$(get_pdbs_active_status "$sid")
+            else
+                pdbs_size="null"
+                pdbs_status="null"
+            fi
+        else
+            DATABASE_DETAILS='{"error": "failed to retrieve database details, credentials not available for instance '$sid'"}'
+        fi
+        
+        results="{\\"database_details\\": $DATABASE_DETAILS, \\"pdbs_size\\": $pdbs_size, \\"root_db_size\\": $root_db_size, \\"pdbs_status\\": $pdbs_status, \\"is_cdb\\": \\"$is_cdb\\"}"
+    done <<< "$oratab_entries"
+
+    echo $results
+`;
+
+export {
+    discoverOracleHosts,
+    getStorageDetailsForRegisteredInstances,
+    fetchOracleDatabasesCount,
+    fetchOracleDatabasesDetails
+};

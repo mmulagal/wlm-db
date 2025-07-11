@@ -98,7 +98,7 @@ import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types
 import { copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
-import discoverOracleHosts from './workloads/oracle/oracle-discover-scripts';
+import { discoverOracleHosts } from './workloads/oracle/oracle-discover-scripts';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
