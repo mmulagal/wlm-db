@@ -1,10 +1,12 @@
 import React from 'react';
 import { FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
 import styles from './StorageSavings.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
+import { useAppSelector } from '../../../store/storeHooks';
 
 type StorageSavingsProps = {
     hostData: any;
@@ -12,7 +14,20 @@ type StorageSavingsProps = {
 };
 
 const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
+    const { showNA } = useAppSelector(state => state.headers);
     const handleProgressBar = () => {
+        if (showNA) {
+            return (
+                <div
+                    className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                    style={{
+                        width: `${100}%`,
+                        backgroundColor: 'var(--chart-disabled)'
+                    }}
+                />
+            );
+        }
+        
         if (
             hostData?.storageSavingsPercent !== 0 &&
             // @ts-ignore
@@ -68,7 +83,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
     };
 
     return (
-        <div className={styles.storageSaving}>
+        <div className={`${styles.storageSaving} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <div className={styles.storageSavingTooltipSection}>
                     <Typography variant="Regular_16" className={styles.title}>
@@ -78,13 +93,13 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                         <div className={styles.list}>
                             <div className={styles.listItem}>
                                 <Bullet />
-                                <Typography variant="Regular_13" className={styles.textWidth}>
+                                <Typography variant="Regular_13" className={`${styles.textWidth} ${showNA ? CommonStyles.notAvailable : ''}`}>
                                     {GENERAL.DB_SS_TT_1}
                                 </Typography>
                             </div>
                             <div className={styles.listItem}>
                                 <Bullet />
-                                <Typography variant="Regular_13" className={styles.textWidth}>
+                                <Typography variant="Regular_13" className={`${styles.textWidth} ${showNA ? CommonStyles.notAvailable : ''}`}>
                                     {GENERAL.DB_SS_TT_2}
                                 </Typography>
                             </div>
@@ -93,8 +108,8 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                 </div>
 
                 <div className={styles.rightTopValue}>
-                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                        {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
+                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                        {showNA ? GENERAL.NOT_AVAILABLE : `${formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%`}
                     </Typography>
                     {hostsLoading && <FlashingDotsLoader />}
                 </div>
@@ -107,19 +122,21 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={hostData?.storageConsumes || GENERAL.NOT_AVAILABLE}
+                        value={showNA ? GENERAL.NOT_AVAILABLE : (hostData?.storageConsumes || GENERAL.NOT_AVAILABLE)}
                         color="var(--chart-9)"
                         text="Consumed storage"
                         loadingInFirstRow={hostsLoading}
                         isSmall
+                        isDisabled={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={hostData?.storageSavings || GENERAL.NOT_AVAILABLE}
+                        value={showNA ? GENERAL.NOT_AVAILABLE : (hostData?.storageSavings || GENERAL.NOT_AVAILABLE)}
                         color="var(--chart-4)"
                         text="Storage Savings"
                         loadingInFirstRow={hostsLoading}
                         isSmall
+                        isDisabled={showNA}
                     />
                 </div>
             </div>

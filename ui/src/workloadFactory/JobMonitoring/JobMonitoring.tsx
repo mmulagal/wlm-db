@@ -8,6 +8,7 @@ import JobDistribution from './JobDistribution/JobDistribution';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import JobMonitoringApi from './JobMonitoringApi';
+import CommonStyles from '../../utils/CommonStyles.module.scss';
 
 const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownValue }: any) => {
     const dispatch = useAppDispatch();
@@ -16,6 +17,7 @@ const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownV
     const timelineLoading = useAppSelector(state => state.jobMonitoring.jobsSummaryTimelineLoading);
     const refreshTimeJobMonitor = useAppSelector(state => state.headers.refreshTimeJobMonitor);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const { showNA } = useAppSelector(state => state.headers);
 
     JobMonitoringApi();
 
@@ -45,7 +47,7 @@ const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownV
                     <div className={styles.headSection}>
                         <Typography variant="Regular_16" className={styles.title}>
                             {GENERAL.JOBS_STATUS_OVER_TIME}
-                            {timelineLoading && <FlashingDotsLoader />}
+                            {!showNA && timelineLoading && <FlashingDotsLoader />}
                         </Typography>
                     </div>
                     <div className={styles.mainSection}>

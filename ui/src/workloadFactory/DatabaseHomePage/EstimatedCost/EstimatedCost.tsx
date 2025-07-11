@@ -1,11 +1,13 @@
 import { Button, FlashingDotsLoader, TooltipInfo, Typography, useDialog } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import styles from './EstimatedCost.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import EstimatedCostDialogContent from './EstimatedCostDialogContent/EstimatedCostDialogContent';
 import { formatNumberWithCustomComma } from '../../../utils/utilityFunctions';
+import { useAppSelector } from '../../../store/storeHooks';
 
 type EstimatedCostProps = {
     hostData: any;
@@ -14,6 +16,7 @@ type EstimatedCostProps = {
 
 const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
     const { setDialog } = useDialog();
+    const { showNA } = useAppSelector(state => state.headers);
 
     const [linkChk, setLinkChk] = useState(true);
 
@@ -25,8 +28,8 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
 
     const ToolTipContainer = () => (
         <div className={styles.tooltipContainerClass}>
-            <Typography variant="Regular_13">{GENERAL.ESTIMATED_COST_TOOLTIP}</Typography>
-            {linkChk && (
+            <Typography variant="Regular_13" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.ESTIMATED_COST_TOOLTIP}</Typography>
+            {linkChk && !showNA && (
                 <Button variant="text" onClick={() => costDialog()}>
                     {GENERAL.LEARN_HOW_ESTIMATED_COST}
                 </Button>
@@ -45,7 +48,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
         );
     };
     return (
-        <div className={styles.estimatedCost}>
+        <div className={`${styles.estimatedCost} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <div className={styles.tooltipSection}>
                     <Typography variant="Regular_16" className={styles.title}>
@@ -59,8 +62,8 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                 </div>
 
                 <div className={styles.rightTopValue}>
-                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                        ${formatNumberWithCustomComma(hostData?.totalCost)}
+                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                        {showNA ? GENERAL.NOT_AVAILABLE : `$${formatNumberWithCustomComma(hostData?.totalCost)}`}
                     </Typography>
                     {hostsLoading && <FlashingDotsLoader />}
                 </div>
@@ -69,10 +72,10 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
             <div className={styles.mainSection}>
                 {/* Progress Bar */}
                 <div className={styles.progressBar}>
-                    {hostData?.storageCostPercent === 0 &&
+                    {(showNA || (hostData?.storageCostPercent === 0 &&
                         hostData?.computeCostPercent === 0 &&
                         hostData?.connectivityCostPercent === 0 &&
-                        hostData?.otherCostPercent === 0 && (
+                        hostData?.otherCostPercent === 0)) && (
                             <div
                                 className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                                 style={{
@@ -81,7 +84,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                                 }}
                             />
                         )}
-                    {hostData?.storageCostPercent !== 0 && (
+                    {!showNA && hostData?.storageCostPercent !== 0 && (
                         <div
                             className={`${styles.progress} ${styles.leftCurveBar} 
                                 ${
@@ -97,7 +100,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                         />
                     )}
                     <div className={styles.separator} />
-                    {hostData?.computeCostPercent !== 0 && (
+                    {!showNA && hostData?.computeCostPercent !== 0 && (
                         <div
                             className={`${styles.progress} 
                                         ${hostData?.storageCostPercent === 0 && styles.leftCurveBar} 
@@ -113,7 +116,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                         />
                     )}
                     <div className={styles.separator} />
-                    {hostData?.connectivityCostPercent !== 0 && (
+                    {!showNA && hostData?.connectivityCostPercent !== 0 && (
                         <div
                             className={`${styles.progress} 
                                         ${
@@ -129,7 +132,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                         />
                     )}
                     <div className={styles.separator} />
-                    {hostData?.otherCostPercent !== 0 && (
+                    {!showNA && hostData?.otherCostPercent !== 0 && (
                         <div
                             className={`${styles.progress} 
                                         ${
@@ -150,35 +153,39 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={`$${formatNumberWithCustomComma(hostData?.storageCost)}`}
+                        value={showNA ? GENERAL.NOT_AVAILABLE : `$${formatNumberWithCustomComma(hostData?.storageCost)}`}
                         color="var(--chart-9)"
                         text="Storage"
                         loadingInFirstRow={hostsLoading}
                         isSmall
+                        isDisabled={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={`$${formatNumberWithCustomComma(hostData?.computeCost)}`}
+                        value={showNA ? GENERAL.NOT_AVAILABLE : `$${formatNumberWithCustomComma(hostData?.computeCost)}`}
                         color="var(--chart-1)"
                         text="Compute"
                         loadingInFirstRow={hostsLoading}
                         isSmall
+                        isDisabled={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={`$${formatNumberWithCustomComma(hostData?.connectivityCost)}`}
+                        value={showNA ? GENERAL.NOT_AVAILABLE : `$${formatNumberWithCustomComma(hostData?.connectivityCost)}`}
                         color="var(--chart-3)"
                         text="Connectivity"
                         loadingInFirstRow={hostsLoading}
                         isSmall
+                        isDisabled={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={`$${formatNumberWithCustomComma(hostData?.otherCost)}`}
+                        value={showNA ? GENERAL.NOT_AVAILABLE : `$${formatNumberWithCustomComma(hostData?.otherCost)}`}
                         color="var(--chart-4)"
                         text="Other"
                         loadingInFirstRow={hostsLoading}
                         isSmall
+                        isDisabled={showNA}
                     />
                 </div>
             </div>

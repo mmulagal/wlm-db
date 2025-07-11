@@ -48,6 +48,7 @@ const JobMonitoringTable = React.memo(() => {
     const dispatch = useDispatch();
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
     const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
+    const { showNA } = useAppSelector(state => state.headers);
     const downloadJobsLoading = useAppSelector(state => state.jobMonitoring.downloadJobsLoading);
     const columnState = useAppSelector(state => state.jobMonitoring.columnState);
     const downloadJobsList = useAppSelector(state => state.jobMonitoring.downloadJobsList);
@@ -87,8 +88,11 @@ const JobMonitoringTable = React.memo(() => {
     };
 
     const tableFullData = useMemo(
-        () =>
-            jobsList.map((job: any) => {
+        () => {
+            if (showNA) {
+                return [];
+            }
+            return jobsList.map((job: any) => {
                 const matchingEntry =
                     credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
 
@@ -98,8 +102,9 @@ const JobMonitoringTable = React.memo(() => {
                     credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
                     providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
                 };
-            }),
-        [jobsList, credentialData]
+            });
+        },
+        [jobsList, credentialData, showNA]
     );
 
     const menuItems = (row: any) => [
@@ -562,7 +567,7 @@ const JobMonitoringTable = React.memo(() => {
     };
 
     return (
-        <div className={styles.jobMonitoringTable}>
+        <div className={`${styles.jobMonitoringTable} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div
                 //  @ts-ignore
                 className={`${styles.table}`}

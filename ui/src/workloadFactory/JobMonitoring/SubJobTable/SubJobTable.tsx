@@ -43,6 +43,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const subJobsDataLoading = useAppSelector(state => state.jobMonitoring.subJobsDataLoading);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const { showNA } = useAppSelector(state => state.headers);
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -285,7 +286,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             <div className={styles.extraDiv2} />
             {subJobsDataLoading && (
                 <Typography variant="Regular_14" className={styles.loadingTable}>
-                    <FlashingDotsLoader />
+                    {!showNA && <FlashingDotsLoader />}
                     <div>{GENERAL.LOADING_DATA}</div>
                 </Typography>
             )}

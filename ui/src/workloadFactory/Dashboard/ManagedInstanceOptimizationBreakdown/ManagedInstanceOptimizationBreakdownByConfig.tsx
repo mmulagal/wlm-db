@@ -2,6 +2,7 @@ import { DsButton, DsTypography, FlashingDotsLoader, Popover } from '@netapp/des
 import { useDispatch } from 'react-redux';
 import { useMemo } from 'react';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -22,7 +23,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const dispatch = useDispatch();
     const windowSize = useResize();
 
-    const { multiDataLoading } = useAppSelector(state => state.headers);
+    const { multiDataLoading, showNA } = useAppSelector(state => state.headers);
 
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
@@ -90,22 +91,23 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             <BarComponent
                 color="#5E8DCD"
                 headingText={headingText}
-                percentage={dismissedOrPostponedText ? 0 : Math.round((optimizedCount / total) * 100)}
-                beforeOutOf={dismissedOrPostponedText ? undefined : optimizedCount}
-                afterOutOf={dismissedOrPostponedText ? undefined : afterOutOfTotal}
-                bottomText={dismissedOrPostponedText ? undefined : 'Well-architected:'}
+                percentage={showNA ? 0 : (dismissedOrPostponedText ? 0 : Math.round((optimizedCount / total) * 100))}
+                beforeOutOf={showNA ? undefined : (dismissedOrPostponedText ? undefined : optimizedCount)}
+                afterOutOf={showNA ? undefined : (dismissedOrPostponedText ? undefined : afterOutOfTotal)}
+                bottomText={showNA ? undefined : (dismissedOrPostponedText ? undefined : 'Well-architected:')}
                 width={width}
                 from="dashboard"
-                optimizePercentage={dismissedOrPostponedText ? 0 : optimizePercentage}
+                optimizePercentage={showNA ? 0 : (dismissedOrPostponedText ? 0 : optimizePercentage)}
                 loading={dismissedOrPostponedText ? loading : isLoading}
-                textMessage={dismissedOrPostponedText || undefined}
+                textMessage={showNA ? GENERAL.NOT_AVAILABLE : (dismissedOrPostponedText || undefined)}
                 tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
+                isDisabled={showNA}
             />
         );
     };
 
     return (
-        <div className={styles.managedBreakdown}>
+        <div className={`${styles.managedBreakdown} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     Well-architected breakdown by configurations
@@ -134,6 +136,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-storage-tier"
                             isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.storageTier) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -144,7 +147,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -183,7 +186,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
                             }}
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.fileSystemHeadroom) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -194,7 +197,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -233,7 +236,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
                             }}
                             data-testid="wlm-db-optimize-log-drive-size"
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.logDriveSize) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -244,7 +247,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -283,7 +286,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
                             }}
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.tempdbDriveSize) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -294,7 +297,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -339,7 +342,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -384,7 +387,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -429,7 +432,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -468,7 +471,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('ONTAP');
                             }}
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.ontapConfiguration) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -508,7 +511,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Operating system');
                             }}
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.operatingSystem) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -548,7 +551,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.computeRightsizing) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -558,7 +561,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -607,7 +610,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -646,7 +649,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(GENERAL.RSS_CONFIGURATION);
                             }}
                             data-testid="wlm-db-optimize-rss-configuration"
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.rssConfiguration) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -657,7 +660,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -705,7 +708,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -754,7 +757,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -793,7 +796,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.MAXDOP);
                             }}
                             data-testid="wlm-db-optimize-maxdop"
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.maxdopPatch) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -804,7 +807,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -843,7 +846,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
                             }}
                             data-testid="wlm-db-optimize-snapshot"
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.scheduledLocalSnapshot) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -854,7 +857,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -894,7 +897,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -933,7 +936,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
                             }}
                             data-testid="wlm-db-optimize-awsbackup"
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.scheduledawsBackup) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -945,7 +948,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>
@@ -969,7 +972,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.clone) ? (
+                    {showNA ? (
+                        <BarComponent
+                            color="#5E8DCD"
+                            headingText={GENERAL.CLONE_MANAGEMENT}
+                            percentage={0}
+                            width={windowSize.width > 1700 ? '328px' : '248px'}
+                            from="dashboard"
+                            optimizePercentage={0}
+                            loading={loading}
+                            textMessage={GENERAL.NOT_AVAILABLE}
+                            isDisabled={showNA}
+                        />
+                    ) : hasDismissedOrPosponed(configData?.configState?.clone) ? (
                         <BarComponent
                             color="#5E8DCD"
                             percentage={0}
@@ -1000,6 +1015,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
                             }
                             tooltipMessage={hasMixedState(configData?.configState?.clone)}
+                            isDisabled={showNA}
                         />
                     )}
 
@@ -1013,7 +1029,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
                             }}
                             data-testid="wlm-db-optimize-clone"
-                            isDisabled={
+                            isDisabled={showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.clone) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -1024,7 +1040,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             {GENERAL.VIEW_AND_FIX}
                         </DsButton>
 
-                        {loading ? (
+                        {loading || showNA ? (
                             <div className={styles.editDisableIcon}>
                                 <Edit />
                             </div>

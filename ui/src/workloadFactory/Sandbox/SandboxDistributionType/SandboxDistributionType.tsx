@@ -13,7 +13,8 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { getSandboxDistributionByTag } from '../SandboxUtility';
 
 const SandboxDistributionType = () => {
-    const { isNA, aggregatedSandboxList, getSandboxList } = useAppSelector(state => state.sandbox);
+    const { aggregatedSandboxList, getSandboxList } = useAppSelector(state => state.sandbox);
+    const { showNA } = useAppSelector(state => state.headers);
     const { sandboxListLoading: loading } = getSandboxList;
     const distributionByTags = getSandboxDistributionByTag(aggregatedSandboxList);
     return (
@@ -37,16 +38,16 @@ const SandboxDistributionType = () => {
                             <div className={styles.topRow}>
                                 <DsTypography
                                     variant="Semibold_14"
-                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                    className={showNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
                                 >
                                     {GENERAL.DEVELOPMENT}
                                 </DsTypography>
-                                {!isNA && (
+                                {!showNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
                                         {distributionByTags[GENERAL.DEVELOPMENT]}
                                     </DsTypography>
                                 )}
-                                {isNA && (
+                                {showNA && (
                                     <DsTypography
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
@@ -58,8 +59,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.DEVELOPMENT]}
-                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={showNA || loading ? 0 : distributionByTags[GENERAL.DEVELOPMENT]}
+                                    color={showNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -74,16 +75,16 @@ const SandboxDistributionType = () => {
                             <div className={styles.topRow}>
                                 <DsTypography
                                     variant="Semibold_14"
-                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                    className={showNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
                                 >
                                     {GENERAL.QA}
                                 </DsTypography>
-                                {!isNA && (
+                                {!showNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
                                         {distributionByTags[GENERAL.QA]}
                                     </DsTypography>
                                 )}
-                                {isNA && (
+                                {showNA && (
                                     <DsTypography
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
@@ -95,8 +96,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.QA]}
-                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={showNA || loading ? 0 : distributionByTags[GENERAL.QA]}
+                                    color={showNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -111,16 +112,16 @@ const SandboxDistributionType = () => {
                             <div className={styles.topRow}>
                                 <DsTypography
                                     variant="Semibold_14"
-                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                    className={showNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
                                 >
                                     {GENERAL.INTEGRATION}
                                 </DsTypography>
-                                {!isNA && (
+                                {!showNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
                                         {distributionByTags[GENERAL.INTEGRATION]}
                                     </DsTypography>
                                 )}
-                                {isNA && (
+                                {showNA && (
                                     <DsTypography
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
@@ -132,8 +133,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.INTEGRATION]}
-                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={showNA || loading ? 0 : distributionByTags[GENERAL.INTEGRATION]}
+                                    color={showNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -150,16 +151,16 @@ const SandboxDistributionType = () => {
                             <div className={styles.topRow}>
                                 <DsTypography
                                     variant="Semibold_14"
-                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                    className={showNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
                                 >
                                     {GENERAL.TRAINING}
                                 </DsTypography>
-                                {!isNA && (
+                                {!showNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
                                         {distributionByTags[GENERAL.TRAINING]}
                                     </DsTypography>
                                 )}
-                                {isNA && (
+                                {showNA && (
                                     <DsTypography
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
@@ -171,8 +172,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.TRAINING]}
-                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={showNA || loading ? 0 : distributionByTags[GENERAL.TRAINING]}
+                                    color={showNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -187,16 +188,16 @@ const SandboxDistributionType = () => {
                             <div className={styles.topRow}>
                                 <DsTypography
                                     variant="Semibold_14"
-                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                    className={showNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
                                 >
                                     {GENERAL.ANALYTICS}
                                 </DsTypography>
-                                {!isNA && (
+                                {!showNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
                                         {distributionByTags[GENERAL.ANALYTICS]}
                                     </DsTypography>
                                 )}
-                                {isNA && (
+                                {showNA && (
                                     <DsTypography
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
@@ -208,8 +209,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.ANALYTICS]}
-                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={showNA || loading ? 0 : distributionByTags[GENERAL.ANALYTICS]}
+                                    color={showNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -224,16 +225,16 @@ const SandboxDistributionType = () => {
                             <div className={styles.topRow}>
                                 <DsTypography
                                     variant="Semibold_14"
-                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                    className={showNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
                                 >
                                     {GENERAL.SANDBOX_OTHER}
                                 </DsTypography>
-                                {!isNA && (
+                                {!showNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
                                         {distributionByTags[GENERAL.SANDBOX_OTHER]}
                                     </DsTypography>
                                 )}
-                                {isNA && (
+                                {showNA && (
                                     <DsTypography
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
@@ -245,8 +246,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.SANDBOX_OTHER]}
-                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={showNA || loading ? 0 : distributionByTags[GENERAL.SANDBOX_OTHER]}
+                                    color={showNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>

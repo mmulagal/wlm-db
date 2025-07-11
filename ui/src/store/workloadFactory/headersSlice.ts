@@ -32,7 +32,8 @@ const initialHeaderState: HeaderTypeEntities = {
     refreshTimeJobMonitor: null,
     dashboardRefresh: false,
     multiDataStatus: {},
-    multiDataLoading: false
+    multiDataLoading: false,
+    showNA: false
 };
 
 const headersSlice = createSlice({
@@ -101,6 +102,9 @@ const headersSlice = createSlice({
         },
         setMultiDataLoading: (state, action: PayloadAction<any>) => {
             state.multiDataLoading = action.payload;
+        },
+        setShowNA: (state, action: PayloadAction<boolean>) => {
+            state.showNA = action.payload;
         }
     }
 });
@@ -123,7 +127,8 @@ export const {
     setRegionMapping,
     setMultiDataStatus,
     setSingleComboCredAndRegion,
-    setMultiDataLoading
+    setMultiDataLoading,
+    setShowNA
 } = headersSlice.actions;
 
 export default headersSlice;

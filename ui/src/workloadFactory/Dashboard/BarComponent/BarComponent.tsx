@@ -1,5 +1,6 @@
 import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
 import styles from './BarComponent.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { CONFIG_STATES, CONFIG_STATES_UI } from '../../../utils/consts';
@@ -18,6 +19,7 @@ type BarComponentType = {
     loading?: boolean;
     textMessage?: string;
     tooltipMessage?: string;
+    isDisabled?: boolean;
 };
 
 const BarComponent = ({
@@ -33,7 +35,8 @@ const BarComponent = ({
     optimizePercentage,
     loading,
     textMessage,
-    tooltipMessage
+    tooltipMessage,
+    isDisabled = false
 }: BarComponentType) => {
     const handleProgressBar = () => {
         if (percentage === 100) {
@@ -133,17 +136,17 @@ const BarComponent = ({
         }
     };
     return (
-        <div className={styles.barComponent}>
+        <div className={`${styles.barComponent} ${isDisabled ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.rightSection} style={{ width }}>
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
-                        <DsTypography variant="Semibold_14">{headingText}</DsTypography>
+                        <DsTypography variant="Semibold_14" className={isDisabled ? CommonStyles.notAvailable : ''}>{headingText}</DsTypography>
                         {loading && <DsFlashingDotsLoader />}
                     </div>
 
                     <div className={styles.optimizeText}>
                         {!textMessage && (
-                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} className={isDisabled ? CommonStyles.notAvailable : ''}>
                                 {`${percentage}%`}
                             </DsTypography>
                         )}
@@ -152,6 +155,7 @@ const BarComponent = ({
                             <DsTypography
                                 variant="Regular_24"
                                 style={{ lineHeight: 'unset', color: 'var(--text-disabled)' }}
+                                className={isDisabled ? CommonStyles.notAvailable : ''}
                             >
                                 {textMessage}
                             </DsTypography>
@@ -170,8 +174,8 @@ const BarComponent = ({
                 {!textMessage && (
                     <div className={styles.bottomTextSection}>
                         {tooltipMessage && <TooltipInfo>{tooltipMessage}</TooltipInfo>}
-                        <DsTypography variant="Regular_14">{bottomText}</DsTypography>
-                        <DsTypography variant="Semibold_14">
+                        <DsTypography variant="Regular_14" className={isDisabled ? CommonStyles.notAvailable : ''}>{bottomText}</DsTypography>
+                        <DsTypography variant="Semibold_14" className={isDisabled ? CommonStyles.notAvailable : ''}>
                             {beforeOutOf} out of {afterOutOf}
                         </DsTypography>
                     </div>
@@ -180,7 +184,7 @@ const BarComponent = ({
                 {textMessage && (
                     <div className={styles.bottomTextSection}>
                         <Warning />
-                        <DsTypography variant="Regular_14">
+                        <DsTypography variant="Regular_14" className={isDisabled ? CommonStyles.notAvailable : ''}>
                             This configuration analysis is{' '}
                             {textMessage === CONFIG_STATES_UI.DISMISSED ? 'dismissed' : 'postponed'}.
                         </DsTypography>

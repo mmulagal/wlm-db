@@ -12,7 +12,7 @@ Chart.register(...registerables);
 const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
-    const { isNA } = useAppSelector(state => state.sandbox);
+    const { showNA } = useAppSelector(state => state.headers);
 
     const doughnutOptions = {
         plugins: {
@@ -50,25 +50,25 @@ const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
     return (
         <div className={styles.sandboxChart} id="chart-item">
             <div className={styles['center-text']}>
-                {!isNA && (
+                {!showNA && (
                     <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                         {aggregatedSandboxList.length}
                     </Typography>
                 )}
 
-                {isNA && (
+                {showNA && (
                     <Typography variant="Regular_16" className={CommonStyles.notAvailable}>
                         {GENERAL.NOT_AVAILABLE}
                     </Typography>
                 )}
-                <Typography variant="Regular_14" className={isNA ? ` ${CommonStyles.notAvailable}` : ''}>
+                <Typography variant="Regular_14" className={showNA ? ` ${CommonStyles.notAvailable}` : ''}>
                     {GENERAL.SANDBOXES}
                 </Typography>
                 {loading && <DsFlashingDotsLoader />}
             </div>
             {/* @ts-ignore */}
 
-            {(isNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle} />}
+            {(showNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle} />}
 
             {aggregatedSandboxList.length !== 0 && <canvas ref={ref} id="chart-area" width={184} height={184} />}
         </div>
