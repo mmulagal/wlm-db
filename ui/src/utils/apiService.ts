@@ -1193,7 +1193,7 @@ export const errorInvestigationApi = createApi({
         }),
         getInvestigationDates: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/investigation-dates`
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis/reports`
             })
         }),
         scanErrorInvestigation: builder.mutation({

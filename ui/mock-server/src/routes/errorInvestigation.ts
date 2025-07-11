@@ -19,7 +19,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/data
     }, 7000);
 });
 
-router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/investigation-dates`, async (req: express.Request, res: any) => {
+router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/reports`, async (req: express.Request, res: any) => {
     setTimeout(() => {
         // generateResponse(res, 500, {message: "Server Error: Unable to fetch logs analysis data."});
         generateResponse(res, 200, {
