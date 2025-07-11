@@ -460,6 +460,55 @@ async function getLogsAnalysisReport(
     throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
 }
 
+async function listLogsAnalysisReportsIdentifiers(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    pageSize: number = 100
+) {
+    logger.info('Listing logs analysis report identifiers:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        pageSize
+    });
+
+    const response = await listLogsAnalysisReports(
+        accountId,
+        databaseHostId,
+        databaseInstanceId,
+        undefined,
+        undefined,
+        'creation_time',
+        'desc',
+        pageSize,
+        undefined,
+        {
+            id: true,
+            creation_time: true
+        }
+    );
+
+    if (response && response.length > 0) {
+        const reports = response.map(({ id, creation_time: creationTime }) => ({
+            id,
+            creationTime: creationTime.getTime()
+        }));
+
+        return {
+            reports
+        };
+    }
+
+    const errorMessage = `No logs analysis reports found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
+    logger.error(errorMessage);
+    throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+}
+
 function aggregateErrorCountAcrossReports(reports: LogsAnalysisReports[], accountId: string, jobId?: string) {
     // this function aggregates only the error count across all logs analysis reports/ token usage is not aggregated, it is not needed as of the initial implementation
     logger.info('Aggregating data across logs analysis reports:', { accountId, jobId, reportsCount: reports.length });
@@ -515,6 +564,22 @@ function aggregateErrorCountAcrossReports(reports: LogsAnalysisReports[], accoun
             if (item.firstOccurrence && item.firstOccurrence < existingItem.firstOccurrence) {
                 existingItem.firstOccurrence = item.firstOccurrence;
             }
+            if (item.hourlyErrorCounts) {
+                const hourlyMap = new Map<number, number>();
+
+                (existingItem.hourlyErrorCounts || []).forEach(({ hour, count }: { hour: number; count: number }) => {
+                    hourlyMap.set(hour, count);
+                });
+
+                item.hourlyErrorCounts.forEach(({ hour, count }) => {
+                    const existingCount = hourlyMap.get(hour) || 0;
+                    hourlyMap.set(hour, existingCount + count);
+                });
+
+                existingItem.hourlyErrorCounts = Array.from(hourlyMap.entries())
+                    .map(([hour, count]) => ({ hour, count }))
+                    .sort((a, b) => a.hour - b.hour);
+            }
         }
     }
 
@@ -562,4 +627,10 @@ async function calculateLogsAnalysisPrice(region: string) {
         costPerError
     };
 }
-export { triggerLogsAnalysis, handleLogsAnalysis, getLogsAnalysisReport, calculateLogsAnalysisPrice };
+export {
+    triggerLogsAnalysis,
+    handleLogsAnalysis,
+    getLogsAnalysisReport,
+    listLogsAnalysisReportsIdentifiers,
+    calculateLogsAnalysisPrice
+};

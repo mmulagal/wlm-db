@@ -54,11 +54,17 @@ type RemediationRecommendationObjectType = Static<typeof RemediationRecommendati
 
 type LogsAnalyzerBody = Static<typeof LogsAnalyzerBody>;
 
+const ReportIdentifier = Type.Object({
+    id: Type.String(),
+    creationTime: Type.Number()
+});
+
 export {
     LogsAnalyzerParams,
     LogsAnalyzerParamsType,
     LogsAnalyzerBody,
     InferenceConfigType,
     RemediationRecommendationObject,
+    ReportIdentifier,
     RemediationRecommendationObjectType
 };

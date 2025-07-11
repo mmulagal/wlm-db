@@ -1,4 +1,5 @@
 import { DATABASE_TYPE } from '@prisma/client';
+import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
@@ -69,13 +70,15 @@ async function listLogsAnalysisReports(
     sort: string = 'creation_time',
     sortOrder: string = 'desc',
     pageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    select?: Record<string, boolean>
 ) {
     logger.info('Listing logs analysis reports', {
         accountId,
         databaseHostId,
         databaseInstanceId,
         jobId,
+        pageSize,
         reportId
     });
 
@@ -94,6 +97,7 @@ async function listLogsAnalysisReports(
                 [sort]: `${sortOrder}`
             }
         ],
+        ...(select && !isEmpty(select) && { select }),
         ...(pageSize && pageSize > 0 && { take: pageSize }),
         ...(nextToken && {
             cursor: { id: nextToken },
