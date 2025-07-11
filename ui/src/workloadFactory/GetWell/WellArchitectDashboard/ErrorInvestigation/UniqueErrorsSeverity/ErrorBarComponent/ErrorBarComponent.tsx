@@ -93,11 +93,15 @@ const ErrorBarComponent = ({
                             trigger={loading || noData || noFilteredData ? 'click' : 'hover'}
                             className={loading || noData || noFilteredData ? styles.disabled : ''}
                         >
-                            {!severity
-                                ? t('databases.log-analyzer.n/a')
-                                : Number(severity) > 9
-                                ? t(`databases.log-analyzer.severity-description.${severity}`)
-                                : t('databases.log-analyzer.severity-description.0-9')}
+                            {(() => {
+                                if (!severity) {
+                                    return t('databases.log-analyzer.n/a');
+                                }
+                                if (Number(severity) > 9) {
+                                    return t(`databases.log-analyzer.severity-description.${severity}`);
+                                }
+                                return t('databases.log-analyzer.severity-description.0-9');
+                            })()}
                         </TooltipInfo>
                         <DsTypography variant="Semibold_14" style={{ marginLeft: '2px' }}>
                             {t('databases.log-analyzer.severity')}

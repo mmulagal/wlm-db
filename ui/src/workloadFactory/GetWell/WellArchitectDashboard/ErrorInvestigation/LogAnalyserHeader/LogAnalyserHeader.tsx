@@ -1,10 +1,21 @@
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { DsButton, TooltipInfo } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
 import { ReactComponent as UniqueError } from '../../../../../assets/unique-errors.svg';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './LogAnalyserHeader.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { useLazyGetSubTaskListQuery, useScanErrorInvestigationMutation } from '../../../../../utils/apiService';
+import {
+    setEiRefreshPage,
+    setScanInProgress,
+    setStopErrorInvestigationScan
+} from '../../../../../store/workloadFactory/agenticAISlice';
+import { JOB_MONITORING_STATUS, LOG_ANALYZER_POLLING_INTERVAL, WLF_TABS } from '../../../../../utils/consts';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
+import store from '../../../../../store/store';
 
 interface LogAnalyserHeaderProps {
     uniqueErrors: number;
@@ -14,10 +25,86 @@ interface LogAnalyserHeaderProps {
 
 const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps }) => {
     const { t } = useTranslation();
+    const dispatch = useDispatch();
 
+    const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
+        useAppSelector(state => state.getWellOptimize);
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
-    const { investigationDatesLoading, scanInProgress, noData } = useAppSelector(state => state.agenticAI);
+    const { investigationDatesLoading, scanInProgress, noData, stopErrorInvestigationScan } = useAppSelector(
+        state => state.agenticAI
+    );
     const loading = errorInvestigationLoading || investigationDatesLoading;
+
+    const [scanErrorInvestigation] = useScanErrorInvestigationMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
+    useEffect(() => {
+        if (stopErrorInvestigationScan) {
+            dispatch(setScanInProgress(false));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stopErrorInvestigationScan]);
+
+    const handleScan = () => {
+        dispatch(setScanInProgress(true));
+        scanErrorInvestigation({
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance
+        }).then((res: any) => {
+            const jobId = res?.data?.jobId;
+            const state = store.getState();
+            const { stopErrorInvestigationScan: stopScan } = state.agenticAI;
+            if (stopScan) {
+                dispatch(setScanInProgress(false));
+                dispatch(setStopErrorInvestigationScan(false));
+            } else if (jobId) {
+                const jobInterval = setInterval(() => {
+                    getJobDetailApi({
+                        id: jobId
+                    }).then((jobRes: any) => {
+                        const status = jobRes?.data?.status;
+                        const state1 = store.getState();
+                        const { stopErrorInvestigationScan: stopScan1 } = state1.agenticAI;
+                        if (stopScan1) {
+                            clearInterval(jobInterval);
+                            dispatch(setScanInProgress(false));
+                            dispatch(setStopErrorInvestigationScan(false));
+                        } else if (
+                            status === JOB_MONITORING_STATUS.COMPLETED ||
+                            status === JOB_MONITORING_STATUS.WARNING
+                        ) {
+                            dispatch(setScanInProgress(false));
+                            clearInterval(jobInterval);
+                            if (!stopScan1) {
+                                dispatch(setEiRefreshPage(true));
+                                dispatch(setStopErrorInvestigationScan(false));
+                            }
+                        } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                            dispatch(setScanInProgress(false));
+                            clearInterval(jobInterval);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: jobRes?.data?.error || t('databases.log-analyzer.scan-failed')
+                                })
+                            );
+                        }
+                    });
+                }, LOG_ANALYZER_POLLING_INTERVAL);
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: t('databases.log-analyzer.scan-trigger-error')
+                    })
+                );
+                dispatch(setScanInProgress(true));
+            }
+        });
+    };
 
     return (
         <div className={styles.logHeader}>
@@ -95,7 +182,9 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                             <div className={styles.inProgressContainer}>
                                 <DsFlashingDotsLoader />
                                 <DsTypography variant="Regular_14">{t('databases.log-analyzer.new-scan')}</DsTypography>
-                                <DsButton type="text">{t('databases.log-analyzer.stop-scan')}</DsButton>
+                                <DsButton type="text" onClick={() => dispatch(setStopErrorInvestigationScan(true))}>
+                                    {t('databases.log-analyzer.stop-scan')}
+                                </DsButton>
                             </div>
                         )}
                         {!scanInProgress && (
@@ -129,7 +218,13 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                             </div>
                         )}
 
-                        <DsButton variant="Default" isThin type="button" isDisabled={loading || scanInProgress}>
+                        <DsButton
+                            variant="Default"
+                            isThin
+                            type="button"
+                            isDisabled={loading || scanInProgress}
+                            onClick={handleScan}
+                        >
                             {t('databases.log-analyzer.scan-now')}
                         </DsButton>
                     </div>

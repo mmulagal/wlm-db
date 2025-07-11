@@ -63,13 +63,21 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                                 display: false
                             },
                             ticks: {
-                                color: loading
-                                    ? isDarkTheme
-                                        ? '#ffffff'
-                                        : '#1C1C1C'
-                                    : isDarkTheme
-                                    ? '#858C95'
-                                    : '#A7A7A7',
+                                color: (() => {
+                                    let tickColor;
+                                    if (loading) {
+                                        if (isDarkTheme) {
+                                            tickColor = '#ffffff';
+                                        } else {
+                                            tickColor = '#1C1C1C';
+                                        }
+                                    } else if (isDarkTheme) {
+                                        tickColor = '#858C95';
+                                    } else {
+                                        tickColor = '#A7A7A7';
+                                    }
+                                    return tickColor;
+                                })(),
                                 font: {
                                     size: 13,
                                     lineHeight: '20px',
@@ -93,13 +101,21 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                             beginAtZero: true,
                             grace: 12,
                             ticks: {
-                                color: loading
-                                    ? isDarkTheme
-                                        ? '#ffffff'
-                                        : '#1C1C1C'
-                                    : isDarkTheme
-                                    ? '#858C95'
-                                    : '#A7A7A7',
+                                color: (() => {
+                                    let tickColor;
+                                    if (loading) {
+                                        if (isDarkTheme) {
+                                            tickColor = '#ffffff';
+                                        } else {
+                                            tickColor = '#1C1C1C';
+                                        }
+                                    } else if (isDarkTheme) {
+                                        tickColor = '#858C95';
+                                    } else {
+                                        tickColor = '#A7A7A7';
+                                    }
+                                    return tickColor;
+                                })(),
                                 font: {
                                     size: 13,
                                     lineHeight: '20px',

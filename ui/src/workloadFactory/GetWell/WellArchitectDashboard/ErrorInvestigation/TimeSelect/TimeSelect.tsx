@@ -20,11 +20,12 @@ const TimeSelect = () => {
     const dateOptions = useMemo(() => {
         const options = investigationDates.map(date => ({
             id: date.id,
-            value: date.reportCreationTime,
-            label: formatDateWithTime(date.reportCreationTime)
+            value: date.creationTime,
+            label: formatDateWithTime(date.creationTime)
         }));
         dispatch(setSelectedInvestigationDate(options[0]));
         return options;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [investigationDates]);
 
     return (

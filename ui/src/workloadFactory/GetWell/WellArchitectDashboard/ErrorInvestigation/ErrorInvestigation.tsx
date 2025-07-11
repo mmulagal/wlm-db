@@ -94,7 +94,7 @@ const ErrorInvestigation = () => {
                 return sum;
             }, 0);
             const lastScan =
-                investigationDates.length > 0 ? formatDateWithTime(investigationDates[0]?.reportCreationTime) : '';
+                investigationDates.length > 0 ? formatDateWithTime(investigationDates[0]?.creationTime) : '';
             setheaderData({ uniqueErrors, totalErrors, lastScan });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

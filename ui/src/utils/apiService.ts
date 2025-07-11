@@ -1195,6 +1195,12 @@ export const errorInvestigationApi = createApi({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/investigation-dates`
             })
+        }),
+        scanErrorInvestigation: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`,
+                method: 'POST'
+            })
         })
     })
 });
@@ -1361,4 +1367,8 @@ export const {
     useDismissMssqlAssessmentMutation
 } = getWellApi;
 
-export const { useGetErrorInvestigationDataMutation, useGetInvestigationDatesMutation } = errorInvestigationApi;
+export const {
+    useGetErrorInvestigationDataMutation,
+    useGetInvestigationDatesMutation,
+    useScanErrorInvestigationMutation
+} = errorInvestigationApi;

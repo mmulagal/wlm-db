@@ -28,7 +28,8 @@ export const initialSandboxState: AgenticAIEntities = {
     eiRefreshTimestamp: '',
     eiRefreshPage: false,
     noErrorsDetected: false,
-    scanInProgress: false
+    scanInProgress: false,
+    stopErrorInvestigationScan: false
 };
 
 const agenticAISlice = createSlice({
@@ -64,10 +65,7 @@ const agenticAISlice = createSlice({
         setErrorInvestigationData: (state, action: PayloadAction<Array<ErrorInvestigationGetApiResponse> | []>) => {
             state.errorInvestigation.errorInvestigationData = action.payload;
         },
-        setInvestigationDateData: (
-            state,
-            action: PayloadAction<Array<{ id: string; reportCreationTime: string }> | []>
-        ) => {
+        setInvestigationDateData: (state, action: PayloadAction<Array<{ id: string; creationTime: string }> | []>) => {
             state.investigationDates = action.payload;
         },
         resetEiFilters: (state, action: PayloadAction<any>) => {
@@ -110,6 +108,9 @@ const agenticAISlice = createSlice({
         },
         setScanInProgress: (state, action: PayloadAction<boolean>) => {
             state.scanInProgress = action.payload;
+        },
+        setStopErrorInvestigationScan: (state, action: PayloadAction<boolean>) => {
+            state.stopErrorInvestigationScan = action.payload;
         }
     }
 });
@@ -130,7 +131,8 @@ export const {
     resetEiData,
     setNoErrorsDetected,
     setInvestigationDatesLoading,
-    setScanInProgress
+    setScanInProgress,
+    setStopErrorInvestigationScan
 } = agenticAISlice.actions;
 
 export default agenticAISlice;

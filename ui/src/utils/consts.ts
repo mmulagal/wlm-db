@@ -622,6 +622,8 @@ export const MANAGE_POLLING_INTERVAL = 5000;
 
 export const DETECT_PAYLOAD_SIZE = 10;
 
+export const LOG_ANALYZER_POLLING_INTERVAL = 5000;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',
