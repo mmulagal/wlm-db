@@ -46,8 +46,7 @@ const ListLogsAnalyzerReportsSchema = {
     hide: process.env.NODE_ENV === 'production',
     params: LogsAnalyzerParams,
     querystring: Type.Object({
-        pageSize: Type.Optional(Type.Number()),
-        nextToken: Type.Optional(Type.String())
+        pageSize: Type.Optional(Type.Number())
     }),
     summary: 'List logs analysis for a specific database instance',
     response: {

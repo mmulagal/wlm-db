@@ -461,14 +461,16 @@ async function listLogsAnalysisReportsIdentifiers(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    pageSize?: number
 ) {
     logger.info('Listing logs analysis report identifiers:', {
         accountId,
         credentialsId,
         region,
         databaseHostId,
-        databaseInstanceId
+        databaseInstanceId,
+        pageSize
     });
 
     const response = await listLogsAnalysisReports(
@@ -478,7 +480,7 @@ async function listLogsAnalysisReportsIdentifiers(
         undefined,
         'creation_time',
         'desc',
-        undefined,
+        pageSize,
         undefined,
         {
             id: true,

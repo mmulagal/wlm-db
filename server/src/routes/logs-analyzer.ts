@@ -68,7 +68,8 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
         { schema: ListLogsAnalyzerReportsSchema },
         async (request, reply) => {
             const {
-                params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                query: { pageSize }
             } = castRequest(request);
 
             const response = await listLogsAnalysisReportsIdentifiers(
@@ -76,7 +77,8 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
                 credentialsId,
                 region,
                 databaseHostId,
-                databaseInstanceId
+                databaseInstanceId,
+                pageSize
             );
 
             return reply.send(response);
