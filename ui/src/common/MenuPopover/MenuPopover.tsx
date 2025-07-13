@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import { Popover as DesignPopover } from '@netapp/design-system';
-import { ReactComponent as ArrowRight } from '@netapp/icons/ic_arrow_right.svg';
+
 import CustomContentInfo from '../CustomContentInfo/CustomContentInfo';
 import { ReactComponent as MenuIcon } from '../../assets/menu-icon2.svg';
+import { ReactComponent as ArrowIcon } from '../../assets/row_arrow.svg';
 import styles from './MenuPopover.module.scss';
 
 export type MenuItemType = {
@@ -98,7 +99,7 @@ function MenuPopover({
                     container={
                         <div className={styles.menuWithArrow}>
                             {item.displayName}
-                            <ArrowRight />
+                            <ArrowIcon />
                         </div>
                     }
                 />

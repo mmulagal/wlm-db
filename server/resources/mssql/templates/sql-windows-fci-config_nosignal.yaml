@@ -24,6 +24,7 @@ Metadata:
                   - ADDnsIpAddresses
                   - DomainMemberSGID
                   - PreferredDomainController
+                  - OUPath
             - Label:
                   default: Amazon EC2 Configuration
               Parameters:
@@ -130,6 +131,8 @@ Metadata:
                 default: Size of the EBS Volume in GiB.
             PreferredDomainController:
                 default: (optional) Preferred domain controller to use for AD join
+            OUPath:
+                default: (optional) Preferred organizational unit in the AD to join.    
 Parameters:
     ParentStackName:
         Description: Name of the parent CloudFormation stack.
@@ -306,7 +309,11 @@ Parameters:
     PreferredDomainController:
         Description: (optional) Preferred domain controller to use for AD join.
         Type: String
-        Default: 'no-value'
+        Default: default
+    OUPath:
+        Description: (optional) Preferred organizational unit in the AD to join.
+        Type: String
+        Default: default 
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
@@ -314,9 +321,7 @@ Conditions:
     LogFeatureEnabled: !Equals
         - !Ref 'EnableCloudWatchLogFeature'
         - 'true'
-    PreferredDomainControllerSet: !And
-        - !Not [!Equals [!Ref PreferredDomainController, '']]
-        - !Not [!Equals [!Ref PreferredDomainController, 'no-value']]
+        
 Rules:
     KeyPairsNotEmpty:
         Assertions:
@@ -744,30 +749,20 @@ Resources:
                                   - '''"'
                             waitAfterCompletion: 0
                         e-join-domain:
-                            command: !If
-                                - PreferredDomainControllerSet
-                                - !Join
-                                    - ''
-                                    - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
-                                        -DomainDNSName '
-                                      - !Ref 'DomainDNSName'
-                                      - "' -Parentstackname '"
-                                      - !Ref 'ParentStackName'
-                                      - "' -DomainAdminUser '"
-                                      - !Ref 'DomainAdminUser'
-                                      - "' -DCName '"
-                                      - !Ref 'PreferredDomainController'
-                                      - '''"'
-                                - !Join
-                                    - ''
-                                    - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
-                                        -DomainDNSName '
-                                      - !Ref 'DomainDNSName'
-                                      - "' -Parentstackname '"
-                                      - !Ref 'ParentStackName'
-                                      - "' -DomainAdminUser '"
-                                      - !Ref 'DomainAdminUser'
-                                      - '''"'
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
+                                    -DomainDNSName '
+                                  - !Ref 'DomainDNSName'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'
+                                  - "' -OUPath '"                                 
+                                  - !Ref 'OUPath'
+                                  - '''"'
                             waitAfterCompletion: forever                 
                         f-open-WSFC-ports:
                             command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\OpenWSFCPorts.ps1"
@@ -1411,31 +1406,21 @@ Resources:
                                   - '"'
                             waitAfterCompletion: 0
                         d-join-domain:
-                                command: !If
-                                    - PreferredDomainControllerSet
-                                    - !Join
-                                            - ''
-                                            - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
-                                                -DomainDNSName '
-                                              - !Ref 'DomainDNSName'
-                                              - "' -Parentstackname '"
-                                              - !Ref 'ParentStackName'
-                                              - "' -DomainAdminUser '"
-                                              - !Ref 'DomainAdminUser'
-                                              - "' -DCName '"
-                                              - !Ref 'PreferredDomainController'
-                                              - '''"'
-                                    - !Join
-                                            - ''
-                                            - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
-                                                -DomainDNSName '
-                                              - !Ref 'DomainDNSName'
-                                              - "' -Parentstackname '"
-                                              - !Ref 'ParentStackName'
-                                              - "' -DomainAdminUser '"
-                                              - !Ref 'DomainAdminUser'
-                                              - '''"'
-                                waitAfterCompletion: forever                 
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
+                                    -DomainDNSName '
+                                  - !Ref 'DomainDNSName'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'
+                                  - "' -OUPath '"                                 
+                                  - !Ref 'OUPath'
+                                  - '''"'
+                            waitAfterCompletion: forever                 
                         e-open-WSFC-ports:
                             command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\OpenWSFCPorts.ps1"
                             waitAfterCompletion: '0'

@@ -1,0 +1,89 @@
+.filterComponent {
+    background-color: var(--content-background);
+    width: 87.3%;
+    height: 72px;
+    margin-bottom: 24px;
+    box-shadow: 2px 2px 6px 0px var(--border);
+    padding: 0 40px 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    .disabled {
+        color: var(--text-disabled) !important   ;
+        svg {
+            path {
+                fill: var(--icon-secondary-disabled) !important;
+            }
+        }
+    }
+
+    .tagContainer {
+        width: 90%;
+        display: flex;
+        justify-content: center;
+        .tag {
+            width: max-content;
+            min-width: 130px;
+            height: 20px;
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 11px !important;
+            cursor: pointer;
+            background-color: var(--tag-3-bg);
+            color: var(--tag-3-text) !important;
+            font-weight: 500;
+        }
+    }
+
+    .leftSide {
+        display: flex;
+        gap: 48px;
+        position: relative;
+        top: 10px;
+
+        .item {
+            display: flex;
+            gap: 16px;
+            align-items: baseline;
+        }
+
+        .itemDropDownItem {
+            display: flex;
+            gap: 4px;
+            align-items: baseline;
+            height: 42px;
+
+            .severitySelect {
+                [class*='dsTextFramePopover'] {
+                    width: 230px !important;
+                }
+            }
+
+            .timeFrameSelect {
+                [class*='dsTextFramePopover'] {
+                    width: 170px !important;
+                }
+            }
+
+            .errorCodeSelect {
+                [class*='dsTextFramePopover'] {
+                    width: 170px !important;
+                }
+            }
+
+            [class*='inputWithActionsContainer'] {
+                border: none !important;
+            }
+            [class*='textFieldInput'] {
+                border: none !important;
+            }
+        }
+    }
+}

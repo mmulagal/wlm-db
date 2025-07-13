@@ -44,7 +44,7 @@ import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
-import serviceStatusRoutes from './routes/service-status';
+import workloadFactoryInternalRoutes from './routes/wf-internal';
 import discoverRoutes from './routes/discover';
 import storageSavingsRoutes from './routes/storage-savings';
 import onpremTcoRoutes from './routes/onprem-tco';
@@ -215,7 +215,7 @@ const app = fastify({
             databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);
             chatbotRoutes(instance);
-            serviceStatusRoutes(instance);
+            workloadFactoryInternalRoutes(instance);
             discoverRoutes(instance);
             resourceRoutes(instance);
             storageSavingsRoutes(instance);

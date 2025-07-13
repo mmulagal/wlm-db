@@ -14,26 +14,24 @@ import { Metadata } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 beforeAll(async () => {
-    const rssAssesmentMetadata = {
-        assessment: {
-            rssConfig: {
-                rssConfigFinding: 'not-optimized',
-                rssAdapters: [
-                    {
-                        adapterName: 'Ethernet 3',
-                        rssEnabled: true,
-                        rssProfile: 'NUMAStatic',
-                        baseProcessorNumber: 0,
-                        numberOfReceiveQueues: 4
-                    }
-                ],
-                recommendedAdapterSettings: {
-                    recommendedRssProfile: 'NUMAStatic',
-                    recommendedBaseProcessorNumber: 2,
-                    recommendedReceiveQueues: 4
-                },
-                tcpOffloadState: 'Disabled'
-            }
+    const rssAssesment = {
+        rssConfig: {
+            rssConfigFinding: 'not-optimized',
+            rssAdapters: [
+                {
+                    adapterName: 'Ethernet 3',
+                    rssEnabled: true,
+                    rssProfile: 'NUMAStatic',
+                    baseProcessorNumber: 0,
+                    numberOfReceiveQueues: 4
+                }
+            ],
+            recommendedAdapterSettings: {
+                recommendedRssProfile: 'NUMAStatic',
+                recommendedBaseProcessorNumber: 2,
+                recommendedReceiveQueues: 4
+            },
+            tcpOffloadState: 'Disabled'
         }
     };
     await createResource(ACCOUNT_ID, {
@@ -49,9 +47,9 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI',
-            ...rssAssesmentMetadata
-        }
+            sqlDeploymentType: 'FCI'
+        },
+        assessmentData: rssAssesment
     });
 
     await upsertDatabaseInstance(ACCOUNT_ID, {

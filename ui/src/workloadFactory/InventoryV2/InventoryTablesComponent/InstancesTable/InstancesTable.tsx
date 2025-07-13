@@ -3,6 +3,7 @@ import {
     DsButton,
     DsFlashingDotsLoader,
     DsTypography,
+    DsTooltipInfo,
     Popover,
     postBlueXPMessage,
     TooltipInfo,
@@ -15,11 +16,20 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
+import {
+    useDiscoverExistingFsxNMutation,
+    useGetConnectorsMutation,
+    useGetFsxDetailsMutation,
+    useGetRBACPrivilegesMutation,
+    useGetWorkSpaceIDMutation,
+    useListExistingHostsMutation,
+    useUnmanageMssqlInstanceMutation
+} from '../../../../utils/apiService';
 import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { bxpRedirect, getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
+    DBType,
     DETECT_HOST_VAR,
     FROM_DIALOG,
     INVENTORY_STATUS,
@@ -74,6 +84,10 @@ import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
+import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
+import { setConnectors } from '../../../../store/workloadFactory/snapcenterSlice';
+import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
+import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -100,6 +114,12 @@ const InstancesTable = () => {
     const dispatch = useDispatch();
 
     const [unmanageApi] = useUnmanageMssqlInstanceMutation();
+    const [getConnector] = useGetConnectorsMutation();
+    const [getFsxDetails] = useGetFsxDetailsMutation();
+    const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
+    const [getWorkSpaceID] = useGetWorkSpaceIDMutation();
+    const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
+    const [listExistingHosts] = useListExistingHostsMutation();
 
     useEffect(() => {
         setLoading(
@@ -284,48 +304,123 @@ const InstancesTable = () => {
         );
     };
 
-    const handleProtection = (rowData: any) => {
-        //No connector case
-        // setDialog(
-        //     <DialogComponent
-        //         header={t('databases.inventory.protect-header')}
-        //         content={<NoAgentDialog />}
-        //         primaryButton={t('databases.inventory.redirect')}
-        //         secondaryButton={GENERAL.CANCEL}
-        //         closeCallback={() => {
-        //             closeDialog();
-        //         }}
-        //         callback={() => {
-        //             bxpRedirect(isWorkloadFactory);
-        //         }}
-        //         customClass={styles.protectionDialog}
-        //     />
-        // );
+    const handleProtection = async (rowData: any) => {
+        const existingConnectors = store.getState().snapCenter.data;
 
-        //Single Connector case
+        if (existingConnectors) {
+            // already in store, use directly
+            await handleFsxFlow(rowData, existingConnectors);
+            return;
+        }
         setDialog(
             <DialogComponent
-                header={
-                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                            {t('databases.inventory.step-1-out-of')}
-                        </DsTypography>
-                    </div>
-                }
-                content={<SingleAgentDialog />}
-                primaryButton={t('databases.inventory.start')}
-                secondaryButton={t('databases.inventory.cancel')}
+                header={t('databases.inventory.protect-header')}
+                content={<FetchingDialog />}
+                primaryButton={t('databases.inventory.redirect')}
+                secondaryButton={GENERAL.CANCEL}
                 closeCallback={() => {
                     closeDialog();
                 }}
-                callback={() => {
-                    dispatch(setStartProtection('started'));
-                }}
+                callback={() => {}}
                 customClass={styles.protectionDialog}
-                dialogFrom={FROM_DIALOG.SINGLE_AGENT}
+                dialogFrom={FROM_DIALOG.LOADER}
             />
         );
+        const res = await getConnector({ accountID: store.getState().auth.accountId });
+
+        if (res?.data?.occms) {
+            // save to store for next time
+            dispatch(setConnectors(res.data));
+            await handleFsxFlow(rowData, res.data);
+        } else {
+            closeDialog();
+        }
+    };
+
+    const handleFsxFlow = async (rowData: any, connectorsData: any) => {
+        // First call the getFsxDetails API
+        const fsxRes = await getFsxDetails({ accountID: store.getState().auth.accountId });
+
+        // Check if fsxId from rowData exists in fetched fsx list
+        // @ts-ignore
+        const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
+
+        if (!fsxExists) {
+            const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+            // Call discoverExistingFsxN API with payload { fsxId }
+            const discoverRes = await discoverExistingFsxN({
+                accountID: store.getState().auth.accountId,
+                credentialID: rowData.credentialId,
+                workSpaceID: workSpaceRes?.data?.items[0]?.id,
+                regionID: rowData.regionId,
+                payload: [rowData.fsxId]
+            });
+            console.log(discoverRes);
+        }
+
+        const rbacRes = await getRBACPrivileges({ accountID: store.getState().auth.accountId });
+        console.log('RBAC Privileges:', rbacRes);
+
+        const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
+
+        // Check if the host exists by name
+        const hostExists = hostsRes?.data?.hosts?.some((host: any) => host.name === rowData.hostRow.name);
+
+        console.log('Is host managed already?', hostExists);
+
+        // Now proceed with protection flow as before
+        proceedWithProtection(connectorsData);
+    };
+
+    const proceedWithProtection = (data: any) => {
+        const activeAgents = data?.occms?.filter((item: any) => item.agent.status === 'active') || [];
+
+        if (activeAgents.length === 0) {
+            setDialog(
+                <DialogComponent
+                    header={t('databases.inventory.protect-header')}
+                    content={<NoAgentDialog />}
+                    primaryButton={t('databases.inventory.redirect')}
+                    secondaryButton={GENERAL.CANCEL}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                    callback={() => {
+                        bxpRedirect(isWorkloadFactory);
+                    }}
+                    customClass={styles.protectionDialog}
+                />
+            );
+        }
+        if (activeAgents.length > 0) {
+            // Single Connector case
+            setDialog(
+                <DialogComponent
+                    header={
+                        <div
+                            className={styles.headerClass}
+                            style={{ display: 'flex', justifyContent: 'space-between' }}
+                        >
+                            <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-1-out-of')}
+                            </DsTypography>
+                        </div>
+                    }
+                    content={<SingleAgentDialog agents={activeAgents} />}
+                    primaryButton={t('databases.inventory.start')}
+                    secondaryButton={t('databases.inventory.cancel')}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                    callback={() => {
+                        dispatch(setStartProtection('started'));
+                    }}
+                    customClass={styles.protectionDialog}
+                    dialogFrom={FROM_DIALOG.SINGLE_AGENT}
+                />
+            );
+        }
     };
 
     const disableManageCheck = (rowData: any) => {
@@ -413,6 +508,36 @@ const InstancesTable = () => {
         </div>
     );
 
+    const resourceScreenNavigation = (rowData: any) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+        dispatch(
+            setFSXId({
+                fsxId: rowData?.fsxId,
+                ec2InstanceId: rowData?.ec2InstanceId
+            })
+        );
+        optimizeAction(rowData);
+    };
+
+    const instanceNameHyperLink = (rowData: any, name: string) => {
+        if (
+            name &&
+            rowData?.hostType === DBType.MSSQL && rowData?.managementStatus === INVENTORY_STATUS.REGISTERED &&
+            (rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
+                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP)
+        ) {
+            return (
+                <DsButton onClick={() => resourceScreenNavigation(rowData)} type="text">
+                    {name}
+                </DsButton>
+            );
+        }
+        return name;
+    };
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'Instance name',
@@ -435,7 +560,8 @@ const InstancesTable = () => {
                             className={styles.textClass}
                             variant="Semibold_14"
                         >
-                            {name || GENERAL.NOT_AVAILABLE}
+                            {name && instanceNameHyperLink(rowData, name)}
+                            {!name && GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                         <div className={styles.firstColText}>
                             {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
@@ -539,9 +665,53 @@ const InstancesTable = () => {
             }
         },
         {
+            id: '6',
+            Header: 'FSxN Name',
+            accessor: 'fileSystemName',
+            isSortable: false,
+            filterOptions: getFilterOptions(updatedTableData, 'fileSystemName'),
+            width: '213px',
+            renderCell: (cellData: any, rowData: any) => (
+                <>
+                    {cellData && rowData?.fsxId ? (
+                        <div className={styles.fsxNameContainer}>
+                            <DsTooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
+                                <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                    <DsTypography variant="Regular_13">{rowData?.fsxId}</DsTypography>
+                                    <Popover
+                                        popoverClass={styles['copy-popover']}
+                                        children="Copied"
+                                        container={
+                                            <CopyToClipboardCommon
+                                                value={rowData?.fsxId}
+                                                iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                            />
+                                        }
+                                    />
+                                </div>
+                            </DsTooltipInfo>
+                            <div className={styles.fsxName}>
+                                <DsTypography
+                                    className={styles.fsxNameText}
+                                    variant="Regular_13"
+                                    title={cellData || GENERAL.NOT_AVAILABLE}
+                                >
+                                    {cellData || GENERAL.NOT_AVAILABLE}
+                                </DsTypography>
+                            </div>
+                        </div>
+                    ) : (
+                        <DsTypography variant="Regular_13" className={styles.colText}>
+                            {GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    )}
+                </>
+            )
+        },
+        {
             Header: 'Well-architected status',
             accessor: 'optimizationStatus',
-            id: '6',
+            id: '7',
             width: '240px',
             filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
@@ -647,7 +817,7 @@ const InstancesTable = () => {
         {
             Header: 'Protection status',
             accessor: 'protectionText',
-            id: '7',
+            id: '8',
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
             renderCell: (cellData: string, rowData: any) => {
@@ -716,7 +886,7 @@ const InstancesTable = () => {
         {
             Header: 'Performance',
             accessor: 'performance.assessment',
-            id: '8',
+            id: '9',
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'performance.assessment'),
             renderCell: (cellData: string, rowData: any) => {
@@ -742,7 +912,7 @@ const InstancesTable = () => {
             }
         },
         {
-            id: '9',
+            id: '10',
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
@@ -755,7 +925,7 @@ const InstancesTable = () => {
             )
         },
         {
-            id: '10',
+            id: '11',
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
@@ -768,7 +938,7 @@ const InstancesTable = () => {
             )
         },
         {
-            id: '11',
+            id: '12',
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
@@ -781,7 +951,7 @@ const InstancesTable = () => {
             )
         },
         {
-            id: '12',
+            id: '13',
             Header: '',
             accessor: '',
             isSortable: false,
@@ -876,12 +1046,49 @@ const InstancesTable = () => {
                 }
 
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
+                    if (localStorage.getItem('protection') === 'true') {
+                        menu.push({
+                            id: 'protect',
+                            displayName: 'Protect'
+                        });
+                    }
                     menu.push(
+                        {
+                            id: 'investigateErrors',
+                            displayName: 'Investigate errors'
+                        },
                         {
                             id: 'viewInstance',
                             displayName: 'Manage instance',
                             disabled: disableOption,
-                            infoText: disableMessage
+                            infoText: disableMessage,
+                            subMenu: [
+                                {
+                                    id: 'viewInstance',
+                                    displayName: 'Instance dashboard',
+                                    disabled: disableOption,
+                                    infoText: disableMessage
+                                },
+                                {
+                                    id: 'viewDatabases',
+                                    displayName: 'View databases',
+                                    disabled: disableOption,
+                                    infoText: disableMessage
+                                },
+
+                                {
+                                    id: 'createUserDb',
+                                    displayName: 'Create database',
+                                    disabled: disableOption || disableCreateDb,
+                                    infoText: disableMessage || disableCreateDbMsg
+                                },
+                                {
+                                    id: 'createSandbox',
+                                    displayName: 'Create sandbox',
+                                    disabled: disableOption,
+                                    infoText: disableMessage
+                                }
+                            ]
                         },
                         {
                             id: 'optimize',
@@ -893,25 +1100,7 @@ const InstancesTable = () => {
                         //     id: 'protect',
                         //     displayName: 'Protect'
                         // },
-                        {
-                            id: 'viewDatabases',
-                            displayName: 'View databases',
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
 
-                        {
-                            id: 'createUserDb',
-                            displayName: 'Create database',
-                            disabled: disableOption || disableCreateDb,
-                            infoText: disableMessage || disableCreateDbMsg
-                        },
-                        {
-                            id: 'createSandbox',
-                            displayName: 'Create sandbox',
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
                         {
                             id: 'unManage',
                             displayName: 'Deregister'
@@ -1024,9 +1213,9 @@ const InstancesTable = () => {
                                         setOpenedRow(null);
 
                                         // Protect POC code
-                                        // if (menuId === 'protect') {
-                                        //     handleProtection(rowData);
-                                        // }
+                                        if (menuId === 'protect') {
+                                            handleProtection(rowData);
+                                        }
 
                                         if (menuId === 'optimize') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
@@ -1043,6 +1232,22 @@ const InstancesTable = () => {
                                                 setSelectedWellArchitectTab(
                                                     WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
                                                 )
+                                            );
+                                            optimizeAction(rowData);
+                                        }
+
+                                        if (menuId === 'investigateErrors') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(
+                                                setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION)
+                                            );
+                                            dispatch(
+                                                setFSXId({
+                                                    fsxId: rowData?.fsxId,
+                                                    ec2InstanceId: rowData?.ec2InstanceId
+                                                })
                                             );
                                             optimizeAction(rowData);
                                         }

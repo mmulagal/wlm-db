@@ -68,6 +68,8 @@ model resource {
   region                    String? @db.VarChar(30)
   metadata                  Json?   @default("{}")
   configurations            Json?   @default("{}")
+  assessment_data           Json?   @default("{}")
+  assessment_results         Json?   @default("{}")
   database_instances        database_instances[]
   database_instance_config_data database_instance_config_data[]
 
@@ -138,6 +140,7 @@ model database_instances {
   fsx_svm_id                        Json     
   metadata                          Json?             @default("{}")
   configurations                    Json?             @default("{}")
+  assessment_results                Json?             @default("{}")
   
   database_instance_config_data                  database_instance_config_data[]
 

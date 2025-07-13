@@ -8,7 +8,7 @@ import {
 } from '../recommendation-operations';
 
 import getLogger from '../../utils/logger';
-import { LicenseAssessment, Metadata } from '../../utils/common-types';
+import { LicenseAssessment, ResourceAssessmentData } from '../../utils/common-types';
 import { ENT_ENGINE_EDITION, FINDING, GENERIC_ASSESSMENT_ERROR_MESSAGE, SQL_STD } from '../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
@@ -19,7 +19,7 @@ import {
 } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
-import { updateResourceMetaData } from '../database/database-operations';
+import { updateDatabaseHostAssessmentData } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -29,7 +29,7 @@ async function calculateLicenseDrift(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    metadata: Metadata
+    assessmentData: ResourceAssessmentData
 ) {
     logger.info('Calculating license drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
@@ -37,7 +37,7 @@ async function calculateLicenseDrift(
     let licenseAssessment;
 
     try {
-        const { assessment: { license, errors } = {} } = metadata as unknown as Metadata;
+        const { license, errors } = assessmentData;
 
         if (isEmpty(license)) {
             errorMessage = errors?.license
@@ -69,14 +69,12 @@ async function calculateLicenseDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating license drift. ${error.message}`;
         logger.error({ errorMessage, error });
-        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-        const assessmentErrors = { ...existingAssessmentData?.errors, license: errorMessage };
-        (metadata as unknown as Metadata).assessment = {
-            ...existingAssessmentData,
-            errors: assessmentErrors,
-            lastAssessedDate: new Date().getTime().toString()
+        const newAssessmentData = {
+            ...assessmentData,
+            errors: { ...assessmentData?.errors, license: errorMessage },
+            lastAssessedDate: Date.now().toString()
         };
-        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     }
     return { errorMessage };
 }

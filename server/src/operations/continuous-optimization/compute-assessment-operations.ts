@@ -14,11 +14,11 @@ import {
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../../utils/continous-optimization-consts';
-import { ComputeAssessment, Metadata } from '../../utils/common-types';
+import { ComputeAssessment, ResourceAssessmentData } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
-import { updateResourceMetaData } from '../database/database-operations';
+import { updateDatabaseHostAssessmentData } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -100,14 +100,14 @@ function calculateComputeDrift(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    metadata: Metadata
+    assessmentData: ResourceAssessmentData
 ) {
     logger.info('Calculating compute drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
 
     try {
-        const { assessment: { compute, errors } = {} } = metadata as unknown as Metadata;
+        const { compute, errors } = assessmentData;
 
         if (isEmpty(compute)) {
             errorMessage = errors?.compute
@@ -160,14 +160,12 @@ function calculateComputeDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating compute drift. ${error.message}`;
         logger.error({ errorMessage, error });
-        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-        const assessmentErrors = { ...existingAssessmentData?.errors, compute: errorMessage };
-        (metadata as unknown as Metadata).assessment = {
-            ...existingAssessmentData,
-            errors: assessmentErrors,
-            lastAssessedDate: new Date().getTime().toString()
+        const newAssessmentData = {
+            ...assessmentData,
+            errors: { ...assessmentData?.errors, compute: errorMessage },
+            lastAssessedDate: Date.now().toString()
         };
-        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     }
     return { errorMessage };
 }

@@ -1,6 +1,6 @@
 import randomize from 'randomatic';
 import { Volume } from '@aws-sdk/client-ec2';
-import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
+import { DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { compact, sample } from 'lodash-es';
 import {
@@ -15,7 +15,7 @@ import {
     DEMO_STANADLONE_SQL_SERVER_ID,
     STORAGE_PROTOCOLS
 } from '../utils/consts';
-import { checkAccount, createDeployment, createResource, upsertDatabaseInstance } from '../lib/database/db';
+import { checkAccount, createResource, upsertDatabaseInstance } from '../lib/database/db';
 import { Metadata, Sandbox, DatabaseInstanceMetadata, ResourceAssessmentData } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
@@ -144,7 +144,7 @@ async function createDeploymentMockDataInDB(
     storageProtocol?: string,
     resourceId?: string
 ) {
-    logger.info('create deployment, resource and job table mock data in database', {
+    logger.info('create resource and job table mock data in database', {
         accountId,
         stackId,
         stackName,
@@ -163,23 +163,6 @@ async function createDeploymentMockDataInDB(
     } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
         sqlDeploymentMode = 'Standalone';
     }
-    await createDeployment(accountId, {
-        deploymentId: stackId,
-        cloudProviderAccountId: cloudProviderId,
-        cloudProviderName: CloudProviders.AWS,
-        credentialsId,
-        deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
-        startTime: new Date().valueOf(),
-        region,
-        deploymentName: stackName,
-        deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        endTime: new Date().valueOf(),
-        data: {
-            databaseType: 'Microsoft SQL Server',
-            resourceName,
-            fileSystemType: STORAGE_TYPE.FSXN
-        }
-    });
 
     const instanceId = randomUUID();
 
@@ -195,11 +178,12 @@ async function createDeploymentMockDataInDB(
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         sandboxCreated: true,
         storageProtocol,
-        ...(createSandbox && prepareDemoSandboxMetadata(resourceName, instanceId)),
-        assessment: optimizedResourceName.includes(resourceName)
-            ? (mockResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData)
-            : (mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData)
+        ...(createSandbox && prepareDemoSandboxMetadata(resourceName, instanceId))
     };
+
+    const assessmentData = optimizedResourceName.includes(resourceName)
+        ? (mockResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData)
+        : (mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData);
 
     if (sqlDeploymentMode === 'FCI') {
         metadata.node2InstanceId = `i-${randomize('A0', 17)}`;
@@ -215,7 +199,8 @@ async function createDeploymentMockDataInDB(
         resourceType: RESOURCESTYPE.MSSQL,
         coRelationId: fsxId,
         region,
-        metadata
+        metadata,
+        assessmentData
     });
 
     const instanceRecord = {
@@ -680,7 +665,7 @@ async function createDeploymentMockDataInDBForPgSql(
     storageProtocol: string = STORAGE_PROTOCOLS.NFS,
     resourceId?: string
 ) {
-    logger.info('create deployment, resource and job table mock data in database', {
+    logger.info('create resource and job table mock data in database', {
         accountId,
         stackId,
         stackName,
@@ -701,23 +686,6 @@ async function createDeploymentMockDataInDBForPgSql(
     } else {
         sqlDeploymentMode = 'ha';
     }
-    await createDeployment(accountId, {
-        deploymentId: stackId,
-        cloudProviderAccountId: cloudProviderId,
-        cloudProviderName: CloudProviders.AWS,
-        credentialsId,
-        deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
-        startTime: new Date().valueOf(),
-        region,
-        deploymentName: stackName,
-        deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        endTime: new Date().valueOf(),
-        data: {
-            databaseType: DatabaseTypes.PG_SQL,
-            resourceName,
-            fileSystemType: STORAGE_TYPE.FSXN
-        }
-    });
 
     const instanceId = '7450008296037943418';
 
@@ -799,6 +767,7 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
+    const fsxVolumeIdUuidMap: Map<string, string> = new Map();
     let fsxVolIds = volumes.map(volume => volume.VolumeId) || [];
     if (volumeUuids.length > fsxVolIds.length) {
         // If the number of volumeUuids is more than the number of fsx volumes, then repeating the fsxVolIds
@@ -814,13 +783,15 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
             volumeIds.push(sample(fsxVolIds) || '');
             uuidVolumeIdMap[VolumeId] = sample(volumeUuids) || '';
         }
+        fsxVolumeIdUuidMap.set(UUID, sample(fsxVolIds) || '');
     });
 
     logger.debug('List volume ids in an fsx response', volumeIds);
 
     return {
         volumeIds: compact(volumeIds),
-        uuidVolumeIdMap
+        uuidVolumeIdMap,
+        fsxVolumeIdUuidMap
     };
 }
 

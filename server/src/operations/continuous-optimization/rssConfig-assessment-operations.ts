@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { Metadata, RssConfigAssesment } from '../../utils/common-types';
+import { Metadata, ResourceAssessmentData, RssConfigAssesment } from '../../utils/common-types';
 import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
@@ -16,7 +16,7 @@ import { GET_RSS_CONFIG_DETAILS } from '../workloads/mssql/continuous-optimizati
 
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
-import { updateResourceMetaData } from '../database/database-operations';
+import { updateDatabaseHostAssessmentData } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -25,14 +25,15 @@ async function calculateRssConfigDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    metadata: Metadata
+    metadata: Metadata,
+    assessmentData: ResourceAssessmentData
 ) {
     logger.info('Calculating RSS drift', { accountId, credentialsId, region, databaseHostId });
     let errorMessage = '';
     let rssConfigAssessment;
 
     try {
-        const { assessment: { rssConfig, errors } = {} } = metadata as unknown as Metadata;
+        const { rssConfig, errors } = assessmentData;
 
         if (isEmpty(rssConfig)) {
             errorMessage = errors?.rssConfig
@@ -82,14 +83,12 @@ async function calculateRssConfigDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating rss config drift. ${error.message}`;
         logger.error({ errorMessage, error });
-        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-        const assessmentErrors = { ...existingAssessmentData?.errors, rssConfig: errorMessage };
-        (metadata as unknown as Metadata).assessment = {
-            ...existingAssessmentData,
-            errors: assessmentErrors,
-            lastAssessedDate: new Date().getTime().toString()
+        const newAssessmentData = {
+            ...assessmentData,
+            errors: { ...assessmentData?.errors, rssConfig: errorMessage },
+            lastAssessedDate: Date.now().toString()
         };
-        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     }
     return { errorMessage };
 }

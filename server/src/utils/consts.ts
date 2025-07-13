@@ -1225,7 +1225,9 @@ const PGSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
 const ORACLE_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     0: 'databaseInstancetopologyData',
     1: 'performance',
-    2: 'protection'
+    2: 'protection',
+    3: 'databasesCount',
+    4: 'databases'
 };
 
 enum DATABASE_METRIC_TYPE {

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import styles from './ProtectionDialogs.module.scss';
 import { DsTypography } from '@tlveng/wlm-ds';
+import styles from './ProtectionDialogs.module.scss';
 import { ReactComponent as Complete } from '../../../../assets/complete-tick.svg';
 
 const StepTwoDialog = () => {
@@ -22,7 +22,7 @@ const StepTwoDialog = () => {
                         <DsTypography variant="Semibold_14">{t('databases.inventory.click-redirect')}</DsTypography>
                     </div>
                     <div className={styles.item}>
-                        <div className={styles.extraSpace}></div>
+                        <div className={styles.extraSpace} />
                         <DsTypography variant="Regular_14">{t('databases.inventory.point-1-text')}</DsTypography>
                     </div>
                 </div>
@@ -33,7 +33,7 @@ const StepTwoDialog = () => {
                         <DsTypography variant="Semibold_14">{t('databases.inventory.add-agent')}</DsTypography>
                     </div>
                     <div className={styles.item}>
-                        <div className={styles.extraSpace}></div>
+                        <div className={styles.extraSpace} />
                         <DsTypography variant="Semibold_14">{t('databases.inventory.assign-policy')}</DsTypography>
                     </div>
                 </div>

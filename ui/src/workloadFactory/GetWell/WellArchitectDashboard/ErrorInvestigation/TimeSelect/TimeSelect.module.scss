@@ -1,0 +1,26 @@
+.timeSelect {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 87.3%;
+    height: 30px;
+    justify-content: flex-start;
+
+    .selectField {
+        .multiSelect {
+            [class*='textFieldInput'] {
+                padding: 2px 12px !important;
+            }
+            [class*='dsTextFramePopover'] {
+                width: 300px !important;
+            }
+            [class*='inputWithActionsContainer'] {
+                height: 29px !important;
+            }
+            [class*='inputTextContainer'] {
+                height: 29px !important;
+            }
+        }
+    }
+}

@@ -10,6 +10,8 @@ import sandbox from './sandbox';
 import exploreSavings from './exploreSavings';
 import inventory from './inventory';
 import getwell from './getwell';
+import errorInvestigation from './errorInvestigation';
+import snapcenter from './snapcenter';
 
 const routes = {
     credentials,
@@ -23,6 +25,8 @@ const routes = {
     createUserDb,
     exploreSavings,
     inventory,
-    getwell
+    getwell,
+    errorInvestigation,
+    snapcenter
 };
 export default routes;

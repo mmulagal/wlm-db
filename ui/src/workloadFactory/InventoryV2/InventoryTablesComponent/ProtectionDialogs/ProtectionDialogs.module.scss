@@ -60,6 +60,31 @@
                 align-items: center;
                 gap: 8px;
             }
+
+            .status {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+
+                .statusIcon {
+                    width: 10px;
+                    height: 10px;
+                    align-self: center;
+                    &.circle {
+                        border-radius: 50%;
+                        // margin-top: 2px;
+                    }
+                    &.online {
+                        background-color: var(--green-60);
+                    }
+                    &.offline {
+                        background-color: var(--red-30);
+                    }
+                    &.unknown {
+                        background-color: var(--grey-25);
+                    }
+                }
+            }
         }
     }
     .topSection {
@@ -229,4 +254,13 @@
             }
         }
     }
+}
+
+.loadingDialog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 650px;
+    height: 350px;
 }

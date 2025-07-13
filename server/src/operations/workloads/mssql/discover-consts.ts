@@ -584,7 +584,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['availablePsModules'] = $availablePsModuleList
 
       if ($sqlService.State -eq "Running") {
-          $deploymentTypeCheckQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered, (SELECT CASE WHEN EXISTS (SELECT 1 FROM sys.dm_hadr_availability_replica_states ars WHERE ars.is_local = 1) THEN 'True' ELSE 'False' END) AS isReadReplicaCreated FOR JSON PATH
+          $deploymentTypeCheckQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered, (SELECT CASE WHEN EXISTS (SELECT 1 FROM sys.dm_hadr_availability_replica_states ars WHERE ars.is_local = 1) THEN 'True' ELSE 'False' END) AS isReadReplicaCreated FOR JSON PATH"
           $editionDBCountMachineInfoGuid = $null
           $existingPermissions = $null
           $sqlInstanceDriveLetterOrPathList = $null

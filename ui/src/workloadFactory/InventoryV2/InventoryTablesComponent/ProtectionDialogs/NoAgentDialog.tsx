@@ -1,10 +1,18 @@
 import { useTranslation } from 'react-i18next';
-import styles from './ProtectionDialogs.module.scss';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { Button } from '@netapp/design-system';
+import styles from './ProtectionDialogs.module.scss';
 
 const NoAgentDialog = () => {
     const { t } = useTranslation();
+
+    const learnMore = () => {
+        window.open(
+            'https://docs.netapp.com/us-en/bluexp-setup-admin/concept-connectors.html',
+            '_blank',
+            'noopener,noreferrer'
+        );
+    };
     return (
         <div className={styles.protectionDialogs}>
             <div className={styles.topSection}>
@@ -15,7 +23,9 @@ const NoAgentDialog = () => {
             <div className={styles.midSection}>
                 <DsTypography variant="Semibold_14">{t('databases.inventory.agent-req')}</DsTypography>
                 <DsTypography variant="Regular_14">{t('databases.inventory.agent-req-text')}</DsTypography>
-                <Button variant="link">Learn about BlueXP Agents</Button>
+                <Button variant="link" onClick={learnMore}>
+                    Learn about BlueXP Agents
+                </Button>
             </div>
 
             <div className={styles.bottomSection}>
@@ -26,7 +36,7 @@ const NoAgentDialog = () => {
                         <DsTypography variant="Semibold_14">{t('databases.inventory.click-redirect')}</DsTypography>
                     </div>
                     <div className={styles.item}>
-                        <div className={styles.extraSpace}></div>
+                        <div className={styles.extraSpace} />
                         <DsTypography variant="Regular_14">{t('databases.inventory.point-1-text')}</DsTypography>
                     </div>
                 </div>
@@ -37,7 +47,7 @@ const NoAgentDialog = () => {
                         <DsTypography variant="Semibold_14">{t('databases.inventory.add-agent')}</DsTypography>
                     </div>
                     <div className={styles.item}>
-                        <div className={styles.extraSpace}></div>
+                        <div className={styles.extraSpace} />
                         <DsTypography variant="Regular_14">{t('databases.inventory.point-2-text')}</DsTypography>
                     </div>
                 </div>
@@ -48,7 +58,7 @@ const NoAgentDialog = () => {
                         <DsTypography variant="Semibold_14">{t('databases.inventory.assign-policy')}</DsTypography>
                     </div>
                     <div className={styles.item}>
-                        <div className={styles.extraSpace}></div>
+                        <div className={styles.extraSpace} />
                         <DsTypography variant="Regular_14">{t('databases.inventory.point-3-text')}</DsTypography>
                     </div>
                 </div>

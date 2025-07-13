@@ -9,24 +9,7 @@ const AboutResponse = Type.Object({
     build: Type.Optional(Type.String())
 });
 
-const StatusParams = Type.Object({
-    accountId: Type.String({ minLength: 1 })
-});
-
-const StatusResponse = Type.Object({
-    isActive: Type.Boolean()
-});
-
 type AboutResponseType = Static<typeof AboutResponse>;
 type HealthResponseType = Static<typeof HealthResponse>;
-type StatusResponseType = Static<typeof StatusResponse>;
 
-export {
-    AboutResponseType,
-    HealthResponseType,
-    StatusResponseType,
-    AboutResponse,
-    HealthResponse,
-    StatusResponse,
-    StatusParams
-};
+export { AboutResponseType, HealthResponseType, AboutResponse, HealthResponse };

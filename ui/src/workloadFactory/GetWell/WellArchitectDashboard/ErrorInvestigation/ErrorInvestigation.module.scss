@@ -1,0 +1,133 @@
+.errorInvestigation {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .noErrorsDetected {
+        display: flex;
+        width: 87.3%;
+        height: 452px;
+        padding-top: 80px;
+        flex-direction: column;
+        align-items: center;
+        gap: 48px;
+        box-shadow: 2px 2px 6px 0px var(--border);
+        background-color: var(--content-background);
+        margin-bottom: 24px;
+
+        .noErrorBlock {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+
+            .noErrorHeader {
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+
+                svg {
+                    margin-top: 4px;
+                }
+            }
+
+            .noErrorText {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: center;
+            }
+        }
+    }
+
+    .countText {
+        margin-top: 38px;
+        display: flex;
+        justify-content: space-between;
+        width: 87.3%;
+        margin-bottom: 16px;
+    }
+
+    .countTextLoading {
+        margin-top: 38px;
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        width: 87.3%;
+        margin-bottom: 16px;
+    }
+
+    .loadingSection {
+        background-color: var(--content-background);
+        width: 87.3%;
+        height: 184px;
+        margin-bottom: 80px;
+        box-shadow: 2px 2px 6px 0px var(--border);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .contentSection {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 141px;
+            align-items: center;
+
+            .loadingView {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+        }
+
+        .noDataSection {
+            svg {
+                path {
+                    fill: #a7a7a7;
+                }
+            }
+        }
+    }
+
+    .sectionTwo {
+        display: flex;
+        gap: 24px;
+        width: 87.3%;
+
+        .errorCardSection {
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            width: 33%;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+            background-color: var(--border);
+        }
+        ::-webkit-scrollbar-thumb {
+            border-radius: 4px;
+            background-color: var(--border);
+            width: 4px;
+            -webkit-box-shadow: inset 0 0 6px var(--grey-25);
+            box-shadow: inset 0 0 6px var(--grey-25);
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: var(--main-background);
+        }
+        ::-webkit-scrollbar-corner {
+            background-color: var(--main-background);
+        }
+    }
+
+    .aiInvestigationSection {
+        background-color: var(--content-background);
+        width: 66.16%;
+        height: auto;
+        box-shadow: 2px 2px 6px 0px var(--border);
+        padding: 40px;
+    }
+}

@@ -1,6 +1,11 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
-import { LogsAnalyzerBody, LogsAnalyzerParams, RemediationRecommendationObject } from '../types/logs-analyzer.types';
+import {
+    LogsAnalyzerBody,
+    LogsAnalyzerParams,
+    RemediationRecommendationObject,
+    ReportIdentifier
+} from '../types/logs-analyzer.types';
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
@@ -22,7 +27,8 @@ const GetLogsAnalyzerSchema = {
     hide: process.env.NODE_ENV === 'production',
     params: LogsAnalyzerParams,
     querystring: Type.Object({
-        jobId: Type.Optional(Type.String())
+        jobId: Type.Optional(Type.String()),
+        reportId: Type.Optional(Type.String())
     }),
     summary: 'Get logs analysis for a specific database instance in a remote database host machine',
     response: {
@@ -35,4 +41,23 @@ const GetLogsAnalyzerSchema = {
     }
 };
 
-export { LogsAnalyzerSchema, GetLogsAnalyzerSchema };
+const ListLogsAnalyzerReportsSchema = {
+    tags: [RouteTags.LOGS_ANALYSIS],
+    description: 'List logs analysis reports for a specific database instance',
+    hide: process.env.NODE_ENV === 'production',
+    params: LogsAnalyzerParams,
+    querystring: Type.Object({
+        pageSize: Type.Optional(Type.Number())
+    }),
+    summary: 'List logs analysis for a specific database instance',
+    response: {
+        200: Type.Object({
+            reports: Type.Array(ReportIdentifier)
+        }),
+        404: Type.Object({
+            message: Type.String()
+        })
+    }
+};
+
+export { LogsAnalyzerSchema, GetLogsAnalyzerSchema, ListLogsAnalyzerReportsSchema };

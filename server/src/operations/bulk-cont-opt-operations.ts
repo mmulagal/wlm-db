@@ -37,7 +37,7 @@ import { handleOptimizeRssOptimization } from './continuous-optimization/rssConf
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { resetCache } from '../utils/cache';
 import { getServerNameWithHostname, isDemo } from '../utils/utils';
-import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { listInstanceConfigIncludingResourceAndInstance } from './database/instance-config-operations';
 import {
     CloneAssessment,
     CloneDetail,
@@ -573,15 +573,15 @@ async function fetchInstanceConfigurationAndVolumeMapping(
     volumeMapping?: MappedVolumeResponseForClone;
 }> {
     // Fetch configuration data for the databaseHostId and databaseInstanceId
-    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+    const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
         accountId,
         region,
         credentialsId,
-        databaseHostId,
-        instanceId,
-        AssessmentCategories.CLONE,
-        1
-    );
+        resourceId: databaseHostId,
+        databaseInstanceId: instanceId,
+        configDataType: AssessmentCategories.CLONE,
+        pageSize: 1
+    });
 
     const {
         config_data: configData,

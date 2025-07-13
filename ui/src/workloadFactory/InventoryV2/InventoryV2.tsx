@@ -118,6 +118,7 @@ const InventoryV2 = () => {
                             perRow?.databaseInstanceId,
                             optimizationStatusList
                         );
+                        const fileSystemName = perRow?.fileSystemName || GENERAL.NOT_AVAILABLE;
                         if (perRow?.statusColText === INVENTORY_STATUS.MANAGED) {
                             optimizationStatusLoading = allmssqlHostAssessmentLoading;
                         }
@@ -173,6 +174,7 @@ const InventoryV2 = () => {
                             regionName: perHost?.regionName,
                             resourceId: perHost?.resourceId,
                             ec2InstanceId: perHost?.ec2InstanceId,
+                            fileSystemName,
                             managementStatus
                         };
                         perInstanceData.push(perRowData);

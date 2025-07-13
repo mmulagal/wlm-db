@@ -123,7 +123,8 @@ export const FROM_DIALOG = {
     OPTIMIZE: 'optimize',
     FSXADMIN: 'fsxadmin',
     SQLSERVER: 'sqlserver',
-    SINGLE_AGENT: 'single_agent'
+    SINGLE_AGENT: 'single_agent',
+    LOADER: ''
 };
 
 export const DBType = {
@@ -621,6 +622,8 @@ export const MANAGE_POLLING_INTERVAL = 5000;
 
 export const DETECT_PAYLOAD_SIZE = 10;
 
+export const LOG_ANALYZER_POLLING_INTERVAL = 5000;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',
@@ -643,6 +646,11 @@ export const INVENTORY_STATUS = {
     RUNNING_LOWER: 'running',
     REGISTERED: 'Registered',
     NOT_REGISTERED: 'Not registered'
+};
+
+export const SNAPCENTER_STATUS = {
+    ACTIVE: 'active',
+    INACTIVE: 'inactive'
 };
 
 export const WELL_ARCHITECT_FINDINGS = {
@@ -756,7 +764,8 @@ export const WELL_ARCHITECTED_TABS = {
     OVERVIEW: 'Overview',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
     DATABASES: 'Databases',
-    SANDBOXES: 'Sandboxes'
+    SANDBOXES: 'Sandboxes',
+    ERROR_INVESTIGATION: 'Error investigation'
 };
 
 export const GETWELL_VALUES: any = {

@@ -418,6 +418,11 @@ export const formatDateWithTime = (date: string | number) => {
     return moment(new Date(parseInt(dateStr))).format('LL HH:mm');
 };
 
+export const formatTime = (date: string | number) => {
+    const dateStr = (date && date.toString()) || '';
+    return moment(new Date(parseInt(dateStr))).format('hh:mm A');
+};
+
 export const getTimeDifferenceInDays = (timeStamp1: number, timeStamp2: number) =>
     Math.floor((timeStamp1 - timeStamp2) / 1000 / 60 / 60 / 24);
 
@@ -2179,6 +2184,19 @@ export const makeRegionMapping = (data: any) => {
     return regionMapping;
 };
 
+export const isPartialData = (resourceDetails: any) => {
+    const rwMetrics = resourceDetails?.performance?.rwMetrics;
+    return [
+        rwMetrics?.iops?.read,
+        rwMetrics?.iops?.write,
+        rwMetrics?.latency?.read,
+        rwMetrics?.latency?.write,
+        rwMetrics?.throughput?.read,
+        rwMetrics?.throughput?.write,
+        resourceDetails?.resourceUtilization?.cpu
+    ].every(arr => (Array.isArray(arr) && arr.length === 0) || !Array.isArray(arr));
+};
+
 const roundedFormatter = Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 const twoDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const fourDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 });
@@ -2189,6 +2207,12 @@ export const twoFractionDigits = (value: number) => twoDecimalFormatter.format(v
 
 export const fourFractionDigits = (value: number) => fourDecimalFormatter.format(value);
 
+export const formatTimeAMPM = (time: string, showPeriod: boolean = true) => {
+    const [h, m] = time.split(':').map(Number);
+    const hour = h % 12 === 0 ? 12 : h % 12;
+    const ampm = h < 12 || h === 24 ? 'AM' : 'PM';
+    return showPeriod ? `${hour}:${m.toString().padStart(2, '0')} ${ampm}` : `${hour}:${m.toString().padStart(2, '0')}`;
+};
 export const blobToDataURL = (blob: Blob): Promise<string> =>
     new Promise((resolve, reject) => {
         try {

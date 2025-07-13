@@ -256,6 +256,12 @@
 
     .selectedTabSection {
         height: calc(100vh - 56px);
+
+        .noCredBanner {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
         // overflow-y: auto;
         .dashboardSection {
             background-color: var(--main-background);

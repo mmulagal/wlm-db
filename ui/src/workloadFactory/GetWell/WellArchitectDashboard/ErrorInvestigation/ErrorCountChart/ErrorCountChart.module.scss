@@ -1,0 +1,38 @@
+.errorCountChart {
+    width: 100%;
+    position: relative;
+    height: 40px;
+
+    .bar {
+        height: 16px;
+        opacity: 0.2;
+        background: var(--chart-6);
+        border-radius: 20px;
+    }
+
+    .markerWrapper {
+        position: absolute;
+        top: 0;
+        pointer-events: auto;
+    }
+
+    .marker {
+        width: 4px;
+        height: 16px;
+        background: var(--chart-6);
+        border-radius: 2px;
+        z-index: 2;
+        cursor: pointer;
+    }
+
+    .labels {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        width: 100%;
+    }
+
+    .label {
+        position: absolute;
+    }
+}

@@ -1,4 +1,13 @@
-import { ChangeEvent, SyntheticEvent, forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+    ChangeEvent,
+    SyntheticEvent,
+    forwardRef,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from 'react';
 import './dsSelect.scss';
 
 import { DropDownCustomeItem, DsExpandableComponent, SelectionType } from '@netapp/design-system/dist/v2/types/types';
@@ -320,12 +329,13 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
 
             const valueWithFormat = () => {
                 if (typeof formatLabel === 'function') {
-                    if (Array.isArray(inputText)) {
-                        return formatLabel(
-                            inputText.filter(item => item.id !== SELECT_ALL).map<string>(chip => chip.label)
-                        );
-                    }
-                    return formatLabel(inputText ? [inputText] : undefined);
+                    const labels = Array.isArray(inputText)
+                        ? inputText.filter(item => item.id !== SELECT_ALL).map(chip => chip.label)
+                        : inputText
+                        ? [inputText]
+                        : [];
+
+                    return formatLabel(labels);
                 }
 
                 switch (formatLabel) {
@@ -344,6 +354,62 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
                     }
                 }
             };
+
+            if (typeof formatLabel === 'function') {
+                const labelOutput = valueWithFormat();
+
+                if (React.isValidElement(labelOutput)) {
+                    return (
+                        <div onClick={handleClick} ref={inputRef} className="dsSelect-label-wrapper">
+                            <span className="dsTextFramePopover">
+                                <div
+                                    className="dsTextFramePopover"
+                                    style={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+                                >
+                                    <div className="textFieldHeader">
+                                        <div
+                                            tabIndex={1}
+                                            className="inputTextContainer"
+                                            style={{ paddingBottom: '1px', position: 'relative', outline: 'none' }}
+                                        >
+                                            <div className="inputContainer" style={{ position: 'relative' }}>
+                                                {labelOutput}
+                                                <div
+                                                    className="actionsContainer"
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '0',
+                                                        right: '0',
+                                                        height: '100%',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        justifyContent: 'center',
+                                                        paddingRight: '12px'
+                                                    }}
+                                                >
+                                                    <svg
+                                                        width="9"
+                                                        height="5"
+                                                        viewBox="0 0 9 5"
+                                                        fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="chevronIcon"
+                                                    >
+                                                        <path
+                                                            d="M4.5 5L0.602887 0.499999L8.39711 0.5L4.5 5Z"
+                                                            fill="var(--text-secondary)"
+                                                        />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </span>
+                        </div>
+                    );
+                }
+            }
 
             if (typeof formatLabel === 'object') {
                 return (

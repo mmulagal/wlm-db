@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography, Popover } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,8 @@ import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
+import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
+import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 
 const DatabasesTable = () => {
     const { selectedInventoryTab, selectedFilterValue, databaseTableRows, tableManageColumnState } = useAppSelector(
@@ -223,9 +225,53 @@ const DatabasesTable = () => {
             }
         },
         {
+            id: '6',
+            Header: 'FSxN Name',
+            accessor: 'instanceRow.fileSystemName',
+            isSortable: false,
+            filterOptions: getFilterOptions(databaseTableRows, 'instanceRow.fileSystemName'),
+            width: '213px',
+            renderCell: (cellData: any, rowData: any) => (
+                <>
+                    {cellData && rowData?.instanceRow?.fsxId ? (
+                        <div className={styles.fsxNameContainer}>
+                            <DsTooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
+                                <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                    <DsTypography variant="Regular_13">{rowData?.instanceRow?.fsxId}</DsTypography>
+                                    <Popover
+                                        popoverClass={styles['copy-popover']}
+                                        children="Copied"
+                                        container={
+                                            <CopyToClipboardCommon
+                                                value={rowData?.instanceRow?.fsxId}
+                                                iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                            />
+                                        }
+                                    />
+                                </div>
+                            </DsTooltipInfo>
+                            <div className={styles.fsxName}>
+                                <DsTypography
+                                    className={styles.fsxNameText}
+                                    variant="Regular_13"
+                                    title={cellData || GENERAL.NOT_AVAILABLE}
+                                >
+                                    {cellData || GENERAL.NOT_AVAILABLE}
+                                </DsTypography>
+                            </div>
+                        </div>
+                    ) : (
+                        <DsTypography variant="Regular_13" className={styles.colText}>
+                            {GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    )}
+                </>
+            )
+        },
+        {
             Header: 'Database Type',
             accessor: 'type',
-            id: '6',
+            id: '7',
             width: '200px',
             filterOptions: getFilterOptions(databaseTableRows, 'type'),
             renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
@@ -234,7 +280,7 @@ const DatabasesTable = () => {
             Header: 'Database size',
             accessor: 'sizeRange',
             csvAccessor: 'Database size',
-            id: '7',
+            id: '8',
             width: '200px',
             filterOptions: [
                 { label: '0 - 100 MiB', value: '0 - 100 MiB' },
@@ -248,7 +294,7 @@ const DatabasesTable = () => {
         {
             Header: 'AWS credentials',
             accessor: 'credentialName',
-            id: '8',
+            id: '9',
             width: '184px',
             isSortable: true,
             filterOptions: getFilterOptions(databaseTableRows, 'credentialName'),
@@ -257,7 +303,7 @@ const DatabasesTable = () => {
         {
             Header: 'AWS account',
             accessor: 'accountId',
-            id: '9',
+            id: '10',
             width: '184px',
             filterOptions: getFilterOptions(databaseTableRows, 'accountId'),
             isSortable: true,
@@ -266,7 +312,7 @@ const DatabasesTable = () => {
         {
             Header: 'Region',
             accessor: 'regionName',
-            id: '10',
+            id: '11',
             width: '184px',
             isSortable: true,
             filterOptions: getFilterOptions(databaseTableRows, 'regionName'),

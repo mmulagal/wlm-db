@@ -1,9 +1,9 @@
 import { STORAGE_TYPE } from '@prisma/client';
 import { createResource, deleteResource } from '../../src/lib/database/db';
-import getSystemStatus from '../../src/operations/system-operations';
+import { getSystemStatus } from '../../src/operations/wf-internal-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID } from '../utils/consts';
 
-describe('System Operations', () => {
+describe('WF Internal Operations', () => {
     it.skip('Get system status- no resource', async () => {
         // Its not mocked as we are making actual api call
         const resp = await getSystemStatus('empty-test');

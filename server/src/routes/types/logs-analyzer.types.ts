@@ -22,20 +22,49 @@ type InferenceConfigType = Static<typeof InferenceConfig>;
 
 const RemediationRecommendationObject = Type.Object({
     error: Type.String(),
+    context: Type.Optional(Type.String()),
     cause: Type.String(),
     count: Type.Number(),
     severity: Type.Optional(Type.String()),
     remediation: Type.Array(Type.String()),
     firstOccurrence: Type.Optional(Type.Number()),
     lastOccurrence: Type.Optional(Type.Number()),
-    errorCode: Type.Optional(Type.String())
+    errorCode: Type.Optional(Type.String()),
+    uniqueErrorKey: Type.Optional(Type.String()),
+    sql: Type.Optional(Type.Array(Type.String())),
+    additionalInfo: Type.Optional(
+        Type.Array(
+            Type.Object({
+                query: Type.Optional(Type.String()),
+                result: Type.Optional(Type.String()),
+                error: Type.Optional(Type.String())
+            })
+        )
+    ),
+    hourlyErrorCounts: Type.Optional(
+        Type.Array(
+            Type.Object({
+                hour: Type.Number(),
+                count: Type.Number()
+            })
+        )
+    )
 });
+type RemediationRecommendationObjectType = Static<typeof RemediationRecommendationObject>;
+
 type LogsAnalyzerBody = Static<typeof LogsAnalyzerBody>;
+
+const ReportIdentifier = Type.Object({
+    id: Type.String(),
+    creationTime: Type.Number()
+});
 
 export {
     LogsAnalyzerParams,
     LogsAnalyzerParamsType,
     LogsAnalyzerBody,
     InferenceConfigType,
-    RemediationRecommendationObject
+    RemediationRecommendationObject,
+    ReportIdentifier,
+    RemediationRecommendationObjectType
 };

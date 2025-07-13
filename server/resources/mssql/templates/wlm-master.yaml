@@ -48,6 +48,7 @@ Metadata:
           - DNSIpAddresses
           - DomainMemberSGID
           - PreferredDomainController
+          - OUPath
       - Label:
           default: Amazon FSx for ONTAP configuration
         Parameters: 
@@ -200,7 +201,8 @@ Metadata:
         default: Does AWS EC2 endpoint exist in the VPC?
       PreferredDomainController:
         default: (optional) Preferred domain controller to use for AD join
-
+      OUPath:
+        default: (optional) Preferred organizational unit in the AD to join.
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
@@ -353,6 +355,8 @@ Parameters:
   {{{PrivateSubnet2Cidrblock}}}
 
   {{{PreferredDomainController}}}
+
+  {{{OUPath}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -369,6 +373,7 @@ Conditions:
   IsFailoverCluster: !Not [Condition: IsStandalone]
   ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
   HasPreferredDomainController: !Not [!Equals [!Ref PreferredDomainController, ""]]
+  HasOUPath: !Not [!Equals [!Ref OUPath, ""]]
 Resources:
   CredentialsSsmParameter:
     Type: AWS::SSM::Parameter
@@ -662,7 +667,7 @@ Resources:
           Fn::If:
             - HasPreferredDomainController
             - Ref: PreferredDomainController
-            - !Ref AWS::NoValue
+            - !Ref AWS::NoValue          
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -960,6 +965,11 @@ Resources:
             - HasPreferredDomainController
             - Ref: PreferredDomainController
             - !Ref AWS::NoValue
+        OUPath: 
+          Fn::If:
+            - HasOUPath
+            - Ref: OUPath
+            - !Ref AWS::NoValue            
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -1061,6 +1071,11 @@ Resources:
             - HasPreferredDomainController
             - Ref: PreferredDomainController
             - !Ref AWS::NoValue
+        OUPath: 
+          Fn::If:
+            - HasOUPath
+            - Ref: OUPath
+            - !Ref AWS::NoValue            
       NotificationARNs:
         Fn::If:
         - IncludeNotification

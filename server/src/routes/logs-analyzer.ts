@@ -1,8 +1,16 @@
 import { FastifyInstance } from 'fastify/types/instance';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { GetLogsAnalyzerSchema, LogsAnalyzerSchema } from './schemas/logs-analyzer-schema';
+import {
+    GetLogsAnalyzerSchema,
+    ListLogsAnalyzerReportsSchema,
+    LogsAnalyzerSchema
+} from './schemas/logs-analyzer-schema';
 import castRequest from './utils';
-import { getLogsAnalysisReport, triggerLogsAnalysis } from '../operations/logs-analyzer/logs-analyzer-operations';
+import {
+    getLogsAnalysisReport,
+    listLogsAnalysisReportsIdentifiers,
+    triggerLogsAnalysis
+} from '../operations/logs-analyzer/logs-analyzer-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -39,7 +47,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
-                query: { jobId }
+                query: { jobId, reportId }
             } = castRequest(request);
 
             const response = await getLogsAnalysisReport(
@@ -48,7 +56,30 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
                 region,
                 databaseHostId,
                 databaseInstanceId,
-                jobId
+                jobId,
+                reportId
+            );
+
+            return reply.send(response);
+        }
+    );
+
+    server.get(
+        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/reports`,
+        { schema: ListLogsAnalyzerReportsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                query: { pageSize }
+            } = castRequest(request);
+
+            const response = await listLogsAnalysisReportsIdentifiers(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                pageSize
             );
 
             return reply.send(response);

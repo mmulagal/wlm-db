@@ -9,7 +9,7 @@ import {
     ListTagsForResourceCommandInput,
     Tag
 } from '@aws-sdk/client-fsx';
-import { attempt, compact, isEmpty } from 'lodash-es';
+import { attempt, compact, isEmpty, uniq } from 'lodash-es';
 import ms from 'ms';
 import throat from 'throat';
 import {
@@ -293,7 +293,8 @@ async function getFsxnVolIdsFromOntapVolIds(
     region: string,
     fsxId: string,
     volumeUuids: string[],
-    accountId?: string
+    accountId?: string,
+    instanceOntapDetails?: Record<string, object>
 ) {
     logger.info('Get the Fsxn volume ids from the ontap volume ids', {
         credentialsId,
@@ -303,12 +304,25 @@ async function getFsxnVolIdsFromOntapVolIds(
         accountId
     });
 
-    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, [fsxId], accountId, {
-        useCache: true
-    });
+    let fileSystems = [fsxId];
+    if (instanceOntapDetails) {
+        fileSystems = compact([
+            ...fileSystems,
+            ...Object.values(instanceOntapDetails).map(value => (value as { fsxId: string })?.fsxId)
+        ]);
+    }
+
+    fileSystems = uniq(fileSystems);
+    const fileSystemChunks = divideArrayIntoChunks(fileSystems, 20);
+
+    const fsxVolumeIdRecords = await Promise.all(
+        fileSystemChunks.map(chunk => getFsxVolumeDetails(credentialsId, region, chunk, [], accountId))
+    );
+    const volumes = fsxVolumeIdRecords.flat();
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
+    const fsxVolumeIdUuidMap: Map<string, string> = new Map();
     if (isDemo()) {
         return demoGetFsxnVolIdsFromOntapVolIds(credentialsId, region, fsxId, volumeUuids);
     }
@@ -318,13 +332,15 @@ async function getFsxnVolIdsFromOntapVolIds(
             volumeIds.push(VolumeId);
             uuidVolumeIdMap[VolumeId] = UUID;
         }
+        fsxVolumeIdUuidMap.set(UUID, VolumeId);
     });
 
     logger.debug('List volume ids in an fsx response', volumeIds);
 
     return {
         volumeIds: compact(volumeIds),
-        uuidVolumeIdMap
+        uuidVolumeIdMap,
+        fsxVolumeIdUuidMap
     };
 }
 
@@ -559,7 +575,7 @@ async function getMappedOntapVolumes(
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
-                const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
+                const { volumeDBMap, volumes, luns } = parsedResponse?.[iName] ?? {};
                 const normalizedVolumeDBMap = Array.isArray(volumeDBMap)
                     ? volumeDBMap
                     : volumeDBMap
@@ -570,15 +586,32 @@ async function getMappedOntapVolumes(
                     instancesResponse[iName] = {
                         volumeRecords: volumes.records,
                         volumeDBMap: normalizedVolumeDBMap,
-                        lunNames
+                        lunRecords: luns
                     };
                 } else {
-                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunNames: [] };
+                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunRecords: [] };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);
             }
         });
+
+        const { fsxVolumeIdUuidMap } = await getFsxnVolIdsFromOntapVolIds(
+            credentialsId,
+            region,
+            fileSystemId,
+            [],
+            accountId,
+            instanceOntapDetails
+        );
+
+        if (!isEmpty(fsxVolumeIdUuidMap)) {
+            Object.values(instancesResponse).forEach(({ volumeRecords }: { volumeRecords: VolumeRecord[] }) => {
+                volumeRecords.forEach(volumeRecord => {
+                    volumeRecord.fsxVolumeId = fsxVolumeIdUuidMap.get(volumeRecord?.uuid);
+                });
+            });
+        }
 
         return instancesResponse;
     } catch (err) {
@@ -751,15 +784,21 @@ async function getStorageDataFromOntap(
     }
 }
 
-async function getFsxVolumeDetails(credentialsId: string, region: string, fsxId: string, fsxVolumeIds: string[]) {
-    logger.info('Get FSx volume details', { credentialsId, region, fsxId, fsxVolumeIds });
+async function getFsxVolumeDetails(
+    credentialsId: string,
+    region: string,
+    fsxId: string | string[],
+    fsxVolumeIds: string[],
+    accountId?: string
+) {
+    logger.info('Get FSx volume details', { credentialsId, region, fsxId, fsxVolumeIds, accountId });
 
     const params = {
-        fileSystemIds: [fsxId],
+        fileSystemIds: Array.isArray(fsxId) ? fsxId : [fsxId],
         volumeIds: fsxVolumeIds
     };
 
-    const { Volumes: fsxVolumes } = await describeFSxVolumes(credentialsId, region, { ...params }, undefined, {
+    const { Volumes: fsxVolumes } = await describeFSxVolumes(credentialsId, region, { ...params }, accountId, {
         useCache: true
     });
     if (!fsxVolumes) {

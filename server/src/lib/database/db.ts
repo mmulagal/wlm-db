@@ -361,7 +361,8 @@ async function createResource(accountId: string, params: Resource) {
         cloudProviderAccountId,
         cloudProviderName,
         region,
-        metadata
+        metadata,
+        assessmentData
     } = params;
 
     accountId = checkAccount(accountId);
@@ -380,7 +381,10 @@ async function createResource(accountId: string, params: Resource) {
             ...(cloudProviderAccountId && { cloud_provider_account_id: cloudProviderAccountId }),
             ...(cloudProviderName && { cloud_provider_name: cloudProviderName }),
             region,
-            ...(metadata && { metadata })
+            ...(metadata && { metadata }),
+            ...(assessmentData && {
+                assessment_data: assessmentData
+            })
         }
     });
 }
@@ -530,7 +534,9 @@ async function updateResource({
     region,
     resourceId,
     metaData,
-    updatedConfigs
+    updatedConfigs,
+    updatedAssessmentData,
+    updatedAssessmentResults
 }: {
     accountId: string;
     credentialsId?: string;
@@ -538,6 +544,8 @@ async function updateResource({
     resourceId?: string;
     metaData?: any;
     updatedConfigs?: any;
+    updatedAssessmentData?: any;
+    updatedAssessmentResults?: any;
 }) {
     logger.info('Updating resource metadata', { accountId, resourceId, credentialsId });
 
@@ -552,7 +560,9 @@ async function updateResource({
         },
         data: {
             ...(!isEmpty(metaData) && { metadata: metaData }),
-            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs }),
+            ...(!isEmpty(updatedAssessmentData) && { assessment_data: updatedAssessmentData }),
+            ...(!isEmpty(updatedAssessmentResults) && { assessment_results: updatedAssessmentResults })
         }
     });
 }
@@ -564,7 +574,8 @@ async function updateDatabaseInstance({
     databaseHostId,
     instanceId,
     metaData,
-    updatedConfigs
+    updatedConfigs,
+    assessmentResults
 }: {
     accountId: string;
     credentialsId?: string;
@@ -573,6 +584,7 @@ async function updateDatabaseInstance({
     instanceId: string;
     metaData?: any;
     updatedConfigs?: any;
+    assessmentResults?: any;
 }) {
     logger.info('Updating instance metadata', { accountId, instanceId });
 
@@ -588,7 +600,8 @@ async function updateDatabaseInstance({
         },
         data: {
             ...(!isEmpty(metaData) && { metadata: metaData }),
-            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs }),
+            ...(!isEmpty(assessmentResults) && { assessment_results: assessmentResults })
         }
     });
 }

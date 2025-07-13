@@ -74,6 +74,21 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const { accountId } = auth;
     const isDevMode = import.meta.env.VITE_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
+
+    // Specifically case for bluexp external api calls
+    if (
+        api.endpoint === 'getConnectors' ||
+        api.endpoint === 'getFsxDetails' ||
+        api.endpoint === 'discoverExistingFsxN' ||
+        api.endpoint === 'getWorkSpaceID' ||
+        api.endpoint === 'getRBACPrivileges' ||
+        api.endpoint === 'listExistingHosts'
+    ) {
+        if (api.endpoint === 'discoverExistingFsxN') {
+            return isDevMode ? import.meta.env.VITE_APP_CM_URL : import.meta.env.VITE_APP_CM_URL;
+        }
+        return isDevMode ? import.meta.env.VITE_APP_BXP_URL : import.meta.env.VITE_APP_BXP_URL;
+    }
     return `${apiHost}/accounts/${accountId}/wlmdb`;
 };
 
@@ -541,6 +556,46 @@ export const createUserDbApi = createApi({
         getCollationListV2: builder.query({
             query: ({ credentialId, region, id, instanceId }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/collation`
+            })
+        })
+    })
+});
+
+export const snapcenterAPI = createApi({
+    reducerPath: 'snapcenterApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => ({
+        getConnectors: builder.mutation({
+            query: ({ accountID }) => ({
+                url: `agents-mgmt/list-connectors/${accountID}`
+            })
+        }),
+        getFsxDetails: builder.mutation({
+            query: ({ accountID }) => ({
+                url: `fsx-ontap/working-environments/${accountID}?partial=true&capacity-details=false&object-store-details=false`
+            })
+        }),
+        getWorkSpaceID: builder.mutation({
+            query: ({ accountID }) => ({
+                url: `v1/management/organizations/${accountID}/resources`
+            })
+        }),
+        discoverExistingFsxN: builder.mutation({
+            query: ({ accountID, workSpaceID, credentialID, regionID, payload }) => ({
+                url: `accounts/${accountID}/fsx/v2/credentials/${credentialID}/regions/${regionID}/bluexp/register-file-systems?workspaceId=${workSpaceID}`,
+                method: 'POST',
+                body: payload
+            })
+        }),
+        getRBACPrivileges: builder.mutation({
+            query: ({ accountID }) => ({
+                url: `v1/management/organizations/${accountID}/users`
+            })
+        }),
+        listExistingHosts: builder.mutation({
+            query: ({ accountID }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts?limit=50&offset=0&order_by=name+asc&deploymentModel=`
             })
         })
     })
@@ -1123,6 +1178,33 @@ export const getWellApi = createApi({
     })
 });
 
+export const errorInvestigationApi = createApi({
+    reducerPath: 'errorInvestigationApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => ({
+        getErrorInvestigationData: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId, instanceId, id }) => {
+                if (id) {
+                    return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis?id=${id}`;
+                }
+                return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`;
+            }
+        }),
+        getInvestigationDates: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis/reports`
+            })
+        }),
+        scanErrorInvestigation: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`,
+                method: 'POST'
+            })
+        })
+    })
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -1212,6 +1294,15 @@ export const {
 } = inventoryApi;
 
 export const {
+    useGetConnectorsMutation,
+    useGetFsxDetailsMutation,
+    useDiscoverExistingFsxNMutation,
+    useGetWorkSpaceIDMutation,
+    useGetRBACPrivilegesMutation,
+    useListExistingHostsMutation
+} = snapcenterAPI;
+
+export const {
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetPgsqlDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
@@ -1275,3 +1366,9 @@ export const {
     useOptimizeCloneCleanupMutation,
     useDismissMssqlAssessmentMutation
 } = getWellApi;
+
+export const {
+    useGetErrorInvestigationDataMutation,
+    useGetInvestigationDatesMutation,
+    useScanErrorInvestigationMutation
+} = errorInvestigationApi;

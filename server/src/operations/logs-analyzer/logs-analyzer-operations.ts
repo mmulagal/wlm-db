@@ -1,12 +1,18 @@
 import { Type, Static } from '@fastify/type-provider-typebox';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
-import { DATABASE_TYPE, JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
+import {
+    DATABASE_TYPE,
+    JOBSTATUS,
+    JOBTYPE,
+    logs_analysis_reports as LogsAnalysisReports,
+    STORAGE_TYPE
+} from '@prisma/client';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
 import { AuditStatus, HttpErrorCodes } from '../../utils/consts';
 
-import { getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
+import { generateHash, getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
 import {
     AVG_TOKEN_COUNT_PER_ERROR,
     BEDROCK_PRICE,
@@ -15,7 +21,8 @@ import {
     LOGS_ANALYZER_PACKAGE_NAME,
     LOGS_ANALYZER_PACKAGE_VERSION,
     LOGS_COUNT_TO_CONSIDER,
-    MODEL_AVAILABILITY_STATUS
+    MODEL_AVAILABILITY_STATUS,
+    MSSQL_ERROR_PATTERN
 } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { listDatabaseInstances } from '../../lib/database/db';
 import { DatabaseInstance, DatabaseInstancesIncludingResource } from '../../utils/common-types';
@@ -27,7 +34,11 @@ import { getModelAvailability } from '../../lib/aws/bedrock';
 import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
 import { parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { InferenceConfigType, RemediationRecommendationObject } from '../../routes/types/logs-analyzer.types';
+import {
+    InferenceConfigType,
+    RemediationRecommendationObject,
+    RemediationRecommendationObjectType
+} from '../../routes/types/logs-analyzer.types';
 import getInferenceProfileFromModelId from '../aws/bedrock-operations';
 import {
     getLinuxBedrockAvailabilityCheckScript,
@@ -424,7 +435,8 @@ async function getLogsAnalysisReport(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    jobId?: string
+    jobId?: string,
+    reportId?: string
 ) {
     logger.info('Getting logs analysis report:', {
         accountId,
@@ -432,20 +444,160 @@ async function getLogsAnalysisReport(
         region,
         databaseHostId,
         databaseInstanceId,
-        jobId
+        jobId,
+        reportId
     });
 
-    const response = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId);
+    const reports = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId, reportId);
 
-    if (response && response.length > 0) {
-        const [{ logs_analysis_data: logsAnalysisData } = {}] = response;
-        const [{ data: { remediationRecommendation = [] } = {} }] =
-            (logsAnalysisData as LogsAnalysisReportObjectType[]) || [];
-        return { remediationRecommendation };
+    const aggregatedReport = aggregateErrorCountAcrossReports(reports, accountId, jobId);
+
+    if (aggregatedReport && aggregatedReport.length > 0) {
+        return { remediationRecommendation: aggregatedReport };
     }
     const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
     logger.error(errorMessage);
     throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+}
+
+async function listLogsAnalysisReportsIdentifiers(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    pageSize: number = 100
+) {
+    logger.info('Listing logs analysis report identifiers:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        pageSize
+    });
+
+    const response = await listLogsAnalysisReports(
+        accountId,
+        databaseHostId,
+        databaseInstanceId,
+        undefined,
+        undefined,
+        'creation_time',
+        'desc',
+        pageSize,
+        undefined,
+        {
+            id: true,
+            creation_time: true
+        }
+    );
+
+    if (response && response.length > 0) {
+        const reports = response.map(({ id, creation_time: creationTime }) => ({
+            id,
+            creationTime: creationTime.getTime()
+        }));
+
+        return {
+            reports
+        };
+    }
+
+    const errorMessage = `No logs analysis reports found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
+    logger.error(errorMessage);
+    throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+}
+
+function aggregateErrorCountAcrossReports(reports: LogsAnalysisReports[], accountId: string, jobId?: string) {
+    // this function aggregates only the error count across all logs analysis reports/ token usage is not aggregated, it is not needed as of the initial implementation
+    logger.info('Aggregating data across logs analysis reports:', { accountId, jobId, reportsCount: reports.length });
+
+    const aggregatedErrorMap = new Map<string, any>();
+
+    const logsAnalysisReports = reports.flatMap(
+        report => (report?.logs_analysis_data as LogsAnalysisReportObjectType[]) || []
+    );
+
+    const allRecommendations = logsAnalysisReports.flatMap(analysisResult => {
+        if (analysisResult?.status === 'success' && analysisResult?.data) {
+            return (
+                analysisResult.data.remediationRecommendation?.map((item: RemediationRecommendationObjectType) => ({
+                    ...item,
+                    additionalInfo: Array.isArray(item.additionalInfo)
+                        ? item.additionalInfo.map(({ query, result, error }) => ({
+                              query,
+                              result: typeof result === 'object' ? JSON.stringify(result) : result,
+                              error
+                          }))
+                        : []
+                })) || []
+            );
+        }
+        logger.warn(`Skipping analysis result with status: ${analysisResult?.status}`, {
+            message: analysisResult?.message,
+            accountId,
+            jobId
+        });
+        return [];
+    });
+
+    for (const item of allRecommendations) {
+        const messageKey = getOrGenerateMessageKey(item);
+
+        if (messageKey == null) {
+            logger.warn('Skipping item due to null or undefined messageKey', { item });
+            return;
+        }
+
+        const existingItem = aggregatedErrorMap.get(messageKey);
+        if (!existingItem) {
+            aggregatedErrorMap.set(messageKey, {
+                ...item,
+                count: item.count
+            });
+        } else {
+            existingItem.count += item.count;
+            if (item.lastOccurrence && item.lastOccurrence > existingItem.lastOccurrence) {
+                existingItem.lastOccurrence = item.lastOccurrence;
+            }
+            if (item.firstOccurrence && item.firstOccurrence < existingItem.firstOccurrence) {
+                existingItem.firstOccurrence = item.firstOccurrence;
+            }
+            if (item.hourlyErrorCounts) {
+                const hourlyMap = new Map<number, number>();
+
+                (existingItem.hourlyErrorCounts || []).forEach(({ hour, count }: { hour: number; count: number }) => {
+                    hourlyMap.set(hour, count);
+                });
+
+                item.hourlyErrorCounts.forEach(({ hour, count }) => {
+                    const existingCount = hourlyMap.get(hour) || 0;
+                    hourlyMap.set(hour, existingCount + count);
+                });
+
+                existingItem.hourlyErrorCounts = Array.from(hourlyMap.entries())
+                    .map(([hour, count]) => ({ hour, count }))
+                    .sort((a, b) => a.hour - b.hour);
+            }
+        }
+    }
+
+    return Array.from(aggregatedErrorMap.values());
+}
+
+function getOrGenerateMessageKey(item: RemediationRecommendationObjectType): string | undefined {
+    // Return existing key if available
+    if (item.uniqueErrorKey) {
+        return item.uniqueErrorKey;
+    }
+
+    // Generate key from error pattern
+    const match = MSSQL_ERROR_PATTERN.exec(item.error);
+    if (match?.groups?.errorCode || match?.groups?.message) {
+        const keySource = (match.groups.errorCode || match.groups.message)?.replaceAll(/[^a-zA-Z0-9]/g, '_');
+        return generateHash(keySource).toLowerCase();
+    }
 }
 
 async function calculateLogsAnalysisPrice(region: string) {
@@ -475,4 +627,10 @@ async function calculateLogsAnalysisPrice(region: string) {
         costPerError
     };
 }
-export { triggerLogsAnalysis, handleLogsAnalysis, getLogsAnalysisReport, calculateLogsAnalysisPrice };
+export {
+    triggerLogsAnalysis,
+    handleLogsAnalysis,
+    getLogsAnalysisReport,
+    listLogsAnalysisReportsIdentifiers,
+    calculateLogsAnalysisPrice
+};

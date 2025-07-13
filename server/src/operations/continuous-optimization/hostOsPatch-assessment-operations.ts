@@ -13,14 +13,14 @@ import {
     ASSESSMENT_RESOURCE_TYPE,
     TEST_CONNECTION_COMMAND
 } from '../../utils/continous-optimization-consts';
-import { HostOsPatchAssessmentObject, Metadata } from '../../utils/common-types';
+import { HostOsPatchAssessmentObject, Metadata, ResourceAssessmentData } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
 import { callSsmExecution } from '../aws/ssm-operations';
-import { updateResourceMetaData } from '../database/database-operations';
+import { updateDatabaseHostAssessmentData } from '../database/database-operations';
 import { describeInstance } from '../../lib/aws/ec2';
 import { getResourceNameFromTags } from '../../utils/utils';
 
@@ -76,14 +76,13 @@ async function calculateHostOsPatchDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    metadata: Metadata
+    assessmentData: ResourceAssessmentData
 ) {
     logger.info('Calculating Host OS patch drift', { accountId, credentialsId, region, databaseHostId });
     let errorMessage = '';
 
-    const metadataObject = metadata as unknown as Metadata;
     try {
-        const { assessment: { hostOsPatch, errors } = {} } = metadataObject;
+        const { hostOsPatch, errors } = assessmentData;
         if (isEmpty(hostOsPatch)) {
             errorMessage = errors?.hostOsPatch
                 ? errors?.hostOsPatch
@@ -121,14 +120,12 @@ async function calculateHostOsPatchDrift(
     } catch (error) {
         errorMessage = `Error while calculating host os patch drift. ${error}`;
         logger.error({ errorMessage });
-        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-        const assessmentErrors = { ...existingAssessmentData?.errors, hostOsPatch: errorMessage };
-        (metadata as unknown as Metadata).assessment = {
-            ...existingAssessmentData,
-            errors: assessmentErrors,
-            lastAssessedDate: new Date().getTime().toString()
-        };
-        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        const { errors = {} } = assessmentData as ResourceAssessmentData;
+        await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, {
+            ...assessmentData,
+            errors: { ...errors, hostOsPatch: errorMessage },
+            lastAssessedDate: Date.now().toString()
+        });
     }
     return { errorMessage };
 }
@@ -336,16 +333,17 @@ async function updatePatchBaselineStatusForHost(
     const resources = (await listResources(accountId, databaseHostId)) || [];
 
     if (!isEmpty(resources) && !isEmpty(hostOsPatchAssessment)) {
-        resources.forEach(async ({ credentials_id: credentialsId, metadata }) => {
-            const metaObj = metadata as unknown as Metadata;
-            const existingAssessmentData = metaObj.assessment;
-            metaObj.assessment = {
-                ...existingAssessmentData,
-                hostOsPatch: hostOsPatchAssessment,
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metaObj);
-        });
+        await Promise.all(
+            resources.map(async ({ credentials_id: credentialsId, assessment_data: assessmentData }) => {
+                const existingAssessmentData = assessmentData as ResourceAssessmentData;
+                const newAssessmentData = {
+                    ...existingAssessmentData,
+                    hostOsPatch: hostOsPatchAssessment,
+                    lastAssessedDate: new Date().getTime().toString()
+                };
+                await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
+            })
+        );
     }
 }
 

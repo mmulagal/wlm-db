@@ -27,6 +27,7 @@ import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND } from
 import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { ListDatabaseInstancesRecord } from '../../lib/database/db-types';
+import { getNextToken } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -282,10 +283,7 @@ async function getResources(
         return {
             count: items?.length,
             items,
-            nextToken:
-                totalResourcesCount > Number(pageSize) && records.length >= Number(pageSize)
-                    ? items[items.length - 1].id
-                    : undefined
+            ...(pageSize && { nextToken: getNextToken(items, totalResourcesCount, pageSize) })
         };
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');
@@ -380,6 +378,38 @@ async function getPaginatedDatabaseInstances(
     return listDatabaseInstancesPaginated(accountId, record, pageSize, nextToken);
 }
 
+async function updateDatabaseHostAssessmentData(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    updatedAssessmentData: any
+) {
+    logger.info('Update host configurations', { accountId, resourceId });
+    return updateResource({ accountId, credentialsId, resourceId, updatedAssessmentData });
+}
+
+async function updateDatabaseHostAssessmentResults(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceId: string,
+    updatedAssessmentResults: any
+) {
+    logger.info('Update host configurations', { accountId, resourceId });
+    return updateResource({ accountId, credentialsId, region, resourceId, updatedAssessmentResults });
+}
+
+async function updateDatabaseInstanceAssessmentResults(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    instanceId: string,
+    assessmentResults: any
+) {
+    logger.info('Update instance configurations', { accountId, instanceId });
+    return updateDatabaseInstance({ accountId, credentialsId, region, databaseHostId, instanceId, assessmentResults });
+}
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -397,5 +427,8 @@ export {
     updateDatabaseInstanceConfigurations,
     updateResourceMetaData,
     updateDatabaseHostConfigurations,
-    getPaginatedDatabaseInstances
+    getPaginatedDatabaseInstances,
+    updateDatabaseHostAssessmentData,
+    updateDatabaseHostAssessmentResults,
+    updateDatabaseInstanceAssessmentResults
 };

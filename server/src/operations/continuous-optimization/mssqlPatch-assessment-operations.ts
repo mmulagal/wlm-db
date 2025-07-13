@@ -13,12 +13,12 @@ import {
 } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
-import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
+import { MSSQLPatchAssessmentObject, PatchDetail, ResourceAssessmentData } from '../../utils/common-types';
 import { extractKbNumber, extractVersionDetails, getResourceNameFromTags, sqlResponseParsing } from '../../utils/utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 import { GET_INSTALLED_MSSQL_VERSION } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
-import { updateResourceMetaData } from '../database/database-operations';
+import { updateDatabaseHostAssessmentData } from '../database/database-operations';
 import { describeInstance } from '../../lib/aws/ec2';
 
 const logger = getLogger();
@@ -34,20 +34,20 @@ async function calculateMSSQLPatchDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    metadata: Metadata
+    assessmentData: ResourceAssessmentData
 ) {
     logger.info('Calculating MSSQL Patch drift', {
         accountId,
         credentialsId,
         region,
-        databaseHostId
+        databaseHostId,
+        assessmentData
     });
     let errorMessage = '';
     let patchAssessment: MSSQLPatchAssessmentObject[] = [];
 
     try {
-        const metadataObject = metadata as unknown as Metadata;
-        const { assessment: { mssqlPatch, errors } = {} } = metadataObject;
+        const { mssqlPatch, errors } = assessmentData;
         logger.info('MSSQL patch assessment from metadata', mssqlPatch);
 
         if (isEmpty(mssqlPatch)) {
@@ -94,14 +94,12 @@ async function calculateMSSQLPatchDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;
         logger.error({ errorMessage, error });
-        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-        const assessmentErrors = { ...existingAssessmentData?.errors, mssqlPatch: errorMessage };
-        (metadata as unknown as Metadata).assessment = {
-            ...existingAssessmentData,
-            errors: assessmentErrors,
-            lastAssessedDate: new Date().getTime().toString()
+        const newAssessmentData = {
+            ...assessmentData,
+            errors: { ...assessmentData?.errors, mssqlPatch: errorMessage },
+            lastAssessedDate: Date.now().toString()
         };
-        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     }
     return { errorMessage };
 }

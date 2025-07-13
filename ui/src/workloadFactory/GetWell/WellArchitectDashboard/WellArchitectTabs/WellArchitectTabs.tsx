@@ -1,5 +1,6 @@
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@netapp/design-system';
 import styles from './WellArchitectTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -7,6 +8,7 @@ import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/g
 import { GENERAL } from '../../../../utils/appConstants';
 
 const WellArchitectTabs = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState<any>();
     const { selectedWellArchitectTab } = useAppSelector(state => state.getWellOptimize);
@@ -57,6 +59,26 @@ const WellArchitectTabs = () => {
                     onClick={() => handleClick('Well-architected status')}
                 >
                     {GENERAL.WELL_ARCHITECTED_STATUS}
+                </DsTypography>
+            </div>
+
+            <div
+                className={
+                    selectedTab === 'Error investigation'
+                        ? `${styles.headers} ${styles.headerWidthSecond} ${styles.active}`
+                        : `${styles.headers} ${styles.headerWidthSecond}`
+                }
+            >
+                <DsTypography
+                    variant="Semibold_14"
+                    className={
+                        selectedTab === 'Error investigation'
+                            ? `${styles.headerPart1} ${styles.activeText}`
+                            : `${styles.headerPart1}`
+                    }
+                    onClick={() => handleClick('Error investigation')}
+                >
+                    {t('databases.log-analyzer.error-investigation')}
                 </DsTypography>
             </div>
 

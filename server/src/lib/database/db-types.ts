@@ -1,4 +1,4 @@
-import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
+import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, Prisma, STORAGE_TYPE } from '@prisma/client';
 import { DatabaseInstanceConfigurations, DatabaseInstanceMetadata } from '../../utils/common-types';
 
 interface Deployment {
@@ -40,6 +40,7 @@ interface Resource {
     cloudProviderName?: string;
     region: string;
     metadata?: object;
+    assessmentData?: object;
 }
 
 interface Config {
@@ -80,4 +81,45 @@ interface ListDatabaseInstancesRecord {
     databaseType?: string;
 }
 
-export { Deployment, Event, Resource, Config, DatabaseInstanceRecord, ListDatabaseInstancesRecord };
+interface DatabaseInstanceConfigData {
+    account_id: string;
+    credentials_id: string;
+    region: string;
+    resource_id: string;
+    database_instance_id: string;
+    creation_time: Date;
+    last_updated?: Date;
+    config_data: object;
+    config_data_type: string;
+}
+
+interface ListDatabaseInstanceConfigDataParams {
+    accountId?: string;
+    region?: string;
+    credentialsId?: string;
+    resourceId?: string;
+    databaseInstanceId?: string;
+    configDataType?: string;
+    pageSize?: number;
+    nextToken?: string;
+    include?: Prisma.database_instance_config_dataInclude;
+    select?: Prisma.database_instance_config_dataSelect;
+    filters?: Record<string, any>;
+}
+
+type CountDatabaseInstanceConfigRecordsParams = Omit<
+    ListDatabaseInstanceConfigDataParams,
+    'include' | 'select' | 'pageSize' | 'nextToken'
+>;
+
+export {
+    Deployment,
+    Event,
+    Resource,
+    Config,
+    DatabaseInstanceRecord,
+    ListDatabaseInstancesRecord,
+    DatabaseInstanceConfigData,
+    ListDatabaseInstanceConfigDataParams,
+    CountDatabaseInstanceConfigRecordsParams
+};

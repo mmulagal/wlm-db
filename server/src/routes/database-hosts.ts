@@ -17,7 +17,8 @@ import {
     GetCollationDetailsSchemaV2,
     PgSqlDbHostDetailsSchema,
     PgSqlDbHostsSummarySchema,
-    DatabaseHostDiagramSchema
+    DatabaseHostDiagramSchema,
+    oracleDbHostDetailsSchema
 } from './schemas/database-hosts-schemas';
 import { DatabaseTypes } from '../utils/consts';
 import castRequest from './utils';
@@ -25,6 +26,7 @@ import getDiagramOfDatabaseHost from '../operations/diagrams/diagram-operations'
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const PGSQL_API_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
+const ORACLE_API_PREFIX_PATH = '/v1/oracle/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -227,6 +229,24 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     forSandbox,
                     undefined,
                     databaseInstanceId
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${ORACLE_API_PREFIX_PATH}/database-hosts/:databaseHostId`,
+            { schema: oracleDbHostDetailsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { fields }
+                } = castRequest(request);
+                const response = await getDatabaseHostSummaryV2(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    fields
                 );
                 return reply.send(response);
             }

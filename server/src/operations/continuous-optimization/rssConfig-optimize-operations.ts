@@ -2,7 +2,7 @@ import { isEmpty, isUndefined } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { listResources } from '../../lib/database/db';
 import getLogger from '../../utils/logger';
-import { Metadata, RssConfigAssesment } from '../../utils/common-types';
+import { Metadata, ResourceAssessmentData, RssConfigAssesment } from '../../utils/common-types';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import {
     AssessmentCategories,
@@ -100,7 +100,7 @@ async function handleOptimizeRssOptimization(
     let shouldRollbackClusterOwnership = false;
     let ownerNode: string = '';
     let errorMessage = '';
-    const [{ metadata, resource_name: resourceName }] = await listResources(
+    const [{ metadata, resource_name: resourceName, assessment_data: assessmentData }] = await listResources(
         accountId,
         databaseHostId,
         credentialsId,
@@ -113,7 +113,7 @@ async function handleOptimizeRssOptimization(
     }
     if (isEmpty(networkAdapters)) {
         const adapters =
-            ((metadata as unknown as Metadata)?.assessment?.rssConfig as RssConfigAssesment)?.rssAdapters?.map(
+            ((assessmentData as ResourceAssessmentData)?.rssConfig as RssConfigAssesment)?.rssAdapters?.map(
                 adapter => adapter?.adapterName
             ) || [];
         networkAdapters = adapters.length > 0 ? adapters : networkAdapters;
