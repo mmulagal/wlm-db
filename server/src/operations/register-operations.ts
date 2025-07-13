@@ -1342,6 +1342,13 @@ async function registerOracleInstancesData(
         }
 
         if (storageInfo) {
+            // It could be that fsx credentials are already registered with storage services. Check and create ssm parameters if not already created.
+            try {
+                await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo.id);
+            } catch (error: any) {
+                throw new Error(`Error while verifying or adding FSx ONTAP credentials: ${error.message}`);
+            }
+
             if (isResourceTobeCreated) {
                 await createResource(accountId, {
                     resourceId,
