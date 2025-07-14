@@ -590,7 +590,10 @@ export const snapcenterAPI = createApi({
         }),
         getRBACPrivileges: builder.mutation({
             query: ({ accountID }) => ({
-                url: `v1/management/organizations/${accountID}/users`
+                url: `v1/management/organizations/${accountID}/users`,
+                headers: {
+                    Accept: 'application/vnd.netapp.bxp.users.extended+json'
+                }
             })
         }),
         assignRBACPrivileges: builder.mutation({

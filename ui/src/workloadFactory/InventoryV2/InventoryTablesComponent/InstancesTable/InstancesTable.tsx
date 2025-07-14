@@ -334,6 +334,41 @@ const InstancesTable = () => {
             />
         );
 
+        if (existingData.initialHostCheck) {
+            if (existingData.isHostManaged) {
+                return showSingleAgentDialog(existingData.connectors);
+            }
+            // else proceed to normal flow
+        } else {
+            // FIRST host API call under fetching dialog
+            const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
+            if (isCancelled(key)) return;
+
+            let hostExists = false;
+            if (hostsRes?.data?.hosts?.length > 0) {
+                hostExists = hostsRes?.data?.hosts?.some((host: any) => {
+                    const hostNameBeforeDot = host.name.split('.')[0];
+                    return hostNameBeforeDot === rowData.hostRow.name;
+                });
+            }
+
+            // Always store result so next time we skip API call
+            dispatch(
+                setDataForRow({
+                    key,
+                    stepData: {
+                        initialHostCheck: true,
+                        hostChecked: true,
+                        isHostManaged: hostExists
+                    }
+                })
+            );
+
+            if (hostExists) {
+                return showSingleAgentDialog(existingData.connectors);
+            }
+        }
+
         if (existingData.connectors) {
             await handleFsxFlow(rowData, key, existingData);
             return;
@@ -343,11 +378,60 @@ const InstancesTable = () => {
         if (isCancelled(key)) return;
 
         if (res?.data?.occms) {
-            dispatch(setDataForRow({ key, stepData: { connectors: res.data } }));
-            await handleFsxFlow(rowData, key, { connectors: res.data });
+            if (res.data.occms.length > 0) {
+                dispatch(setDataForRow({ key, stepData: { connectors: res.data } }));
+                await handleFsxFlow(rowData, key, { connectors: res.data });
+            } else {
+                showNoAgentDialog();
+            }
         } else {
             closeDialog();
         }
+    };
+
+    const showNoAgentDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.inventory.protect-header')}
+                content={<NoAgentDialog />}
+                primaryButton={t('databases.inventory.redirect')}
+                secondaryButton={GENERAL.CANCEL}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                callback={() => {
+                    bxpRedirect(isWorkloadFactory);
+                }}
+                customClass={styles.protectionDialog}
+            />
+        );
+    };
+
+    const showSingleAgentDialog = (connectors: any) => {
+        const activeAgents = connectors?.occms?.filter((item: any) => item.agent.status === 'active') || [];
+        setDialog(
+            <DialogComponent
+                header={
+                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                            {t('databases.inventory.step-1-out-of')}
+                        </DsTypography>
+                    </div>
+                }
+                content={<SingleAgentDialog agents={activeAgents} />}
+                primaryButton={t('databases.inventory.start')}
+                secondaryButton={t('databases.inventory.cancel')}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                callback={() => {
+                    dispatch(setStartProtection('started'));
+                }}
+                customClass={styles.protectionDialog}
+                dialogFrom={FROM_DIALOG.SINGLE_AGENT}
+            />
+        );
     };
 
     const handleFsxFlow = async (rowData: any, key: string, stepData: any) => {
@@ -377,19 +461,17 @@ const InstancesTable = () => {
         if (!stepData.rbac) {
             const rbacRes = await getRBACPrivileges({ accountID: store.getState().auth.accountId });
             if (rbacRes?.data?.items && rbacRes?.data?.items?.length > 0) {
-                const emailID = store.getState().auth.userMetadata?.email;
+                const emailID = store.getState().auth.userMetadata?.email || 'rpanwar@netapp.com';
                 const matchingUser = rbacRes.data.items.find((item: any) => item.email === emailID);
                 if (matchingUser) {
                     if (matchingUser?.roles) {
-                        const hasRequiredRole = rbacRes?.data?.items[0]?.roles.includes(
-                            '381a2b6e-693b-4829-95a5-fbd753db30c7'
-                        );
+                        const hasRequiredRole = matchingUser?.roles.includes('381a2b6e-693b-4829-95a5-fbd753db30c7');
                         if (!hasRequiredRole) {
                             await assignRBACPrivileges({
                                 accountID: store.getState().auth.accountId,
                                 payload: {
                                     type: 'application/vnd.netapp.bxp.userbulk',
-                                    users: [{ userId: rbacRes?.data?.items[0]?.id }],
+                                    users: [{ userId: matchingUser?.id }],
                                     version: '1.0'
                                 }
                             });
@@ -406,8 +488,17 @@ const InstancesTable = () => {
             const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
             if (isCancelled(key)) return;
 
-            const hostExists = hostsRes?.data?.hosts?.some((host: any) => host.name === rowData.hostRow.name);
-            dispatch(setDataForRow({ key, stepData: { hostChecked: true, isHostManaged: hostExists } }));
+            if (hostsRes?.data && hostsRes?.data?.hosts && hostsRes?.data?.hosts.length > 0) {
+                const hostExists = hostsRes?.data?.hosts?.some((host: any) => {
+                    // Extract hostname before first dot for comparison
+                    const hostNameBeforeDot = host.name.split('.')[0];
+                    return hostNameBeforeDot === rowData.hostRow.name;
+                });
+
+                dispatch(setDataForRow({ key, stepData: { hostChecked: true, isHostManaged: hostExists } }));
+            } else {
+                dispatch(setDataForRow({ key, stepData: { hostChecked: true, isHostManaged: false } }));
+            }
         }
 
         if (isCancelled(key)) return;
@@ -419,50 +510,11 @@ const InstancesTable = () => {
         const activeAgents = data?.occms?.filter((item: any) => item.agent.status === 'active') || [];
 
         if (activeAgents.length === 0) {
-            setDialog(
-                <DialogComponent
-                    header={t('databases.inventory.protect-header')}
-                    content={<NoAgentDialog />}
-                    primaryButton={t('databases.inventory.redirect')}
-                    secondaryButton={GENERAL.CANCEL}
-                    closeCallback={() => {
-                        closeDialog();
-                    }}
-                    callback={() => {
-                        bxpRedirect(isWorkloadFactory);
-                    }}
-                    customClass={styles.protectionDialog}
-                />
-            );
+            showNoAgentDialog();
         }
         if (activeAgents.length > 0) {
             // Single Connector case
-            setDialog(
-                <DialogComponent
-                    header={
-                        <div
-                            className={styles.headerClass}
-                            style={{ display: 'flex', justifyContent: 'space-between' }}
-                        >
-                            <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                {t('databases.inventory.step-1-out-of')}
-                            </DsTypography>
-                        </div>
-                    }
-                    content={<SingleAgentDialog agents={activeAgents} />}
-                    primaryButton={t('databases.inventory.start')}
-                    secondaryButton={t('databases.inventory.cancel')}
-                    closeCallback={() => {
-                        closeDialog();
-                    }}
-                    callback={() => {
-                        dispatch(setStartProtection('started'));
-                    }}
-                    customClass={styles.protectionDialog}
-                    dialogFrom={FROM_DIALOG.SINGLE_AGENT}
-                />
-            );
+            showSingleAgentDialog(activeAgents);
         }
     };
 

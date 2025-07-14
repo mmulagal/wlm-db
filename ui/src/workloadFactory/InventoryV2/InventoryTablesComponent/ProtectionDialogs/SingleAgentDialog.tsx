@@ -21,7 +21,7 @@ import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorC
 import { setSelectedAgent } from '../../../../store/workloadFactory/snapcenterSlice';
 import { SNAPCENTER_STATUS } from '../../../../utils/consts';
 
-const SingleAgentDialog = ({ agents }: any) => {
+const SingleAgentDialog = ({ agents, hostExists }: any) => {
     const { t } = useTranslation();
     const [step1Status, setStep1Status] = useState<'idle' | 'running' | 'done'>('idle');
     const [step2Status, setStep2Status] = useState<'idle' | 'running' | 'done'>('idle');
