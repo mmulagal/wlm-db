@@ -164,14 +164,14 @@ const InstancesTable = () => {
                         },
                         valuesArray: [true]
                     },
-                    '9': {
+                    '10': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.credentialName]: true
                         },
                         valuesArray: [true]
                     },
-                    '11': {
+                    '12': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.regionName]: true

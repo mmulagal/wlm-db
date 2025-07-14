@@ -72,14 +72,14 @@ const DatabasesTable = () => {
                         },
                         valuesArray: [true]
                     },
-                    '8': {
+                    '9': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.credentialName]: true
                         },
                         valuesArray: [true]
                     },
-                    '10': {
+                    '11': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.regionName]: true
@@ -118,14 +118,14 @@ const DatabasesTable = () => {
                         },
                         valuesArray: [true]
                     },
-                    '8': {
+                    '9': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.credentialName]: true
                         },
                         valuesArray: [true]
                     },
-                    '10': {
+                    '11': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.regionName]: true
