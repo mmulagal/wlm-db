@@ -41,13 +41,17 @@ const BarComponent = ({
     isDisabled = false
 }: BarComponentType) => {
     const handleProgressBar = () => {
-        if (percentage === 100) {
+        const disabledColor = isDisabled ? 'var(--text-disabled)' : color;
+        const borderColor = isDisabled ? 'var(--text-disabled)' : 'var(--border)';
+        const chartColor = isDisabled ? 'var(--text-disabled)' : 'var(--chart-6)';
+        
+        if (percentage === 100 || isDisabled) {
             return (
                 <div
                     className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                     style={{
                         width: `${100}%`,
-                        backgroundColor: color
+                        backgroundColor: disabledColor
                     }}
                 />
             );
@@ -59,7 +63,7 @@ const BarComponent = ({
                         className={`${styles.progress} ${styles.leftCurveBar}`}
                         style={{
                             width: `${percentage}%`,
-                            backgroundColor: color
+                            backgroundColor: disabledColor
                         }}
                     />
                     <div className={styles.separator} />
@@ -67,14 +71,14 @@ const BarComponent = ({
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
                             width: `${optimizePercentage}%`,
-                            backgroundColor: 'var(--chart-6)'
+                            backgroundColor: chartColor
                         }}
                     />
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
                             width: `${100 - (optimizePercentage + percentage)}%`,
-                            backgroundColor: 'var(--border)'
+                            backgroundColor: borderColor
                         }}
                     />
                 </>
@@ -87,7 +91,7 @@ const BarComponent = ({
                     className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                     style={{
                         width: `${100}%`,
-                        backgroundColor: 'var(--border)'
+                        backgroundColor: borderColor
                     }}
                 />
             );
@@ -100,7 +104,7 @@ const BarComponent = ({
                         className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                         style={{
                             width: `${percentage}%`,
-                            backgroundColor: color
+                            backgroundColor: disabledColor
                         }}
                     />
 
@@ -108,7 +112,7 @@ const BarComponent = ({
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
                             width: `${100 - percentage}%`,
-                            backgroundColor: 'var(--border)'
+                            backgroundColor: borderColor
                         }}
                     />
                 </>
@@ -122,7 +126,7 @@ const BarComponent = ({
                         className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                         style={{
                             width: `${optimizePercentage}%`,
-                            backgroundColor: 'var(--chart-6)'
+                            backgroundColor: chartColor
                         }}
                     />
 
@@ -130,7 +134,7 @@ const BarComponent = ({
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
                             width: `${100 - optimizePercentage}%`,
-                            backgroundColor: 'var(--border)'
+                            backgroundColor: borderColor
                         }}
                     />
                 </>
@@ -148,8 +152,8 @@ const BarComponent = ({
 
                     <div className={styles.optimizeText}>
                         {!textMessage && (
-                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} className={isDisabled ? CommonStyles.notAvailable : ''}>
-                                {`${percentage}%`}
+                            <DsTypography variant={isDisabled ? "Regular_14" : "Regular_24"} style={{ lineHeight: 'unset' }} className={isDisabled ? CommonStyles.notAvailable : ''}>
+                                {isDisabled ? percentage : `${percentage}%`}
                             </DsTypography>
                         )}
 
@@ -169,17 +173,19 @@ const BarComponent = ({
                     <div className={styles.getWellBar}>
                         {from === 'dashboard' && <div className={styles.progressBar}>{handleProgressBar()}</div>}
 
-                        {from !== 'dashboard' && <ProgressBar value={percentage} color={color} />}
+                        {from !== 'dashboard' && <ProgressBar value={percentage} color={isDisabled ? 'var(--text-disabled)' : color} />}
                     </div>
                 </div>
 
                 {!textMessage && (
                     <div className={styles.bottomTextSection}>
                         {tooltipMessage && <TooltipInfo>{tooltipMessage}</TooltipInfo>}
-                        <DsTypography variant="Regular_14" className={isDisabled ? CommonStyles.notAvailable : ''}>{bottomText}</DsTypography>
-                        <DsTypography variant="Semibold_14" className={isDisabled ? CommonStyles.notAvailable : ''}>
-                            {beforeOutOf} out of {afterOutOf}
-                        </DsTypography>
+                        {bottomText && <DsTypography variant="Regular_14" className={isDisabled ? CommonStyles.notAvailable : ''}>{bottomText}</DsTypography>}
+                        {(beforeOutOf !== undefined && afterOutOf !== undefined) && (
+                            <DsTypography variant="Semibold_14" className={isDisabled ? CommonStyles.notAvailable : ''}>
+                                {beforeOutOf} out of {afterOutOf}
+                            </DsTypography>
+                        )}
                     </div>
                 )}
 

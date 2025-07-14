@@ -93,15 +93,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             <BarComponent
                 color="#5E8DCD"
                 headingText={headingText}
-                percentage={showNA ? 0 : (dismissedOrPostponedText ? 0 : Math.round((optimizedCount / total) * 100))}
+                percentage={showNA ? t('databases.general.not-available') : (dismissedOrPostponedText ? 0 : Math.round((optimizedCount / total) * 100))}
                 beforeOutOf={showNA ? undefined : (dismissedOrPostponedText ? undefined : optimizedCount)}
                 afterOutOf={showNA ? undefined : (dismissedOrPostponedText ? undefined : afterOutOfTotal)}
                 bottomText={showNA ? undefined : (dismissedOrPostponedText ? undefined : 'Well-architected:')}
                 width={width}
                 from="dashboard"
-                optimizePercentage={showNA ? 0 : (dismissedOrPostponedText ? 0 : optimizePercentage)}
+                optimizePercentage={showNA ? 100 : (dismissedOrPostponedText ? 0 : optimizePercentage)}
                 loading={dismissedOrPostponedText ? loading : isLoading}
-                textMessage={showNA ? t('databases.general.not-available') : (dismissedOrPostponedText || undefined)}
+                textMessage={showNA ? undefined : (dismissedOrPostponedText || undefined)}
                 textMessageVariant={showNA ? "Regular_14" : undefined}
                 tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
                 isDisabled={showNA}
@@ -978,13 +978,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     { hasDismissedOrPosponed(configData?.configState?.clone)|| showNA ? (
                         <BarComponent
                             color="#5E8DCD"
-                            percentage={0}
+                            percentage={showNA ? t('databases.general.not-available') : 0}
                             headingText={GENERAL.CLONE_MANAGEMENT}
                             width={windowSize.width > 1700 ? '328px' : '248px'}
                             from="dashboard"
-                            textMessage={showNA ? t('databases.general.not-available') : hasDismissedOrPosponed(configData?.configState?.clone)}
+                            textMessage={showNA ? undefined : hasDismissedOrPosponed(configData?.configState?.clone)}
                             textMessageVariant={showNA ? "Regular_14" : undefined}
-                            optimizePercentage={0}
+                            optimizePercentage={showNA ? 100 : 0}
                             loading={loading}
                             isDisabled={showNA}
                         />

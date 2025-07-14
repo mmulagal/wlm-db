@@ -46,7 +46,10 @@ const SquareComponent = ({
         )}
         {boldValue && <Typography variant="Semibold_14" className={isDisabled ? CommonStyles.notAvailable : ''}>{value}</Typography>}
         <div className={styles.bottomRow}>
-            <div className={styles.square} style={{ backgroundColor: color }} />
+            <div 
+                className={`${styles.square} ${isDisabled ? CommonStyles.notAvailable : ''}`} 
+                style={{ backgroundColor: isDisabled ? 'var(--text-disabled)' : color }} 
+            />
             <Typography
                 variant="Regular_14"
                 style={{ lineHeight: 'unset', width: 'max-content', whiteSpace: 'nowrap' }}

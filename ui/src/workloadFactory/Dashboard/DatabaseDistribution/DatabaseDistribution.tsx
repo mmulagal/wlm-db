@@ -75,9 +75,9 @@ const DatabaseDistribution = () => {
                                 100,
                             2
                         )}
-                        beforeOutOf={showNA ? t('databases.general.not-available') : aggregatedHostsCount?.managedDatabases || 0}
-                        afterOutOf={showNA ? t('databases.general.not-available') : aggregatedHostsCount?.totalDatabases || 0}
-                        bottomText="Registered databases:"
+                        beforeOutOf={showNA ? undefined : aggregatedHostsCount?.managedDatabases || 0}
+                        afterOutOf={showNA ? undefined : aggregatedHostsCount?.totalDatabases || 0}
+                        bottomText={showNA ? undefined : "Registered databases:"}
                         width="auto"
                         loading={loading}
                         isDisabled={showNA}
@@ -91,9 +91,9 @@ const DatabaseDistribution = () => {
                                 100,
                             2
                         )}
-                        beforeOutOf={showNA ? t('databases.general.not-available') : aggregatedPgSqlHostsCount?.managedDatabases || 0}
-                        afterOutOf={showNA ? t('databases.general.not-available') : aggregatedPgSqlHostsCount?.totalDatabases || 0}
-                        bottomText="Registered databases:"
+                        beforeOutOf={showNA ? undefined : aggregatedPgSqlHostsCount?.managedDatabases || 0}
+                        afterOutOf={showNA ? undefined : aggregatedPgSqlHostsCount?.totalDatabases || 0}
+                        bottomText={showNA ? undefined : "Registered databases:"}
                         width="auto"
                         loading={loading}
                         isDisabled={showNA}

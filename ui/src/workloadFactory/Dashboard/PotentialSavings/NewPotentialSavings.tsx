@@ -307,7 +307,10 @@ const NewPotentialSavings = () => {
 
                                 {/* Text section */}
                                 <div className={styles.textSection}>
-                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
+                                    <div 
+                                        className={`${styles.square} ${showNA ? CommonStyles.notAvailable : ''}`} 
+                                        style={{ backgroundColor: showNA ? 'var(--text-disabled)' : 'var(--chart-3)' }} 
+                                    />
                                     <DsTypography variant={showNA ? "Regular_14" : "Semibold_20"} className={showNA ? CommonStyles.notAvailable : ''}>{showNA ? t('databases.general.not-available') : esCount?.ebs}</DsTypography>
                                     <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.SQL_SERVER_HOSTS_EBS}</DsTypography>
                                 </div>
@@ -355,7 +358,10 @@ const NewPotentialSavings = () => {
 
                                 {/* Text section */}
                                 <div className={styles.textSection}>
-                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
+                                    <div 
+                                        className={`${styles.square} ${showNA ? CommonStyles.notAvailable : ''}`} 
+                                        style={{ backgroundColor: showNA ? 'var(--text-disabled)' : 'var(--chart-2)' }} 
+                                    />
                                     <DsTypography variant={showNA ? "Regular_14" : "Semibold_20"} className={showNA ? CommonStyles.notAvailable : ''}>{showNA ? t('databases.general.not-available') : esCount?.fsxw}</DsTypography>
                                     <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.SQL_SERVER_HOSTS_FSXW}</DsTypography>
                                 </div>

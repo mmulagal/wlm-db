@@ -59,7 +59,7 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
     return (
         <div className={styles.inventoryChart} id="chart-item">
             <div className={styles['center-text']}>
-                <Typography variant="Regular_32" style={{ lineHeight: 'unset' }} className={isDisabled ? CommonStyles.notAvailable : ''}>
+                <Typography variant={isDisabled ? "Semibold_14" : "Regular_32"} style={{ lineHeight: 'unset' }} className={isDisabled ? CommonStyles.notAvailable : ''}>
                     {centerValue}
                 </Typography>
 

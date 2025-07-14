@@ -96,9 +96,9 @@ const InstanceDistribution = () => {
                             ((mssqlHostData?.managedInstances || 0) / (mssqlHostData?.totalInstances || 1)) * 100,
                             2
                         )}
-                        beforeOutOf={showNA ? t('databases.general.not-available') : mssqlHostData?.managedInstances || 0}
-                        afterOutOf={showNA ? t('databases.general.not-available') : mssqlHostData?.totalInstances || 0}
-                        bottomText="Registered instances:"
+                        beforeOutOf={showNA ? undefined : mssqlHostData?.managedInstances || 0}
+                        afterOutOf={showNA ? undefined : mssqlHostData?.totalInstances || 0}
+                        bottomText={showNA ? undefined : "Registered instances:"}
                         width="auto"
                         loading={mssqlDatabaseHostsLoading || multiDataLoading}
                         isDisabled={showNA}
@@ -110,9 +110,9 @@ const InstanceDistribution = () => {
                             ((pgsqlHostData?.managedInstances || 0) / (pgsqlHostData?.totalInstances || 1)) * 100,
                             2
                         )}
-                        beforeOutOf={showNA ? t('databases.general.not-available') : pgsqlHostData?.managedInstances || 0}
-                        afterOutOf={showNA ? t('databases.general.not-available') : pgsqlHostData?.totalInstances || 0}
-                        bottomText="Registered instances:"
+                        beforeOutOf={showNA ? undefined : pgsqlHostData?.managedInstances || 0}
+                        afterOutOf={showNA ? undefined : pgsqlHostData?.totalInstances || 0}
+                        bottomText={showNA ? undefined : "Registered instances:"}
                         width="auto"
                         loading={pgsqlDatabaseHostsLoading || multiDataLoading}
                         isDisabled={showNA}
