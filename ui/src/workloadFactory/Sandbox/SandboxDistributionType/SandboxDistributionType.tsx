@@ -1,4 +1,5 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Dev } from '../../../assets/Dev.svg';
 import { ReactComponent as Other } from '../../../assets/Other.svg';
 import { ReactComponent as Analytics } from '../../../assets/Analytics.svg';
@@ -13,6 +14,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { getSandboxDistributionByTag } from '../SandboxUtility';
 
 const SandboxDistributionType = () => {
+    const { t } = useTranslation();
     const { aggregatedSandboxList, getSandboxList } = useAppSelector(state => state.sandbox);
     const { showNA } = useAppSelector(state => state.headers);
     const { sandboxListLoading: loading } = getSandboxList;
@@ -52,7 +54,7 @@ const SandboxDistributionType = () => {
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
                                     >
-                                        {GENERAL.NOT_AVAILABLE}
+                                        {t('databases.general.not-available')}
                                     </DsTypography>
                                 )}
                             </div>
@@ -89,7 +91,7 @@ const SandboxDistributionType = () => {
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
                                     >
-                                        {GENERAL.NOT_AVAILABLE}
+                                        {t('databases.general.not-available')}
                                     </DsTypography>
                                 )}
                             </div>
@@ -126,7 +128,7 @@ const SandboxDistributionType = () => {
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
                                     >
-                                        {GENERAL.NOT_AVAILABLE}
+                                        {t('databases.general.not-available')}
                                     </DsTypography>
                                 )}
                             </div>
@@ -165,7 +167,7 @@ const SandboxDistributionType = () => {
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
                                     >
-                                        {GENERAL.NOT_AVAILABLE}
+                                        {t('databases.general.not-available')}
                                     </DsTypography>
                                 )}
                             </div>
@@ -202,7 +204,7 @@ const SandboxDistributionType = () => {
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
                                     >
-                                        {GENERAL.NOT_AVAILABLE}
+                                        {t('databases.general.not-available')}
                                     </DsTypography>
                                 )}
                             </div>
@@ -239,7 +241,7 @@ const SandboxDistributionType = () => {
                                         variant="Regular_16"
                                         className={`${styles.value} ${CommonStyles.notAvailable}`}
                                     >
-                                        {GENERAL.NOT_AVAILABLE}
+                                        {t('databases.general.not-available')}
                                     </DsTypography>
                                 )}
                             </div>

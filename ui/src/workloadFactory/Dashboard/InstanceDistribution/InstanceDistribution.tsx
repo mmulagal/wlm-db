@@ -1,5 +1,6 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './InstanceDistribution.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
@@ -12,6 +13,7 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import { GENERAL } from '../../../utils/appConstants';
 
 const InstanceDistribution = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const mssqlDatabaseHostsLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
@@ -34,7 +36,7 @@ const InstanceDistribution = () => {
                 </DsTypography>
 
                 <div className={styles.rightSection}>
-                    {!showNA && (mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
+                    {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
                         <FlashingDotsLoader />
                     )}
                     <DsButton
@@ -58,12 +60,12 @@ const InstanceDistribution = () => {
                         </div>
                         <div className={styles.valueSection}>
                             <DsTypography
-                                variant="Regular_32"
+                                variant={showNA ? "Regular_14" : "Regular_32"}
                                 style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}
                                 className={showNA ? CommonStyles.notAvailable : ''}
                             >
-                                {showNA ? GENERAL.NOT_AVAILABLE : (mssqlHostData?.totalInstances || 0) + (pgsqlHostData?.totalInstances || 0)}
-                                {!showNA && (mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
+                                {showNA ? t('databases.general.not-available') : (mssqlHostData?.totalInstances || 0) + (pgsqlHostData?.totalInstances || 0)}
+                                {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
                                     <DsFlashingDotsLoader />
                                 )}
                             </DsTypography>
@@ -74,9 +76,9 @@ const InstanceDistribution = () => {
                     <SeparatorComponent variant="vertical" height="56px" />
 
                     <div className={styles.valueSection}>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                            {showNA ? GENERAL.NOT_AVAILABLE : (mssqlHostData?.managedInstances || 0) + (pgsqlHostData?.managedInstances || 0)}
-                            {!showNA && (mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
+                        <DsTypography variant={showNA ? "Regular_14" : "Regular_32"} style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                            {showNA ? t('databases.general.not-available') : (mssqlHostData?.managedInstances || 0) + (pgsqlHostData?.managedInstances || 0)}
+                            {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
                                 <DsFlashingDotsLoader />
                             )}
                         </DsTypography>
@@ -90,12 +92,12 @@ const InstanceDistribution = () => {
                     <BarComponent
                         color="var(--chart-3)"
                         headingText="Microsoft SQL Server"
-                        percentage={showNA ? GENERAL.NOT_AVAILABLE : formatFractionalNumber(
+                        percentage={showNA ? t('databases.general.not-available') : formatFractionalNumber(
                             ((mssqlHostData?.managedInstances || 0) / (mssqlHostData?.totalInstances || 1)) * 100,
                             2
                         )}
-                        beforeOutOf={showNA ? GENERAL.NOT_AVAILABLE : mssqlHostData?.managedInstances || 0}
-                        afterOutOf={showNA ? GENERAL.NOT_AVAILABLE : mssqlHostData?.totalInstances || 0}
+                        beforeOutOf={showNA ? t('databases.general.not-available') : mssqlHostData?.managedInstances || 0}
+                        afterOutOf={showNA ? t('databases.general.not-available') : mssqlHostData?.totalInstances || 0}
                         bottomText="Registered instances:"
                         width="auto"
                         loading={mssqlDatabaseHostsLoading || multiDataLoading}
@@ -104,12 +106,12 @@ const InstanceDistribution = () => {
                     <BarComponent
                         color="var(--chart-9)"
                         headingText="PostgreSQL"
-                        percentage={showNA ? GENERAL.NOT_AVAILABLE : formatFractionalNumber(
+                        percentage={showNA ? t('databases.general.not-available') : formatFractionalNumber(
                             ((pgsqlHostData?.managedInstances || 0) / (pgsqlHostData?.totalInstances || 1)) * 100,
                             2
                         )}
-                        beforeOutOf={showNA ? GENERAL.NOT_AVAILABLE : pgsqlHostData?.managedInstances || 0}
-                        afterOutOf={showNA ? GENERAL.NOT_AVAILABLE : pgsqlHostData?.totalInstances || 0}
+                        beforeOutOf={showNA ? t('databases.general.not-available') : pgsqlHostData?.managedInstances || 0}
+                        afterOutOf={showNA ? t('databases.general.not-available') : pgsqlHostData?.totalInstances || 0}
                         bottomText="Registered instances:"
                         width="auto"
                         loading={pgsqlDatabaseHostsLoading || multiDataLoading}

@@ -1,6 +1,7 @@
 import { DsTypography, DsButton, DsFlashingDotsLoader } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './Sandboxes.module.scss';
 import SandboxChart from '../../Sandbox/SandboxDistributionDate/SandboxChart/SandboxChart';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -13,6 +14,7 @@ import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 const Sandboxes = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { isNA } = useAppSelector(state => state.sandbox);
     const { loading: dataLoading, data: aggregatedSandboxList } = useAppSelector(
@@ -101,7 +103,7 @@ const Sandboxes = () => {
 
                             {showNA && (
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
@@ -141,7 +143,7 @@ const Sandboxes = () => {
 
                             {showNA && (
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
@@ -181,7 +183,7 @@ const Sandboxes = () => {
 
                             {showNA && (
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />

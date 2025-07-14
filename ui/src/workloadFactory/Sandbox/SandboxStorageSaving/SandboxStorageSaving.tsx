@@ -1,4 +1,5 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as Savings } from '../../../assets/Savings.svg';
 import styles from './SandboxStorageSaving.module.scss';
@@ -8,6 +9,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { formatSize } from '../../../utils/utilityFunctions';
 
 const SandboxStorageSaving = () => {
+    const { t } = useTranslation();
     const windowSize = useResize();
     const { getSandboxSavings } = useAppSelector(state => state.sandbox);
     const { showNA } = useAppSelector(state => state.headers);
@@ -98,7 +100,7 @@ const SandboxStorageSaving = () => {
                                     variant="Regular_14"
                                     className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                             <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
@@ -169,7 +171,7 @@ const SandboxStorageSaving = () => {
                                     variant="Regular_14"
                                     className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                             <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
@@ -206,7 +208,7 @@ const SandboxStorageSaving = () => {
                                     variant="Regular_14"
                                     className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                         </div>
@@ -243,7 +245,7 @@ const SandboxStorageSaving = () => {
                                     variant="Regular_14"
                                     className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                         </div>

@@ -81,11 +81,11 @@ const HeaderComponentApi = () => {
     useEffect(() => {
         dispatch(addCredentialsHeaderList({ credentialData, credentialLoading, credentialError }));
         dispatch(setCredentialMapping(makeCredMapping(credentialData)));
-
+        
         // Set showNA flag based on credentials availability
-        const hasNoCredentials = credentialData && credentialData.length === 0;
+        const hasNoCredentials = !credentialData || credentialData.length === 0;
         dispatch(setShowNA(hasNoCredentials));
-
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [credentialData, credentialLoading, credentialError]);
 

@@ -1,6 +1,7 @@
 import { DsButton, DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
@@ -18,6 +19,7 @@ import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
 import { ReactComponent as Edit } from '../../../assets/ic_edit.svg';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
+    const { t } = useTranslation();
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const dispatch = useDispatch();
@@ -99,7 +101,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 from="dashboard"
                 optimizePercentage={showNA ? 0 : (dismissedOrPostponedText ? 0 : optimizePercentage)}
                 loading={dismissedOrPostponedText ? loading : isLoading}
-                textMessage={showNA ? GENERAL.NOT_AVAILABLE : (dismissedOrPostponedText || undefined)}
+                textMessage={showNA ? t('databases.general.not-available') : (dismissedOrPostponedText || undefined)}
+                textMessageVariant={showNA ? "Regular_14" : undefined}
                 tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
                 isDisabled={showNA}
             />
@@ -972,28 +975,18 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {showNA ? (
+                    { hasDismissedOrPosponed(configData?.configState?.clone)|| showNA ? (
                         <BarComponent
                             color="#5E8DCD"
-                            headingText={GENERAL.CLONE_MANAGEMENT}
                             percentage={0}
+                            headingText={GENERAL.CLONE_MANAGEMENT}
                             width={windowSize.width > 1700 ? '328px' : '248px'}
                             from="dashboard"
+                            textMessage={showNA ? t('databases.general.not-available') : hasDismissedOrPosponed(configData?.configState?.clone)}
+                            textMessageVariant={showNA ? "Regular_14" : undefined}
                             optimizePercentage={0}
                             loading={loading}
-                            textMessage={GENERAL.NOT_AVAILABLE}
                             isDisabled={showNA}
-                        />
-                    ) : hasDismissedOrPosponed(configData?.configState?.clone) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.CLONE_MANAGEMENT}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.clone)}
-                            optimizePercentage={0}
-                            loading={loading}
                         />
                     ) : (
                         <BarComponent

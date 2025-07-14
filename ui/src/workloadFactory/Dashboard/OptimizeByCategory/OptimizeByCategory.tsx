@@ -148,8 +148,8 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                                    {showNA ? GENERAL.NOT_AVAILABLE : `${Math.round(((categoryData.storage || 0) / (categoryData.total || 1)) * 100)}%`}
+                                <DsTypography variant={showNA ? "Regular_14" : "Regular_24"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                                    {showNA ? t('databases.general.not-available') : `${Math.round(((categoryData.storage || 0) / (categoryData.total || 1)) * 100)}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
@@ -164,8 +164,8 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                                    {showNA ? GENERAL.NOT_AVAILABLE : `${Math.round(((categoryData.compute || 0) / (categoryData.total || 1)) * 100)}%`}
+                                <DsTypography variant={showNA ? "Regular_14" : "Regular_24"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                                    {showNA ? t('databases.general.not-available') : `${Math.round(((categoryData.compute || 0) / (categoryData.total || 1)) * 100)}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
@@ -179,8 +179,8 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                                    {showNA ? GENERAL.NOT_AVAILABLE : `${Math.round(((categoryData.application || 0) / (categoryData.total || 1)) * 100)}%`}
+                                <DsTypography variant={showNA ? "Regular_14" : "Regular_24"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                                    {showNA ? t('databases.general.not-available') : `${Math.round(((categoryData.application || 0) / (categoryData.total || 1)) * 100)}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
@@ -198,8 +198,8 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                                    {showNA ? GENERAL.NOT_AVAILABLE : `${Math.round(((categoryData.resiliency || 0) / (categoryData.total || 1)) * 100)}%`}
+                                <DsTypography variant={showNA ? "Regular_14" : "Regular_24"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                                    {showNA ? t('databases.general.not-available') : `${Math.round(((categoryData.resiliency || 0) / (categoryData.total || 1)) * 100)}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
@@ -213,8 +213,8 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                                    {showNA ? GENERAL.NOT_AVAILABLE : `${Math.round(((categoryData.cloning || 0) / (categoryData.total || 1)) * 100)}%`}
+                                <DsTypography variant={showNA ? "Regular_14" : "Regular_24"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                                    {showNA ? t('databases.general.not-available') : `${Math.round(((categoryData.cloning || 0) / (categoryData.total || 1)) * 100)}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>

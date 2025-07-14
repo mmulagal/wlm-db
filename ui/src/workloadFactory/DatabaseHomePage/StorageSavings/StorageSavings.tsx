@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './StorageSavings.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import SquareComponent from '../SquareComponent/SquareComponent';
@@ -14,9 +15,10 @@ type StorageSavingsProps = {
 };
 
 const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
+    const { t } = useTranslation();
     const { showNA } = useAppSelector(state => state.headers);
     const handleProgressBar = () => {
-        if (showNA) {
+       if (hostData?.storageSavingsPercent === 0 || showNA) {
             return (
                 <div
                     className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
@@ -68,18 +70,6 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                 </>
             );
         }
-
-        if (hostData?.storageSavingsPercent === 0) {
-            return (
-                <div
-                    className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                    style={{
-                        width: `${100}%`,
-                        backgroundColor: 'var(--chart-disabled)'
-                    }}
-                />
-            );
-        }
     };
 
     return (
@@ -108,8 +98,8 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                 </div>
 
                 <div className={styles.rightTopValue}>
-                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                        {showNA ? GENERAL.NOT_AVAILABLE : `${formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%`}
+                    <Typography variant={showNA ? "Semibold_14" : "Semibold_20"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                        {showNA ? t('databases.general.not-available') : `${formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%`}
                     </Typography>
                     {hostsLoading && <FlashingDotsLoader />}
                 </div>
@@ -122,7 +112,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={showNA ? GENERAL.NOT_AVAILABLE : (hostData?.storageConsumes || GENERAL.NOT_AVAILABLE)}
+                        value={showNA ? t('databases.general.not-available') : (hostData?.storageConsumes || t('databases.general.not-available'))}
                         color="var(--chart-9)"
                         text="Consumed storage"
                         loadingInFirstRow={hostsLoading}
@@ -131,7 +121,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={showNA ? GENERAL.NOT_AVAILABLE : (hostData?.storageSavings || GENERAL.NOT_AVAILABLE)}
+                        value={showNA ? t('databases.general.not-available') : (hostData?.storageSavings || t('databases.general.not-available'))}
                         color="var(--chart-4)"
                         text="Storage Savings"
                         loadingInFirstRow={hostsLoading}

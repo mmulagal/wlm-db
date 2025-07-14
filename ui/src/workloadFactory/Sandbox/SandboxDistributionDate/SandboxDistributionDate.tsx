@@ -1,4 +1,5 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './SandboxDistributionDate.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import SandboxChart from './SandboxChart/SandboxChart';
@@ -8,6 +9,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { getSandboxDistributionByAge } from '../SandboxUtility';
 
 const SandboxDistributionDate = () => {
+    const { t } = useTranslation();
     const windowSize = useResize();
     const loading = useAppSelector(state => state.sandbox.getSandboxList.sandboxListLoading);
     const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
@@ -54,7 +56,7 @@ const SandboxDistributionDate = () => {
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             </>
                         )}
@@ -88,7 +90,7 @@ const SandboxDistributionDate = () => {
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             </>
                         )}
@@ -124,7 +126,7 @@ const SandboxDistributionDate = () => {
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             </>
                         )}

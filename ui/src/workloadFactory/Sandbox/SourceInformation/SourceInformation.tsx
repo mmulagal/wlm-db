@@ -1,6 +1,7 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { ReactComponent as Source } from '../../../assets/Source.svg';
 import { ReactComponent as Sandbox } from '../../../assets/Sandbox.svg';
+import { useTranslation } from 'react-i18next';
 
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './SourceInformation.module.scss';
@@ -9,6 +10,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { getUniqueSourceDatabasesCount } from '../SandboxUtility';
 
 const SourceInformation = () => {
+    const { t } = useTranslation();
     const loading = useAppSelector(state => state?.sandbox?.getSandboxList?.sandboxListLoading);
     const { aggregatedSandboxList } = useAppSelector(state => state?.sandbox);
     const { showNA } = useAppSelector(state => state.headers);
@@ -36,7 +38,7 @@ const SourceInformation = () => {
                             variant="Regular_14"
                             className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                         >
-                            {GENERAL.NOT_AVAILABLE}
+                            {t('databases.general.not-available')}
                         </DsTypography>
                     )}
 
@@ -68,7 +70,7 @@ const SourceInformation = () => {
                             variant="Regular_14"
                             className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                         >
-                            {GENERAL.NOT_AVAILABLE}
+                            {t('databases.general.not-available')}
                         </DsTypography>
                     )}
                     <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>

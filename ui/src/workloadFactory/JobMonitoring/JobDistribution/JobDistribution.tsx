@@ -4,41 +4,40 @@ import JobDoughnutChart from '../../DatabaseHomePage/JobStatus/JobDoughnut/JobDo
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import useResize from '../../../common/hooks/useResize';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
+
 
 const JobDistribution = () => {
     const jobsSummaryData = useAppSelector(state => state.jobMonitoring.jmJobsSummary);
     const jobsSummaryLoading = useAppSelector(state => state.jobMonitoring.jmJobsSummaryLoading);
-    const { showNA } = useAppSelector(state => state.headers);
     const windowSize = useResize();
     return (
         <div
             className={
                 window.innerWidth <= 1500
-                    ? `${styles.jobDistribution} ${styles.minWidthClass} ${showNA ? CommonStyles.notAvailable : ''}`
-                    : `${styles.jobDistribution} ${styles.maxWidthClass} ${showNA ? CommonStyles.notAvailable : ''}`
+                    ? `${styles.jobDistribution} ${styles.minWidthClass}`
+                    : `${styles.jobDistribution} ${styles.maxWidthClass}`
             }
         >
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.headStatus}>
                     {GENERAL.JOB_DISTRIBUTION}
-                    {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                     {jobsSummaryLoading && <FlashingDotsLoader />}
                 </Typography>
             </div>
 
             <div className={styles.mainSection}>
-                <JobDoughnutChart jobsSummaryData={showNA ? null : jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading} showNA={showNA} />
+                <JobDoughnutChart jobsSummaryData={jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading} />
                 {windowSize.width <= 1500 && (
                     <div className={styles.rightSection}>
                         <div className={styles.jobSeparator} />
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
-                                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.JM_COMPLETED}</Typography>
-                                {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                                 <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -47,11 +46,11 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-6)' }} />
-                                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>Completed with issues</Typography>
-                                {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                               <Typography variant="Regular_14">Completed with issues</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.warning || 0) + GENERAL.JOB_STATUS_JOBS}
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.warning || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -60,11 +59,11 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
-                                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.JM_RUNNING}</Typography>
-                                {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                                <Typography variant="Regular_14">{GENERAL.JM_RUNNING}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -73,11 +72,11 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
-                                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.JM_FAILED}</Typography>
-                                {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                                 <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.failed || 0) + GENERAL.JOB_STATUS_JOBS}
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.failed || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -91,11 +90,11 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
-                                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.JM_COMPLETED}</Typography>
-                                {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                                <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
+                             <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -104,11 +103,11 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-6)' }} />
-                                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>Completed with issues</Typography>
-                                {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                                <Typography variant="Regular_14">Completed with issues</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.warning || 0) + GENERAL.JOB_STATUS_JOBS}
+                             <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.warning || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -117,11 +116,11 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
-                                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.JM_RUNNING}</Typography>
-                                {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                                <Typography variant="Regular_14">{GENERAL.JM_RUNNING}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -130,11 +129,11 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
-                                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.JM_FAILED}</Typography>
-                                {!showNA && jobsSummaryLoading && <FlashingDotsLoader />}
+                              <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.failed || 0) + GENERAL.JOB_STATUS_JOBS}
+                            <Typography variant="Semibold_14">
+                                {(jobsSummaryData?.failed || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 

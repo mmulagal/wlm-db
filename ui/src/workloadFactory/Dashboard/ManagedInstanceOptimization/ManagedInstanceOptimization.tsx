@@ -49,12 +49,12 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
         };
         return () => (
             <HostDistributionChart
-                color1={showNA ? '#E0E0E0' : setColor(instanceOptimizationSummary?.optimizedPercent)}
+                color1={showNA ? 'var(--border)' : setColor(instanceOptimizationSummary?.optimizedPercent)}
                 color2="#E0E0E0"
                 data1={showNA ? 0 : instanceOptimizationSummary?.optimizedPercent}
                 data2={showNA ? 100 : 100 - instanceOptimizationSummary?.optimizedPercent}
                 centerText="Optimization score"
-                centerValue={showNA ? GENERAL.NOT_AVAILABLE : `${instanceOptimizationSummary?.optimizedPercent || 0}%`}
+                centerValue={showNA ? t('databases.general.not-available') : `${instanceOptimizationSummary?.optimizedPercent || 0}%`}
                 loading={loading}
                 isDisabled={showNA}
             />
@@ -82,8 +82,8 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                             <div className={styles.contentSection}>
                                 <div className={styles.firstBlock}>
                                     <div className={styles.loadingState}>
-                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                                            {showNA ? GENERAL.NOT_AVAILABLE : instanceOptimizationSummary?.totalInstances}
+                                        <DsTypography variant={showNA ? "Regular_14" : "Regular_24"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                                            {showNA ? t('databases.general.not-available') : instanceOptimizationSummary?.totalInstances}
                                         </DsTypography>
 
                                         {instanceOptimizationSummary?.hasDismissedOrPostponed && (
@@ -104,7 +104,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <SeparatorComponent variant="vertical" height="48px" />
 
                                 <SquareComponent
-                                    value={showNA ? GENERAL.NOT_AVAILABLE : String(instanceOptimizationSummary?.optimizedInstances)}
+                                    value={showNA ? t('databases.general.not-available') : String(instanceOptimizationSummary?.optimizedInstances)}
                                     color="var(--chart-4)"
                                     text="Well-architected instances"
                                     isLoading={false}
@@ -114,7 +114,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
 
                                 <SeparatorComponent variant="vertical" height="48px" />
                                 <SquareComponent
-                                    value={showNA ? GENERAL.NOT_AVAILABLE : String(instanceOptimizationSummary?.notOptimizedInstances)}
+                                    value={showNA ? t('databases.general.not-available') : String(instanceOptimizationSummary?.notOptimizedInstances)}
                                     color="var(--chart-disabled)"
                                     text="Not-optimized instances "
                                     isLoading={false}
@@ -133,7 +133,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                     <div className={styles.manageInstanceTooltipSection}>
                                         <DsTypography variant="Semibold_16" style={{ whiteSpace: 'nowrap' }} className={showNA ? CommonStyles.notAvailable : ''}>
                                             Total registered instances &nbsp;
-                                            {showNA ? GENERAL.NOT_AVAILABLE : instanceOptimizationSummary?.totalInstances}
+                                            {showNA ? t('databases.general.not-available') : instanceOptimizationSummary?.totalInstances}
                                         </DsTypography>
                                         {instanceOptimizationSummary?.hasDismissedOrPostponed && (
                                             <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>
@@ -156,7 +156,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                     </div>
                                     <div className={styles.loadingState}>
                                         <DsTypography className={`${styles.valueText} ${showNA ? CommonStyles.notAvailable : ''}`} variant="Semibold_14">
-                                            {showNA ? GENERAL.NOT_AVAILABLE : String(instanceOptimizationSummary?.optimizedInstances)} instances
+                                            {showNA ? t('databases.general.not-available') : String(instanceOptimizationSummary?.optimizedInstances)} instances
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
@@ -171,7 +171,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                     </div>
                                     <div className={styles.loadingState}>
                                         <DsTypography className={`${styles.valueText} ${showNA ? CommonStyles.notAvailable : ''}`} variant="Semibold_14">
-                                            {showNA ? GENERAL.NOT_AVAILABLE : String(instanceOptimizationSummary?.notOptimizedInstances)} instances
+                                            {showNA ? t('databases.general.not-available') : String(instanceOptimizationSummary?.notOptimizedInstances)} instances
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>

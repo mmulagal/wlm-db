@@ -3,11 +3,10 @@ import { Chart, registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './JobDoughnutchart.module.scss';
-import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
 Chart.register(...registerables);
 
-const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading, showNA }: any) => {
+const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading }: any) => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -24,7 +23,7 @@ const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading, showNA }: any) 
         data: {
             datasets: [
                 {
-                    data: showNA ? [100] : [
+                    data: [
                         jobsSummaryData?.completedPercent,
                         jobsSummaryData?.inProgressPercent,
                         jobsSummaryData?.failedPercent,
@@ -45,24 +44,24 @@ const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading, showNA }: any) 
             setDoughnutChart(myDoughnut);
         }
         return () => {
-            if (!jobsSummaryLoading && (jobsSummaryData?.totalJobs !== 0 || showNA)) myDoughnut.destroy();
+            if (!jobsSummaryLoading && jobsSummaryData?.totalJobs !== 0) myDoughnut.destroy();
         };
-    }, [jobsSummaryData, jobsSummaryLoading, showNA]);
+    }, [jobsSummaryData, jobsSummaryLoading]);
 
     return (
-        <div className={styles.jobChart} id="chart-item" style={showNA ? { filter: 'grayscale(100%)' } : {}}>
+        <div className={styles.jobChart} id="chart-item">
             <div className={styles['center-text']}>
-                <Typography variant="Regular_32" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                    {showNA ? GENERAL.NOT_AVAILABLE : (jobsSummaryData?.totalJobs || 0)}
+                <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
+                    {jobsSummaryData?.totalJobs || 0}
                 </Typography>
-                <Typography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.JOB_STATUS_JOBS}</Typography>
+                <Typography variant="Regular_14">{GENERAL.JOB_STATUS_JOBS}</Typography>
             </div>
             {/* @ts-ignore */}
-            {(jobsSummaryLoading || !jobsSummaryData || jobsSummaryData?.totalJobs == 0) && !showNA && (
+            {(jobsSummaryLoading || !jobsSummaryData || jobsSummaryData?.totalJobs == 0) && (
                 <div className={styles.emptyCircle} />
             )}
 
-            {(!jobsSummaryLoading && (jobsSummaryData?.totalJobs !== 0 || showNA)) && (
+            {!jobsSummaryLoading && jobsSummaryData?.totalJobs !== 0 && (
                 <canvas ref={ref} id="chart-area" width={162} height={162} />
             )}
         </div>

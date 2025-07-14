@@ -1,6 +1,7 @@
 import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
 import { Chart, registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './SandboxChart.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -10,6 +11,7 @@ import { getSandboxDistributionByAge } from '../../SandboxUtility';
 Chart.register(...registerables);
 
 const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
+    const { t } = useTranslation();
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
     const { showNA } = useAppSelector(state => state.headers);
@@ -58,7 +60,7 @@ const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
 
                 {showNA && (
                     <Typography variant="Regular_16" className={CommonStyles.notAvailable}>
-                        {GENERAL.NOT_AVAILABLE}
+                        {t('databases.general.not-available')}
                     </Typography>
                 )}
                 <Typography variant="Regular_14" className={showNA ? ` ${CommonStyles.notAvailable}` : ''}>

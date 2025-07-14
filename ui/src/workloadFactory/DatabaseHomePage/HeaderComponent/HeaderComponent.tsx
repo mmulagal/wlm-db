@@ -13,7 +13,7 @@ import {
 import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useDispatch } from 'react-redux';
-import { useNavigate, useNavigationType, NavigationType, useLocation } from 'react-router-dom';
+import { useNavigate, useNavigationType, NavigationType,useLocation } from 'react-router-dom';
 import styles from './HeaderComponent.module.scss';
 
 // @ts-ignore
@@ -234,9 +234,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            //Check for No cred
             if (location.state && location.state.allowDashboardNoCred) {
-                setStatusChk(true);
+                 setStatusChk(true);
                 return;
             }
             if (
@@ -933,48 +932,86 @@ const HeaderComponent = ({ tab }: Tab) => {
     const selectMultipleComponents = () => (
         <div className={styles.content}>
             <div className={styles.firstSelect}>
-                <DsSelect
-                    isLoading={credentialLoading}
-                    title=""
-                    formatLabel={() => labelForMultiSelectCred()}
-                    selectedOptionIds={
-                        headerSelectedMultiCred && headerSelectedMultiCred.length > 0
-                            ? headerSelectedMultiCred.map((cred: any) => cred?.data?.credentialsId)
-                            : []
-                    }
-                    className={styles.multiSelect}
-                    // @ts-ignore
-                    options={generateAccountsForMultiSelect}
-                    selectionType="multi"
-                    isWithActions
-                    variant="underline"
-                    onSelect={(option: any) => {
-                        dispatch(setHeaderSelectedMultiCred(option));
-                    }}
-                    placeholder="No credentials selected"
-                    isCleanable={false}
-                    isSelectAll
-                    dropDown={{
-                        isCloseOnClickOutside: true
-                    }}
-                    searchMethod={{
-                        method: 'smart'
-                    }}
-                    isReadOnly={
-                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                    }
-                    isDisabled={
-                        !credentialData ||
-                        credentialData.length === 0 ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                    }
-                    disabledReason={!credentialData || credentialData.length === 0 ? 'No credentials' : ''}
-                />
+                {!credentialData || credentialData.length === 0 ? (
+                    <Popover
+                        popoverClass={styles['copy-popover']}
+                        trigger="hover"
+                        container={
+                            <div>
+                                <DsSelect
+                                    isLoading={credentialLoading}
+                                    title=""
+                                    formatLabel={() => labelForMultiSelectCred()}
+                                    selectedOptionIds={[]}
+                                    className={styles.multiSelect}
+                                    // @ts-ignore
+                                    options={[]}
+                                    selectionType="multi"
+                                    isWithActions
+                                    variant="underline"
+                                    onSelect={() => {}}
+                                    placeholder="No credentials selected"
+                                    isCleanable={false}
+                                    isSelectAll
+                                    dropDown={{
+                                        isCloseOnClickOutside: true
+                                    }}
+                                    searchMethod={{
+                                        method: 'smart'
+                                    }}
+                                    isReadOnly={
+                                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                    }
+                                    isDisabled
+                                />
+                            </div>
+                        }
+                    >
+                        <div className={styles.noCredentialsTag}>No credentials</div>
+                    </Popover>
+                ) : (
+                    <DsSelect
+                        isLoading={credentialLoading}
+                        title=""
+                        formatLabel={() => labelForMultiSelectCred()}
+                        selectedOptionIds={
+                            headerSelectedMultiCred && headerSelectedMultiCred.length > 0
+                                ? headerSelectedMultiCred.map((cred: any) => cred?.data?.credentialsId)
+                                : []
+                        }
+                        className={styles.multiSelect}
+                        // @ts-ignore
+                        options={generateAccountsForMultiSelect}
+                        selectionType="multi"
+                        isWithActions
+                        variant="underline"
+                        onSelect={(option: any) => {
+                            dispatch(setHeaderSelectedMultiCred(option));
+                        }}
+                        placeholder="No credentials selected"
+                        isCleanable={false}
+                        isSelectAll
+                        dropDown={{
+                            isCloseOnClickOutside: true
+                        }}
+                        searchMethod={{
+                            method: 'smart'
+                        }}
+                        isReadOnly={
+                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                        }
+                        isDisabled={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                        }
+                    />
+                )}
             </div>
 
             <div className={styles.secondSelect}>
@@ -1013,12 +1050,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                     isDisabled={
                         !credentialData ||
                         credentialData.length === 0 ||
+                        !regionsData ||
+                        !regionsData.regions ||
+                        regionsData.regions.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                     }
-                    disabledReason={!credentialData || credentialData.length === 0 ? 'No credentials' : ''}
                 />
             </div>
         </div>
@@ -1027,43 +1066,79 @@ const HeaderComponent = ({ tab }: Tab) => {
     const selectSandboxComponents = () => (
         <div className={styles.content}>
             <div className={styles.firstSelect} title={headerSelectedCredSandbox?.label}>
-                <SelectField
-                    isLoading={credentialLoading}
-                    isClearable={false}
-                    value={headerSelectedCredSandbox ? [headerSelectedCredSandbox] : [generateSandboxAWSAccounts[0]]}
-                    onChange={(selectedOptions: any): void => {
-                        if (localStorage.getItem('selectedSandboxCred')) {
-                            localStorage.removeItem('selectedSandboxCred');
+                {generateSandboxAWSAccounts.length === 0 ? (
+                    <Popover
+                        popoverClass={styles['copy-popover']}
+                        trigger="hover"
+                        container={
+                            <div>
+                                <SelectField
+                                    isLoading={credentialLoading}
+                                    isClearable={false}
+                                    value={[]}
+                                    onChange={() => {}}
+                                    placeholder="Select a Credential"
+                                    isSearchable={false}
+                                    options={[]}
+                                    className={
+                                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                                            ? styles.regionSelect
+                                            : ''
+                                    }
+                                    isReadOnly={
+                                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                    }
+                                    isDisabled={true}
+                                />
+                            </div>
                         }
-                        localStorage.setItem('selectedSandboxCred', JSON.stringify(selectedOptions));
-                        dispatch(updateRefreshBlocked(false));
-                        dispatch(setHeaderSelectedCredSandbox(selectedOptions));
-                    }}
-                    placeholder="Select a Credential"
-                    isSearchable={generateSandboxAWSAccounts.length > 5}
-                    options={generateSandboxAWSAccounts}
-                    className={
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                            ? styles.regionSelect
-                            : ''
-                    }
-                    isReadOnly={
-                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                    }
-                    isDisabled={
-                        !credentialData ||
-                        credentialData.length === 0 ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                    }
-                />
+                         >
+                        <div className={styles.noCredentialsTag}>No credentials</div>
+                    </Popover>
+                ) : (
+                    <SelectField
+                        isLoading={credentialLoading}
+                        isClearable={false}
+                        value={
+                            headerSelectedCredSandbox ? [headerSelectedCredSandbox] : [generateSandboxAWSAccounts[0]]
+                        }
+                        onChange={(selectedOptions: any): void => {
+                            if (localStorage.getItem('selectedSandboxCred')) {
+                                localStorage.removeItem('selectedSandboxCred');
+                            }
+                            localStorage.setItem('selectedSandboxCred', JSON.stringify(selectedOptions));
+                            dispatch(updateRefreshBlocked(false));
+                            dispatch(setHeaderSelectedCredSandbox(selectedOptions));
+                        }}
+                        placeholder="Select a Credential"
+                        isSearchable={generateSandboxAWSAccounts.length > 5}
+                        options={generateSandboxAWSAccounts}
+                        className={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                                ? styles.regionSelect
+                                : ''
+                        }
+                        isReadOnly={
+                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                        }
+                        isDisabled={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                        }
+                    />
+                )}
             </div>
 
             <div className={styles.secondSelect}>
@@ -1110,8 +1185,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
-                        !credentialData ||
-                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
@@ -1503,7 +1576,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
-                                    <div />
+                                    {(!credentialData || credentialData.length === 0) ? (
+                                        selectMultipleComponents()
+                                    ) : (
+                                        <div />
+                                    )}
                                     <div className={styles.content}>
                                         <div className={styles.selectContainer}>
                                             <SelectField
