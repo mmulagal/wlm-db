@@ -546,7 +546,7 @@ async function recommendRemediation(
                         context,
                         sql,
                         additionalInfo:
-                            additionalInfo && !isEmpty(additionalInfo) ? formatAdditionalInfo(additionalInfo) : {},
+                            additionalInfo && !isEmpty(additionalInfo) ? formatAdditionalInfo(additionalInfo) : [],
                         tokenUsage: {
                             causeIdentification,
                             remediationRecommendation: {
