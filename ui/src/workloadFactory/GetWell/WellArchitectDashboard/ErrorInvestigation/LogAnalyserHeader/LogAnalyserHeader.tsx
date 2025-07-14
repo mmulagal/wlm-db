@@ -52,7 +52,8 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
             credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
             regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance
+            instanceId: selectedDatabaseInstance,
+            payload: {}
         }).then((res: any) => {
             const jobId = res?.data?.jobId;
             const state = store.getState();

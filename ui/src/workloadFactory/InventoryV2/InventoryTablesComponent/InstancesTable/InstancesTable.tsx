@@ -306,11 +306,9 @@ const InstancesTable = () => {
         );
     };
 
-    //Snapcenter Protection code starts
+    // Snapcenter Protection code starts
 
-    const isCancelled = (key: any) => {
-        return store.getState().snapCenter.dataMap[key]?.cancelled;
-    };
+    const isCancelled = (key: any) => store.getState().snapCenter.dataMap[key]?.cancelled;
 
     const handleProtection = async (rowData: any) => {
         const key = `${rowData.databaseInstanceName}_${rowData.name}`;

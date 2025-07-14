@@ -1207,9 +1207,10 @@ export const errorInvestigationApi = createApi({
             })
         }),
         scanErrorInvestigation: builder.mutation({
-            query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+            query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`,
-                method: 'POST'
+                method: 'POST',
+                body: payload
             })
         })
     })
