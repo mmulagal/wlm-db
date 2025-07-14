@@ -82,12 +82,13 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
         api.endpoint === 'discoverExistingFsxN' ||
         api.endpoint === 'getWorkSpaceID' ||
         api.endpoint === 'getRBACPrivileges' ||
-        api.endpoint === 'listExistingHosts'
+        api.endpoint === 'listExistingHosts' ||
+        api.endpoint === 'assignRBACPrivileges'
     ) {
         if (api.endpoint === 'discoverExistingFsxN') {
-            return isDevMode ? import.meta.env.VITE_APP_CM_URL : import.meta.env.VITE_APP_CM_URL;
+            return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
         }
-        return isDevMode ? import.meta.env.VITE_APP_BXP_URL : import.meta.env.VITE_APP_BXP_URL;
+        return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_BXP_URL;
     }
     return `${apiHost}/accounts/${accountId}/wlmdb`;
 };
@@ -590,6 +591,13 @@ export const snapcenterAPI = createApi({
         getRBACPrivileges: builder.mutation({
             query: ({ accountID }) => ({
                 url: `v1/management/organizations/${accountID}/users`
+            })
+        }),
+        assignRBACPrivileges: builder.mutation({
+            query: ({ accountID, payload }) => ({
+                url: `v1/management/organizations/${accountID}/roles/381a2b6e-693b-4829-95a5-fbd753db30c7/users`,
+                method: 'POST',
+                body: payload
             })
         }),
         listExistingHosts: builder.mutation({
@@ -1295,6 +1303,7 @@ export const {
 export const {
     useGetConnectorsMutation,
     useGetFsxDetailsMutation,
+    useAssignRBACPrivilegesMutation,
     useDiscoverExistingFsxNMutation,
     useGetWorkSpaceIDMutation,
     useGetRBACPrivilegesMutation,

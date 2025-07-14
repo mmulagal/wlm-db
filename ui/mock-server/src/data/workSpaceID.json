@@ -1,0 +1,198 @@
+{
+    "continue": "37161e30-6069-11f0-a3ed-c6bb8619b537",
+    "count": 5,
+    "items": [
+        {
+            "id": "fa13c91e-cb14-4e3b-841c-4488ef0f5451",
+            "isSystem": "false",
+            "legacyId": "account-aHP3esT5",
+            "links": [],
+            "name": "wlm-qa-automation",
+            "ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451",
+            "resourceClass": "hierarchy",
+            "resourceType": "organization",
+            "tags": [
+                {
+                    "internal:bxp:organizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:ancestors": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:legacyId": "account-aHP3esT5"
+                },
+                {
+                    "internal:bxp:resourceType": "organization"
+                },
+                {
+                    "internal:bxp:resourceClass": "hierarchy"
+                },
+                {
+                    "internal:bxp:ancestors": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:serial": "96075708201995209431"
+                },
+                {
+                    "internal:bxp:saas": "true"
+                },
+                {
+                    "internal:bxp:gov": "false"
+                },
+                {
+                    "internal:bxp:privatePreview": "false"
+                },
+                {
+                    "internal:bxp:thirdPartyServices": "false"
+                }
+            ],
+            "type": "application/vnd.netapp.bxp.resource",
+            "version": "1.0"
+        },
+        {
+            "id": "313782cc-dd35-4d66-aa12-0a29f57961a6",
+            "isSystem": "false",
+            "legacyId": "resource-oH2CavdM",
+            "links": [],
+            "name": "",
+            "ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451",
+            "rawId": "313782cc-dd35-4d66-aa12-0a29f57961a6",
+            "resourceClass": "ON_PREM",
+            "resourceType": "aws_assume_role",
+            "tags": [
+                {
+                    "internal:bxp:resourceId": "313782cc-dd35-4d66-aa12-0a29f57961a6"
+                },
+                {
+                    "internal:bxp:legacyId": "resource-oH2CavdM"
+                },
+                {
+                    "internal:bxp:resourceType": "aws_assume_role"
+                },
+                {
+                    "internal:bxp:resourceClass": "ON_PREM"
+                },
+                {
+                    "internal:bxp:cloudId": ""
+                },
+                {
+                    "internal:bxp:resourceIdentifier": "f3d9ffab-f00a-4659-aae7-9230683cee99"
+                },
+                {
+                    "internal:bxp:organizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:metadata": ""
+                }
+            ],
+            "type": "application/vnd.netapp.bxp.resource",
+            "version": "1.0"
+        },
+        {
+            "id": "d88fbaff-a413-4f3d-90a2-c43554ea4a36",
+            "isSystem": "false",
+            "legacyId": "workspace48WXwAWT",
+            "links": [],
+            "name": "Workspace-1",
+            "ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451",
+            "parentId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451",
+            "resourceClass": "hierarchy",
+            "resourceType": "project",
+            "tags": [
+                {
+                    "internal:bxp:legacyId": "workspace48WXwAWT"
+                },
+                {
+                    "internal:bxp:resourceType": "project"
+                },
+                {
+                    "internal:bxp:resourceClass": "hierarchy"
+                },
+                {
+                    "internal:bxp:projectId": "d88fbaff-a413-4f3d-90a2-c43554ea4a36"
+                },
+                {
+                    "internal:bxp:organizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:ancestors": "fa13c91e-cb14-4e3b-841c-4488ef0f5451,d88fbaff-a413-4f3d-90a2-c43554ea4a36"
+                },
+                {
+                    "internal:bxp:parentId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                }
+            ],
+            "type": "application/vnd.netapp.bxp.resource",
+            "version": "1.0"
+        },
+        {
+            "id": "d2fae37f-06c6-4da0-b024-37cff8cfd748",
+            "legacyId": "d2fae37f-06c6-4da0-b024-37cff8cfd748",
+            "links": [],
+            "name": "",
+            "ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451",
+            "rawId": "d2fae37f-06c6-4da0-b024-37cff8cfd748",
+            "resourceClass": "",
+            "resourceType": "aws_assume_role",
+            "tags": [
+                {
+                    "internal:bxp:legacyId": "d2fae37f-06c6-4da0-b024-37cff8cfd748"
+                },
+                {
+                    "internal:bxp:resourceId": "d2fae37f-06c6-4da0-b024-37cff8cfd748"
+                },
+                {
+                    "internal:bxp:organizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:resourceIdentifier": "9baeec99-9435-40fa-a265-775ed26cd6c5"
+                },
+                {
+                    "internal:bxp:cloudId": ""
+                }
+            ],
+            "type": "application/vnd.netapp.bxp.resource",
+            "version": "1.0"
+        },
+        {
+            "id": "2a692ce7-8842-49cc-a2fb-999c462076f9",
+            "legacyId": "2a692ce7-8842-49cc-a2fb-999c462076f9",
+            "links": [],
+            "name": "",
+            "ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451",
+            "rawId": "2a692ce7-8842-49cc-a2fb-999c462076f9",
+            "resourceClass": "",
+            "resourceType": "aws_assume_role",
+            "tags": [
+                {
+                    "internal:bxp:legacyId": "2a692ce7-8842-49cc-a2fb-999c462076f9"
+                },
+                {
+                    "internal:bxp:resourceId": "2a692ce7-8842-49cc-a2fb-999c462076f9"
+                },
+                {
+                    "internal:bxp:organizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:ownerOrganizationId": "fa13c91e-cb14-4e3b-841c-4488ef0f5451"
+                },
+                {
+                    "internal:bxp:resourceIdentifier": "6fccd890-16a5-4bf0-98c9-22952a7e90c3"
+                },
+                {
+                    "internal:bxp:cloudId": ""
+                }
+            ],
+            "type": "application/vnd.netapp.bxp.resource",
+            "version": "1.0"
+        }
+    ]
+}

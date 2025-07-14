@@ -3,7 +3,7 @@ import { SnapCenterEntities } from '../../utils/types/snapCenterTypes';
 
 export const initialSandboxState: SnapCenterEntities = {
     selectedAgent: [],
-    data: null
+    dataMap: {}
 };
 
 const snapCenterSlice = createSlice({
@@ -13,15 +13,28 @@ const snapCenterSlice = createSlice({
         setSelectedAgent: (state, action: PayloadAction<any>) => {
             state.selectedAgent = action.payload;
         },
-        setConnectors: (state, action) => {
-            state.data = action.payload;
+        setDataForRow: (state, action) => {
+            const { key, stepData } = action.payload;
+            if (!state.dataMap[key]) {
+                state.dataMap[key] = {};
+            }
+            state.dataMap[key] = {
+                ...state.dataMap[key],
+                ...stepData
+            };
         },
-        clearConnectors: state => {
-            state.data = null;
+        clearDataForRow: (state, action) => {
+            delete state.dataMap[action.payload.key];
+        },
+        cancelProtectionForRow: (state, action) => {
+            const key = action.payload;
+            if (state.dataMap[key]) {
+                state.dataMap[key].cancelled = true;
+            }
         }
     }
 });
 
-export const { setSelectedAgent, setConnectors, clearConnectors } = snapCenterSlice.actions;
+export const { setSelectedAgent, setDataForRow, clearDataForRow, cancelProtectionForRow } = snapCenterSlice.actions;
 
 export default snapCenterSlice;

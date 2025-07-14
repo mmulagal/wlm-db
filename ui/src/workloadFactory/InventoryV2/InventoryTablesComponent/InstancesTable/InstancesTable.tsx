@@ -17,6 +17,7 @@ import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg'
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
+    useAssignRBACPrivilegesMutation,
     useDiscoverExistingFsxNMutation,
     useGetConnectorsMutation,
     useGetFsxDetailsMutation,
@@ -85,7 +86,7 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
-import { setConnectors } from '../../../../store/workloadFactory/snapcenterSlice';
+import { cancelProtectionForRow, setDataForRow } from '../../../../store/workloadFactory/snapcenterSlice';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 
@@ -120,6 +121,7 @@ const InstancesTable = () => {
     const [getWorkSpaceID] = useGetWorkSpaceIDMutation();
     const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
     const [listExistingHosts] = useListExistingHostsMutation();
+    const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
 
     useEffect(() => {
         setLoading(
@@ -304,14 +306,18 @@ const InstancesTable = () => {
         );
     };
 
-    const handleProtection = async (rowData: any) => {
-        const existingConnectors = store.getState().snapCenter.data;
+    //Snapcenter Protection code starts
 
-        if (existingConnectors) {
-            // already in store, use directly
-            await handleFsxFlow(rowData, existingConnectors);
-            return;
-        }
+    const isCancelled = (key: any) => {
+        return store.getState().snapCenter.dataMap[key]?.cancelled;
+    };
+
+    const handleProtection = async (rowData: any) => {
+        const key = `${rowData.databaseInstanceName}_${rowData.name}`;
+        const existingData = store.getState().snapCenter.dataMap[key] || {};
+
+        dispatch(setDataForRow({ key, stepData: { cancelled: false } }));
+
         setDialog(
             <DialogComponent
                 header={t('databases.inventory.protect-header')}
@@ -319,6 +325,7 @@ const InstancesTable = () => {
                 primaryButton={t('databases.inventory.redirect')}
                 secondaryButton={GENERAL.CANCEL}
                 closeCallback={() => {
+                    dispatch(cancelProtectionForRow(key));
                     closeDialog();
                 }}
                 callback={() => {}}
@@ -326,50 +333,86 @@ const InstancesTable = () => {
                 dialogFrom={FROM_DIALOG.LOADER}
             />
         );
+
+        if (existingData.connectors) {
+            await handleFsxFlow(rowData, key, existingData);
+            return;
+        }
+
         const res = await getConnector({ accountID: store.getState().auth.accountId });
+        if (isCancelled(key)) return;
 
         if (res?.data?.occms) {
-            // save to store for next time
-            dispatch(setConnectors(res.data));
-            await handleFsxFlow(rowData, res.data);
+            dispatch(setDataForRow({ key, stepData: { connectors: res.data } }));
+            await handleFsxFlow(rowData, key, { connectors: res.data });
         } else {
             closeDialog();
         }
     };
 
-    const handleFsxFlow = async (rowData: any, connectorsData: any) => {
-        // First call the getFsxDetails API
-        const fsxRes = await getFsxDetails({ accountID: store.getState().auth.accountId });
+    const handleFsxFlow = async (rowData: any, key: string, stepData: any) => {
+        // if already have fsx info, skip
+        if (!stepData.fsxChecked) {
+            const fsxRes = await getFsxDetails({ accountID: store.getState().auth.accountId });
+            if (isCancelled(key)) return;
 
-        // Check if fsxId from rowData exists in fetched fsx list
-        // @ts-ignore
-        const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
+            const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
 
-        if (!fsxExists) {
-            const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
-            // Call discoverExistingFsxN API with payload { fsxId }
-            const discoverRes = await discoverExistingFsxN({
-                accountID: store.getState().auth.accountId,
-                credentialID: rowData.credentialId,
-                workSpaceID: workSpaceRes?.data?.items[0]?.id,
-                regionID: rowData.regionId,
-                payload: [rowData.fsxId]
-            });
-            console.log(discoverRes);
+            if (!fsxExists) {
+                const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+                if (isCancelled(key)) return;
+
+                await discoverExistingFsxN({
+                    accountID: store.getState().auth.accountId,
+                    credentialID: rowData.credentialId,
+                    workSpaceID: workSpaceRes?.data?.items[0]?.id,
+                    regionID: rowData.regionId,
+                    payload: [rowData.fsxId]
+                });
+                if (isCancelled(key)) return;
+            }
+            dispatch(setDataForRow({ key, stepData: { fsxChecked: true } }));
         }
 
-        const rbacRes = await getRBACPrivileges({ accountID: store.getState().auth.accountId });
-        console.log('RBAC Privileges:', rbacRes);
+        if (!stepData.rbac) {
+            const rbacRes = await getRBACPrivileges({ accountID: store.getState().auth.accountId });
+            if (rbacRes?.data?.items && rbacRes?.data?.items?.length > 0) {
+                const emailID = store.getState().auth.userMetadata?.email;
+                const matchingUser = rbacRes.data.items.find((item: any) => item.email === emailID);
+                if (matchingUser) {
+                    if (matchingUser?.roles) {
+                        const hasRequiredRole = rbacRes?.data?.items[0]?.roles.includes(
+                            '381a2b6e-693b-4829-95a5-fbd753db30c7'
+                        );
+                        if (!hasRequiredRole) {
+                            await assignRBACPrivileges({
+                                accountID: store.getState().auth.accountId,
+                                payload: {
+                                    type: 'application/vnd.netapp.bxp.userbulk',
+                                    users: [{ userId: rbacRes?.data?.items[0]?.id }],
+                                    version: '1.0'
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            if (isCancelled(key)) return;
 
-        const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
+            dispatch(setDataForRow({ key, stepData: { rbac: rbacRes } }));
+        }
 
-        // Check if the host exists by name
-        const hostExists = hostsRes?.data?.hosts?.some((host: any) => host.name === rowData.hostRow.name);
+        if (!stepData.hostChecked) {
+            const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
+            if (isCancelled(key)) return;
 
-        console.log('Is host managed already?', hostExists);
+            const hostExists = hostsRes?.data?.hosts?.some((host: any) => host.name === rowData.hostRow.name);
+            dispatch(setDataForRow({ key, stepData: { hostChecked: true, isHostManaged: hostExists } }));
+        }
 
-        // Now proceed with protection flow as before
-        proceedWithProtection(connectorsData);
+        if (isCancelled(key)) return;
+
+        proceedWithProtection(stepData.connectors);
     };
 
     const proceedWithProtection = (data: any) => {
@@ -525,7 +568,8 @@ const InstancesTable = () => {
     const instanceNameHyperLink = (rowData: any, name: string) => {
         if (
             name &&
-            rowData?.hostType === DBType.MSSQL && rowData?.managementStatus === INVENTORY_STATUS.REGISTERED &&
+            rowData?.hostType === DBType.MSSQL &&
+            rowData?.managementStatus === INVENTORY_STATUS.REGISTERED &&
             (rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP)
         ) {
