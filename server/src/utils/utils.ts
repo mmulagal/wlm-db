@@ -813,7 +813,9 @@ async function decompressSSMResponse(response: string) {
     } catch (err) {
         if (
             err instanceof Error &&
-            ['invalid stored block lengths', 'invalid block type'].some(msg => err?.message?.toLowerCase().includes(msg))
+            ['invalid stored block lengths', 'invalid block type'].some(msg =>
+                err?.message?.toLowerCase().includes(msg)
+            )
         ) {
             logger.error('Trying to decompress response that is not base64 encoded', response);
             return response;

@@ -42,10 +42,10 @@ import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-lo
 import { cronAssessmentCollection } from './cont-opt-assessment-operations';
 import { Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
-import { purgeOlderAssessmentRecords } from './database/instance-config-operations';
 import { listAllManagedInstances } from './database/database-operations';
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
 import { processWellArchitectedAssessmentNotifications } from './continuous-optimization/notification';
+import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -286,7 +286,7 @@ async function logQueueMetrics(queue: Queue) {
 
 async function purgeAssessmentData() {
     setInterval(async () => {
-        await purgeOlderAssessmentRecords();
+        await deleteAllButLatestRecordPerConfigDataType();
     }, Number(ms(config.get('db.assessment.purge.interval'))));
 }
 

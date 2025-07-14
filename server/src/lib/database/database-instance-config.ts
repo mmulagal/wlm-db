@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
@@ -104,32 +104,22 @@ async function removeDatabaseInstanceConfigData(
     });
 }
 
-async function removeAllButLatestDatabaseInstanceConfigData(
-    accountId: string,
-    region: string,
-    credentialsId: string,
-    resourceId: string,
-    databaseInstanceId: string,
-    latestCreatedTime: Date
-) {
-    logger.info('Remove all but latest assessment data', {
-        accountId,
-        region,
-        credentialsId,
-        resourceId,
-        databaseInstanceId,
-        latestCreatedTime
+async function deleteAllButLatestRecordPerConfigDataType() {
+    logger.info('Deleting all but latest record per config data type');
+
+    const latestRecords = await prisma.client.database_instance_config_data.groupBy({
+        by: ['account_id', 'region', 'credentials_id', 'resource_id', 'database_instance_id', 'config_data_type'],
+        _max: {
+            creation_time: true
+        }
     });
+
+    const latestRecordCreationTimes = compact(latestRecords.map(record => record._max.creation_time));
 
     return prisma.client.database_instance_config_data.deleteMany({
         where: {
-            account_id: accountId,
-            credentials_id: credentialsId,
-            region,
-            resource_id: resourceId,
-            database_instance_id: databaseInstanceId,
             creation_time: {
-                lt: latestCreatedTime
+                notIn: latestRecordCreationTimes
             }
         }
     });
@@ -175,6 +165,6 @@ export {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData,
     removeDatabaseInstanceConfigData,
-    removeAllButLatestDatabaseInstanceConfigData,
+    deleteAllButLatestRecordPerConfigDataType,
     countDatabaseInstanceConfigRecords
 };
