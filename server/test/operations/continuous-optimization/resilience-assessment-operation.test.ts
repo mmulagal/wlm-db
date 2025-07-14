@@ -16,7 +16,7 @@ import {
     collectVolumeSnapshotCopiesData,
     getResilienceDriftAssessment,
     getVolumesWithoutSnapshotPolicy
-} from '../../../src/operations/continuous-optimization/resilience-assessment-operation';
+} from '../../../src/operations/continuous-optimization/mssql/resilience-assessment-operation';
 import { WorkloadInstance } from '../../../src/utils/common-types';
 import { createDatabaseInstanceConfigData } from '../../../src/lib/database/database-instance-config';
 import { AssessmentCategories } from '../../../src/utils/continous-optimization-consts';

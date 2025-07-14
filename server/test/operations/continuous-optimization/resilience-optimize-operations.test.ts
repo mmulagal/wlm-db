@@ -13,7 +13,7 @@ import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../.
 import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
-} from '../../../src/operations/continuous-optimization/resilience-optimize-operations';
+} from '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations';
 import { RESOURCE_ID } from '../../../src/utils/consts';
 import { OPTIMIZE_RESILIENCY_CONFIGS } from '../../../src/utils/continous-optimization-consts';
 

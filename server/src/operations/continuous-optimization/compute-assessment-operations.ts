@@ -18,7 +18,6 @@ import { ComputeAssessment, ResourceAssessmentData } from '../../utils/common-ty
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
-import { updateDatabaseHostAssessmentData } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -160,12 +159,6 @@ function calculateComputeDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating compute drift. ${error.message}`;
         logger.error({ errorMessage, error });
-        const newAssessmentData = {
-            ...assessmentData,
-            errors: { ...assessmentData?.errors, compute: errorMessage },
-            lastAssessedDate: Date.now().toString()
-        };
-        updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     }
     return { errorMessage };
 }

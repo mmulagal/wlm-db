@@ -96,12 +96,12 @@ import {
     getHeadroomDrift,
     getLogVolumeDrift,
     getTempDbVolumeDrift
-} from './continuous-optimization/storage-assessment-operations';
+} from './continuous-optimization/mssql/storage-assessment-operations';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
-import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { listJobs } from '../lib/database/job';
 import { resetCache } from '../utils/cache';
-import { handleCloneRemediation } from './continuous-optimization/clone-optimization-operations';
+import { handleCloneRemediation } from './continuous-optimization/mssql/clone-optimization-operations';
+import { onDemandTriggerMssqlDriftAssessment } from './continuous-optimization/mssql/assessment-operations';
 
 const isDemoFlow = isDemo();
 
@@ -2971,7 +2971,7 @@ async function triggerAssessmentAfterOptimization(
         await sleep(5000);
     }
 
-    await onDemandTriggerDriftAssessmentDataCollection(
+    await onDemandTriggerMssqlDriftAssessment(
         accountId,
         credentialsId,
         region,

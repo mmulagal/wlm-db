@@ -9,7 +9,7 @@ import {
     getAvailablePatches,
     getInstalledSQLPatchDetails
 } from '../../../src/operations/aws/mssqlPatch-ssm-operations';
-import { getTheMSSqlversion } from '../../../src/operations/continuous-optimization/mssqlPatch-assessment-operations';
+import { getTheMSSqlversion } from '../../../src/operations/continuous-optimization/mssql/mssqlPatch-assessment-operations';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 

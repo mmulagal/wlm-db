@@ -1,21 +1,21 @@
 import { isEmpty, isUndefined } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { listResources } from '../../lib/database/db';
-import getLogger from '../../utils/logger';
-import { Metadata, ResourceAssessmentData, RssConfigAssesment } from '../../utils/common-types';
-import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
+import { listResources } from '../../../lib/database/db';
+import getLogger from '../../../utils/logger';
+import { Metadata, ResourceAssessmentData, RssConfigAssesment } from '../../../utils/common-types';
+import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
 import {
     AssessmentCategories,
     AssessmentTriggeredBy,
     OPTIMIZATION_CATEGORIES
-} from '../../utils/continous-optimization-consts';
-import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../utils/utils';
-import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
-import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
-import { OPTIMIZE_NETWORK_ADAPTERS } from '../workloads/mssql/continuous-optimization-scripts';
-import { updateJobDetails } from '../database/job-operations';
-import { getInstanceInfo, updateResourceMetaData } from '../database/database-operations';
-import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
+} from '../../../utils/continous-optimization-consts';
+import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../../utils/utils';
+import { callSsmExecution, pollSSMConnectionStatus } from '../../aws/ssm-operations';
+import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
+import { OPTIMIZE_NETWORK_ADAPTERS } from '../../workloads/mssql/continuous-optimization-scripts';
+import { updateJobDetails } from '../../database/job-operations';
+import { getInstanceInfo, updateResourceMetaData } from '../../database/database-operations';
+import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import {
     checkRunningStatus,
     getClusterNodeInstanceIds,
@@ -23,11 +23,11 @@ import {
     handleRollbackClusterOwnership,
     moveClusterGroupOwnership,
     transferClusterOwnershipToStandbyNode
-} from './compute-optimize-operations';
-import { waitForInstanceOk } from '../../lib/aws/ec2';
-import { AuditStatus, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
-import { onDemandTriggerDriftAssessmentDataCollection } from '../cont-opt-assessment-operations';
-import { resetCache } from '../../utils/cache';
+} from '../compute-optimize-operations';
+import { waitForInstanceOk } from '../../../lib/aws/ec2';
+import { AuditStatus, SSM_COMMAND_CACHE_TYPE } from '../../../utils/consts';
+import { resetCache } from '../../../utils/cache';
+import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
 
 const logger = getLogger();
 async function optimizeNetworkAdapters(
@@ -399,7 +399,7 @@ async function handleOptimizeRssOptimization(
                 // clearning all the ssm command cache so that we will get the fresh data in assessment
                 resetCache(SSM_COMMAND_CACHE_TYPE);
                 // Trigger assessment after optimize
-                await onDemandTriggerDriftAssessmentDataCollection(
+                await onDemandTriggerMssqlDriftAssessment(
                     accountId,
                     credentialsId,
                     region,

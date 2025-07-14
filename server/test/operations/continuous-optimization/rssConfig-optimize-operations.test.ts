@@ -9,7 +9,7 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/aws/compute-optimizer-scope';
 import { createResource, listResources, upsertDatabaseInstance } from '../../../src/lib/database/db';
-import { handleOptimizeRssOptimization } from '../../../src/operations/continuous-optimization/rssConfig-optimize-operations';
+import { handleOptimizeRssOptimization } from '../../../src/operations/continuous-optimization/mssql/rssConfig-optimize-operations';
 import { Metadata } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';

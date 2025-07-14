@@ -12,7 +12,7 @@ import '../../simulator/scopes/aws/compute-optimizer-scope';
 import {
     calculateHostOsPatchDrift,
     managedHostOsPatchAssessment
-} from '../../../src/operations/continuous-optimization/hostOsPatch-assessment-operations';
+} from '../../../src/operations/continuous-optimization/mssql/hostOsPatch-assessment-operations';
 import { ResourceAssessmentData } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';

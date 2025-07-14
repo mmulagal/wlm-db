@@ -414,6 +414,7 @@ interface WorkloadInstance {
     resourceName: string;
     svmId?: string;
     svmOntapUuid?: string;
+    databaseObject?: DatabaseInstance;
 }
 interface LogDriveDetails {
     lunUuid: string;

@@ -1,23 +1,23 @@
 import { isEmpty } from 'lodash-es';
 
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import getLogger from '../../utils/logger';
-import { MaxDOPAssesment } from '../../utils/common-types';
-import { getInstanceDetails } from '../database-hosts-operations';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
+import getLogger from '../../../utils/logger';
+import { MaxDOPAssesment } from '../../../utils/common-types';
+import { getInstanceDetails } from '../../database-hosts-operations';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
-} from '../../utils/continous-optimization-consts';
-import { registerJob, updateJobDetails } from '../database/job-operations';
-import { GET_VCPU_AND_MAXDOP_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
-import { callSsmExecution } from '../aws/ssm-operations';
-import { sqlResponseParsing } from '../../utils/utils';
-import { ParameterDriftResponseType } from '../../routes/types/continuous-optimization.types';
-import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+} from '../../../utils/continous-optimization-consts';
+import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { GET_VCPU_AND_MAXDOP_DETAILS } from '../../workloads/mssql/continuous-optimization-scripts';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { sqlResponseParsing } from '../../../utils/utils';
+import { ParameterDriftResponseType } from '../../../routes/types/continuous-optimization.types';
+import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 
 const logger = getLogger();
 

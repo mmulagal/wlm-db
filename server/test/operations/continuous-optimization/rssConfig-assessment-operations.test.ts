@@ -2,7 +2,7 @@ import {
     calculateRssConfigDrift,
     managedHostsRssConfigAssessment,
     runRssConfigAssessment
-} from '../../../src/operations/continuous-optimization/rssConfig-assessment-operations';
+} from '../../../src/operations/continuous-optimization/mssql/rssConfig-assessment-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';

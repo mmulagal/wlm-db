@@ -2,9 +2,9 @@ import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { CommandFilterKey } from '@aws-sdk/client-ssm';
-import { listResources } from '../../lib/database/db';
+import { listResources } from '../../../lib/database/db';
 
-import getLogger from '../../utils/logger';
+import getLogger from '../../../utils/logger';
 import {
     AssessmentCategories,
     AssessmentStatus,
@@ -12,17 +12,17 @@ import {
     SEVERITY,
     ASSESSMENT_RESOURCE_TYPE,
     TEST_CONNECTION_COMMAND
-} from '../../utils/continous-optimization-consts';
-import { HostOsPatchAssessmentObject, Metadata, ResourceAssessmentData } from '../../utils/common-types';
-import { registerJob, updateJobDetails } from '../database/job-operations';
-import { getAllClusterNodeDetails } from '../database-hosts-operations';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../utils/consts';
-import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
-import { listSsmCommands } from '../../lib/aws/ssm';
-import { callSsmExecution } from '../aws/ssm-operations';
-import { updateDatabaseHostAssessmentData } from '../database/database-operations';
-import { describeInstance } from '../../lib/aws/ec2';
-import { getResourceNameFromTags } from '../../utils/utils';
+} from '../../../utils/continous-optimization-consts';
+import { HostOsPatchAssessmentObject, Metadata, ResourceAssessmentData } from '../../../utils/common-types';
+import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { getAllClusterNodeDetails } from '../../database-hosts-operations';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../../utils/consts';
+import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../aws/ospatch-ssm-operations';
+import { listSsmCommands } from '../../../lib/aws/ssm';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { updateDatabaseHostAssessmentData } from '../../database/database-operations';
+import { describeInstance } from '../../../lib/aws/ec2';
+import { getResourceNameFromTags } from '../../../utils/utils';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
@@ -71,7 +71,7 @@ async function checkIfWindowsUpdateCatalogReachable(
     }
 }
 
-async function calculateHostOsPatchDrift(
+function calculateHostOsPatchDrift(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -120,12 +120,6 @@ async function calculateHostOsPatchDrift(
     } catch (error) {
         errorMessage = `Error while calculating host os patch drift. ${error}`;
         logger.error({ errorMessage });
-        const { errors = {} } = assessmentData as ResourceAssessmentData;
-        await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, {
-            ...assessmentData,
-            errors: { ...errors, hostOsPatch: errorMessage },
-            lastAssessedDate: Date.now().toString()
-        });
     }
     return { errorMessage };
 }
@@ -185,6 +179,9 @@ async function managedHostOsPatchAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+    }
+    if (!isEmpty(hostOsPatchAssessment)) {
+        updatePatchBaselineStatusForHost(accountId, databaseHostId, hostOsPatchAssessment);
     }
     return { hostOsPatchAssessment, errorMessage };
 }

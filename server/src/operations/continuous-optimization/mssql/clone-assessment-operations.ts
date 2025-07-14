@@ -2,36 +2,36 @@ import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import getLogger from '../../utils/logger';
+import getLogger from '../../../utils/logger';
 import {
     CloneAssessment,
     CloneDetail,
     InstancesResponse,
     VolumeDBMapEntry,
     VolumeRecord
-} from '../../utils/common-types';
-import { getInstanceDetails, getInstanceOntapDetails } from '../database-hosts-operations';
+} from '../../../utils/common-types';
+import { getInstanceDetails, getInstanceOntapDetails } from '../../database-hosts-operations';
 import {
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
     GENERIC_ASSESSMENT_ERROR_MESSAGE,
     HttpErrorCodes,
     CLONE_AGE
-} from '../../utils/consts';
+} from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
-} from '../../utils/continous-optimization-consts';
-import { registerJob, updateJobDetails } from '../database/job-operations';
-import { GET_SANDBOX_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
-import { callSsmExecution } from '../aws/ssm-operations';
-import { calculateDaysSince, sqlResponseParsing } from '../../utils/utils';
-import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
-import { GET_SANDBOXES } from '../workloads/mssql/queries';
-import { getProperty, getSourceDetails } from '../sandbox-operations';
-import { getMappedOntapVolumes } from '../aws/fsx-operations';
+} from '../../../utils/continous-optimization-consts';
+import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { GET_SANDBOX_DETAILS } from '../../workloads/mssql/continuous-optimization-scripts';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { calculateDaysSince, sqlResponseParsing } from '../../../utils/utils';
+import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
+import { GET_SANDBOXES } from '../../workloads/mssql/queries';
+import { getProperty, getSourceDetails } from '../../sandbox-operations';
+import { getMappedOntapVolumes } from '../../aws/fsx-operations';
 
 const logger = getLogger();
 

@@ -12,7 +12,7 @@ import '../../simulator/scopes/aws/compute-optimizer-scope';
 import {
     calculateLicenseDrift,
     managedHostsLicenseAssessment
-} from '../../../src/operations/continuous-optimization/license-assessment-operations';
+} from '../../../src/operations/continuous-optimization/mssql/license-assessment-operations';
 import { ResourceAssessmentData } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';

@@ -1,12 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
-    fetchDriftAssessment,
-    fetchDriftAssessmentPerAccount,
-    fetchDriftAssessmentPerHost,
-    onDemandTriggerDriftAssessmentDataCollection
-} from '../operations/cont-opt-assessment-operations';
-import {
     AssessmentTriggeredBy,
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
@@ -49,12 +43,18 @@ import {
 import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
-} from '../operations/continuous-optimization/resilience-optimize-operations';
+} from '../operations/continuous-optimization/mssql/resilience-optimize-operations';
 import {
     OptimizeResiliencyBodyType,
     BulkOptimizeCloneInHostRequestBodyType
 } from './types/continuous-optimization.types';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-utils';
+import {
+    fetchMssqlDriftAssessment,
+    fetchMssqlDriftAssessmentPerAccount,
+    fetchMssqlDriftAssessmentPerHost,
+    onDemandTriggerMssqlDriftAssessment
+} from '../operations/continuous-optimization/mssql/assessment-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
@@ -71,7 +71,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
                     query: { fields }
                 } = castRequest(request);
-                const response = await fetchDriftAssessment(
+                const response = await fetchMssqlDriftAssessment(
                     accountId,
                     credentialsId,
                     region,
@@ -90,7 +90,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
                     query: { fields }
                 } = castRequest(request);
-                const response = await onDemandTriggerDriftAssessmentDataCollection(
+                const response = await onDemandTriggerMssqlDriftAssessment(
                     accountId,
                     credentialsId,
                     region,
@@ -194,7 +194,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     query: { fields }
                 } = castRequest(request);
 
-                const response = await fetchDriftAssessmentPerHost(
+                const response = await fetchMssqlDriftAssessmentPerHost(
                     accountId,
                     credentialsId,
                     region,
@@ -230,7 +230,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 query: { fields, nextToken, pageSize }
             } = castRequest(request);
 
-            const response = await fetchDriftAssessmentPerAccount(
+            const response = await fetchMssqlDriftAssessmentPerAccount(
                 accountId,
                 credentialsId,
                 region,

@@ -2,24 +2,28 @@ import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import getLogger from '../../utils/logger';
-import { getAllClusterNodeDetails } from '../database-hosts-operations';
+import getLogger from '../../../utils/logger';
+import { getAllClusterNodeDetails } from '../../database-hosts-operations';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
-} from '../../utils/continous-optimization-consts';
-import { registerJob, updateJobDetails } from '../database/job-operations';
-import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
-import { MSSQLPatchAssessmentObject, PatchDetail, ResourceAssessmentData } from '../../utils/common-types';
-import { extractKbNumber, extractVersionDetails, getResourceNameFromTags, sqlResponseParsing } from '../../utils/utils';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
-import { GET_INSTALLED_MSSQL_VERSION } from '../workloads/mssql/continuous-optimization-scripts';
-import { callSsmExecution } from '../aws/ssm-operations';
-import { updateDatabaseHostAssessmentData } from '../database/database-operations';
-import { describeInstance } from '../../lib/aws/ec2';
+} from '../../../utils/continous-optimization-consts';
+import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { getAvailablePatches, getInstalledSQLPatchDetails } from '../../aws/mssqlPatch-ssm-operations';
+import { MSSQLPatchAssessmentObject, PatchDetail, ResourceAssessmentData } from '../../../utils/common-types';
+import {
+    extractKbNumber,
+    extractVersionDetails,
+    getResourceNameFromTags,
+    sqlResponseParsing
+} from '../../../utils/utils';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
+import { GET_INSTALLED_MSSQL_VERSION } from '../../workloads/mssql/continuous-optimization-scripts';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { describeInstance } from '../../../lib/aws/ec2';
 
 const logger = getLogger();
 
@@ -29,7 +33,7 @@ interface InstalledPatches {
     InstallDate: string;
 }
 
-async function calculateMSSQLPatchDrift(
+function calculateMSSQLPatchDrift(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -48,7 +52,6 @@ async function calculateMSSQLPatchDrift(
 
     try {
         const { mssqlPatch, errors } = assessmentData;
-        logger.info('MSSQL patch assessment from metadata', mssqlPatch);
 
         if (isEmpty(mssqlPatch)) {
             errorMessage = errors?.mssqlPatch
@@ -94,12 +97,6 @@ async function calculateMSSQLPatchDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;
         logger.error({ errorMessage, error });
-        const newAssessmentData = {
-            ...assessmentData,
-            errors: { ...assessmentData?.errors, mssqlPatch: errorMessage },
-            lastAssessedDate: Date.now().toString()
-        };
-        updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     }
     return { errorMessage };
 }

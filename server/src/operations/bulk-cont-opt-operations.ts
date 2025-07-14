@@ -33,7 +33,7 @@ import {
 } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
-import { handleOptimizeRssOptimization } from './continuous-optimization/rssConfig-optimize-operations';
+import { handleOptimizeRssOptimization } from './continuous-optimization/mssql/rssConfig-optimize-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { resetCache } from '../utils/cache';
 import { getServerNameWithHostname, isDemo } from '../utils/utils';
@@ -45,7 +45,7 @@ import {
     DatabaseInstanceMetadata,
     MappedVolumeResponseForClone
 } from '../utils/common-types';
-import { getMappedVolumeDetailForInstance } from './continuous-optimization/clone-optimization-operations';
+import { getMappedVolumeDetailForInstance } from './continuous-optimization/mssql/clone-optimization-operations';
 import { getInstanceInfo } from './database/database-operations';
 import { updateOptimizedConfigMetaData } from './demo-operations';
 

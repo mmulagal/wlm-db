@@ -1,29 +1,28 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { getSqlServerVersionAndEdition } from '../workloads/mssql/mssql-operations';
+import { getSqlServerVersionAndEdition } from '../../workloads/mssql/mssql-operations';
 import {
     fetchSqlServerInstanceConfiguration,
     getLicenseRecommendations,
     isNonFreeEnterpriseEdition
-} from '../recommendation-operations';
+} from '../../recommendation-operations';
 
-import getLogger from '../../utils/logger';
-import { LicenseAssessment, ResourceAssessmentData } from '../../utils/common-types';
-import { ENT_ENGINE_EDITION, FINDING, GENERIC_ASSESSMENT_ERROR_MESSAGE, SQL_STD } from '../../utils/consts';
+import getLogger from '../../../utils/logger';
+import { LicenseAssessment, ResourceAssessmentData } from '../../../utils/common-types';
+import { ENT_ENGINE_EDITION, FINDING, GENERIC_ASSESSMENT_ERROR_MESSAGE, SQL_STD } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
-} from '../../utils/continous-optimization-consts';
-import { registerJob, updateJobDetails } from '../database/job-operations';
-import { getMatchingAssessmentStatus } from './assessment-utils';
-import { updateDatabaseHostAssessmentData } from '../database/database-operations';
+} from '../../../utils/continous-optimization-consts';
+import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { getMatchingAssessmentStatus } from '../assessment-utils';
 
 const logger = getLogger();
 
-async function calculateLicenseDrift(
+function calculateLicenseDrift(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -69,12 +68,6 @@ async function calculateLicenseDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating license drift. ${error.message}`;
         logger.error({ errorMessage, error });
-        const newAssessmentData = {
-            ...assessmentData,
-            errors: { ...assessmentData?.errors, license: errorMessage },
-            lastAssessedDate: Date.now().toString()
-        };
-        await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     }
     return { errorMessage };
 }

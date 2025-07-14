@@ -39,15 +39,13 @@ import {
     fetchSqlServerInstanceConfiguration
 } from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
-import {
-    processWellArchitectedAssessmentNotifications,
-    triggerDriftAssessmentDataCollection
-} from './cont-opt-assessment-operations';
+import { cronAssessmentCollection } from './cont-opt-assessment-operations';
 import { Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import { purgeOlderAssessmentRecords } from './database/instance-config-operations';
 import { listAllManagedInstances } from './database/database-operations';
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
+import { processWellArchitectedAssessmentNotifications } from './continuous-optimization/notification';
 
 const logger = getLogger();
 
@@ -369,7 +367,7 @@ async function initiateCronOperations() {
                 jobName: 'CONTINUOUS_OPTIMIZATION_DRIFT_ASSESSMENT',
                 cronPattern: DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN,
                 workerProcessor: async () => {
-                    await triggerDriftAssessmentDataCollection(AssessmentTriggeredBy.SYSTEM);
+                    await cronAssessmentCollection(AssessmentTriggeredBy.SYSTEM);
                 },
                 onJobErrorMessage: 'Error processing drift assessment job:'
             });

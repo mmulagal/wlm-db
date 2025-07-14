@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { Metadata, ResourceAssessmentData, RssConfigAssesment } from '../../utils/common-types';
+import { Metadata, ResourceAssessmentData, RssConfigAssesment } from '../../../utils/common-types';
 import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
@@ -8,19 +8,18 @@ import {
     SEVERITY,
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories
-} from '../../utils/continous-optimization-consts';
-import getLogger from '../../utils/logger';
-import { isDemo, sqlResponseParsing } from '../../utils/utils';
-import { callSsmExecution } from '../aws/ssm-operations';
-import { GET_RSS_CONFIG_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
+} from '../../../utils/continous-optimization-consts';
+import getLogger from '../../../utils/logger';
+import { isDemo, sqlResponseParsing } from '../../../utils/utils';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { GET_RSS_CONFIG_DETAILS } from '../../workloads/mssql/continuous-optimization-scripts';
 
-import { registerJob, updateJobDetails } from '../database/job-operations';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
-import { updateDatabaseHostAssessmentData } from '../database/database-operations';
+import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
 
 const logger = getLogger();
 
-async function calculateRssConfigDrift(
+function calculateRssConfigDrift(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -83,12 +82,6 @@ async function calculateRssConfigDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating rss config drift. ${error.message}`;
         logger.error({ errorMessage, error });
-        const newAssessmentData = {
-            ...assessmentData,
-            errors: { ...assessmentData?.errors, rssConfig: errorMessage },
-            lastAssessedDate: Date.now().toString()
-        };
-        await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
     }
     return { errorMessage };
 }

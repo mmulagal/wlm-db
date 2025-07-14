@@ -347,6 +347,8 @@ const DriftAssessmentResponsePerHost = Type.Object({
     instancesAssessment: Type.Array(DriftAssessmentResponsePerInstance)
 });
 
+type DriftAssessmentResponsePerHostType = Static<typeof DriftAssessmentResponsePerHost>;
+
 const OptimizeStorageRequestParams = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
     objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
@@ -679,5 +681,6 @@ export {
     dismissedConfigurationsResponseType,
     BulkDismissConfigurationBodyType,
     ContinuousOptimizationQueryString,
-    AssessmentQueryStringPerAccount
+    AssessmentQueryStringPerAccount,
+    DriftAssessmentResponsePerHostType
 };

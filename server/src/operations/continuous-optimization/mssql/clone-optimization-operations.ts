@@ -1,20 +1,20 @@
 import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
-import { CloneDetailType } from '../../routes/types/continuous-optimization.types';
+import { CloneDetailType } from '../../../routes/types/continuous-optimization.types';
 import {
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
     CLONE_ACTION,
     HttpErrorCodes,
     SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
     SandboxLifecycleAction
-} from '../../utils/consts';
-import getLogger from '../../utils/logger';
+} from '../../../utils/consts';
+import getLogger from '../../../utils/logger';
 import {
     runSandboxPreValidations,
     performSandboxDeletion,
     getSandboxSnapshots,
     performLifecycleUpdate
-} from '../sandbox-operations';
+} from '../../sandbox-operations';
 import {
     CloneDetail,
     ClonedVolumeDetail,
@@ -22,12 +22,12 @@ import {
     MappedVolumeResponseForClone,
     Metadata,
     VolumeDBMapEntry
-} from '../../utils/common-types';
-import { getMappedOntapVolumes } from '../aws/fsx-operations';
-import { listResources } from '../../lib/database/db';
-import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
-import { getInstanceDetails, getInstanceOntapDetails } from '../database-hosts-operations';
-import { isDemo } from '../../utils/utils';
+} from '../../../utils/common-types';
+import { getMappedOntapVolumes } from '../../aws/fsx-operations';
+import { listResources } from '../../../lib/database/db';
+import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
+import { getInstanceDetails, getInstanceOntapDetails } from '../../database-hosts-operations';
+import { isDemo } from '../../../utils/utils';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();

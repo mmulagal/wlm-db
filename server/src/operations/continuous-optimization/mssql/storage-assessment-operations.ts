@@ -1,24 +1,47 @@
-import { countBy, isEmpty, isNull } from 'lodash-es';
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import createError from 'http-errors';
+import { compact, countBy, isEmpty, isNull } from 'lodash-es';
 import {
     AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     ASSESSMENT_RESOURCE_TYPE,
     VALID_MPIO_LB_POLICIES
-} from '../../utils/continous-optimization-consts';
-import getLogger from '../../utils/logger';
+} from '../../../utils/continous-optimization-consts';
+import getLogger from '../../../utils/logger';
 
-import storageGoldenConfigData from './golden-configs/storage';
+import storageGoldenConfigData from '../golden-configs/storage';
 import {
     SizingViolationResponseType,
     StorageParameterDriftResponseType,
     GenericViolationResponseType
-} from '../../routes/types/continuous-optimization.types';
-import { LogDriveDetails, StorageAssessment, TempDbDriveDetails } from '../../utils/common-types';
-import { calculateFsxStorageCapacityForHeadroomOptimization, convertToBytes } from '../../utils/utils';
-import getMissingPermissionsList from '../aws/iam-operations';
-import { getFsxStorageDetails } from '../aws/fsx-operations';
-import { calculateFsxnStorageEfficiencyUsingCloudwatch } from '../aws/cloud-watch-operations';
+} from '../../../routes/types/continuous-optimization.types';
+import {
+    LogDriveDetails,
+    MappedOnTapVolumeResponse,
+    StorageAssessment,
+    TempDbDriveDetails,
+    WorkloadInstance
+} from '../../../utils/common-types';
+import {
+    calculateFsxStorageCapacityForHeadroomOptimization,
+    convertToBytes,
+    isDemo,
+    sqlResponseParsing
+} from '../../../utils/utils';
+import getMissingPermissionsList from '../../aws/iam-operations';
+import { getFsxStorageDetails } from '../../aws/fsx-operations';
+import { calculateFsxnStorageEfficiencyUsingCloudwatch } from '../../aws/cloud-watch-operations';
+import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
+import {
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
+    HttpErrorCodes,
+    ASSESSMENT_SSM_EXECUTION_TIMEOUT
+} from '../../../utils/consts';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { STORAGE_CONFIGURATION_ASSESSMENT } from '../../workloads/mssql/continuous-optimization-scripts';
+import { collectSnapshotCopyData } from './resilience-assessment-operation';
 
 const logger = getLogger();
 
@@ -53,6 +76,177 @@ const lunConfigData = storageGoldenConfigData.configuration.lun;
 const osConfigData = storageGoldenConfigData.configuration.os;
 const layoutConfigData = storageGoldenConfigData.layout;
 const sizingConfigData = storageGoldenConfigData.sizing;
+
+async function initiateStorageAssessmentCollection(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    parentJobId: string,
+    instanceRecord: WorkloadInstance,
+    instanceVolumeMapping: MappedOnTapVolumeResponse[],
+    jobTriggers: STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES = STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
+) {
+    logger.info('Initiating storage assessment data collection', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        parentJobId,
+        instanceName: instanceRecord?.name,
+        fsxId: instanceRecord?.fsxFileSystem
+    });
+
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+    let snapshotPolicyAssessmentJobId = '';
+
+    const { resourceName, name: databaseInstanceName } = instanceRecord;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    try {
+        if (isEmpty(instanceVolumeMapping)) {
+            errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+        const volumeRecords =
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i?.volumeRecords)
+                .flat() || [];
+        const lunRecords =
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i?.lunRecords)
+                .flat() || [];
+        instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
+        instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
+
+        const lunNames = !isEmpty(lunRecords)
+            ? lunRecords?.map(lun => lun.name)
+            : Object.values(instanceVolumeMapping)
+                  ?.map(i => i.lunNames)
+                  .flat() || [];
+
+        instanceRecord.mappedLunNames = compact(lunNames);
+
+        const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
+        const ssmComment = 'Get Storage Configuration Assessment';
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            instanceRecord.activeNodeInstanceid,
+            ssmComment,
+            accountId,
+            false,
+            ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+            true
+        );
+
+        const parsedResponse = response ? sqlResponseParsing(response) : {};
+        const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
+        if (!isDemo()) {
+            // add snapshot copy details to volumes
+            parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
+        }
+        await createDatabaseInstanceConfigData([
+            {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: databaseHostId,
+                database_instance_id: instanceRecord.id,
+                creation_time: new Date(Date.now()),
+                config_data_type: AssessmentCategories.STORAGE,
+                config_data: parsedResponse
+            }
+        ]);
+
+        const configJobStatus = isDemo()
+            ? JOBSTATUS.COMPLETED
+            : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
+            ? JOBSTATUS.FAILED
+            : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
+            ? JOBSTATUS.COMPLETED
+            : JOBSTATUS.WARNING;
+        if (
+            jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+            jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE.valueOf()
+        ) {
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage configuration assessment',
+                description: 'Storage configuration assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: configJobStatus,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage layout assessment',
+                description: 'Storage layout assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage sizing assessment',
+                description: 'Storage sizing assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+        }
+
+        if (
+            jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+            jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
+        ) {
+            ({ id: snapshotPolicyAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+                name: 'Snapshot policy assessment ',
+                description: 'Snapshot policy assessment ',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: configJobStatus,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            }));
+        }
+    } catch (error) {
+        logger.error('Error while initiating storage assessment collection', {
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceName: instanceRecord?.name,
+            fsxId: instanceRecord?.fsxFileSystem,
+            error
+        });
+        errorMessage = `Error while initiating storage assessment collection. ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, parentJobId, {
+            endTime: Date.now(),
+            status: jobStatus,
+            error: errorMessage
+        });
+        if (snapshotPolicyAssessmentJobId) {
+            await updateJobDetails(accountId, snapshotPolicyAssessmentJobId, {
+                endTime: Date.now(),
+                status: jobStatus,
+                error: errorMessage
+            });
+        }
+    }
+}
 
 function expandVolumeDataPerDatabaseForLayoutAssessment(data: DatabaseVolumeRecord[]) {
     const expandedData: DatabaseVolumeRecord[] = [];
@@ -116,7 +310,7 @@ async function checkForMissingOptimizePermissions(credentialsId: string, region:
 }
 
 function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
-    logger.info('Getting log volume drift', logVolumes);
+    logger.info('Getting log volume drift', { logVolumesLength: logVolumes.length });
 
     const overProvisionedDrives: SizingViolationResponseType[] = [];
     const underProvisionedDrives: SizingViolationResponseType[] = [];
@@ -215,7 +409,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
 }
 
 function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatus, key: string) {
-    logger.info('Getting tempdb volume drift', value);
+    logger.info('Getting tempdb volume drift');
 
     const overProvisionedDrives: SizingViolationResponseType[] = [];
     const underProvisionedDrives: SizingViolationResponseType[] = [];
@@ -874,4 +1068,10 @@ async function calculateStorageDrift(
     return driftAssessmentData;
 }
 
-export { calculateStorageDrift, getHeadroomDrift, getLogVolumeDrift, getTempDbVolumeDrift };
+export {
+    calculateStorageDrift,
+    getHeadroomDrift,
+    getLogVolumeDrift,
+    getTempDbVolumeDrift,
+    initiateStorageAssessmentCollection
+};

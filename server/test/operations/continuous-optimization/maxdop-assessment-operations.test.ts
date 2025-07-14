@@ -2,7 +2,7 @@ import {
     calculateMaxDOPDrift,
     managedHostsMaxDOPAssessment,
     runMaxDOPAssessment
-} from '../../../src/operations/continuous-optimization/maxdop-assessment-operations';
+} from '../../../src/operations/continuous-optimization/mssql/maxdop-assessment-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';

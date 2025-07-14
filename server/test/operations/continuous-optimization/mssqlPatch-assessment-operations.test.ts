@@ -13,7 +13,7 @@ import {
     calculateMSSQLPatchDrift,
     managedHostMSSQLPatchAssessment,
     runMSSQLPatchAssessment
-} from '../../../src/operations/continuous-optimization/mssqlPatch-assessment-operations';
+} from '../../../src/operations/continuous-optimization/mssql/mssqlPatch-assessment-operations';
 import { ResourceAssessmentData } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';

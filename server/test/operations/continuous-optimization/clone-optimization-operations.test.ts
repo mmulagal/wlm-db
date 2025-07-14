@@ -10,7 +10,7 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/aws/compute-optimizer-scope';
-import { handleCloneRemediation } from '../../../src/operations/continuous-optimization/clone-optimization-operations';
+import { handleCloneRemediation } from '../../../src/operations/continuous-optimization/mssql/clone-optimization-operations';
 import { handleOptimizeJobCreation } from '../../../src/operations/continuous-optimization/assessment-utils';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';

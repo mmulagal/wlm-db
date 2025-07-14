@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { isEmpty, isNil } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import getLogger from '../../utils/logger';
+import getLogger from '../../../utils/logger';
 import {
     AvailableSnapshotPoliciesResponseType,
     BulkOptimizeSnapshotPolicyRequestBody,
@@ -11,37 +11,42 @@ import {
     SnapshotPolicyType,
     SnapshotScheduleType,
     BulkOptimizeSnapshotPolicyParamsType
-} from '../../routes/types/continuous-optimization.types';
+} from '../../../routes/types/continuous-optimization.types';
 import {
     DatabaseInstanceMetadata,
     Metadata,
     WorkloadInstance,
     MappedOnTapVolumeResponse
-} from '../../utils/common-types';
-import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
-import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
+} from '../../../utils/common-types';
+import {
+    AuditStatus,
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
+    HttpErrorCodes,
+    SSM_COMMAND_CACHE_TYPE
+} from '../../../utils/consts';
+import { activeSqlNodeDetails } from '../../cont-opt-optimize-operations';
 import {
     GET_CLUSTER_SNAPSHOT_POLICIES,
     SET_VOLUME_SNAPSHOT_POLICY
-} from '../workloads/mssql/continuous-optimization-scripts';
-import { callSsmExecution } from '../aws/ssm-operations';
-import { isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
-import { describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
-import { getMappedOntapVolumes } from '../aws/fsx-operations';
-import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
-import { updateJobDetails } from '../database/job-operations';
-import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { listDatabaseInstances } from '../../lib/database/db';
-import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
-import { onDemandTriggerDriftAssessmentDataCollection } from '../cont-opt-assessment-operations';
+} from '../../workloads/mssql/continuous-optimization-scripts';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
+import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
+import { getMappedOntapVolumes } from '../../aws/fsx-operations';
+import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
+import { updateJobDetails } from '../../database/job-operations';
+import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
+import { listDatabaseInstances } from '../../../lib/database/db';
+import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import {
     AssessmentCategories,
     AssessmentTriggeredBy,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OptimizeStorageConfigs
-} from '../../utils/continous-optimization-consts';
-import { updateOptimizedConfigNameInInstanceTable } from '../demo-operations';
-import { resetCache } from '../../utils/cache';
+} from '../../../utils/continous-optimization-consts';
+import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
+import { resetCache } from '../../../utils/cache';
+import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -413,7 +418,7 @@ async function handleResiliecyOptimize(
         // clearning all the ssm command cache so that we will get the fresh data in assessment
         resetCache(SSM_COMMAND_CACHE_TYPE);
         // trigger assesment to update the assessment config data
-        onDemandTriggerDriftAssessmentDataCollection(
+        onDemandTriggerMssqlDriftAssessment(
             accountId,
             credentialsId,
             region,

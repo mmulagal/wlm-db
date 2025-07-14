@@ -557,7 +557,7 @@ async function checkAndUpdatePostponedEndTime(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    dismissedConfigs: DatabaseInstanceDismissConfigs,
+    dismissedConfigurations: { instance?: DatabaseInstanceDismissConfigs; host?: DatabaseInstanceDismissConfigs },
     databaseInstanceId?: string
 ) {
     logger.info('Check and update postponed config for end time', {
@@ -565,36 +565,71 @@ async function checkAndUpdatePostponedEndTime(
         credentialsId,
         region,
         databaseHostId,
-        dismissedConfigExists: Boolean(dismissedConfigs),
+        dismissedInstanceConfigurationsExists: Boolean(dismissedConfigurations?.instance),
+        dismissedHostConfigurationsExists: Boolean(dismissedConfigurations?.host),
         databaseInstanceId
     });
+    const dismissedInstanceConfigurations = dismissedConfigurations?.instance || {};
+    const dismissedHostConfigurations = dismissedConfigurations?.host || {};
 
-    let updatedConfigs = dismissedConfigs;
-    let isConfigUpdated = false;
+    let updatedInstanceConfigs = dismissedInstanceConfigurations;
+    let updatedHostConfigs = dismissedHostConfigurations;
+    let isInstanceConfigUpdated = false;
+    let isHostConfigUpdated = false;
 
-    if (dismissedConfigs) {
-        const result = processConfigEntries(Object.entries(dismissedConfigs), dismissedConfigs);
-        updatedConfigs = result.updatedConfigs;
-        isConfigUpdated = result.isConfigUpdated;
+    if (dismissedInstanceConfigurations) {
+        const result = processConfigEntries(
+            Object.entries(dismissedInstanceConfigurations),
+            dismissedInstanceConfigurations
+        );
+        updatedInstanceConfigs = result.updatedConfigs;
+        isInstanceConfigUpdated = result.isConfigUpdated;
+    }
+    if (dismissedHostConfigurations) {
+        const result = processConfigEntries(Object.entries(dismissedHostConfigurations), dismissedHostConfigurations);
+        updatedHostConfigs = result.updatedConfigs;
+        isHostConfigUpdated = result.isConfigUpdated;
     }
 
-    if (isConfigUpdated) {
-        if (databaseInstanceId) {
-            await updateDatabaseInstanceConfigurations(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId,
-                { dismissedConfigurations: updatedConfigs }
-            );
-        } else {
-            await updateDatabaseHostConfigurations(accountId, credentialsId, region, databaseHostId, {
-                dismissedConfigurations: updatedConfigs
-            });
+    if (!isInstanceConfigUpdated && !isHostConfigUpdated) {
+        logger.info('No postponed configurations found to update end time');
+        return { dismissedInstanceConfigurations, dismissedHostConfigurations };
+    }
+
+    await Promise.all([
+        databaseInstanceId
+            ? updateDatabaseInstanceConfigurations(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  { dismissedConfigurations: dismissedInstanceConfigurations }
+              )
+            : Promise.resolve(),
+        updateDatabaseHostConfigurations(accountId, credentialsId, region, databaseHostId, {
+            dismissedConfigurations: dismissedHostConfigurations
+        })
+    ]);
+
+    return { dismissedInstanceConfigurations: updatedInstanceConfigs, dismissedHostConfigurations: updatedHostConfigs };
+}
+
+// Recursive function to check for any "not-optimized" status in the assessment results.
+// It checks both arrays and objects, looking for the specific status in any nested structure.
+// Returns true if any "not-optimized" status is found, otherwise false.
+// This is used to determine if an instance has any assessment results that are not optimized.
+function hasNotOptimizedStatus(obj: any): boolean {
+    if (Array.isArray(obj)) {
+        return obj.some(hasNotOptimizedStatus);
+    }
+    if (obj && typeof obj === 'object') {
+        if (obj.status === AssessmentStatus.NOT_OPTIMIZED || obj.errorMessage) {
+            return true;
         }
+        return Object.values(obj).some(hasNotOptimizedStatus);
     }
-    return updatedConfigs;
+    return false;
 }
 
 export {
@@ -604,5 +639,6 @@ export {
     updateDismissConfigurations,
     formatInstanceDismissConfigurations,
     updateFieldsBasedOnDismissedConfigurations,
-    checkAndUpdatePostponedEndTime
+    checkAndUpdatePostponedEndTime,
+    hasNotOptimizedStatus
 };
