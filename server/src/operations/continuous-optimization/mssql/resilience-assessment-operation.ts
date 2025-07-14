@@ -1155,7 +1155,6 @@ async function getSqlServerServicesAssessment(
     credentialsId: string,
     region: string,
     accountId: string,
-    databaseHostId: string,
     instanceRecord: WorkloadInstance
 ) {
     try {
@@ -1317,7 +1316,7 @@ async function initiateHighAvailabilityAssessment(
                 ),
                 getClusterQuorumAssessment(credentialsId, region, accountId, instanceRecord),
                 getHeartbeatSettingsAssessment(credentialsId, region, accountId, instanceRecord),
-                getSqlServerServicesAssessment(credentialsId, region, accountId, databaseHostId, instanceRecord)
+                getSqlServerServicesAssessment(credentialsId, region, accountId, instanceRecord)
             ]);
     } catch (err) {
         logger.error('Error running high availability assessment:', err);
