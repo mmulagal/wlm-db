@@ -47,7 +47,7 @@ const awsAccountId = `${faker.number.int({ min: 100000000 })}`;
 const fsxId = `fs-${faker.string.numeric(8)}`;
 const fsxArn = `arn:aws:fsx:${DEFAULT_AWS_REGION}:${awsAccountId}:file-system/${fsxId}`;
 
-describe(' Secrets Manager string', () => {
+describe('Utils test cases', () => {
     it(' Create Secrets Manager String', async () => {
         const response = await createSecrets(
             CREDENTIALS_ID,
@@ -169,6 +169,13 @@ describe(' Secrets Manager string', () => {
         const response = parseMultipleCommandResponse(decompressedResponse);
         expect(response.length).toEqual(2);
         expect(isEmpty(response.find(r => r.error))).toBeTruthy();
+    });
+
+    it('Decompress SSM response that is not a valid base64 string', async () => {
+        const string =
+            'A\r\nB\r\nD\r\nE\r\nF\r\nG\r\nH\r\nI\r\nJ\r\nK\r\nL\r\nM\r\nN\r\nO\r\nP\r\nQ\r\nR\r\nT\r\nU\r\nV\r\nW\r\nX\r\nY\r\nZ\r\n';
+        const response = await decompressSSMResponse(string);
+        expect(response).toEqual('ABDEFGHIJKLMNOPQRTUVWXYZ');
     });
 
     it('Divide array into chunks', () => {
