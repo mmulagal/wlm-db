@@ -62,6 +62,12 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
                 <Typography variant={isDisabled ? "Semibold_14" : "Regular_32"} style={{ lineHeight: 'unset' }} className={isDisabled ? CommonStyles.notAvailable : ''}>
                     {centerValue}
                 </Typography>
+                
+                {isDisabled && (
+                    <Typography variant="Regular_14" style={{ lineHeight: 'unset', marginTop: '4px' }} className={CommonStyles.notAvailable}>
+                        {centerText}
+                    </Typography>
+                )}
 
                 {loading && (
                     <div style={{ marginTop: '6px' }}>

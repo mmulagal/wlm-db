@@ -272,7 +272,7 @@ const NewPotentialSavings = () => {
                                         potentialSavingsValues?.ebsCost
                                     ) ? (
                                         <ComparisonChart
-                                            data={showNA ? [0, 0] : [
+                                            data={[
                                                 potentialSavingsValues?.fsxnCostForEbsHost || 0,
                                                 potentialSavingsValues?.ebsCost || 0
                                             ]}
@@ -281,13 +281,13 @@ const NewPotentialSavings = () => {
                                             }
                                             height={259}
                                             colors={['chart-9', 'chart-3']}
-                                            categories={showNA ? [t('databases.general.not-available'), t('databases.general.not-available')] : ['FSx for ONTAP', 'EBS']}
+                                            categories={['FSx for ONTAP', 'EBS']}
                                             loading={loading}
                                         />
                                     ) : (
                                         <ComparisonChartStack
                                             // chart draws top to bottom, so the order of the data is reversed
-                                            data={showNA ? [[0], [0]] : [[1], [1]]}
+                                            data={[[1], [1]]}
                                             yTickFormatter={yValue =>
                                                 `$${formatNumberWithCustomComma(Number(yValue), true)}`
                                             }
@@ -307,12 +307,9 @@ const NewPotentialSavings = () => {
 
                                 {/* Text section */}
                                 <div className={styles.textSection}>
-                                    <div 
-                                        className={`${styles.square} ${showNA ? CommonStyles.notAvailable : ''}`} 
-                                        style={{ backgroundColor: showNA ? 'var(--text-disabled)' : 'var(--chart-3)' }} 
-                                    />
-                                    <DsTypography variant={showNA ? "Regular_14" : "Semibold_20"} className={showNA ? CommonStyles.notAvailable : ''}>{showNA ? t('databases.general.not-available') : esCount?.ebs}</DsTypography>
-                                    <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.SQL_SERVER_HOSTS_EBS}</DsTypography>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
+                                    <DsTypography variant="Semibold_20">{esCount?.ebs}</DsTypography>
+                                    <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_EBS}</DsTypography>
                                 </div>
                             </div>
                             <div className={styles.rightSide}>
@@ -323,7 +320,7 @@ const NewPotentialSavings = () => {
                                         potentialSavingsValues?.fsxwCost
                                     ) ? (
                                         <ComparisonChart
-                                            data={showNA ? [0, 0] : [
+                                            data={[
                                                 potentialSavingsValues?.fsxnCostForFsxwHost || 0,
                                                 potentialSavingsValues?.fsxwCost || 0
                                             ]}
@@ -338,7 +335,7 @@ const NewPotentialSavings = () => {
                                     ) : (
                                         <ComparisonChartStack
                                             // chart draws top to bottom, so the order of the data is reversed
-                                            data={showNA ? [[0], [0]] : [[1], [1]]}
+                                            data={[[1], [1]]}
                                             yTickFormatter={yValue =>
                                                 `$${formatNumberWithCustomComma(Number(yValue), true)}`
                                             }
@@ -358,12 +355,9 @@ const NewPotentialSavings = () => {
 
                                 {/* Text section */}
                                 <div className={styles.textSection}>
-                                    <div 
-                                        className={`${styles.square} ${showNA ? CommonStyles.notAvailable : ''}`} 
-                                        style={{ backgroundColor: showNA ? 'var(--text-disabled)' : 'var(--chart-2)' }} 
-                                    />
-                                    <DsTypography variant={showNA ? "Regular_14" : "Semibold_20"} className={showNA ? CommonStyles.notAvailable : ''}>{showNA ? t('databases.general.not-available') : esCount?.fsxw}</DsTypography>
-                                    <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.SQL_SERVER_HOSTS_FSXW}</DsTypography>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
+                                    <DsTypography variant="Semibold_20">{esCount?.fsxw}</DsTypography>
+                                    <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_FSXW}</DsTypography>
                                 </div>
                             </div>
                         </div>

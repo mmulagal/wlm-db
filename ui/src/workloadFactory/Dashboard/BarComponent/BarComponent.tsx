@@ -18,7 +18,7 @@ type BarComponentType = {
     optimizePercentage?: number | any;
     loading?: boolean;
     textMessage?: string;
-    textMessageVariant?: string;
+    textMessageVariant?: string | any;
     tooltipMessage?: string;
     isDisabled?: boolean;
 };
@@ -159,7 +159,7 @@ const BarComponent = ({
 
                         {textMessage && (
                             <DsTypography
-                                variant={(textMessageVariant || "Regular_24") as any}
+                                variant={textMessageVariant || "Regular_24"}
                                 style={{ lineHeight: 'unset', color: 'var(--text-disabled)' }}
                                 className={isDisabled ? CommonStyles.notAvailable : ''}
                             >

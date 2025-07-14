@@ -76,7 +76,6 @@ const Marketing = () => {
 
                         <div className={styles.buttonSection}>
                             <DsButton
-                                // children=" Get Started"
                                 variant="Default"
                                 dropDown={{
                                     trigger: 'click',
@@ -136,7 +135,6 @@ const Marketing = () => {
                                         }
                                     ]
                                 }}
-                            // />
                              >
                                 Get Started
                             </DsButton>
@@ -154,7 +152,7 @@ const Marketing = () => {
                                             }
                                         });
                                     } else {
-                                        navigate('/fsxdb', { state: { allowDashboardNoCred: true } });
+                                        navigate('../../fsxdb/inventory', { state: { allowDashboardNoCred: true } });
                                         postBlueXPMessage({
                                             type: BlueXPListeners.navigate,
                                             payload: {
