@@ -13,7 +13,7 @@ import {
 import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useDispatch } from 'react-redux';
-import { useNavigate, useNavigationType, NavigationType,useLocation } from 'react-router-dom';
+import { useNavigate, useNavigationType, NavigationType, useLocation } from 'react-router-dom';
 import styles from './HeaderComponent.module.scss';
 
 // @ts-ignore
@@ -235,7 +235,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
             if (location.state && location.state.allowDashboardNoCred) {
-                 setStatusChk(true);
+                setStatusChk(true);
                 return;
             }
             if (
@@ -965,11 +965,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
+                        !credentialData ||
+                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                     }
+                    disabledReason={!credentialData || credentialData.length === 0 ? 'No credentials' : ''}
                 />
             </div>
 
@@ -1007,11 +1010,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
+                        !credentialData ||
+                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                     }
+                    disabledReason={!credentialData || credentialData.length === 0 ? 'No credentials' : ''}
                 />
             </div>
         </div>
@@ -1049,6 +1055,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
+                        !credentialData ||
+                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
@@ -1101,6 +1109,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
+                        !credentialData ||
+                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
