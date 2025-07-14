@@ -104,6 +104,72 @@ interface AWSBackupAssessment {
     isAWSBackupEnabled: boolean;
     errorMessage?: string;
 }
+interface HighAvailabilityHeartbeatDetails {
+    CrossSiteDelay: number;
+    SameSubnetDelay: number;
+    CrossSubnetDelay: number;
+    CrossSiteThreshold: number;
+    SameSubnetThreshold: number;
+    CrossSubnetThreshold: number;
+}
+
+interface HighAvailabilityClusterQuorumDetails {
+    IsMajority: boolean;
+    QuorumType: number;
+    IsPhysicalDisk: boolean;
+    QuorumResourceName: string;
+    IsPhysicalDiskAndMajority: boolean;
+}
+
+interface HighAvailabilityIgroupDetails {
+    igroupName: string;
+    igroupUuid: string;
+    initiatorNames: string[];
+    hostIqnsChecked: string[];
+}
+
+interface HighAvailabilityLunDetails {
+    status: string;
+    lunName: string;
+    lunUuid: string;
+    igroupDetails: HighAvailabilityIgroupDetails;
+}
+
+interface HighAvailabilitySharedStorage {
+    status: string;
+    lunDetails: HighAvailabilityLunDetails[];
+}
+
+interface HighAvailabilitySqlServerServiceDetail {
+    Name: string;
+    Status: string;
+    StartType: string;
+}
+interface HighAvailabilityClusterDriveLetterDetails {
+    Name: string;
+    Status: string;
+    missingDriveLetters: string[];
+}
+
+interface HighAvailabilityAssessment {
+    heartbeat?: {
+        status: string;
+        details: HighAvailabilityHeartbeatDetails;
+    };
+    driveLetter?: {
+        status: string;
+        details: HighAvailabilityClusterDriveLetterDetails;
+    };
+    clusterQuorum?: {
+        status: string;
+        details: HighAvailabilityClusterQuorumDetails;
+    };
+    sharedStorage?: HighAvailabilitySharedStorage;
+    sqlServerServices?: {
+        status: string;
+        details: HighAvailabilitySqlServerServiceDetail[];
+    };
+}
 
 interface CloneDetail {
     databaseHostName: string;
@@ -781,5 +847,6 @@ export {
     DatabaseInstanceRegistration,
     OracleCredential,
     SqlCredential,
-    OracleInstanceRegistration
+    OracleInstanceRegistration,
+    HighAvailabilityAssessment
 };

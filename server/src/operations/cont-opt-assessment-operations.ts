@@ -107,7 +107,8 @@ async function cronAssessmentCollection(initiatedBy: string) {
                                     AssessmentCategories.AWS_BACKUP,
                                     AssessmentCategories.CRR,
                                     AssessmentCategories.CLONE,
-                                    AssessmentCategories.MAXDOP
+                                    AssessmentCategories.MAXDOP,
+                                    AssessmentCategories.HIGH_AVAILABILITY
                                 ])
                             )
                         )

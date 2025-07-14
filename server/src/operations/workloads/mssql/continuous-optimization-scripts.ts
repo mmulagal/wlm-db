@@ -50,6 +50,36 @@ const JSON_CHECK = `
         }
     `;
 
+// This function is used to get the MSSQL instance volume and lun details for data,log and tempdb drives
+const FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS = (instanceRecord: WorkloadInstance) => `
+    #Get MSSQL Instance Volume LUN Drive Details
+    ${slqcmdExecutionTemplate}
+
+    $sqlInstance = "${instanceRecord.name}"
+    $FSxID = "${instanceRecord.fsxFileSystem}"
+    $FSxRegion = "${instanceRecord.region}"
+    ${ontapRestRequest}
+
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
+    $sqlCredential = @{'useSqlAuth' = $False}
+
+    # Build sql instance service name
+    $instanceServiceName = "$env:COMPUTERNAME"
+    if ($sqlInstance -ne 'MSSQLSERVER') {
+        $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
+    }
+    ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
+
+    $response = $responseObject | ConvertTo-Json -Compress
+
+    if([string]::IsNullOrEmpty($response)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    
+    ${compressResponse}
+    return (Deflate-String $response)
+    `;
+
 const GET_ONTAP_LUN_DETAILS = (params: OntapRequestParams) => `
 #Get ONTAP LUN details Script
 Start-Transcript -Path ${SIZING_OPERATIONS_LOG_PATH} -Append | Out-Null
@@ -137,6 +167,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
                         "sizeInMb" = $winvolume.sizeInMb
                         "diskNumber" = $vol.number
                         "accessPaths" = $partition.accesspaths
+                        "driveLetter" = $winvolume.driveLetter
                     }
                     $type = 'data'
                     if ($winvolume.name -Contains "tempdev") {
@@ -1573,5 +1604,6 @@ export {
     SET_MAXDOP,
     JSON_CHECK,
     GET_SNAPSHOT_DETAILS,
-    GET_SANDBOX_DETAILS
+    GET_SANDBOX_DETAILS,
+    FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS
 };

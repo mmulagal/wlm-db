@@ -281,6 +281,12 @@ const StorageParameterDriftResponse = Type.Object({
 
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
+const HighAvailabilityDriftResponse = Type.Object({
+    highAvailability: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))
+});
+
+type HighAvailabilityDriftResponseType = Static<typeof HighAvailabilityDriftResponse>;
+
 const InstanceDismissResponse = Type.Object({
     configurationName: Type.String(),
     configState: Type.String(),
@@ -326,6 +332,7 @@ const DriftAssessmentResponse = Type.Object({
     snapshotPolicy: Type.Optional(GenericAssessmentResponse),
     crr: Type.Optional(GenericAssessmentResponse),
     awsBackup: Type.Optional(GenericAssessmentResponse),
+    highAvailability: Type.Optional(Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     dismissedConfigurations: Type.Optional(dismissedConfigurationsResponse),
     fileSystemId: Type.Optional(Type.String()),
@@ -682,5 +689,7 @@ export {
     BulkDismissConfigurationBodyType,
     ContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
-    DriftAssessmentResponsePerHostType
+    DriftAssessmentResponsePerHostType,
+    HighAvailabilityDriftResponse,
+    HighAvailabilityDriftResponseType
 };
