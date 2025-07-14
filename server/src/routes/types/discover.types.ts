@@ -347,6 +347,12 @@ const oracleDatabaseInstance = Type.Object({
             description: 'true if instance storage is managed through ASM'
         })
     ),
+    oracleServerAuthentication: Type.Boolean({
+        description: 'Is Oracle server authentication possible for Oracle instance?'
+    }),
+    isDefaultAuthentication: Type.Boolean({
+        description: 'Is default / OS auth possible for Oracle instance?'
+    }),
     storage: Type.Optional(
         Type.Array(
             Type.Object({

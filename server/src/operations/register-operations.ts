@@ -15,9 +15,12 @@ import { registerJob, updateJobDetails, updateParentJobStatus } from './database
 import { SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import {
+    AWS_CLI_LINUX_RELATIVE_PATH,
     CloudProviders,
     DatabaseTypes,
     HttpErrorCodes,
+    JQ_LINUX_RELATIVE_PATH,
+    MAKE_LINUX_RELATIVE_PATH,
     POWERSHELL_7_RELATIVE_PATH,
     PREPARE_PSMODULES_RELATIVE_PATH,
     PSMODULES_RELATIVE_PATH,
@@ -30,7 +33,7 @@ import {
 } from '../utils/consts';
 import { callSsmExecution, getEc2SqlParameters, getSSMConnectionStatus, ssmPutParameters } from './aws/ssm-operations';
 import { describeInstance, paginateDescribeEbsVolumes } from '../lib/aws/ec2';
-import { getHostAndSqlServerInfo } from './discover-operations';
+import { discoverOracleResources, getHostAndSqlServerInfo } from './discover-operations';
 import {
     ACTIVE_DIRECTORY,
     CHECK_POWERSHELL7_AVAILABLE,
@@ -81,6 +84,7 @@ import {
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import {
+    checkAndInstallRequiredOracleDependentModules,
     validateOracleInstanceConnectivity,
     validateOracleInstanceFsxConnectivity
 } from './workloads/oracle/oracle-ssm-script-utils';
@@ -412,14 +416,6 @@ async function registerSqlInstance(
             if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
                 alreadyManagedDatabaseInstances = resourceDetails.database_instances;
             }
-        }
-
-        if (alreadyManagedDatabaseInstances.length === 0) {
-            alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
-                credentialsId,
-                resourceId,
-                region
-            });
         }
 
         // Filter SQL Server instances: not already managed, storage is FSXN, deployment is Standalone or FCI
@@ -776,15 +772,17 @@ async function registerSqlInstance(
     }
 }
 
-async function installAndRegisterSqlInstances(
+async function installAndRegisterDatabaseServerInstances(
     accountId: string,
     parentManageJobId: string,
-    resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]
+    resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[],
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
-    logger.info('Install and register sql instances', {
+    logger.info(`Install and register ${databaseType} server instances`, {
         accountId,
         parentManageJobId,
-        resourcesToBeManaged: resourcesToBeManaged.length
+        resourcesToBeManaged: resourcesToBeManaged.length,
+        databaseType
     });
 
     await Promise.all(
@@ -809,17 +807,33 @@ async function installAndRegisterSqlInstances(
                     description: jobName,
                     metadata: { ec2InstanceId, region, credentialsId, databaseInstanceNames }
                 });
-                await registerSqlInstance(
-                    accountId,
-                    credentialsId,
-                    region,
-                    ec2InstanceId,
-                    databaseInstanceNames,
-                    modulesToInstall ?? [],
-                    parentManageJobId,
-                    jobId,
-                    databaseHostId
-                );
+
+                if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
+                    await registerSqlInstance(
+                        accountId,
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        databaseInstanceNames,
+                        modulesToInstall ?? [],
+                        parentManageJobId,
+                        jobId,
+                        databaseHostId
+                    );
+                } else if (databaseType === DatabaseTypes.ORACLE) {
+                    await registerOracleInstance(
+                        accountId,
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        databaseInstanceNames,
+                        parentManageJobId,
+                        jobId,
+                        databaseHostId
+                    );
+                } else {
+                    throw createError(HttpErrorCodes.VALIDATION_ERROR, `Unsupported database type: ${databaseType}`);
+                }
             })
         )
     );
@@ -1232,16 +1246,20 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
     return { hosts: manageResponse };
 }
 
-async function registerSqlInstances(
+async function registerDatabaseServerInstances(
     accountId: string,
-    resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]
+    resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[],
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
-    logger.info('Register sql instances', { accountId, resourcesToBeManagedLength: resourcesToBeManaged.length });
+    logger.info(`Register ${databaseType} server instances`, {
+        accountId,
+        resourcesToBeManagedLength: resourcesToBeManaged.length
+    });
 
     if (!resourcesToBeManaged?.length) {
-        throw new Error('No sql instances to be registered');
+        throw new Error(`No ${databaseType} server instances to be registered`);
     }
-    const jobName = `Register SQL Server instances for account ${accountId}`;
+    const jobName = `Register ${databaseType} server instances for account ${accountId}`;
     const { id: jobId } = await registerJob(accountId, '', '', {
         type: JOBTYPE.REGISTER_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
@@ -1251,9 +1269,284 @@ async function registerSqlInstances(
         description: jobName
     });
 
-    installAndRegisterSqlInstances(accountId, jobId, resourcesToBeManaged);
+    installAndRegisterDatabaseServerInstances(accountId, jobId, resourcesToBeManaged, databaseType);
 
     return { jobId };
+}
+
+async function registerOracleInstancesData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    alreadyRegisteredDatabaseInstances: any[],
+    oracleInstanceConfig: any
+) {
+    let instanceManagementStatus: {
+        databaseInstanceName: string;
+        databaseInstanceGuid?: string;
+        status: string;
+        errorMessage?: string;
+    } = {
+        databaseInstanceName: '',
+        status: ''
+    };
+
+    let { resourceId, dbInst, oracleServerInstances, node1InstanceId, hostJobId, awsAccountId, isResourceTobeCreated } =
+        oracleInstanceConfig;
+
+    let instanceJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
+    let instanceErrorMessage = '';
+    const oracleInstanceInfo = oracleServerInstances?.find(
+        (oracleInst: { instanceName: string }) => oracleInst.instanceName === dbInst
+    );
+
+    if (!oracleInstanceInfo || !oracleInstanceInfo.instanceId || !oracleInstanceInfo.instanceType) {
+        throw new Error('Oracle Server instance not found or required details are missing.');
+    }
+
+    if (alreadyRegisteredDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
+        const errorMsg = 'Instance is already registered.';
+        throw new Error(errorMsg);
+    }
+
+    try {
+        // ToDo: Add oracle server auth field here
+        const { instanceId, storage } = oracleInstanceInfo;
+        const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
+        const storageProtocols = [
+            ...new Set(
+                storage
+                    ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
+                    .flatMap((elem: any) =>
+                        Array.isArray(elem.mountDetails)
+                            ? elem.mountDetails.map((mountDetail: any) => mountDetail.protocol)
+                            : []
+                    )
+                    .filter(Boolean) // remove undefined/null
+            )
+        ];
+
+        // Combine all failure conditions for early exit
+        let failureReason: string | undefined;
+        const oracleServerAuthentication = true;
+        if (!oracleServerAuthentication) {
+            failureReason =
+                'Unable to authenticate with the Oracle Server instance. Oracle Server authentication is required.';
+        } else if (!storageInfo) {
+            failureReason = 'Oracle Server instance is not hosted on FSx for NetApp.';
+        }
+
+        if (failureReason) {
+            throw new Error(failureReason);
+        }
+
+        if (storageInfo) {
+            // It could be that fsx credentials are already registered with storage services. Check and create ssm parameters if not already created.
+            try {
+                await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo.id);
+            } catch (error: any) {
+                throw new Error(`Error while verifying or adding FSx ONTAP credentials: ${error.message}`);
+            }
+
+            if (isResourceTobeCreated) {
+                await createResource(accountId, {
+                    resourceId,
+                    credentialsId,
+                    storageType: STORAGE_TYPE.FSXN,
+                    resourceName: oracleInstanceInfo.instanceName,
+                    cloudProviderAccountId: awsAccountId!,
+                    cloudProviderName: CloudProviders.AWS,
+                    resourceType: RESOURCESTYPE.ORACLE,
+                    coRelationId: storageInfo.id,
+                    region,
+                    metadata: {
+                        creationDate: Date.now(),
+                        node1InstanceId,
+                        oracleDeploymentType: oracleInstanceInfo.instanceType,
+                        source: RESOURCE_SOURCE.DISCOVER,
+                        fsxSvmId: storageInfo.svmId,
+                        storageProtocol: storageProtocols ? storageProtocols.join() : ''
+                    }
+                });
+                isResourceTobeCreated = false;
+            }
+
+            tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo.id, node1InstanceId);
+
+            const dbInstanceName = oracleInstanceInfo.instanceName;
+
+            await upsertDatabaseInstance(accountId, {
+                credentialsId,
+                resourceId,
+                region,
+                databaseInstanceId: instanceId,
+                databaseInstanceName: dbInstanceName,
+                fsxnIds: storageInfo.id,
+                isDefault: false, // Oracle instances do not have a default instance concept
+                source: RESOURCE_SOURCE.DISCOVER,
+                sqlDeploymentType: 'Standalone',
+                fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
+                storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                databaseType: DatabaseTypes.ORACLE
+            });
+
+            instanceManagementStatus = {
+                databaseInstanceName: dbInst,
+                databaseInstanceGuid: instanceId,
+                status: JOBSTATUS.COMPLETED
+            };
+
+            instanceJobStatus = JOBSTATUS.COMPLETED;
+        }
+    } catch (error: any) {
+        logger.error('Error while registering Oracle instance', {
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            dbInst,
+            error: error.message
+        });
+        instanceManagementStatus = {
+            databaseInstanceName: dbInst,
+            status: JOBSTATUS.FAILED,
+            errorMessage: `${error}`
+        };
+        instanceJobStatus = JOBSTATUS.FAILED;
+        instanceErrorMessage = `${error}`;
+    } finally {
+        await registerJob(accountId, credentialsId, region, {
+            type: JOBTYPE.REGISTER_RESOURCE,
+            status: instanceJobStatus,
+            resourceName: accountId,
+            parentJobId: hostJobId,
+            name: `Register instance ${dbInst}`,
+            startTime: Date.now(),
+            description: `Register instance ${dbInst}`,
+            error: instanceErrorMessage,
+            endTime: Date.now()
+        });
+    }
+
+    return instanceManagementStatus;
+}
+
+async function registerOracleInstance(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    databaseInstanceNames: string[],
+    parentManageJobId: string,
+    hostJobId: string,
+    databaseHostId?: string
+) {
+    logger.info('Register Oracle instance', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        databaseInstanceNames,
+        parentManageJobId,
+        hostJobId,
+        databaseHostId
+    });
+
+    let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
+    let instanceManagementStatus: {
+        databaseInstanceName: string;
+        databaseInstanceGuid?: string;
+        status: string;
+        errorMessage?: string;
+    }[] = [];
+
+    let resourceId: string = '';
+    try {
+        const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
+        if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, 'No SSM connectivity.');
+        }
+
+        const [ec2Details, discoverDetails] = await Promise.all([
+            describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }, { useCache: true }),
+            discoverOracleResources(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId])
+        ]);
+
+        const node1InstanceId = ec2InstanceId;
+        const { awsAccountId } =
+            derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn || '') || {};
+
+        const [{ databaseInstanceDetails: oracleServerInstances } = {}] = discoverDetails.items || [];
+        resourceId = isDemoFlow && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
+
+        let isResourceTobeCreated = !(isDemoFlow && databaseHostId);
+        let alreadyRegisteredDatabaseInstances: DatabaseInstance[] = [];
+
+        if (!isDemoFlow || !databaseHostId) {
+            const {
+                items: [resourceDetails]
+            } = await getResources(accountId, resourceId, credentialsId, region, undefined, undefined, undefined, true);
+            isResourceTobeCreated = !resourceDetails;
+            if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
+                alreadyRegisteredDatabaseInstances = resourceDetails.database_instances;
+            }
+        }
+
+        instanceManagementStatus = await Promise.all(
+            databaseInstanceNames.map(
+                throat(1, async dbInst => {
+                    const oracleInstanceConfig = {
+                        resourceId,
+                        dbInst,
+                        oracleServerInstances,
+                        node1InstanceId,
+                        hostJobId,
+                        awsAccountId,
+                        isResourceTobeCreated
+                    };
+                    return registerOracleInstancesData(
+                        accountId,
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        alreadyRegisteredDatabaseInstances,
+                        oracleInstanceConfig
+                    );
+                })
+            )
+        );
+    } catch (error: any) {
+        jobStatus = JOBSTATUS.FAILED;
+        databaseInstanceNames.forEach(databaseInstanceName =>
+            instanceManagementStatus.push({
+                databaseInstanceName,
+                databaseInstanceGuid: '',
+                status: jobStatus,
+                errorMessage: error.message
+            })
+        );
+        logger.error('Error while registering Oracle instances', {
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            databaseInstanceNames,
+            error: error.message
+        });
+    } finally {
+        const errorMessage = instanceManagementStatus
+            .filter(elem => elem.status === JOBSTATUS.FAILED)
+            .map(elem => `${elem.databaseInstanceName}: ${elem.errorMessage}`)
+            .join(', ');
+        const jobMetadata = {
+            ec2InstanceId,
+            databaseInstanceNames,
+            instanceManagementStatus,
+            resourceId
+        };
+        await updateParentJobStatus(accountId, hostJobId, false, errorMessage, jobMetadata);
+    }
 }
 
 function getErrorMessage(detectResponse: Record<string, string[]>[]) {
@@ -1723,12 +2016,14 @@ async function validateCredentials(
     const newSqlCredentials = cloneDeep(sqlCredentials);
     const newWindowsUserCredentials = cloneDeep(windowsUserCredentials);
     const newOracleCredentials = cloneDeep(oracleCredentials);
+    const credentialsForValidation =
+        (newSqlCredentials && newSqlCredentials.length) > 0 ? newSqlCredentials : newOracleCredentials;
     const { allDatabaseCredentials, allWindowsUserCredentials } = await verifyAndCreateCredentials(
         credentialsId,
         region,
         instanceId,
         fsxCredentials,
-        newSqlCredentials ?? oracleCredentials,
+        credentialsForValidation,
         windowsUserCredentials,
         instanceIds
     );
@@ -1757,7 +2052,8 @@ async function validateCredentials(
                 fsxCredentials,
                 newOracleCredentials,
                 instanceIds,
-                allDatabaseCredentials
+                allDatabaseCredentials,
+                checkManageReadiness
             );
         } else {
             response = await validateWindowsCredentials(
@@ -1989,18 +2285,33 @@ async function validateOracleCredentials(
     fsxCredentials: RegisterCredentialsType | undefined,
     oracleCredentials: RegisterCredentialsType[],
     instanceIds: string[],
-    allDatabaseCredentials: RegisterCredentialsType[] = []
+    allDatabaseCredentials: RegisterCredentialsType[] = [],
+    checkManageReadiness: boolean = false
 ) {
     logger.info('Validate Oracle credentials', {
         accountId,
         credentialsId,
         region,
         instanceId,
-        oracleCredentialsLength: oracleCredentials.length
+        oracleCredentialsLength: oracleCredentials.length,
+        checkManageReadiness,
+        allDatabaseCredentialsLength: allDatabaseCredentials.length,
+        instanceIds
     });
 
     let command = '';
     let parsedResponse;
+
+    const bucketname = getArtifactsRegionBucketName(region);
+    const awsCliSignedUrl = await getPreSignedUrl(region, bucketname, AWS_CLI_LINUX_RELATIVE_PATH);
+    const jqSignedUrl = await getPreSignedUrl(region, bucketname, JQ_LINUX_RELATIVE_PATH);
+    const makeSignedUrl = await getPreSignedUrl(region, bucketname, MAKE_LINUX_RELATIVE_PATH);
+    const signedUrls = [awsCliSignedUrl, jqSignedUrl, makeSignedUrl];
+
+    if (checkManageReadiness) {
+        command += `${checkAndInstallRequiredOracleDependentModules(signedUrls)}\n`;
+    }
+
     if (fsxCredentials) {
         command += `${validateOracleInstanceFsxConnectivity(fsxCredentials.resourceId, region)}\n`;
     }
@@ -2040,6 +2351,27 @@ async function validateOracleCredentials(
     const response: Record<string, any>[] = [];
     const paramsToDelete: string[] = [];
     const instancesToBeDeleted: string[] = [];
+
+    if (checkManageReadiness) {
+        const { modulesInstallationResults } = parsedResponse;
+
+        logger.debug('Modules installation results', { modulesInstallationResults });
+
+        if (modulesInstallationResults && modulesInstallationResults.length) {
+            let errString = '';
+            for (const moduleResult of modulesInstallationResults) {
+                if (moduleResult?.error) {
+                    errString += moduleResult.error;
+                }
+            }
+            if (errString) {
+                throw createError(
+                    HttpErrorCodes.VALIDATION_ERROR,
+                    `Failed to validate Oracle credentials. Reason: ${errString}`
+                );
+            }
+        }
+    }
 
     if (fsxCredentials) {
         parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
@@ -2110,7 +2442,7 @@ async function verifyAndCreateCredentials(
     windowsUserCredentials: RegisterCredentialsType[],
     instanceIds: string[]
 ) {
-    logger.info('Verify and create credentials', { instanceId });
+    logger.info('Verify and create credentials', { instanceId, databaseCredentialsLength: databaseCredentials.length });
 
     if (fsxCredentials) {
         const SSMParameter = await getParameter(
@@ -2272,7 +2604,7 @@ async function verifyAndAddFSxOntapCredentials(
 }
 
 export {
-    registerSqlInstances,
+    registerDatabaseServerInstances,
     registerResourceCredentials,
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,

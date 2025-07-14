@@ -1787,6 +1787,12 @@ async function discoverOracleResources(
                         oracleServerDeploymentType: 'standalone'
                     };
 
+                    const { oracle: ec2OracleParameters } = await getEc2SqlParameters(
+                        credentialsId,
+                        region,
+                        ec2Instance.ec2InstanceId
+                    );
+
                     const databaseInstanceDetails: DiscoverOracleInstanceType[] = [];
                     // Parsed Response : an array of objects for each database Instance
                     for (const dbInstance of parsedResponse) {
@@ -1798,8 +1804,14 @@ async function discoverOracleResources(
                                 instance_state: instanceState
                             },
                             database_details: databaseDetails,
-                            storage_details: instanceStorageDetails
+                            storage_details: instanceStorageDetails,
+                            is_default_auth: isDefaultAuthentication
                         } = dbInstance;
+
+                        const isOracleAuth = ec2OracleParameters.some(
+                            (obj: { oracleinstancename: string; username: string; password: string }) =>
+                                obj.oracleinstancename === instanceName
+                        );
 
                         let databaseInfo: {
                             databaseId?: string;
@@ -1855,7 +1867,9 @@ async function discoverOracleResources(
                                 pluggableDatabases
                             }),
                             storage: storageDetails,
-                            isInstanceStorageAsmManaged
+                            isInstanceStorageAsmManaged,
+                            isDefaultAuthentication,
+                            oracleServerAuthentication: isOracleAuth
                         });
                     }
 

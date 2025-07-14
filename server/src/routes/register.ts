@@ -12,12 +12,13 @@ import { prepareForManage } from '../operations/discover-operations';
 import getLogger from '../utils/logger';
 import castRequest from './utils';
 import {
-    registerSqlInstances,
     manageSqlServerV2,
     registerResourceCredentials,
-    validateAndStoreDiscoveredParameters
+    validateAndStoreDiscoveredParameters,
+    registerDatabaseServerInstances
 } from '../operations/register-operations';
 import { SingleRegisterCredentialsResponseType } from './types/register.types';
+import { DatabaseTypes } from '../utils/consts';
 
 const logger = getLogger();
 
@@ -79,7 +80,7 @@ export default function registerRoutes(fastify: FastifyInstance) {
             params: { accountId },
             body: { items }
         } = castRequest(request);
-        const response = await registerSqlInstances(accountId, items);
+        const response = await registerDatabaseServerInstances(accountId, items, DatabaseTypes.MS_SQL_SERVER);
         return response;
     });
 
@@ -90,6 +91,15 @@ export default function registerRoutes(fastify: FastifyInstance) {
         } = castRequest(request);
 
         const response = await registerResourceCredentials(accountId, items);
+        return response;
+    });
+
+    server.post('/v1/oracle/register', { schema: JobBasedManageSchema }, async request => {
+        const {
+            params: { accountId },
+            body: { items }
+        } = castRequest(request);
+        const response = await registerDatabaseServerInstances(accountId, items, DatabaseTypes.ORACLE);
         return response;
     });
 }

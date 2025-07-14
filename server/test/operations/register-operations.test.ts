@@ -10,11 +10,12 @@ import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/cloud-watch-logs-scope';
 import {
-    registerSqlInstances,
+    registerDatabaseServerInstances,
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
     validateOracleCredentials
 } from '../../src/operations/register-operations';
+import { DatabaseTypes } from '../../src/utils/consts';
 
 const TEST_EC2_INSTANCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
@@ -22,7 +23,7 @@ const TEST_REGION = 'ap-southeast-1';
 
 describe('Manage operations', () => {
     it('should manage SQL instances', async () => {
-        const { jobId } = await registerSqlInstances(ACCOUNT_ID, [
+        const { jobId } = await registerDatabaseServerInstances(ACCOUNT_ID, [
             {
                 credentialsId: TEST_CREDENTIALS_ID,
                 region: TEST_REGION,
@@ -34,11 +35,13 @@ describe('Manage operations', () => {
     });
 
     it('should throw error if no resources to be managed', async () => {
-        await expect(registerSqlInstances(ACCOUNT_ID, [])).rejects.toThrow('No sql instances to be registered');
+        await expect(registerDatabaseServerInstances(ACCOUNT_ID, [])).rejects.toThrow(
+            'No MSSQL server instances to be registered'
+        );
     });
 
     it('should manage multiple SQL instances in one call', async () => {
-        const { jobId } = await registerSqlInstances(ACCOUNT_ID, [
+        const { jobId } = await registerDatabaseServerInstances(ACCOUNT_ID, [
             {
                 credentialsId: TEST_CREDENTIALS_ID,
                 region: TEST_REGION,
@@ -50,7 +53,7 @@ describe('Manage operations', () => {
     });
 
     it('should manage SQL instances for multiple EC2 resources', async () => {
-        const { jobId } = await registerSqlInstances(ACCOUNT_ID, [
+        const { jobId } = await registerDatabaseServerInstances(ACCOUNT_ID, [
             {
                 credentialsId: TEST_CREDENTIALS_ID,
                 region: TEST_REGION,
@@ -68,7 +71,7 @@ describe('Manage operations', () => {
     });
 
     it('should handle missing databaseInstanceNames gracefully', async () => {
-        const { jobId } = await registerSqlInstances(ACCOUNT_ID, [
+        const { jobId } = await registerDatabaseServerInstances(ACCOUNT_ID, [
             {
                 credentialsId: TEST_CREDENTIALS_ID,
                 region: TEST_REGION,
@@ -158,5 +161,65 @@ describe('Manage operations', () => {
                 }
             ]
         });
+    });
+
+    it('should throw error if no oracle resources to be registered', async () => {
+        await expect(registerDatabaseServerInstances(ACCOUNT_ID, [], DatabaseTypes.ORACLE)).rejects.toThrow(
+            'No ORACLE server instances to be registered'
+        );
+    });
+
+    it('should register Oracle instances', async () => {
+        const { jobId } = await registerDatabaseServerInstances(
+            ACCOUNT_ID,
+            [
+                {
+                    credentialsId: TEST_CREDENTIALS_ID,
+                    region: TEST_REGION,
+                    ec2InstanceId: TEST_EC2_INSTANCE_ID,
+                    databaseInstanceNames: ['oracleInstance1']
+                }
+            ],
+            DatabaseTypes.ORACLE
+        );
+        expect(jobId).toBeDefined();
+    });
+
+    it('should register Oracle instances for multiple EC2 resources', async () => {
+        const { jobId } = await registerDatabaseServerInstances(
+            ACCOUNT_ID,
+            [
+                {
+                    credentialsId: TEST_CREDENTIALS_ID,
+                    region: TEST_REGION,
+                    ec2InstanceId: TEST_EC2_INSTANCE_ID,
+                    databaseInstanceNames: ['oracleInstance1']
+                },
+                {
+                    credentialsId: TEST_CREDENTIALS_ID,
+                    region: TEST_REGION,
+                    ec2InstanceId: 'ANOTHER-EC2-ID',
+                    databaseInstanceNames: ['oracleInstance2']
+                }
+            ],
+            DatabaseTypes.ORACLE
+        );
+        expect(jobId).toBeDefined();
+    });
+
+    it('should register multiple Oracle instances in single invocation', async () => {
+        const { jobId } = await registerDatabaseServerInstances(
+            ACCOUNT_ID,
+            [
+                {
+                    credentialsId: TEST_CREDENTIALS_ID,
+                    region: TEST_REGION,
+                    ec2InstanceId: TEST_EC2_INSTANCE_ID,
+                    databaseInstanceNames: ['oracleInstance1', 'oracleInstance2']
+                }
+            ],
+            DatabaseTypes.ORACLE
+        );
+        expect(jobId).toBeDefined();
     });
 });
