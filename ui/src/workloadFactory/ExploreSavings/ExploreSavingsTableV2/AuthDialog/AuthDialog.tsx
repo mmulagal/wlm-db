@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { DsRadioButton, DsTextField, DsTypography } from '@tlveng/wlm-ds';
 import { useDispatch } from 'react-redux';
-import { ChangeEvent, use, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { Popover } from '@netapp/design-system';
 import styles from './AuthDialog.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -15,11 +15,9 @@ import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClip
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import {
     resetServerDetailsCredentials,
-    setServerPassword,
-    setServerUserName
+    setCredentials,
+    setSelectedAuthenticationType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
-import { setSelectedAuthenticationType } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import store from '../../../../store/store';
 import { setDialogPrimaryButtonDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 
 interface AuthDialogProps {
@@ -32,8 +30,10 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
     const [userNameTouched, setUserNameTouched] = useState(false);
     const [passwordTouched, setPasswordTouched] = useState(false);
 
-    const { selectedAuthenticationType } = useAppSelector(state => state.workloadFactoryResource);
-    const { userName, password } = useAppSelector(state => state.exploreSavings.serverDetails);
+    const {
+        selectedAuthenticationType,
+        serverDetails: { userName, password }
+    } = useAppSelector(state => state.exploreSavings);
     const { allActionsDisabled } = useAppSelector(state => state.dialogComponent);
 
     useEffect(() => {
@@ -51,8 +51,7 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
     }, [userName, password]);
 
     const mssqlInputFields = () => {
-        const state = store.getState();
-        const { selectedAuthenticationType } = state.workloadFactoryResource;
+        const { selectedAuthenticationType } = useAppSelector(state => state.exploreSavings);
         return (
             <div className={styles.firstSection}>
                 <div className={styles.textFieldContainer}>
@@ -64,7 +63,7 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
                         }
                         value={userName}
                         onChange={(event?: ChangeEvent<HTMLInputElement>) => {
-                            dispatch(setServerUserName(event?.target?.value));
+                            dispatch(setCredentials({ userName: event?.target?.value }));
                         }}
                         isDisabled={allActionsDisabled}
                         className={styles.textFieldStyle}
@@ -95,7 +94,7 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
                         value={password}
                         isPassword
                         onChange={(event?: ChangeEvent<HTMLInputElement>) => {
-                            dispatch(setServerPassword(event?.target?.value));
+                            dispatch(setCredentials({ password: event?.target?.value }));
                         }}
                         isDisabled={allActionsDisabled}
                         className={styles.textFieldStyle}

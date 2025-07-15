@@ -143,18 +143,22 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     serverDetails: {
         password: '',
         userName: ''
-    }
+    },
+    selectedAuthenticationType: ''
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
-        setServerUserName: (state, action: PayloadAction<any>) => {
-            state.serverDetails.userName = action.payload;
+        setCredentials: (state, action: PayloadAction<Partial<typeof state.serverDetails>>) => {
+            state.serverDetails = {
+                ...state.serverDetails,
+                ...action.payload
+            };
         },
-        setServerPassword: (state, action: PayloadAction<any>) => {
-            state.serverDetails.password = action.payload;
+        setSelectedAuthenticationType: (state, action: PayloadAction<any>) => {
+            state.selectedAuthenticationType = action.payload;
         },
         setRegionChangeInstanceLoading(state, action: PayloadAction<any>) {
             state.regionChangeInstanceLoading = action.payload;
@@ -509,8 +513,8 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
-    setServerUserName,
-    setServerPassword,
+    setCredentials,
+    setSelectedAuthenticationType,
     setOnPremiseData,
     setRegionChangeInstanceLoading,
     setOnPremiseDataLoading,

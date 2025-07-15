@@ -3,18 +3,28 @@ import { reset } from 'numeral';
 import { ResourceEntities } from '../../utils/types/resourceTypes';
 
 interface DialogComponentState {
-    showDialogError?: boolean;
-    showTooltipInfo?: boolean;
-    tooltipText?: string;
+    dialogError?: {
+        showDialogError?: boolean;
+        errorMessage?: string;
+    };
+    dialogTooltip?: {
+        showTooltipInfo?: boolean;
+        tooltipText?: string;
+    };
     primaryButtonLoading?: boolean;
     allActionsDisabled?: boolean;
     dialogPrimaryButtonDisabled?: boolean;
 }
 
 const initialState: DialogComponentState = {
-    showDialogError: false,
-    showTooltipInfo: false,
-    tooltipText: '',
+    dialogError: {
+        showDialogError: false,
+        errorMessage: ''
+    },
+    dialogTooltip: {
+        showTooltipInfo: false,
+        tooltipText: ''
+    },
     primaryButtonLoading: false,
     allActionsDisabled: false,
     dialogPrimaryButtonDisabled: false
@@ -24,14 +34,29 @@ const dialogComponentSlice = createSlice({
     name: 'dialogComponent',
     initialState,
     reducers: {
-        setDialogError: (state, action: PayloadAction<boolean>) => {
-            state.showDialogError = action.payload;
+        setDialogError: (state, action: PayloadAction<{ showDialogError: boolean; errorMessage?: string }>) => {
+            state.dialogError = {
+                showDialogError: action.payload.showDialogError,
+                errorMessage: action.payload.errorMessage || ''
+            };
         },
-        setTooltipInfo: (state, action: PayloadAction<boolean>) => {
-            state.showTooltipInfo = action.payload;
-        },
-        setTooltipText: (state, action: PayloadAction<string>) => {
-            state.tooltipText = action.payload;
+        setDialogErrorWithTooltip: (
+            state,
+            action: PayloadAction<{
+                showDialogError: boolean;
+                errorMessage?: string;
+                showTooltipInfo?: boolean;
+                tooltipText?: string;
+            }>
+        ) => {
+            state.dialogError = {
+                showDialogError: action.payload.showDialogError,
+                errorMessage: action.payload.errorMessage || ''
+            };
+            state.dialogTooltip = {
+                showTooltipInfo: action.payload.showTooltipInfo ?? false,
+                tooltipText: action.payload.tooltipText ?? ''
+            };
         },
         setPrimaryButtonLoading: (state, action: PayloadAction<boolean>) => {
             state.primaryButtonLoading = action.payload;
@@ -48,8 +73,7 @@ const dialogComponentSlice = createSlice({
 
 export const {
     setDialogError,
-    setTooltipInfo,
-    setTooltipText,
+    setDialogErrorWithTooltip,
     setPrimaryButtonLoading,
     setAllActionsDisabled,
     setDialogPrimaryButtonDisabled,

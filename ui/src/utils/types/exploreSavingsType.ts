@@ -13,6 +13,7 @@ export interface ExploreSavingsSliceEntities {
         password: string;
         userName: string;
     };
+    selectedAuthenticationType: string;
     regionChangeInstanceLoading: boolean;
     onPremiseData: any;
     onPremiseDataLoading: boolean;

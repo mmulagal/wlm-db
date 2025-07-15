@@ -29,7 +29,6 @@ type DialogProps = {
     hidePrimaryButton?: boolean;
     primaryButtonTooltip?: string;
     testId?: string;
-    errorMessage?: string;
 };
 
 const DialogComponent = ({
@@ -44,8 +43,7 @@ const DialogComponent = ({
     primaryButtonDisabled = false,
     hidePrimaryButton = false,
     primaryButtonTooltip = '',
-    testId,
-    errorMessage = ''
+    testId
 }: DialogProps) => {
     const { closeDialog } = useDialog();
     const { t } = useTranslation();
@@ -55,13 +53,13 @@ const DialogComponent = ({
     const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
     const saveConfigFromSaving = useAppSelector(state => state.exploreSavings.saveConfigName);
     const {
-        showDialogError,
-        showTooltipInfo,
-        tooltipText,
+        dialogError: { showDialogError = false, errorMessage = '' } = {},
+        dialogTooltip: { showTooltipInfo = false, tooltipText = '' } = {},
         primaryButtonLoading,
         allActionsDisabled,
         dialogPrimaryButtonDisabled
     } = useAppSelector(state => state.dialogComponent);
+
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);

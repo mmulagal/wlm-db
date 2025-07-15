@@ -7,8 +7,8 @@ import { t } from 'i18next';
 import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { onClickESHost } from '../ExploreSavingsUtils';
-import { AUTHENTICATION_TYPE, DETECT_HOST_VAR, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
+import { handleAuthenticate, onClickESHost } from '../ExploreSavingsUtils';
+import { FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import {
     renderAllocatedCapacity,
     renderCellData,
@@ -16,24 +16,13 @@ import {
     renderUnmanagedAZ,
     uniqueHostRow
 } from '../../InventoryV2/InventoryUtilsV2';
-import { setInventoryTableData } from '../../../store/workloadFactory/inventoryV2Slice';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import AuthDialog from './AuthDialog/AuthDialog';
-import store from '../../../store/store';
-import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { useRegisterResourceCredentialsBulkMutation } from '../../../utils/apiService';
 import { resetServerDetailsCredentials } from '../../../store/workloadFactory/exploreSavingsSlice';
-import {
-    resetDialogComponent,
-    setAllActionsDisabled,
-    setDialogError,
-    setPrimaryButtonLoading,
-    setTooltipInfo,
-    setTooltipText
-} from '../../../store/workloadFactory/dialogComponentSlice';
-import { DiscoverHostInterface } from '../../../utils/types/inventoryV2Types';
+import { resetDialogComponent } from '../../../store/workloadFactory/dialogComponentSlice';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -126,130 +115,6 @@ const ExploreSavingsTableV2 = () => {
         }
     }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
-    const handleAuthenticate = async (rowData: any) => {
-        try {
-            dispatch(setPrimaryButtonLoading(true));
-            dispatch(setAllActionsDisabled(true));
-            const state = store.getState();
-            const { selectedAuthenticationType } = state.workloadFactoryResource;
-            const { inventoryTableData } = state.inventoryV2;
-
-            // Get all the SQL Server instances that match the selected file system type
-            const matchedInstances = rowData?.sqlServerInstances?.filter(
-                (instance: any) => instance?.fileSystemType === selectedExploreSavingsTabFileSystemType
-            );
-            const { userName, password } = state.exploreSavings.serverDetails;
-
-            const credentialList: {
-                resourceId: string;
-                resourceType: string;
-                username: string;
-                password: string;
-            }[] = [];
-
-            matchedInstances?.forEach((instance: any) => {
-                credentialList.push({
-                    resourceId: instance?.databaseInstanceName,
-                    resourceType:
-                        selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                            ? DETECT_HOST_VAR.MSSQL
-                            : DETECT_HOST_VAR.WINDOWS,
-                    username: userName,
-                    password
-                });
-            });
-            const credList = {
-                credentials: credentialList
-            };
-
-            const payload = {
-                items: [
-                    {
-                        ...credList,
-                        ec2InstanceId: rowData?.ec2InstanceId,
-                        region: rowData?.regionId,
-                        credentialsId: rowData?.credentialId
-                    }
-                ]
-            };
-
-            const result = await registerResourceCredBulk({ payload });
-            if (result && !result?.error && result?.data) {
-                if (
-                    result?.data?.items?.length > 0 &&
-                    !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
-                    !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
-                ) {
-                    // Clone the inventoryTableData
-                    const updatedInventoryTableData: Record<string, DiscoverHostInterface> = {
-                        ...inventoryTableData
-                    } as Record<string, DiscoverHostInterface>;
-
-                    // Clone the sqlServerInstances array and update the correct instance
-                    updatedInventoryTableData[rowData.id] = {
-                        ...(updatedInventoryTableData[rowData.id] as DiscoverHostInterface),
-                        isDetected: true,
-                        sqlServerInstances:
-                            updatedInventoryTableData[rowData.id]?.sqlServerInstances?.map(instance =>
-                                // @ts-ignore
-                                instance?.fileSystemType === selectedExploreSavingsTabFileSystemType
-                                    ? {
-                                          ...instance,
-                                          sqlServerAuthentication:
-                                              selectedAuthenticationType ===
-                                              AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                                                  ? true
-                                                  : instance.sqlServerAuthentication,
-                                          windowsDomainUserAuthentication:
-                                              selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
-                                                  ? true
-                                                  : instance.windowsDomainUserAuthentication
-                                      }
-                                    : instance
-                            ) ?? []
-                    };
-
-                    // Dispatch the update to the store
-                    dispatch(setInventoryTableData(updatedInventoryTableData));
-                    // Navigate to the Explore Savings page
-                    onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: `Authenticated database host ${rowData?.name} was successful.\nYou can now explore potential savings.`
-                        })
-                    );
-                } else {
-                    dispatch(
-                        setTooltipText(
-                            result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
-                                result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
-                                t('databases.explore-savings.authentication-failed')
-                        )
-                    );
-                    dispatch(setTooltipInfo(true));
-                    dispatch(setDialogError(true));
-                }
-            } else {
-                dispatch(
-                    // @ts-ignore
-                    setTooltipText(result?.error?.data?.message || t('databases.explore-savings.authentication-failed'))
-                );
-                dispatch(setTooltipInfo(true));
-                dispatch(setDialogError(true));
-            }
-        } catch (error) {
-            // @ts-ignore
-            dispatch(setTooltipText(error || t('databases.explore-savings.authentication-failed')));
-            dispatch(setTooltipInfo(true));
-            dispatch(setDialogError(true));
-        } finally {
-            dispatch(resetDialogComponent());
-            dispatch(resetServerDetailsCredentials());
-            closeDialog();
-        }
-    };
-
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
@@ -263,9 +128,17 @@ const ExploreSavingsTableV2 = () => {
                     closeDialog();
                 }}
                 dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
-                errorMessage={t('databases.explore-savings.authentication-failed')}
                 callback={() => {
-                    handleAuthenticate(rowData);
+                    handleAuthenticate(
+                        rowData,
+                        dispatch,
+                        selectedExploreSavingsTabFileSystemType,
+                        isWorkloadFactory,
+                        navigate,
+                        () => closeDialog(),
+                        t,
+                        registerResourceCredBulk
+                    );
                 }}
                 customClass={styles.protectionDialog}
             />
