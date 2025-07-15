@@ -18,7 +18,6 @@ import {
     setCredentials,
     setSelectedAuthenticationType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
-import { setDialogPrimaryButtonDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 
 interface AuthDialogProps {
     databaseHostName: string;
@@ -34,7 +33,7 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
         selectedAuthenticationType,
         serverDetails: { userName, password }
     } = useAppSelector(state => state.exploreSavings);
-    const { allActionsDisabled } = useAppSelector(state => state.dialogComponent);
+    const { actionsDisabled } = useAppSelector(state => state.dialogComponent);
 
     useEffect(() => {
         if (!selectedAuthenticationType) {
@@ -42,13 +41,12 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
         }
     }, []);
 
-    useEffect(() => {
-        if (userName.length > 0 && password.length > 0) {
-            dispatch(setDialogPrimaryButtonDisabled(false));
-        } else {
-            dispatch(setDialogPrimaryButtonDisabled(true));
-        }
-    }, [userName, password]);
+    const handleAuthTypeChange = (authType: string) => {
+        dispatch(setSelectedAuthenticationType(authType));
+        dispatch(resetServerDetailsCredentials());
+        setUserNameTouched(false);
+        setPasswordTouched(false);
+    };
 
     const mssqlInputFields = () => {
         const { selectedAuthenticationType } = useAppSelector(state => state.exploreSavings);
@@ -65,7 +63,7 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
                         onChange={(event?: ChangeEvent<HTMLInputElement>) => {
                             dispatch(setCredentials({ userName: event?.target?.value }));
                         }}
-                        isDisabled={allActionsDisabled}
+                        isDisabled={actionsDisabled}
                         className={styles.textFieldStyle}
                         onBlur={() => setUserNameTouched(true)}
                         {...(userNameTouched && userName.length === 0
@@ -96,7 +94,7 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
                         onChange={(event?: ChangeEvent<HTMLInputElement>) => {
                             dispatch(setCredentials({ password: event?.target?.value }));
                         }}
-                        isDisabled={allActionsDisabled}
+                        isDisabled={actionsDisabled}
                         className={styles.textFieldStyle}
                         onBlur={() => setPasswordTouched(true)}
                         {...(passwordTouched && password.length === 0
@@ -127,24 +125,14 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
                     variant="Default"
                     title={t('databases.explore-savings.sql-server-authentication')}
                     isSelected={selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
-                    onClick={() => {
-                        dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
-                        dispatch(resetServerDetailsCredentials());
-                        setUserNameTouched(false);
-                        setPasswordTouched(false);
-                    }}
+                    onClick={() => handleAuthTypeChange(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION)}
                 />
                 <DsRadioButton
                     id="select-windows-authentication"
                     variant="Default"
                     title={t('databases.explore-savings.windows-authentication')}
                     isSelected={selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                    onClick={() => {
-                        dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
-                        dispatch(resetServerDetailsCredentials());
-                        setUserNameTouched(false);
-                        setPasswordTouched(false);
-                    }}
+                    onClick={() => handleAuthTypeChange(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION)}
                 />
             </div>
             <div className={styles.textFieldContainer}>{mssqlInputFields()}</div>

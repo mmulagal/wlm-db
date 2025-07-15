@@ -56,8 +56,7 @@ const DialogComponent = ({
         dialogError: { showDialogError = false, errorMessage = '' } = {},
         dialogTooltip: { showTooltipInfo = false, tooltipText = '' } = {},
         primaryButtonLoading,
-        allActionsDisabled,
-        dialogPrimaryButtonDisabled
+        actionsDisabled
     } = useAppSelector(state => state.dialogComponent);
 
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
@@ -76,13 +75,17 @@ const DialogComponent = ({
     });
     const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
+    const { userName: exploreSavingsUserName, password: exploreSavingsPassword } = useAppSelector(
+        state => state.exploreSavings.serverDetails
+    );
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() =>
         (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
         ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading) ||
         (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
-        (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading))();
+        (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading) ||
+        (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS && actionsDisabled))();
 
     // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
     const primaryButtonClick = () => {
@@ -145,6 +148,12 @@ const DialogComponent = ({
         if (
             dialogFrom === FROM_DIALOG.FSXADMIN &&
             ((password.length === 0 && confirmPassword.length === 0) || password !== confirmPassword)
+        ) {
+            return true;
+        }
+        if (
+            dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS &&
+            (exploreSavingsUserName.length === 0 || exploreSavingsPassword.length === 0)
         ) {
             return true;
         }
@@ -212,12 +221,7 @@ const DialogComponent = ({
                         variant="primary"
                         className="continue-button"
                         isThin
-                        isDisabled={
-                            disabledCheck() ||
-                            refreshSandboxDisabled ||
-                            allActionsDisabled ||
-                            dialogPrimaryButtonDisabled
-                        }
+                        isDisabled={disabledCheck() || refreshSandboxDisabled}
                         isLoading={primaryButtonLoad || primaryButtonLoading}
                         onClick={primaryButtonClick}
                         title={primaryButtonTooltip}

@@ -38,9 +38,8 @@ import {
 } from '../../utils/utilityFunctions';
 import {
     resetDialogComponent,
-    setAllActionsDisabled,
-    setDialogErrorWithTooltip,
-    setPrimaryButtonLoading
+    setActionsDisabled,
+    setDialogErrorWithTooltip
 } from '../../store/workloadFactory/dialogComponentSlice';
 import { DiscoverHostInterface } from '../../utils/types/inventoryV2Types';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
@@ -1082,8 +1081,7 @@ export const handleAuthenticate = async (
     registerResourceCredBulk: (args: any) => Promise<any>
 ) => {
     try {
-        dispatch(setPrimaryButtonLoading(true));
-        dispatch(setAllActionsDisabled(true));
+        dispatch(setActionsDisabled(true));
         const state = store.getState();
         const {
             selectedAuthenticationType,
