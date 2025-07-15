@@ -16,7 +16,6 @@ import {
     setShowNA
 } from '../../../store/workloadFactory/headersSlice';
 import { makeCredMapping, makeRegionMapping } from '../../../utils/utilityFunctions';
-import { stat } from 'fs';
 
 const HeaderComponentApi = () => {
     const dispatch = useAppDispatch();
