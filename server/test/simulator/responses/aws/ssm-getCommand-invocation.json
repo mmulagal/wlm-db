@@ -2317,6 +2317,7 @@
                 "instance_state": "OPEN",
                 "instance_id": "28096904"
             },
+            "is_default_auth": true,
             "database_details": {
                 "name": "ORADB1SA",
                 "database_id": "28096904",
@@ -2353,6 +2354,7 @@
                 "instance_state": "OPEN",
                 "instance_id": "28096914"
             },
+            "is_default_auth": false,
             "database_details": {
                 "name": "ORADB1",
                 "database_id": "28096914",
