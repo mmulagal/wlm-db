@@ -660,7 +660,6 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
 const fetchOracleDatabasesCount = (ec2InstanceId: string, dbSid: string) => `
     ec2InstanceId="${ec2InstanceId}"
     dbSid="${dbSid}"
-    dbSid_temp="${dbSid}_temp"
     oracleCredsAvailable="false"
 
     # Check if oratab exists
@@ -719,7 +718,6 @@ const fetchOracleDatabasesCount = (ec2InstanceId: string, dbSid: string) => `
 const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
     ec2InstanceId="${ec2InstanceId}"
     dbSid="${dbSid}"
-    dbSid_temp="${dbSid}_temp"
     oracleCredsAvailable="false"
 
     # Check if oratab exists

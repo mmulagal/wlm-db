@@ -252,12 +252,12 @@ EOF
 
 const oracleUserAuthLoginCommand = `
     get_oracle_user_auth_login_command() {
-        local oracleSidTemp="$1"
+        local oracleSid="$1"
         local ec2InstanceId="$2"
 
         instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
         oracleInstances=$(echo "$instanceCreds" | jq -c '.oracle')
-        matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSidTemp" '.[] | select(.oracleinstancename == $sid)')
+        matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSid" '.[] | select(.oracleinstancename == $sid)')
         username=$(echo "$matchingOracleInstance" | jq -r '.username')
         password=$(echo "$matchingOracleInstance" | jq -r '.password')
         
@@ -279,7 +279,6 @@ const oracleUserAuthLoginCommand = `
 
 const getOracleDefaultOrUserAuthCommand = (ec2InstanceId: string, dbSid: string) => `
     oracleSid="${dbSid}"
-    oracleSid_temp="${dbSid}_temp"
     ec2InstanceId="${ec2InstanceId}"
 
     ${defaultAuthDetectModule}
@@ -291,7 +290,7 @@ const getOracleDefaultOrUserAuthCommand = (ec2InstanceId: string, dbSid: string)
         # If default auth is not used, we need to fetch the credentials from SSM.
         ${oracleUserAuthLoginCommand}
         
-        result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
+        result=$(get_oracle_user_auth_login_command "$oracleSid" "$ec2InstanceId")
         sqlplus_command=$(echo "$result" | cut -d'|' -f1)
         oracleCredsAvailable=$(echo "$result" | cut -d'|' -f2)
     else
@@ -361,8 +360,7 @@ EOF
             sqlplus_command="sqlplus -S / as sysdba"
         elif [ "$isDefaultAuth" == "false" ]; then
             # If default auth is not used, check if user auth credentials are available.
-            sid_temp="\${sid}_temp"
-            result=$(get_oracle_user_auth_login_command "$sid_temp" "$ec2InstanceId")
+            result=$(get_oracle_user_auth_login_command "$sid" "$ec2InstanceId")
             sqlplus_command=$(echo "$result" | cut -d'|' -f1)
             oracleCredsAvailable=$(echo "$result" | cut -d'|' -f2)
         else
@@ -451,6 +449,8 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
     fi
 
     ${oracleUserAuthLoginCommand}
+    result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
+    sqlplus_command=$(echo "$result" | cut -d'|' -f1)
 
     get_instance_db_version() {
         sudo -i -u oracle bash <<EOF
