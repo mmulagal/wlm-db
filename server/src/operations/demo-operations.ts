@@ -51,7 +51,8 @@ import {
     ASSESSMENT_MAXDOP_CONFIG_DATA,
     MSSQL_ASSESMENT_CONFIG_DATA,
     MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
-    MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA
+    MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,
+    MAPPED_ONTAP_VOLUMES_DATA
 } from '../utils/demo-utils/demoInventoryData';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
@@ -876,6 +877,17 @@ async function createAssessmentData(
         config_data:
             databaseInstanceName === DEFAULT_INSTANCE_NAME ? MSSQL_ASSESMENT_CONFIG_DATA : ASSESMENT_CONFIG_DATA
     };
+    const instanceConfigMappedOntapDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
+        config_data: MAPPED_ONTAP_VOLUMES_DATA
+    };
+
     const instanceCRRConfigDataRecord = {
         account_id: accountId,
         credentials_id: credentialsId,
@@ -927,7 +939,8 @@ async function createAssessmentData(
         instanceCRRConfigDataRecord,
         instanceAWSBackupConfigDataRecord,
         instanceMaxdopConfigDataRecord,
-        instanceCloneConfigDataRecord
+        instanceCloneConfigDataRecord,
+        instanceConfigMappedOntapDataRecord
     ]);
 }
 

@@ -443,6 +443,71 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
     };
 }
 
+const MAPPED_ONTAP_VOLUMES_DATA = {
+    SQL1: {
+        lunRecords: [
+            {
+                name: '/vol/wlmdb_sqllog_1737955806953/sqllog',
+                uuid: '5b2c2bfb-2bbf-4acd-be19-f690944c1451',
+                serial_number: 'SERIAL1'
+            },
+            {
+                name: '/vol/wlmdb_sqldata_1737955806953/sqldata',
+                uuid: '81e84adc-cdb8-4cf1-8a85-a5559d18f2c7',
+                serial_number: 'SERIAL2'
+            }
+        ],
+        volumeDBMap: [
+            {
+                databaseName: 'dsfs',
+                ontapVolumeuuid: '73df15ec-dc72-11ef-b430-bb0ad6a3b8df'
+            },
+            {
+                databaseName: 'dsfs',
+                ontapVolumeuuid: '73c4863d-dc72-11ef-b430-bb0ad6a3b8df'
+            },
+            {
+                databaseName: 'kljghfgf',
+                ontapVolumeuuid: '73df15ec-dc72-11ef-b430-bb0ad6a3b8df'
+            },
+            {
+                databaseName: 'kljghfgf',
+                ontapVolumeuuid: '73c4863d-dc72-11ef-b430-bb0ad6a3b8df'
+            }
+        ],
+        volumeRecords: [
+            {
+                svm: {
+                    uuid: '2b03dfe8-dc72-11ef-b430-bb0ad6a3b8df',
+                    _links: {
+                        self: {
+                            href: '/api/svm/svms/2b03dfe8-dc72-11ef-b430-bb0ad6a3b8df'
+                        }
+                    }
+                },
+                name: 'wlmdb_sqllog_1737955806953',
+                uuid: '73c4863d-dc72-11ef-b430-bb0ad6a3b8df',
+                fsxVolumeId: 'fsvol-043070d5487',
+                snapshot_count: 9
+            },
+            {
+                svm: {
+                    uuid: '2b03dfe8-dc72-11ef-b430-bb0ad6a3b8df',
+                    _links: {
+                        self: {
+                            href: '/api/svm/svms/2b03dfe8-dc72-11ef-b430-bb0ad6a3b8df'
+                        }
+                    }
+                },
+                name: 'wlmdb_sqldata_1737955806953',
+                uuid: '73df15ec-dc72-11ef-b430-bb0ad6a3b8df',
+                fsxVolumeId: 'fsvol-0e5d5b33d988',
+                snapshot_count: 15
+            }
+        ]
+    }
+};
+
 const ASSESMENT_CONFIG_DATA = {
     os: {
         'mpio-enabled': false,
@@ -2580,5 +2645,6 @@ export {
     ASSESSMENT_CLONE_CONFIG_DATA,
     MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,
     MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
-    MSSQL_ASSESMENT_CONFIG_DATA
+    MSSQL_ASSESMENT_CONFIG_DATA,
+    MAPPED_ONTAP_VOLUMES_DATA
 };

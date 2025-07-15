@@ -3,7 +3,9 @@ import { describeSubnets } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
 import { FileSystemTypes, NOT_AVAILABLE } from './consts';
 import getLogger from './logger';
-import { DatabaseInstance } from './common-types';
+import { DatabaseInstance, MappedOnTapVolumeResponse } from './common-types';
+import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { AssessmentCategories } from './continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -31,6 +33,8 @@ async function getDatabaseInstanceTopology(
         fsxwId
     } = databaseInstances;
 
+    const { database_instance_id: databaseInstanceId, resource: { resource_id: resourceId } = {} } =
+        databaseInstances || {};
     let topologyData = {
         serverType: databaseType,
         serverInstallationMode: databaseDeploymentType !== undefined ? databaseDeploymentType : '',
@@ -85,12 +89,28 @@ async function getDatabaseInstanceTopology(
                     SubnetIds: subnetIds
                 });
                 availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-
-                logger.info('availabilityZones', availabilityZones);
             }
         } catch (error) {
             logger.error(`Error while fetching details for fsx. Error: ${error}`, databaseInstanceDetails);
         }
+
+        const mappedStorageDetails =
+            ((
+                await listDatabaseInstanceConfigData({
+                    accountId,
+                    credentialsId,
+                    region,
+                    resourceId,
+                    databaseInstanceId,
+                    configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
+                })
+            )?.[0]?.config_data as MappedOnTapVolumeResponse) || {};
+
+        const extractRecords = (records: Array<{ uuid: string; name: string }> = []) =>
+            records.map(({ uuid, name }) => ({ id: uuid, name }));
+
+        const ontapVolumes = Object.values(mappedStorageDetails).flatMap(i => extractRecords(i?.volumeRecords)) || [];
+        const ontapLuns = Object.values(mappedStorageDetails).flatMap(i => extractRecords(i?.lunRecords)) || [];
 
         topologyData = {
             ...topologyData,
@@ -100,7 +120,9 @@ async function getDatabaseInstanceTopology(
             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
             ...(availabilityZones && { availabilityZone: availabilityZones }),
-            ...(fileSystemStorageType && { fileSystemStorageType })
+            ...(fileSystemStorageType && { fileSystemStorageType }),
+            ...(ontapVolumes && { ontapVolumes }),
+            ...(ontapLuns && { ontapLuns })
         };
     }
     return topologyData;
