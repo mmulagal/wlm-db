@@ -8,7 +8,8 @@ import {
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
     UnManagePgSqlSchema,
-    OracleResourceDetailsSchema
+    OracleResourceDetailsSchema,
+    UnmanageOracleSchema
 } from './schemas/discover-schemas';
 import {
     getHostAndSqlServerInfo,
@@ -138,6 +139,25 @@ export default function discoverRoutes(fastify: FastifyInstance) {
 
             const apiInfo = await getOracleResourceDetails(accountId, credentialsId, region, instances, fields);
             return reply.send(apiInfo);
+        }
+    );
+
+    server.delete(
+        '/v1/oracle/credentials/:credentialsId/resources/:resourceId/instances',
+        { schema: UnmanageOracleSchema },
+        async request => {
+            const {
+                params: { accountId, credentialsId, resourceId },
+                query: { databaseInstanceIds }
+            } = castRequest(request);
+
+            const response = await unmanageDatabaseInstance(
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceIds ?? ''
+            );
+            return response;
         }
     );
 }
