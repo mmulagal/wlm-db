@@ -37,6 +37,10 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
 12.Do NOT guess or assume column names or table structure.** Only use columns and tables that are standard and guaranteed to exist in the context provided. If you are unsure, do not include the query.
 13.If you are unsure about the validity of a query, do not include it in the output.
 14.If no valid query can be generated, return "sql": { "query": [] }.
+15.**ALWAYS limit query results to prevent excessive data.** Use TOP 10 for system views that may return large datasets (e.g., sys.dm_os_memory_clerks, sys.dm_xe_session_events, sys.dm_exec_requests). Format queries as: "SET NOCOUNT ON; SELECT TOP 10 * FROM sys.dm_os_memory_clerks ORDER BY pages_kb DESC;"
+16.**For queries that may return large result sets, always include appropriate WHERE clauses or TOP N limits.** Avoid queries that could return hundreds or thousands of rows.
+17.**When querying system DMVs (Dynamic Management Views), prioritize the most relevant columns rather than SELECT *.** Focus on key diagnostic columns that directly relate to the error being analyzed.
+18.**Request query results in JSON format to reduce token usage.** Append "FOR JSON PATH" to SELECT queries where possible to get compact JSON output instead of tabular format. Example: "SET NOCOUNT ON; SELECT TOP 10 name, pages_kb FROM sys.dm_os_memory_clerks ORDER BY pages_kb DESC FOR JSON PATH;"
 
 ### Example Input:
 {
@@ -49,7 +53,7 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
         "error": "Error: 18456, Severity: 14, State: 1.",
         "cause": "Login failed for user. This indicates that the SQL Server login attempt was unsuccessful, which can be due to incorrect credentials, disabled login, or insufficient permissions.",
         "sql": {
-         "query" : ["SELECT name, log_reuse_wait_desc, total_log_size_in_bytes, used_log_space_in_bytes, log_growth_percent_used FROM sys.databases WHERE name = 'STDDB1';", "SELECT * FROM sys.dm_tran_active_transactions;", "SELECT * FROM sys.dm_tran_database_transactions;"]
+         "query" : ["SET NOCOUNT ON; SELECT name, log_reuse_wait_desc, total_log_size_in_bytes, used_log_space_in_bytes, log_growth_percent_used FROM sys.databases WHERE name = 'STDDB1' FOR JSON PATH;", "SET NOCOUNT ON; SELECT TOP 5 transaction_id, transaction_begin_time, transaction_type FROM sys.dm_tran_active_transactions FOR JSON PATH;", "SET NOCOUNT ON; SELECT TOP 5 transaction_id, database_id, database_transaction_begin_time FROM sys.dm_tran_database_transactions FOR JSON PATH;"]
         
         }
     }
@@ -169,6 +173,10 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
 5. If no additional information is required, always return '"sql": { "query": [] }'.
 6. You are only a simple read-only assistant. Do NOT return any alter, update, or delete queries that can modify any data in the 'sql' field.
 7. For purely informational messages or errors where no further investigation is needed, ensure the 'sql' field contains an empty array.
+8. **ALWAYS limit query results to prevent excessive data.** Use LIMIT 10 for system views that may return large datasets (e.g., pg_stat_activity, pg_stat_statements). 
+9. **For queries that may return large result sets, always include appropriate WHERE clauses or LIMIT clauses.** Avoid queries that could return hundreds or thousands of rows.
+10. **When querying system views, prioritize the most relevant columns rather than SELECT *.** Focus on key diagnostic columns that directly relate to the error being analyzed.
+11. **Request query results in JSON format to reduce token usage.** Use array_to_json() or row_to_json() functions where possible to get compact JSON output. Example: "SELECT array_to_json(array_agg(row_to_json(t))) FROM (SELECT datname, state, count(*) FROM pg_stat_activity GROUP BY datname, state LIMIT 10) t;"
 
 ### Example Input:
 {
@@ -184,7 +192,7 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
         "count": 50,
         "severity": "ERROR",
         "sql": {
-         "query" : ["SELECT * FROM pg_stat_activity;", "SELECT * FROM pg_settings WHERE name = 'listen_addresses';"]
+         "query" : ["SELECT array_to_json(array_agg(row_to_json(t))) FROM (SELECT datname, state, count(*) as connection_count FROM pg_stat_activity GROUP BY datname, state LIMIT 10) t;", "SELECT row_to_json(t) FROM (SELECT name, setting, category FROM pg_settings WHERE name = 'listen_addresses') t;"]
         }
     }
 Here's the error details for your reference:`;
