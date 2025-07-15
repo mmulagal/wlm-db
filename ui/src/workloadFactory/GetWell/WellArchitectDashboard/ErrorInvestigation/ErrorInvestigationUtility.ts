@@ -61,7 +61,7 @@ export const filterByTime = (
                 if (objMax > maxHour) maxHour = objMax;
             }
         });
-        const minHour = maxHour - (hours - 1) * 60 * 60 * 1000;
+        const minHour = maxHour - hours * 60 * 60 * 1000;
         result = result.map(obj => {
             const hourly = obj.hourlyErrorCounts;
             return {
@@ -72,7 +72,19 @@ export const filterByTime = (
             };
         });
     } else if (selectedTimeFrame.includes(' - ') && timeRange) {
-        // Parse hour string and period to hour in ms
+        // Calculate minHour and maxHour from data
+        let minHour = Number.POSITIVE_INFINITY;
+        let maxHour = 0;
+        result.forEach(obj => {
+            const hourly = obj.hourlyErrorCounts;
+            if (Array.isArray(hourly) && hourly.length > 0) {
+                const objMin = Math.min(...hourly.map(h => h.hour));
+                const objMax = Math.max(...hourly.map(h => h.hour));
+                if (objMin < minHour) minHour = objMin;
+                if (objMax > maxHour) maxHour = objMax;
+            }
+        });
+        // Parse hour and period to get hour offset in ms
         const parseHour = (time: string, period: string) => {
             const [hourStr] = time.split(':');
             let hour = Number(hourStr);
@@ -81,18 +93,33 @@ export const filterByTime = (
             } else if (period === 'PM') {
                 if (hour !== 12) hour += 12;
             }
-            return hour * 60 * 60 * 1000;
+            return hour;
         };
-        const start = parseHour(timeRange.from, timeRange.fromPeriod);
-        const end = parseHour(timeRange.to, timeRange.toPeriod);
+        // Use maxHour as reference date
+        const refDate = new Date(maxHour);
+        // Calculate start and end using timeRange, but clamp between minHour and maxHour
+        const startHour = parseHour(timeRange.from, timeRange.fromPeriod);
+        const endHour = parseHour(timeRange.to, timeRange.toPeriod);
+        // Build start and end timestamps with the same date as refDate
+        let start = new Date(refDate);
+        start.setHours(startHour, 0, 0, 0);
+        let end = new Date(refDate);
+        end.setHours(endHour, 0, 0, 0);
+        // Clamp start and end between minHour and maxHour
+        if (start.getTime() < minHour) start = new Date(minHour);
+        if (end.getTime() > maxHour) end = new Date(maxHour);
         result = result.map(obj => {
             const hourly = obj.hourlyErrorCounts;
             return {
                 ...obj,
-                hourlyErrorCounts: Array.isArray(hourly) ? hourly.filter(h => h.hour >= start && h.hour <= end) : []
+                hourlyErrorCounts: Array.isArray(hourly)
+                    ? hourly.filter(h => h.hour >= start.getTime() && h.hour <= end.getTime())
+                    : []
             };
         });
     }
+    // Remove rows whose hourlyErrorCounts is empty
+    result = result.filter(obj => Array.isArray(obj.hourlyErrorCounts) && obj.hourlyErrorCounts.length > 0);
     return result;
 };
 
@@ -120,6 +147,18 @@ export const filterByErrorCodes = (
             totalFilteredCount?: number;
         };
         return rest;
+    });
+    return result;
+};
+
+export const recalculateErrorFields = (data: ErrorInvestigationGetApiResponse[]) => {
+    let result = [...data];
+    result = result.map(obj => {
+        const hourly = obj.hourlyErrorCounts;
+        return {
+            ...obj,
+            totalFilteredCount: Array.isArray(hourly) ? hourly.reduce((sum, h) => sum + h.count, 0) : 0
+        };
     });
     return result;
 };

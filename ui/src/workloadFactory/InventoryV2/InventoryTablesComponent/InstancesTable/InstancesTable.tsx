@@ -89,6 +89,7 @@ import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import { cancelProtectionForRow, setDataForRow } from '../../../../store/workloadFactory/snapcenterSlice';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -304,6 +305,7 @@ const InstancesTable = () => {
                 regionId: targettedHost?.regionId
             })
         );
+        dispatch(resetEiData({}));
     };
 
     // Snapcenter Protection code starts

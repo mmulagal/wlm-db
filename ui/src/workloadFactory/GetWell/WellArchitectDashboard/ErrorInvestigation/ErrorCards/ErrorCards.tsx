@@ -7,11 +7,20 @@ type ErrorCardProps = {
     errorMessage?: string;
     severity?: string;
     errorCount?: number;
+    filteredCount?: number;
     isSelected?: boolean;
     onClick?: () => void;
 };
 
-const ErrorCards = ({ errorCode, errorMessage, severity, errorCount, isSelected = false, onClick }: ErrorCardProps) => {
+const ErrorCards = ({
+    errorCode,
+    errorMessage,
+    severity,
+    errorCount,
+    filteredCount,
+    isSelected = false,
+    onClick
+}: ErrorCardProps) => {
     const { t } = useTranslation();
     return (
         <div
@@ -41,7 +50,10 @@ const ErrorCards = ({ errorCode, errorMessage, severity, errorCount, isSelected 
                     {t('databases.log-analyzer.severity')}: {severity}
                 </DsTypography>
                 <DsTypography variant="Regular_14" className={styles.severity}>
-                    {t('databases.log-analyzer.error-count')}: {errorCount}
+                    {t('databases.log-analyzer.error-count')}:{' '}
+                    {filteredCount && errorCount && errorCount > filteredCount
+                        ? `${errorCount}  ${filteredCount}/${errorCount}`
+                        : errorCount}
                 </DsTypography>
             </div>
         </div>

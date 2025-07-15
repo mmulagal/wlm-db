@@ -23,7 +23,8 @@ import {
     getStartAndEndTime,
     eiErrorCodesOptions,
     eiSeverityOptionList,
-    eiTimeOptions
+    eiTimeOptions,
+    recalculateErrorFields
 } from './ErrorInvestigationUtility';
 import { formatDateWithTime } from '../../../../utils/utilityFunctions';
 
@@ -70,19 +71,22 @@ const ErrorInvestigation = () => {
         if (errorInvestigationData) {
             // Filtering logic
             const filtered = filterBySeverity(errorInvestigationData, selectedSeverity);
-
             const timeFiltered = filterByTime(filtered, selectedTimeFrame, timeRange);
             const codesFiltered = filterByErrorCodes(timeFiltered, selectedErrorCodes);
+
             // Set filteredCount for UI
             let filteredCount = 0;
             if (selectedErrorCodes !== eiErrorCodesOptions?.all) filteredCount += 1;
             if (selectedSeverity !== eiSeverityOptionList?.all) filteredCount += 1;
             if (selectedTimeFrame !== eiTimeOptions?.last24) filteredCount += 1;
             setFiltersApplied(filteredCount);
-            setErrorCardsData(codesFiltered);
-            setSelectedErrorData(codesFiltered[0]);
+
+            const newFilteredData = recalculateErrorFields(codesFiltered);
+            setErrorCardsData(newFilteredData);
+            setSelectedErrorData(newFilteredData[0]);
+
             // Calculate unique errors by severity (top 5)
-            setUniqueErrBySeverity(getUniqueErrBySeverity(timeFiltered));
+            setUniqueErrBySeverity(getUniqueErrBySeverity(newFilteredData));
 
             // Set header data
             const uniqueErrors = errorInvestigationData.length;
@@ -214,6 +218,7 @@ const ErrorInvestigation = () => {
                                             errorMessage={error.error}
                                             severity={error.severity}
                                             errorCount={error.count}
+                                            filteredCount={error.totalFilteredCount}
                                             isSelected={selectedIndex === index}
                                             onClick={() => handleCardClick(index)}
                                         />
