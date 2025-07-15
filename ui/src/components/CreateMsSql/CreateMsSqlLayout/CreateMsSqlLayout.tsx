@@ -22,7 +22,7 @@ const CreateMsSqlLayout = ({ selectedTab, setSelectedTab }: CreateMsSqlLayoutPro
 
     return (
         <div className={styles['create-mssql-layout']}>
-            <DeploymentTabs
+            {/* <DeploymentTabs
                 selectedTab={selectedTab}
                 onTabChange={(tab: 'wizard' | 'chatbot') => {
                     if (tab === 'wizard' && selectedTab === 'chatbot') {
@@ -31,8 +31,9 @@ const CreateMsSqlLayout = ({ selectedTab, setSelectedTab }: CreateMsSqlLayoutPro
                     }
                     setSelectedTab(tab);
                 }}
-            />
-            {selectedTab === 'wizard' ? <MSSqlServer /> : <Chatbot />}
+            /> */}
+            {/* {selectedTab === 'wizard' ? <MSSqlServer /> : <Chatbot />} */}
+            <MSSqlServer />
         </div>
     );
 };
