@@ -20,7 +20,6 @@ import {
     filterByTime,
     filterByErrorCodes,
     getUniqueErrBySeverity,
-    getStartAndEndTime,
     eiErrorCodesOptions,
     eiSeverityOptionList,
     eiTimeOptions,
@@ -45,6 +44,7 @@ const ErrorInvestigation = () => {
     });
     const [startTime, setStartTime] = useState(0);
     const [endTime, setEndTime] = useState(0);
+    const [totalHourlyErrorCounts, setTotalHourlyErrorCounts] = useState<Array<{ hour: number; count: number }>>([]);
 
     ErrorInvestigationApi();
     const { errorInvestigationData, errorInvestigationLoading } = useAppSelector(
@@ -61,12 +61,6 @@ const ErrorInvestigation = () => {
         investigationDatesLoading
     } = useAppSelector(state => state.agenticAI);
     const loading = errorInvestigationLoading || investigationDatesLoading;
-
-    // useEffect(() => {
-    //     const { startTime: newStartTime, endTime: newEndTime } = getStartAndEndTime(selectedTimeFrame, timeRange);
-    //     setStartTime(newStartTime);
-    //     setEndTime(newEndTime);
-    // }, [selectedTimeFrame, timeRange]);
 
     useEffect(() => {
         if (errorInvestigationData) {
@@ -97,6 +91,27 @@ const ErrorInvestigation = () => {
             );
             setStartTime(newStartTime);
             setEndTime(newEndTime);
+
+            // Calculate total hourly error counts with all timestamps present in all objects
+            const allTimestampsSet = new Set<number>();
+            newFilteredData.forEach(err => {
+                (err.hourlyErrorCounts || []).forEach(h => {
+                    if (h.hour) {
+                        allTimestampsSet.add(new Date(h.hour).getTime());
+                    }
+                });
+            });
+            const allTimestamps = Array.from(allTimestampsSet).sort((a, b) => a - b);
+
+            // For each timestamp, sum the count from all objects (0 if missing)
+            const totalHourlyCounts = allTimestamps.map(ts => {
+                const count = newFilteredData.reduce((sum, err) => {
+                    const found = (err.hourlyErrorCounts || []).find(h => new Date(h.hour).getTime() === ts);
+                    return sum + (found ? found.count || 0 : 0);
+                }, 0);
+                return { hour: ts, count };
+            });
+            setTotalHourlyErrorCounts(totalHourlyCounts);
 
             // Set header data
             const uniqueErrors = errorInvestigationData.length;
@@ -157,7 +172,7 @@ const ErrorInvestigation = () => {
                 <>
                     <div className={styles.sectionTwo}>
                         <UniqueErrorsSeverity uniqueErrBySeverity={uniqueErrBySeverity} />
-                        {/* <UniqueErrorGraph startTime={startTime} endTime={endTime} /> */}
+                        <UniqueErrorGraph startTime={startTime} endTime={endTime} data={totalHourlyErrorCounts || []} />
                     </div>
 
                     {loading && (

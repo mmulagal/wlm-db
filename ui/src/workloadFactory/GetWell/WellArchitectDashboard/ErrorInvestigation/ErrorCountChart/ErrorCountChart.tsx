@@ -4,7 +4,7 @@ import styles from './ErrorCountChart.module.scss';
 import { formatTimeAMPM } from '../../../../../utils/utilityFunctions';
 
 // New helper to generate hour labels between two timestamps (inclusive)
-function getHourLabelsBetween(start: number, end: number) {
+const getHourLabelsBetween = (start: number, end: number) => {
     const labels = [];
     for (let t = start; t <= end; t += 60 * 60 * 1000) {
         const date = new Date(t);
@@ -13,7 +13,7 @@ function getHourLabelsBetween(start: number, end: number) {
         labels.push(`${hour}:${minute}`);
     }
     return labels;
-}
+};
 
 type ErrorCountChartProps = {
     startTime: number;
@@ -107,7 +107,7 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
                             className={styles.label}
                             style={{
                                 left: `calc(${leftPercent}%)`,
-                                width: xAxisNumbers.length > 1 ? `max(40px, ${100 / denominator}%)` : 'auto',
+                                width: xAxisNumbers.length > 1 ? `max(55px, ${100 / denominator}%)` : 'auto',
                                 textAlign,
                                 transform
                             }}

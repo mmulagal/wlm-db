@@ -8,7 +8,8 @@ import { useAppSelector } from '../../../../../store/storeHooks';
 import { hexToRgb } from '../../../../../ui-components/Charts/chartCommon';
 import { ReactComponent as NoData } from '../../../../../assets/empty_table_message.svg';
 import { ReactComponent as LoadingEmptyGraph } from '../../../../../assets/loading_empty_graph.svg';
-import { getCustomRangeLabelsLineGraph, getMaxGraceValueLineGraph } from '../ErrorInvestigationUtility';
+import { getMaxGraceValueLineGraph } from '../ErrorInvestigationUtility';
+import { formatTimeAMPM } from '../../../../../utils/utilityFunctions';
 
 Chart.register(...registerables);
 
@@ -16,21 +17,46 @@ interface ErrorLineGraphProps {
     startTime: number;
     endTime: number;
     color: string;
+    data: Array<{ hour: number; count: number }>;
 }
 
-const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
+const ErrorLineGraph = ({ startTime, endTime, color, data }: ErrorLineGraphProps) => {
     const chartRef = useRef<HTMLCanvasElement>(null);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { noData, investigationDatesLoading } = useAppSelector(state => state?.agenticAI);
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const loading = errorInvestigationLoading || investigationDatesLoading;
 
-    // Calculate correct number of points for the range, handling wrap-around
+    // Generate xLabels based on startTime and endTime (hourly)
+    const getHourLabelsBetween = (start: number, end: number) => {
+        const labels = [];
+        for (let t = start; t <= end; t += 60 * 60 * 1000) {
+            const date = new Date(t);
+            const hour = date.getHours().toString().padStart(2, '0');
+            const minute = date.getMinutes().toString().padStart(2, '0');
+            labels.push(`${hour}:${minute}`);
+        }
+        return labels;
+    };
+    const allLabels = getHourLabelsBetween(startTime, endTime);
+    // Only show first, middle, last labels, others are empty
+    const xLabels = allLabels.map((label, idx) => {
+        if (idx === 0) return formatTimeAMPM(label);
+        if (idx === allLabels.length - 1) return formatTimeAMPM(label);
+        if (idx === Math.floor((allLabels.length - 1) / 2)) return formatTimeAMPM(label);
+        return '';
+    });
 
-    const xLabels = getCustomRangeLabelsLineGraph(startTime, endTime);
-
-    // Will update once we start getting actual values from the backend
-    const errorCounts = Array.from({ length: xLabels.length }, () => Math.floor(Math.random() * 8)); // 24 hourly error counts
+    // Map hour to count for quick lookup
+    const hourToCount: Record<string, number> = {};
+    data.forEach(h => {
+        const date = new Date(h.hour);
+        const hour = date.getHours().toString().padStart(2, '0');
+        const minute = date.getMinutes().toString().padStart(2, '0');
+        hourToCount[`${hour}:${minute}`] = h.count;
+    });
+    // Get errorCounts for each label (use allLabels for data, xLabels for display)
+    const errorCounts = allLabels.map(label => hourToCount[label] || 0);
 
     const disableColor = () => {
         let tickColor;
@@ -127,7 +153,7 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                     datasets: [
                         {
                             label: 'Errors',
-                            data: errorCounts,
+                            data: errorCounts, // use full errorCounts array
                             borderColor: '#FDC300',
                             backgroundColor: gradient,
                             pointBackgroundColor: color,
@@ -193,10 +219,8 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
                                 // Build the tooltip content safely
                                 tooltipModel.body.forEach(item => {
                                     const { dataIndex } = tooltipModel.dataPoints[0];
-                                    const hour = (startTime + dataIndex) % 24; // for 24h wrap-around
-                                    const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-                                    const period = hour < 12 ? 'AM' : 'PM';
-                                    const timeLabel = `${hour12 < 10 ? '0' : ''}${hour12}:00 ${period}`;
+                                    // Use allLabels[dataIndex] for the correct time label
+                                    const timeLabel = allLabels[dataIndex] ? formatTimeAMPM(allLabels[dataIndex]) : '';
                                     const label = item.lines[0];
 
                                     // Row container
@@ -283,7 +307,7 @@ const ErrorLineGraph = ({ startTime, endTime, color }: ErrorLineGraphProps) => {
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [startTime, endTime, noData, color, isDarkTheme, loading]);
+    }, [startTime, endTime, noData, color, isDarkTheme, loading, data]);
 
     return (
         <>
