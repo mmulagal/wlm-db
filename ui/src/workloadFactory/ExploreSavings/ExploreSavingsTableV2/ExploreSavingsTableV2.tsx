@@ -191,7 +191,7 @@ const ExploreSavingsTableV2 = () => {
                         isDetected: true,
                         sqlServerInstances:
                             updatedInventoryTableData[rowData.id]?.sqlServerInstances?.map(instance =>
-                                //@ts-ignore
+                                // @ts-ignore
                                 instance?.fileSystemType === selectedExploreSavingsTabFileSystemType
                                     ? {
                                           ...instance,
@@ -240,7 +240,7 @@ const ExploreSavingsTableV2 = () => {
             }
         } catch (error) {
             // @ts-ignore
-            dispatch(setTooltipText(error?.data?.message || t('databases.explore-savings.authentication-failed')));
+            dispatch(setTooltipText(error || t('databases.explore-savings.authentication-failed')));
             dispatch(setTooltipInfo(true));
             dispatch(setDialogError(true));
         } finally {
