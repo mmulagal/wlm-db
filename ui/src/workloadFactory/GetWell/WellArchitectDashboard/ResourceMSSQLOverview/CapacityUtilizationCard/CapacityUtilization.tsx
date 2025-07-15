@@ -4,8 +4,9 @@ import DoughnutChartComponent from '../../Doughnut/DoughnutChartComponent';
 import styles from './CapacityUtilization.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { GENERAL } from '../../../../../utils/appConstants';
+import React from 'react';
 
-const CapacityUtilization = () => {
+const CapacityUtilization = React.memo(() => {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const color1 = isDarkTheme ? '#DE9EFF' : '#A815F3';
     const color2 = isDarkTheme ? '#A855B8' : '#DE9EFF';
@@ -128,6 +129,6 @@ const CapacityUtilization = () => {
             </div>
         </div>
     );
-};
+});
 
 export default CapacityUtilization;
