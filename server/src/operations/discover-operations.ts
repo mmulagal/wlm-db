@@ -1114,7 +1114,7 @@ async function unmanageDatabaseInstance(
     resourceId: string,
     databaseInstanceList: string
 ) {
-    logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
+    logger.info('Unmanaging database instances', { accountId, credentialsId, resourceId, databaseInstanceList });
 
     const databaseInstanceResponse: {
         databaseInstanceId: string;
