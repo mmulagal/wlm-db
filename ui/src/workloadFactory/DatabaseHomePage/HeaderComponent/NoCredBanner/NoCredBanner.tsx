@@ -19,7 +19,7 @@ const NoCredBanner = ({ width }: any) => {
             url = import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
         }
 
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.location.href = url;
     };
 
     const learnMore = () => {
