@@ -11,7 +11,7 @@ type SC = {
     isLoading?: boolean;
     loadingInFirstRow?: boolean;
     isSmall?: boolean;
-    isDisabled?: boolean;
+    showNA?: boolean;
 };
 
 const SquareComponent = ({
@@ -22,12 +22,15 @@ const SquareComponent = ({
     loadingInFirstRow = false,
     isLoading = false,
     isSmall = false,
-    isDisabled = false
+    showNA = false
 }: SC) => (
     <div className={styles.container}>
         {!boldValue && (
             <div className={styles.headerArea}>
-                <Typography className={`${styles.valueText} ${isDisabled ? CommonStyles.notAvailable : ''}`} variant="Semibold_14">
+                <Typography
+                    className={`${showNA ? '' : styles.valueText} ${showNA ? CommonStyles.notAvailable : ''}`}
+                    variant="Semibold_14"
+                >
                     {value}
                 </Typography>
 
@@ -44,16 +47,20 @@ const SquareComponent = ({
                 )}
             </div>
         )}
-        {boldValue && <Typography variant="Semibold_14" className={isDisabled ? CommonStyles.notAvailable : ''}>{value}</Typography>}
+        {boldValue && (
+            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                {value}
+            </Typography>
+        )}
         <div className={styles.bottomRow}>
-            <div 
-                className={`${styles.square} ${isDisabled ? CommonStyles.notAvailable : ''}`} 
-                style={{ backgroundColor: isDisabled ? 'var(--text-disabled)' : color }} 
+            <div
+                className={`${styles.square} ${showNA ? CommonStyles.notAvailable : ''}`}
+                style={{ backgroundColor: showNA ? 'var(--text-disabled)' : color }}
             />
             <Typography
                 variant="Regular_14"
                 style={{ lineHeight: 'unset', width: 'max-content', whiteSpace: 'nowrap' }}
-                className={isDisabled ? CommonStyles.notAvailable : ''}
+                className={showNA ? CommonStyles.notAvailable : ''}
             >
                 {text}
             </Typography>

@@ -26,10 +26,14 @@ const HostDistribution = () => {
                 <HostDistributionChart
                     color1="#0BAFFC"
                     color2="#A815F3"
-                    data1={showNA ? 0 : (mssqlHostData?.totalHosts || 0)}
-                    data2={showNA ? 0 : (pgsqlHostData?.totalHosts || 0)}
+                    data1={showNA ? 0 : mssqlHostData?.totalHosts || 0}
+                    data2={showNA ? 0 : pgsqlHostData?.totalHosts || 0}
                     centerText="Total hosts"
-                    centerValue={showNA ? t('databases.general.not-available') : ((mssqlHostData?.totalHosts || 0) + (pgsqlHostData?.totalHosts || 0)).toString()}
+                    centerValue={
+                        showNA
+                            ? t('databases.general.not-available')
+                            : ((mssqlHostData?.totalHosts || 0) + (pgsqlHostData?.totalHosts || 0)).toString()
+                    }
                     loading={multiDataLoading}
                     isDisabled={showNA}
                 />
@@ -53,11 +57,13 @@ const HostDistribution = () => {
                 <div className={styles.valueArea}>
                     <div className={`${styles.firstBlock} ${showNA ? CommonStyles.notAvailable : ''}`}>
                         <SquareComponent
-                            value={showNA ? t('databases.general.not-available') : String(mssqlHostData?.totalHosts || 0)}
+                            value={
+                                showNA ? t('databases.general.not-available') : String(mssqlHostData?.totalHosts || 0)
+                            }
                             color="var(--chart-3)"
                             text={windowSize.width > 1700 ? 'Microsoft SQL Server hosts' : 'Microsoft SQL Server'}
                             loadingInFirstRow={mssqlDatabaseHostsLoading || multiDataLoading}
-                            isDisabled={showNA}
+                            showNA={showNA}
                         />
                     </div>
 
@@ -65,11 +71,13 @@ const HostDistribution = () => {
 
                     <div className={`${styles.secondBlock} ${showNA ? CommonStyles.notAvailable : ''}`}>
                         <SquareComponent
-                            value={showNA ? t('databases.general.not-available') : String(pgsqlHostData?.totalHosts || 0)}
+                            value={
+                                showNA ? t('databases.general.not-available') : String(pgsqlHostData?.totalHosts || 0)
+                            }
                             color="var(--chart-9)"
                             text={windowSize.width > 1700 ? 'PostgreSQL hosts' : 'PostgreSQL'}
                             loadingInFirstRow={pgsqlDatabaseHostsLoading || multiDataLoading}
-                            isDisabled={showNA}
+                            showNA={showNA}
                         />
                     </div>
                 </div>

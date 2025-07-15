@@ -18,7 +18,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
     const { t } = useTranslation();
     const { showNA } = useAppSelector(state => state.headers);
     const handleProgressBar = () => {
-       if (hostData?.storageSavingsPercent === 0 || showNA) {
+        if (hostData?.storageSavingsPercent === 0 || showNA) {
             return (
                 <div
                     className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
@@ -29,7 +29,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                 />
             );
         }
-        
+
         if (
             hostData?.storageSavingsPercent !== 0 &&
             // @ts-ignore
@@ -83,13 +83,19 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                         <div className={styles.list}>
                             <div className={styles.listItem}>
                                 <Bullet />
-                                <Typography variant="Regular_13" className={`${styles.textWidth} ${showNA ? CommonStyles.notAvailable : ''}`}>
+                                <Typography
+                                    variant="Regular_13"
+                                    className={`${styles.textWidth} ${showNA ? CommonStyles.notAvailable : ''}`}
+                                >
                                     {GENERAL.DB_SS_TT_1}
                                 </Typography>
                             </div>
                             <div className={styles.listItem}>
                                 <Bullet />
-                                <Typography variant="Regular_13" className={`${styles.textWidth} ${showNA ? CommonStyles.notAvailable : ''}`}>
+                                <Typography
+                                    variant="Regular_13"
+                                    className={`${styles.textWidth} ${showNA ? CommonStyles.notAvailable : ''}`}
+                                >
                                     {GENERAL.DB_SS_TT_2}
                                 </Typography>
                             </div>
@@ -98,8 +104,14 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                 </div>
 
                 <div className={styles.rightTopValue}>
-                    <Typography variant={showNA ? "Semibold_14" : "Semibold_20"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                        {showNA ? t('databases.general.not-available') : `${formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%`}
+                    <Typography
+                        variant={showNA ? 'Semibold_14' : 'Semibold_20'}
+                        style={{ lineHeight: 'unset' }}
+                        className={showNA ? CommonStyles.notAvailable : ''}
+                    >
+                        {showNA
+                            ? t('databases.general.not-available')
+                            : `${formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%`}
                     </Typography>
                     {hostsLoading && <FlashingDotsLoader />}
                 </div>
@@ -112,21 +124,29 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={showNA ? t('databases.general.not-available') : (hostData?.storageConsumes || t('databases.general.not-available'))}
+                        value={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : hostData?.storageConsumes || t('databases.general.not-available')
+                        }
                         color="var(--chart-9)"
                         text="Consumed storage"
                         loadingInFirstRow={hostsLoading}
                         isSmall
-                        isDisabled={showNA}
+                        showNA={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={showNA ? t('databases.general.not-available') : (hostData?.storageSavings || t('databases.general.not-available'))}
+                        value={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : hostData?.storageSavings || t('databases.general.not-available')
+                        }
                         color="var(--chart-4)"
                         text="Storage Savings"
                         loadingInFirstRow={hostsLoading}
                         isSmall
-                        isDisabled={showNA}
+                        showNA={showNA}
                     />
                 </div>
             </div>

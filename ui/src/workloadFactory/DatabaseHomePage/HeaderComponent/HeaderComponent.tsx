@@ -123,6 +123,7 @@ import DashboardOptimizeInnerPage from '../../Dashboard/DashboardInnerPage/Dashb
 import { DsBlueXpMenu } from '../../../common/DsMenuBlueXP/DsBlueXpMenu';
 import WellArchitectDashboard from '../../GetWell/WellArchitectDashboard/WellArchitectDashboard';
 import RegisterWizard from '../../InventoryV2/InventoryTablesComponent/ManageInstanceWizard/RegisterWizard';
+import DummySelect from '../../../common/DummySelect/DummySelect';
 
 type Tab = {
     tab: string;
@@ -1497,7 +1498,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
-                                    <div />
+                                    {showNA && <DummySelect fromJM={true} />}
+                                    {!showNA && <div />}
                                     <div className={styles.content}>
                                         <div className={styles.selectContainer}>
                                             <SelectField
@@ -1555,7 +1557,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.sandboxSection}>
                                 <div className={styles.contentArea}>
-                                    {selectSandboxComponents()}
+                                    {!showNA && selectSandboxComponents()}
+                                    {showNA && <DummySelect fromJM={false} />}
                                     <div className={styles.content}>{refreshComponentSandbox()}</div>
                                 </div>
                             </div>

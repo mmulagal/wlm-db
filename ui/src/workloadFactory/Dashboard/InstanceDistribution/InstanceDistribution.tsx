@@ -60,45 +60,64 @@ const InstanceDistribution = () => {
                         </div>
                         <div className={styles.valueSection}>
                             <DsTypography
-                                variant={showNA ? "Regular_14" : "Regular_32"}
+                                variant={showNA ? 'Regular_14' : 'Regular_32'}
                                 style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}
-                                className={showNA ? CommonStyles.notAvailable : ''}
+                                className={showNA ? `${CommonStyles.notAvailable} ${CommonStyles.fontSet}` : ''}
                             >
-                                {showNA ? t('databases.general.not-available') : (mssqlHostData?.totalInstances || 0) + (pgsqlHostData?.totalInstances || 0)}
+                                {showNA
+                                    ? t('databases.general.not-available')
+                                    : (mssqlHostData?.totalInstances || 0) + (pgsqlHostData?.totalInstances || 0)}
                                 {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
                                     <DsFlashingDotsLoader />
                                 )}
                             </DsTypography>
-                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>Total instances</DsTypography>
+                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                                Total instances
+                            </DsTypography>
                         </div>
                     </div>
 
                     <SeparatorComponent variant="vertical" height="56px" />
 
                     <div className={styles.valueSection}>
-                        <DsTypography variant={showNA ? "Regular_14" : "Regular_32"} style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                            {showNA ? t('databases.general.not-available') : (mssqlHostData?.managedInstances || 0) + (pgsqlHostData?.managedInstances || 0)}
+                        <DsTypography
+                            variant={showNA ? 'Regular_14' : 'Regular_32'}
+                            style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}
+                            className={showNA ? `${CommonStyles.notAvailable} ${CommonStyles.fontSet}` : ''}
+                        >
+                            {showNA
+                                ? t('databases.general.not-available')
+                                : (mssqlHostData?.managedInstances || 0) + (pgsqlHostData?.managedInstances || 0)}
                             {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
                                 <DsFlashingDotsLoader />
                             )}
                         </DsTypography>
 
-                        <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>Registered instances</DsTypography>
+                        <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                            Registered instances
+                        </DsTypography>
                     </div>
                 </div>
 
-                <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>Registered instances</DsTypography>
+                <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                    Registered instances
+                </DsTypography>
                 <div className={`${styles.barContainer} ${showNA ? CommonStyles.notAvailable : ''}`}>
                     <BarComponent
                         color="var(--chart-3)"
                         headingText="Microsoft SQL Server"
-                        percentage={showNA ? t('databases.general.not-available') : formatFractionalNumber(
-                            ((mssqlHostData?.managedInstances || 0) / (mssqlHostData?.totalInstances || 1)) * 100,
-                            2
-                        )}
+                        percentage={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : formatFractionalNumber(
+                                      ((mssqlHostData?.managedInstances || 0) / (mssqlHostData?.totalInstances || 1)) *
+                                          100,
+                                      2
+                                  )
+                        }
                         beforeOutOf={showNA ? undefined : mssqlHostData?.managedInstances || 0}
                         afterOutOf={showNA ? undefined : mssqlHostData?.totalInstances || 0}
-                        bottomText={showNA ? undefined : "Registered instances:"}
+                        bottomText={showNA ? undefined : 'Registered instances:'}
                         width="auto"
                         loading={mssqlDatabaseHostsLoading || multiDataLoading}
                         isDisabled={showNA}
@@ -106,13 +125,18 @@ const InstanceDistribution = () => {
                     <BarComponent
                         color="var(--chart-9)"
                         headingText="PostgreSQL"
-                        percentage={showNA ? t('databases.general.not-available') : formatFractionalNumber(
-                            ((pgsqlHostData?.managedInstances || 0) / (pgsqlHostData?.totalInstances || 1)) * 100,
-                            2
-                        )}
+                        percentage={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : formatFractionalNumber(
+                                      ((pgsqlHostData?.managedInstances || 0) / (pgsqlHostData?.totalInstances || 1)) *
+                                          100,
+                                      2
+                                  )
+                        }
                         beforeOutOf={showNA ? undefined : pgsqlHostData?.managedInstances || 0}
                         afterOutOf={showNA ? undefined : pgsqlHostData?.totalInstances || 0}
-                        bottomText={showNA ? undefined : "Registered instances:"}
+                        bottomText={showNA ? undefined : 'Registered instances:'}
                         width="auto"
                         loading={pgsqlDatabaseHostsLoading || multiDataLoading}
                         isDisabled={showNA}

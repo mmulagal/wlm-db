@@ -30,8 +30,10 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
 
     const ToolTipContainer = () => (
         <div className={styles.tooltipContainerClass}>
-            <Typography variant="Regular_13" className={showNA ? CommonStyles.notAvailable : ''}>{GENERAL.ESTIMATED_COST_TOOLTIP}</Typography>
-            {linkChk &&(
+            <Typography variant="Regular_13" className={showNA ? CommonStyles.notAvailable : ''}>
+                {GENERAL.ESTIMATED_COST_TOOLTIP}
+            </Typography>
+            {linkChk && (
                 <Button variant="text" onClick={() => costDialog()}>
                     {GENERAL.LEARN_HOW_ESTIMATED_COST}
                 </Button>
@@ -64,8 +66,14 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                 </div>
 
                 <div className={styles.rightTopValue}>
-                    <Typography variant={showNA ? "Semibold_14" : "Semibold_20"} style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
-                        {showNA ? t('databases.general.not-available') : `$${formatNumberWithCustomComma(hostData?.totalCost)}`}
+                    <Typography
+                        variant={showNA ? 'Semibold_14' : 'Semibold_20'}
+                        style={{ lineHeight: 'unset' }}
+                        className={showNA ? CommonStyles.notAvailable : ''}
+                    >
+                        {showNA
+                            ? t('databases.general.not-available')
+                            : `$${formatNumberWithCustomComma(hostData?.totalCost)}`}
                     </Typography>
                     {hostsLoading && <FlashingDotsLoader />}
                 </div>
@@ -74,18 +82,19 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
             <div className={styles.mainSection}>
                 {/* Progress Bar */}
                 <div className={styles.progressBar}>
-                    {(showNA || (hostData?.storageCostPercent === 0 &&
-                        hostData?.computeCostPercent === 0 &&
-                        hostData?.connectivityCostPercent === 0 &&
-                        hostData?.otherCostPercent === 0)) && (
-                            <div
-                                className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                                style={{
-                                    width: `${100}%`,
-                                    backgroundColor: 'var(--chart-disabled)'
-                                }}
-                            />
-                        )}
+                    {(showNA ||
+                        (hostData?.storageCostPercent === 0 &&
+                            hostData?.computeCostPercent === 0 &&
+                            hostData?.connectivityCostPercent === 0 &&
+                            hostData?.otherCostPercent === 0)) && (
+                        <div
+                            className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                            style={{
+                                width: `${100}%`,
+                                backgroundColor: 'var(--chart-disabled)'
+                            }}
+                        />
+                    )}
                     {!showNA && hostData?.storageCostPercent !== 0 && (
                         <div
                             className={`${styles.progress} ${styles.leftCurveBar} 
@@ -155,39 +164,55 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={showNA ? t('databases.general.not-available') : `$${formatNumberWithCustomComma(hostData?.storageCost)}`}
+                        value={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : `$${formatNumberWithCustomComma(hostData?.storageCost)}`
+                        }
                         color="var(--chart-9)"
                         text="Storage"
                         loadingInFirstRow={hostsLoading}
                         isSmall
-                        isDisabled={showNA}
+                        showNA={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={showNA ? t('databases.general.not-available') : `$${formatNumberWithCustomComma(hostData?.computeCost)}`}
+                        value={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : `$${formatNumberWithCustomComma(hostData?.computeCost)}`
+                        }
                         color="var(--chart-1)"
                         text="Compute"
                         loadingInFirstRow={hostsLoading}
                         isSmall
-                        isDisabled={showNA}
+                        showNA={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={showNA ? t('databases.general.not-available') : `$${formatNumberWithCustomComma(hostData?.connectivityCost)}`}
+                        value={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : `$${formatNumberWithCustomComma(hostData?.connectivityCost)}`
+                        }
                         color="var(--chart-3)"
                         text="Connectivity"
                         loadingInFirstRow={hostsLoading}
                         isSmall
-                        isDisabled={showNA}
+                        showNA={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={showNA ? t('databases.general.not-available') : `$${formatNumberWithCustomComma(hostData?.otherCost)}`}
+                        value={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : `$${formatNumberWithCustomComma(hostData?.otherCost)}`
+                        }
                         color="var(--chart-4)"
                         text="Other"
                         loadingInFirstRow={hostsLoading}
                         isSmall
-                        isDisabled={showNA}
+                        showNA={showNA}
                     />
                 </div>
             </div>
