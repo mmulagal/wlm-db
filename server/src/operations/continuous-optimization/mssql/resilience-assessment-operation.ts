@@ -47,9 +47,8 @@ import {
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
-    GET_HOST_IQN,
-    GET_LUN_MAPS,
-    GET_IGROUP_UUID
+    GET_LUN_IGROUP_INITIATOR_NAMES,
+    GET_HOST_IQN
 } from '../../workloads/mssql/high-availability-scripts';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 
@@ -686,6 +685,7 @@ function checkFCIDeploymentType(instanceDetail: DatabaseInstance, context: strin
         typeof instanceDetail?.database_deployment_type === 'string'
             ? instanceDetail.database_deployment_type
             : undefined;
+    logger.debug(`[checkFCIDeploymentType] context=${context}, deploymentType=${sqlDeploymentType}`);
     if (!sqlDeploymentType || sqlDeploymentType.toUpperCase() !== 'FCI') {
         const message = `SQL deployment type is '${
             sqlDeploymentType ?? 'unknown'
@@ -693,7 +693,6 @@ function checkFCIDeploymentType(instanceDetail: DatabaseInstance, context: strin
         logger.info(message);
         return { error: message };
     }
-    return null;
 }
 async function getSharedStorageAssessment(
     credentialsId: string,
@@ -701,24 +700,20 @@ async function getSharedStorageAssessment(
     accountId: string,
     databaseHostId: string,
     instanceRecord: WorkloadInstance,
-    instanceVolumeMapping: MappedOnTapVolumeResponse[]
+    instanceVolumeMapping: MappedOnTapVolumeResponse[],
+    instanceDetail?: DatabaseInstance
 ) {
+    logger.info('[getSharedStorageAssessment] called', {
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        instanceName: instanceRecord?.name,
+        volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
+    });
     try {
-        const instanceDetail = (await getInstanceInfo(
-            accountId,
-            credentialsId,
-            databaseHostId,
-            instanceRecord.id
-        )) as DatabaseInstance;
-        logger.info('Instance detail for SQL Server Services assessment:', instanceDetail.metadata);
-
-        // Only run assessment if deployment type is FCI
-        const fciCheck = checkFCIDeploymentType(instanceDetail, 'shared-storage');
-        if (fciCheck) {
-            return fciCheck;
-        }
-
-        const { node1InstanceId, node2InstanceId } = (instanceDetail?.resource?.metadata || {}) as {
+        const details = instanceDetail as DatabaseInstance;
+        const { node1InstanceId, node2InstanceId } = (details?.resource?.metadata || {}) as {
             node1InstanceId?: string;
             node2InstanceId?: string;
         };
@@ -730,14 +725,14 @@ async function getSharedStorageAssessment(
         // Get HOST IQN details for both nodes
         logger.info('Fetching HOST IQN details for both nodes:', { node1InstanceId, node2InstanceId });
         const hostIqnCommand = [GET_HOST_IQN];
-        const [hostIqnRespNode1, hostIqnRespNode2] = await Promise.all([
+        const hostIqns = await Promise.all([
             node1InstanceId
                 ? callSsmExecution(
                       credentialsId,
                       region,
                       hostIqnCommand,
                       node1InstanceId,
-                      'Get HOST IQN details (node1)',
+                      'Get HOST IQN details on node 1',
                       accountId,
                       false,
                       undefined,
@@ -750,7 +745,7 @@ async function getSharedStorageAssessment(
                       region,
                       hostIqnCommand,
                       node2InstanceId,
-                      'Get HOST IQN details (node2)',
+                      'Get HOST IQN details on node 2',
                       accountId,
                       false,
                       undefined,
@@ -758,9 +753,7 @@ async function getSharedStorageAssessment(
                   )
                 : undefined
         ]);
-
-        const hostIqnNode1 = hostIqnRespNode1 as string | undefined;
-        const hostIqnNode2 = hostIqnRespNode2 as string | undefined;
+        const hostIqnsToCheck = hostIqns.filter(Boolean) as string[];
 
         if (!instanceVolumeMapping || instanceVolumeMapping.length === 0) {
             const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
@@ -769,100 +762,52 @@ async function getSharedStorageAssessment(
         }
 
         const lunRecords = Object.values(instanceVolumeMapping).flatMap(i => i.lunRecords || []);
-
         const results = await Promise.all(
             lunRecords.map(async lun => {
                 const lunUuid = lun.uuid;
                 const lunName = lun.name;
-
-                // Get LUN maps (to extract igroupUuid)
-                const lunMapsCommand = [
-                    GET_LUN_MAPS({
-                        fsxId: instanceRecord.fsxFileSystem,
-                        region,
-                        apiEndpoint: `/protocols/san/lun-maps/${lunUuid}`,
-                        apiQueryFilter: 'fields=space,igroup'
-                    })
+                const lunIgroupCommand = [
+                    GET_LUN_IGROUP_INITIATOR_NAMES(
+                        {
+                            fsxId: instanceRecord.fsxFileSystem,
+                            region,
+                            apiEndpoint: '',
+                            apiQueryFilter: ''
+                        },
+                        lunUuid
+                    )
                 ];
-                const lunMapsResp = await callSsmExecution(
+                const lunIgroupResp = await callSsmExecution(
                     credentialsId,
                     region,
-                    lunMapsCommand,
+                    lunIgroupCommand,
                     instanceRecord.activeNodeInstanceid,
-                    `Get ONTAP LUN details for LUN ${lunUuid}`,
+                    `Get ONTAP LUN igroup and initiator names for LUN ${lunUuid}`,
                     accountId,
                     false,
                     undefined,
                     true
                 );
-                const lunMapsParsed = sqlResponseParsing(lunMapsResp);
+                const lunIgroupRespParsed = sqlResponseParsing(lunIgroupResp);
+                logger.info('LUN igroup SSM response:', lunIgroupRespParsed);
 
-                // Inline PowerShell-style string parsing for igroup
-                const records = Array.isArray(lunMapsParsed?.records)
-                    ? lunMapsParsed.records
-                    : lunMapsParsed?.records
-                    ? [lunMapsParsed.records]
-                    : [];
+                const lunRecord = Array.isArray(lunIgroupRespParsed)
+                    ? lunIgroupRespParsed.find((r: any) => r.LUN_UUID === lunUuid)
+                    : lunIgroupRespParsed;
 
-                let igroupUuid: string | undefined;
-                let igroupName: string | undefined;
-
-                const igroupRecord = records.find(
-                    (r: any) => typeof r?.igroup === 'string' && r.igroup.startsWith('@{')
-                );
-
-                if (igroupRecord && typeof igroupRecord.igroup === 'string') {
-                    const str = igroupRecord.igroup;
-                    if (str.startsWith('@{') && str.endsWith('}')) {
-                        const body = str.slice(2, -1);
-                        for (const pair of body
-                            .split(';')
-                            .map((s: string) => s.trim())
-                            .filter(Boolean)) {
-                            const [key, ...rest] = pair.split('=');
-                            const value = rest.join('=').trim();
-                            if (key.trim() === 'uuid') {
-                                igroupUuid = value;
-                            }
-                            if (key.trim() === 'name') {
-                                igroupName = value;
-                            }
-                        }
-                    }
-                }
-
-                // Get IGROUP details (to fetch initiator names)
+                const igroupUuid: string | undefined = lunRecord?.IGROUP_UUID;
+                const igroupName: string | undefined = lunRecord?.IGROUP_NAME;
                 let initiatorNames: string[] = [];
-                if (igroupUuid) {
-                    const igroupCommand = [
-                        GET_IGROUP_UUID({
-                            fsxId: instanceRecord.fsxFileSystem,
-                            region,
-                            apiEndpoint: `/protocols/san/igroups/${igroupUuid}`,
-                            apiQueryFilter: 'fields=initiators'
-                        })
-                    ];
-                    const igroupResp = await callSsmExecution(
-                        credentialsId,
-                        region,
-                        igroupCommand,
-                        instanceRecord.activeNodeInstanceid,
-                        `Get ONTAP igroup details for igroup ${igroupUuid}`,
-                        accountId,
-                        false,
-                        undefined,
-                        true
-                    );
-                    const igroupParsed = sqlResponseParsing(igroupResp);
-                    initiatorNames = Array.isArray(igroupParsed?.initiators)
-                        ? igroupParsed.initiators.map((initiator: { name: string }) => initiator.name)
-                        : [];
-                    logger.info('Fetched initiator names:', initiatorNames);
+                if (Array.isArray(lunRecord?.InitiatorNames)) {
+                    initiatorNames = lunRecord.InitiatorNames.map((s: string) => s.trim()).filter(Boolean);
+                } else if (typeof lunRecord?.InitiatorNames === 'string') {
+                    initiatorNames = lunRecord.InitiatorNames.split(',')
+                        .map((s: string) => s.trim())
+                        .filter(Boolean);
                 }
 
-                // Assessment: Check if any of hostIqnNode1 or hostIqnNode2 is present in initiatorNames
-                const hostIqnsToCheck = [hostIqnNode1, hostIqnNode2].filter(Boolean) as string[];
-                const initiatorAssessmentStatus = hostIqnsToCheck.some(iqn => initiatorNames.includes(iqn))
+                // Assessment: Check if all host IQNs are present in initiatorNames for this LUN
+                const initiatorAssessmentStatus = hostIqnsToCheck.every(iqn => initiatorNames.includes(iqn))
                     ? AssessmentStatus.OPTIMIZED
                     : AssessmentStatus.NOT_OPTIMIZED;
 
@@ -891,24 +836,34 @@ async function getSharedStorageAssessment(
     }
 }
 
+const DRIVE_LETTER_SECTIONS = ['data', 'log', 'tempDb'] as const;
+
 async function getDriveLetterAssessment(
     credentialsId: string,
     region: string,
     accountId: string,
     databaseHostId: string,
     instanceRecord: WorkloadInstance,
-    instanceVolumeMapping: MappedOnTapVolumeResponse[]
+    instanceVolumeMapping: MappedOnTapVolumeResponse[],
+    instanceDetail?: DatabaseInstance
 ) {
+    logger.info('[getDriveLetterAssessment] called', {
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        instanceName: instanceRecord?.name,
+        volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
+    });
     try {
-        const instanceDetail = (await getInstanceInfo(
-            accountId,
-            credentialsId,
-            databaseHostId,
-            instanceRecord.id
-        )) as DatabaseInstance;
-        logger.info('Instance detail for Drive Letter assessment:', instanceDetail.metadata);
+        // Use passed instanceDetail (always provided from main)
+        const detail = instanceDetail as DatabaseInstance;
+        logger.info('Instance detail for Drive Letter assessment:', {
+            instanceId: detail?.database_instance_id,
+            metadataKeys: Object.keys(detail?.metadata || {})
+        });
 
-        const { node1InstanceId, node2InstanceId } = (instanceDetail?.resource?.metadata || {}) as {
+        const { node1InstanceId, node2InstanceId } = (detail?.resource?.metadata || {}) as {
             node1InstanceId?: string;
             node2InstanceId?: string;
         };
@@ -922,6 +877,7 @@ async function getDriveLetterAssessment(
             node1InstanceId,
             node2InstanceId
         });
+        logger.debug('[getDriveLetterAssessment] active/standby node', { activeNodeInstanceId, standbyNodeInstanceId });
 
         let mappedVolumeDriveLetters: string[] = [];
         const mappedVolumeDriveLetterMap: {
@@ -939,7 +895,7 @@ async function getDriveLetterAssessment(
                 credentialsId,
                 region,
                 fetchDriveDetailsCommand,
-                activeNodeInstanceId,
+                standbyNodeInstanceId,
                 'Fetch drive letters for mapped volumes',
                 accountId,
                 false,
@@ -947,8 +903,7 @@ async function getDriveLetterAssessment(
                 true
             );
             driveDetails = JSON.parse(driveDetails);
-            const sections = ['data', 'log', 'tempDb'] as const;
-            mappedVolumeDriveLetters = sections.flatMap(section => {
+            mappedVolumeDriveLetters = DRIVE_LETTER_SECTIONS.flatMap(section => {
                 mappedVolumeDriveLetterMap[section] = {};
                 if (Array.isArray(driveDetails[section])) {
                     return driveDetails[section]
@@ -965,12 +920,19 @@ async function getDriveLetterAssessment(
                 }
                 return [];
             });
+            logger.debug('[getDriveLetterAssessment] mappedVolumeDriveLetters', {
+                count: mappedVolumeDriveLetters.length
+            });
         } catch (err) {
             logger.error('Failed to fetch mapped volume drive letters:', err);
+            throw err;
         }
 
         if (mappedVolumeDriveLetters.length === 0 && Array.isArray(instanceVolumeMapping)) {
             mappedVolumeDriveLetters = instanceVolumeMapping.map((vol: any) => vol?.driveLetter).filter(Boolean);
+            logger.debug('[getDriveLetterAssessment] fallback mappedVolumeDriveLetters', {
+                count: mappedVolumeDriveLetters.length
+            });
         }
 
         let standbyNodeDriveLetters: string[] = [];
@@ -982,7 +944,7 @@ async function getDriveLetterAssessment(
                 credentialsId,
                 region,
                 [DRIVE_LETTER],
-                standbyNodeInstanceId,
+                activeNodeInstanceId,
                 'Get drive letters on standby node',
                 accountId,
                 false,
@@ -995,6 +957,9 @@ async function getDriveLetterAssessment(
                       .map(letter => (typeof letter === 'string' ? letter.trim().toUpperCase() : ''))
                       .filter(letter => /^[A-Z]$/.test(letter))
                 : [];
+            logger.debug('[getDriveLetterAssessment] standbyNodeDriveLetters', {
+                count: standbyNodeDriveLetters.length
+            });
         } catch (err) {
             logger.error('Failed to fetch drive letters on standby node:', err);
             return { error: err?.toString() };
@@ -1005,6 +970,7 @@ async function getDriveLetterAssessment(
         const missingDriveLetters = uniqueMappedVolumeDriveLetters.filter(
             letter => !standbyNodeDriveLetters.includes(letter)
         );
+        logger.info('[getDriveLetterAssessment] completed', { allPresent, missingCount: missingDriveLetters.length });
 
         return {
             status: allPresent ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
@@ -1022,6 +988,12 @@ async function getClusterQuorumAssessment(
     accountId: string,
     instanceRecord: WorkloadInstance
 ) {
+    logger.info('[getClusterQuorumAssessment] called', {
+        credentialsId,
+        region,
+        accountId,
+        instanceName: instanceRecord?.name
+    });
     try {
         const command = [CLUSTER_QUORUM_TYPE];
         const rawResponse = await callSsmExecution(
@@ -1037,10 +1009,9 @@ async function getClusterQuorumAssessment(
         );
         const response = sqlResponseParsing(rawResponse);
 
-        let quorumResult;
-        try {
-            quorumResult = typeof response === 'string' ? JSON.parse(response) : response;
-        } catch {
+        const quorumResult = response;
+        if (!quorumResult || typeof quorumResult !== 'object') {
+            logger.error('[getClusterQuorumAssessment] Failed to parse quorum script output');
             return {
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 details: null,
@@ -1048,10 +1019,13 @@ async function getClusterQuorumAssessment(
             };
         }
         if (quorumResult.IsPhysicalDiskAndMajority === true) {
+            logger.info('[getClusterQuorumAssessment] Optimized quorum');
             return { status: AssessmentStatus.OPTIMIZED, details: quorumResult };
         }
+        logger.info('[getClusterQuorumAssessment] Not optimized quorum');
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: quorumResult };
     } catch (err) {
+        logger.error('[getClusterQuorumAssessment] Exception:', err);
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
     }
 }
@@ -1062,6 +1036,12 @@ async function getHeartbeatSettingsAssessment(
     accountId: string,
     instanceRecord: WorkloadInstance
 ) {
+    logger.info('[getHeartbeatSettingsAssessment] called', {
+        credentialsId,
+        region,
+        accountId,
+        instanceName: instanceRecord?.name
+    });
     try {
         const command = [HEARTBEAT_SETTINGS];
         const rawResponse = await callSsmExecution(
@@ -1075,37 +1055,21 @@ async function getHeartbeatSettingsAssessment(
             undefined,
             true
         );
-        let responseObj: any;
+        let settings: Record<string, any>;
         try {
-            responseObj = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+            settings = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
         } catch {
+            logger.error('[getHeartbeatSettingsAssessment] Failed to parse heartbeat script output');
             return {
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 details: null,
                 error: 'Failed to parse heartbeat script output'
             };
         }
-        const recommended = {
-            SameSubnetDelay: 1000,
-            SameSubnetThreshold: 10,
-            CrossSubnetDelay: 1000,
-            CrossSubnetThreshold: 20,
-            CrossSiteDelay: 1000,
-            CrossSiteThreshold: 20
-        };
-
-        let settings: Record<string, any> = {};
-        try {
-            settings = typeof responseObj === 'string' ? JSON.parse(responseObj) : responseObj;
-        } catch {
-            return {
-                status: AssessmentStatus.NOT_OPTIMIZED,
-                details: null,
-                error: 'Failed to parse heartbeat script output'
-            };
-        }
+        const recommended = storageGoldenConfigData.resiliency.heartbeatSettings;
 
         if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+            logger.error('[getHeartbeatSettingsAssessment] Heartbeat settings are missing or invalid');
             return {
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 details: null,
@@ -1115,11 +1079,13 @@ async function getHeartbeatSettingsAssessment(
 
         const notOptimized: Record<string, { current: number; recommended: number }> = {};
         let allOptimized = true;
+        const details: Record<string, { current: number; recommended: number }> = {};
 
         for (const key of Object.keys(recommended) as (keyof typeof recommended)[]) {
             const foundKey = Object.keys(settings).find(k => k.toLowerCase() === key.toLowerCase());
             const current = foundKey ? Number(settings[foundKey]) : NaN;
             const rec = recommended[key];
+            details[key] = { current, recommended: rec };
             if (current !== rec) {
                 notOptimized[key] = { current, recommended: rec };
                 allOptimized = false;
@@ -1127,20 +1093,15 @@ async function getHeartbeatSettingsAssessment(
         }
 
         if (allOptimized) {
+            logger.info('[getHeartbeatSettingsAssessment] All heartbeat settings optimized');
             return {
                 status: AssessmentStatus.OPTIMIZED,
                 details: settings
             };
         }
-
-        const details: Record<string, { current: number; recommended: number }> = {};
-        for (const key of Object.keys(recommended) as (keyof typeof recommended)[]) {
-            const foundKey = Object.keys(settings).find(k => k.toLowerCase() === key.toLowerCase());
-            details[key] = {
-                current: foundKey ? Number(settings[foundKey]) : NaN,
-                recommended: recommended[key]
-            };
-        }
+        logger.info('[getHeartbeatSettingsAssessment] Not all heartbeat settings optimized', {
+            notOptimizedKeys: Object.keys(notOptimized)
+        });
         return {
             status: AssessmentStatus.NOT_OPTIMIZED,
             details
@@ -1157,6 +1118,12 @@ async function getSqlServerServicesAssessment(
     accountId: string,
     instanceRecord: WorkloadInstance
 ) {
+    logger.info('[getSqlServerServicesAssessment] called', {
+        credentialsId,
+        region,
+        accountId,
+        instanceName: instanceRecord?.name
+    });
     try {
         const command = [SQL_SERVER_SERVICES(instanceRecord.name)];
         const rawResponse = await callSsmExecution(
@@ -1178,6 +1145,7 @@ async function getSqlServerServicesAssessment(
         } else if (response && typeof response === 'object') {
             services = [response];
         }
+        logger.debug('[getSqlServerServicesAssessment] services count', { count: services.length });
 
         const allManualAndRunning = services.every(
             (svc: any) =>
@@ -1185,12 +1153,15 @@ async function getSqlServerServicesAssessment(
                 (typeof svc.Status === 'string' ? svc.Status.toLowerCase() === 'running' : svc.Status === 4)
         );
 
-        const details = services.map((svc: any) => ({
-            Name: svc.Name,
-            Status: svc.Status,
-            StartType: svc.StartType
-        }));
+        const details = services.map(
+            ({ Name, Status, StartType }: { Name: string; Status: string; StartType: string }) => ({
+                Name,
+                Status,
+                StartType
+            })
+        );
 
+        logger.info('[getSqlServerServicesAssessment] completed', { allManualAndRunning });
         return allManualAndRunning
             ? { status: AssessmentStatus.OPTIMIZED, details }
             : { status: AssessmentStatus.NOT_OPTIMIZED, details, error: null };
@@ -1215,13 +1186,16 @@ async function initiateHighAvailabilityAssessment(
         region,
         databaseHostId,
         parentJobId,
-        instanceRecord
+        instanceName: instanceRecord?.name,
+        volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
     });
 
     if (!instanceRecord) {
+        logger.error('[initiateHighAvailabilityAssessment] instanceRecord is required');
         throw new Error('Instance record required for SSM checks');
     }
 
+    // Fetch instanceDetail once and pass to sub-assessments
     const instanceDetail = (await getInstanceInfo(
         accountId,
         credentialsId,
@@ -1232,6 +1206,7 @@ async function initiateHighAvailabilityAssessment(
     // Only run assessment if deployment type is FCI
     const fciCheck = checkFCIDeploymentType(instanceDetail, 'main');
     if (fciCheck) {
+        logger.info('[initiateHighAvailabilityAssessment] FCI check failed', { error: fciCheck.error });
         const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = instanceRecord;
         const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
         const jobName = 'High Availability Assessment';
@@ -1244,7 +1219,7 @@ async function initiateHighAvailabilityAssessment(
             description: jobDescription,
             resourceName: resourceWithInstanceName,
             startTime: Date.now(),
-            status: JOBSTATUS.IN_PROGRESS,
+            status: JOBSTATUS.FAILED,
             type: JOBTYPE.ASSESSMENT
         });
 
@@ -1296,6 +1271,7 @@ async function initiateHighAvailabilityAssessment(
     let sqlServerServicesResult;
     let driveLetterResult;
     try {
+        logger.info('[initiateHighAvailabilityAssessment] Starting all HA checks');
         [sharedStorageResult, driveLetterResult, clusterQuorumResult, heartbeatResult, sqlServerServicesResult] =
             await Promise.all([
                 getSharedStorageAssessment(
@@ -1304,7 +1280,8 @@ async function initiateHighAvailabilityAssessment(
                     accountId,
                     databaseHostId,
                     instanceRecord,
-                    instanceVolumeMapping
+                    instanceVolumeMapping,
+                    instanceDetail // pass down
                 ),
                 getDriveLetterAssessment(
                     credentialsId,
@@ -1312,17 +1289,20 @@ async function initiateHighAvailabilityAssessment(
                     accountId,
                     databaseHostId,
                     instanceRecord,
-                    instanceVolumeMapping
+                    instanceVolumeMapping,
+                    instanceDetail // pass down
                 ),
                 getClusterQuorumAssessment(credentialsId, region, accountId, instanceRecord),
                 getHeartbeatSettingsAssessment(credentialsId, region, accountId, instanceRecord),
                 getSqlServerServicesAssessment(credentialsId, region, accountId, instanceRecord)
             ]);
+        logger.info('[initiateHighAvailabilityAssessment] All HA checks completed');
     } catch (err) {
         logger.error('Error running high availability assessment:', err);
         errorMessage = err?.toString?.() || String(err);
         jobStatus = JOBSTATUS.FAILED;
     } finally {
+        logger.info('[initiateHighAvailabilityAssessment] Writing HA assessment config data');
         await createDatabaseInstanceConfigData([
             {
                 account_id: accountId,
@@ -1347,6 +1327,7 @@ async function initiateHighAvailabilityAssessment(
         status: jobStatus,
         error: errorMessage
     });
+    logger.info('[initiateHighAvailabilityAssessment] Job updated', { jobStatus, errorMessage });
 }
 
 async function getHighAvailabilityDriftData(
@@ -1367,12 +1348,21 @@ async function getHighAvailabilityDriftData(
 
     if (isEmpty(highAvailabilityAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HIGH_AVAILABILITY);
+        logger.error('[getHighAvailabilityDriftData] No assessment data', { errorMessage });
         return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
     }
 
     try {
         const { sharedStorage, driveLetter, clusterQuorum, heartbeat, sqlServerServices } =
             highAvailabilityAssessmentData;
+
+        logger.debug('[getHighAvailabilityDriftData] assessmentData keys', {
+            sharedStorage: !!sharedStorage,
+            driveLetter: !!driveLetter,
+            clusterQuorum: !!clusterQuorum,
+            heartbeat: !!heartbeat,
+            sqlServerServices: !!sqlServerServices
+        });
 
         const haChecks: ParameterDriftResponseType[] = [
             {
@@ -1420,7 +1410,7 @@ async function getHighAvailabilityDriftData(
                 objectsInViolation:
                     clusterQuorum?.status !== AssessmentStatus.OPTIMIZED && clusterQuorum?.details
                         ? [
-                              `IsMajority: ${clusterQuorum.details.IsMajority}, IsPhysicalDisk: ${clusterQuorum.details.IsPhysicalDisk}, QuorumResourceName: ${clusterQuorum.details.QuorumResourceName}`
+                              `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}, QuorumResourceName: ${clusterQuorum.details.quorumResourceName}`
                           ]
                         : [],
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
@@ -1476,6 +1466,7 @@ async function getHighAvailabilityDriftData(
             }
         ];
 
+        logger.info('[getHighAvailabilityDriftData] Drift data calculated', { checks: haChecks.length });
         return haChecks;
     } catch (error) {
         logger.error('Error fetching high availability drift data:', error);

@@ -55,7 +55,8 @@ import { calculateMaxDOPDrift, managedHostsMaxDOPAssessment } from './maxdop-ass
 import {
     initiateCrossRegionResiliencyAssessment,
     initiateAWSBackupAssessment,
-    getResilienceDriftAssessment
+    getResilienceDriftAssessment,
+    initiateHighAvailabilityAssessment
 } from './resilience-assessment-operation';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
@@ -861,6 +862,17 @@ async function initiateInstanceLevelAssessmentDataCollection(
                     databaseHostId,
                     databaseInstanceId,
                     instanceLevelAssessmentJobId
+                );
+                break;
+            case AssessmentCategories.HIGH_AVAILABILITY:
+                await initiateHighAvailabilityAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    instanceLevelAssessmentJobId,
+                    databaseInstanceRecord,
+                    instanceVolumeMapping
                 );
                 break;
             default:

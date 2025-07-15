@@ -105,20 +105,20 @@ interface AWSBackupAssessment {
     errorMessage?: string;
 }
 interface HighAvailabilityHeartbeatDetails {
-    CrossSiteDelay: number;
-    SameSubnetDelay: number;
-    CrossSubnetDelay: number;
-    CrossSiteThreshold: number;
-    SameSubnetThreshold: number;
-    CrossSubnetThreshold: number;
+    crossSiteDelay: number;
+    sameSubnetDelay: number;
+    crossSubnetDelay: number;
+    crossSiteThreshold: number;
+    sameSubnetThreshold: number;
+    crossSubnetThreshold: number;
 }
 
 interface HighAvailabilityClusterQuorumDetails {
-    IsMajority: boolean;
-    QuorumType: number;
-    IsPhysicalDisk: boolean;
-    QuorumResourceName: string;
-    IsPhysicalDiskAndMajority: boolean;
+    isMajority: boolean;
+    quorumType: number;
+    isPhysicalDisk: boolean;
+    quorumResourceName: string;
+    isPhysicalDiskAndMajority: boolean;
 }
 
 interface HighAvailabilityIgroupDetails {
@@ -141,13 +141,14 @@ interface HighAvailabilitySharedStorage {
 }
 
 interface HighAvailabilitySqlServerServiceDetail {
-    Name: string;
-    Status: string;
-    StartType: string;
+    name: string;
+    status: string;
+    startType: string;
 }
+
 interface HighAvailabilityClusterDriveLetterDetails {
-    Name: string;
-    Status: string;
+    name: string;
+    status: string;
     missingDriveLetters: string[];
 }
 

@@ -63,11 +63,7 @@ const FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS = (instanceRecord: WorkloadI
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
 
-    # Build sql instance service name
-    $instanceServiceName = "$env:COMPUTERNAME"
-    if ($sqlInstance -ne 'MSSQLSERVER') {
-        $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
-    }
+    # No need to build $instanceServiceName here, DATABASE_VOLUME_LUN_DETAILS handles it internally
     ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
 
     $response = $responseObject | ConvertTo-Json -Compress

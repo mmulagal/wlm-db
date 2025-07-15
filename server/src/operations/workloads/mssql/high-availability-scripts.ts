@@ -9,7 +9,6 @@ $WarningPreference = 'SilentlyContinue'
 $FSxID = '${params.fsxId}'
 $FSxRegion = '${params.region}'
 $apiEndpoint = '${params.apiEndpoint}'
-Write-Information "Getting igroup details for FSxID: $FSxID, FSxRegion: $FSxRegion"
 ${ontapRestRequest}
 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
 $ontapResponse | ConvertTo-Json
@@ -17,7 +16,6 @@ Stop-Transcript | Out-Null
 `;
 
 const GET_IGROUP_UUID = (params: OntapRequestParams) => getOntapScript(params, 'Get ONTAP IGROUP UUID');
-
 const GET_LUN_MAPS = (params: OntapRequestParams) => getOntapScript(params, 'Get ONTAP LUN MAPS');
 
 const GET_HOST_IQN = `
@@ -45,11 +43,6 @@ $settings = @{
 return $settings | ConvertTo-Json
 `;
 
-const GET_CLUSTER_QUORUM = `
-# Get current cluster quorum type
-(Get-ClusterQuorum).QuorumResource
-`;
-
 const CLUSTER_QUORUM_TYPE = `
 # Get quorum information
 $quorumInfo = Get-ClusterQuorum
@@ -66,14 +59,10 @@ $quorumResource = $physicalDisks | Where-Object { $_.Name -eq $quorumResourceNam
 $result = [PSCustomObject]@{
         QuorumResourceName = $quorumResourceName
         QuorumType = $quorumType
-        IsPhysicalDisk = $false
-        IsMajority = $false
-        IsPhysicalDiskAndMajority = $false
+        IsPhysicalDisk = !!$quorumResource
+        IsMajority = $quorumType -eq "Majority"
+        IsPhysicalDiskAndMajority = !!$quorumResource -and ($quorumType -eq "Majority")
 }
-
-if ($quorumResource) { $result.IsPhysicalDisk = $true }
-if ($quorumType -eq "Majority") { $result.IsMajority = $true }
-if ($result.IsPhysicalDisk -and $result.IsMajority) { $result.IsPhysicalDiskAndMajority = $true }
 $result | ConvertTo-Json -Compress
 `;
 
@@ -85,19 +74,69 @@ $serviceName = if ([string]::IsNullOrEmpty("${instanceName}") -or "${instanceNam
 }
 Get-Service -Name $serviceName -ErrorAction SilentlyContinue |
         Select-Object Name,
-                                    @{Name="Status";Expression={ $_.Status.ToString() }},
-                                    DisplayName,
-                                    @{Name="StartType";Expression={ $_.StartType.ToString() }} |
+                                  @{Name="Status";Expression={ $_.Status.ToString() }},
+                                  DisplayName,
+                                  @{Name="StartType";Expression={ $_.StartType.ToString() }} |
         ConvertTo-Json
+`;
+const GET_LUN_IGROUP_INITIATOR_NAMES = (params: OntapRequestParams, lunUuid: string) => `
+# Get LUN map and extract igroupUuid, igroupName, and initiator names for mapped LUN UUID
+Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
+$WarningPreference = 'SilentlyContinue'
+$FSxID = '${params.fsxId}'
+$FSxRegion = '${params.region}'
+$apiEndpoint = '${params.apiEndpoint}'
+$apiQueryFilter = 'fields=igroup'
+${ontapRestRequest}
+
+function Convert-StringToHashtable {
+        param([string]$str)
+        $hash = @{}
+        if ($str -match '^@{(.+)}$') {
+                $body = $matches[1]
+                $pairs = $body -split ';(?=(?:[^"]*"[^"]*")*[^"]*$)'
+                foreach ($pair in $pairs) {
+                        if ($pair -match '^(.*?)=(.*)$') {
+                                $key = $matches[1].Trim()
+                                $value = $matches[2].Trim()
+                                $hash[$key] = $value
+                        }
+                }
+        }
+        return $hash
+}
+
+$results = @()
+$lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "$apiEndpoint/protocols/san/lun-maps/${lunUuid}" -ApiQueryFilter $apiQueryFilter -method "GET"
+if ($lunMapsResp.records) {
+        foreach ($lunMap in $lunMapsResp.records) {
+                $igroupObj = $null
+                if ($lunMap.PSObject.Properties['igroup']) {
+                        $igroupObj = $lunMap.igroup
+                }
+                if ($igroupObj) {
+                        if ($igroupObj -is [string]) { $igroupObj = Convert-StringToHashtable $igroupObj }
+                        $result = [PSCustomObject]@{
+                                LUN_UUID = '${lunUuid}'
+                                IGROUP_UUID = $igroupObj.uuid
+                                IGROUP_NAME = $igroupObj.name
+                                InitiatorNames = $igroupObj.initiators
+                        }
+                        $results += $result
+                }
+        }
+}
+$results | ConvertTo-Json
+Stop-Transcript | Out-Null
 `;
 
 export {
     CLUSTER_QUORUM_TYPE,
-    GET_CLUSTER_QUORUM,
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
     GET_IGROUP_UUID,
     GET_LUN_MAPS,
-    GET_HOST_IQN
+    GET_HOST_IQN,
+    GET_LUN_IGROUP_INITIATOR_NAMES
 };

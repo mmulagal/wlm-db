@@ -256,6 +256,14 @@ const GOLDEN_CONFIG = {
             resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
             recommendation:
                 'Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.'
+        },
+        heartbeatSettings: {
+            SameSubnetDelay: 1000,
+            SameSubnetThreshold: 10,
+            CrossSubnetDelay: 1000,
+            CrossSubnetThreshold: 20,
+            CrossSiteDelay: 1000,
+            CrossSiteThreshold: 20
         }
     }
 };
