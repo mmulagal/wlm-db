@@ -18,7 +18,6 @@ const AIInvestigation = ({
     startTime: number;
     endTime: number;
 }) => {
-    const markedNumbers = ['03:00', '10:00', '12:00', '18:00'];
     const { t } = useTranslation();
 
     return (
@@ -71,7 +70,11 @@ const AIInvestigation = ({
                         )}
                     </div>
                 </div>
-                <ErrorCountChart startTime={startTime} endTime={endTime} markedNumbers={markedNumbers} />
+                <ErrorCountChart
+                    startTime={startTime}
+                    endTime={endTime}
+                    hourlyErrorCounts={selectedErrorData?.hourlyErrorCounts || []}
+                />
             </div>
 
             <div className={styles.sectionTwo}>

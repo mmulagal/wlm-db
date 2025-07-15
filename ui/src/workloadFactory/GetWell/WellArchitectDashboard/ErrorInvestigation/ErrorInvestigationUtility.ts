@@ -123,6 +123,79 @@ export const filterByTime = (
     return result;
 };
 
+export const getStartAndEndTimeFromRange = (
+    data: ErrorInvestigationGetApiResponse[],
+    selectedTimeFrame: string,
+    timeRange: { from: string; to: string; fromPeriod: string; toPeriod: string }
+) => {
+    const result = data.map(obj => ({ ...obj }));
+    if (data?.length > 0 && selectedTimeFrame && !selectedTimeFrame.includes(' - ')) {
+        let hours = 24;
+        if (selectedTimeFrame === eiTimeOptions?.last12) hours = 12;
+        else if (selectedTimeFrame === eiTimeOptions?.last6) hours = 6;
+        else if (selectedTimeFrame === eiTimeOptions?.last1) hours = 1;
+        let maxHour = 0;
+        result.forEach(obj => {
+            const hourly = obj.hourlyErrorCounts;
+            if (Array.isArray(hourly) && hourly.length > 0) {
+                const objMax = Math.max(...hourly.map(h => h.hour));
+                if (objMax > maxHour) maxHour = objMax;
+            }
+        });
+        const minHour = maxHour - hours * 60 * 60 * 1000;
+        return {
+            startTime: minHour,
+            endTime: maxHour
+        };
+    }
+    if (data?.length > 0 && selectedTimeFrame.includes(' - ') && timeRange) {
+        // Calculate minHour and maxHour from data
+        let minHour = Number.POSITIVE_INFINITY;
+        let maxHour = 0;
+        result.forEach(obj => {
+            const hourly = obj.hourlyErrorCounts;
+            if (Array.isArray(hourly) && hourly.length > 0) {
+                const objMin = Math.min(...hourly.map(h => h.hour));
+                const objMax = Math.max(...hourly.map(h => h.hour));
+                if (objMin < minHour) minHour = objMin;
+                if (objMax > maxHour) maxHour = objMax;
+            }
+        });
+        // Parse hour and period to get hour offset in ms
+        const parseHour = (time: string, period: string) => {
+            const [hourStr] = time.split(':');
+            let hour = Number(hourStr);
+            if (period === 'AM') {
+                if (hour === 12) hour = 0;
+            } else if (period === 'PM') {
+                if (hour !== 12) hour += 12;
+            }
+            return hour;
+        };
+        // Use maxHour as reference date
+        const refDate = new Date(maxHour);
+        // Calculate start and end using timeRange, but clamp between minHour and maxHour
+        const startHour = parseHour(timeRange.from, timeRange.fromPeriod);
+        const endHour = parseHour(timeRange.to, timeRange.toPeriod);
+        // Build start and end timestamps with the same date as refDate
+        let start = new Date(refDate);
+        start.setHours(startHour, 0, 0, 0);
+        let end = new Date(refDate);
+        end.setHours(endHour, 0, 0, 0);
+        // Clamp start and end between minHour and maxHour
+        if (start.getTime() < minHour) start = new Date(minHour);
+        if (end.getTime() > maxHour) end = new Date(maxHour);
+        return {
+            startTime: start.getTime(),
+            endTime: end.getTime()
+        };
+    }
+    return {
+        startTime: 0,
+        endTime: 0
+    };
+};
+
 export const filterByErrorCodes = (
     data: ErrorInvestigationGetApiResponse[],
     selectedErrorCodes: string
