@@ -20,9 +20,8 @@ const Sandboxes = () => {
     const { loading: dataLoading, data: aggregatedSandboxList } = useAppSelector(
         state => state.inventoryV2.dashSandboxList
     );
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } = useAppSelector(
-        state => state.headers
-    );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
+        useAppSelector(state => state.headers);
 
     const [data, setData] = useState<any>([]);
 
@@ -72,8 +71,8 @@ const Sandboxes = () => {
             <div className={styles.mainSection}>
                 <SandboxChart aggregatedSandboxList={data} loading={loading} />
                 <div className={styles.rightSide}>
-                    <DsTypography 
-                        variant="Semibold_14" 
+                    <DsTypography
+                        variant="Semibold_14"
                         style={{ marginBottom: '16px' }}
                         className={showNA ? CommonStyles.notAvailable : ''}
                     >

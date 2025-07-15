@@ -1468,7 +1468,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             {/* Add based on noCred flag */}
                             {showNA && (
                                 <div className={styles.noCredBanner}>
-                                    <NoCredBanner width={'83.5%'} />
+                                    <NoCredBanner width="83.5%" />
                                 </div>
                             )}
 
@@ -1487,7 +1487,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             {/* Add based on noCred flag */}
                             {showNA && (
                                 <div className={styles.noCredBanner}>
-                                    <NoCredBanner width={'87.3%'} />
+                                    <NoCredBanner width="87.3%" />
                                 </div>
                             )}
 
@@ -1498,7 +1498,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
-                                    {showNA && <DummySelect fromJM={true} />}
+                                    {showNA && <DummySelect fromJM />}
                                     {!showNA && <div />}
                                     <div className={styles.content}>
                                         <div className={styles.selectContainer}>
@@ -1566,7 +1566,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             {/* Add based on noCred flag */}
                             {showNA && (
                                 <div className={styles.noCredBanner}>
-                                    <NoCredBanner width={'87.3%'} />
+                                    <NoCredBanner width="87.3%" />
                                 </div>
                             )}
 
@@ -1588,7 +1588,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             {/* Add based on noCred flag */}
                             {showNA && (
                                 <div className={styles.noCredBanner}>
-                                    <NoCredBanner width={'87.3%'} />
+                                    <NoCredBanner width="87.3%" />
                                 </div>
                             )}
                             <ExploreSavings />

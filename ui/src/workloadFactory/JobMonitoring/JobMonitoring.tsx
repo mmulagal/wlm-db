@@ -45,7 +45,7 @@ const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownV
                     <div className={styles.headSection}>
                         <Typography variant="Regular_16" className={styles.title}>
                             {GENERAL.JOBS_STATUS_OVER_TIME}
-                           {timelineLoading && <FlashingDotsLoader />}
+                            {timelineLoading && <FlashingDotsLoader />}
                         </Typography>
                     </div>
                     <div className={styles.mainSection}>

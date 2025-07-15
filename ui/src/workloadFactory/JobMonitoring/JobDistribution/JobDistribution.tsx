@@ -5,7 +5,6 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import useResize from '../../../common/hooks/useResize';
 
-
 const JobDistribution = () => {
     const jobsSummaryData = useAppSelector(state => state.jobMonitoring.jmJobsSummary);
     const jobsSummaryLoading = useAppSelector(state => state.jobMonitoring.jmJobsSummaryLoading);
@@ -21,7 +20,7 @@ const JobDistribution = () => {
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.headStatus}>
                     {GENERAL.JOB_DISTRIBUTION}
-                     {jobsSummaryLoading && <FlashingDotsLoader />}
+                    {jobsSummaryLoading && <FlashingDotsLoader />}
                 </Typography>
             </div>
 
@@ -33,7 +32,7 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
-                                 <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
+                                <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
                                 {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">
@@ -46,7 +45,7 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-6)' }} />
-                               <Typography variant="Regular_14">Completed with issues</Typography>
+                                <Typography variant="Regular_14">Completed with issues</Typography>
                                 {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">
@@ -72,7 +71,7 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
-                                 <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
+                                <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
                                 {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">
@@ -93,7 +92,7 @@ const JobDistribution = () => {
                                 <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
                                 {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                             <Typography variant="Semibold_14">
+                            <Typography variant="Semibold_14">
                                 {(jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
@@ -106,7 +105,7 @@ const JobDistribution = () => {
                                 <Typography variant="Regular_14">Completed with issues</Typography>
                                 {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
-                             <Typography variant="Semibold_14">
+                            <Typography variant="Semibold_14">
                                 {(jobsSummaryData?.warning || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
@@ -129,7 +128,7 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
-                              <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
+                                <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
                                 {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">

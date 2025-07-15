@@ -124,7 +124,11 @@ const SandboxStorageSaving = () => {
                                     </DsTypography>
                                 )}
 
-                                <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
                                     {GENERAL.SANDBOX_CONSUMED_STORAGE}
                                 </DsTypography>
                             </div>
@@ -140,7 +144,11 @@ const SandboxStorageSaving = () => {
                                     </DsTypography>
                                 )}
 
-                                <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }} className={showNA ? CommonStyles.notAvailable : ''}>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
                                     {windowSize.width > 1872 ? GENERAL.SANDBOX_STORAGE_SAVINGS : GENERAL.SAVINGS}
                                 </DsTypography>
                             </div>

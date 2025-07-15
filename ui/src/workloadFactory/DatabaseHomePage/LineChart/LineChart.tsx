@@ -327,7 +327,12 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData, show
                         <NoData />
                     </div>
                 ))}
-            <canvas ref={chartRef} width={336} height={131} style={showNA ? { filter: 'grayscale(100%) opacity(0.5)' } : {}} />
+            <canvas
+                ref={chartRef}
+                width={336}
+                height={131}
+                style={showNA ? { filter: 'grayscale(100%) opacity(0.5)' } : {}}
+            />
 
             {/* <Typography variant="Semibold_14" className={styles.text}>
                 24 hours trend

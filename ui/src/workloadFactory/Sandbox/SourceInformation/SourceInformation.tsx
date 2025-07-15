@@ -1,7 +1,7 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Source } from '../../../assets/Source.svg';
 import { ReactComponent as Sandbox } from '../../../assets/Sandbox.svg';
-import { useTranslation } from 'react-i18next';
 
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './SourceInformation.module.scss';

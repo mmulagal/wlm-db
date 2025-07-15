@@ -93,16 +93,22 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             <BarComponent
                 color="#5E8DCD"
                 headingText={headingText}
-                percentage={showNA ? t('databases.general.not-available') : (dismissedOrPostponedText ? 0 : Math.round((optimizedCount / total) * 100))}
-                beforeOutOf={showNA ? undefined : (dismissedOrPostponedText ? undefined : optimizedCount)}
-                afterOutOf={showNA ? undefined : (dismissedOrPostponedText ? undefined : afterOutOfTotal)}
-                bottomText={showNA ? undefined : (dismissedOrPostponedText ? undefined : 'Well-architected:')}
+                percentage={
+                    showNA
+                        ? t('databases.general.not-available')
+                        : dismissedOrPostponedText
+                        ? 0
+                        : Math.round((optimizedCount / total) * 100)
+                }
+                beforeOutOf={showNA ? undefined : dismissedOrPostponedText ? undefined : optimizedCount}
+                afterOutOf={showNA ? undefined : dismissedOrPostponedText ? undefined : afterOutOfTotal}
+                bottomText={showNA ? undefined : dismissedOrPostponedText ? undefined : 'Well-architected:'}
                 width={width}
                 from="dashboard"
-                optimizePercentage={showNA ? 100 : (dismissedOrPostponedText ? 0 : optimizePercentage)}
+                optimizePercentage={showNA ? 100 : dismissedOrPostponedText ? 0 : optimizePercentage}
                 loading={dismissedOrPostponedText ? loading : isLoading}
-                textMessage={showNA ? undefined : (dismissedOrPostponedText || undefined)}
-                textMessageVariant={showNA ? "Regular_14" : undefined}
+                textMessage={showNA ? undefined : dismissedOrPostponedText || undefined}
+                textMessageVariant={showNA ? 'Regular_14' : undefined}
                 tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
                 isDisabled={showNA}
             />
@@ -189,7 +195,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
                             }}
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.fileSystemHeadroom) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -239,7 +246,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
                             }}
                             data-testid="wlm-db-optimize-log-drive-size"
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.logDriveSize) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -289,7 +297,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
                             }}
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.tempdbDriveSize) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -474,7 +483,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('ONTAP');
                             }}
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.ontapConfiguration) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -514,7 +524,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Operating system');
                             }}
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.operatingSystem) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -554,7 +565,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.computeRightsizing) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -652,7 +664,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(GENERAL.RSS_CONFIGURATION);
                             }}
                             data-testid="wlm-db-optimize-rss-configuration"
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.rssConfiguration) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -799,7 +812,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.MAXDOP);
                             }}
                             data-testid="wlm-db-optimize-maxdop"
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.maxdopPatch) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -849,7 +863,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
                             }}
                             data-testid="wlm-db-optimize-snapshot"
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.scheduledLocalSnapshot) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -939,7 +954,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
                             }}
                             data-testid="wlm-db-optimize-awsbackup"
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.scheduledawsBackup) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||
@@ -975,7 +991,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    { hasDismissedOrPosponed(configData?.configState?.clone)|| showNA ? (
+                    {hasDismissedOrPosponed(configData?.configState?.clone) || showNA ? (
                         <BarComponent
                             color="#5E8DCD"
                             percentage={showNA ? t('databases.general.not-available') : 0}
@@ -983,7 +999,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             width={windowSize.width > 1700 ? '328px' : '248px'}
                             from="dashboard"
                             textMessage={showNA ? undefined : hasDismissedOrPosponed(configData?.configState?.clone)}
-                            textMessageVariant={showNA ? "Regular_14" : undefined}
+                            textMessageVariant={showNA ? 'Regular_14' : undefined}
                             optimizePercentage={showNA ? 100 : 0}
                             loading={loading}
                             isDisabled={showNA}
@@ -1022,7 +1038,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
                             }}
                             data-testid="wlm-db-optimize-clone"
-                            isDisabled={showNA ||
+                            isDisabled={
+                                showNA ||
                                 hasDismissedOrPosponed(configData?.configState?.clone) !== '' ||
                                 loading ||
                                 configData?.total === 0 ||

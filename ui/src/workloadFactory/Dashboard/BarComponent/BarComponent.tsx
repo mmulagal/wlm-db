@@ -155,7 +155,7 @@ const BarComponent = ({
                     {!isDisabled && (
                         <div className={styles.optimizeText}>
                             {!textMessage && (
-                                <DsTypography variant={'Regular_24'} style={{ lineHeight: 'unset' }}>
+                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {percentage}%
                                 </DsTypography>
                             )}
@@ -176,7 +176,7 @@ const BarComponent = ({
                         <div className={styles.disableOptimize}>
                             {!textMessage && (
                                 <DsTypography
-                                    variant={'Regular_14'}
+                                    variant="Regular_14"
                                     style={{ lineHeight: 'unset' }}
                                     className={isDisabled ? CommonStyles.notAvailable : ''}
                                 >

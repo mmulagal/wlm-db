@@ -17,7 +17,16 @@ type ChartType = {
     isDisabled?: boolean;
 };
 
-const HostDistributionChart = ({ color1, color2, data1, data2, centerText, centerValue, loading, isDisabled = false }: ChartType) => {
+const HostDistributionChart = ({
+    color1,
+    color2,
+    data1,
+    data2,
+    centerText,
+    centerValue,
+    loading,
+    isDisabled = false
+}: ChartType) => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
     const chartInstanceRef = useRef<any>(null);
@@ -59,12 +68,20 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
     return (
         <div className={styles.inventoryChart} id="chart-item">
             <div className={styles['center-text']}>
-                <Typography variant={isDisabled ? "Semibold_14" : "Regular_32"} style={{ lineHeight: 'unset' }} className={isDisabled ? CommonStyles.notAvailable : ''}>
+                <Typography
+                    variant={isDisabled ? 'Semibold_14' : 'Regular_32'}
+                    style={{ lineHeight: 'unset' }}
+                    className={isDisabled ? CommonStyles.notAvailable : ''}
+                >
                     {centerValue}
                 </Typography>
-                
+
                 {isDisabled && (
-                    <Typography variant="Regular_14" style={{ lineHeight: 'unset', marginTop: '4px' }} className={CommonStyles.notAvailable}>
+                    <Typography
+                        variant="Regular_14"
+                        style={{ lineHeight: 'unset', marginTop: '4px' }}
+                        className={CommonStyles.notAvailable}
+                    >
                         {centerText}
                     </Typography>
                 )}
