@@ -55,11 +55,15 @@ const HeaderComponentApi = () => {
     useEffect(() => {
         if (statusError) {
             dispatch(addStatus({ undefined, statusLoading, statusError }));
+            dispatch(setShowNA(true));
         } else {
             dispatch(addStatus({ statusData, statusLoading, statusError }));
             if (isDemoMode || (statusData && statusData?.isActive)) {
                 setSkipApiCall(false);
             }
+        }
+        if (statusData && !statusData?.isActive) {
+            dispatch(setShowNA(true));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData, statusLoading, statusError]);
