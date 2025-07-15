@@ -363,7 +363,7 @@ const InstancesTable = () => {
             );
 
             if (hostExists) {
-                return showSingleAgentDialog(existingData.connectors);
+                return showSingleAgentDialog([], true);
             }
         }
 
@@ -405,7 +405,7 @@ const InstancesTable = () => {
         );
     };
 
-    const showSingleAgentDialog = (connectors: any) => {
+    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean) => {
         const activeAgents = connectors?.occms?.filter((item: any) => item.agent.status === 'active') || [];
         setDialog(
             <DialogComponent
@@ -417,14 +417,18 @@ const InstancesTable = () => {
                         </DsTypography>
                     </div>
                 }
-                content={<SingleAgentDialog agents={activeAgents} />}
-                primaryButton={t('databases.inventory.start')}
+                content={<SingleAgentDialog agents={activeAgents} hostExists={hostExists} />}
+                primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
                 secondaryButton={t('databases.inventory.cancel')}
                 closeCallback={() => {
                     closeDialog();
                 }}
                 callback={() => {
-                    dispatch(setStartProtection('started'));
+                    if (hostExists) {
+                        bxpRedirect(isWorkloadFactory);
+                    } else {
+                        dispatch(setStartProtection('started'));
+                    }
                 }}
                 customClass={styles.protectionDialog}
                 dialogFrom={FROM_DIALOG.SINGLE_AGENT}
@@ -512,7 +516,7 @@ const InstancesTable = () => {
         }
         if (activeAgents.length > 0) {
             // Single Connector case
-            showSingleAgentDialog(activeAgents);
+            showSingleAgentDialog(activeAgents, false);
         }
     };
 
@@ -1140,12 +1144,6 @@ const InstancesTable = () => {
                 }
 
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
-                    if (localStorage.getItem('protection') === 'true') {
-                        menu.push({
-                            id: 'protect',
-                            displayName: 'Protect'
-                        });
-                    }
                     menu.push(
                         {
                             id: 'investigateErrors',
@@ -1190,10 +1188,11 @@ const InstancesTable = () => {
                             disabled: disableOption,
                             infoText: disableMessage
                         },
-                        // {
-                        //     id: 'protect',
-                        //     displayName: 'Protect'
-                        // },
+                        {
+                            id: 'protect',
+                            displayName: 'Protect',
+                            disabled: !rowData?.fsxId
+                        },
 
                         {
                             id: 'unManage',
