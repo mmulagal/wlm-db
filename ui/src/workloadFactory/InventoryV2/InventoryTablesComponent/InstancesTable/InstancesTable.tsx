@@ -334,7 +334,7 @@ const InstancesTable = () => {
 
         if (existingData.initialHostCheck) {
             if (existingData.isHostManaged) {
-                return showSingleAgentDialog(existingData.connectors);
+                return showSingleAgentDialog([], true);
             }
             // else proceed to normal flow
         } else {
