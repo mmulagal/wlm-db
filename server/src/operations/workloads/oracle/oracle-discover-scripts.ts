@@ -245,19 +245,19 @@ EOF
 get_data_directories_without_creds() {
         local ORACLE_SID="$1"
         local ORACLE_HOME="$2"
-        sudo -i -u oracle bash <<'EOF'
+        sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
             export ORACLE_HOME="$ORACLE_HOME"
-            spFilePath="$ORACLE_HOME/dbs/spfile$ORACLE_SID.ora"
-            controlFilesPath=$(strings "$spFilePath" | grep -i control_files | sed "s/.*=//;s/'//g" | tr ',' '\n' | sed '/^$/d')
+            spFilePath="\\$ORACLE_HOME/dbs/spfile\\$ORACLE_SID.ora"
+            controlFilesPath=\\$(strings "\\$spFilePath" | grep -i control_files | sed "s/.*=//;s/'//g" | tr ',' '\n' | sed '/^$/d')
 
             # Get the first control file path from the list, not all control files need to be checked as control files are usually exact copies of each other for an instance.
-            controlFile=$(echo "$controlFilesPath" | head -n 1)
+            controlFile=$(echo "\\$controlFilesPath" | head -n 1)
 
 
             # Data files entries are in the form of 'file_name = /path/to/datafile.dbf', so we will grep for '.dbf' to find data file paths and get the unique directories.
-            uniqueDataFileDirectories=$(strings $controlFile | grep -i '\\.dbf' | xargs -n1 dirname | sort | uniq)
-            echo "$uniqueDataFileDirectories"
+            uniqueDataFileDirectories=\\$(strings \\$controlFile | grep -i '\\.dbf' | xargs -n1 dirname | sort | uniq)
+            echo "\\$uniqueDataFileDirectories"
 EOF
 }
 
