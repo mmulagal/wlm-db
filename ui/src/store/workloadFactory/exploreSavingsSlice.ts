@@ -139,13 +139,23 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     onPremNetworkPerformance: null,
     storageSavingsOnPremResponse: {},
     storageSavingsOnPremLoading: false,
-    regionChangeInstanceLoading: false
+    regionChangeInstanceLoading: false,
+    serverDetails: {
+        password: '',
+        userName: ''
+    }
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setServerUserName: (state, action: PayloadAction<any>) => {
+            state.serverDetails.userName = action.payload;
+        },
+        setServerPassword: (state, action: PayloadAction<any>) => {
+            state.serverDetails.password = action.payload;
+        },
         setRegionChangeInstanceLoading(state, action: PayloadAction<any>) {
             state.regionChangeInstanceLoading = action.payload;
         },
@@ -488,11 +498,19 @@ const exploreSavingsSlice = createSlice({
             state.selectedExRegionId = action.payload.regionId;
             state.selectedDeploymentModel = action.payload.deploymentModel;
             state.selectedServerName = action.payload.serverName;
+        },
+        resetServerDetailsCredentials(state) {
+            state.serverDetails = {
+                password: '',
+                userName: ''
+            };
         }
     }
 });
 
 export const {
+    setServerUserName,
+    setServerPassword,
     setOnPremiseData,
     setRegionChangeInstanceLoading,
     setOnPremiseDataLoading,
@@ -560,7 +578,8 @@ export const {
     setOnPremRegionsLoading,
     setOnPremStorageAndComputeInfo,
     setOnPremStorageAndComputeInfoFull,
-    setSelectedEsPageInstance
+    setSelectedEsPageInstance,
+    resetServerDetailsCredentials
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

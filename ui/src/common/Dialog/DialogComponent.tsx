@@ -29,6 +29,7 @@ type DialogProps = {
     hidePrimaryButton?: boolean;
     primaryButtonTooltip?: string;
     testId?: string;
+    errorMessage?: string;
 };
 
 const DialogComponent = ({
@@ -43,7 +44,8 @@ const DialogComponent = ({
     primaryButtonDisabled = false,
     hidePrimaryButton = false,
     primaryButtonTooltip = '',
-    testId
+    testId,
+    errorMessage = ''
 }: DialogProps) => {
     const { closeDialog } = useDialog();
     const { t } = useTranslation();
@@ -52,6 +54,14 @@ const DialogComponent = ({
     const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
     const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
     const saveConfigFromSaving = useAppSelector(state => state.exploreSavings.saveConfigName);
+    const {
+        showDialogError,
+        showTooltipInfo,
+        tooltipText,
+        primaryButtonLoading,
+        allActionsDisabled,
+        dialogPrimaryButtonDisabled
+    } = useAppSelector(state => state.dialogComponent);
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
@@ -85,7 +95,8 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
             dialogFrom !== FROM_DIALOG.FSXADMIN &&
             dialogFrom !== FROM_DIALOG.SQLSERVER &&
-            dialogFrom !== FROM_DIALOG.SINGLE_AGENT
+            dialogFrom !== FROM_DIALOG.SINGLE_AGENT &&
+            dialogFrom !== FROM_DIALOG.EXPLORE_SAVINGS
         ) {
             closeDialog();
         }
@@ -182,17 +193,19 @@ const DialogComponent = ({
             <DialogHeader>{header}</DialogHeader>
             <DialogContent>{content}</DialogContent>
             <DialogFooter>
-                {/* Error condition will come here */}
-                {false && (
+                {/* Show error message if showDialogError is true which is stored in dialogComponentSlice so that the DialogComponents reloads when there is a change */}
+                {showDialogError && (
                     <div className={styles.errorMsg}>
                         <ErrorIcon className={styles.errorIcon} />
                         <DsTypography variant="Semibold_14">Error:</DsTypography>&nbsp;
                         <DsTypography variant="Regular_14" className={styles.errorMsgText}>
-                            'Error text'
+                            {errorMessage}
                         </DsTypography>
-                        <div className={styles.dialogFooterDialog}>
-                            <TooltipInfo>Text</TooltipInfo>
-                        </div>
+                        {showTooltipInfo && (
+                            <div className={styles.dialogFooterDialog}>
+                                <TooltipInfo>{tooltipText}</TooltipInfo>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -201,8 +214,13 @@ const DialogComponent = ({
                         variant="primary"
                         className="continue-button"
                         isThin
-                        isDisabled={disabledCheck() || refreshSandboxDisabled}
-                        isLoading={primaryButtonLoad}
+                        isDisabled={
+                            disabledCheck() ||
+                            refreshSandboxDisabled ||
+                            allActionsDisabled ||
+                            dialogPrimaryButtonDisabled
+                        }
+                        isLoading={primaryButtonLoad || primaryButtonLoading}
                         onClick={primaryButtonClick}
                         title={primaryButtonTooltip}
                         data-testid={testId}
