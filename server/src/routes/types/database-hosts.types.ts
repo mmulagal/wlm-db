@@ -473,7 +473,7 @@ const NodeTopologyResponse = Type.Object({
 
 const VolumeLunDetailsResponse = Type.Object({
     id: Type.String({ description: 'Identifier for the volume/lun' }),
-    name: Type.String({ description: 'Name of the volume' })
+    name: Type.String({ description: 'Name of the volume/lun' })
 });
 
 const DatabaseInstanceTopology = Type.Object({
