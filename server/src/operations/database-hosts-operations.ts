@@ -1226,7 +1226,7 @@ async function getDatabaseHostSummaryV2(
             } else {
                 promises.push(Promise.resolve());
             }
-
+            resourceDetail.database_instances = instancesManaged;
             if (getUsageEstimation && activeNodeInstanceId) {
                 promises.push(
                     getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource).catch(
