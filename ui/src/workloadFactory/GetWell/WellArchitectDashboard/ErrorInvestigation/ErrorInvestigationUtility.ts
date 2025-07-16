@@ -61,7 +61,7 @@ export const filterByTime = (
                 if (objMax > maxHour) maxHour = objMax;
             }
         });
-        const minHour = maxHour - hours * 60 * 60 * 1000;
+        const minHour = maxHour - (hours !== 24 ? hours : hours - 1) * 60 * 60 * 1000;
         result = result.map(obj => {
             const hourly = obj.hourlyErrorCounts;
             return {
@@ -142,7 +142,7 @@ export const getStartAndEndTimeFromRange = (
                 if (objMax > maxHour) maxHour = objMax;
             }
         });
-        const minHour = maxHour - hours * 60 * 60 * 1000;
+        const minHour = maxHour - (hours !== 24 ? hours : hours - 1) * 60 * 60 * 1000;
         return {
             startTime: minHour,
             endTime: maxHour
