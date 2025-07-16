@@ -1173,11 +1173,13 @@ async function initiateHighAvailabilityAssessment(
     instanceRecord: WorkloadInstance,
     instanceVolumeMapping: MappedOnTapVolumeResponse[]
 ) {
-    logger.info(
-        `Starting high availability assessment for "${instanceRecord?.name}" with ${
-            Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
-        } volumes...`
-    );
+    logger.info('Initiating High availability resiliency assessment for:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        parentJobId
+    });
 
     if (!instanceRecord) {
         logger.error('Instance record is required for high availability assessment.');
@@ -1326,7 +1328,13 @@ async function getHighAvailabilityDriftData(
     databaseInstanceId: string,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
 ): Promise<ParameterDriftResponseType[] | (ParameterDriftResponseType & { errorMessage: string })> {
-    logger.info(`Calculating high availability drift data for instance "${databaseInstanceId}"...`);
+    logger.info('Initiating High availability resiliency assessment for:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
 
     if (isEmpty(highAvailabilityAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HIGH_AVAILABILITY);
