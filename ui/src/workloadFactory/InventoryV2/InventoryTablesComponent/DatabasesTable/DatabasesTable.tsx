@@ -2,6 +2,7 @@ import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography, Popover } from '@net
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
@@ -19,6 +20,7 @@ import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClip
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 
 const DatabasesTable = () => {
+    const { t } = useTranslation();
     const { selectedInventoryTab, selectedFilterValue, databaseTableRows, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
@@ -141,7 +143,7 @@ const DatabasesTable = () => {
     const DatabasesColDefs: ColumnProps[] = [
         {
             id: '1',
-            Header: 'Database name',
+            Header: t('databases.databases-table.headers.database-name'),
             accessor: 'name',
             isSortable: true,
             width: '200px',
@@ -176,7 +178,7 @@ const DatabasesTable = () => {
             }
         },
         {
-            Header: 'Host name',
+            Header: t('databases.databases-table.headers.host-name'),
             accessor: 'hostName',
             id: '2',
             width: '200px',
@@ -184,7 +186,7 @@ const DatabasesTable = () => {
             renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
-            Header: 'Engine type',
+            Header: t('databases.databases-table.headers.engine-type'),
             accessor: 'hostType',
             id: '3',
             width: '200px',
@@ -192,7 +194,7 @@ const DatabasesTable = () => {
             renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
-            Header: 'Instance name',
+            Header: t('databases.databases-table.headers.instance-name'),
             accessor: 'databaseInstanceName',
             id: '4',
             width: '200px',
@@ -200,7 +202,7 @@ const DatabasesTable = () => {
             renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
-            Header: 'Protection status',
+            Header: t('databases.databases-table.headers.protection-status'),
             accessor: 'isProtected',
             id: '5',
             width: '300px',
@@ -226,7 +228,7 @@ const DatabasesTable = () => {
         },
         {
             id: '6',
-            Header: 'FSxN Name',
+            Header: t('databases.databases-table.headers.fsx-for-ontap'),
             accessor: 'instanceRow.fileSystemName',
             isSortable: false,
             filterOptions: getFilterOptions(databaseTableRows, 'instanceRow.fileSystemName'),
@@ -269,7 +271,7 @@ const DatabasesTable = () => {
             )
         },
         {
-            Header: 'Database Type',
+            Header: t('databases.databases-table.headers.database-type'),
             accessor: 'type',
             id: '7',
             width: '200px',
@@ -277,9 +279,9 @@ const DatabasesTable = () => {
             renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
-            Header: 'Database size',
+            Header: t('databases.databases-table.headers.database-size'),
             accessor: 'sizeRange',
-            csvAccessor: 'Database size',
+            csvAccessor: t('databases.databases-table.headers.database-size'),
             id: '8',
             width: '200px',
             filterOptions: [
@@ -292,7 +294,7 @@ const DatabasesTable = () => {
             renderCell: (cellData: any, rowData: any) => formatSize(rowData?.size)
         },
         {
-            Header: 'AWS credentials',
+            Header: t('databases.databases-table.headers.aws-credentials'),
             accessor: 'credentialName',
             id: '9',
             width: '184px',
@@ -301,7 +303,7 @@ const DatabasesTable = () => {
             renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
-            Header: 'AWS account',
+            Header: t('databases.databases-table.headers.aws-account'),
             accessor: 'accountId',
             id: '10',
             width: '184px',
@@ -310,7 +312,7 @@ const DatabasesTable = () => {
             renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
-            Header: 'Region',
+            Header: t('databases.databases-table.headers.region'),
             accessor: 'regionName',
             id: '11',
             width: '184px',

@@ -1,0 +1,113 @@
+.authDialog {
+    .dbName {
+        font-weight: 500;
+    }
+
+    .radioContainer {
+        width: 100%;
+        height: 56px;
+        margin-top: 24px;
+        background: var(--hover-background);
+        padding: 16px 40px;
+        display: flex;
+        gap: 40px;
+    }
+
+    .firstSection {
+        margin-top: 40px;
+        margin-bottom: 40px;
+
+        .textFieldContainer {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+
+            .textFieldStyle {
+                width: 48.7%;
+                margin-bottom: 0 !important;
+            }
+        }
+    }
+
+    .accordionContainer {
+        margin-top: 32px;
+        width: 100%;
+
+        .text {
+            width: 620px;
+        }
+
+        .dialog-body {
+            margin-top: 16px;
+
+            .code-box {
+                width: 620px;
+                background-color: var(--main-background);
+                padding: 24px 16px 8px 32px;
+                display: flex;
+                position: relative;
+
+                min-height: 108px;
+                overflow-y: auto;
+
+                .code {
+                    width: 100%;
+                    font-weight: 400;
+                    font-size: 14px;
+                    line-height: 24px;
+                    color: var(--text-primary);
+                }
+
+                .copy {
+                    width: 100px;
+                    display: flex;
+                    justify-content: flex-end;
+                    height: 20px;
+                    [class*='_base'] {
+                        background-color: unset !important;
+                    }
+                    .copy-popover {
+                        width: 140px;
+                        font-size: 13px;
+                        line-height: 20px;
+                        text-align: center;
+                        padding: 2px 2px;
+                    }
+
+                    svg {
+                        cursor: pointer;
+                        &:hover {
+                            fill: var(--icon-primary);
+                        }
+                    }
+                }
+            }
+        }
+
+        [class*='_base'] {
+            background-color: var(--hover-background) !important;
+            box-shadow: none !important;
+            border: none !important;
+
+            [class*='_title'] {
+                padding-right: 0 !important;
+            }
+        }
+
+        [class*='_header'] {
+            grid-template-columns: max-content 1fr max-content max-content max-content !important;
+        }
+
+        [class*='_header']:hover {
+            button {
+                span {
+                    svg {
+                        path {
+                            fill: var(--text-title);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

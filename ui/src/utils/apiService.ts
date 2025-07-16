@@ -607,6 +607,13 @@ export const snapcenterAPI = createApi({
             query: ({ accountID }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts?limit=50&offset=0&order_by=name+asc&deploymentModel=`
             })
+        }),
+        generateCredentialID: builder.mutation({
+            query: ({ credentialID, regionID, payload }) => ({
+                url: `v1/ubr-protection/credentials/${credentialID}/regions/${regionID}/ubr-credentials`,
+                method: 'POST',
+                body: payload
+            })
         })
     })
 });
@@ -1311,7 +1318,8 @@ export const {
     useDiscoverExistingFsxNMutation,
     useGetWorkSpaceIDMutation,
     useGetRBACPrivilegesMutation,
-    useListExistingHostsMutation
+    useListExistingHostsMutation,
+    useGenerateCredentialIDMutation
 } = snapcenterAPI;
 
 export const {

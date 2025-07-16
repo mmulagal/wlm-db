@@ -119,6 +119,7 @@
             "windows-authentication": "Windows authentication"
         },
         "well-architect": {
+            "well-architect-state": "Well-architected",
             "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
             "view-and-fix": "View and fix",
             "no-configurations-available": "No configuration available.",
@@ -226,22 +227,25 @@
             "missing-modules-content-1": "Missing AWS PowerShell module: 'AWS.Tools.CloudWatch'",
             "missing-modules-content-2": "Missing IAM permission - 'cloudwatch:GetMetricData'",
             "missing-modules-content-3": "Missing instance profile permission - 'cloudwatch:PutMetricData'",
-            "missing-modules-content-4": "Partial data displayed due to one of the following reasons:"
+            "missing-modules-content-4": "Partial data displayed due to one of the following reasons:",
+            "associated_volumes": "Associated volume",
+            "associated_luns": "Associated LUN",
+            "fsx-for-ontap:": "FSx for ONTAP"
         },
         "inventory": {
-            "protect-header": "Protect SQL server instance",
+            "protect-header": "Protect Microsoft SQL Server instance",
             "redirect": "Redirect",
-            "redirect-to-netapp": "Redirect to NetApp protection console",
-            "top-section-text": "You are about to be redirected to the NetApp Protection Console (also known as BlueXP Backup and Recovery) to configure database protection for your SQL Server.",
-            "agent-req": "Agent requirement",
-            "agent-req-text": "Agent requirement: To unlock SQL Server protection, a Agent is required. The Agent is NetApp software that runs in your cloud network. It executes actions necessary for BlueXP to manage your data infrastructure.",
+            "redirect-to-netapp": "Redirect to protect Microsoft SQL Server instance",
+            "top-section-text": "To protect the SQL Server instance, you will be redirected to BlueXP backup and recovery to configure database protection.",
+            "agent-req": "Connector requirement",
+            "agent-req-text": "You must have an active Connector to use SQL Server protection.",
             "steps-to-follow": "Steps to follow",
-            "click-redirect": "Click Redirect",
-            "point-1-text": "You will be redirected to the NetApp Protection Console.",
-            "add-agent": "Add Agent",
-            "point-2-text": "Follow the steps in the console to add a Agent.",
+            "click-redirect": "Select Redirect",
+            "point-1-text": "You will be redirected to BlueXP backup and recovery.",
+            "add-agent": "Add a Connector",
+            "point-2-text": "Add a Connector to create a secure connection between your SQL Server instance and BlueXP. ",
             "assign-policy": "Assign protection policy",
-            "point-3-text": "Once the Agent is set up, you can assign a protection policy for your SQL Server. Return to inventory and click on Protect again.",
+            "point-3-text": "After creating the Connector, return to your inventory and select Protect to assign a protection policy for your SQL Server instance. ",
             "step-1-out-of": "Step 1 out of 2",
             "step-2-out-of": "Step 2 out of 2",
             "protection-steps-text": "Protection steps for SQL Server database",
@@ -261,8 +265,8 @@
             "protection-for-data": "Preparation for data protection completed successfully",
             "next-steps": "Next steps",
             "assign-protection-policy-sql": "Assign a protection policy for your SQL Server.",
-            "multi-agent-text": "Select the Agent where you want the workload to be registered and protected.",
-            "agent": "Agent"
+            "multi-agent-text": "Select the Connector where you want the workload to be registered and protected.",
+            "agent": "Connector"
         },
         "log-analyzer": {
             "error-investigation": "Error analyzer",
@@ -327,6 +331,66 @@
             "add-credentials": "Add credentials",
             "learn-more": "Learn more",
             "discover-database": "to discover databases."
+        },
+        "explore-savings": {
+            "auth-heading": "To explore potential savings, authentication is required for database host:",
+            "select-auth-mode": "Select authentication mode",
+            "sql-server-authentication": "SQL Server authentication",
+            "windows-authentication": "Windows authentication",
+            "sql-server-username": "Microsoft SQL Server user name",
+            "sql-server-password": "Microsoft SQL Server password",
+            "windows-username": "Windows user name",
+            "windows-password": "Windows password",
+            "authentication-failed": "Authentication failed",
+            "authentication-required": "Authentication required",
+            "authenticate": "Authenticate",
+            "close": "Close",
+            "view-any-definition": "VIEW ANY DEFINITION",
+            "view-server-state": "VIEW SERVER STATE",
+            "connect-sql": "CONNECT SQL",
+            "permissions-required-heading": "Another method of authentication is to add the missing SQL Server permissions.",
+            "permissions-required-content": "Ensure that the following SQL Server permissions are granted to the NT Authority\\SYSTEM user. After permissions are granted, select Explore savings again."
+        },
+        "instance-table": {
+            "headers": {
+                "instance-name": "Instance name",
+                "host-name": "Host name",
+                "engine-type": "Engine type",
+                "deployment-model": "Deployment model",
+                "registration-status": "Registration status",
+                "fsx-for-ontap": "FSx for ONTAP",
+                "well-architected-status": "Well-architected status",
+                "protection-status": "Protection status",
+                "performance": "Performance",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            }
+        },
+        "databases-table": {
+            "headers": {
+                "database-name": "Database name",
+                "host-name": "Host name",
+                "engine-type": "Engine type",
+                "instance-name": "Instance name",
+                "protection-status": "Protection status",
+                "fsx-for-ontap": "FSx for ONTAP",
+                "database-type": "Database Type",
+                "database-size": "Database size",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            }
+        },
+        "job-monitor": {
+            "jm-type-logs-analysis": "Logs analysis",
+            "jm-type-deployment": "Deployment",
+            "jm-type-create-resource": "Create database",
+            "jm-type-prepare-resource": "Prepare resource",
+            "jm-type-sandbox": "Sandbox",
+            "jm-type-assessment": "Assessment",
+            "jm-type-optimize": "Well-architected",
+            "jm-type-register-resource": "Register resource"
         }
     }
 }

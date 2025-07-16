@@ -19,6 +19,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useAssignRBACPrivilegesMutation,
     useDiscoverExistingFsxNMutation,
+    useGenerateCredentialIDMutation,
     useGetConnectorsMutation,
     useGetFsxDetailsMutation,
     useGetRBACPrivilegesMutation,
@@ -48,7 +49,6 @@ import {
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setSelectedMultiDetectInstances,
-    setStartProtection,
     setTableManageColumnState,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -86,7 +86,12 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
-import { cancelProtectionForRow, setDataForRow } from '../../../../store/workloadFactory/snapcenterSlice';
+import {
+    cancelProtectionForRow,
+    setDataForRow,
+    setWorkSpaceData,
+    startProtectionStep1
+} from '../../../../store/workloadFactory/snapcenterSlice';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
@@ -123,6 +128,7 @@ const InstancesTable = () => {
     const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
     const [listExistingHosts] = useListExistingHostsMutation();
     const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
+    const [generateCredentialID] = useGenerateCredentialIDMutation();
 
     useEffect(() => {
         setLoading(
@@ -313,7 +319,7 @@ const InstancesTable = () => {
     const isCancelled = (key: any) => store.getState().snapCenter.dataMap[key]?.cancelled;
 
     const handleProtection = async (rowData: any) => {
-        const key = `${rowData.databaseInstanceName}_${rowData.name}`;
+        const key = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
         const existingData = store.getState().snapCenter.dataMap[key] || {};
 
         dispatch(setDataForRow({ key, stepData: { cancelled: false } }));
@@ -336,7 +342,7 @@ const InstancesTable = () => {
 
         if (existingData.initialHostCheck) {
             if (existingData.isHostManaged) {
-                return showSingleAgentDialog([], true);
+                return showSingleAgentDialog([], true, rowData);
             }
             // else proceed to normal flow
         } else {
@@ -365,7 +371,7 @@ const InstancesTable = () => {
             );
 
             if (hostExists) {
-                return showSingleAgentDialog([], true);
+                return showSingleAgentDialog([], true, rowData);
             }
         }
 
@@ -407,19 +413,48 @@ const InstancesTable = () => {
         );
     };
 
-    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean) => {
-        const activeAgents = connectors?.occms?.filter((item: any) => item.agent.status === 'active') || [];
+    //Function to handle Add host
+    const addHostHandler = async (rowData: any) => {
+        dispatch(
+            startProtectionStep1(
+                `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`
+            )
+        );
+        const state: any = store.getState().snapCenter;
+        const payload = {
+            connectorId: state.selectedAgent[0]?.id,
+            ec2InstanceIds: [rowData.ec2InstanceId],
+            sqlInstanceName: rowData.databaseInstanceName,
+            resourceId: rowData.resourceId,
+            workspaceId: state?.workSpaceData?.id
+        };
+        await generateCredentialID({
+            credentialID: rowData.credentialId,
+            regionID: rowData.regionId,
+            payload: payload
+        });
+    };
+
+    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any) => {
         setDialog(
             <DialogComponent
                 header={
                     <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                            {t('databases.inventory.step-1-out-of')}
-                        </DsTypography>
+                        {!hostExists && (
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-1-out-of')}
+                            </DsTypography>
+                        )}
                     </div>
                 }
-                content={<SingleAgentDialog agents={activeAgents} hostExists={hostExists} />}
+                content={
+                    <SingleAgentDialog
+                        agents={connectors}
+                        hostExists={hostExists}
+                        dialogKey={`${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`}
+                    />
+                }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
                 secondaryButton={t('databases.inventory.cancel')}
                 closeCallback={() => {
@@ -429,7 +464,7 @@ const InstancesTable = () => {
                     if (hostExists) {
                         bxpRedirect(isWorkloadFactory);
                     } else {
-                        dispatch(setStartProtection('started'));
+                        addHostHandler(rowData);
                     }
                 }}
                 customClass={styles.protectionDialog}
@@ -446,8 +481,12 @@ const InstancesTable = () => {
 
             const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
 
+            const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+            if (workSpaceRes?.data?.items?.length) {
+                dispatch(setWorkSpaceData(workSpaceRes.data.items[0]));
+            }
+
             if (!fsxExists) {
-                const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
                 if (isCancelled(key)) return;
 
                 await discoverExistingFsxN({
@@ -492,6 +531,16 @@ const InstancesTable = () => {
             const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
             if (isCancelled(key)) return;
 
+            // @ts-ignore
+            if (hostsRes?.error?.data === 'Unauthorized') {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'Unauthorized'
+                    })
+                );
+            }
+
             if (hostsRes?.data && hostsRes?.data?.hosts && hostsRes?.data?.hosts.length > 0) {
                 const hostExists = hostsRes?.data?.hosts?.some((host: any) => {
                     // Extract hostname before first dot for comparison
@@ -507,10 +556,10 @@ const InstancesTable = () => {
 
         if (isCancelled(key)) return;
 
-        proceedWithProtection(stepData.connectors);
+        proceedWithProtection(stepData.connectors, rowData);
     };
 
-    const proceedWithProtection = (data: any) => {
+    const proceedWithProtection = (data: any, rowData: any) => {
         const activeAgents = data?.occms?.filter((item: any) => item.agent.status === 'active') || [];
 
         if (activeAgents.length === 0) {
@@ -518,7 +567,7 @@ const InstancesTable = () => {
         }
         if (activeAgents.length > 0) {
             // Single Connector case
-            showSingleAgentDialog(activeAgents, false);
+            showSingleAgentDialog(activeAgents, false, rowData);
         }
     };
 
@@ -640,7 +689,7 @@ const InstancesTable = () => {
 
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
-            Header: 'Instance name',
+            Header: t('databases.instance-table.headers.instance-name'),
             accessor: 'databaseInstanceName',
             customAccessor: 'statusAccessor',
             id: '1',
@@ -700,7 +749,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Host name',
+            Header: t('databases.instance-table.headers.host-name'),
             accessor: 'name',
             id: '2',
             width: '213px',
@@ -716,7 +765,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Engine type',
+            Header: t('databases.instance-table.headers.engine-type'),
             accessor: 'hostType',
             id: '3',
             width: '213px',
@@ -728,7 +777,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Deployment model',
+            Header: t('databases.instance-table.headers.deployment-model'),
             accessor: 'serverInstallationMode',
             id: '4',
             width: '213px',
@@ -740,7 +789,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Registration status',
+            Header: t('databases.instance-table.headers.registration-status'),
             accessor: 'managementStatus',
             id: '5',
             isSortable: false,
@@ -766,7 +815,7 @@ const InstancesTable = () => {
         },
         {
             id: '6',
-            Header: 'FSxN Name',
+            Header: t('databases.instance-table.headers.fsx-for-ontap'),
             accessor: 'fileSystemName',
             isSortable: false,
             filterOptions: getFilterOptions(updatedTableData, 'fileSystemName'),
@@ -809,7 +858,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Well-architected status',
+            Header: t('databases.instance-table.headers.well-architected-status'),
             accessor: 'optimizationStatus',
             id: '7',
             width: '240px',
@@ -915,7 +964,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Protection status',
+            Header: t('databases.instance-table.headers.protection-status'),
             accessor: 'protectionText',
             id: '8',
             width: '200px',
@@ -984,7 +1033,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Performance',
+            Header: t('databases.instance-table.headers.performance'),
             accessor: 'performance.assessment',
             id: '9',
             width: '200px',
@@ -1013,7 +1062,7 @@ const InstancesTable = () => {
         },
         {
             id: '10',
-            Header: 'AWS credentials',
+            Header: t('databases.instance-table.headers.aws-credentials'),
             accessor: 'credentialName',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'credentialName'),
@@ -1026,7 +1075,7 @@ const InstancesTable = () => {
         },
         {
             id: '11',
-            Header: 'AWS account',
+            Header: t('databases.instance-table.headers.aws-account'),
             accessor: 'accountId',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'accountId'),
@@ -1039,7 +1088,7 @@ const InstancesTable = () => {
         },
         {
             id: '12',
-            Header: 'Region',
+            Header: t('databases.instance-table.headers.region'),
             accessor: 'regionName',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'regionName'),
@@ -1148,6 +1197,12 @@ const InstancesTable = () => {
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
                     menu.push(
                         {
+                            id: 'optimize',
+                            displayName: t('databases.well-architect.well-architect-state'),
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
+                        {
                             id: 'investigateErrors',
                             displayName: 'Investigate errors'
                         },
@@ -1183,12 +1238,6 @@ const InstancesTable = () => {
                                     infoText: disableMessage
                                 }
                             ]
-                        },
-                        {
-                            id: 'optimize',
-                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
-                            disabled: disableOption,
-                            infoText: disableMessage
                         },
                         {
                             id: 'protect',

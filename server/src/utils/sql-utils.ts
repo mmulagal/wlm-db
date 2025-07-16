@@ -3,7 +3,9 @@ import { describeSubnets } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
 import { FileSystemTypes, NOT_AVAILABLE } from './consts';
 import getLogger from './logger';
-import { DatabaseInstance } from './common-types';
+import { DatabaseInstance, MappedOnTapVolumeResponse } from './common-types';
+import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { AssessmentCategories } from './continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -25,10 +27,11 @@ async function getDatabaseInstanceTopology(
     const {
         fsxn_ids: fileSystemId,
         storage_type: storageType,
-        database_instance_id: databaseInstanceDetails,
+        database_instance_id: databaseInstanceId,
         database_deployment_type: databaseDeploymentType,
         database_type: databaseType,
-        fsxwId
+        fsxwId,
+        resource: { resource_id: resourceId } = {}
     } = databaseInstances;
 
     let topologyData = {
@@ -85,12 +88,36 @@ async function getDatabaseInstanceTopology(
                     SubnetIds: subnetIds
                 });
                 availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-
-                logger.info('availabilityZones', availabilityZones);
             }
         } catch (error) {
-            logger.error(`Error while fetching details for fsx. Error: ${error}`, databaseInstanceDetails);
+            logger.error(`Error while fetching details for fsx. Error: ${error}`, {
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceId
+            });
         }
+
+        const [{ config_data: mappedStorageDetails }] =
+            (await listDatabaseInstanceConfigData({
+                accountId,
+                credentialsId,
+                region,
+                resourceId,
+                databaseInstanceId,
+                configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
+            })) || {};
+
+        const extractRecords = (records: Array<{ uuid: string; name: string }> = []) =>
+            records.map(({ uuid, name }) => ({ id: uuid, name }));
+
+        const mappedDetails = Object.values(mappedStorageDetails as MappedOnTapVolumeResponse) || [];
+        const volumes = mappedDetails.flatMap(i => extractRecords(i?.volumeRecords));
+        const luns = mappedDetails.flatMap(i => extractRecords(i?.lunRecords));
+        const combinedOntapVolumes = volumes.map(volume => ({
+            ...volume,
+            luns: luns.filter(lun => lun.name.includes(volume.name))
+        }));
 
         topologyData = {
             ...topologyData,
@@ -100,9 +127,17 @@ async function getDatabaseInstanceTopology(
             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
             ...(availabilityZones && { availabilityZone: availabilityZones }),
-            ...(fileSystemStorageType && { fileSystemStorageType })
+            ...(fileSystemStorageType && { fileSystemStorageType }),
+            ...(combinedOntapVolumes && {
+                storageSummary: {
+                    volumes: combinedOntapVolumes,
+                    totalVolumes: volumes?.length || 0,
+                    totalLuns: luns?.length || 0
+                }
+            })
         };
     }
+
     return topologyData;
 }
 

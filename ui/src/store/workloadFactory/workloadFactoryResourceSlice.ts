@@ -8,6 +8,7 @@ const initialState: WorkloadFactoryResourceEntities = {
         name: '',
         status: '',
         databaseCount: 0,
+        databaseInstanceTopology: {},
         databaseServer: {
             operatingSystem: '',
             serverEdition: '',

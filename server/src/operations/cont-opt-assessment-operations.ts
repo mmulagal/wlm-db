@@ -83,7 +83,7 @@ async function cronAssessmentCollection(initiatedBy: string) {
             throat(3, async ([accountId, managedInstances]) => {
                 let parentJobId = '';
                 try {
-                    const jobDescription = `Assess online SQL Server instances in account ${accountId} for best practice misalignments.`;
+                    const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} registered instances in account ${accountId} for best practice misalignments.`;
                     ({ id: parentJobId } = await registerJob(accountId, '', '', {
                         name: jobDescription,
                         description: jobDescription,

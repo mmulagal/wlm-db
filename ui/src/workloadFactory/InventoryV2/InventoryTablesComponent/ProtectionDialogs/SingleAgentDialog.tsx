@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { DsSelect, DsTypography } from '@tlveng/wlm-ds';
 import { Button, useDialog } from '@netapp/design-system';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import styles from './ProtectionDialogs.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -14,17 +14,20 @@ import {
 } from '../../../../common/AccordionCard/AccordionCard';
 import { useAppSelector } from '../../../../store/storeHooks';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { setStartProtection } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { bxpRedirect } from '../../../../utils/utilityFunctions';
 import StepTwoDialog from './StepTwoDialog';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
-import { setSelectedAgent } from '../../../../store/workloadFactory/snapcenterSlice';
+import {
+    completeProtectionStep1,
+    completeProtectionStep2,
+    resetProtectionProcess,
+    setSelectedAgent
+} from '../../../../store/workloadFactory/snapcenterSlice';
 import { SNAPCENTER_STATUS } from '../../../../utils/consts';
 
-const SingleAgentDialog = ({ agents, hostExists }: any) => {
+const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
     const { t } = useTranslation();
-    const [step1Status, setStep1Status] = useState<'idle' | 'running' | 'done'>('idle');
-    const [step2Status, setStep2Status] = useState<'idle' | 'running' | 'done'>('idle');
+
     const { setDialog, closeDialog } = useDialog();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { selectedAgent } = useAppSelector(state => state.snapCenter);
@@ -32,33 +35,31 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
 
     const isMultiConnector = agents && agents.length > 1;
 
-    const { protectionStatus } = useAppSelector(state => state.inventoryV2);
+    const protectionState = useAppSelector(state => state.snapCenter.protectionProcessState[dialogKey]);
 
     useEffect(() => {
-        if (protectionStatus === 'started' && step1Status === 'idle') {
-            setStep1Status('running');
+        if (!protectionState) {
+            dispatch(resetProtectionProcess(dialogKey));
         }
-    }, [protectionStatus, step1Status]);
+    }, [dialogKey, dispatch]);
 
     useEffect(() => {
-        if (step1Status === 'running') {
+        if (protectionState?.step1Status === 'running') {
             const timer1 = setTimeout(() => {
-                setStep1Status('done');
-                setStep2Status('running');
+                dispatch(completeProtectionStep1(dialogKey));
             }, 5000);
             return () => clearTimeout(timer1);
         }
-    }, [step1Status]);
+    }, [protectionState?.step1Status, dialogKey, dispatch]);
 
     useEffect(() => {
-        if (step2Status === 'running') {
+        if (protectionState?.step2Status === 'running') {
             const timer2 = setTimeout(() => {
-                setStep2Status('done');
-                dispatch(setStartProtection('done'));
+                dispatch(completeProtectionStep2(dialogKey));
             }, 5000);
             return () => clearTimeout(timer2);
         }
-        if (step2Status === 'done') {
+        if (protectionState?.step2Status === 'done') {
             setTimeout(() => {
                 setDialog(
                     <DialogComponent
@@ -88,7 +89,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                 );
             }, 0);
         }
-    }, [step2Status]);
+    }, [protectionState?.step2Status, dialogKey, dispatch]);
 
     // map to dropdown format
     const generateDropDownValues = useMemo(
@@ -96,7 +97,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
             agents.map((item: { agent: any }, index: number) => {
                 const { agent } = item;
                 return {
-                    id: (index + 1).toString(),
+                    id: agent.agentId,
                     label: `${agent.name}, ${agent.status}, ${agent.region}`,
                     value: agent.name
                 };
@@ -227,7 +228,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                             id="1"
                             title={
                                 <div className={styles.titleClass}>
-                                    {step1Status === 'running' && !hostExists ? (
+                                    {protectionState?.step1Status === 'running' && !hostExists ? (
                                         <div className={styles['loader-container']}>
                                             <div className={styles.spinner}>
                                                 <svg
@@ -245,7 +246,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                                             </div>
                                             <div className={styles['center-circle']}>1</div>
                                         </div>
-                                    ) : step1Status === 'done' || hostExists ? (
+                                    ) : protectionState?.step1Status === 'done' || hostExists ? (
                                         <div className={styles.circleClass}>
                                             <Complete />
                                         </div>
@@ -272,7 +273,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                             id="2"
                             title={
                                 <div className={styles.titleClass}>
-                                    {step2Status === 'running' && !hostExists ? (
+                                    {protectionState?.step2Status === 'running' && !hostExists ? (
                                         <div className={styles['loader-container']}>
                                             <div className={styles.spinner}>
                                                 <svg
@@ -290,7 +291,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                                             </div>
                                             <div className={styles['center-circle']}>2</div>
                                         </div>
-                                    ) : step2Status === 'done' || hostExists ? (
+                                    ) : protectionState?.step2Status === 'done' || hostExists ? (
                                         <div className={styles.circleClass}>
                                             <Complete />
                                         </div>

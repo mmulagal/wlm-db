@@ -20,11 +20,12 @@ import {
     filterByTime,
     filterByErrorCodes,
     getUniqueErrBySeverity,
-    getStartAndEndTime,
     eiErrorCodesOptions,
     eiSeverityOptionList,
     eiTimeOptions,
-    recalculateErrorFields
+    recalculateErrorFields,
+    getStartAndEndTimeFromRange,
+    calculateTotalHourlyErrorCounts
 } from './ErrorInvestigationUtility';
 import { formatDateWithTime } from '../../../../utils/utilityFunctions';
 
@@ -44,6 +45,7 @@ const ErrorInvestigation = () => {
     });
     const [startTime, setStartTime] = useState(0);
     const [endTime, setEndTime] = useState(0);
+    const [totalHourlyErrorCounts, setTotalHourlyErrorCounts] = useState<Array<{ hour: number; count: number }>>([]);
 
     ErrorInvestigationApi();
     const { errorInvestigationData, errorInvestigationLoading } = useAppSelector(
@@ -60,12 +62,6 @@ const ErrorInvestigation = () => {
         investigationDatesLoading
     } = useAppSelector(state => state.agenticAI);
     const loading = errorInvestigationLoading || investigationDatesLoading;
-
-    useEffect(() => {
-        const { startTime: newStartTime, endTime: newEndTime } = getStartAndEndTime(selectedTimeFrame, timeRange);
-        setStartTime(newStartTime);
-        setEndTime(newEndTime);
-    }, [selectedTimeFrame, timeRange]);
 
     useEffect(() => {
         if (errorInvestigationData) {
@@ -87,6 +83,17 @@ const ErrorInvestigation = () => {
 
             // Calculate unique errors by severity (top 5)
             setUniqueErrBySeverity(getUniqueErrBySeverity(newFilteredData));
+
+            // calculate start and end time
+            const { startTime: newStartTime, endTime: newEndTime } = getStartAndEndTimeFromRange(
+                newFilteredData,
+                selectedTimeFrame,
+                timeRange
+            );
+            setStartTime(newStartTime);
+            setEndTime(newEndTime);
+
+            setTotalHourlyErrorCounts(calculateTotalHourlyErrorCounts(newFilteredData));
 
             // Set header data
             const uniqueErrors = errorInvestigationData.length;
@@ -147,7 +154,7 @@ const ErrorInvestigation = () => {
                 <>
                     <div className={styles.sectionTwo}>
                         <UniqueErrorsSeverity uniqueErrBySeverity={uniqueErrBySeverity} />
-                        <UniqueErrorGraph startTime={startTime} endTime={endTime} />
+                        <UniqueErrorGraph startTime={startTime} endTime={endTime} data={totalHourlyErrorCounts || []} />
                     </div>
 
                     {loading && (
