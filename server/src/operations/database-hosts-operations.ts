@@ -2220,7 +2220,7 @@ async function getDatabaseInstancesSummary(
             databaseInstanceDetails.protection = protectionData?.[index];
         }
         const databases: Record<string, any[]> = {};
-        databasesList.forEach(dbs => {
+        databasesList?.forEach(dbs => {
             Object.keys(dbs).forEach(key => {
                 if (!databases[key]) {
                     databases[key] = [];
