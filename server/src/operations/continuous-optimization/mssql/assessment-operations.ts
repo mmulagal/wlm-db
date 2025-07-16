@@ -507,7 +507,6 @@ async function initiateHostLevelAssessmentDataCollection(
     region: string,
     databaseHostId: string,
     databaseInstanceRecord: WorkloadInstance,
-
     jobId: string,
     fields: string[]
 ) {
@@ -523,22 +522,14 @@ async function initiateHostLevelAssessmentDataCollection(
         sqlAuthEnabled: databaseInstanceRecord.sqlAuthEnabled
     });
 
-    const { id: databaseInstanceId, resourceName, sqlAuthEnabled, databaseObject } = databaseInstanceRecord;
-    const { resource } = databaseObject as DatabaseInstance;
+    const { id: databaseInstanceId, resourceName, sqlAuthEnabled, databaseInstanceObject } = databaseInstanceRecord;
+    const { resource } = databaseInstanceObject as DatabaseInstance;
     const {
         metadata,
         cloud_provider_account_id: awsAccountId,
         resource_id: resourceId,
-        database_instances: managedInstances = [],
         assessment_data: hostLevelAssessmentData
     } = resource;
-    const [managedInstance = managedInstances[0]] = managedInstances;
-
-    if (!managedInstance) {
-        const errorMessage = `Managed instance not found for databaseInstanceId ${databaseInstanceId}.`;
-        logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, credentialsId, region });
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-    }
 
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
@@ -715,7 +706,7 @@ async function initiateHostLevelAssessmentDataCollection(
             databaseHostId,
             databaseInstanceId,
             'license,compute,host-os-patch,rss-config,mssql-patch',
-            { ...managedInstance, resource }
+            { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
 
         await updateDatabaseHostAssessmentResults(accountId, credentialsId, region, databaseHostId, {
@@ -962,7 +953,7 @@ async function triggerMssqlAssessment(
             cloudProviderAccountId: cloudProviderAccountId || '',
             resourceName: resourceName || '',
             svmId: (fsxSvmId as Record<string, string>)[fileSystemId!] || '',
-            databaseObject: newDatabaseInstanceDetails
+            databaseInstanceObject: newDatabaseInstanceDetails
         };
 
         if (!isEmpty(dismissedConfigurations)) {
