@@ -76,11 +76,12 @@ $HostIQNs = (Get-InitiatorPort | Select-Object -ExpandProperty NodeAddress) -joi
 $results = @()
 $lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "$apiEndpoint/protocols/san/lun-maps" -ApiQueryFilter $apiQueryFilter -method "GET"
 
+$filterLuns = @(${lunUuids.map(uuid => `'${uuid}'`).join(',')})
+
 if ($lunMapsResp.records) {
-        $filterLuns = @(${lunUuids.map(uuid => `'${uuid}'`).join(',')})
         foreach ($lunMap in $lunMapsResp.records) {
                 $lunUuid = $lunMap.lun.uuid
-                if ($filterLuns.Count -eq 0 -or $filterLuns -contains $lunUuid) {
+                if ($filterLuns -contains $lunUuid) {
                         $igroupObj = $lunMap.igroup
                         $igroupUuid = $null
                         $igroupName = $null
