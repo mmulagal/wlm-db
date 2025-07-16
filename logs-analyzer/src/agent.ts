@@ -247,11 +247,16 @@ async function initiateLogsAnalysis(inputText: string) {
 }
 
 function getStartTimestampForAnalysis(timeWindowHours: number = 24) {
-    const twentyFourHrAgoTimestamp = hoursAgoTimestamp(timeWindowHours);
-    const startTimestamp =
-        TIMESTAMP_LAST_LOG_PROCESSED > twentyFourHrAgoTimestamp
+    if(timeWindowHours > 24) { // 24 is default value
+        // If the time window is greater than 24 hours, value specifically passed to the agent will be used.
+        logger.info(`Using time window of ${timeWindowHours} hours for logs analysis.`);
+        return hoursAgoTimestamp(timeWindowHours);
+    }
+    const windowHrAgoTimestamp = hoursAgoTimestamp(timeWindowHours);
+    const startTimestamp = 
+        TIMESTAMP_LAST_LOG_PROCESSED > windowHrAgoTimestamp
             ? TIMESTAMP_LAST_LOG_PROCESSED
-            : twentyFourHrAgoTimestamp;
+            : windowHrAgoTimestamp;
     return startTimestamp;
 }
 
