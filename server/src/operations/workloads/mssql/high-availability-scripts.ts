@@ -33,14 +33,14 @@ $available | ConvertTo-Json
 const HEARTBEAT_SETTINGS = `
 $cluster = Get-Cluster
 $settings = @{
-        "CrossSiteDelay" = $cluster.CrossSiteDelay
-        "SameSubnetDelay" = $cluster.SameSubnetDelay
-        "CrossSubnetDelay" = $cluster.CrossSubnetDelay
-        "CrossSiteThreshold" = $cluster.CrossSiteThreshold
-        "SameSubnetThreshold" = $cluster.SameSubnetThreshold
-        "CrossSubnetThreshold" = $cluster.CrossSubnetThreshold
+    "CrossSiteDelay" = $cluster.CrossSiteDelay
+    "SameSubnetDelay" = $cluster.SameSubnetDelay
+    "CrossSubnetDelay" = $cluster.CrossSubnetDelay
+    "CrossSiteThreshold" = $cluster.CrossSiteThreshold
+    "SameSubnetThreshold" = $cluster.SameSubnetThreshold
+    "CrossSubnetThreshold" = $cluster.CrossSubnetThreshold
 }
-return $settings | ConvertTo-Json
+$settings | ConvertTo-Json | Write-Output
 `;
 
 const CLUSTER_QUORUM_TYPE = `
@@ -68,19 +68,21 @@ $result | ConvertTo-Json -Compress
 
 const SQL_SERVER_SERVICES = (instanceName: string) => `
 $serviceName = if ([string]::IsNullOrEmpty("${instanceName}") -or "${instanceName}".ToUpper() -eq "MSSQLSERVER") {
-        "MSSQLSERVER"
+    "MSSQLSERVER"
 } else {
-        "MSSQL$${instanceName}"
+    "MSSQL$${instanceName}"
 }
 Get-Service -Name $serviceName -ErrorAction SilentlyContinue |
-        Select-Object Name,
-                                  @{Name="Status";Expression={ $_.Status.ToString() }},
-                                  DisplayName,
-                                  @{Name="StartType";Expression={ $_.StartType.ToString() }} |
-        ConvertTo-Json
+    Select-Object Name,
+                  @{Name="Status";Expression={ $_.Status.ToString() }},
+                  DisplayName,
+                  @{Name="StartType";Expression={ $_.StartType.ToString() }} |
+    ConvertTo-Json | Write-Output
 `;
+
 const GET_LUN_IGROUP_INITIATOR_NAMES = (params: OntapRequestParams, lunUuid: string) => `
 # Get LUN map and extract igroupUuid, igroupName, and initiator names for mapped LUN UUID
+${GET_HOST_IQN}
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 $WarningPreference = 'SilentlyContinue'
 $FSxID = '${params.fsxId}'

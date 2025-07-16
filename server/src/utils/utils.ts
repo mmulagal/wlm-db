@@ -813,7 +813,9 @@ async function decompressSSMResponse(response: string) {
     } catch (err) {
         if (
             err instanceof Error &&
-            ['invalid stored block lengths', 'invalid block type'].some(msg => err?.message?.toLowerCase().includes(msg))
+            ['invalid stored block lengths', 'invalid block type'].some(msg =>
+                err?.message?.toLowerCase().includes(msg)
+            )
         ) {
             logger.error('Trying to decompress response that is not base64 encoded', response);
             return response;
@@ -1043,6 +1045,10 @@ const isValidEmail = (email: string): boolean => {
 
 function parseMultipleCommandResponse(response: string) {
     // Multiple SSM command response is of the form {<json1String>}{<json2String>}...{<jsonnString>}, so we need to split the response into individual json objects and return them as an array
+    response = response.replaceAll('\r\n', '');
+    response = response.replaceAll('\\r\\n', '');
+    response = response.replaceAll('\n', '');
+    response = response.replaceAll('\\n', '');
     const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
 
     return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];

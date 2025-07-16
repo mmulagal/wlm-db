@@ -31,7 +31,7 @@ import {
     CrrDetails,
     HighAvailabilityAssessment
 } from '../../../utils/common-types';
-import { isDemo, sqlResponseParsing } from '../../../utils/utils';
+import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import { getInstanceInfo } from '../../database/database-operations';
 import { describeFSx } from '../../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../../workloads/mssql/resiliency-scripts';
@@ -47,7 +47,7 @@ import {
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
-    GET_LUN_IGROUP_INITIATOR_NAMES,
+    // GET_LUN_IGROUP_INITIATOR_NAMES,
     GET_HOST_IQN
 } from '../../workloads/mssql/high-availability-scripts';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
@@ -701,6 +701,7 @@ function checkFCIDeploymentType(instanceDetail: DatabaseInstance, context: strin
         return { error: message };
     }
 }
+
 async function getSharedStorageAssessment(
     credentialsId: string,
     region: string,
@@ -710,15 +711,12 @@ async function getSharedStorageAssessment(
     instanceVolumeMapping: MappedOnTapVolumeResponse[],
     instanceDetail?: DatabaseInstance
 ) {
-    // Destructure required parameters from instanceRecord
-    const { name: instanceName, fsxFileSystem, activeNodeInstanceid } = instanceRecord;
-
-    logger.info(' Calculate shared storage assessment for ', {
+    logger.info('[getSharedStorageAssessment] called', {
         credentialsId,
         region,
         accountId,
         databaseHostId,
-        instanceName,
+        instanceName: instanceRecord?.name,
         volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
     });
     try {
@@ -728,115 +726,119 @@ async function getSharedStorageAssessment(
             node2InstanceId?: string;
         };
 
-        if (!node1InstanceId || !node2InstanceId) {
-            throw new Error(
-                'Primary node and secondary node information not found. Please ensure both nodes are configured for shared storage assessment.'
-            );
+        if (!node1InstanceId && !node2InstanceId) {
+            throw new Error('node1instanceid and node2instanceid not found in instanceRecord metadata');
         }
 
         // Get HOST IQN details for both nodes
         logger.info('Fetching HOST IQN details for both nodes:', { node1InstanceId, node2InstanceId });
         const hostIqnCommand = [GET_HOST_IQN];
         const hostIqns = await Promise.all([
-            callSsmExecution(
-                credentialsId,
-                region,
-                hostIqnCommand,
-                node1InstanceId,
-                'Get HOST IQN details on node 1',
-                accountId,
-                false,
-                undefined,
-                true
-            ),
-            callSsmExecution(
-                credentialsId,
-                region,
-                hostIqnCommand,
-                node2InstanceId,
-                'Get HOST IQN details on node 2',
-                accountId,
-                false,
-                undefined,
-                true
-            )
+            node1InstanceId
+                ? callSsmExecution(
+                      credentialsId,
+                      region,
+                      hostIqnCommand,
+                      node1InstanceId,
+                      'Get HOST IQN details on node 1',
+                      accountId,
+                      false,
+                      undefined,
+                      true
+                  )
+                : undefined,
+            node2InstanceId
+                ? callSsmExecution(
+                      credentialsId,
+                      region,
+                      hostIqnCommand,
+                      node2InstanceId,
+                      'Get HOST IQN details on node 2',
+                      accountId,
+                      false,
+                      undefined,
+                      true
+                  )
+                : undefined
         ]);
-        const hostIqnsToCheck = compact(hostIqns);
+        logger.info('HOST IQN details fetched:', hostIqns);
+        // const hostIqnsToCheck = hostIqns.filter(Boolean) as string[];
 
-        if (!instanceVolumeMapping || instanceVolumeMapping.length === 0) {
-            const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceName}.`;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-        }
+        // if (!instanceVolumeMapping || instanceVolumeMapping.length === 0) {
+        //     const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
+        //     logger.error(errorMessage);
+        //     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        // }
 
-        const lunRecords = Object.values(instanceVolumeMapping).flatMap(i => i.lunRecords || []);
-        const results = await Promise.all(
-            lunRecords.map(async lun => {
-                const { uuid: lunUuid, name: lunName } = lun;
-                const lunIgroupCommand = [
-                    GET_LUN_IGROUP_INITIATOR_NAMES(
-                        {
-                            fsxId: fsxFileSystem,
-                            region,
-                            apiEndpoint: '',
-                            apiQueryFilter: ''
-                        },
-                        lunUuid
-                    )
-                ];
-                const lunIgroupResp = await callSsmExecution(
-                    credentialsId,
-                    region,
-                    lunIgroupCommand,
-                    activeNodeInstanceid,
-                    `Get ONTAP LUN igroup and initiator names for LUN ${lunUuid}`,
-                    accountId,
-                    false,
-                    undefined,
-                    true
-                );
-                const lunIgroupRespParsed = sqlResponseParsing(lunIgroupResp);
-                logger.info('LUN igroup SSM response:', lunIgroupRespParsed);
+        // const lunRecords = Object.values(instanceVolumeMapping).flatMap(i => i.lunRecords || []);
+        // const results = await Promise.all(
+        //     lunRecords.map(async lun => {
+        //         const lunUuid = lun.uuid;
+        //         const lunName = lun.name;
+        //         const lunIgroupCommand = [
+        //             GET_LUN_IGROUP_INITIATOR_NAMES(
+        //                 {
+        //                     fsxId: instanceRecord.fsxFileSystem,
+        //                     region,
+        //                     apiEndpoint: '',
+        //                     apiQueryFilter: ''
+        //                 },
+        //                 lunUuid
+        //             )
+        //         ];
+        //         const lunIgroupResp = await callSsmExecution(
+        //             credentialsId,
+        //             region,
+        //             lunIgroupCommand,
+        //             instanceRecord.activeNodeInstanceid,
+        //             `Get ONTAP LUN igroup and initiator names for LUN ${lunUuid}`,
+        //             accountId,
+        //             false,
+        //             undefined,
+        //             true
+        //         );
+        //         const lunIgroupRespParsed = sqlResponseParsing(lunIgroupResp);
+        //         logger.info('LUN igroup SSM response:', lunIgroupRespParsed);
 
-                const lunRecord = Array.isArray(lunIgroupRespParsed)
-                    ? lunIgroupRespParsed.find((r: any) => r.LUN_UUID === lunUuid)
-                    : lunIgroupRespParsed;
+        // const lunRecord = Array.isArray(lunIgroupRespParsed)
+        //     ? lunIgroupRespParsed.find((r: any) => r.LUN_UUID === lunUuid)
+        //     : lunIgroupRespParsed;
 
-                const igroupUuid: string | undefined = lunRecord?.IGROUP_UUID;
-                const igroupName: string | undefined = lunRecord?.IGROUP_NAME;
-                let initiatorNames: string[] = [];
-                if (Array.isArray(lunRecord?.InitiatorNames)) {
-                    initiatorNames = lunRecord.InitiatorNames.map((s: string) => s.trim()).filter(Boolean);
-                } else if (typeof lunRecord?.InitiatorNames === 'string') {
-                    initiatorNames = lunRecord.InitiatorNames.split(',')
-                        .map((s: string) => s.trim())
-                        .filter(Boolean);
-                }
+        // const igroupUuid: string | undefined = lunRecord?.IGROUP_UUID;
+        // const igroupName: string | undefined = lunRecord?.IGROUP_NAME;
+        // let initiatorNames: string[] = [];
+        // if (Array.isArray(lunRecord?.InitiatorNames)) {
+        //     initiatorNames = lunRecord.InitiatorNames.map((s: string) => s.trim()).filter(Boolean);
+        // } else if (typeof lunRecord?.InitiatorNames === 'string') {
+        //     initiatorNames = lunRecord.InitiatorNames.split(',')
+        //         .map((s: string) => s.trim())
+        //         .filter(Boolean);
+        // }
 
-                // Assessment: Check if all host IQNs are present in initiatorNames for this LUN
-                const initiatorAssessmentStatus = hostIqnsToCheck.every(iqn => initiatorNames.includes(iqn))
-                    ? AssessmentStatus.OPTIMIZED
-                    : AssessmentStatus.NOT_OPTIMIZED;
+        // // Assessment: Check if all host IQNs are present in initiatorNames for this LUN
+        // const initiatorAssessmentStatus = hostIqnsToCheck.every(iqn => initiatorNames.includes(iqn))
+        //     ? AssessmentStatus.OPTIMIZED
+        //     : AssessmentStatus.NOT_OPTIMIZED;
 
-                return {
-                    lunUuid,
-                    lunName,
-                    status: initiatorAssessmentStatus,
-                    igroupDetails: {
-                        igroupUuid,
-                        igroupName,
-                        initiatorNames,
-                        hostIqnsChecked: hostIqnsToCheck
-                    }
-                };
-            })
-        );
+        // return {
+        //     lunUuid,
+        //     lunName,
+        //     status: initiatorAssessmentStatus,
+        //     igroupDetails: {
+        //         igroupUuid,
+        //         igroupName,
+        //         initiatorNames,
+        //         hostIqnsChecked: hostIqnsToCheck
+        //     }
+        //             // };
+        //         })
+        //     );
 
-        const allOptimized = results.every(r => r.status === AssessmentStatus.OPTIMIZED);
-        return {
-            status: allOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-            lunDetails: results
-        };
+        //     const allOptimized = results.every(r => r.status === AssessmentStatus.OPTIMIZED);
+        //     return {
+        //         status: allOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+        //         lunDetails: results
+        //     };
     } catch (err) {
         logger.error('Exception running SSM for shared-storage:', err);
         return { status: AssessmentStatus.NOT_OPTIMIZED, lunDetails: null, error: err?.toString() };
@@ -995,182 +997,128 @@ async function getDriveLetterAssessment(
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
     }
 }
-
-async function getClusterQuorumAssessment(
+// Combined SSM command for cluster quorum, heartbeat settings, and SQL Server services
+async function getCombinedHighAvailabilityAssessment(
     credentialsId: string,
     region: string,
     accountId: string,
     instanceRecord: WorkloadInstance
 ) {
-    logger.info(`Checking cluster quorum for instance "${instanceRecord?.name}"...`);
+    logger.info(`Running combined high availability SSM for instance "${instanceRecord?.name}"...`);
     try {
-        const command = [CLUSTER_QUORUM_TYPE];
-        const rawResponse = await callSsmExecution(
+        // Prepare all commands in a single SSM document execution
+        const sqlServerServicesCmd = SQL_SERVER_SERVICES(instanceRecord.name);
+        logger.info('SQL Server Services command:', sqlServerServicesCmd);
+        const commands = compact([CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS, sqlServerServicesCmd]);
+        const rawResponses = await callSsmExecution(
             credentialsId,
             region,
-            command,
+            commands,
             instanceRecord.activeNodeInstanceid,
-            'Get High Availability Assessment: cluster-quorum',
+            'Get High Availability Assessment: combined',
             accountId,
             false,
             undefined,
             true
         );
-        const response = sqlResponseParsing(rawResponse);
 
-        const quorumResult = response;
+        // Parse SSM output into separate objects (already parsed by utility)
+        const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);
+        const [quorumRaw, heartbeatRaw, sqlServerServicesRaw] = rawResponsesParsed;
+
+        // --- Cluster Quorum ---
+        const quorumResult = quorumRaw; // Already parsed object
+        let clusterQuorumResult;
         if (!quorumResult || typeof quorumResult !== 'object') {
             logger.error('Unable to parse cluster quorum output.');
-            return {
+            clusterQuorumResult = {
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 details: null,
                 error: 'Failed to parse quorum script output'
             };
+        } else if (quorumResult.IsPhysicalDiskAndMajority === true) {
+            clusterQuorumResult = { status: AssessmentStatus.OPTIMIZED, details: quorumResult };
+        } else {
+            clusterQuorumResult = { status: AssessmentStatus.NOT_OPTIMIZED, details: quorumResult };
         }
-        if (quorumResult.IsPhysicalDiskAndMajority === true) {
-            logger.info('Cluster quorum is optimized.');
-            return { status: AssessmentStatus.OPTIMIZED, details: quorumResult };
-        }
-        logger.info('Cluster quorum is not optimized.');
-        return { status: AssessmentStatus.NOT_OPTIMIZED, details: quorumResult };
-    } catch (err) {
-        logger.error('Error checking cluster quorum:', err);
-        return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
-    }
-}
 
-async function getHeartbeatSettingsAssessment(
-    credentialsId: string,
-    region: string,
-    accountId: string,
-    instanceRecord: WorkloadInstance
-) {
-    logger.info(`Checking cluster heartbeat settings for instance "${instanceRecord?.name}"...`);
-    try {
-        const command = [HEARTBEAT_SETTINGS];
-        const rawResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            instanceRecord.activeNodeInstanceid,
-            'Get High Availability Assessment: heartbeat-settings',
-            accountId,
-            false,
-            undefined,
-            true
-        );
-        let settings: Record<string, any>;
-        try {
-            settings = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
-        } catch {
-            logger.error('Unable to parse heartbeat settings output.');
-            return {
-                status: AssessmentStatus.NOT_OPTIMIZED,
-                details: null,
-                error: 'Failed to parse heartbeat script output'
-            };
-        }
+        // --- Heartbeat Settings ---
+        const heartbeatSettingsParsed = heartbeatRaw; // Already parsed object
         const recommended = storageGoldenConfigData.resiliency.heartbeatSettings;
-
-        if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
-            logger.error('Heartbeat settings are missing or invalid.');
-            return {
+        let heartbeatResult;
+        if (
+            !heartbeatSettingsParsed ||
+            typeof heartbeatSettingsParsed !== 'object' ||
+            Array.isArray(heartbeatSettingsParsed)
+        ) {
+            heartbeatResult = {
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 details: null,
                 error: 'Heartbeat settings are missing or invalid'
             };
-        }
-
-        const notOptimized: Record<string, { current: number; recommended: number }> = {};
-        let allOptimized = true;
-        const details: Record<string, { current: number; recommended: number }> = {};
-
-        for (const key of Object.keys(recommended) as (keyof typeof recommended)[]) {
-            const foundKey = Object.keys(settings).find(k => k.toLowerCase() === key.toLowerCase());
-            const current = foundKey ? Number(settings[foundKey]) : NaN;
-            const rec = recommended[key];
-            details[key] = { current, recommended: rec };
-            if (current !== rec) {
-                notOptimized[key] = { current, recommended: rec };
-                allOptimized = false;
+        } else {
+            const notOptimized: Record<string, { current: number; recommended: number }> = {};
+            let allOptimized = true;
+            const details: Record<string, { current: number; recommended: number }> = {};
+            for (const key of Object.keys(recommended) as (keyof typeof recommended)[]) {
+                const foundKey = Object.keys(heartbeatSettingsParsed).find(k => k.toLowerCase() === key.toLowerCase());
+                const current = foundKey ? Number(heartbeatSettingsParsed[foundKey]) : NaN;
+                const rec = recommended[key];
+                details[key] = { current, recommended: rec };
+                if (current !== rec) {
+                    notOptimized[key] = { current, recommended: rec };
+                    allOptimized = false;
+                }
             }
+            heartbeatResult = allOptimized
+                ? { status: AssessmentStatus.OPTIMIZED, details: heartbeatSettingsParsed }
+                : { status: AssessmentStatus.NOT_OPTIMIZED, details };
         }
 
-        if (allOptimized) {
-            logger.info('All heartbeat settings are optimized.');
-            return {
-                status: AssessmentStatus.OPTIMIZED,
-                details: settings
+        // --- SQL Server Services ---
+        let sqlServerServicesResult;
+        if (sqlServerServicesRaw === undefined) {
+            // If missing, mark as not optimized
+            sqlServerServicesResult = {
+                status: AssessmentStatus.NOT_OPTIMIZED,
+                details: [],
+                error: 'SQL Server Services response missing'
             };
+        } else {
+            const sqlServicesResp = sqlServerServicesRaw; // Already parsed object/array
+            let services: any[] = [];
+            if (Array.isArray(sqlServicesResp)) {
+                services = sqlServicesResp;
+            } else if (sqlServicesResp && typeof sqlServicesResp === 'object') {
+                services = [sqlServicesResp];
+            }
+            const allManualAndRunning =
+                services.length > 0 &&
+                services.every(
+                    (svc: any) =>
+                        svc.StartType?.toLowerCase() === 'manual' &&
+                        (typeof svc.Status === 'string' ? svc.Status.toLowerCase() === 'running' : svc.Status === 4)
+                );
+            sqlServerServicesResult = allManualAndRunning
+                ? { status: AssessmentStatus.OPTIMIZED, details: services }
+                : { status: AssessmentStatus.NOT_OPTIMIZED, details: services, error: null };
         }
-        logger.info(`Some heartbeat settings are not optimized: ${Object.keys(notOptimized).join(', ') || 'none'}.`);
+
         return {
-            status: AssessmentStatus.NOT_OPTIMIZED,
-            details
+            clusterQuorum: clusterQuorumResult,
+            heartbeat: heartbeatResult,
+            sqlServerServices: sqlServerServicesResult
         };
     } catch (err) {
-        logger.error('Error checking heartbeat settings:', err);
-        return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
+        logger.error('Error running combined high availability assessment:', err);
+        return {
+            clusterQuorum: { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() },
+            heartbeat: { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() },
+            sqlServerServices: { status: AssessmentStatus.NOT_OPTIMIZED, details: [], error: err?.toString() }
+        };
     }
 }
 
-async function getSqlServerServicesAssessment(
-    credentialsId: string,
-    region: string,
-    accountId: string,
-    instanceRecord: WorkloadInstance
-) {
-    logger.info(`Checking SQL Server services for instance "${instanceRecord?.name}"...`);
-    try {
-        const command = [SQL_SERVER_SERVICES(instanceRecord.name)];
-        const rawResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            instanceRecord.activeNodeInstanceid,
-            'Get High Availability Assessment: sql-server-services',
-            accountId,
-            false,
-            undefined,
-            true
-        );
-        const response = sqlResponseParsing(rawResponse);
-
-        let services: any[] = [];
-        if (Array.isArray(response)) {
-            services = response;
-        } else if (response && typeof response === 'object') {
-            services = [response];
-        }
-        logger.debug(`Found ${services.length} SQL Server services.`);
-
-        const allManualAndRunning = services.every(
-            (svc: any) =>
-                svc.StartType?.toLowerCase() === 'manual' &&
-                (typeof svc.Status === 'string' ? svc.Status.toLowerCase() === 'running' : svc.Status === 4)
-        );
-
-        const details = services.map(
-            ({ Name, Status, StartType }: { Name: string; Status: string; StartType: string }) => ({
-                Name,
-                Status,
-                StartType
-            })
-        );
-
-        logger.info(
-            allManualAndRunning
-                ? 'All SQL Server services are set to manual and running.'
-                : 'Some SQL Server services are not set to manual or not running.'
-        );
-        return allManualAndRunning
-            ? { status: AssessmentStatus.OPTIMIZED, details }
-            : { status: AssessmentStatus.NOT_OPTIMIZED, details, error: null };
-    } catch (err) {
-        logger.error('Error checking SQL Server services:', err);
-        return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
-    }
-}
 async function initiateHighAvailabilityAssessment(
     accountId: string,
     credentialsId: string,
@@ -1258,37 +1206,46 @@ async function initiateHighAvailabilityAssessment(
         type: JOBTYPE.ASSESSMENT
     });
 
-    let sharedStorageResult;
-    let clusterQuorumResult;
-    let heartbeatResult;
-    let sqlServerServicesResult;
-    let driveLetterResult;
+    let sharedStorageResult: any;
+    let driveLetterResult: any;
+    let clusterQuorumResult: any;
+    let heartbeatResult: any;
+    let sqlServerServicesResult: any;
+
     try {
         logger.info('Running all high availability checks...');
-        [sharedStorageResult, driveLetterResult, clusterQuorumResult, heartbeatResult, sqlServerServicesResult] =
-            await Promise.all([
-                getSharedStorageAssessment(
-                    credentialsId,
-                    region,
-                    accountId,
-                    databaseHostId,
-                    instanceRecord,
-                    instanceVolumeMapping,
-                    instanceDetail
-                ),
-                getDriveLetterAssessment(
-                    credentialsId,
-                    region,
-                    accountId,
-                    databaseHostId,
-                    instanceRecord,
-                    instanceVolumeMapping,
-                    instanceDetail
-                ),
-                getClusterQuorumAssessment(credentialsId, region, accountId, instanceRecord),
-                getHeartbeatSettingsAssessment(credentialsId, region, accountId, instanceRecord),
-                getSqlServerServicesAssessment(credentialsId, region, accountId, instanceRecord)
-            ]);
+        const [sharedStorage, driveLetter, combinedHighAvailability] = await Promise.all([
+            getSharedStorageAssessment(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                instanceRecord,
+                instanceVolumeMapping,
+                instanceDetail
+            ),
+            getDriveLetterAssessment(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                instanceRecord,
+                instanceVolumeMapping,
+                instanceDetail
+            ),
+            getCombinedHighAvailabilityAssessment(credentialsId, region, accountId, instanceRecord)
+        ]);
+
+        sharedStorageResult = sharedStorage;
+        driveLetterResult = driveLetter;
+
+        // Destructure the combined result
+        ({
+            clusterQuorum: clusterQuorumResult,
+            heartbeat: heartbeatResult,
+            sqlServerServices: sqlServerServicesResult
+        } = combinedHighAvailability);
+
         logger.info('All high availability checks completed.');
     } catch (err) {
         logger.error('Error running high availability assessment:', err);
