@@ -49,7 +49,6 @@ import {
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setSelectedMultiDetectInstances,
-    setStartProtection,
     setTableManageColumnState,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -90,7 +89,8 @@ import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import {
     cancelProtectionForRow,
     setDataForRow,
-    setWorkSpaceData
+    setWorkSpaceData,
+    startProtectionStep1
 } from '../../../../store/workloadFactory/snapcenterSlice';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
@@ -415,7 +415,7 @@ const InstancesTable = () => {
 
     //Function to handle Add host
     const addHostHandler = async (rowData: any) => {
-        dispatch(setStartProtection('started'));
+        dispatch(startProtectionStep1(`${rowData.databaseInstanceName}_${rowData.name}`));
         const state: any = store.getState().snapCenter;
         const payload = {
             connectorId: state.selectedAgent[0]?.id,
@@ -424,13 +424,11 @@ const InstancesTable = () => {
             resourceId: rowData.resourceId,
             workspaceId: state?.workSpaceData?.id
         };
-        const credRes = await generateCredentialID({
+        await generateCredentialID({
             credentialID: rowData.credentialId,
             regionID: rowData.regionId,
             payload: payload
         });
-
-        console.log(credRes);
     };
 
     const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any) => {
@@ -1196,7 +1194,7 @@ const InstancesTable = () => {
                     menu.push(
                         {
                             id: 'optimize',
-                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
+                            displayName: t('databases.well-architect.well-architect-state'),
                             disabled: disableOption,
                             infoText: disableMessage
                         },

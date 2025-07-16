@@ -119,6 +119,7 @@
             "windows-authentication": "Windows authentication"
         },
         "well-architect": {
+            "well-architect-state": "Well-architected",
             "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
             "view-and-fix": "View and fix",
             "no-configurations-available": "No configuration available.",
