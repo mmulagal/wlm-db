@@ -27,14 +27,13 @@ async function getDatabaseInstanceTopology(
     const {
         fsxn_ids: fileSystemId,
         storage_type: storageType,
-        database_instance_id: databaseInstanceDetails,
+        database_instance_id: databaseInstanceId,
         database_deployment_type: databaseDeploymentType,
         database_type: databaseType,
-        fsxwId
+        fsxwId,
+        resource: { resource_id: resourceId } = {}
     } = databaseInstances;
 
-    const { database_instance_id: databaseInstanceId, resource: { resource_id: resourceId } = {} } =
-        databaseInstances || {};
     let topologyData = {
         serverType: databaseType,
         serverInstallationMode: databaseDeploymentType !== undefined ? databaseDeploymentType : '',
@@ -91,7 +90,12 @@ async function getDatabaseInstanceTopology(
                 availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
             }
         } catch (error) {
-            logger.error(`Error while fetching details for fsx. Error: ${error}`, databaseInstanceDetails);
+            logger.error(`Error while fetching details for fsx. Error: ${error}`, {
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceId
+            });
         }
 
         const [{ config_data: mappedStorageDetails }] =
@@ -107,14 +111,13 @@ async function getDatabaseInstanceTopology(
         const extractRecords = (records: Array<{ uuid: string; name: string }> = []) =>
             records.map(({ uuid, name }) => ({ id: uuid, name }));
 
-        const ontapVolumes =
-            Object.values(mappedStorageDetails as MappedOnTapVolumeResponse).flatMap(i =>
-                extractRecords(i?.volumeRecords)
-            ) || [];
-        const ontapLuns =
-            Object.values(mappedStorageDetails as MappedOnTapVolumeResponse).flatMap(i =>
-                extractRecords(i?.lunRecords)
-            ) || [];
+        const mappedDetails = Object.values(mappedStorageDetails as MappedOnTapVolumeResponse) || [];
+        const volumes = mappedDetails.flatMap(i => extractRecords(i?.volumeRecords));
+        const luns = mappedDetails.flatMap(i => extractRecords(i?.lunRecords));
+        const combinedOntapVolumes = volumes.map(volume => ({
+            ...volume,
+            luns: luns.filter(lun => lun.name.includes(volume.name))
+        }));
 
         topologyData = {
             ...topologyData,
@@ -125,10 +128,16 @@ async function getDatabaseInstanceTopology(
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
             ...(availabilityZones && { availabilityZone: availabilityZones }),
             ...(fileSystemStorageType && { fileSystemStorageType }),
-            ...(ontapVolumes && { ontapVolumes }),
-            ...(ontapLuns && { ontapLuns })
+            ...(combinedOntapVolumes && {
+                storageSummary: {
+                    volumes: combinedOntapVolumes,
+                    totalVolumes: volumes?.length || 0,
+                    totalLuns: luns?.length || 0
+                }
+            })
         };
     }
+
     return topologyData;
 }
 

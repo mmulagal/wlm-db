@@ -472,8 +472,16 @@ const NodeTopologyResponse = Type.Object({
 });
 
 const VolumeLunDetailsResponse = Type.Object({
-    id: Type.String({ description: 'Identifier for the volume/lun' }),
-    name: Type.String({ description: 'Name of the volume/lun' })
+    id: Type.Optional(Type.String({ description: 'ONTAP volume identifier' })),
+    name: Type.Optional(Type.String({ description: 'ONTAP volume name' })),
+    luns: Type.Optional(
+        Type.Array(
+            Type.Object({
+                id: Type.Optional(Type.String({ description: 'LUN identifier' })),
+                name: Type.Optional(Type.String({ description: 'LUN name' }))
+            })
+        )
+    )
 });
 
 const DatabaseInstanceTopology = Type.Object({
@@ -490,8 +498,13 @@ const DatabaseInstanceTopology = Type.Object({
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     availabilityZones: Type.Optional(Type.Array(Type.String())),
     fileSystemStorageType: Type.Optional(Type.String({ enum: ['SSD', 'HDD'] })),
-    ontapVolumes: Type.Optional(Type.Array(VolumeLunDetailsResponse)),
-    ontapLuns: Type.Optional(Type.Array(VolumeLunDetailsResponse))
+    storageSummary: Type.Optional(
+        Type.Object({
+            volumes: Type.Optional(Type.Array(VolumeLunDetailsResponse)),
+            totalVolumes: Type.Optional(Type.Number()),
+            totalLuns: Type.Optional(Type.Number())
+        })
+    )
 });
 
 type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;
