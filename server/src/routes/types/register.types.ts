@@ -188,8 +188,8 @@ const SingleRegisterCredentialsResponse = Type.Object({
             assessment: ManageReadinessObject,
             remediation: ManageReadinessObject,
             dbcreation: ManageReadinessObject,
-            sandbox: ManageReadinessObject
-            // logsanalyzer: Type.Optional(ManageReadinessObject)
+            sandbox: ManageReadinessObject,
+            logsanalyzer: Type.Optional(ManageReadinessObject)
         })
     )
 });

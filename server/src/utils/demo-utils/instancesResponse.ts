@@ -15,11 +15,11 @@ const MANAGE_READINESS = {
     sandbox: {
         missingSqlPermissions: [],
         missingModules: []
+    },
+    logsanalyzer: {
+        missingSqlPermissions: [],
+        missingModules: []
     }
-    // logsanalyzer: {
-    //     missingSqlPermissions: [],
-    //     missingModules: []
-    // }
 };
 
 function instanceDemoData(fsxId: string, ec2InstanceId: string) {

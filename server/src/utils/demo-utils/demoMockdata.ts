@@ -3295,11 +3295,11 @@ const DEMO_REGISTER_RESPONSE = {
         sandbox: {
             missingSqlPermissions: [],
             missingModules: []
+        },
+        logsanalyzer: {
+            missingSqlPermissions: [],
+            missingModules: []
         }
-        // logsanalyzer: {
-        //     missingSqlPermissions: [],
-        //     missingModules: []
-        // }
     }
 };
 
