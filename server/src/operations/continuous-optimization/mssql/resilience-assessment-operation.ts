@@ -1299,66 +1299,69 @@ async function getHighAvailabilityDriftData(
             `Assessment data found for: sharedStorage=${!!sharedStorage}, driveLetter=${!!driveLetter}, clusterQuorum=${!!clusterQuorum}, heartbeat=${!!heartbeat}, sqlServerServices=${!!sqlServerServices}`
         );
 
+        // Import golden config for recommendations, tags, severity, resourceType
+        const resiliencyConfig = storageGoldenConfigData.resiliency;
+
         const haChecks: ParameterDriftResponseType[] = [
             {
                 name: 'shared-storage',
                 status: (sharedStorage?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: 'All shared disks should be accessible by both nodes',
-                severity: SEVERITY.CRITICAL,
-                recommendation: 'All shared disks (iSCSI LUNs) should be accessible by both nodes to allow failover.',
+                recommended: resiliencyConfig.highAvailability.sharedStorage.recommendation,
+                severity: resiliencyConfig.highAvailability.sharedStorage.severity,
+                recommendation: resiliencyConfig.highAvailability.sharedStorage.recommendation,
                 objectsInViolation: Array.isArray(sharedStorage?.lunDetails)
                     ? sharedStorage.lunDetails
                           .filter((lun: any) => lun.status !== AssessmentStatus.OPTIMIZED)
                           .map((lun: any) => lun.lunName)
                     : [],
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                tags: resiliencyConfig.highAvailability.sharedStorage.tags,
                 totalObjectsAssessed: Array.isArray(sharedStorage?.lunDetails) ? sharedStorage.lunDetails.length : 0,
                 totalObjectsInViolation: Array.isArray(sharedStorage?.lunDetails)
                     ? sharedStorage.lunDetails.filter((lun: any) => lun.status !== AssessmentStatus.OPTIMIZED).length
                     : 0,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN
+                resourceType: resiliencyConfig.highAvailability.sharedStorage.resourceType
             },
             {
                 name: 'drive-letter',
                 status: (driveLetter?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: 'Validate availability of same drive letters on standby node',
-                severity: SEVERITY.CRITICAL,
-                recommendation: 'Validate availability of same drive letters on standby node.',
+                recommended: resiliencyConfig.highAvailability.driveLetter.recommendation,
+                severity: resiliencyConfig.highAvailability.driveLetter.severity,
+                recommendation: resiliencyConfig.highAvailability.driveLetter.recommendation,
                 objectsInViolation: Array.isArray(driveLetter?.details?.missingDriveLetters)
                     ? driveLetter.details.missingDriveLetters
                     : [],
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                tags: resiliencyConfig.highAvailability.driveLetter.tags,
                 totalObjectsAssessed: Array.isArray(driveLetter?.details?.missingDriveLetters)
                     ? driveLetter.details.missingDriveLetters.length
                     : 0,
                 totalObjectsInViolation: Array.isArray(driveLetter?.details?.missingDriveLetters)
                     ? driveLetter.details.missingDriveLetters.length
                     : 0,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN
+                resourceType: resiliencyConfig.highAvailability.driveLetter.resourceType
             },
             {
                 name: 'cluster-quorum',
                 status: (clusterQuorum?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: 'Cluster quorum should be optimized',
-                severity: SEVERITY.CRITICAL,
-                recommendation: 'The quorum configuration should be appropriate for the cluster size and environment.',
+                recommended: resiliencyConfig.highAvailability.clusterQuorum.recommendation,
+                severity: resiliencyConfig.highAvailability.clusterQuorum.severity,
+                recommendation: resiliencyConfig.highAvailability.clusterQuorum.recommendation,
                 objectsInViolation:
                     clusterQuorum?.status !== AssessmentStatus.OPTIMIZED && clusterQuorum?.details
                         ? [
                               `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}, QuorumResourceName: ${clusterQuorum.details.quorumResourceName}`
                           ]
                         : [],
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                tags: resiliencyConfig.highAvailability.clusterQuorum.tags,
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: clusterQuorum?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+                resourceType: resiliencyConfig.highAvailability.clusterQuorum.resourceType
             },
             {
                 name: 'heartbeat-settings',
                 status: (heartbeat?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: 'Heartbeat settings should be optimized',
-                severity: SEVERITY.CRITICAL,
-                recommendation: 'Cluster heartbeat settings should be optimized to prevent unnecessary failovers.',
+                recommended: resiliencyConfig.highAvailability.heartbeat.recommendation,
+                severity: resiliencyConfig.highAvailability.heartbeat.severity,
+                recommendation: resiliencyConfig.highAvailability.heartbeat.recommendation,
                 objectsInViolation:
                     heartbeat?.status !== AssessmentStatus.OPTIMIZED && heartbeat?.details
                         ? Object.entries(heartbeat.details)
@@ -1368,7 +1371,7 @@ async function getHighAvailabilityDriftData(
                               )
                               .map(([key]) => key)
                         : [],
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                tags: resiliencyConfig.highAvailability.heartbeat.tags,
                 totalObjectsAssessed: heartbeat?.details ? Object.keys(heartbeat.details).length : 0,
                 totalObjectsInViolation:
                     heartbeat?.details && typeof heartbeat.details === 'object'
@@ -1376,28 +1379,27 @@ async function getHighAvailabilityDriftData(
                               (value: any) => value && typeof value === 'object' && value.current !== value.recommended
                           ).length
                         : 0,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+                resourceType: resiliencyConfig.highAvailability.heartbeat.resourceType
             },
             {
                 name: 'sqlServer-service',
                 status: (sqlServerServices?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: 'SQL Server services should be set to start automatically',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'SQL Server services should be set to start automatically and run on the primary node and stopped on the secondary node.',
+                recommended: resiliencyConfig.highAvailability.sqlServerService.recommendation,
+                severity: resiliencyConfig.highAvailability.sqlServerService.severity,
+                recommendation: resiliencyConfig.highAvailability.sqlServerService.recommendation,
                 objectsInViolation:
                     sqlServerServices?.status !== AssessmentStatus.OPTIMIZED &&
                     Array.isArray(sqlServerServices?.details)
                         ? sqlServerServices.details
                         : [],
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                tags: resiliencyConfig.highAvailability.sqlServerService.tags,
                 totalObjectsAssessed: Array.isArray(sqlServerServices?.details) ? sqlServerServices.details.length : 0,
                 totalObjectsInViolation:
                     sqlServerServices?.status !== AssessmentStatus.OPTIMIZED &&
                     Array.isArray(sqlServerServices?.details)
                         ? sqlServerServices.details.length
                         : 0,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+                resourceType: resiliencyConfig.highAvailability.sqlServerService.resourceType
             }
         ];
 
