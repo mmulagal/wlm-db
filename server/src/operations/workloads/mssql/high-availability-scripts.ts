@@ -130,6 +130,26 @@ $results | ConvertTo-Json
 Stop-Transcript | Out-Null
 `;
 
+const OPTIMIZE_SHARED_STORAGE = (params: OntapRequestParams, igroupName: string, missingInitiators: string[]) => `
+# Add missing initiators to igroup ${igroupName}
+Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
+$WarningPreference = 'SilentlyContinue'
+$FSxID = '${params.fsxId}'
+$FSxRegion = '${params.region}'
+$apiEndpoint = '${params.apiEndpoint}'
+${ontapRestRequest}
+
+$igroupName = '${igroupName}'
+$missingInitiators = @(${missingInitiators.map(iqn => `'${iqn}'`).join(', ')})
+
+foreach ($initiator in $missingInitiators) {
+    $body = @{ initiator = $initiator } | ConvertTo-Json
+    Invoke-ONTAPRequest -ApiEndpoint "$apiEndpoint/protocols/san/igroups/$igroupName/initiators" -Method "POST" -Body $body
+}
+
+Stop-Transcript | Out-Null
+`;
+
 export {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
@@ -138,5 +158,6 @@ export {
     GET_IGROUP_UUID,
     GET_LUN_MAPS,
     GET_HOST_IQN,
-    GET_LUN_IGROUP_INITIATOR_NAMES
+    GET_LUN_IGROUP_INITIATOR_NAMES,
+    OPTIMIZE_SHARED_STORAGE
 };

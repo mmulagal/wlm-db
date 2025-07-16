@@ -703,12 +703,15 @@ async function getSharedStorageAssessment(
     instanceVolumeMapping: MappedOnTapVolumeResponse[],
     instanceDetail?: DatabaseInstance
 ) {
-    logger.info('[getSharedStorageAssessment] called', {
+    // Destructure required parameters from instanceRecord
+    const { name: instanceName, fsxFileSystem, activeNodeInstanceid } = instanceRecord;
+
+    logger.info(' Calculate shared storage assessment for ', {
         credentialsId,
         region,
         accountId,
         databaseHostId,
-        instanceName: instanceRecord?.name,
+        instanceName,
         volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
     });
     try {
@@ -718,45 +721,43 @@ async function getSharedStorageAssessment(
             node2InstanceId?: string;
         };
 
-        if (!node1InstanceId && !node2InstanceId) {
-            throw new Error('node1instanceid and node2instanceid not found in instanceRecord metadata');
+        if (!node1InstanceId || !node2InstanceId) {
+            throw new Error(
+                'Primary node and secondary node information not found. Please ensure both nodes are configured for shared storage assessment.'
+            );
         }
 
         // Get HOST IQN details for both nodes
         logger.info('Fetching HOST IQN details for both nodes:', { node1InstanceId, node2InstanceId });
         const hostIqnCommand = [GET_HOST_IQN];
         const hostIqns = await Promise.all([
-            node1InstanceId
-                ? callSsmExecution(
-                      credentialsId,
-                      region,
-                      hostIqnCommand,
-                      node1InstanceId,
-                      'Get HOST IQN details on node 1',
-                      accountId,
-                      false,
-                      undefined,
-                      true
-                  )
-                : undefined,
-            node2InstanceId
-                ? callSsmExecution(
-                      credentialsId,
-                      region,
-                      hostIqnCommand,
-                      node2InstanceId,
-                      'Get HOST IQN details on node 2',
-                      accountId,
-                      false,
-                      undefined,
-                      true
-                  )
-                : undefined
+            callSsmExecution(
+                credentialsId,
+                region,
+                hostIqnCommand,
+                node1InstanceId,
+                'Get HOST IQN details on node 1',
+                accountId,
+                false,
+                undefined,
+                true
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                hostIqnCommand,
+                node2InstanceId,
+                'Get HOST IQN details on node 2',
+                accountId,
+                false,
+                undefined,
+                true
+            )
         ]);
-        const hostIqnsToCheck = hostIqns.filter(Boolean) as string[];
+        const hostIqnsToCheck = compact(hostIqns);
 
         if (!instanceVolumeMapping || instanceVolumeMapping.length === 0) {
-            const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
+            const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceName}.`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
@@ -764,12 +765,11 @@ async function getSharedStorageAssessment(
         const lunRecords = Object.values(instanceVolumeMapping).flatMap(i => i.lunRecords || []);
         const results = await Promise.all(
             lunRecords.map(async lun => {
-                const lunUuid = lun.uuid;
-                const lunName = lun.name;
+                const { uuid: lunUuid, name: lunName } = lun;
                 const lunIgroupCommand = [
                     GET_LUN_IGROUP_INITIATOR_NAMES(
                         {
-                            fsxId: instanceRecord.fsxFileSystem,
+                            fsxId: fsxFileSystem,
                             region,
                             apiEndpoint: '',
                             apiQueryFilter: ''
@@ -781,7 +781,7 @@ async function getSharedStorageAssessment(
                     credentialsId,
                     region,
                     lunIgroupCommand,
-                    instanceRecord.activeNodeInstanceid,
+                    activeNodeInstanceid,
                     `Get ONTAP LUN igroup and initiator names for LUN ${lunUuid}`,
                     accountId,
                     false,
@@ -847,7 +847,7 @@ async function getDriveLetterAssessment(
     instanceVolumeMapping: MappedOnTapVolumeResponse[],
     instanceDetail?: DatabaseInstance
 ) {
-    logger.info('[getDriveLetterAssessment] called', {
+    logger.info('Calculate drive letter assessment for', {
         credentialsId,
         region,
         accountId,
@@ -877,7 +877,10 @@ async function getDriveLetterAssessment(
             node1InstanceId,
             node2InstanceId
         });
-        logger.debug('[getDriveLetterAssessment] active/standby node', { activeNodeInstanceId, standbyNodeInstanceId });
+        logger.debug('Calculate drive letter assessment for active/standby node', {
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        });
 
         let mappedVolumeDriveLetters: string[] = [];
         const mappedVolumeDriveLetterMap: {
@@ -888,7 +891,9 @@ async function getDriveLetterAssessment(
 
         try {
             if (!activeNodeInstanceId || !standbyNodeInstanceId) {
-                throw new Error('activeNodeInstanceId or standbyNodeInstanceId is undefined');
+                throw new Error(
+                    'Primary or Standby node information not found. Please ensure both nodes are configured for drive letter assessment.'
+                );
             }
             const fetchDriveDetailsCommand = [FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS(instanceRecord)];
             let driveDetails: any = await callSsmExecution(
@@ -903,24 +908,21 @@ async function getDriveLetterAssessment(
                 true
             );
             driveDetails = JSON.parse(driveDetails);
-            mappedVolumeDriveLetters = DRIVE_LETTER_SECTIONS.flatMap(section => {
+            mappedVolumeDriveLetters = [];
+            DRIVE_LETTER_SECTIONS.forEach(section => {
                 mappedVolumeDriveLetterMap[section] = {};
                 if (Array.isArray(driveDetails[section])) {
-                    return driveDetails[section]
-                        .map(item => {
-                            const driveLetter = item?.driveLetter;
-                            if (driveLetter) {
-                                const key = item.name || item.lunUuid || item.ontapVolumeName;
-                                mappedVolumeDriveLetterMap[section][key] = driveLetter;
-                                return driveLetter;
-                            }
-                            return null;
-                        })
-                        .filter(Boolean) as string[];
+                    driveDetails[section].forEach(item => {
+                        const driveLetter = item?.driveLetter;
+                        if (driveLetter) {
+                            const key = item.name || item.lunUuid || item.ontapVolumeName;
+                            mappedVolumeDriveLetterMap[section][key] = driveLetter;
+                            mappedVolumeDriveLetters.push(driveLetter);
+                        }
+                    });
                 }
-                return [];
             });
-            logger.debug('[getDriveLetterAssessment] mappedVolumeDriveLetters', {
+            logger.debug('mappedVolumeDriveLetters for Drive Letter assessment', {
                 count: mappedVolumeDriveLetters.length
             });
         } catch (err) {
@@ -930,7 +932,7 @@ async function getDriveLetterAssessment(
 
         if (mappedVolumeDriveLetters.length === 0 && Array.isArray(instanceVolumeMapping)) {
             mappedVolumeDriveLetters = instanceVolumeMapping.map((vol: any) => vol?.driveLetter).filter(Boolean);
-            logger.debug('[getDriveLetterAssessment] fallback mappedVolumeDriveLetters', {
+            logger.debug('Drive Letter assessment: fallback mappedVolumeDriveLetters', {
                 count: mappedVolumeDriveLetters.length
             });
         }
@@ -938,7 +940,10 @@ async function getDriveLetterAssessment(
         let standbyNodeDriveLetters: string[] = [];
         try {
             if (!standbyNodeInstanceId) {
-                throw new Error('standbyNodeInstanceId is undefined');
+                const message =
+                    'Standby node instance ID is missing. Please ensure both nodes are configured for drive letter assessment.';
+                logger.error(message);
+                return { error: message };
             }
             const standbyResp = await callSsmExecution(
                 credentialsId,
@@ -957,11 +962,11 @@ async function getDriveLetterAssessment(
                       .map(letter => (typeof letter === 'string' ? letter.trim().toUpperCase() : ''))
                       .filter(letter => /^[A-Z]$/.test(letter))
                 : [];
-            logger.debug('[getDriveLetterAssessment] standbyNodeDriveLetters', {
-                count: standbyNodeDriveLetters.length
-            });
+            logger.debug(
+                `[Drive Letter Assessment] Standby node has ${standbyNodeDriveLetters.length} drive letters detected.`
+            );
         } catch (err) {
-            logger.error('Failed to fetch drive letters on standby node:', err);
+            logger.error(`[Drive Letter Assessment] Unable to fetch drive letters on standby node: ${err?.toString()}`);
             return { error: err?.toString() };
         }
 
@@ -970,7 +975,9 @@ async function getDriveLetterAssessment(
         const missingDriveLetters = uniqueMappedVolumeDriveLetters.filter(
             letter => !standbyNodeDriveLetters.includes(letter)
         );
-        logger.info('[getDriveLetterAssessment] completed', { allPresent, missingCount: missingDriveLetters.length });
+        logger.info(
+            `[Drive Letter Assessment] Assessment completed. All drive letters present: ${allPresent}. Missing drive letters: ${missingDriveLetters.length}.`
+        );
 
         return {
             status: allPresent ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
@@ -988,12 +995,7 @@ async function getClusterQuorumAssessment(
     accountId: string,
     instanceRecord: WorkloadInstance
 ) {
-    logger.info('[getClusterQuorumAssessment] called', {
-        credentialsId,
-        region,
-        accountId,
-        instanceName: instanceRecord?.name
-    });
+    logger.info(`Checking cluster quorum for instance "${instanceRecord?.name}"...`);
     try {
         const command = [CLUSTER_QUORUM_TYPE];
         const rawResponse = await callSsmExecution(
@@ -1011,7 +1013,7 @@ async function getClusterQuorumAssessment(
 
         const quorumResult = response;
         if (!quorumResult || typeof quorumResult !== 'object') {
-            logger.error('[getClusterQuorumAssessment] Failed to parse quorum script output');
+            logger.error('Unable to parse cluster quorum output.');
             return {
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 details: null,
@@ -1019,13 +1021,13 @@ async function getClusterQuorumAssessment(
             };
         }
         if (quorumResult.IsPhysicalDiskAndMajority === true) {
-            logger.info('[getClusterQuorumAssessment] Optimized quorum');
+            logger.info('Cluster quorum is optimized.');
             return { status: AssessmentStatus.OPTIMIZED, details: quorumResult };
         }
-        logger.info('[getClusterQuorumAssessment] Not optimized quorum');
+        logger.info('Cluster quorum is not optimized.');
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: quorumResult };
     } catch (err) {
-        logger.error('[getClusterQuorumAssessment] Exception:', err);
+        logger.error('Error checking cluster quorum:', err);
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
     }
 }
@@ -1036,12 +1038,7 @@ async function getHeartbeatSettingsAssessment(
     accountId: string,
     instanceRecord: WorkloadInstance
 ) {
-    logger.info('[getHeartbeatSettingsAssessment] called', {
-        credentialsId,
-        region,
-        accountId,
-        instanceName: instanceRecord?.name
-    });
+    logger.info(`Checking cluster heartbeat settings for instance "${instanceRecord?.name}"...`);
     try {
         const command = [HEARTBEAT_SETTINGS];
         const rawResponse = await callSsmExecution(
@@ -1059,7 +1056,7 @@ async function getHeartbeatSettingsAssessment(
         try {
             settings = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
         } catch {
-            logger.error('[getHeartbeatSettingsAssessment] Failed to parse heartbeat script output');
+            logger.error('Unable to parse heartbeat settings output.');
             return {
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 details: null,
@@ -1069,7 +1066,7 @@ async function getHeartbeatSettingsAssessment(
         const recommended = storageGoldenConfigData.resiliency.heartbeatSettings;
 
         if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
-            logger.error('[getHeartbeatSettingsAssessment] Heartbeat settings are missing or invalid');
+            logger.error('Heartbeat settings are missing or invalid.');
             return {
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 details: null,
@@ -1093,21 +1090,19 @@ async function getHeartbeatSettingsAssessment(
         }
 
         if (allOptimized) {
-            logger.info('[getHeartbeatSettingsAssessment] All heartbeat settings optimized');
+            logger.info('All heartbeat settings are optimized.');
             return {
                 status: AssessmentStatus.OPTIMIZED,
                 details: settings
             };
         }
-        logger.info('[getHeartbeatSettingsAssessment] Not all heartbeat settings optimized', {
-            notOptimizedKeys: Object.keys(notOptimized)
-        });
+        logger.info(`Some heartbeat settings are not optimized: ${Object.keys(notOptimized).join(', ') || 'none'}.`);
         return {
             status: AssessmentStatus.NOT_OPTIMIZED,
             details
         };
     } catch (err) {
-        logger.error('Exception running SSM for heartbeat-settings:', err);
+        logger.error('Error checking heartbeat settings:', err);
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
     }
 }
@@ -1118,12 +1113,7 @@ async function getSqlServerServicesAssessment(
     accountId: string,
     instanceRecord: WorkloadInstance
 ) {
-    logger.info('[getSqlServerServicesAssessment] called', {
-        credentialsId,
-        region,
-        accountId,
-        instanceName: instanceRecord?.name
-    });
+    logger.info(`Checking SQL Server services for instance "${instanceRecord?.name}"...`);
     try {
         const command = [SQL_SERVER_SERVICES(instanceRecord.name)];
         const rawResponse = await callSsmExecution(
@@ -1145,7 +1135,7 @@ async function getSqlServerServicesAssessment(
         } else if (response && typeof response === 'object') {
             services = [response];
         }
-        logger.debug('[getSqlServerServicesAssessment] services count', { count: services.length });
+        logger.debug(`Found ${services.length} SQL Server services.`);
 
         const allManualAndRunning = services.every(
             (svc: any) =>
@@ -1161,16 +1151,19 @@ async function getSqlServerServicesAssessment(
             })
         );
 
-        logger.info('[getSqlServerServicesAssessment] completed', { allManualAndRunning });
+        logger.info(
+            allManualAndRunning
+                ? 'All SQL Server services are set to manual and running.'
+                : 'Some SQL Server services are not set to manual or not running.'
+        );
         return allManualAndRunning
             ? { status: AssessmentStatus.OPTIMIZED, details }
             : { status: AssessmentStatus.NOT_OPTIMIZED, details, error: null };
     } catch (err) {
-        logger.error('Exception running SSM for sql-server-services:', err);
+        logger.error('Error checking SQL Server services:', err);
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
     }
 }
-
 async function initiateHighAvailabilityAssessment(
     accountId: string,
     credentialsId: string,
@@ -1180,22 +1173,17 @@ async function initiateHighAvailabilityAssessment(
     instanceRecord: WorkloadInstance,
     instanceVolumeMapping: MappedOnTapVolumeResponse[]
 ) {
-    logger.info('Get Cluster High Availability assessment data', {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        parentJobId,
-        instanceName: instanceRecord?.name,
-        volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
-    });
+    logger.info(
+        `Starting high availability assessment for "${instanceRecord?.name}" with ${
+            Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
+        } volumes...`
+    );
 
     if (!instanceRecord) {
-        logger.error('[initiateHighAvailabilityAssessment] instanceRecord is required');
+        logger.error('Instance record is required for high availability assessment.');
         throw new Error('Instance record required for SSM checks');
     }
 
-    // Fetch instanceDetail once and pass to sub-assessments
     const instanceDetail = (await getInstanceInfo(
         accountId,
         credentialsId,
@@ -1203,15 +1191,15 @@ async function initiateHighAvailabilityAssessment(
         instanceRecord.id
     )) as DatabaseInstance;
 
-    // Only run assessment if deployment type is FCI
+    const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = instanceRecord;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    const jobName = 'High Availability Assessment';
+    const jobDescription = jobName;
+
     const fciCheck = checkFCIDeploymentType(instanceDetail, 'main');
     if (fciCheck) {
-        logger.info('[initiateHighAvailabilityAssessment] FCI check failed', { error: fciCheck.error });
-        const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = instanceRecord;
-        const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-        const jobName = 'High Availability Assessment';
-        const jobDescription = jobName;
-        const jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+        logger.info(`High availability assessment skipped: ${fciCheck.error}`);
+        const jobStatus: JOBSTATUS = JOBSTATUS.FAILED;
         const errorMessage = fciCheck.error;
 
         const { id: highAvailabilityAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
@@ -1249,10 +1237,6 @@ async function initiateHighAvailabilityAssessment(
         return;
     }
 
-    const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = instanceRecord;
-    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobName = 'High Availability Assessment';
-    const jobDescription = jobName;
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
 
@@ -1271,7 +1255,7 @@ async function initiateHighAvailabilityAssessment(
     let sqlServerServicesResult;
     let driveLetterResult;
     try {
-        logger.info('[initiateHighAvailabilityAssessment] Starting all HA checks');
+        logger.info('Running all high availability checks...');
         [sharedStorageResult, driveLetterResult, clusterQuorumResult, heartbeatResult, sqlServerServicesResult] =
             await Promise.all([
                 getSharedStorageAssessment(
@@ -1281,7 +1265,7 @@ async function initiateHighAvailabilityAssessment(
                     databaseHostId,
                     instanceRecord,
                     instanceVolumeMapping,
-                    instanceDetail // pass down
+                    instanceDetail
                 ),
                 getDriveLetterAssessment(
                     credentialsId,
@@ -1290,19 +1274,19 @@ async function initiateHighAvailabilityAssessment(
                     databaseHostId,
                     instanceRecord,
                     instanceVolumeMapping,
-                    instanceDetail // pass down
+                    instanceDetail
                 ),
                 getClusterQuorumAssessment(credentialsId, region, accountId, instanceRecord),
                 getHeartbeatSettingsAssessment(credentialsId, region, accountId, instanceRecord),
                 getSqlServerServicesAssessment(credentialsId, region, accountId, instanceRecord)
             ]);
-        logger.info('[initiateHighAvailabilityAssessment] All HA checks completed');
+        logger.info('All high availability checks completed.');
     } catch (err) {
         logger.error('Error running high availability assessment:', err);
         errorMessage = err?.toString?.() || String(err);
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        logger.info('[initiateHighAvailabilityAssessment] Writing HA assessment config data');
+        logger.info('Saving high availability assessment results...');
         await createDatabaseInstanceConfigData([
             {
                 account_id: accountId,
@@ -1327,7 +1311,11 @@ async function initiateHighAvailabilityAssessment(
         status: jobStatus,
         error: errorMessage
     });
-    logger.info('[initiateHighAvailabilityAssessment] Job updated', { jobStatus, errorMessage });
+    logger.info(
+        `High availability assessment job updated. Status: ${jobStatus}${
+            errorMessage ? `, Error: ${errorMessage}` : ''
+        }`
+    );
 }
 
 async function getHighAvailabilityDriftData(
@@ -1338,17 +1326,11 @@ async function getHighAvailabilityDriftData(
     databaseInstanceId: string,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
 ): Promise<ParameterDriftResponseType[] | (ParameterDriftResponseType & { errorMessage: string })> {
-    logger.info('Calculate high Availability drift data for:', {
-        accountId,
-        region,
-        credentialsId,
-        databaseInstanceId,
-        databaseHostId
-    });
+    logger.info(`Calculating high availability drift data for instance "${databaseInstanceId}"...`);
 
     if (isEmpty(highAvailabilityAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HIGH_AVAILABILITY);
-        logger.error('[getHighAvailabilityDriftData] No assessment data', { errorMessage });
+        logger.error('No high availability assessment data found.');
         return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
     }
 
@@ -1356,13 +1338,9 @@ async function getHighAvailabilityDriftData(
         const { sharedStorage, driveLetter, clusterQuorum, heartbeat, sqlServerServices } =
             highAvailabilityAssessmentData;
 
-        logger.debug('[getHighAvailabilityDriftData] assessmentData keys', {
-            sharedStorage: !!sharedStorage,
-            driveLetter: !!driveLetter,
-            clusterQuorum: !!clusterQuorum,
-            heartbeat: !!heartbeat,
-            sqlServerServices: !!sqlServerServices
-        });
+        logger.debug(
+            `Assessment data found for: sharedStorage=${!!sharedStorage}, driveLetter=${!!driveLetter}, clusterQuorum=${!!clusterQuorum}, heartbeat=${!!heartbeat}, sqlServerServices=${!!sqlServerServices}`
+        );
 
         const haChecks: ParameterDriftResponseType[] = [
             {
@@ -1466,10 +1444,10 @@ async function getHighAvailabilityDriftData(
             }
         ];
 
-        logger.info('[getHighAvailabilityDriftData] Drift data calculated', { checks: haChecks.length });
+        logger.info(`High availability drift data calculated. ${haChecks.length} checks performed.`);
         return haChecks;
     } catch (error) {
-        logger.error('Error fetching high availability drift data:', error);
+        logger.error('Error calculating high availability drift data:', error);
         return { errorMessage: (error as Error).message } as ParameterDriftResponseType & { errorMessage: string };
     }
 }
