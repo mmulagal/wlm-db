@@ -9,6 +9,11 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
+    serverDetails: {
+        password: string;
+        userName: string;
+    };
+    selectedAuthenticationType: string;
     regionChangeInstanceLoading: boolean;
     onPremiseData: any;
     onPremiseDataLoading: boolean;

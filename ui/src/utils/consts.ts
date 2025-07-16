@@ -124,7 +124,8 @@ export const FROM_DIALOG = {
     FSXADMIN: 'fsxadmin',
     SQLSERVER: 'sqlserver',
     SINGLE_AGENT: 'single_agent',
-    LOADER: ''
+    LOADER: '',
+    EXPLORE_SAVINGS: 'explore_savings'
 };
 
 export const DBType = {
