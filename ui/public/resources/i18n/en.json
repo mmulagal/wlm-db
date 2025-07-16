@@ -347,7 +347,38 @@
             "view-server-state": "VIEW SERVER STATE",
             "connect-sql": "CONNECT SQL",
             "permissions-required-heading": "Another method of authentication is to add the missing SQL Server permissions.",
-            "permissions-required-content": "Ensure that the following SQL Server permissions are granted to the NT Authority\\SYSTEM user. Once permissions are set, please try accessing Explore Savings again."
+            "permissions-required-content": "Ensure that the following SQL Server permissions are granted to the NT Authority\\SYSTEM user. After permissions are granted, select Explore savings again."
+        },
+        "instance-table": {
+            "headers": {
+                "instance-name": "Instance name",
+                "host-name": "Host name",
+                "engine-type": "Engine type",
+                "deployment-model": "Deployment model",
+                "registration-status": "Registration status",
+                "fsx-for-ontap": "FSx for ONTAP",
+                "well-architected-status": "Well-architected status",
+                "protection-status": "Protection status",
+                "performance": "Performance",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            }
+        },
+        "databases-table": {
+            "headers": {
+                "database-name": "Database name",
+                "host-name": "Host name",
+                "engine-type": "Engine type",
+                "instance-name": "Instance name",
+                "protection-status": "Protection status",
+                "fsx-for-ontap": "FSx for ONTAP",
+                "database-type": "Database Type",
+                "database-size": "Database size",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            }
         }
     }
 }
