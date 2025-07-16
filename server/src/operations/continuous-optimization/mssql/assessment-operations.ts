@@ -73,6 +73,7 @@ import {
     DriftAssessmentResponsePerHostType
 } from '../../../routes/types/continuous-optimization.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
+import { handleGetAssessmentForDemo } from '../../demo-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -292,10 +293,16 @@ async function fetchMssqlDriftAssessment(
                   hostLevelAssessmentData as ResourceAssessmentData,
                   fieldsValues
               )
-            : {}
+            : {
+                  compute: {} as ComputeDriftResponseType,
+                  license: {} as LicenseDriftResponseType,
+                  hostOsPatch: {} as HostOsPatchDriftResponseType,
+                  rssConfig: {} as RssConfigDriftResponseType,
+                  mssqlPatch: {} as MSSQLPatchDriftResponseType
+              }
     ];
 
-    const driftAssessmentData: DriftAssessmentResponseType = {
+    let driftAssessmentData: DriftAssessmentResponseType = {
         storage: !isEmpty(storageAssessmentResponse)
             ? (storageAssessmentResponse as StorageParameterDriftResponseType)
             : undefined,
@@ -318,6 +325,10 @@ async function fetchMssqlDriftAssessment(
         databaseInstanceName,
         ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId
     };
+
+    if (isDemoFlow) {
+        driftAssessmentData = handleGetAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
+    }
 
     return driftAssessmentData;
 }
