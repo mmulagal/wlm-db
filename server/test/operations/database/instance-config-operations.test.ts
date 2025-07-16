@@ -97,7 +97,6 @@ describe('database instance config operations', () => {
         const resp = await listInstanceConfigIncludingResourceAndInstance({ accountId: ACCOUNT_ID });
         expect(resp.length).toBeDefined(); // Need to check this
     });
-    ``;
 
     it('should list database instance config data - mapped ontap volumes', async () => {
         const DatabaseInstanceConfigDataRecords = [
