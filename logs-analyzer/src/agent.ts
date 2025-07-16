@@ -28,7 +28,8 @@ import {
     getBashScript,
     runPowerShellScript,
     deleteOlderFilesInDirectory,
-    safeParseJson
+    safeParseJson,
+    hoursAgoTimestamp
 } from './utils/utils';
 import logger from './utils/logging';
 import { ToolUse, ToolSpec, MessageObj, AgentArgs, ErrorLogWithScriptAndDetails, ErrorLog } from './utils/interfaces';
@@ -46,12 +47,9 @@ program
     .requiredOption('-i, --instance-id <id>', 'EC2 instance ID')
     .requiredOption('-r, --region <region>', 'AWS region')
     .option('-g, --log-level <level>', 'Log level', 'info')
-    .option(
-        '-t, --timestamp <ms>',
-        'Timestamp of the last log statement in milliseconds',
-        `${Date.now() - 1000 * 60 * 60 * 24 * 120}`
-    )
+    .option('-t, --timestamp <ms>', 'Timestamp of the last log statement in milliseconds', `${hoursAgoTimestamp(24)}`)
     .option('-c, --logs-count-to-consider <count>', 'Number of logs to consider for analysis', '1000')
+    .option('-w, --time-window-hours <hours>', 'Time window in hours to look back for logs', '24')
     .option('-e, --temperature <temp>', 'Temperature for the model', '0.5')
     .option('-p, --top-p <topP>', 'Top P for the model', '0.9')
     .option('-m, --max-tokens <tokens>', 'Max tokens for the model', '1000')
@@ -75,6 +73,7 @@ const {
     modelRegion: MODEL_REGION,
     timestamp: TIMESTAMP_LAST_LOG_PROCESSED,
     logsCountToConsider: LOGS_COUNT,
+    timeWindowHours: TIME_WINDOW_HOURS,
     topP: TOP_P,
     temperature: TEMP,
     maxTokens: MAX_TOKENS
@@ -158,6 +157,8 @@ async function initiateLogsAnalysis(inputText: string) {
 
     logger.info('Step 2: Creating output directory and file paths.');
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    const startLogsAnalysisFromTimestamp = getStartTimestampForAnalysis(TIME_WINDOW_HOURS);
     const outputDir = join(process.cwd(), 'output');
     if (!existsSync(outputDir)) {
         mkdirSync(outputDir);
@@ -179,7 +180,15 @@ async function initiateLogsAnalysis(inputText: string) {
         messages.push(message);
         const { inputTokens, outputTokens, totalTokens } = usage || {};
         if (stopReason === 'tool_use') {
-            await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, INFERENCE_CONFIG);
+            await handleToolUse(
+                client,
+                message,
+                messages,
+                toolConfig,
+                uniqueQueryMap,
+                INFERENCE_CONFIG,
+                startLogsAnalysisFromTimestamp
+            );
         }
 
         logger.info('Step 4: Writing output files.');
@@ -201,6 +210,8 @@ async function initiateLogsAnalysis(inputText: string) {
                 remediationFilePath,
                 statusFilePath,
                 remediationRecommendation,
+                startTime: startLogsAnalysisFromTimestamp,
+                endTime: Date.now(),
                 totalTokens: {
                     tokenUsageForIntentIdentification: {
                         input: inputTokens,
@@ -235,6 +246,15 @@ async function initiateLogsAnalysis(inputText: string) {
     }
 }
 
+function getStartTimestampForAnalysis(timeWindowHours: number = 24) {
+    const twentyFourHrAgoTimestamp = hoursAgoTimestamp(timeWindowHours);
+    const startTimestamp =
+        TIMESTAMP_LAST_LOG_PROCESSED > twentyFourHrAgoTimestamp
+            ? TIMESTAMP_LAST_LOG_PROCESSED
+            : twentyFourHrAgoTimestamp;
+    return startTimestamp;
+}
+
 function sumTokenUsage(
     recommendations: RemediationRecommendation[],
     key: 'causeIdentification' | 'remediationRecommendation',
@@ -252,7 +272,8 @@ async function handleToolUse(
     messages: MessageObj[],
     toolConfig: { tools: ToolSpec[] },
     uniqueQueryMap: Map<string, string[]>,
-    inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
+    inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG,
+    startLogsAnalysisFromTimestamp: number
 ) {
     let stopReason = '';
     if (message?.content) {
@@ -271,7 +292,8 @@ async function handleToolUse(
                                     SQL_AUTH_ENABLED,
                                     DATABASE_INSTANCE_NAME,
                                     messages,
-                                    INFERENCE_CONFIG
+                                    INFERENCE_CONFIG,
+                                    startLogsAnalysisFromTimestamp
                                 );
                                 stopReason = 'end_turn'; // Stop further tool use
                                 logger.info('Log analysis completed. Stopping further tool use.');
@@ -285,7 +307,15 @@ async function handleToolUse(
                         }
 
                         if (stopReason === 'tool_use') {
-                            await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, inferenceConfig);
+                            await handleToolUse(
+                                client,
+                                message,
+                                messages,
+                                toolConfig,
+                                uniqueQueryMap,
+                                inferenceConfig,
+                                startLogsAnalysisFromTimestamp
+                            );
                         }
                     }
                 })
@@ -630,7 +660,8 @@ async function analyzeDatabaseApplicationLogs(
     sqlAuthEnabled: boolean,
     databaseInstanceName: string,
     messages: MessageObj[],
-    inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
+    inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG,
+    startLogsAnalysisFromTimestamp: number
 ) {
     logger.info('Analyzing database application logs.', { logsFolderPath, sqlAuthEnabled, databaseInstanceName });
 
@@ -641,7 +672,7 @@ async function analyzeDatabaseApplicationLogs(
     const { uniqueErrorLogs: errorLogs } = await collectLogs(
         dbType,
         logsFolderPath,
-        TIMESTAMP_LAST_LOG_PROCESSED,
+        startLogsAnalysisFromTimestamp,
         LOGS_COUNT
     );
 

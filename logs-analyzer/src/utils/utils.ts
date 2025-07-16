@@ -397,6 +397,10 @@ function safeParseJson(jsonString: string) {
     }
 }
 
+function hoursAgoTimestamp(hours: number = 24): number {
+    return Date.now() - 1000 * 60 * 60 * hours;
+}
+
 export {
     getPowershellScript,
     getBashScript,
@@ -405,5 +409,6 @@ export {
     deflateString,
     deleteOlderFilesInDirectory,
     generateHash,
-    safeParseJson
+    safeParseJson,
+    hoursAgoTimestamp
 };

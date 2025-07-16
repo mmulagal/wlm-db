@@ -109,17 +109,13 @@ function getWindowsPrepareScript(scriptParams: {
         region,
         inferenceProfileArn,
         jobId,
-        inferenceConfig = {
-            temperature: 0.5,
-            maxTokens: 1000,
-            topP: 0.9
-        },
+        inferenceConfig = {},
         logsAnalyzerFromTimestamp,
         logsCountToConsider,
         logLevel = LOG_LEVEL
     } = scriptParams;
 
-    const { temperature, maxTokens, topP } = inferenceConfig;
+    const { temperature = 0.5, maxTokens = 1000, topP = 0.9 } = inferenceConfig;
 
     return `
     # Logs Analysis Windows Prepare Script
@@ -243,14 +239,10 @@ function getLinuxPrepareScript(scriptParams: {
         region,
         inferenceProfileArn,
         jobId,
-        inferenceConfig = {
-            temperature: 0.5,
-            maxTokens: 1000,
-            topP: 0.9
-        },
+        inferenceConfig = {},
         logLevel = LOG_LEVEL
     } = scriptParams;
-    const { temperature, maxTokens, topP } = inferenceConfig;
+    const { temperature = 0.5, maxTokens = 1000, topP = 0.9 } = inferenceConfig;
 
     return `
     
