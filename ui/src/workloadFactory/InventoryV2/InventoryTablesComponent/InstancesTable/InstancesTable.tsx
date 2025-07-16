@@ -414,9 +414,11 @@ const InstancesTable = () => {
                 header={
                     <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                            {t('databases.inventory.step-1-out-of')}
-                        </DsTypography>
+                        {!hostExists && (
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-1-out-of')}
+                            </DsTypography>
+                        )}
                     </div>
                 }
                 content={<SingleAgentDialog agents={activeAgents} hostExists={hostExists} />}
@@ -1158,6 +1160,12 @@ const InstancesTable = () => {
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
                     menu.push(
                         {
+                            id: 'optimize',
+                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
+                        {
                             id: 'investigateErrors',
                             displayName: 'Investigate errors'
                         },
@@ -1193,12 +1201,6 @@ const InstancesTable = () => {
                                     infoText: disableMessage
                                 }
                             ]
-                        },
-                        {
-                            id: 'optimize',
-                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
-                            disabled: disableOption,
-                            infoText: disableMessage
                         },
                         {
                             id: 'protect',
