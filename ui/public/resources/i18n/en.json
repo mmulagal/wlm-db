@@ -380,6 +380,16 @@
                 "aws-account": "AWS account",
                 "region": "Region"
             }
+        },
+        "job-monitor": {
+            "jm-type-logs-analysis": "Logs analysis",
+            "jm-type-deployment": "Deployment",
+            "jm-type-create-resource": "Create database",
+            "jm-type-prepare-resource": "Prepare resource",
+            "jm-type-sandbox": "Sandbox",
+            "jm-type-assessment": "Assessment",
+            "jm-type-optimize": "Well-architected",
+            "jm-type-register-resource": "Register resource"
         }
     }
 }

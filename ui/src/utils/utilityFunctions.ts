@@ -1259,22 +1259,24 @@ export const jobMonitoringStatusMapping = (val: string) => {
     return statusValue;
 };
 
-export const jobMonitoringTypeMapping = (val: string) => {
+export const jobMonitoringTypeMapping = (val: string, t: any) => {
     let typeValue = val;
     if (val === JOB_MONITORING_TYPE.DEPLOYMENT) {
-        typeValue = GENERAL.JM_TYPE_DEPLOYMENT;
+        typeValue = t('databases.job-monitor.jm-type-deployment');
     } else if (val === JOB_MONITORING_TYPE.CREATE_RESOURCE || val === JOB_MONITORING_TYPE.CREATE_DATABASE) {
-        typeValue = GENERAL.JM_TYPE_CREATE_RESOURCE;
+        typeValue = t('databases.job-monitor.jm-type-create-resource');
     } else if (val === JOB_MONITORING_TYPE.PREPARE_RESOURCE) {
-        typeValue = GENERAL.JM_TYPE_PREPARE_RESOURCE;
+        typeValue = t('databases.job-monitor.jm-type-prepare-resource');
     } else if (val === JOB_MONITORING_TYPE.SANDBOX) {
-        typeValue = GENERAL.JM_TYPE_SANDBOX;
+        typeValue = t('databases.job-monitor.jm-type-sandbox');
     } else if (val === JOB_MONITORING_TYPE.ASSESSMENT) {
-        typeValue = GENERAL.JM_TYPE_ASSESSMENT;
+        typeValue = t('databases.job-monitor.jm-type-assessment');
     } else if (val === JOB_MONITORING_TYPE.OPTIMIZE || val === JOB_MONITORING_TYPE.WELL_ARCHITECTED) {
-        typeValue = GENERAL.JM_TYPE_OPTIMIZE;
+        typeValue = t('databases.job-monitor.jm-type-optimize');
     } else if (val === JOB_MONITORING_TYPE.REGISTER_RESOURCE) {
-        typeValue = GENERAL.JM_TYPE_REGISTER_RESOURCE;
+        typeValue = t('databases.job-monitor.jm-type-register-resource');
+    } else if (val === JOB_MONITORING_TYPE.LOGS_ANALYSIS) {
+        typeValue = t('databases.job-monitor.jm-type-logs-analysis');
     }
     return typeValue;
 };
