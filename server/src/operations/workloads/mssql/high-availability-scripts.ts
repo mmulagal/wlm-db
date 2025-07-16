@@ -2,27 +2,6 @@ import { OntapRequestParams } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 
-const getOntapScript = (params: OntapRequestParams, info: string) => `
-# ${info}
-Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
-$WarningPreference = 'SilentlyContinue'
-$FSxID = '${params.fsxId}'
-$FSxRegion = '${params.region}'
-$apiEndpoint = '${params.apiEndpoint}'
-${ontapRestRequest}
-$ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
-$ontapResponse | ConvertTo-Json
-Stop-Transcript | Out-Null
-`;
-
-const GET_IGROUP_UUID = (params: OntapRequestParams) => getOntapScript(params, 'Get ONTAP IGROUP UUID');
-const GET_LUN_MAPS = (params: OntapRequestParams) => getOntapScript(params, 'Get ONTAP LUN MAPS');
-
-const GET_HOST_IQN = `
-# Get local IQN
-(Get-InitiatorPort | Select-Object -ExpandProperty NodeAddress) -join ', '
-`;
-
 const DRIVE_LETTER = `
 $used = (Get-PSDrive -PSProvider 'FileSystem').Name
 $all = 65..90 | ForEach-Object { [char]$_ }
@@ -33,12 +12,12 @@ $available | ConvertTo-Json
 const HEARTBEAT_SETTINGS = `
 $cluster = Get-Cluster
 $settings = @{
-    "CrossSiteDelay" = $cluster.CrossSiteDelay
-    "SameSubnetDelay" = $cluster.SameSubnetDelay
-    "CrossSubnetDelay" = $cluster.CrossSubnetDelay
-    "CrossSiteThreshold" = $cluster.CrossSiteThreshold
-    "SameSubnetThreshold" = $cluster.SameSubnetThreshold
-    "CrossSubnetThreshold" = $cluster.CrossSubnetThreshold
+        "CrossSiteDelay" = $cluster.CrossSiteDelay
+        "SameSubnetDelay" = $cluster.SameSubnetDelay
+        "CrossSubnetDelay" = $cluster.CrossSubnetDelay
+        "CrossSiteThreshold" = $cluster.CrossSiteThreshold
+        "SameSubnetThreshold" = $cluster.SameSubnetThreshold
+        "CrossSubnetThreshold" = $cluster.CrossSubnetThreshold
 }
 $settings | ConvertTo-Json | Write-Output
 `;
@@ -57,32 +36,31 @@ $quorumResource = $physicalDisks | Where-Object { $_.Name -eq $quorumResourceNam
 
 # Prepare result object
 $result = [PSCustomObject]@{
-        QuorumResourceName = $quorumResourceName
-        QuorumType = $quorumType
-        IsPhysicalDisk = !!$quorumResource
-        IsMajority = $quorumType -eq "Majority"
-        IsPhysicalDiskAndMajority = !!$quorumResource -and ($quorumType -eq "Majority")
+                QuorumResourceName = $quorumResourceName
+                QuorumType = $quorumType
+                IsPhysicalDisk = !!$quorumResource
+                IsMajority = $quorumType -eq "Majority"
+                IsPhysicalDiskAndMajority = !!$quorumResource -and ($quorumType -eq "Majority")
 }
 $result | ConvertTo-Json -Compress
 `;
 
 const SQL_SERVER_SERVICES = (instanceName: string) => `
 $serviceName = if ([string]::IsNullOrEmpty("${instanceName}") -or "${instanceName}".ToUpper() -eq "MSSQLSERVER") {
-    "MSSQLSERVER"
+        "MSSQLSERVER"
 } else {
-    "MSSQL$${instanceName}"
+        "MSSQL$${instanceName}"
 }
 Get-Service -Name $serviceName -ErrorAction SilentlyContinue |
-    Select-Object Name,
-                  @{Name="Status";Expression={ $_.Status.ToString() }},
-                  DisplayName,
-                  @{Name="StartType";Expression={ $_.StartType.ToString() }} |
-    ConvertTo-Json | Write-Output
+        Select-Object Name,
+                                  @{Name="Status";Expression={ $_.Status.ToString() }},
+                                  DisplayName,
+                                  @{Name="StartType";Expression={ $_.StartType.ToString() }} |
+        ConvertTo-Json | Write-Output
 `;
 
-const GET_LUN_IGROUP_INITIATOR_NAMES = (params: OntapRequestParams, lunUuid: string) => `
-# Get LUN map and extract igroupUuid, igroupName, and initiator names for mapped LUN UUID
-${GET_HOST_IQN}
+const GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN = (params: OntapRequestParams, lunUuids: string[]) => `
+# Get host IQN and LUN igroup/initiator names for multiple LUNs
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 $WarningPreference = 'SilentlyContinue'
 $FSxID = '${params.fsxId}'
@@ -91,63 +69,55 @@ $apiEndpoint = '${params.apiEndpoint}'
 $apiQueryFilter = 'fields=igroup'
 ${ontapRestRequest}
 
-function Convert-StringToHashtable {
-        param([string]$str)
-        $hash = @{}
-        if ($str -match '^@{(.+)}$') {
-                $body = $matches[1]
-                $pairs = $body -split ';(?=(?:[^"]*"[^"]*")*[^"]*$)'
-                foreach ($pair in $pairs) {
-                        if ($pair -match '^(.*?)=(.*)$') {
-                                $key = $matches[1].Trim()
-                                $value = $matches[2].Trim()
-                                $hash[$key] = $value
-                        }
-                }
-        }
-        return $hash
-}
+# Fetch host IQN(s)
+$HostIQNs = (Get-InitiatorPort | Select-Object -ExpandProperty NodeAddress) -join ', '
 
+# Fetch all LUN mappings
 $results = @()
-$lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "$apiEndpoint/protocols/san/lun-maps/${lunUuid}" -ApiQueryFilter $apiQueryFilter -method "GET"
+$lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "$apiEndpoint/protocols/san/lun-maps" -ApiQueryFilter $apiQueryFilter -method "GET"
+
 if ($lunMapsResp.records) {
+        $filterLuns = @(${lunUuids.map(uuid => `'${uuid}'`).join(',')})
         foreach ($lunMap in $lunMapsResp.records) {
-                $igroupObj = $null
-                if ($lunMap.PSObject.Properties['igroup']) {
+                $lunUuid = $lunMap.lun.uuid
+                if ($filterLuns.Count -eq 0 -or $filterLuns -contains $lunUuid) {
                         $igroupObj = $lunMap.igroup
-                }
-                if ($igroupObj) {
-                        if ($igroupObj -is [string]) { $igroupObj = Convert-StringToHashtable $igroupObj }
+                        $igroupUuid = $null
+                        $igroupName = $null
+                        if ($igroupObj) {
+                                if ($igroupObj.PSObject.Properties['uuid']) {
+                                        $igroupUuid = $igroupObj.uuid
+                                }
+                                if ($igroupObj.PSObject.Properties['name']) {
+                                        $igroupName = $igroupObj.name
+                                }
+                        }
+                        $initiators = @()
+                        if ($igroupObj -and $igroupObj.PSObject.Properties['initiators']) {
+                                $initiatorsRaw = $igroupObj.initiators
+                                foreach ($item in @($initiatorsRaw)) {
+                                        # Split by comma and whitespace, trim, and filter empty
+                                        $itemStr = "$item"
+                                        $initiators += ($itemStr -split '[,\\s]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+                                }
+                        }
                         $result = [PSCustomObject]@{
-                                LUN_UUID = '${lunUuid}'
-                                IGROUP_UUID = $igroupObj.uuid
-                                IGROUP_NAME = $igroupObj.name
-                                InitiatorNames = $igroupObj.initiators
+                                LUN_UUID = $lunUuid
+                                IGROUP_UUID = $igroupUuid
+                                IGROUP_NAME = $igroupName
+                                InitiatorNames = $initiators
                         }
                         $results += $result
                 }
         }
 }
-$results | ConvertTo-Json
-Stop-Transcript | Out-Null
-`;
 
-const OPTIMIZE_SHARED_STORAGE = (params: OntapRequestParams, igroupName: string, missingInitiators: string[]) => `
-# Add missing initiators to igroup ${igroupName}
-Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
-$WarningPreference = 'SilentlyContinue'
-$FSxID = '${params.fsxId}'
-$FSxRegion = '${params.region}'
-$apiEndpoint = '${params.apiEndpoint}'
-${ontapRestRequest}
-
-$igroupName = '${igroupName}'
-$missingInitiators = @(${missingInitiators.map(iqn => `'${iqn}'`).join(', ')})
-
-foreach ($initiator in $missingInitiators) {
-    $body = @{ initiator = $initiator } | ConvertTo-Json
-    Invoke-ONTAPRequest -ApiEndpoint "$apiEndpoint/protocols/san/igroups/$igroupName/initiators" -Method "POST" -Body $body
+# Output both host IQN and LUN mapping results as a single object
+$output = [PSCustomObject]@{
+        HostIQN = $HostIQNs
+        LUNMappings = $results
 }
+$output | ConvertTo-Json -Compress
 
 Stop-Transcript | Out-Null
 `;
@@ -157,9 +127,5 @@ export {
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
-    GET_IGROUP_UUID,
-    GET_LUN_MAPS,
-    GET_HOST_IQN,
-    GET_LUN_IGROUP_INITIATOR_NAMES,
-    OPTIMIZE_SHARED_STORAGE
+    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
 };

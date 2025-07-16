@@ -29,7 +29,8 @@ import {
     AWSBackupAssessment,
     CrrAssessment,
     CrrDetails,
-    HighAvailabilityAssessment
+    HighAvailabilityAssessment,
+    OntapRequestParams
 } from '../../../utils/common-types';
 import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import { getInstanceInfo } from '../../database/database-operations';
@@ -47,8 +48,7 @@ import {
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
-    // GET_LUN_IGROUP_INITIATOR_NAMES,
-    GET_HOST_IQN
+    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
 } from '../../workloads/mssql/high-availability-scripts';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 
@@ -711,6 +711,23 @@ async function getSharedStorageAssessment(
     instanceVolumeMapping: MappedOnTapVolumeResponse[],
     instanceDetail?: DatabaseInstance
 ) {
+    // Helper to call SSM for a node and parse the result
+    async function fetchNodeAssessment(nodeInstanceId: string, ontapParams: OntapRequestParams, lunUuids: string[]) {
+        const psScript = GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN(ontapParams, lunUuids);
+        const ssmResp = await callSsmExecution(
+            credentialsId,
+            region,
+            [psScript],
+            nodeInstanceId,
+            'Get Host IQN and LUN mappings',
+            accountId,
+            false,
+            undefined,
+            true
+        );
+        return JSON.parse(ssmResp);
+    }
+
     logger.info('[getSharedStorageAssessment] called', {
         credentialsId,
         region,
@@ -730,115 +747,83 @@ async function getSharedStorageAssessment(
             throw new Error('node1instanceid and node2instanceid not found in instanceRecord metadata');
         }
 
-        // Get HOST IQN details for both nodes
-        logger.info('Fetching HOST IQN details for both nodes:', { node1InstanceId, node2InstanceId });
-        const hostIqnCommand = [GET_HOST_IQN];
-        const hostIqns = await Promise.all([
-            node1InstanceId
-                ? callSsmExecution(
-                      credentialsId,
-                      region,
-                      hostIqnCommand,
-                      node1InstanceId,
-                      'Get HOST IQN details on node 1',
-                      accountId,
-                      false,
-                      undefined,
-                      true
-                  )
-                : undefined,
-            node2InstanceId
-                ? callSsmExecution(
-                      credentialsId,
-                      region,
-                      hostIqnCommand,
-                      node2InstanceId,
-                      'Get HOST IQN details on node 2',
-                      accountId,
-                      false,
-                      undefined,
-                      true
-                  )
-                : undefined
-        ]);
-        logger.info('HOST IQN details fetched:', hostIqns);
-        // const hostIqnsToCheck = hostIqns.filter(Boolean) as string[];
+        if (!instanceVolumeMapping || instanceVolumeMapping.length === 0) {
+            const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
 
-        // if (!instanceVolumeMapping || instanceVolumeMapping.length === 0) {
-        //     const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
-        //     logger.error(errorMessage);
-        //     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-        // }
+        // Gather all unique LUN UUIDs from the mappings
+        const lunRecords = Object.values(instanceVolumeMapping).flatMap(i => i.lunRecords || []);
+        const lunUuids = lunRecords.map(lun => lun.uuid);
 
-        // const lunRecords = Object.values(instanceVolumeMapping).flatMap(i => i.lunRecords || []);
-        // const results = await Promise.all(
-        //     lunRecords.map(async lun => {
-        //         const lunUuid = lun.uuid;
-        //         const lunName = lun.name;
-        //         const lunIgroupCommand = [
-        //             GET_LUN_IGROUP_INITIATOR_NAMES(
-        //                 {
-        //                     fsxId: instanceRecord.fsxFileSystem,
-        //                     region,
-        //                     apiEndpoint: '',
-        //                     apiQueryFilter: ''
-        //                 },
-        //                 lunUuid
-        //             )
-        //         ];
-        //         const lunIgroupResp = await callSsmExecution(
-        //             credentialsId,
-        //             region,
-        //             lunIgroupCommand,
-        //             instanceRecord.activeNodeInstanceid,
-        //             `Get ONTAP LUN igroup and initiator names for LUN ${lunUuid}`,
-        //             accountId,
-        //             false,
-        //             undefined,
-        //             true
-        //         );
-        //         const lunIgroupRespParsed = sqlResponseParsing(lunIgroupResp);
-        //         logger.info('LUN igroup SSM response:', lunIgroupRespParsed);
+        // Prepare ONTAP params
+        const ontapParams: OntapRequestParams = {
+            fsxId: instanceRecord.fsxFileSystem,
+            region,
+            apiEndpoint: '', // Fill as needed
+            apiQueryFilter: '' // Fill as needed
+        };
 
-        // const lunRecord = Array.isArray(lunIgroupRespParsed)
-        //     ? lunIgroupRespParsed.find((r: any) => r.LUN_UUID === lunUuid)
-        //     : lunIgroupRespParsed;
+        // Fetch for both nodes (in parallel if both exist)
+        const nodeIds = [node1InstanceId, node2InstanceId].filter(Boolean) as string[];
+        const nodeResults = await Promise.all(
+            nodeIds.map(nodeId => fetchNodeAssessment(nodeId, ontapParams, lunUuids))
+        );
 
-        // const igroupUuid: string | undefined = lunRecord?.IGROUP_UUID;
-        // const igroupName: string | undefined = lunRecord?.IGROUP_NAME;
-        // let initiatorNames: string[] = [];
-        // if (Array.isArray(lunRecord?.InitiatorNames)) {
-        //     initiatorNames = lunRecord.InitiatorNames.map((s: string) => s.trim()).filter(Boolean);
-        // } else if (typeof lunRecord?.InitiatorNames === 'string') {
-        //     initiatorNames = lunRecord.InitiatorNames.split(',')
-        //         .map((s: string) => s.trim())
-        //         .filter(Boolean);
-        // }
+        // Collect all host IQNs from both nodes
+        const allHostIqns: string[] = nodeResults
+            .map(res => res.HostIQN)
+            .flatMap(iqns => iqns.split(',').map((iqn: string) => iqn.trim()))
+            .filter(Boolean);
 
-        // // Assessment: Check if all host IQNs are present in initiatorNames for this LUN
-        // const initiatorAssessmentStatus = hostIqnsToCheck.every(iqn => initiatorNames.includes(iqn))
-        //     ? AssessmentStatus.OPTIMIZED
-        //     : AssessmentStatus.NOT_OPTIMIZED;
+        // Use LUN mappings from the first node (assuming both nodes see the same LUNs)
+        // If you want to merge from both, adjust accordingly
+        const lunMappings = nodeResults[0]?.LUNMappings || [];
 
-        // return {
-        //     lunUuid,
-        //     lunName,
-        //     status: initiatorAssessmentStatus,
-        //     igroupDetails: {
-        //         igroupUuid,
-        //         igroupName,
-        //         initiatorNames,
-        //         hostIqnsChecked: hostIqnsToCheck
-        //     }
-        //             // };
-        //         })
-        //     );
+        // Assess each LUN
+        const results = lunRecords.map(lun => {
+            const lunMapping = lunMappings.find((r: any) => r.LUN_UUID === lun.uuid);
+            const igroupUuid: string | undefined = lunMapping?.IGROUP_UUID;
+            const igroupName: string | undefined = lunMapping?.IGROUP_NAME;
+            let initiatorNames: string[] = [];
+            if (Array.isArray(lunMapping?.InitiatorNames)) {
+                // Flatten and split any string that contains whitespace or comma
+                initiatorNames = lunMapping.InitiatorNames.flatMap((s: string) =>
+                    s
+                        .split(/[\s,]+/)
+                        .map(x => x.trim())
+                        .filter(Boolean)
+                );
+            } else if (typeof lunMapping?.InitiatorNames === 'string') {
+                initiatorNames = lunMapping.InitiatorNames.split(/[\s,]+/)
+                    .map((s: string) => s.trim())
+                    .filter(Boolean);
+            }
 
-        //     const allOptimized = results.every(r => r.status === AssessmentStatus.OPTIMIZED);
-        //     return {
-        //         status: allOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-        //         lunDetails: results
-        //     };
+            // Assessment: Check if all host IQNs are present in initiatorNames for this LUN
+            const initiatorAssessmentStatus = allHostIqns.every(iqn => initiatorNames.includes(iqn))
+                ? AssessmentStatus.OPTIMIZED
+                : AssessmentStatus.NOT_OPTIMIZED;
+
+            return {
+                lunUuid: lun.uuid,
+                lunName: lun.name,
+                status: initiatorAssessmentStatus,
+                igroupDetails: {
+                    igroupUuid,
+                    igroupName,
+                    initiatorNames,
+                    hostIqnsChecked: allHostIqns
+                }
+            };
+        });
+
+        const allOptimized = results.every(r => r.status === AssessmentStatus.OPTIMIZED);
+        return {
+            status: allOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            lunDetails: results
+        };
     } catch (err) {
         logger.error('Exception running SSM for shared-storage:', err);
         return { status: AssessmentStatus.NOT_OPTIMIZED, lunDetails: null, error: err?.toString() };
@@ -997,7 +982,7 @@ async function getDriveLetterAssessment(
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
     }
 }
-// Combined SSM command for cluster quorum, heartbeat settings, and SQL Server services
+
 async function getCombinedHighAvailabilityAssessment(
     credentialsId: string,
     region: string,
