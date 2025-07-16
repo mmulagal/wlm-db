@@ -1,3 +1,4 @@
+import { MS_PER_HOUR } from '../../../../utils/consts';
 import { ErrorInvestigationGetApiResponse } from '../../../../utils/types/agenticAITypes';
 
 export const eiSeverityOptionList = {
@@ -61,7 +62,7 @@ export const filterByTime = (
                 if (objMax > maxHour) maxHour = objMax;
             }
         });
-        const minHour = maxHour - (hours !== 24 ? hours : hours - 1) * 60 * 60 * 1000;
+        const minHour = maxHour - (hours !== 24 ? hours : hours - 1) * MS_PER_HOUR;
         result = result.map(obj => {
             const hourly = obj.hourlyErrorCounts;
             return {
@@ -142,7 +143,7 @@ export const getStartAndEndTimeFromRange = (
                 if (objMax > maxHour) maxHour = objMax;
             }
         });
-        const minHour = maxHour - (hours !== 24 ? hours : hours - 1) * 60 * 60 * 1000;
+        const minHour = maxHour - (hours !== 24 ? hours : hours - 1) * MS_PER_HOUR;
         return {
             startTime: minHour,
             endTime: maxHour
@@ -265,7 +266,7 @@ export const getMaxGraceValueLineGraph = (data: number[]) => {
 // New helper to generate hour labels between two timestamps (inclusive)
 export const getHourLabelsBetween = (start: number, end: number) => {
     const labels = [];
-    for (let t = start; t <= end; t += 60 * 60 * 1000) {
+    for (let t = start; t <= end; t += MS_PER_HOUR) {
         const date = new Date(t);
         const hour = date.getHours().toString().padStart(2, '0');
         const minute = date.getMinutes().toString().padStart(2, '0');

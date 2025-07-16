@@ -958,3 +958,5 @@ export const ACTION_TYPE = {
     BULK: 'bulk',
     SINGLE: 'single'
 };
+
+export const MS_PER_HOUR = 60 * 60 * 1000;
