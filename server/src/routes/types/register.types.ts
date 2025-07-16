@@ -45,6 +45,21 @@ const MultiInstanceManageMsSqlRequestBody = Type.Object({
     items: Type.Array(BulkManageMsSqlRequestBody)
 });
 
+const BulkRegisterOracleRequestBody = Type.Object({
+    credentialsId: Type.String({
+        description: API_DESCRIPTION.CREDENTIALS_ID_DESC,
+        examples: ['123e4567-e89b-12d3-a456-426614174000']
+    }),
+    region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC }),
+    ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
+    databaseInstanceNames: Type.Array(Type.String({ description: 'List of Oracle database instances' })),
+    databaseHostId: Type.Optional(Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }))
+});
+
+const MultiInstanceRegisterOracleRequestBody = Type.Object({
+    items: Type.Array(BulkRegisterOracleRequestBody)
+});
+
 type MultiInstanceManageMsSqlRequestBodyType = Static<typeof BulkManageMsSqlRequestBody>;
 
 const MultiInstanceManageResponseBody = Type.Array(
@@ -217,5 +232,6 @@ export {
     RegisterInstanceParams,
     SingleInstanceRegisterCredentialsRequestBody,
     SingleRegisterCredentialsResponse,
-    RegisterCredentialsRequestBody
+    RegisterCredentialsRequestBody,
+    MultiInstanceRegisterOracleRequestBody
 };
