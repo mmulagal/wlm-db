@@ -35,7 +35,7 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
     const maxLabels = 13;
     let labelStep = 1;
     if (xAxisNumbers.length > maxLabels) {
-        labelStep = Math.ceil(xAxisNumbers.length / maxLabels);
+        labelStep = Math.ceil(xAxisNumbers.length / maxLabels) + 1;
     }
     // Helper to format time range for marker popover
     const formatRange = (h1: number, h2: number, min: string) => {
@@ -53,7 +53,12 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
     const markerData = markedNumbers.map(num => {
         const idx = xAxisNumbers.indexOf(num);
         const offset = getOffset(num, idx);
-        const leftPercent = (offset / denominator) * 100;
+        let leftPercent = (offset / denominator) * 100;
+
+        // To prevent markers from being too close to the edges
+        if (leftPercent === 0) leftPercent = 1;
+        else if (leftPercent === 100) leftPercent = 97;
+
         const count = hourToCount[num] || 0;
         const [hourStr, minuteStr] = num.split(':');
         const hour = Number(hourStr);

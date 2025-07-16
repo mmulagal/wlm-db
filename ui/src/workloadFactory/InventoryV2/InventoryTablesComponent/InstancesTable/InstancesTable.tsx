@@ -494,7 +494,7 @@ const InstancesTable = () => {
             const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
             if (isCancelled(key)) return;
 
-            //@ts-ignore
+            // @ts-ignore
             if (hostsRes?.error?.data === 'Unauthorized') {
                 dispatch(
                     addNotification({
