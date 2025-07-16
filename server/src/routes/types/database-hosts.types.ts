@@ -471,11 +471,6 @@ const NodeTopologyResponse = Type.Object({
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
 
-// const GenericStorageUnitResponse = Type.Object({
-//     id: Type.Optional(Type.String({ description: 'Identifier for the ontap volume/lun' })),
-//     name: Type.Optional(Type.String({ description: 'Name of the ontap volume/lun' }))
-// });
-
 const VolumeLunDetailsResponse = Type.Object({
     id: Type.Optional(Type.String({ description: 'ONTAP volume identifier' })),
     name: Type.Optional(Type.String({ description: 'ONTAP volume name' })),
