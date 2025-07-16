@@ -10,8 +10,10 @@ export interface WorkloadFactoryResourceEntities {
     sqlServerUserName: string;
     passwordResetLoading: boolean;
     resourceLoading: boolean;
+    // eslint-disable-next-line no-use-before-define
     resourceDetails: WorkloadFactoryResourceDetails;
     databaseListLoading: boolean;
+    // eslint-disable-next-line no-use-before-define
     databaseList: WorkloadFactoryDatabaseItem[];
     selectedResourceId: string;
     selectedDatabaseInstance: string;
@@ -47,6 +49,7 @@ export interface WorkloadFactoryResourceDetails {
         clusterName: string;
         activeNode: string;
     };
+    databaseInstanceTopology: any;
     resourceTrend: {
         cpuUsed: ResourceTrendMetric[];
         readThroughput: ResourceTrendMetric[];
