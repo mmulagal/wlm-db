@@ -11,7 +11,6 @@ interface DialogComponentState {
         showTooltipInfo?: boolean;
         tooltipText?: string;
     };
-    primaryButtonLoading?: boolean;
     actionsDisabled?: boolean;
 }
 
@@ -24,7 +23,6 @@ const initialState: DialogComponentState = {
         showTooltipInfo: false,
         tooltipText: ''
     },
-    primaryButtonLoading: false,
     actionsDisabled: false
 };
 
@@ -56,9 +54,6 @@ const dialogComponentSlice = createSlice({
                 tooltipText: action.payload.tooltipText ?? ''
             };
         },
-        setPrimaryButtonLoading: (state, action: PayloadAction<boolean>) => {
-            state.primaryButtonLoading = action.payload;
-        },
         setActionsDisabled: (state, action: PayloadAction<boolean>) => {
             state.actionsDisabled = action.payload;
         },
@@ -66,11 +61,6 @@ const dialogComponentSlice = createSlice({
     }
 });
 
-export const {
-    setDialogError,
-    setDialogErrorWithTooltip,
-    setPrimaryButtonLoading,
-    setActionsDisabled,
-    resetDialogComponent
-} = dialogComponentSlice.actions;
+export const { setDialogError, setDialogErrorWithTooltip, setActionsDisabled, resetDialogComponent } =
+    dialogComponentSlice.actions;
 export default dialogComponentSlice;

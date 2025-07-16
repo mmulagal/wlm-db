@@ -55,7 +55,6 @@ const DialogComponent = ({
     const {
         dialogError: { showDialogError = false, errorMessage = '' } = {},
         dialogTooltip: { showTooltipInfo = false, tooltipText = '' } = {},
-        primaryButtonLoading,
         actionsDisabled
     } = useAppSelector(state => state.dialogComponent);
 
@@ -222,7 +221,7 @@ const DialogComponent = ({
                         className="continue-button"
                         isThin
                         isDisabled={disabledCheck() || refreshSandboxDisabled}
-                        isLoading={primaryButtonLoad || primaryButtonLoading}
+                        isLoading={primaryButtonLoad}
                         onClick={primaryButtonClick}
                         title={primaryButtonTooltip}
                         data-testid={testId}
