@@ -94,23 +94,27 @@ async function getDatabaseInstanceTopology(
             logger.error(`Error while fetching details for fsx. Error: ${error}`, databaseInstanceDetails);
         }
 
-        const mappedStorageDetails =
-            ((
-                await listDatabaseInstanceConfigData({
-                    accountId,
-                    credentialsId,
-                    region,
-                    resourceId,
-                    databaseInstanceId,
-                    configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
-                })
-            )?.[0]?.config_data as MappedOnTapVolumeResponse) || {};
+        const [{ config_data: mappedStorageDetails }] =
+            (await listDatabaseInstanceConfigData({
+                accountId,
+                credentialsId,
+                region,
+                resourceId,
+                databaseInstanceId,
+                configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
+            })) || {};
 
         const extractRecords = (records: Array<{ uuid: string; name: string }> = []) =>
             records.map(({ uuid, name }) => ({ id: uuid, name }));
 
-        const ontapVolumes = Object.values(mappedStorageDetails).flatMap(i => extractRecords(i?.volumeRecords)) || [];
-        const ontapLuns = Object.values(mappedStorageDetails).flatMap(i => extractRecords(i?.lunRecords)) || [];
+        const ontapVolumes =
+            Object.values(mappedStorageDetails as MappedOnTapVolumeResponse).flatMap(i =>
+                extractRecords(i?.volumeRecords)
+            ) || [];
+        const ontapLuns =
+            Object.values(mappedStorageDetails as MappedOnTapVolumeResponse).flatMap(i =>
+                extractRecords(i?.lunRecords)
+            ) || [];
 
         topologyData = {
             ...topologyData,
