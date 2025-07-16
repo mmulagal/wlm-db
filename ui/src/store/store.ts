@@ -45,6 +45,7 @@ import createSandboxSlice from './workloadFactory/createSandboxSlice';
 import getWellOptimizeSlice from './workloadFactory/getWellOptimizeSlice';
 import agenticAISlice from './workloadFactory/agenticAISlice';
 import snapCenterSlice from './workloadFactory/snapcenterSlice';
+import dialogComponentSlice from './workloadFactory/dialogComponentSlice';
 // import postgressSlice from './mssql/postgressSlice';
 
 const rootReducer = combineReducers({
@@ -84,7 +85,8 @@ const rootReducer = combineReducers({
     [getWellApi.reducerPath]: getWellApi.reducer,
     [getWellOptimizeSlice.name]: getWellOptimizeSlice.reducer,
     [agenticAISlice.name]: agenticAISlice.reducer,
-    [errorInvestigationApi.reducerPath]: errorInvestigationApi.reducer
+    [errorInvestigationApi.reducerPath]: errorInvestigationApi.reducer,
+    [dialogComponentSlice.name]: dialogComponentSlice.reducer
     // [postgressSlice.name]: postgressSlice.reducer
 });
 
@@ -100,7 +102,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             action?.meta?.arg?.endpointName === 'manageHost' ||
             action?.meta?.arg?.endpointName === 'getMssqlInstanceData' ||
             action?.meta?.arg?.endpointName === 'prepareHost' ||
-            action?.meta?.arg?.endpointName === 'manageMssqlInstance'
+            action?.meta?.arg?.endpointName === 'manageMssqlInstance' ||
+            (action?.meta?.arg?.endpointName === 'listExistingHosts' && errorMsg?.includes('Unauthorized'))
         ) {
             return;
         }

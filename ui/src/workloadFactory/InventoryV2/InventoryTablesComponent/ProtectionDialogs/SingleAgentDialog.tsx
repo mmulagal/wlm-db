@@ -79,10 +79,10 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                         primaryButton={t('databases.inventory.redirect')}
                         secondaryButton={t('databases.inventory.cancel')}
                         closeCallback={() => {
-                            bxpRedirect(isWorkloadFactory);
+                            closeDialog();
                         }}
                         callback={() => {
-                            closeDialog();
+                            bxpRedirect(isWorkloadFactory);
                         }}
                     />
                 );
@@ -227,7 +227,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                             id="1"
                             title={
                                 <div className={styles.titleClass}>
-                                    {step1Status === 'running' ? (
+                                    {step1Status === 'running' && !hostExists ? (
                                         <div className={styles['loader-container']}>
                                             <div className={styles.spinner}>
                                                 <svg
@@ -245,7 +245,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                                             </div>
                                             <div className={styles['center-circle']}>1</div>
                                         </div>
-                                    ) : step1Status === 'done' ? (
+                                    ) : step1Status === 'done' || hostExists ? (
                                         <div className={styles.circleClass}>
                                             <Complete />
                                         </div>
@@ -272,7 +272,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                             id="2"
                             title={
                                 <div className={styles.titleClass}>
-                                    {step2Status === 'running' ? (
+                                    {step2Status === 'running' && !hostExists ? (
                                         <div className={styles['loader-container']}>
                                             <div className={styles.spinner}>
                                                 <svg
@@ -290,7 +290,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
                                             </div>
                                             <div className={styles['center-circle']}>2</div>
                                         </div>
-                                    ) : step1Status === 'done' ? (
+                                    ) : step2Status === 'done' || hostExists ? (
                                         <div className={styles.circleClass}>
                                             <Complete />
                                         </div>

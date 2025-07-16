@@ -8,6 +8,7 @@ import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
 import { ReactComponent as Cloning } from '../../../assets/Cloning.svg';
 import { ReactComponent as Compute } from '../../../assets/Compute.svg';
 import styles from './OptimizeByCategory.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
     getAssessmentGroupedByCategory,
@@ -41,7 +42,7 @@ const OptimizeByCategory = () => {
         () => getAssessmentGroupedByCategory(allmssqlHostAssessmentData),
         [allmssqlHostAssessmentData]
     );
-    const { multiDataLoading } = useAppSelector(state => state.headers);
+    const { multiDataLoading, showNA } = useAppSelector(state => state.headers);
 
     const loading = useMemo(
         () => allmssqlHostAssessmentLoading || multiDataLoading,
@@ -119,7 +120,7 @@ const OptimizeByCategory = () => {
         );
     };
     return (
-        <div className={styles.optimizeByCategory}>
+        <div className={`${styles.optimizeByCategory} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     {GENERAL.WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY}
@@ -131,7 +132,7 @@ const OptimizeByCategory = () => {
                         variant="secondary"
                         isThin
                         onClick={() => handleClick()}
-                        isDisabled={loading}
+                        isDisabled={loading || showNA}
                         data-testid="wlm-db-optimize-instances-by-category"
                     >
                         {t('databases.well-architect.view-and-fix')}
@@ -147,13 +148,23 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                    {Math.round(((categoryData.storage || 0) / (categoryData.total || 1)) * 100)}%
+                                <DsTypography
+                                    variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
+                                    {showNA
+                                        ? t('databases.general.not-available')
+                                        : `${Math.round(
+                                              ((categoryData.storage || 0) / (categoryData.total || 1)) * 100
+                                          )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
 
-                            <DsTypography variant="Semibold_14">{GENERAL.STORAGE}</DsTypography>
+                            <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                                {GENERAL.STORAGE}
+                            </DsTypography>
                         </div>
                         <div className={styles.section3} />
                     </div>
@@ -163,12 +174,22 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                    {Math.round(((categoryData.compute || 0) / (categoryData.total || 1)) * 100)}%
+                                <DsTypography
+                                    variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
+                                    {showNA
+                                        ? t('databases.general.not-available')
+                                        : `${Math.round(
+                                              ((categoryData.compute || 0) / (categoryData.total || 1)) * 100
+                                          )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">{GENERAL.COMPUTE}</DsTypography>
+                            <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                                {GENERAL.COMPUTE}
+                            </DsTypography>
                         </div>
                         <div className={styles.section3} />
                     </div>
@@ -178,12 +199,22 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                    {Math.round(((categoryData.application || 0) / (categoryData.total || 1)) * 100)}%
+                                <DsTypography
+                                    variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
+                                    {showNA
+                                        ? t('databases.general.not-available')
+                                        : `${Math.round(
+                                              ((categoryData.application || 0) / (categoryData.total || 1)) * 100
+                                          )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">{GENERAL.APPLICATION}</DsTypography>
+                            <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                                {GENERAL.APPLICATION}
+                            </DsTypography>
                         </div>
                     </div>
                 </div>
@@ -197,12 +228,22 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                    {Math.round(((categoryData.resiliency || 0) / (categoryData.total || 1)) * 100)}%
+                                <DsTypography
+                                    variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
+                                    {showNA
+                                        ? t('databases.general.not-available')
+                                        : `${Math.round(
+                                              ((categoryData.resiliency || 0) / (categoryData.total || 1)) * 100
+                                          )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">{GENERAL.RESILIENCY}</DsTypography>
+                            <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                                {GENERAL.RESILIENCY}
+                            </DsTypography>
                         </div>
                         <div className={styles.section3} />
                     </div>
@@ -212,12 +253,22 @@ const OptimizeByCategory = () => {
                         </div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
-                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                    {Math.round(((categoryData.cloning || 0) / (categoryData.total || 1)) * 100)}%
+                                <DsTypography
+                                    variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
+                                    {showNA
+                                        ? t('databases.general.not-available')
+                                        : `${Math.round(
+                                              ((categoryData.cloning || 0) / (categoryData.total || 1)) * 100
+                                          )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">{GENERAL.CLONING}</DsTypography>
+                            <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                                {GENERAL.CLONING}
+                            </DsTypography>
                         </div>
                         <div className={styles.section3} />
                     </div>

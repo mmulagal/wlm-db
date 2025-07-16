@@ -1,0 +1,14 @@
+.dummySelect {
+    display: flex;
+    gap: 24px;
+
+    .commonSelect {
+        width: 240px;
+        height: 40px;
+        border-bottom: 1px solid var(--text-disabled);
+        padding: 7px 12px;
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+    }
+}

@@ -2,83 +2,114 @@ import React, { useMemo } from 'react';
 import { DsPopover, DsTypography } from '@tlveng/wlm-ds';
 import styles from './ErrorCountChart.module.scss';
 import { formatTimeAMPM } from '../../../../../utils/utilityFunctions';
-import { getFixedHourLabelsErrorCount } from '../ErrorInvestigationUtility';
+import { getHourLabelsBetween } from '../ErrorInvestigationUtility';
 
 type ErrorCountChartProps = {
     startTime: number;
     endTime: number;
-    markedNumbers: string[];
+    hourlyErrorCounts?: { hour: number; count: number }[];
 };
 
-const ErrorCountChart = ({ startTime, endTime, markedNumbers }: ErrorCountChartProps) => {
-    // Always recalculate xAxisNumbers based on startTime and endTime for consistency with ErrorLineGraph
-    const xAxisNumbers = useMemo(() => getFixedHourLabelsErrorCount(startTime, endTime), [startTime, endTime]);
-    // Calculate denominator for proportional positioning
-    const range = endTime - startTime <= 0 ? endTime - startTime + 24 : endTime - startTime;
-    const denominator = range > 0 ? range : 1;
-    // Helper to get hour from label string
-    const getHour = (label: string) => parseInt(label.split(':')[0], 10);
-    // Only draw markers for markedNumbers within the range
-    const inRangeMarkedNumbers = markedNumbers.filter(num => {
-        const hour = getHour(num);
-        let pos = hour - startTime;
-        if (pos < 0) pos += 24;
-        return pos >= 0 && pos <= range;
+const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCountChartProps) => {
+    // Generate x-axis labels based on startTime and endTime
+    const xAxisNumbers = useMemo(() => getHourLabelsBetween(startTime, endTime), [startTime, endTime]);
+    // Map hour to count for quick lookup
+    const hourToCount: Record<string, number> = {};
+    hourlyErrorCounts.forEach(h => {
+        const date = new Date(h.hour);
+        const hour = date.getHours().toString().padStart(2, '0');
+        const minute = date.getMinutes().toString().padStart(2, '0');
+        hourToCount[`${hour}:${minute}`] = h.count;
     });
+    // Markers: only for hours with count > 0
+    const markedNumbers = xAxisNumbers.filter(label => hourToCount[label] && hourToCount[label] > 0);
+    const range = endTime - startTime;
+    const denominator = range > 0 ? range : 1;
+    // Helper to get hour offset in ms
+    const getOffset = (label: string, idx: number) => {
+        // Use the actual timestamp for the label, not just hour
+        const laterTime = startTime + idx * 60 * 60 * 1000;
+        return laterTime - startTime;
+    };
     // Prevent label overlap: only show every Nth label if too many
     const maxLabels = 13;
     let labelStep = 1;
     if (xAxisNumbers.length > maxLabels) {
         labelStep = Math.ceil(xAxisNumbers.length / maxLabels);
     }
+    // Helper to format time range for marker popover
+    const formatRange = (h1: number, h2: number, min: string) => {
+        const d1 = new Date();
+        d1.setHours(h1, Number(min), 0, 0);
+        const d2 = new Date();
+        d2.setHours(h2, Number(min), 0, 0);
+        // Remove AM/PM from the first part
+        const first = formatTimeAMPM(`${d1.getHours().toString().padStart(2, '0')}:${min}`).replace(/\s?(AM|PM)/, '');
+        const second = formatTimeAMPM(`${d2.getHours().toString().padStart(2, '0')}:${min}`);
+        return `${first} - ${second}`;
+    };
+
+    // Prepare marker data
+    const markerData = markedNumbers.map(num => {
+        const idx = xAxisNumbers.indexOf(num);
+        const offset = getOffset(num, idx);
+        const leftPercent = (offset / denominator) * 100;
+        const count = hourToCount[num] || 0;
+        const [hourStr, minuteStr] = num.split(':');
+        const hour = Number(hourStr);
+        let prevHour = hour - 1;
+        if (prevHour < 0) prevHour = 23;
+        const timeRange = formatRange(prevHour, hour, minuteStr);
+        return {
+            num,
+            leftPercent,
+            count,
+            timeRange
+        };
+    });
+
+    // Prepare label data
+    const labelData = xAxisNumbers.map((num, idx) => {
+        const isLast = idx === xAxisNumbers.length - 1;
+        const isFirst = idx === 0;
+        const offset = getOffset(num, idx);
+        const leftPercent = (offset / denominator) * 100;
+        let textAlign: 'left' | 'right' | 'center' = 'center';
+        if (isFirst) textAlign = 'left';
+        else if (isLast) textAlign = 'right';
+        let transform = 'translateX(-50%)';
+        if (isFirst) transform = 'translateX(0)';
+        else if (isLast) transform = 'translateX(-100%)';
+        return {
+            num,
+            idx,
+            isFirst,
+            isLast,
+            leftPercent,
+            textAlign,
+            transform
+        };
+    });
+
     return (
         <div className={styles.errorCountChart}>
             <div className={styles.bar} />
-            {inRangeMarkedNumbers.map(num => {
-                const hour = getHour(num);
-                let pos = hour - startTime;
-                if (pos < 0) pos += 24;
-                const leftPercent = (pos / denominator) * 100;
-                return (
-                    <div
-                        key={`marker-${num}`}
-                        className={styles.markerWrapper}
-                        style={{
-                            left: `calc(${leftPercent}%)`
-                        }}
-                    >
-                        <DsPopover title={`Time: ${formatTimeAMPM(num)}`} trigger="hover" placement="top">
-                            <div className={styles.marker} />
-                        </DsPopover>
-                    </div>
-                );
-            })}
+            {markerData.map(({ num, leftPercent, count, timeRange }) => (
+                <div key={`marker-${num}`} className={styles.markerWrapper} style={{ left: `calc(${leftPercent}%)` }}>
+                    <DsPopover title={`Time: ${timeRange} \nErrors: ${count}`} trigger="hover" placement="top">
+                        <div className={styles.marker} style={{ width: `${Math.max(2, count * 4)}px` }} />
+                    </DsPopover>
+                </div>
+            ))}
             <div className={styles.labels}>
-                {xAxisNumbers.map((num, idx) => {
-                    const isLast = idx === xAxisNumbers.length - 1;
-                    const isFirst = idx === 0;
-                    // Calculate position for this label
-                    let leftPercent;
-                    if (isLast) {
-                        leftPercent = 100;
-                    } else {
-                        const hourOffset =
-                            getHour(num) - startTime < 0 ? getHour(num) - startTime + 24 : getHour(num) - startTime;
-                        leftPercent = (hourOffset / denominator) * 100;
-                    }
-                    let textAlign: 'left' | 'right' | 'center' = 'center';
-                    if (isFirst) textAlign = 'left';
-                    else if (isLast) textAlign = 'right';
-                    let transform = 'translateX(-50%)';
-                    if (isFirst) transform = 'translateX(0)';
-                    else if (isLast) transform = 'translateX(-100%)';
-                    return idx % labelStep === 0 || isLast ? (
+                {labelData.map(({ num, idx, isFirst, isLast, leftPercent, textAlign, transform }) =>
+                    idx % labelStep === 0 || isLast ? (
                         <div
                             key={`label-${num}-${Math.round(leftPercent * 1000)}-${startTime}-${endTime}`}
                             className={styles.label}
                             style={{
                                 left: `calc(${leftPercent}%)`,
-                                width: xAxisNumbers.length > 1 ? `max(40px, ${100 / denominator}%)` : 'auto',
+                                width: xAxisNumbers.length > 1 ? `max(55px, ${100 / denominator}%)` : 'auto',
                                 textAlign,
                                 transform
                             }}
@@ -87,8 +118,8 @@ const ErrorCountChart = ({ startTime, endTime, markedNumbers }: ErrorCountChartP
                                 {formatTimeAMPM(num, isFirst || isLast)}
                             </DsTypography>
                         </div>
-                    ) : null;
-                })}
+                    ) : null
+                )}
             </div>
         </div>
     );

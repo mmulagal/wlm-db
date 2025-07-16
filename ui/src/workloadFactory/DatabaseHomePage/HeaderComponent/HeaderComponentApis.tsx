@@ -12,7 +12,8 @@ import {
     addRegionsHeaderList,
     addStatus,
     setCredentialMapping,
-    setRegionMapping
+    setRegionMapping,
+    setShowNA
 } from '../../../store/workloadFactory/headersSlice';
 import { makeCredMapping, makeRegionMapping } from '../../../utils/utilityFunctions';
 
@@ -54,11 +55,15 @@ const HeaderComponentApi = () => {
     useEffect(() => {
         if (statusError) {
             dispatch(addStatus({ undefined, statusLoading, statusError }));
+            dispatch(setShowNA(true));
         } else {
             dispatch(addStatus({ statusData, statusLoading, statusError }));
             if (isDemoMode || (statusData && statusData?.isActive)) {
                 setSkipApiCall(false);
             }
+        }
+        if (statusData && !statusData?.isActive) {
+            dispatch(setShowNA(true));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData, statusLoading, statusError]);
@@ -80,6 +85,11 @@ const HeaderComponentApi = () => {
     useEffect(() => {
         dispatch(addCredentialsHeaderList({ credentialData, credentialLoading, credentialError }));
         dispatch(setCredentialMapping(makeCredMapping(credentialData)));
+
+        // Set showNA flag based on credentials availability
+        const hasNoCredentials = credentialData && credentialData.length === 0;
+        dispatch(setShowNA(hasNoCredentials));
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [credentialData, credentialLoading, credentialError]);
 

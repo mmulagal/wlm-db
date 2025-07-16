@@ -2,7 +2,7 @@ import randomize from 'randomatic';
 import { Volume } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { compact, sample } from 'lodash-es';
+import { compact, isEmpty, sample } from 'lodash-es';
 import {
     CloudProviders,
     RESOURCESTYPE,
@@ -16,7 +16,14 @@ import {
     STORAGE_PROTOCOLS
 } from '../utils/consts';
 import { checkAccount, createResource, upsertDatabaseInstance } from '../lib/database/db';
-import { Metadata, Sandbox, DatabaseInstanceMetadata, ResourceAssessmentData } from '../utils/common-types';
+import {
+    Metadata,
+    Sandbox,
+    DatabaseInstanceMetadata,
+    ResourceAssessmentData,
+    DatabaseInstance,
+    CloneDetail
+} from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
@@ -42,7 +49,7 @@ import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 import { describeFSxVolumes } from '../lib/aws/fsx';
-import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus } from '../utils/continous-optimization-consts';
 import {
     ASSESMENT_CONFIG_DATA,
     ASSESSMENT_AWS_BACKUP_DATA,
@@ -61,6 +68,15 @@ import {
     mockResourceAssessmentDataAllOptimized,
     optimizedResourceName
 } from '../utils/demo-utils/hostAssementsData';
+import {
+    CloneDriftResponseType,
+    ComputeDriftResponseType,
+    DriftAssessmentResponseType,
+    HostOsPatchDriftResponseType,
+    LicenseDriftResponseType,
+    ParameterDriftResponseType,
+    StorageParameterDriftResponseType
+} from '../routes/types/continuous-optimization.types';
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
@@ -960,6 +976,125 @@ function prepareDemoSandboxMetadata(
     return hostMetadata;
 }
 
+function handleGetAssessmentForDemo(
+    accountId: string,
+    instanceDetail: DatabaseInstance,
+    assessmentData: DriftAssessmentResponseType
+) {
+    logger.info('Handling demo for assessment', { accountId });
+    const { resource: { metadata = {} } = {}, metadata: instanceMetadata } =
+        instanceDetail as unknown as DatabaseInstance;
+    const computeData = assessmentData?.compute as ComputeDriftResponseType;
+    if (!isEmpty(computeData)) {
+        const computeConfigsOptimized = (metadata as unknown as Metadata).isComputeOptimized;
+        if (computeConfigsOptimized) {
+            computeData.status = AssessmentStatus.OPTIMIZED;
+            computeData.recommendation = 'Optimized instance for your workload.';
+        }
+        assessmentData.compute = computeData;
+    }
+    const licenseData = assessmentData?.license as LicenseDriftResponseType;
+    if (!isEmpty(licenseData)) {
+        const licenseConfigsOptimized = (metadata as unknown as Metadata).isLicenseOptimized;
+        if (licenseConfigsOptimized) {
+            licenseData.status = AssessmentStatus.OPTIMIZED;
+            licenseData.recommendation = 'Your current SQL license is optimized for your workload.';
+            assessmentData.license = licenseData;
+        }
+    }
+    const hostOsPatchAssessmentResponse = assessmentData?.hostOsPatch as HostOsPatchDriftResponseType;
+    if (!isEmpty(hostOsPatchAssessmentResponse)) {
+        const hostOsPatchOptimized = (metadata as unknown as Metadata).isHostOsPatchOptimized;
+        if (hostOsPatchOptimized) {
+            hostOsPatchAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
+            hostOsPatchAssessmentResponse.recommendation =
+                'Your current windows host is optimized with security best practices.';
+            assessmentData.hostOsPatch = hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType;
+        }
+    }
+    const cloneResponse = assessmentData.clone as CloneDriftResponseType;
+    if (!isEmpty(cloneResponse) && !('errorMessage' in cloneResponse)) {
+        const { oldCloneDetails = [], cloneDetails = [] } = cloneResponse;
+        const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
+
+        if (cloneConfigsOptimized.length > 0) {
+            // Destructure cloneDatabaseName from each optimized config
+            const cloneDatabaseNamesToRemove = new Set(
+                (cloneConfigsOptimized as CloneDetail[]).map(({ cloneDatabaseName }) => cloneDatabaseName)
+            );
+
+            // Filter out optimized clones from oldCloneDetails
+            const filteredOldCloneDetails = oldCloneDetails.filter(
+                ({ cloneDatabaseName }) => !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
+            );
+
+            const totalObjectsInViolation = filteredOldCloneDetails.length;
+            const objectsInViolation = filteredOldCloneDetails.map(
+                ({ cloneDatabaseName }) => cloneDatabaseName as string
+            );
+            const status = totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            const cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${cloneDetails.length} clones are old and divergent`;
+
+            cloneResponse.oldCloneDetails = filteredOldCloneDetails;
+            cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
+            cloneResponse.status = status;
+            cloneResponse.objectsInViolation = objectsInViolation;
+            cloneResponse.cloneDriftMessage = cloneDriftMessage;
+        }
+        assessmentData.clone = cloneResponse as CloneDriftResponseType;
+    }
+    const storageAssessmentResponse = assessmentData.storage as StorageParameterDriftResponseType;
+    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
+        const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+        const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
+        const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+
+        if (storageConfigsOptimized.length > 0) {
+            const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
+                configArray.map(config => {
+                    if (optimizedConfigs.includes(config.name)) {
+                        config.status = AssessmentStatus.OPTIMIZED;
+                        config.objectsInViolation = [];
+                    }
+                    return config;
+                });
+
+            storageAssessmentResponse.configuration.volumes = optimizeConfig(
+                storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
+                storageConfigsOptimized
+            );
+
+            storageAssessmentResponse.configuration.luns = optimizeConfig(
+                storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
+                storageConfigsOptimized
+            );
+        }
+        if (osConfigsOptimized.length > 0) {
+            storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(osConfig => {
+                const os = osConfig as ParameterDriftResponseType;
+                if (osConfigsOptimized.includes(os.name)) {
+                    os.status = AssessmentStatus.OPTIMIZED;
+                }
+                return os;
+            });
+        }
+        if (sizingConfigsOptimized.length > 0) {
+            storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
+                const sizing = sizingConfig as ParameterDriftResponseType;
+                if (sizingConfigsOptimized.includes(sizing.name)) {
+                    sizing.status = AssessmentStatus.OPTIMIZED;
+                    sizing.objectsInViolation = [];
+                    sizing.totalObjectsInViolation = 0;
+                }
+                return sizing;
+            });
+        }
+        assessmentData.storage = storageAssessmentResponse as StorageParameterDriftResponseType;
+    }
+
+    return assessmentData;
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -981,5 +1116,6 @@ export {
     createEnableMpioJobMockData,
     createAssessmentData,
     prepareDemoSandboxMetadata,
-    updateOptimizedConfigMetaData
+    updateOptimizedConfigMetaData,
+    handleGetAssessmentForDemo
 };

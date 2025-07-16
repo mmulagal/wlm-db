@@ -73,6 +73,7 @@ import {
     DriftAssessmentResponsePerHostType
 } from '../../../routes/types/continuous-optimization.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
+import { handleGetAssessmentForDemo } from '../../demo-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -149,13 +150,23 @@ function hostLevelDriftData(
             : {}
     ];
 
-    return {
-        compute: computeAssessmentResponse as ComputeDriftResponseType,
-        license: licenseAssessmentResponse as LicenseDriftResponseType,
-        hostOsPatch: hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType,
-        rssConfig: rssConfigResponse as RssConfigDriftResponseType,
-        mssqlPatch: mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType
+    const result = {
+        compute: !isEmpty(computeAssessmentResponse)
+            ? (computeAssessmentResponse as ComputeDriftResponseType)
+            : undefined,
+        license: !isEmpty(licenseAssessmentResponse)
+            ? (licenseAssessmentResponse as LicenseDriftResponseType)
+            : undefined,
+        hostOsPatch: !isEmpty(hostOsPatchAssessmentResponse)
+            ? (hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType)
+            : undefined,
+        rssConfig: !isEmpty(rssConfigResponse) ? (rssConfigResponse as RssConfigDriftResponseType) : undefined,
+        mssqlPatch: !isEmpty(mssqlPatchAssessmentResponse)
+            ? (mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType)
+            : undefined
     };
+
+    return result;
 }
 
 async function fetchMssqlDriftAssessment(
@@ -295,13 +306,13 @@ async function fetchMssqlDriftAssessment(
             : {}
     ];
 
-    const driftAssessmentData: DriftAssessmentResponseType = {
+    let driftAssessmentData: DriftAssessmentResponseType = {
         storage: !isEmpty(storageAssessmentResponse)
             ? (storageAssessmentResponse as StorageParameterDriftResponseType)
             : undefined,
         maxDOP: !isEmpty(maxDOPResponse) ? (maxDOPResponse as ParameterDriftResponseType) : undefined,
         clone: !isEmpty(cloneResponse) ? (cloneResponse as ParameterDriftResponseType) : undefined,
-        ...hostLevelData,
+        ...(!isEmpty(hostLevelData) ? hostLevelData : undefined),
         ...resilienceAssessmentResponse,
         dismissedConfigurations,
         lastAssessmentTimestamp: (() => {
@@ -318,6 +329,10 @@ async function fetchMssqlDriftAssessment(
         databaseInstanceName,
         ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId
     };
+
+    if (isDemoFlow) {
+        driftAssessmentData = handleGetAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
+    }
 
     return driftAssessmentData;
 }
@@ -496,7 +511,6 @@ async function initiateHostLevelAssessmentDataCollection(
     region: string,
     databaseHostId: string,
     databaseInstanceRecord: WorkloadInstance,
-
     jobId: string,
     fields: string[]
 ) {
@@ -512,22 +526,14 @@ async function initiateHostLevelAssessmentDataCollection(
         sqlAuthEnabled: databaseInstanceRecord.sqlAuthEnabled
     });
 
-    const { id: databaseInstanceId, resourceName, sqlAuthEnabled, databaseObject } = databaseInstanceRecord;
-    const { resource } = databaseObject as DatabaseInstance;
+    const { id: databaseInstanceId, resourceName, sqlAuthEnabled, databaseInstanceObject } = databaseInstanceRecord;
+    const { resource } = databaseInstanceObject as DatabaseInstance;
     const {
         metadata,
         cloud_provider_account_id: awsAccountId,
         resource_id: resourceId,
-        database_instances: managedInstances = [],
         assessment_data: hostLevelAssessmentData
     } = resource;
-    const [managedInstance = managedInstances[0]] = managedInstances;
-
-    if (!managedInstance) {
-        const errorMessage = `Managed instance not found for databaseInstanceId ${databaseInstanceId}.`;
-        logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, credentialsId, region });
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-    }
 
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
@@ -704,7 +710,7 @@ async function initiateHostLevelAssessmentDataCollection(
             databaseHostId,
             databaseInstanceId,
             'license,compute,host-os-patch,rss-config,mssql-patch',
-            { ...managedInstance, resource }
+            { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
 
         await updateDatabaseHostAssessmentResults(accountId, credentialsId, region, databaseHostId, {
@@ -951,7 +957,7 @@ async function triggerMssqlAssessment(
             cloudProviderAccountId: cloudProviderAccountId || '',
             resourceName: resourceName || '',
             svmId: (fsxSvmId as Record<string, string>)[fileSystemId!] || '',
-            databaseObject: newDatabaseInstanceDetails
+            databaseInstanceObject: newDatabaseInstanceDetails
         };
 
         if (!isEmpty(dismissedConfigurations)) {

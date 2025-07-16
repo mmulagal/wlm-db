@@ -134,6 +134,17 @@ const OracleResourceDetailsSchema = {
     }
 };
 
+const UnmanageOracleSchema = {
+    ...DiscoveryBaseRequest,
+    params: UnmanageInstanceParams,
+    querystring: DatabaseInstanceQueryString,
+    summary: 'Deregister Oracle database instances.',
+    description: 'Deregister Oracle database instances managed by Workload Factory.',
+    response: {
+        200: MultiInstanceUnmanageResponseBody
+    }
+};
+
 export {
     DiscoverMsSqlSchema,
     MsSqlInstancesSchema,
@@ -142,5 +153,6 @@ export {
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
     UnManagePgSqlSchema,
-    OracleResourceDetailsSchema
+    OracleResourceDetailsSchema,
+    UnmanageOracleSchema
 };

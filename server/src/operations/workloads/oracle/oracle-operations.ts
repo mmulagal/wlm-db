@@ -146,7 +146,7 @@ async function getOraclePerformanceMetrics(
     node1InstanceId: string,
     dbInstanceSid: string
 ) {
-    logger.info('Fetching oralce db performance metrics', { accountId, credentialsId, region, node1InstanceId });
+    logger.info('Fetching oracle db performance metrics', { accountId, credentialsId, region, node1InstanceId });
 
     try {
         const command = ORACLE_PERFORMANCE_METRICS(node1InstanceId, dbInstanceSid);

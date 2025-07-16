@@ -89,6 +89,7 @@ import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import { cancelProtectionForRow, setDataForRow } from '../../../../store/workloadFactory/snapcenterSlice';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -304,6 +305,7 @@ const InstancesTable = () => {
                 regionId: targettedHost?.regionId
             })
         );
+        dispatch(resetEiData({}));
     };
 
     // Snapcenter Protection code starts
@@ -334,7 +336,7 @@ const InstancesTable = () => {
 
         if (existingData.initialHostCheck) {
             if (existingData.isHostManaged) {
-                return showSingleAgentDialog(existingData.connectors);
+                return showSingleAgentDialog([], true);
             }
             // else proceed to normal flow
         } else {
@@ -363,7 +365,7 @@ const InstancesTable = () => {
             );
 
             if (hostExists) {
-                return showSingleAgentDialog(existingData.connectors);
+                return showSingleAgentDialog([], true);
             }
         }
 
@@ -405,26 +407,32 @@ const InstancesTable = () => {
         );
     };
 
-    const showSingleAgentDialog = (connectors: any) => {
+    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean) => {
         const activeAgents = connectors?.occms?.filter((item: any) => item.agent.status === 'active') || [];
         setDialog(
             <DialogComponent
                 header={
                     <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                            {t('databases.inventory.step-1-out-of')}
-                        </DsTypography>
+                        {!hostExists && (
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-1-out-of')}
+                            </DsTypography>
+                        )}
                     </div>
                 }
-                content={<SingleAgentDialog agents={activeAgents} />}
-                primaryButton={t('databases.inventory.start')}
+                content={<SingleAgentDialog agents={activeAgents} hostExists={hostExists} />}
+                primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
                 secondaryButton={t('databases.inventory.cancel')}
                 closeCallback={() => {
                     closeDialog();
                 }}
                 callback={() => {
-                    dispatch(setStartProtection('started'));
+                    if (hostExists) {
+                        bxpRedirect(isWorkloadFactory);
+                    } else {
+                        dispatch(setStartProtection('started'));
+                    }
                 }}
                 customClass={styles.protectionDialog}
                 dialogFrom={FROM_DIALOG.SINGLE_AGENT}
@@ -486,6 +494,16 @@ const InstancesTable = () => {
             const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
             if (isCancelled(key)) return;
 
+            //@ts-ignore
+            if (hostsRes?.error?.data === 'Unauthorized') {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'Unauthorized'
+                    })
+                );
+            }
+
             if (hostsRes?.data && hostsRes?.data?.hosts && hostsRes?.data?.hosts.length > 0) {
                 const hostExists = hostsRes?.data?.hosts?.some((host: any) => {
                     // Extract hostname before first dot for comparison
@@ -512,7 +530,7 @@ const InstancesTable = () => {
         }
         if (activeAgents.length > 0) {
             // Single Connector case
-            showSingleAgentDialog(activeAgents);
+            showSingleAgentDialog(activeAgents, false);
         }
     };
 
@@ -634,7 +652,7 @@ const InstancesTable = () => {
 
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
-            Header: 'Instance name',
+            Header: t('databases.instance-table.headers.instance-name'),
             accessor: 'databaseInstanceName',
             customAccessor: 'statusAccessor',
             id: '1',
@@ -694,7 +712,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Host name',
+            Header: t('databases.instance-table.headers.host-name'),
             accessor: 'name',
             id: '2',
             width: '213px',
@@ -710,7 +728,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Engine type',
+            Header: t('databases.instance-table.headers.engine-type'),
             accessor: 'hostType',
             id: '3',
             width: '213px',
@@ -722,7 +740,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Deployment model',
+            Header: t('databases.instance-table.headers.deployment-model'),
             accessor: 'serverInstallationMode',
             id: '4',
             width: '213px',
@@ -734,7 +752,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Registration status',
+            Header: t('databases.instance-table.headers.registration-status'),
             accessor: 'managementStatus',
             id: '5',
             isSortable: false,
@@ -760,7 +778,7 @@ const InstancesTable = () => {
         },
         {
             id: '6',
-            Header: 'FSxN Name',
+            Header: t('databases.instance-table.headers.fsx-for-ontap'),
             accessor: 'fileSystemName',
             isSortable: false,
             filterOptions: getFilterOptions(updatedTableData, 'fileSystemName'),
@@ -803,7 +821,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Well-architected status',
+            Header: t('databases.instance-table.headers.well-architected-status'),
             accessor: 'optimizationStatus',
             id: '7',
             width: '240px',
@@ -909,7 +927,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Protection status',
+            Header: t('databases.instance-table.headers.protection-status'),
             accessor: 'protectionText',
             id: '8',
             width: '200px',
@@ -978,7 +996,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Performance',
+            Header: t('databases.instance-table.headers.performance'),
             accessor: 'performance.assessment',
             id: '9',
             width: '200px',
@@ -1007,7 +1025,7 @@ const InstancesTable = () => {
         },
         {
             id: '10',
-            Header: 'AWS credentials',
+            Header: t('databases.instance-table.headers.aws-credentials'),
             accessor: 'credentialName',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'credentialName'),
@@ -1020,7 +1038,7 @@ const InstancesTable = () => {
         },
         {
             id: '11',
-            Header: 'AWS account',
+            Header: t('databases.instance-table.headers.aws-account'),
             accessor: 'accountId',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'accountId'),
@@ -1033,7 +1051,7 @@ const InstancesTable = () => {
         },
         {
             id: '12',
-            Header: 'Region',
+            Header: t('databases.instance-table.headers.region'),
             accessor: 'regionName',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'regionName'),
@@ -1140,13 +1158,13 @@ const InstancesTable = () => {
                 }
 
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
-                    if (localStorage.getItem('protection') === 'true') {
-                        menu.push({
-                            id: 'protect',
-                            displayName: 'Protect'
-                        });
-                    }
                     menu.push(
+                        {
+                            id: 'optimize',
+                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
                         {
                             id: 'investigateErrors',
                             displayName: 'Investigate errors'
@@ -1185,15 +1203,10 @@ const InstancesTable = () => {
                             ]
                         },
                         {
-                            id: 'optimize',
-                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
-                            disabled: disableOption,
-                            infoText: disableMessage
+                            id: 'protect',
+                            displayName: 'Protect',
+                            disabled: !rowData?.fsxId
                         },
-                        // {
-                        //     id: 'protect',
-                        //     displayName: 'Protect'
-                        // },
 
                         {
                             id: 'unManage',

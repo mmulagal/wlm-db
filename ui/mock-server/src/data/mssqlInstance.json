@@ -56,7 +56,27 @@
         "fileSystemStatus": "AVAILABLE",
         "fileSystemStorageCapacity": 35840,
         "fileSystemThroughputCapacity": 512,
-        "fileSystemStorageType": "SSD"
+        "fileSystemStorageType": "SSD",
+        "ontapVolumes": [
+            {
+                "id": "vol-1234567890abcdef0",
+                "name": "wlmdb-sqllog-17379880098676"
+            },
+            {
+                "id": "vol-0987654321fedcba0",
+                "name": "wlmdb-sqldata-17379880098676"
+            }
+        ],
+        "ontapLuns": [
+            {
+                "id": "5b2c3b-2bb-4acd-ba19-f987645151",
+                "name": "/vol/wlmgb_sqllog_17379880098676/sqllog"
+            },
+            {
+                "id": "lun-0987654321fedcba0",
+                "name": "/vol/wlmgb_sqldata_17379880098676/sqldata"
+            }
+        ]
     },
     "performance": {
         "assessment": "Excellent ( <=1 ms )",

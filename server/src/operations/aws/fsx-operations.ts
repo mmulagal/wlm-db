@@ -50,6 +50,7 @@ import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 import { GET_SNAPSHOT_DETAILS, OntapRestRequestParams } from '../workloads/mssql/continuous-optimization-scripts';
+import { populateDbInstances } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -633,21 +634,32 @@ async function tagFsxResource(
 }
 async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) {
     logger.info('Get Fsx Resources which has cost allocation tag attached');
+    await populateDbInstances(resourceDetail);
     const {
         region,
-        co_relation_id: fileSystemId,
         cloud_provider_account_id: awsAccountId,
-        credentials_id: credentialsId
+        credentials_id: credentialsId,
+        database_instances: dbInstances
     } = resourceDetail;
+
+    let fsxIds = dbInstances?.map(dbInstance => dbInstance.fsxn_ids);
+    fsxIds = [...new Set(fsxIds?.flat())];
+
     try {
-        const resourceArn = getFsxArn(awsAccountId!, region!, fileSystemId!);
-        const input: ListTagsForResourceCommandInput = {
-            ResourceARN: resourceArn
-        };
-        const response = await listResourceTags(credentialsId, region!, input);
-        return response;
+        const resourceArns = fsxIds?.map(fsxId => getFsxArn(awsAccountId!, region!, fsxId!));
+        if (!resourceArns || resourceArns.length === 0) {
+            return [];
+        }
+
+        const responses = await Promise.all(
+            resourceArns.map(resourceArn => {
+                const input: ListTagsForResourceCommandInput = { ResourceARN: resourceArn };
+                return listResourceTags(credentialsId, region!, input);
+            })
+        );
+        return [...new Set(responses.map(response => response?.Tags)?.flat())];
     } catch (error) {
-        logger.error(`Get fsx resources with cost allocation tag failed for filesystem ${fileSystemId} `, error);
+        logger.error('Get fsx resources with cost allocation tag failed', error);
     }
 }
 

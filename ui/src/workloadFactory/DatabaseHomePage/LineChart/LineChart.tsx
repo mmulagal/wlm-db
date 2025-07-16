@@ -4,6 +4,7 @@ import { ReactComponent as NoData } from '../../../assets/empty table message.sv
 import styles from './LineChart.module.scss';
 import { getShiftedHoursList, last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 Chart.register(...registerables);
 
@@ -12,9 +13,10 @@ type colorCodes = {
     endColor: string;
     selectedTimeFrame: string;
     timelineData: any;
+    showNA?: boolean;
 };
 
-const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: colorCodes) => {
+const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData, showNA = false }: colorCodes) => {
     const chartRef = useRef(null);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -318,14 +320,19 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
     }, [selectedTimeFrame, timelineData]);
 
     return (
-        <div className={styles.lineChart}>
+        <div className={`${styles.lineChart} ${showNA ? CommonStyles.notAvailable : ''}`}>
             {!timelineData ||
                 (timelineData?.completed?.length === 0 && (
                     <div className={styles.noData}>
                         <NoData />
                     </div>
                 ))}
-            <canvas ref={chartRef} width={336} height={131} />
+            <canvas
+                ref={chartRef}
+                width={336}
+                height={131}
+                style={showNA ? { filter: 'grayscale(100%) opacity(0.5)' } : {}}
+            />
 
             {/* <Typography variant="Semibold_14" className={styles.text}>
                 24 hours trend

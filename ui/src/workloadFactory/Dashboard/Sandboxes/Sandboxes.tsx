@@ -1,6 +1,7 @@
 import { DsTypography, DsButton, DsFlashingDotsLoader } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './Sandboxes.module.scss';
 import SandboxChart from '../../Sandbox/SandboxDistributionDate/SandboxChart/SandboxChart';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -13,14 +14,14 @@ import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
 const Sandboxes = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { isNA } = useAppSelector(state => state.sandbox);
     const { loading: dataLoading, data: aggregatedSandboxList } = useAppSelector(
         state => state.inventoryV2.dashSandboxList
     );
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
-        state => state.headers
-    );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
+        useAppSelector(state => state.headers);
 
     const [data, setData] = useState<any>([]);
 
@@ -70,34 +71,38 @@ const Sandboxes = () => {
             <div className={styles.mainSection}>
                 <SandboxChart aggregatedSandboxList={data} loading={loading} />
                 <div className={styles.rightSide}>
-                    <DsTypography variant="Semibold_14" style={{ marginBottom: '16px' }}>
+                    <DsTypography
+                        variant="Semibold_14"
+                        style={{ marginBottom: '16px' }}
+                        className={showNA ? CommonStyles.notAvailable : ''}
+                    >
                         Sandboxes distribution by age
                     </DsTypography>
                     <div className={styles.individualRow}>
                         <div className={styles.squareSetup}>
                             <div
                                 className={styles.square}
-                                style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#68C6B3' }}
+                                style={{ backgroundColor: showNA ? 'var(--chart-disabled)' : '#68C6B3' }}
                             />
                             <DsTypography
                                 variant="Regular_14"
-                                className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
+                                className={showNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                             >
                                 {GENERAL.ONE_THIRTY_DAYS}
                             </DsTypography>
-                            {loading && <DsFlashingDotsLoader />}
+                            {!showNA && loading && <DsFlashingDotsLoader />}
                         </div>
 
                         <div className={styles.count}>
-                            {!isNA && (
+                            {!showNA && (
                                 <DsTypography variant="Semibold_14">{`${
                                     getSandboxDistributionByAgeValue(data)['0-30']
                                 }`}</DsTypography>
                             )}
 
-                            {isNA && (
+                            {showNA && (
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
@@ -106,6 +111,7 @@ const Sandboxes = () => {
                                 data-testid="wlm-db-view-zero-thirty"
                                 type="text"
                                 onClick={() => redirectToSandbox(GENERAL.ONE_THIRTY_DAYS)}
+                                isDisabled={showNA}
                             >
                                 View
                             </DsButton>
@@ -116,27 +122,27 @@ const Sandboxes = () => {
                         <div className={styles.squareSetup}>
                             <div
                                 className={styles.square}
-                                style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#A815F3' }}
+                                style={{ backgroundColor: showNA ? 'var(--chart-disabled)' : '#A815F3' }}
                             />
                             <DsTypography
                                 variant="Regular_14"
-                                className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
+                                className={showNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                             >
                                 {GENERAL.THIRTY_SIXTY_DAYS}
                             </DsTypography>
-                            {loading && <DsFlashingDotsLoader />}
+                            {!showNA && loading && <DsFlashingDotsLoader />}
                         </div>
 
                         <div className={styles.count}>
-                            {!isNA && (
+                            {!showNA && (
                                 <DsTypography variant="Semibold_14">{`${
                                     getSandboxDistributionByAgeValue(data)['31-60']
                                 }`}</DsTypography>
                             )}
 
-                            {isNA && (
+                            {showNA && (
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
@@ -145,6 +151,7 @@ const Sandboxes = () => {
                                 data-testid="wlm-db-view-thirtyOne-sixty"
                                 type="text"
                                 onClick={() => redirectToSandbox(GENERAL.THIRTY_SIXTY_DAYS)}
+                                isDisabled={showNA}
                             >
                                 View
                             </DsButton>
@@ -155,27 +162,27 @@ const Sandboxes = () => {
                         <div className={styles.squareSetup}>
                             <div
                                 className={styles.square}
-                                style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#FDC300' }}
+                                style={{ backgroundColor: showNA ? 'var(--chart-disabled)' : '#FDC300' }}
                             />
                             <DsTypography
                                 variant="Regular_14"
-                                className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
+                                className={showNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                             >
                                 {GENERAL.SIXTY_PLUS_DAYS}
                             </DsTypography>
-                            {loading && <DsFlashingDotsLoader />}
+                            {!showNA && loading && <DsFlashingDotsLoader />}
                         </div>
 
                         <div className={styles.count}>
-                            {!isNA && (
+                            {!showNA && (
                                 <DsTypography variant="Semibold_14">{`${
                                     getSandboxDistributionByAgeValue(data)['61+']
                                 }`}</DsTypography>
                             )}
 
-                            {isNA && (
+                            {showNA && (
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
@@ -184,6 +191,7 @@ const Sandboxes = () => {
                                 data-testid="wlm-db-view-sixtyOne-plus"
                                 type="text"
                                 onClick={() => redirectToSandbox(GENERAL.SIXTY_PLUS_DAYS)}
+                                isDisabled={showNA}
                             >
                                 View
                             </DsButton>

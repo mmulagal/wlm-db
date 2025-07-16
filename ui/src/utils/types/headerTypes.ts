@@ -33,4 +33,5 @@ export interface HeaderTypeEntities {
     dashboardRefresh: boolean;
     multiDataStatus: any;
     multiDataLoading: boolean;
+    showNA: boolean; // Flag to show N/A when no credentials are available
 }

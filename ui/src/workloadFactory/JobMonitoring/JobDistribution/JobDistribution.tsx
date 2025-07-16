@@ -28,10 +28,6 @@ const JobDistribution = () => {
                 <JobDoughnutChart jobsSummaryData={jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading} />
                 {windowSize.width <= 1500 && (
                     <div className={styles.rightSection}>
-                        {/* <div className={styles.rowData} style={{ marginTop: '0' }}>
-                            <Typography variant="Semibold_14">{GENERAL.JOBS_DISTRIBUTION}</Typography>
-                        </div> */}
-
                         <div className={styles.jobSeparator} />
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
@@ -89,10 +85,6 @@ const JobDistribution = () => {
 
                 {windowSize.width >= 1500 && (
                     <div className={styles.rightSection}>
-                        {/* <div className={styles.rowData} style={{ marginTop: '0' }}>
-                       <Typography variant="Semibold_14">{GENERAL.JOBS_DISTRIBUTION}</Typography>
-                   </div> */}
-
                         <div className={styles.jobSeparator} />
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>

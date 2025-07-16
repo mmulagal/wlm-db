@@ -34,7 +34,8 @@
             "application-consistent": "Application consistent protection",
             "protected": "Protected",
             "not_protected": "Not protected",
-            "manage-analysis-state": "Manage Analysis State"
+            "manage-analysis-state": "Manage Analysis State",
+            "not-available": "N/A"
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "No instances are eligible for registration at this time.",
@@ -225,7 +226,9 @@
             "missing-modules-content-1": "Missing AWS PowerShell module: 'AWS.Tools.CloudWatch'",
             "missing-modules-content-2": "Missing IAM permission - 'cloudwatch:GetMetricData'",
             "missing-modules-content-3": "Missing instance profile permission - 'cloudwatch:PutMetricData'",
-            "missing-modules-content-4": "Partial data displayed due to one of the following reasons:"
+            "missing-modules-content-4": "Partial data displayed due to one of the following reasons:",
+            "associated_volumes": "Associated volumes",
+            "associated_luns": "Associated LUNs"
         },
         "inventory": {
             "protect-header": "Protect SQL server instance",
@@ -264,19 +267,19 @@
             "agent": "Agent"
         },
         "log-analyzer": {
-            "error-investigation": "Error investigation",
-            "ai-investigation": "AI Investigation",
+            "error-investigation": "Error analyzer",
+            "ai-investigation": "AI-generated analysis",
             "unique-errors": "Unique errors",
             "loading-data": "Loading data",
             "filters-applied": "Filters applied",
-            "investigation-date": "Investigation date",
+            "investigation-date": "Scan date",
             "total-errors": "Total errors",
             "last-scan": "Last scan",
             "new-scan": "New scan in progress; previous details shown until ready.",
             "stop-scan": "Stop scan",
             "scan-details": "Scan details",
-            "display-activity": "Displays activity from the last 24 hours",
-            "include-errors": "Includes up to 1,000 unique errors",
+            "display-activity": "Every scan analyzes the last 24 hours from the start time of the scan.",
+            "include-errors": "Every scan includes upto 100 unique errors.",
             "scan-now": "Scan now",
             "filters": "Filters",
             "severity": "Severity",
@@ -291,6 +294,7 @@
             "error-count": "Error count",
             "first-occurrence": "First occurrence",
             "last-occurrence": "Last occurrence",
+            "timeframe-is-filtered": "Timeframe is filtered.",
             "original-error-message": "Original error message",
             "explanation": "Explanation",
             "remediation": "Remediation",
@@ -325,6 +329,56 @@
             "add-credentials": "Add credentials",
             "learn-more": "Learn more",
             "discover-database": "to discover databases."
+        },
+        "explore-savings": {
+            "auth-heading": "To explore potential savings, authentication is required for database host:",
+            "select-auth-mode": "Select authentication mode",
+            "sql-server-authentication": "SQL Server authentication",
+            "windows-authentication": "Windows authentication",
+            "sql-server-username": "Microsoft SQL Server user name",
+            "sql-server-password": "Microsoft SQL Server password",
+            "windows-username": "Windows user name",
+            "windows-password": "Windows password",
+            "authentication-failed": "Authentication failed",
+            "authentication-required": "Authentication required",
+            "authenticate": "Authenticate",
+            "close": "Close",
+            "view-any-definition": "VIEW ANY DEFINITION",
+            "view-server-state": "VIEW SERVER STATE",
+            "connect-sql": "CONNECT SQL",
+            "permissions-required-heading": "Another method of authentication is to add the missing SQL Server permissions.",
+            "permissions-required-content": "Ensure that the following SQL Server permissions are granted to the NT Authority\\SYSTEM user. After permissions are granted, select Explore savings again."
+        },
+        "instance-table": {
+            "headers": {
+                "instance-name": "Instance name",
+                "host-name": "Host name",
+                "engine-type": "Engine type",
+                "deployment-model": "Deployment model",
+                "registration-status": "Registration status",
+                "fsx-for-ontap": "FSx for ONTAP",
+                "well-architected-status": "Well-architected status",
+                "protection-status": "Protection status",
+                "performance": "Performance",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            }
+        },
+        "databases-table": {
+            "headers": {
+                "database-name": "Database name",
+                "host-name": "Host name",
+                "engine-type": "Engine type",
+                "instance-name": "Instance name",
+                "protection-status": "Protection status",
+                "fsx-for-ontap": "FSx for ONTAP",
+                "database-type": "Database Type",
+                "database-size": "Database size",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            }
         }
     }
 }
