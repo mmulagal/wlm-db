@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
+import { Button, useDialog } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -9,7 +10,6 @@ import { ReactComponent as Success } from '../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../assets/error-icon.svg';
 import styles from './StorageCompute.module.scss';
 import { formatString } from '../../../../utils/utilityFunctions';
-import { Button, useDialog } from '@netapp/design-system';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LunsDialogContent from './LunsDialogContent/LunsDialogContent';
 

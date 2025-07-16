@@ -1,6 +1,6 @@
 import { DsTypography } from '@tlveng/wlm-ds';
-import styles from './LunsDialogContent.module.scss';
 import { useTranslation } from 'react-i18next';
+import styles from './LunsDialogContent.module.scss';
 
 const LunsDialogContent = ({ resourceDetails }: any) => {
     const { t } = useTranslation();
