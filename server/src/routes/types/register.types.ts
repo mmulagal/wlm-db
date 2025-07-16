@@ -21,8 +21,8 @@ const BulkManageMsSqlRequestBody = Type.Object({
         examples: ['123e4567-e89b-12d3-a456-426614174000']
     }),
     region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC }),
-    ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
-    databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' })),
+    ec2InstanceId: Type.String({ description: API_DESCRIPTION.EC2_INSTANCE_ID_DESC }),
+    databaseInstanceNames: Type.Array(Type.String({ description: API_DESCRIPTION.SQL_DATABASE_INSTANCES_DESC })),
     databaseHostId: Type.Optional(Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC })),
     modulesToInstall: Type.Optional(
         Type.Array(
@@ -51,8 +51,8 @@ const BulkRegisterOracleRequestBody = Type.Object({
         examples: ['123e4567-e89b-12d3-a456-426614174000']
     }),
     region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC }),
-    ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
-    databaseInstanceNames: Type.Array(Type.String({ description: 'List of Oracle database instances' })),
+    ec2InstanceId: Type.String({ description: API_DESCRIPTION.EC2_INSTANCE_ID_DESC }),
+    databaseInstanceNames: Type.Array(Type.String({ description: API_DESCRIPTION.ORACLE_DATABASE_INSTANCES_DESC })),
     databaseHostId: Type.Optional(Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }))
 });
 
