@@ -150,13 +150,23 @@ function hostLevelDriftData(
             : {}
     ];
 
-    return {
-        compute: computeAssessmentResponse as ComputeDriftResponseType,
-        license: licenseAssessmentResponse as LicenseDriftResponseType,
-        hostOsPatch: hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType,
-        rssConfig: rssConfigResponse as RssConfigDriftResponseType,
-        mssqlPatch: mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType
+    const result = {
+        compute: !isEmpty(computeAssessmentResponse)
+            ? (computeAssessmentResponse as ComputeDriftResponseType)
+            : undefined,
+        license: !isEmpty(licenseAssessmentResponse)
+            ? (licenseAssessmentResponse as LicenseDriftResponseType)
+            : undefined,
+        hostOsPatch: !isEmpty(hostOsPatchAssessmentResponse)
+            ? (hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType)
+            : undefined,
+        rssConfig: !isEmpty(rssConfigResponse) ? (rssConfigResponse as RssConfigDriftResponseType) : undefined,
+        mssqlPatch: !isEmpty(mssqlPatchAssessmentResponse)
+            ? (mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType)
+            : undefined
     };
+
+    return result;
 }
 
 async function fetchMssqlDriftAssessment(
@@ -293,13 +303,7 @@ async function fetchMssqlDriftAssessment(
                   hostLevelAssessmentData as ResourceAssessmentData,
                   fieldsValues
               )
-            : {
-                  compute: {} as ComputeDriftResponseType,
-                  license: {} as LicenseDriftResponseType,
-                  hostOsPatch: {} as HostOsPatchDriftResponseType,
-                  rssConfig: {} as RssConfigDriftResponseType,
-                  mssqlPatch: {} as MSSQLPatchDriftResponseType
-              }
+            : {}
     ];
 
     let driftAssessmentData: DriftAssessmentResponseType = {
@@ -308,7 +312,7 @@ async function fetchMssqlDriftAssessment(
             : undefined,
         maxDOP: !isEmpty(maxDOPResponse) ? (maxDOPResponse as ParameterDriftResponseType) : undefined,
         clone: !isEmpty(cloneResponse) ? (cloneResponse as ParameterDriftResponseType) : undefined,
-        ...hostLevelData,
+        ...(!isEmpty(hostLevelData) ? hostLevelData : undefined),
         ...resilienceAssessmentResponse,
         dismissedConfigurations,
         lastAssessmentTimestamp: (() => {

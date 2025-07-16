@@ -115,7 +115,7 @@ import {
     getOracleDatabaseInstancesSummary
 } from './workloads/oracle/oracle-operations';
 import { trendGraphCreateScript } from './workloads/mssql/ssm-script-utils';
-import { getResources } from './database/database-operations';
+import { getResources, populateDbInstances } from './database/database-operations';
 
 const logger = getLogger();
 
@@ -218,35 +218,27 @@ async function getStorageData(
         let credentialsId;
         let fsxwId;
         let ebsVolumeIds;
-        let metadata;
         let totalSize = 0;
         let totalUsed;
         let totalSpaceSavings;
         let totalSpaceSavingsPercentage;
         let storageProtocol;
 
-        if (version === VERSION_2_0 && databaseInstanceDetails) {
-            ({
-                region,
-                fsxn_ids: fsxnId,
-                credentials_id: credentialsId,
-                fsxwId,
-                ebsVolumeIds,
-                storage_protocol: storageProtocol
-            } = databaseInstanceDetails);
-        } else if (resourceDetail) {
-            ({
-                region,
-                co_relation_id: fsxnId,
-                credentials_id: credentialsId,
-                fsxwId,
-                ebsVolumeIds,
-                metadata
-            } = resourceDetail);
-            ({ storageProtocol } = metadata as unknown as Metadata);
+        if (isEmpty(databaseInstanceDetails)) {
+            logger.info('No database instance details found, returning empty storage data.');
+            return;
         }
-        ebsVolumeIds = ebsVolumeIds || [];
 
+        ({
+            region,
+            fsxn_ids: fsxnId,
+            credentials_id: credentialsId,
+            fsxwId,
+            ebsVolumeIds,
+            storage_protocol: storageProtocol
+        } = databaseInstanceDetails);
+
+        ebsVolumeIds = ebsVolumeIds || [];
         const response = {} as StoragePerStorageTypeResponseType;
         if (fsxnId && region && credentialsId && !(databaseInstanceDetails?.isManaged && !isDemoFlow)) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
@@ -279,9 +271,9 @@ async function getStorageData(
 
         return response;
     } catch (error) {
-        const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ${JSON.stringify(
-            error
-        )}`;
+        const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ,databaseInstance: id: ${
+            databaseInstanceDetails?.database_instance_id
+        } fsxId: ${databaseInstanceDetails?.fsxn_ids} error: ${JSON.stringify(error)}`;
         let { message } = error as { message: string };
         if (message?.toLowerCase().includes('ThrottlingException: Rate exceeded'.toLowerCase())) {
             message += '. Retry the operation.';
@@ -301,19 +293,17 @@ async function getProtectionStatus(
 ): Promise<ProtectionPerStorageTypeResponseType | ProtectionPerStorageTypeResponseType[] | undefined> {
     logger.info('Get protection status', { resourceId: resourceDetail?.resource_id, instanceName });
 
-    let region;
-    let fsxnId;
-    let credentialsId;
-    let fsxwId;
-    let ebsVolumeIds;
-    let id;
-
-    if (version === VERSION_2_0 && databaseInstances) {
-        [{ database_instance_id: id, fsxn_ids: fsxnId, region, credentials_id: credentialsId, fsxwId, ebsVolumeIds }] =
-            databaseInstances;
-    } else if (resourceDetail) {
-        ({ id, region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId, ebsVolumeIds } = resourceDetail);
+    if (!databaseInstances || isEmpty(databaseInstances) || version !== VERSION_2_0) {
+        logger.info(
+            'No database instance details found or version not 2.0, returning empty storage data. version:',
+            version
+        );
+        return;
     }
+
+    const [
+        { database_instance_id: id, fsxn_ids: fsxnId, region, credentials_id: credentialsId, fsxwId, ebsVolumeIds }
+    ] = databaseInstances;
 
     if (!region || !credentialsId) {
         throw createError(
@@ -420,7 +410,10 @@ async function getBillingOrPriceEstimation(
 async function getBilling(resourceDetail: ResourceDetails) {
     logger.info('Get AWS resources billing data:', { resourceId: resourceDetail?.resource_id });
     try {
-        const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
+        await populateDbInstances(resourceDetail);
+        const { region, credentials_id: credentialsId, metadata, database_instances: dbInstances } = resourceDetail;
+        let fsxIds = dbInstances?.map(dbInstance => dbInstance.fsxn_ids);
+        fsxIds = [...new Set(fsxIds?.flat())];
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         // Need to validate before proceeding for billing
         await validationForCostExplorer(resourceDetail);
@@ -428,7 +421,7 @@ async function getBilling(resourceDetail: ResourceDetails) {
         resourceGroupsById.set(resourceDetail.resource_id, [
             node1InstanceId,
             ...(node2InstanceId ? [node2InstanceId] : []),
-            ...(fileSystemId ? (Array.isArray(fileSystemId) ? fileSystemId : [fileSystemId]) : [])
+            ...(fsxIds || [])
         ]);
 
         const billsByResourceIds = await getBillByResourceIds(credentialsId, region!, resourceGroupsById);
@@ -465,7 +458,7 @@ async function validationForCostExplorer(resourceDetail: ResourceDetails) {
         getCostAllocationTagFsxResource(resourceDetail)
     ]);
     // fsxResources has all tag attached to the that filesystem, so we need to find if cost allocation tag is attached or not
-    if (!ec2Resources?.Tags?.length && !fsxResources?.Tags?.find(tag => tag?.Key === WLMDB_COST_ALLOCATION_TAG)) {
+    if (!ec2Resources?.Tags?.length && !fsxResources?.find(tag => tag?.Key === WLMDB_COST_ALLOCATION_TAG)) {
         throw new Error(
             `Calcaulation of Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not attached to resource ${resourceDetail.resource_id}`
         );
@@ -479,23 +472,14 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
     });
 
     try {
-        const {
-            region,
-            co_relation_id: fsxnId,
-            credentials_id: credentialsId,
-            metadata,
-            ebsVolumeIds,
-            fsxwId
-        } = resourceDetail;
+        const { region, credentials_id: credentialsId, metadata, ebsVolumeIds, fsxwId } = resourceDetail;
         const { sqlDeploymentType } = metadata as unknown as Metadata;
 
         if (!region) {
             throw new Error('Unable to fetch usage estimation data as region is not available');
         }
 
-        const fsxnIds = fsxnId
-            ? [fsxnId]
-            : resourceDetail.database_instances?.flatMap(f => (f.fsxn_ids ? [f.fsxn_ids] : []));
+        const fsxnIds = resourceDetail.database_instances?.flatMap(f => (f.fsxn_ids ? [f.fsxn_ids] : []));
         const fsxwIds = fsxwId
             ? [fsxwId]
             : resourceDetail.database_instances?.flatMap(f => (f.fsxwId ? [f.fsxwId] : []));
@@ -1067,7 +1051,18 @@ async function getDatabaseHostSummaryV2(
 ) {
     logger.info('Fetching details about a database host ', accountId, databaseHostId, fields, isManagedResource);
     if (isEmpty(resourceDetail)) {
-        [resourceDetail] = await listResources(accountId, databaseHostId, customerCredentialsId, awsRegion);
+        [resourceDetail] = await listResources(
+            accountId,
+            databaseHostId,
+            customerCredentialsId,
+            awsRegion,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            true
+        );
     }
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -1231,7 +1226,7 @@ async function getDatabaseHostSummaryV2(
             } else {
                 promises.push(Promise.resolve());
             }
-
+            resourceDetail.database_instances = instancesManaged;
             if (getUsageEstimation && activeNodeInstanceId) {
                 promises.push(
                     getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource).catch(
@@ -1963,7 +1958,7 @@ async function getDatabaseInstancesSummary(
     let databasesCount: any;
     let nodeTopologyData: any;
     let ontapStorageSavings: any;
-    let databases: any;
+    let databasesList: Record<string, any[]>[];
     let resourceTrendsData: any;
     const errormessages: { [index: string]: string } = {};
 
@@ -1984,7 +1979,7 @@ async function getDatabaseInstancesSummary(
             : databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
     const shouldGetStorageSavingsFromOntap = databaseInstances.some(i => i.isManaged && !isDemoFlow);
-    const { co_relation_id: fsxnId } = resourceDetails!;
+    const fsxIds = resourceDetails?.database_instances?.map((instance: DatabaseInstance) => instance.fsxn_ids);
 
     try {
         [
@@ -1997,7 +1992,7 @@ async function getDatabaseInstancesSummary(
             databasesCount,
             nodeTopologyData,
             ontapStorageSavings,
-            databases,
+            databasesList,
             resourceTrendsData
         ] = await Promise.all(
             [
@@ -2080,16 +2075,20 @@ async function getDatabaseInstancesSummary(
                     : [Promise.resolve()]),
                 ...(shouldQueryDatabasesWithProtection || shouldQueryDatabasesWithoutProtection
                     ? [
-                          getDatabaseDetails(
-                              accountId,
-                              region,
-                              credentialsId,
-                              databaseHostId!,
-                              fsxnId!,
-                              shouldQueryDatabasesWithProtection,
-                              databaseInstances,
-                              activeNodeInstanceId,
-                              isSqlAuthEnabled
+                          Promise.all(
+                              (fsxIds ?? []).map(fsxId =>
+                                  getDatabaseDetails(
+                                      accountId,
+                                      region,
+                                      credentialsId,
+                                      databaseHostId!,
+                                      fsxId!,
+                                      shouldQueryDatabasesWithProtection,
+                                      databaseInstances,
+                                      activeNodeInstanceId,
+                                      isSqlAuthEnabled
+                                  )
+                              )
                           )
                       ]
                     : [Promise.resolve()]),
@@ -2220,6 +2219,16 @@ async function getDatabaseInstancesSummary(
         if (getProtection && protectionData) {
             databaseInstanceDetails.protection = protectionData?.[index];
         }
+        const databases: Record<string, any[]> = {};
+        databasesList.forEach(dbs => {
+            Object.keys(dbs).forEach(key => {
+                if (!databases[key]) {
+                    databases[key] = [];
+                }
+                databases[key].push(...dbs[key]);
+            });
+        });
+
         if (shouldQueryDatabasesWithProtection && getProtection && databases?.[instanceName]) {
             let isSqlNativeEnabled: string | boolean = 'N/A';
             let isFsxOntapSnapshotsEnabled: string | boolean = 'N/A';

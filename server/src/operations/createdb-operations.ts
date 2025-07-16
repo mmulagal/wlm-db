@@ -33,7 +33,12 @@ import {
     AuditStatus
 } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
-import { getInstanceInfo, getResources, updateResourceMetaData } from './database/database-operations';
+import {
+    getInstanceInfo,
+    getResources,
+    populateDbInstances,
+    updateResourceMetaData
+} from './database/database-operations';
 import { getFsxStorageCapacity } from './aws/fsx-operations';
 import {
     DatabaseCreateResponseType,
@@ -364,7 +369,16 @@ async function getDriveInfo(
 
     const {
         items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
+    } = await getResources(
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region,
+        RESOURCESTYPE.MSSQL,
+        undefined,
+        undefined,
+        true
+    );
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -372,7 +386,10 @@ async function getDriveInfo(
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
-    let { co_relation_id: fileSystemId, metadata } = resourceDetail;
+    await populateDbInstances(resourceDetail);
+    const { database_instances: dbInstances, metadata } = resourceDetail;
+    let fsxIds = dbInstances?.map(dbInstance => dbInstance.fsxn_ids) || [];
+    fsxIds = [...new Set(fsxIds?.flat())];
     const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
 
     // Handling the case when /register does not register standby node in case of FCI deployments
@@ -386,16 +403,27 @@ async function getDriveInfo(
     }
 
     let instanceDetail;
+    let fsxId = fsxIds.length > 0 ? fsxIds[0] : undefined;
     if (databaseInstanceId) {
-        instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-        ({ fsxn_ids: fileSystemId } = instanceDetail as unknown as DatabaseInstance);
+        const instances = dbInstances?.filter(instance => instance.database_instance_id === databaseInstanceId);
+        instanceDetail =
+            instances && instances.length > 0
+                ? instances[0]
+                : await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+
+        ({ fsxn_ids: fsxId } = instanceDetail as unknown as DatabaseInstance);
     }
 
     let fsxStorageCapacity;
     let driveResponse;
     try {
+        if (!fsxId) {
+            const errorMessage = `No FSx file system found for database host ${databaseHostId} in account ${accountId}.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        }
         [fsxStorageCapacity, driveResponse] = await Promise.all([
-            forSandbox ? Promise.resolve() : getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
+            forSandbox ? Promise.resolve() : getFsxStorageCapacity(credentialsId, region!, fsxId!),
             getDriveInfoFromSSM(
                 accountId,
                 databaseHostId,

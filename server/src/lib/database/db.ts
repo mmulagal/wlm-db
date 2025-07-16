@@ -281,7 +281,13 @@ async function listResources(
             ...(resourceType && { resource_type: { in: resourceType } }),
             ...(region && { region: { in: region } }),
             ...(credentialIds && { credentials_id: { in: credentialIds } }),
-            ...(fsxId && { co_relation_id: fsxId }),
+            ...(fsxId && {
+                database_instances: {
+                    some: {
+                        fsxn_ids: fsxId
+                    }
+                }
+            }),
             ...(metaFilters && {
                 AND: Object.entries(metaFilters).map(([key, val]) => ({
                     metadata: {

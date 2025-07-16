@@ -1,6 +1,6 @@
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { compact, groupBy, isEmpty, uniq, uniqBy } from 'lodash-es';
+import { compact, isEmpty, uniq, uniqBy } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
@@ -370,7 +370,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
             sandboxSavingsPercentage: 0
         };
 
-        const resourceDetails = await listResources(
+        const resourceDetails: ResourceDetails[] = await listResources(
             accountId,
             undefined,
             credentialsId,
@@ -381,7 +381,10 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                 ? undefined
                 : {
                       sandboxCreated: true
-                  }
+                  },
+            undefined,
+            undefined,
+            true
         );
 
         if (isEmpty(resourceDetails)) {
@@ -389,7 +392,17 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
             return savingsData;
         }
 
-        const fsxGroups = groupBy(resourceDetails, 'co_relation_id'); // { fsxId: Array<resource> }
+        const fsxGroups: { [key: string]: ResourceDetails[] } = {};
+
+        resourceDetails.forEach(resource => {
+            resource.database_instances?.forEach(instance => {
+                const fsxId = instance.fsxn_ids;
+                if (fsxId) {
+                    fsxGroups[fsxId] = fsxGroups[fsxId] || [];
+                    fsxGroups[fsxId].push(resource);
+                }
+            });
+        });
 
         await Promise.all(
             Object.keys(fsxGroups).map(
@@ -3404,10 +3417,10 @@ async function runSandboxPreValidations(
         );
     }
 
-    if (srcResourceDetail.co_relation_id !== destResourceDetail.co_relation_id) {
+    if (srcInstanceDetail.fsxn_ids !== destInstanceDetail.fsxn_ids) {
         throw createError(
             HttpErrorCodes.BAD_REQUEST,
-            'The source and destination host should be connected to the same FSx'
+            'The source and destination resource instances should be connected to the same FSx'
         );
     }
 

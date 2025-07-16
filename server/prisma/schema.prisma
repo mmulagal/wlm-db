@@ -62,6 +62,7 @@ model resource {
   resource_id               String  @db.VarChar(255)
   resource_name             String? @db.VarChar(255)
   resource_type             String  @db.VarChar(20)
+  /// co_relation_id is deprecated; will be removed in future releases 
   co_relation_id            String? @db.VarChar(20)
   cloud_provider_account_id String? @db.VarChar(80)
   cloud_provider_name       String? @db.VarChar(30)
