@@ -492,6 +492,16 @@ const InstancesTable = () => {
             const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
             if (isCancelled(key)) return;
 
+            //@ts-ignore
+            if (hostsRes?.error?.data === 'Unauthorized') {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'Unauthorized'
+                    })
+                );
+            }
+
             if (hostsRes?.data && hostsRes?.data?.hosts && hostsRes?.data?.hosts.length > 0) {
                 const hostExists = hostsRes?.data?.hosts?.some((host: any) => {
                     // Extract hostname before first dot for comparison

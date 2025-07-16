@@ -45,6 +45,7 @@ import createSandboxSlice from './workloadFactory/createSandboxSlice';
 import getWellOptimizeSlice from './workloadFactory/getWellOptimizeSlice';
 import agenticAISlice from './workloadFactory/agenticAISlice';
 import snapCenterSlice from './workloadFactory/snapcenterSlice';
+import { error } from 'console';
 // import postgressSlice from './mssql/postgressSlice';
 
 const rootReducer = combineReducers({
@@ -100,7 +101,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             action?.meta?.arg?.endpointName === 'manageHost' ||
             action?.meta?.arg?.endpointName === 'getMssqlInstanceData' ||
             action?.meta?.arg?.endpointName === 'prepareHost' ||
-            action?.meta?.arg?.endpointName === 'manageMssqlInstance'
+            action?.meta?.arg?.endpointName === 'manageMssqlInstance' ||
+            (action?.meta?.arg?.endpointName === 'listExistingHosts' && errorMsg?.includes('Unauthorized'))
         ) {
             return;
         }
