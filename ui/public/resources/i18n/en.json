@@ -329,6 +329,25 @@
             "add-credentials": "Add credentials",
             "learn-more": "Learn more",
             "discover-database": "to discover databases."
+        },
+        "explore-savings": {
+            "auth-heading": "To explore potential savings, authentication is required for database host:",
+            "select-auth-mode": "Select authentication mode",
+            "sql-server-authentication": "SQL Server authentication",
+            "windows-authentication": "Windows authentication",
+            "sql-server-username": "Microsoft SQL Server user name",
+            "sql-server-password": "Microsoft SQL Server password",
+            "windows-username": "Windows user name",
+            "windows-password": "Windows password",
+            "authentication-failed": "Authentication failed",
+            "authentication-required": "Authentication required",
+            "authenticate": "Authenticate",
+            "close": "Close",
+            "view-any-definition": "VIEW ANY DEFINITION",
+            "view-server-state": "VIEW SERVER STATE",
+            "connect-sql": "CONNECT SQL",
+            "permissions-required-heading": "Another method of authentication is to add the missing SQL Server permissions.",
+            "permissions-required-content": "Ensure that the following SQL Server permissions are granted to the NT Authority\\SYSTEM user. Once permissions are set, please try accessing Explore Savings again."
         }
     }
 }

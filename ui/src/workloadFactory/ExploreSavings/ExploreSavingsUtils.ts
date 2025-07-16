@@ -1,7 +1,10 @@
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { NavigateFunction } from 'react-router-dom';
+import { Dispatch } from '@reduxjs/toolkit';
+import { TFunction } from 'i18next';
 import store from '../../store/store';
 import {
+    resetServerDetailsCredentials,
     setDisableState,
     setMonthlyChangeRate,
     setOnPremStorageAndComputeInfoFull,
@@ -12,9 +15,17 @@ import {
     setSelectedOnPremHostId,
     setSelectedServerName
 } from '../../store/workloadFactory/exploreSavingsSlice';
-import { setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
+import { setInventoryTableData, setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
-import { FSX_AZ_TYPE, GIB_IN_BYTE, SAVINGS_CALC_MODE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
+import {
+    AUTHENTICATION_TYPE,
+    DETECT_HOST_VAR,
+    FSX_AZ_TYPE,
+    GIB_IN_BYTE,
+    SAVINGS_CALC_MODE,
+    SQL_DEPLOYMENT_MODE,
+    WLF_TABS
+} from '../../utils/consts';
 import {
     EBSCalculation,
     StorageSavingsInterface,
@@ -25,6 +36,13 @@ import {
     formatFractionalNumberForCost,
     formatNumberWithCustomComma
 } from '../../utils/utilityFunctions';
+import {
+    resetDialogComponent,
+    setActionsDisabled,
+    setDialogErrorWithTooltip
+} from '../../store/workloadFactory/dialogComponentSlice';
+import { DiscoverHostInterface } from '../../utils/types/inventoryV2Types';
+import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     postBlueXPMessage({
@@ -1050,4 +1068,154 @@ export const generateLabel2ForInstanceType = (options: any, option: any, existin
         return label2;
     }
     return '';
+};
+
+export const handleAuthenticate = async (
+    rowData: any,
+    dispatch: Dispatch,
+    selectedExploreSavingsTabFileSystemType: string,
+    isWorkloadFactory: boolean,
+    navigate: NavigateFunction,
+    closeDialogCallback: () => void,
+    t: TFunction,
+    registerResourceCredBulk: (args: any) => Promise<any>
+) => {
+    try {
+        dispatch(setActionsDisabled(true));
+        const state = store.getState();
+        const {
+            selectedAuthenticationType,
+            serverDetails: { userName, password }
+        } = state.exploreSavings;
+
+        // Get all the SQL Server instances that match the selected file system type
+        const matchedInstances = rowData?.sqlServerInstances?.filter(
+            (instance: any) => instance?.fileSystemType === selectedExploreSavingsTabFileSystemType
+        );
+
+        const credentialList: {
+            resourceId: string;
+            resourceType: string;
+            username: string;
+            password: string;
+        }[] = [];
+
+        matchedInstances?.forEach((instance: any) => {
+            credentialList.push({
+                resourceId: instance?.databaseInstanceName,
+                resourceType:
+                    selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                        ? DETECT_HOST_VAR.MSSQL
+                        : DETECT_HOST_VAR.WINDOWS,
+                username: userName,
+                password
+            });
+        });
+        const credList = {
+            credentials: credentialList
+        };
+
+        const payload = {
+            items: [
+                {
+                    ...credList,
+                    ec2InstanceId: rowData?.ec2InstanceId,
+                    region: rowData?.regionId,
+                    credentialsId: rowData?.credentialId
+                }
+            ]
+        };
+
+        const result = await registerResourceCredBulk({ payload });
+        if (result && !result?.error && result?.data) {
+            if (
+                result?.data?.items?.length > 0 &&
+                !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
+                !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
+            ) {
+                updateInventoryTable(rowData, selectedExploreSavingsTabFileSystemType, dispatch);
+                // Navigate to the Explore Savings page
+                onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: `Authenticated database host ${rowData?.name} was successful.\nYou can now explore potential savings.`
+                    })
+                );
+            } else {
+                dispatch(
+                    setDialogErrorWithTooltip({
+                        showDialogError: true,
+                        errorMessage: t('databases.explore-savings.authentication-failed'),
+                        showTooltipInfo: true,
+                        tooltipText:
+                            result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
+                            result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
+                            t('databases.explore-savings.authentication-failed')
+                    })
+                );
+            }
+        } else {
+            dispatch(
+                setDialogErrorWithTooltip({
+                    showDialogError: true,
+                    errorMessage: t('databases.explore-savings.authentication-failed'),
+                    showTooltipInfo: true,
+                    tooltipText:
+                        // @ts-ignore
+                        result?.error?.data?.message || t('databases.explore-savings.authentication-failed')
+                })
+            );
+        }
+    } catch (error) {
+        dispatch(
+            setDialogErrorWithTooltip({
+                showDialogError: true,
+                errorMessage: t('databases.explore-savings.authentication-failed'),
+                showTooltipInfo: true,
+                // @ts-ignore
+                tooltipText: error || t('databases.explore-savings.authentication-failed')
+            })
+        );
+    } finally {
+        dispatch(resetDialogComponent());
+        dispatch(resetServerDetailsCredentials());
+        closeDialogCallback();
+    }
+};
+
+const updateInventoryTable = (rowData: any, selectedExploreSavingsTabFileSystemType: string, dispatch: Dispatch) => {
+    const state = store.getState();
+    const { inventoryTableData } = state.inventoryV2;
+    const { selectedAuthenticationType } = state.exploreSavings;
+    // Clone the inventoryTableData
+    const updatedInventoryTableData: Record<string, DiscoverHostInterface> = {
+        ...inventoryTableData
+    } as Record<string, DiscoverHostInterface>;
+
+    // Clone the sqlServerInstances array and update the correct instance
+    updatedInventoryTableData[rowData.id] = {
+        ...(updatedInventoryTableData[rowData.id] as DiscoverHostInterface),
+        isDetected: true,
+        sqlServerInstances:
+            updatedInventoryTableData[rowData.id]?.sqlServerInstances?.map(instance =>
+                // @ts-ignore
+                instance?.fileSystemType === selectedExploreSavingsTabFileSystemType
+                    ? {
+                          ...instance,
+                          sqlServerAuthentication:
+                              selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                                  ? true
+                                  : instance.sqlServerAuthentication,
+                          windowsDomainUserAuthentication:
+                              selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                                  ? true
+                                  : instance.windowsDomainUserAuthentication
+                      }
+                    : instance
+            ) ?? []
+    };
+
+    // Dispatch the updated inventory table data to the store
+    dispatch(setInventoryTableData(updatedInventoryTableData));
 };

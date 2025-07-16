@@ -45,7 +45,7 @@ import createSandboxSlice from './workloadFactory/createSandboxSlice';
 import getWellOptimizeSlice from './workloadFactory/getWellOptimizeSlice';
 import agenticAISlice from './workloadFactory/agenticAISlice';
 import snapCenterSlice from './workloadFactory/snapcenterSlice';
-
+import dialogComponentSlice from './workloadFactory/dialogComponentSlice';
 // import postgressSlice from './mssql/postgressSlice';
 
 const rootReducer = combineReducers({
@@ -85,7 +85,8 @@ const rootReducer = combineReducers({
     [getWellApi.reducerPath]: getWellApi.reducer,
     [getWellOptimizeSlice.name]: getWellOptimizeSlice.reducer,
     [agenticAISlice.name]: agenticAISlice.reducer,
-    [errorInvestigationApi.reducerPath]: errorInvestigationApi.reducer
+    [errorInvestigationApi.reducerPath]: errorInvestigationApi.reducer,
+    [dialogComponentSlice.name]: dialogComponentSlice.reducer
     // [postgressSlice.name]: postgressSlice.reducer
 });
 
