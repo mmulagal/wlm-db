@@ -650,7 +650,7 @@ const InstancesTable = () => {
 
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
-            Header: 'Instance name',
+            Header: t('databases.instance-table.headers.instance-name'),
             accessor: 'databaseInstanceName',
             customAccessor: 'statusAccessor',
             id: '1',
@@ -710,7 +710,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Host name',
+            Header: t('databases.instance-table.headers.host-name'),
             accessor: 'name',
             id: '2',
             width: '213px',
@@ -726,7 +726,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Engine type',
+            Header: t('databases.instance-table.headers.engine-type'),
             accessor: 'hostType',
             id: '3',
             width: '213px',
@@ -738,7 +738,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Deployment model',
+            Header: t('databases.instance-table.headers.deployment-model'),
             accessor: 'serverInstallationMode',
             id: '4',
             width: '213px',
@@ -750,7 +750,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Registration status',
+            Header: t('databases.instance-table.headers.registration-status'),
             accessor: 'managementStatus',
             id: '5',
             isSortable: false,
@@ -776,7 +776,7 @@ const InstancesTable = () => {
         },
         {
             id: '6',
-            Header: 'FSxN Name',
+            Header: t('databases.instance-table.headers.fsx-for-ontap'),
             accessor: 'fileSystemName',
             isSortable: false,
             filterOptions: getFilterOptions(updatedTableData, 'fileSystemName'),
@@ -819,7 +819,7 @@ const InstancesTable = () => {
             )
         },
         {
-            Header: 'Well-architected status',
+            Header: t('databases.instance-table.headers.well-architected-status'),
             accessor: 'optimizationStatus',
             id: '7',
             width: '240px',
@@ -925,7 +925,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Protection status',
+            Header: t('databases.instance-table.headers.protection-status'),
             accessor: 'protectionText',
             id: '8',
             width: '200px',
@@ -994,7 +994,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Performance',
+            Header: t('databases.instance-table.headers.performance'),
             accessor: 'performance.assessment',
             id: '9',
             width: '200px',
@@ -1023,7 +1023,7 @@ const InstancesTable = () => {
         },
         {
             id: '10',
-            Header: 'AWS credentials',
+            Header: t('databases.instance-table.headers.aws-credentials'),
             accessor: 'credentialName',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'credentialName'),
@@ -1036,7 +1036,7 @@ const InstancesTable = () => {
         },
         {
             id: '11',
-            Header: 'AWS account',
+            Header: t('databases.instance-table.headers.aws-account'),
             accessor: 'accountId',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'accountId'),
@@ -1049,7 +1049,7 @@ const InstancesTable = () => {
         },
         {
             id: '12',
-            Header: 'Region',
+            Header: t('databases.instance-table.headers.region'),
             accessor: 'regionName',
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'regionName'),
