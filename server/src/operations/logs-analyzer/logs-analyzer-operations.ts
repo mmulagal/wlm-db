@@ -415,7 +415,7 @@ async function getTimestampToProcessLogs(
 
     let timestampLastLogProcessed = Date.now() - ms('24h');
     if (logsAnalyzerFromTimestamp !== 1) {
-        // If logsAnalyzerFromTimestamp is not 1, there is a user input passed down, use the provided timestamp
+        // If logsAnalyzerFromTimestamp is not 1 (1 is the default value indicating beginning of time), there is a user input passed down, use the provided timestamp
         logger.info('Using provided logsAnalyzerFromTimestamp:', logsAnalyzerFromTimestamp);
         timestampLastLogProcessed = logsAnalyzerFromTimestamp;
     } else if (report && !isEmpty(report)) {
