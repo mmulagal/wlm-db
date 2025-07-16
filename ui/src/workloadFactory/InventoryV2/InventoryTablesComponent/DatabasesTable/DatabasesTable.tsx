@@ -2,6 +2,7 @@ import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography, Popover } from '@net
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
@@ -17,7 +18,6 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import { useTranslation } from 'react-i18next';
 
 const DatabasesTable = () => {
     const { t } = useTranslation();
