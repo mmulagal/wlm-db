@@ -37,7 +37,6 @@ COPY resources/packages ./resources/packages/
 
 COPY dist/src ./
 
-COPY src/lib/chatbot/schemas/* ./lib/chatbot/schemas
 
 COPY prisma ./prisma/
 

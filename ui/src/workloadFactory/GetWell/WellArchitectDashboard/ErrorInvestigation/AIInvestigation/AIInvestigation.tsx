@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { ReactComponent as AIInvestigationIcon } from '../../../../../assets/ai-investigation.svg';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './AIInvestigation.module.scss';
@@ -37,17 +38,37 @@ const AIInvestigation = ({
             <div className={styles.sectionOne}>
                 <div className={styles.errorInfoRow}>
                     <DsTypography variant="Semibold_14">
-                        {t('databases.log-analyzer.error-count')}: {selectedErrorData?.count}
+                        {t('databases.log-analyzer.error-count')}:{' '}
+                        {selectedErrorData?.totalFilteredCount &&
+                        selectedErrorData?.totalFilteredCount < selectedErrorData?.count
+                            ? `${selectedErrorData?.totalFilteredCount}/${selectedErrorData?.count}`
+                            : `${selectedErrorData?.count}`}
                     </DsTypography>
                     <div className={styles.errorInfoRight}>
-                        <DsTypography variant="Regular_13">
-                            {t('databases.log-analyzer.first-occurrence')}:{' '}
-                            {selectedErrorData?.firstOccurrence ? formatTime(selectedErrorData?.firstOccurrence) : ''}
-                        </DsTypography>
-                        <DsTypography variant="Regular_13">
-                            {t('databases.log-analyzer.last-occurrence')}:{' '}
-                            {selectedErrorData?.lastOccurrence ? formatTime(selectedErrorData?.lastOccurrence) : ''}
-                        </DsTypography>
+                        {selectedErrorData?.totalFilteredCount &&
+                        selectedErrorData?.totalFilteredCount >= selectedErrorData?.count ? (
+                            <>
+                                <DsTypography variant="Regular_13">
+                                    {t('databases.log-analyzer.first-occurrence')}:{' '}
+                                    {selectedErrorData?.firstOccurrence
+                                        ? formatTime(selectedErrorData?.firstOccurrence)
+                                        : ''}
+                                </DsTypography>
+                                <DsTypography variant="Regular_13">
+                                    {t('databases.log-analyzer.last-occurrence')}:{' '}
+                                    {selectedErrorData?.lastOccurrence
+                                        ? formatTime(selectedErrorData?.lastOccurrence)
+                                        : ''}
+                                </DsTypography>
+                            </>
+                        ) : (
+                            <div className={styles.setSVG}>
+                                <InfoIcon />
+                                <DsTypography variant="Regular_13">
+                                    {t('databases.log-analyzer.timeframe-is-filtered')}
+                                </DsTypography>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <ErrorCountChart startTime={startTime} endTime={endTime} markedNumbers={markedNumbers} />
