@@ -9,13 +9,13 @@ const router = require('express').Router();
 router.get(`/agents-mgmt/list-connectors/:accountID`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, Connectors);
-    }, 2000);
+    }, 100);
 });
 
 router.get(`/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, listHosts);
-    }, 2000);
+    }, 500);
 });
 
 router.get(`/fsx-ontap/working-environments/:accountID`, async (req: {}, res: any) => {
@@ -29,19 +29,19 @@ router.get(`/fsx-ontap/working-environments/:accountID`, async (req: {}, res: an
                 autoScale: false
             }
         ]);
-    }, 2000);
+    }, 500);
 });
 
 router.get(`/v1/management/organizations/:accountID/users`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, RBACList);
-    }, 2000);
+    }, 500);
 });
 
 router.get(`/v1/management/organizations/:accountID/resources`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, WorkSpaceID);
-    }, 2000);
+    }, 10);
 });
 
 router.post(
@@ -57,7 +57,7 @@ router.post(
                     deploymentType: 'MULTI_AZ'
                 }
             ]);
-        }, 2000);
+        }, 10);
     }
 );
 
@@ -66,7 +66,18 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, '');
-        }, 2000);
+        }, 100);
+    }
+);
+
+router.post(
+    `${BASE_URL}/v1/ubr-protection/credentials/:credentialsID/regions/:regionID/ubr-credentials`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, {
+                credentialsId: '523b6e25-e01c-4397-9adb-c9a4b8f987d6'
+            });
+        }, 10);
     }
 );
 

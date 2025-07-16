@@ -45,7 +45,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
             const timer1 = setTimeout(() => {
                 setStep1Status('done');
                 setStep2Status('running');
-            }, 5000);
+            }, 20000);
             return () => clearTimeout(timer1);
         }
     }, [step1Status]);
@@ -96,7 +96,7 @@ const SingleAgentDialog = ({ agents, hostExists }: any) => {
             agents.map((item: { agent: any }, index: number) => {
                 const { agent } = item;
                 return {
-                    id: (index + 1).toString(),
+                    id: agent.agentId,
                     label: `${agent.name}, ${agent.status}, ${agent.region}`,
                     value: agent.name
                 };

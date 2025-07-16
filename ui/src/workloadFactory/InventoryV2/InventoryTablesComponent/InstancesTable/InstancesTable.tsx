@@ -19,6 +19,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useAssignRBACPrivilegesMutation,
     useDiscoverExistingFsxNMutation,
+    useGenerateCredentialIDMutation,
     useGetConnectorsMutation,
     useGetFsxDetailsMutation,
     useGetRBACPrivilegesMutation,
@@ -86,7 +87,11 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
-import { cancelProtectionForRow, setDataForRow } from '../../../../store/workloadFactory/snapcenterSlice';
+import {
+    cancelProtectionForRow,
+    setDataForRow,
+    setWorkSpaceData
+} from '../../../../store/workloadFactory/snapcenterSlice';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
@@ -123,6 +128,7 @@ const InstancesTable = () => {
     const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
     const [listExistingHosts] = useListExistingHostsMutation();
     const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
+    const [generateCredentialID] = useGenerateCredentialIDMutation();
 
     useEffect(() => {
         setLoading(
@@ -336,7 +342,7 @@ const InstancesTable = () => {
 
         if (existingData.initialHostCheck) {
             if (existingData.isHostManaged) {
-                return showSingleAgentDialog([], true);
+                return showSingleAgentDialog([], true, rowData);
             }
             // else proceed to normal flow
         } else {
@@ -365,7 +371,7 @@ const InstancesTable = () => {
             );
 
             if (hostExists) {
-                return showSingleAgentDialog([], true);
+                return showSingleAgentDialog([], true, rowData);
             }
         }
 
@@ -407,8 +413,27 @@ const InstancesTable = () => {
         );
     };
 
-    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean) => {
-        const activeAgents = connectors?.occms?.filter((item: any) => item.agent.status === 'active') || [];
+    //Function to handle Add host
+    const addHostHandler = async (rowData: any) => {
+        dispatch(setStartProtection('started'));
+        const state: any = store.getState().snapCenter;
+        const payload = {
+            connectorId: state.selectedAgent[0]?.id,
+            ec2InstanceIds: [rowData.ec2InstanceId],
+            sqlInstanceName: rowData.databaseInstanceName,
+            resourceId: rowData.resourceId,
+            workspaceId: state?.workSpaceData?.id
+        };
+        const credRes = await generateCredentialID({
+            credentialID: rowData.credentialId,
+            regionID: rowData.regionId,
+            payload: payload
+        });
+
+        console.log(credRes);
+    };
+
+    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any) => {
         setDialog(
             <DialogComponent
                 header={
@@ -421,7 +446,13 @@ const InstancesTable = () => {
                         )}
                     </div>
                 }
-                content={<SingleAgentDialog agents={activeAgents} hostExists={hostExists} />}
+                content={
+                    <SingleAgentDialog
+                        agents={connectors}
+                        hostExists={hostExists}
+                        dialogKey={`${rowData.databaseInstanceName}_${rowData.name}`}
+                    />
+                }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
                 secondaryButton={t('databases.inventory.cancel')}
                 closeCallback={() => {
@@ -431,7 +462,7 @@ const InstancesTable = () => {
                     if (hostExists) {
                         bxpRedirect(isWorkloadFactory);
                     } else {
-                        dispatch(setStartProtection('started'));
+                        addHostHandler(rowData);
                     }
                 }}
                 customClass={styles.protectionDialog}
@@ -448,8 +479,12 @@ const InstancesTable = () => {
 
             const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
 
+            const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+            if (workSpaceRes?.data?.items?.length) {
+                dispatch(setWorkSpaceData(workSpaceRes.data.items[0]));
+            }
+
             if (!fsxExists) {
-                const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
                 if (isCancelled(key)) return;
 
                 await discoverExistingFsxN({
@@ -519,10 +554,10 @@ const InstancesTable = () => {
 
         if (isCancelled(key)) return;
 
-        proceedWithProtection(stepData.connectors);
+        proceedWithProtection(stepData.connectors, rowData);
     };
 
-    const proceedWithProtection = (data: any) => {
+    const proceedWithProtection = (data: any, rowData: any) => {
         const activeAgents = data?.occms?.filter((item: any) => item.agent.status === 'active') || [];
 
         if (activeAgents.length === 0) {
@@ -530,7 +565,7 @@ const InstancesTable = () => {
         }
         if (activeAgents.length > 0) {
             // Single Connector case
-            showSingleAgentDialog(activeAgents, false);
+            showSingleAgentDialog(activeAgents, false, rowData);
         }
     };
 

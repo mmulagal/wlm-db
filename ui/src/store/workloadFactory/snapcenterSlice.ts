@@ -3,13 +3,17 @@ import { SnapCenterEntities } from '../../utils/types/snapCenterTypes';
 
 export const initialSandboxState: SnapCenterEntities = {
     selectedAgent: [],
-    dataMap: {}
+    dataMap: {},
+    workSpaceData: {}
 };
 
 const snapCenterSlice = createSlice({
     name: 'snapCenter',
     initialState: initialSandboxState,
     reducers: {
+        setWorkSpaceData: (state, action: PayloadAction<any>) => {
+            state.workSpaceData = action.payload;
+        },
         setSelectedAgent: (state, action: PayloadAction<any>) => {
             state.selectedAgent = action.payload;
         },
@@ -35,6 +39,7 @@ const snapCenterSlice = createSlice({
     }
 });
 
-export const { setSelectedAgent, setDataForRow, clearDataForRow, cancelProtectionForRow } = snapCenterSlice.actions;
+export const { setWorkSpaceData, setSelectedAgent, setDataForRow, clearDataForRow, cancelProtectionForRow } =
+    snapCenterSlice.actions;
 
 export default snapCenterSlice;
