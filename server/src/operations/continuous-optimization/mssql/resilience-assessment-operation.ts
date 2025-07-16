@@ -253,11 +253,18 @@ async function getResilienceDriftAssessment(
                 : Promise.resolve(undefined)
         ]);
 
+        const haChecksArray =
+            haChecks && !Array.isArray(haChecks) && haChecks.errorMessage
+                ? [haChecks]
+                : Array.isArray(haChecks)
+                ? haChecks
+                : [];
+
         const assessmentData: DriftAssessmentResponseType = {
             snapshotPolicy,
             crr: crrData,
             awsBackup: awsBackup as ParameterDriftResponseType,
-            highAvailability: haChecks as ParameterDriftResponseType[]
+            highAvailability: haChecksArray
         };
         return assessmentData;
     } catch (error) {
