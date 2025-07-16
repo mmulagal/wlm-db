@@ -16,14 +16,18 @@ export interface DatabaseInstanceTopology {
     fileSystemStorageCapacity: number;
     fileSystemThroughputCapacity: number;
     fileSystemStorageType: string;
-    ontapVolumes: Array<{
-        id: string;
-        name: string;
-    }>;
-    ontapLuns: Array<{
-        id: string;
-        name: string;
-    }>;
+    storageSummary: {
+        volumes: Array<{
+            id: string;
+            name: string;
+            luns: Array<{
+                id: string;
+                name: string;
+            }>;
+        }>;
+        totalVolumes: number;
+        totalLuns: number;
+    };
 }
 
 export interface WorkloadFactoryResourceEntities {
