@@ -8,7 +8,7 @@ import { useAppSelector } from '../../../../../store/storeHooks';
 import { hexToRgb } from '../../../../../ui-components/Charts/chartCommon';
 import { ReactComponent as NoData } from '../../../../../assets/empty_table_message.svg';
 import { ReactComponent as LoadingEmptyGraph } from '../../../../../assets/loading_empty_graph.svg';
-import { getMaxGraceValueLineGraph } from '../ErrorInvestigationUtility';
+import { getHourLabelsBetween, getMaxGraceValueLineGraph } from '../ErrorInvestigationUtility';
 import { formatTimeAMPM } from '../../../../../utils/utilityFunctions';
 
 Chart.register(...registerables);
@@ -27,17 +27,6 @@ const ErrorLineGraph = ({ startTime, endTime, color, data }: ErrorLineGraphProps
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const loading = errorInvestigationLoading || investigationDatesLoading;
 
-    // Generate xLabels based on startTime and endTime (hourly)
-    const getHourLabelsBetween = (start: number, end: number) => {
-        const labels = [];
-        for (let t = start; t <= end; t += 60 * 60 * 1000) {
-            const date = new Date(t);
-            const hour = date.getHours().toString().padStart(2, '0');
-            const minute = date.getMinutes().toString().padStart(2, '0');
-            labels.push(`${hour}:${minute}`);
-        }
-        return labels;
-    };
     const allLabels = getHourLabelsBetween(startTime, endTime);
     // Only show first, middle, last labels, others are empty
     const xLabels = allLabels.map((label, idx) => {

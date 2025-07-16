@@ -1,10 +1,10 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import _ from 'lodash';
+import React from 'react';
 import DoughnutChartComponent from '../../Doughnut/DoughnutChartComponent';
 import styles from './CapacityUtilization.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { GENERAL } from '../../../../../utils/appConstants';
-import React from 'react';
 
 const CapacityUtilization = React.memo(() => {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);

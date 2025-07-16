@@ -24,7 +24,8 @@ import {
     eiSeverityOptionList,
     eiTimeOptions,
     recalculateErrorFields,
-    getStartAndEndTimeFromRange
+    getStartAndEndTimeFromRange,
+    calculateTotalHourlyErrorCounts
 } from './ErrorInvestigationUtility';
 import { formatDateWithTime } from '../../../../utils/utilityFunctions';
 
@@ -92,26 +93,7 @@ const ErrorInvestigation = () => {
             setStartTime(newStartTime);
             setEndTime(newEndTime);
 
-            // Calculate total hourly error counts with all timestamps present in all objects
-            const allTimestampsSet = new Set<number>();
-            newFilteredData.forEach(err => {
-                (err.hourlyErrorCounts || []).forEach(h => {
-                    if (h.hour) {
-                        allTimestampsSet.add(new Date(h.hour).getTime());
-                    }
-                });
-            });
-            const allTimestamps = Array.from(allTimestampsSet).sort((a, b) => a - b);
-
-            // For each timestamp, sum the count from all objects (0 if missing)
-            const totalHourlyCounts = allTimestamps.map(ts => {
-                const count = newFilteredData.reduce((sum, err) => {
-                    const found = (err.hourlyErrorCounts || []).find(h => new Date(h.hour).getTime() === ts);
-                    return sum + (found ? found.count || 0 : 0);
-                }, 0);
-                return { hour: ts, count };
-            });
-            setTotalHourlyErrorCounts(totalHourlyCounts);
+            setTotalHourlyErrorCounts(calculateTotalHourlyErrorCounts(newFilteredData));
 
             // Set header data
             const uniqueErrors = errorInvestigationData.length;

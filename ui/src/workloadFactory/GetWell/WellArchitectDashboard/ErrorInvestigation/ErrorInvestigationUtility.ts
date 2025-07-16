@@ -128,7 +128,7 @@ export const getStartAndEndTimeFromRange = (
     selectedTimeFrame: string,
     timeRange: { from: string; to: string; fromPeriod: string; toPeriod: string }
 ) => {
-    const result = data.map(obj => ({ ...obj }));
+    const result = data;
     if (data?.length > 0 && selectedTimeFrame && !selectedTimeFrame.includes(' - ')) {
         let hours = 24;
         if (selectedTimeFrame === eiTimeOptions?.last12) hours = 12;
@@ -260,4 +260,33 @@ export const getMaxGraceValueLineGraph = (data: number[]) => {
     if (maxVal === 4) return 4;
     if (maxVal < 100) return 10;
     return 100;
+};
+
+// New helper to generate hour labels between two timestamps (inclusive)
+export const getHourLabelsBetween = (start: number, end: number) => {
+    const labels = [];
+    for (let t = start; t <= end; t += 60 * 60 * 1000) {
+        const date = new Date(t);
+        const hour = date.getHours().toString().padStart(2, '0');
+        const minute = date.getMinutes().toString().padStart(2, '0');
+        labels.push(`${hour}:${minute}`);
+    }
+    return labels;
+};
+
+export const calculateTotalHourlyErrorCounts = (newFilteredData: ErrorInvestigationGetApiResponse[]) => {
+    // Build a map of timestamp -> total count in one pass for performance
+    const timestampCountMap = new Map<number, number>();
+    newFilteredData.forEach(err => {
+        (err.hourlyErrorCounts || []).forEach(h => {
+            if (h.hour) {
+                const ts = new Date(h.hour).getTime();
+                timestampCountMap.set(ts, (timestampCountMap.get(ts) || 0) + (h.count || 0));
+            }
+        });
+    });
+    // Ensure all timestamps are present (even if missing in some objects)
+    const allTimestamps = Array.from(timestampCountMap.keys()).sort((a, b) => a - b);
+    const totalHourlyCounts = allTimestamps.map(ts => ({ hour: ts, count: timestampCountMap.get(ts) || 0 }));
+    return totalHourlyCounts;
 };

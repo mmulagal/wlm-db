@@ -2,18 +2,7 @@ import React, { useMemo } from 'react';
 import { DsPopover, DsTypography } from '@tlveng/wlm-ds';
 import styles from './ErrorCountChart.module.scss';
 import { formatTimeAMPM } from '../../../../../utils/utilityFunctions';
-
-// New helper to generate hour labels between two timestamps (inclusive)
-const getHourLabelsBetween = (start: number, end: number) => {
-    const labels = [];
-    for (let t = start; t <= end; t += 60 * 60 * 1000) {
-        const date = new Date(t);
-        const hour = date.getHours().toString().padStart(2, '0');
-        const minute = date.getMinutes().toString().padStart(2, '0');
-        labels.push(`${hour}:${minute}`);
-    }
-    return labels;
-};
+import { getHourLabelsBetween } from '../ErrorInvestigationUtility';
 
 type ErrorCountChartProps = {
     startTime: number;
@@ -39,8 +28,8 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
     // Helper to get hour offset in ms
     const getOffset = (label: string, idx: number) => {
         // Use the actual timestamp for the label, not just hour
-        const t = startTime + idx * 60 * 60 * 1000;
-        return t - startTime;
+        const laterTime = startTime + idx * 60 * 60 * 1000;
+        return laterTime - startTime;
     };
     // Prevent label overlap: only show every Nth label if too many
     const maxLabels = 13;
@@ -48,60 +37,73 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
     if (xAxisNumbers.length > maxLabels) {
         labelStep = Math.ceil(xAxisNumbers.length / maxLabels);
     }
+    // Helper to format time range for marker popover
+    const formatRange = (h1: number, h2: number, min: string) => {
+        const d1 = new Date();
+        d1.setHours(h1, Number(min), 0, 0);
+        const d2 = new Date();
+        d2.setHours(h2, Number(min), 0, 0);
+        // Remove AM/PM from the first part
+        const first = formatTimeAMPM(`${d1.getHours().toString().padStart(2, '0')}:${min}`).replace(/\s?(AM|PM)/, '');
+        const second = formatTimeAMPM(`${d2.getHours().toString().padStart(2, '0')}:${min}`);
+        return `${first} - ${second}`;
+    };
+
+    // Prepare marker data
+    const markerData = markedNumbers.map(num => {
+        const idx = xAxisNumbers.indexOf(num);
+        const offset = getOffset(num, idx);
+        const leftPercent = (offset / denominator) * 100;
+        const count = hourToCount[num] || 0;
+        const [hourStr, minuteStr] = num.split(':');
+        const hour = Number(hourStr);
+        let prevHour = hour - 1;
+        if (prevHour < 0) prevHour = 23;
+        const timeRange = formatRange(prevHour, hour, minuteStr);
+        return {
+            num,
+            leftPercent,
+            count,
+            timeRange
+        };
+    });
+
+    // Prepare label data
+    const labelData = xAxisNumbers.map((num, idx) => {
+        const isLast = idx === xAxisNumbers.length - 1;
+        const isFirst = idx === 0;
+        const offset = getOffset(num, idx);
+        const leftPercent = (offset / denominator) * 100;
+        let textAlign: 'left' | 'right' | 'center' = 'center';
+        if (isFirst) textAlign = 'left';
+        else if (isLast) textAlign = 'right';
+        let transform = 'translateX(-50%)';
+        if (isFirst) transform = 'translateX(0)';
+        else if (isLast) transform = 'translateX(-100%)';
+        return {
+            num,
+            idx,
+            isFirst,
+            isLast,
+            leftPercent,
+            textAlign,
+            transform
+        };
+    });
+
     return (
         <div className={styles.errorCountChart}>
             <div className={styles.bar} />
-            {markedNumbers.map(num => {
-                const idx = xAxisNumbers.indexOf(num);
-                const offset = getOffset(num, idx);
-                const leftPercent = (offset / denominator) * 100;
-                // Find the count for this hour
-                const count = hourToCount[num] || 0;
-                // Calculate previous hour for range
-                const [hourStr, minuteStr] = num.split(':');
-                const hour = Number(hourStr);
-                let prevHour = hour - 1;
-                if (prevHour < 0) prevHour = 23;
-                // Format time range string
-                const formatRange = (h1: number, h2: number, min: string) => {
-                    const d1 = new Date();
-                    d1.setHours(h1, Number(min), 0, 0);
-                    const d2 = new Date();
-                    d2.setHours(h2, Number(min), 0, 0);
-                    // Remove AM/PM from the first part
-                    const first = formatTimeAMPM(`${d1.getHours().toString().padStart(2, '0')}:${min}`).replace(
-                        /\s?(AM|PM)/,
-                        ''
-                    );
-                    const second = formatTimeAMPM(`${d2.getHours().toString().padStart(2, '0')}:${min}`);
-                    return `${first} - ${second}`;
-                };
-                const timeRange = formatRange(prevHour, hour, minuteStr);
-                return (
-                    <div
-                        key={`marker-${num}`}
-                        className={styles.markerWrapper}
-                        style={{ left: `calc(${leftPercent}%)` }}
-                    >
-                        <DsPopover title={`Time: ${timeRange} \nErrors: ${count}`} trigger="hover" placement="top">
-                            <div className={styles.marker} style={{ width: `${Math.max(2, count * 4)}px` }} />
-                        </DsPopover>
-                    </div>
-                );
-            })}
+            {markerData.map(({ num, leftPercent, count, timeRange }) => (
+                <div key={`marker-${num}`} className={styles.markerWrapper} style={{ left: `calc(${leftPercent}%)` }}>
+                    <DsPopover title={`Time: ${timeRange} \nErrors: ${count}`} trigger="hover" placement="top">
+                        <div className={styles.marker} style={{ width: `${Math.max(2, count * 4)}px` }} />
+                    </DsPopover>
+                </div>
+            ))}
             <div className={styles.labels}>
-                {xAxisNumbers.map((num, idx) => {
-                    const isLast = idx === xAxisNumbers.length - 1;
-                    const isFirst = idx === 0;
-                    const offset = getOffset(num, idx);
-                    const leftPercent = (offset / denominator) * 100;
-                    let textAlign: 'left' | 'right' | 'center' = 'center';
-                    if (isFirst) textAlign = 'left';
-                    else if (isLast) textAlign = 'right';
-                    let transform = 'translateX(-50%)';
-                    if (isFirst) transform = 'translateX(0)';
-                    else if (isLast) transform = 'translateX(-100%)';
-                    return idx % labelStep === 0 || isLast ? (
+                {labelData.map(({ num, idx, isFirst, isLast, leftPercent, textAlign, transform }) =>
+                    idx % labelStep === 0 || isLast ? (
                         <div
                             key={`label-${num}-${Math.round(leftPercent * 1000)}-${startTime}-${endTime}`}
                             className={styles.label}
@@ -116,8 +118,8 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
                                 {formatTimeAMPM(num, isFirst || isLast)}
                             </DsTypography>
                         </div>
-                    ) : null;
-                })}
+                    ) : null
+                )}
             </div>
         </div>
     );
