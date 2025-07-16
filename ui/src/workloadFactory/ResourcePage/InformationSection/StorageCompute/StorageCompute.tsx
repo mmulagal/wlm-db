@@ -1,4 +1,5 @@
-import { Typography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
+import { DsTypography } from '@tlveng/wlm-ds';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -16,64 +17,65 @@ type accordionType = {
 
 const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
     const resourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
+    const { t } = useTranslation();
     const contentArea = () => (
         <>
             <div className={commonStyles.row}>
-                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.DB_INSTANCE_TYPE}
-                </Typography>
-                <Typography
+                </DsTypography>
+                <DsTypography
                     variant="Regular_14"
                     className={commonStyles.valueCSS}
                     title={resourceDetails?.topology?.ec2Details?.[0].instanceType || ''}
                 >
                     {resourceDetails?.topology?.ec2Details?.[0].instanceType}
-                </Typography>
+                </DsTypography>
             </div>
 
             <div className={commonStyles.row}>
-                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.FILE_SYS_NAME}
-                </Typography>
-                <Typography
+                </DsTypography>
+                <DsTypography
                     variant="Regular_14"
                     className={commonStyles.valueCSS}
                     title={resourceDetails?.topology?.fileSystemName || ''}
                 >
                     {resourceDetails?.topology?.fileSystemName}
-                </Typography>
+                </DsTypography>
             </div>
 
             <div className={commonStyles.row}>
-                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.FILE_SYS_ID}
-                </Typography>
-                <Typography
+                </DsTypography>
+                <DsTypography
                     variant="Regular_14"
                     className={commonStyles.valueCSS}
                     title={resourceDetails?.topology?.fileSystemId || ''}
                 >
                     {resourceDetails?.topology?.fileSystemId}
-                </Typography>
+                </DsTypography>
             </div>
 
             <div className={commonStyles.row}>
-                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.FILE_SYS_TYPE}
-                </Typography>
-                <Typography
+                </DsTypography>
+                <DsTypography
                     variant="Regular_14"
                     className={commonStyles.valueCSS}
                     title={resourceDetails?.topology?.fileSystemType || ''}
                 >
                     {resourceDetails?.topology?.fileSystemType}
-                </Typography>
+                </DsTypography>
             </div>
 
             <div className={commonStyles.row}>
-                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.FILE_SYS_STATUS}
-                </Typography>
+                </DsTypography>
                 <div className={styles.statusIconClass}>
                     {resourceDetails?.topology?.fileSystemStatus &&
                     resourceDetails?.topology?.fileSystemStatus.toLowerCase() === 'available' ? (
@@ -81,43 +83,90 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     ) : (
                         <Failure />
                     )}
-                    <Typography
+                    <DsTypography
                         variant="Regular_14"
                         className={commonStyles.valueCSS}
                         title={resourceDetails?.topology?.fileSystemStatus || ''}
                     >
                         {formatString(resourceDetails?.topology?.fileSystemStatus)}
-                    </Typography>
+                    </DsTypography>
                 </div>
             </div>
 
             <div className={commonStyles.row}>
-                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.STORAGE_CAPACITY_INFO}
-                </Typography>
-                <Typography variant="Regular_14">
+                </DsTypography>
+                <DsTypography variant="Regular_14">
                     {resourceDetails?.topology?.fileSystemStorageCapacity
                         ? `${resourceDetails.topology.fileSystemStorageCapacity} GiB`
                         : ''}
-                </Typography>
+                </DsTypography>
             </div>
 
             <div className={commonStyles.row}>
-                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.FILE_SYS_DP_TYPE}
-                </Typography>
-                <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemDeploymentMode}</Typography>
+                </DsTypography>
+                <DsTypography variant="Regular_14">{resourceDetails?.topology?.fileSystemDeploymentMode}</DsTypography>
             </div>
 
             <div className={commonStyles.row}>
-                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.FSX_THROUGHPUT_TYPE}
-                </Typography>
-                <Typography variant="Regular_14">
+                </DsTypography>
+                <DsTypography variant="Regular_14">
                     {resourceDetails?.topology?.fileSystemThroughputCapacity
                         ? `${resourceDetails.topology.fileSystemThroughputCapacity} MB/s`
                         : ''}
-                </Typography>
+                </DsTypography>
+            </div>
+
+            <div className={commonStyles.row}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
+                    {t('databases.resource-overview.associated_volumes')}
+                </DsTypography>
+                <DsTypography
+                    variant="Regular_14"
+                    className={commonStyles.valueCSS}
+                    title={
+                        resourceDetails?.databaseInstanceTopology?.ontapVolumes
+                            ?.map((volume: any) => volume.name)
+                            .join(', ') || ''
+                    }
+                >
+                    {resourceDetails?.databaseInstanceTopology?.ontapVolumes &&
+                    resourceDetails?.databaseInstanceTopology?.ontapVolumes?.length
+                        ? resourceDetails?.databaseInstanceTopology?.ontapVolumes
+                              ?.map((volume: any) => volume.name)
+                              .join(', ')
+                        : t('databases.general.not-available')}
+                </DsTypography>
+            </div>
+
+            <div className={commonStyles.row}>
+                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
+                    {t('databases.resource-overview.associated_luns')}
+                </DsTypography>
+                <DsTypography
+                    variant="Regular_14"
+                    className={commonStyles.valueCSS}
+                    title={
+                        resourceDetails?.databaseInstanceTopology?.ontapLuns &&
+                        resourceDetails?.databaseInstanceTopology?.ontapLuns?.length
+                            ? resourceDetails?.databaseInstanceTopology?.ontapLuns
+                                  ?.map((volume: any) => volume.name)
+                                  .join(', ')
+                            : t('databases.general.not-available')
+                    }
+                >
+                    {resourceDetails?.databaseInstanceTopology?.ontapLuns &&
+                    resourceDetails?.databaseInstanceTopology?.ontapLuns?.length
+                        ? resourceDetails?.databaseInstanceTopology?.ontapLuns
+                              ?.map((volume: any) => volume.name)
+                              .join(', ')
+                        : t('databases.general.not-available')}
+                </DsTypography>
             </div>
         </>
     );

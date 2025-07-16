@@ -4,14 +4,38 @@ export interface InstanceDetailsData {
     ec2InstanceId: string;
 }
 
+// Add a placeholder type for DatabaseInstanceTopology if not imported from elsewhere
+export interface DatabaseInstanceTopology {
+    serverType: string;
+    serverInstallationMode: string;
+    fileSystemType: string;
+    fileSystemId: string;
+    fileSystemName: string;
+    fileSystemDeploymentMode: string;
+    fileSystemStatus: string;
+    fileSystemStorageCapacity: number;
+    fileSystemThroughputCapacity: number;
+    fileSystemStorageType: string;
+    ontapVolumes: Array<{
+        id: string;
+        name: string;
+    }>;
+    ontapLuns: Array<{
+        id: string;
+        name: string;
+    }>;
+}
+
 export interface WorkloadFactoryResourceEntities {
     imageDataUrl: string;
     instanceDetailsData: InstanceDetailsData;
     sqlServerUserName: string;
     passwordResetLoading: boolean;
     resourceLoading: boolean;
+    // eslint-disable-next-line no-use-before-define
     resourceDetails: WorkloadFactoryResourceDetails;
     databaseListLoading: boolean;
+    // eslint-disable-next-line no-use-before-define
     databaseList: WorkloadFactoryDatabaseItem[];
     selectedResourceId: string;
     selectedDatabaseInstance: string;
@@ -47,6 +71,7 @@ export interface WorkloadFactoryResourceDetails {
         clusterName: string;
         activeNode: string;
     };
+    databaseInstanceTopology: DatabaseInstanceTopology;
     resourceTrend: {
         cpuUsed: ResourceTrendMetric[];
         readThroughput: ResourceTrendMetric[];
