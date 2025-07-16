@@ -319,7 +319,7 @@ const InstancesTable = () => {
     const isCancelled = (key: any) => store.getState().snapCenter.dataMap[key]?.cancelled;
 
     const handleProtection = async (rowData: any) => {
-        const key = `${rowData.databaseInstanceName}_${rowData.name}`;
+        const key = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
         const existingData = store.getState().snapCenter.dataMap[key] || {};
 
         dispatch(setDataForRow({ key, stepData: { cancelled: false } }));
@@ -415,7 +415,11 @@ const InstancesTable = () => {
 
     //Function to handle Add host
     const addHostHandler = async (rowData: any) => {
-        dispatch(startProtectionStep1(`${rowData.databaseInstanceName}_${rowData.name}`));
+        dispatch(
+            startProtectionStep1(
+                `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`
+            )
+        );
         const state: any = store.getState().snapCenter;
         const payload = {
             connectorId: state.selectedAgent[0]?.id,
@@ -448,7 +452,7 @@ const InstancesTable = () => {
                     <SingleAgentDialog
                         agents={connectors}
                         hostExists={hostExists}
-                        dialogKey={`${rowData.databaseInstanceName}_${rowData.name}`}
+                        dialogKey={`${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`}
                     />
                 }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}

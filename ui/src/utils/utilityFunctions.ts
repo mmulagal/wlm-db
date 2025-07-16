@@ -2121,10 +2121,16 @@ export const compareDataAndCalculateDifference = (arrays: any) => {
     };
 };
 
-export const formatString = (s: string) => {
-    s = s.toLowerCase();
+export const formatString = (s: string | undefined) => {
+    if (s === undefined) {
+        return '';
+    }
+    if (!s) {
+        return '';
+    }
+    const lowerCased = s.toLowerCase();
     // Capitalize the first letter and return the result
-    return s.charAt(0).toUpperCase() + s.slice(1);
+    return lowerCased.charAt(0).toUpperCase() + lowerCased.slice(1);
 };
 
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {

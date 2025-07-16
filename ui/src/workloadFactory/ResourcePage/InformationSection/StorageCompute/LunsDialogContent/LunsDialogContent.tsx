@@ -26,7 +26,7 @@ const LunsDialogContent = ({ resourceDetails }: any) => {
         <div className={styles.tableWrapper}>
             <div className={styles.tableRow}>
                 <DsTypography variant="Semibold_14" className={styles.tableCellFsx}>
-                    {t('databases.resource-overview.fsx-for-ontap')}
+                    FSx for ONTAP
                 </DsTypography>
                 <DsTypography variant="Semibold_14" className={styles.tableCell}>
                     {t('databases.resource-overview.associated_volumes')}
