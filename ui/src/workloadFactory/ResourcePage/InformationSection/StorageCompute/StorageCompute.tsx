@@ -9,6 +9,9 @@ import { ReactComponent as Success } from '../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../assets/error-icon.svg';
 import styles from './StorageCompute.module.scss';
 import { formatString } from '../../../../utils/utilityFunctions';
+import { Button, useDialog } from '@netapp/design-system';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import LunsDialogContent from './LunsDialogContent/LunsDialogContent';
 
 type accordionType = {
     handleToggle: any;
@@ -16,8 +19,21 @@ type accordionType = {
 };
 
 const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
+    const { setDialog } = useDialog();
     const resourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
     const { t } = useTranslation();
+
+    const handleLUNSDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.resource-overview.associated_luns')}
+                content={<LunsDialogContent resourceDetails={resourceDetails} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+                customClass={styles.protectionDialog}
+            />
+        );
+    };
     const contentArea = () => (
         <>
             <div className={commonStyles.row}>
@@ -124,48 +140,25 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
 
             <div className={commonStyles.row}>
                 <DsTypography variant="Semibold_14" className={commonStyles.heading}>
-                    {t('databases.resource-overview.associated_volumes')}
+                    {t('databases.resource-overview.associated_luns')}:
                 </DsTypography>
-                <DsTypography
-                    variant="Regular_14"
-                    className={commonStyles.valueCSS}
-                    title={
-                        resourceDetails?.databaseInstanceTopology?.ontapVolumes
-                            ?.map((volume: any) => volume.name)
-                            .join(', ') || ''
-                    }
-                >
-                    {resourceDetails?.databaseInstanceTopology?.ontapVolumes &&
-                    resourceDetails?.databaseInstanceTopology?.ontapVolumes?.length
-                        ? resourceDetails?.databaseInstanceTopology?.ontapVolumes
-                              ?.map((volume: any) => volume.name)
-                              .join(', ')
-                        : t('databases.general.not-available')}
-                </DsTypography>
-            </div>
-
-            <div className={commonStyles.row}>
-                <DsTypography variant="Semibold_14" className={commonStyles.heading}>
-                    {t('databases.resource-overview.associated_luns')}
-                </DsTypography>
-                <DsTypography
-                    variant="Regular_14"
-                    className={commonStyles.valueCSS}
-                    title={
-                        resourceDetails?.databaseInstanceTopology?.ontapLuns &&
-                        resourceDetails?.databaseInstanceTopology?.ontapLuns?.length
-                            ? resourceDetails?.databaseInstanceTopology?.ontapLuns
-                                  ?.map((volume: any) => volume.name)
-                                  .join(', ')
-                            : t('databases.general.not-available')
-                    }
-                >
-                    {resourceDetails?.databaseInstanceTopology?.ontapLuns &&
-                    resourceDetails?.databaseInstanceTopology?.ontapLuns?.length
-                        ? resourceDetails?.databaseInstanceTopology?.ontapLuns
-                              ?.map((volume: any) => volume.name)
-                              .join(', ')
-                        : t('databases.general.not-available')}
+                <DsTypography variant="Regular_14" className={commonStyles.valueCSS}>
+                    <div className={commonStyles.luns}>
+                        {resourceDetails?.databaseInstanceTopology?.storageSummary &&
+                        resourceDetails?.databaseInstanceTopology?.storageSummary?.volumes &&
+                        resourceDetails?.databaseInstanceTopology?.storageSummary?.volumes.length ? (
+                            <>
+                                <DsTypography variant="Regular_14">
+                                    {resourceDetails?.databaseInstanceTopology?.storageSummary?.totalLuns}
+                                </DsTypography>
+                                <Button variant="text" onClick={handleLUNSDialog}>
+                                    View
+                                </Button>
+                            </>
+                        ) : (
+                            t('databases.general.not-available')
+                        )}
+                    </div>
                 </DsTypography>
             </div>
         </>

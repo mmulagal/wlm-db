@@ -83,6 +83,12 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+
+    .luns {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
 }
 
 .circleSVG {

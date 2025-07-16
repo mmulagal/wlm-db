@@ -1,0 +1,34 @@
+.tableWrapper {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 24px 0;
+
+    .tableRow {
+        display: table-row;
+        height: 56px;
+    }
+
+    .tableCell {
+        display: table-cell;
+        width: 250px;
+        max-width: 250px;
+        min-width: 250px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .tableCellFsx {
+        display: table-cell;
+        width: 200px;
+        max-width: 200px;
+        min-width: 200px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
