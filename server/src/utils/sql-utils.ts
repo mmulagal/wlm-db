@@ -138,7 +138,6 @@ async function getDatabaseInstanceTopology(
         };
     }
 
-    logger.info('topology data', { topologyData });
     return topologyData;
 }
 
