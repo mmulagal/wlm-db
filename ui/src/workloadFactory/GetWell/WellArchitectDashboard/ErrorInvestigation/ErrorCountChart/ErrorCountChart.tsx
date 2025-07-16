@@ -3,12 +3,16 @@ import { DsPopover, DsTypography } from '@tlveng/wlm-ds';
 import styles from './ErrorCountChart.module.scss';
 import { formatTimeAMPM } from '../../../../../utils/utilityFunctions';
 import { getHourLabelsBetween } from '../ErrorInvestigationUtility';
+import { MS_PER_HOUR } from '../../../../../utils/consts';
 
 type ErrorCountChartProps = {
     startTime: number;
     endTime: number;
     hourlyErrorCounts?: { hour: number; count: number }[];
 };
+
+const MIN_LEFT_PERCENT = 1; // Minimum left percent to avoid markers being too close to the left edge
+const MAX_RIGHT_PERCENT = 97; // Maximum left percent to avoid markers being too close to the right edge
 
 const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCountChartProps) => {
     // Generate x-axis labels based on startTime and endTime
@@ -28,7 +32,7 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
     // Helper to get hour offset in ms
     const getOffset = (label: string, idx: number) => {
         // Use the actual timestamp for the label, not just hour
-        const laterTime = startTime + idx * 60 * 60 * 1000;
+        const laterTime = startTime + idx * MS_PER_HOUR;
         return laterTime - startTime;
     };
     // Prevent label overlap: only show every Nth label if too many
@@ -56,8 +60,7 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
         let leftPercent = (offset / denominator) * 100;
 
         // To prevent markers from being too close to the edges
-        if (leftPercent === 0) leftPercent = 1;
-        else if (leftPercent === 100) leftPercent = 97;
+        leftPercent = Math.max(MIN_LEFT_PERCENT, Math.min(leftPercent, MAX_RIGHT_PERCENT));
 
         const count = hourToCount[num] || 0;
         const [hourStr, minuteStr] = num.split(':');
