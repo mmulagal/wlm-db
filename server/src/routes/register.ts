@@ -5,7 +5,8 @@ import {
     ManageMsSqlSchemaV2,
     JobBasedManageSchema,
     RegisterCredentialsSchema,
-    SingleRegisterCredentialsSchema
+    SingleRegisterCredentialsSchema,
+    OracleRegisterInstancesSchema
 } from './schemas/register-schema';
 import { prepareForManage } from '../operations/discover-operations';
 
@@ -94,7 +95,7 @@ export default function registerRoutes(fastify: FastifyInstance) {
         return response;
     });
 
-    server.post('/v1/oracle/register', { schema: JobBasedManageSchema }, async request => {
+    server.post('/v1/oracle/register', { schema: OracleRegisterInstancesSchema }, async request => {
         const {
             params: { accountId },
             body: { items }
