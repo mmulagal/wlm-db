@@ -504,7 +504,7 @@ const InstancesTable = () => {
         if (!stepData.rbac) {
             const rbacRes = await getRBACPrivileges({ accountID: store.getState().auth.accountId });
             if (rbacRes?.data?.items && rbacRes?.data?.items?.length > 0) {
-                const emailID = store.getState().auth.userMetadata?.email || 'rpanwar@netapp.com';
+                const emailID = store.getState().auth.userMetadata?.email;
                 const matchingUser = rbacRes.data.items.find((item: any) => item.email === emailID);
                 if (matchingUser) {
                     if (matchingUser?.roles) {

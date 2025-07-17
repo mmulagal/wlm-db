@@ -61,7 +61,7 @@ const DialogComponent = ({
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
-    const { selectedOptimizeConfig, protectionStatus } = useAppSelector(state => state.inventoryV2);
+    const { selectedOptimizeConfig } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const { password, confirmPassword } = useAppSelector(state => {
         if (dialogFrom === FROM_DIALOG.FSXADMIN) {
@@ -128,9 +128,9 @@ const DialogComponent = ({
 
     const disabledCheck = () => {
         // SC integration step 1 dialog
-        if (dialogFrom === FROM_DIALOG.SINGLE_AGENT && protectionStatus === 'started') {
-            return true;
-        }
+        // if (dialogFrom === FROM_DIALOG.SINGLE_AGENT && protectionStatus === 'started') {
+        //     return true;
+        // }
         if (dialogFrom === FROM_DIALOG.LOADER) {
             return true;
         }

@@ -81,4 +81,15 @@ router.post(
     }
 );
 
+//Job api call - add host
+router.post(`backup-recovery/organizations/:accountID/v1/workloads/sql/hosts`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            jobId: 'f662093f-9f26-4b88-ba12-4c57e656922f',
+            jobUrl: 'https://staging.api.bluexp.netapp.com/cbs-backend/api/account/8b037670-92c8-480a-9ddd-d0bbfd1b18cb/v1/jobs/f662093f-9f26-4b88-ba12-4c57e656922f',
+            errorMessage: ''
+        });
+    }, 100);
+});
+
 export default router;
