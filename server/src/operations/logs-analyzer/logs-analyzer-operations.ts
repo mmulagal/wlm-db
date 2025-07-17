@@ -8,6 +8,7 @@ import {
     logs_analysis_reports as LogsAnalysisReports,
     STORAGE_TYPE
 } from '@prisma/client';
+import ms from 'ms';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
 import { AuditStatus, HttpErrorCodes } from '../../utils/consts';
@@ -169,7 +170,9 @@ async function updateLogsAnalysisReportsInDB(
     databaseInstanceId: string,
     jobId: string,
     databaseType: string,
-    jsonSsmLogsResponse: object
+    jsonSsmLogsResponse: object,
+    startTime?: Date,
+    endTime?: Date
 ) {
     logger.info('Updating logs analysis reports in DB:', {
         accountId,
@@ -188,11 +191,37 @@ async function updateLogsAnalysisReportsInDB(
             account_id: accountId,
             database_type: databaseType as DATABASE_TYPE,
             logs_analysis_data: jsonSsmLogsResponse,
+            start_time: startTime,
+            end_time: endTime,
             version: LOGS_ANALYZER_PACKAGE_VERSION,
             creation_time: new Date()
         }
     ]);
 }
+
+async function getLastAnalysisData(accountId: string, databaseHostId: string, databaseInstanceId: string) {
+    logger.info('Getting last logs analysis data:', {
+        accountId,
+        databaseHostId,
+        databaseInstanceId
+    });
+    try {
+        const [report] = await listLogsAnalysisReports(
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            undefined,
+            undefined,
+            'creation_time',
+            'desc',
+            1
+        );
+        return report;
+    } catch (error) {
+        logger.error('Error fetching last logs analysis data:', error);
+    }
+}
+
 async function handleLogsAnalysis(
     accountId: string,
     credentialsId: string,
@@ -203,11 +232,20 @@ async function handleLogsAnalysis(
     logsAnalyzerFromTimestamp: number = 1,
     inferenceConfig?: InferenceConfigType,
     logsAnalyzerS3SignedUrl?: string,
-    logLevel?: string
+    logLevel?: string,
+    logsWindowDuration?: number
 ) {
     logger.info(
         `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`,
-        { logsAnalyzerS3SignedUrl, inferenceConfig, logsCountToConsider, logsAnalyzerFromTimestamp, jobId }
+        {
+            logsAnalyzerS3SignedUrl,
+            inferenceConfig,
+            logsCountToConsider,
+            logsAnalyzerFromTimestamp,
+            logLevel,
+            logsWindowDuration,
+            jobId
+        }
     );
     let jobStatus;
     let jobError;
@@ -218,7 +256,11 @@ async function handleLogsAnalysis(
             isManaged: true
         };
 
-        const { database_type: dbType } = managedInstance;
+        const {
+            database_type: dbType,
+            database_instance_id: databaseInstanceId,
+            resource_id: databaseHostId
+        } = managedInstance;
         const databaseType = dbType?.toLowerCase();
         const { nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
             accountId,
@@ -262,6 +304,13 @@ async function handleLogsAnalysis(
             );
         }
 
+        logsAnalyzerFromTimestamp = await getTimestampToProcessLogs(
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            logsAnalyzerFromTimestamp
+        );
+
         const logsAnalyserScriptCommand =
             databaseType === DATABASE_TYPE.mssql
                 ? getWindowsPrepareScript({
@@ -278,7 +327,8 @@ async function handleLogsAnalysis(
                       inferenceProfileArn,
                       jobId,
                       inferenceConfig,
-                      logLevel
+                      logLevel,
+                      logsWindowDuration
                   })
                 : getLinuxPrepareScript({
                       s3SignedUrl,
@@ -323,14 +373,19 @@ async function handleLogsAnalysis(
         logger.info('Logs analysis compleeted successfully for jobId:', jobId);
         logger.debug(`Logs analysis response: ${JSON.stringify(jsonSsmLogsResponse)}`);
 
+        const { start_time: startTime, end_time: endTime } =
+            (jsonSsmLogsResponse as unknown as { start_time: number; end_time: number }) || {};
+
         await updateLogsAnalysisReportsInDB(
             accountId,
             credentialsId,
-            managedInstance.resource_id,
-            managedInstance.database_instance_id,
+            databaseHostId,
+            databaseInstanceId,
             jobId,
             databaseType,
-            jsonSsmLogsResponse
+            jsonSsmLogsResponse,
+            startTime ? new Date(startTime) : undefined,
+            endTime ? new Date(endTime) : undefined
         );
         await updateLongRunningAuditGroup(AuditStatus.SUCCESS, 'Logs analysis completed successfully');
         await updateJobDetails(accountId, jobId, {
@@ -353,6 +408,35 @@ async function handleLogsAnalysis(
     }
 }
 
+async function getTimestampToProcessLogs(
+    accountId: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    logsAnalyzerFromTimestamp: number
+) {
+    logger.info('Getting timestamp to process logs:', {
+        accountId,
+        databaseHostId,
+        databaseInstanceId,
+        logsAnalyzerFromTimestamp
+    });
+
+    const report = await getLastAnalysisData(accountId, databaseHostId, databaseInstanceId);
+
+    let timestampLastLogProcessed = Date.now() - ms('24h');
+    if (logsAnalyzerFromTimestamp !== 1) {
+        // If logsAnalyzerFromTimestamp is not 1 (1 is the default value indicating beginning of time), there is a user input passed down, use the provided timestamp
+        logger.info('Using provided logsAnalyzerFromTimestamp:', logsAnalyzerFromTimestamp);
+        timestampLastLogProcessed = logsAnalyzerFromTimestamp;
+    } else if (report && !isEmpty(report)) {
+        // If report exists, use the end time of the last report
+        logger.debug('Using end time from the last logs analysis report');
+        const { end_time: endTime } = report;
+        timestampLastLogProcessed = endTime ? endTime.getTime() : timestampLastLogProcessed;
+    }
+    return timestampLastLogProcessed;
+}
+
 async function triggerLogsAnalysis(
     accountId: string,
     credentialsId: string,
@@ -363,7 +447,8 @@ async function triggerLogsAnalysis(
     logsAnalyzerFromTimestamp?: number,
     inferenceConfig?: InferenceConfigType,
     logsAnalyzerS3SignedUrl?: string,
-    logLevel?: string
+    logLevel?: string,
+    logsWindowDuration?: number
 ) {
     logger.info('Triggering logs analysis:', {
         accountId,
@@ -375,7 +460,8 @@ async function triggerLogsAnalysis(
         logsAnalyzerFromTimestamp,
         inferenceConfig,
         logsAnalyzerS3SignedUrl,
-        logLevel
+        logLevel,
+        logsWindowDuration
     });
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
@@ -420,7 +506,8 @@ async function triggerLogsAnalysis(
             logsAnalyzerFromTimestamp,
             inferenceConfig,
             logsAnalyzerS3SignedUrl,
-            logLevel
+            logLevel,
+            logsWindowDuration
         );
         return { jobId };
     } catch (error) {

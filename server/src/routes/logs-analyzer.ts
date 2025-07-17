@@ -28,7 +28,8 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
                     logsAnalyzerS3SignedUrl,
                     logsCountToConsider,
                     logsAnalyzerFromTimestamp,
-                    logLevel
+                    logLevel,
+                    logsWindowDuration
                 }
             } = castRequest(request);
 
@@ -42,7 +43,8 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
                 logsAnalyzerFromTimestamp,
                 inferenceConfig,
                 logsAnalyzerS3SignedUrl,
-                logLevel
+                logLevel,
+                logsWindowDuration
             );
             return reply.send(response);
         }
