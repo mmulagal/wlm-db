@@ -232,11 +232,20 @@ async function handleLogsAnalysis(
     logsAnalyzerFromTimestamp: number = 1,
     inferenceConfig?: InferenceConfigType,
     logsAnalyzerS3SignedUrl?: string,
-    logLevel?: string
+    logLevel?: string,
+    logsWindowDuration?: number
 ) {
     logger.info(
         `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`,
-        { logsAnalyzerS3SignedUrl, inferenceConfig, logsCountToConsider, logsAnalyzerFromTimestamp, jobId }
+        {
+            logsAnalyzerS3SignedUrl,
+            inferenceConfig,
+            logsCountToConsider,
+            logsAnalyzerFromTimestamp,
+            logLevel,
+            logsWindowDuration,
+            jobId
+        }
     );
     let jobStatus;
     let jobError;
@@ -318,7 +327,8 @@ async function handleLogsAnalysis(
                       inferenceProfileArn,
                       jobId,
                       inferenceConfig,
-                      logLevel
+                      logLevel,
+                      logsWindowDuration
                   })
                 : getLinuxPrepareScript({
                       s3SignedUrl,
@@ -437,7 +447,8 @@ async function triggerLogsAnalysis(
     logsAnalyzerFromTimestamp?: number,
     inferenceConfig?: InferenceConfigType,
     logsAnalyzerS3SignedUrl?: string,
-    logLevel?: string
+    logLevel?: string,
+    logsWindowDuration?: number
 ) {
     logger.info('Triggering logs analysis:', {
         accountId,
@@ -449,7 +460,8 @@ async function triggerLogsAnalysis(
         logsAnalyzerFromTimestamp,
         inferenceConfig,
         logsAnalyzerS3SignedUrl,
-        logLevel
+        logLevel,
+        logsWindowDuration
     });
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
@@ -494,7 +506,8 @@ async function triggerLogsAnalysis(
             logsAnalyzerFromTimestamp,
             inferenceConfig,
             logsAnalyzerS3SignedUrl,
-            logLevel
+            logLevel,
+            logsWindowDuration
         );
         return { jobId };
     } catch (error) {
