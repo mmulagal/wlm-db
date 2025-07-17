@@ -150,6 +150,7 @@ interface HighAvailabilityClusterDriveLetterDetails {
     name: string;
     status: string;
     missingDriveLetters: string[];
+    primaryNodeDriveLetters: string[];
 }
 
 interface HighAvailabilityAssessment {

@@ -30,7 +30,7 @@ import {
     CrrAssessment,
     CrrDetails,
     HighAvailabilityAssessment,
-    OntapRequestParams
+    Metadata
 } from '../../../utils/common-types';
 import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import { getInstanceInfo } from '../../database/database-operations';
@@ -50,7 +50,6 @@ import {
     HEARTBEAT_SETTINGS,
     GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
 } from '../../workloads/mssql/high-availability-scripts';
-import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -177,6 +176,7 @@ async function getResilienceDriftAssessment(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
+    databaseInstanceName: string,
     fieldsValues: string[] = [],
     databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
 ) {
@@ -184,6 +184,7 @@ async function getResilienceDriftAssessment(
         credentialsId,
         databaseInstanceId,
         databaseHostId,
+        databaseInstanceName,
         fieldsValues
     });
     const shouldTriggerSnapshotPolicyAssessment =
@@ -207,6 +208,8 @@ async function getResilienceDriftAssessment(
     const awsbackupAssessmentData = configDataMap[AssessmentCategories.AWS_BACKUP];
     const crrAssessmentData = configDataMap[AssessmentCategories.CRR];
     const highAvailabilityAssessmentData = configDataMap[AssessmentCategories.HIGH_AVAILABILITY];
+
+    logger.info('config data map', { configDataMap });
 
     try {
         const [snapshotPolicy, crrData, awsBackup, haChecks] = await Promise.all([
@@ -248,6 +251,7 @@ async function getResilienceDriftAssessment(
                       region,
                       databaseHostId,
                       databaseInstanceId,
+                      databaseInstanceName,
                       highAvailabilityAssessmentData
                   )
                 : Promise.resolve(undefined)
@@ -687,140 +691,85 @@ async function getCrrDriftData(
     }
 }
 
-function checkFCIDeploymentType(instanceDetail: DatabaseInstance, context: string) {
-    const sqlDeploymentType =
-        typeof instanceDetail?.database_deployment_type === 'string'
-            ? instanceDetail.database_deployment_type
-            : undefined;
-    logger.debug(`[checkFCIDeploymentType] context=${context}, deploymentType=${sqlDeploymentType}`);
-    if (!sqlDeploymentType || sqlDeploymentType.toUpperCase() !== 'FCI') {
-        const message = `SQL deployment type is '${
-            sqlDeploymentType ?? 'unknown'
-        }'. High Availability configuration assessment (${context}) is only applicable for FCI deployment type.`;
-        logger.info(message);
-        return { error: message };
-    }
+interface LunMapping {
+    lunUuid: string;
+    igroupUuid: string;
+    igroupName: string;
+    initiatorNames: string[];
+}
+interface LunIqnDetails {
+    hostIqns: string;
+    lunMappings: [LunMapping];
 }
 
 async function getSharedStorageAssessment(
+    accountId: string,
     credentialsId: string,
     region: string,
-    accountId: string,
     databaseHostId: string,
-    instanceRecord: WorkloadInstance,
-    instanceVolumeMapping: MappedOnTapVolumeResponse[],
-    instanceDetail?: DatabaseInstance
+    instanceRecord: WorkloadInstance
 ) {
-    // Helper to call SSM for a node and parse the result
-    async function fetchNodeAssessment(nodeInstanceId: string, ontapParams: OntapRequestParams, lunUuids: string[]) {
-        const psScript = GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN(ontapParams, lunUuids);
-        const ssmResp = await callSsmExecution(
-            credentialsId,
-            region,
-            [psScript],
-            nodeInstanceId,
-            'Get Host IQN and LUN mappings',
-            accountId,
-            false,
-            undefined,
-            true
-        );
-        return JSON.parse(ssmResp);
-    }
+    logger.info('Fetching shared storage details', { accountId, credentialsId, region, databaseHostId });
 
-    logger.info('[getSharedStorageAssessment] called', {
-        credentialsId,
-        region,
-        accountId,
-        databaseHostId,
-        instanceName: instanceRecord?.name,
-        volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
-    });
+    let errorMessage;
     try {
-        const details = instanceDetail as DatabaseInstance;
-        const { node1InstanceId, node2InstanceId } = (details?.resource?.metadata || {}) as {
-            node1InstanceId?: string;
-            node2InstanceId?: string;
-        };
+        const { fsxFileSystem, databaseInstanceObject, mappedLunUuids, id: databaseInstanceId } = instanceRecord;
 
-        if (!node1InstanceId && !node2InstanceId) {
-            throw new Error('node1instanceid and node2instanceid not found in instanceRecord metadata');
+        const { metadata: resourceMetadata } = (databaseInstanceObject as DatabaseInstance).resource;
+        const { node1InstanceId, node2InstanceId } = resourceMetadata as Metadata;
+
+        if (!node1InstanceId || !node2InstanceId) {
+            errorMessage = `Unable to fetch primary node and (or) standby node details for ${accountId}, ${credentialsId}, ${databaseHostId}, ${databaseInstanceId}.`;
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
         }
 
-        if (!instanceVolumeMapping || instanceVolumeMapping.length === 0) {
-            const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-        }
+        const command = GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN(fsxFileSystem, region, mappedLunUuids || []);
+        const [primaryNodeResponse, standbyNodeResponse] = await Promise.all([
+            callSsmExecution(
+                credentialsId,
+                region,
+                [command],
+                node1InstanceId,
+                `Get Host IQN and LUN mappings from node ${node1InstanceId}`,
+                accountId,
+                false,
+                undefined,
+                true
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                [command],
+                node2InstanceId,
+                `Get Host IQN and LUN mappings from node ${node2InstanceId}`,
+                accountId,
+                false,
+                undefined,
+                true
+            )
+        ]);
 
-        // Gather all unique LUN UUIDs from the mappings
-        const lunRecords = Object.values(instanceVolumeMapping).flatMap(i => i.lunRecords || []);
-        const lunUuids = lunRecords.map(lun => lun.uuid);
+        const primaryNodeParsedResponse = JSON.parse(primaryNodeResponse) as LunIqnDetails;
+        const standbyNodeParsedResponse = JSON.parse(standbyNodeResponse) as LunIqnDetails;
 
-        // Prepare ONTAP params
-        const ontapParams: OntapRequestParams = {
-            fsxId: instanceRecord.fsxFileSystem,
-            region,
-            apiEndpoint: '',
-            apiQueryFilter: ''
-        };
+        const primaryHostIqns = primaryNodeParsedResponse?.hostIqns?.split(',').map((iqn: string) => iqn.trim()) || [];
+        const standbyHostIqns = standbyNodeParsedResponse?.hostIqns?.split(',').map((iqn: string) => iqn.trim()) || [];
+        const allHostIqns = [...new Set([...primaryHostIqns, ...standbyHostIqns])];
 
-        // Fetch for both nodes (in parallel if both exist)
-        const nodeIds = [node1InstanceId, node2InstanceId].filter(Boolean) as string[];
-        const nodeResults = await Promise.all(
-            nodeIds.map(nodeId => fetchNodeAssessment(nodeId, ontapParams, lunUuids))
-        );
+        const primaryNodeLunMappings = primaryNodeParsedResponse?.lunMappings;
 
-        // Collect all host IQNs from both nodes
-        const allHostIqns: string[] = nodeResults
-            .map(res => res.HostIQN)
-            .flatMap(iqns => iqns.split(',').map((iqn: string) => iqn.trim()))
-            .filter(Boolean);
-
-        const lunMappings = nodeResults[0]?.LUNMappings || [];
-
-        // Assess each LUN
-        const results = lunRecords.map(lun => {
-            const lunMapping = lunMappings.find((r: any) => r.LUN_UUID === lun.uuid);
-            const igroupUuid: string | undefined = lunMapping?.IGROUP_UUID;
-            const igroupName: string | undefined = lunMapping?.IGROUP_NAME;
-            let initiatorNames: string[] = [];
-            if (Array.isArray(lunMapping?.InitiatorNames)) {
-                // Flatten and split any string that contains whitespace or comma
-                initiatorNames = lunMapping.InitiatorNames.flatMap((s: string) =>
-                    s
-                        .split(/[\s,]+/)
-                        .map(x => x.trim())
-                        .filter(Boolean)
-                );
-            } else if (typeof lunMapping?.InitiatorNames === 'string') {
-                initiatorNames = lunMapping.InitiatorNames.split(/[\s,]+/)
-                    .map((s: string) => s.trim())
-                    .filter(Boolean);
-            }
-
-            // Assessment: Check if all host IQNs are present in initiatorNames for this LUN
-            const initiatorAssessmentStatus = allHostIqns.every(iqn => initiatorNames.includes(iqn))
+        const lunDetails = primaryNodeLunMappings.map(lunMapping => ({
+            ...lunMapping,
+            status: allHostIqns.every(iqn => lunMapping.initiatorNames.includes(iqn))
                 ? AssessmentStatus.OPTIMIZED
-                : AssessmentStatus.NOT_OPTIMIZED;
+                : AssessmentStatus.NOT_OPTIMIZED
+        }));
 
-            return {
-                lunUuid: lun.uuid,
-                lunName: lun.name,
-                status: initiatorAssessmentStatus,
-                igroupDetails: {
-                    igroupUuid,
-                    igroupName,
-                    initiatorNames,
-                    hostIqnsChecked: allHostIqns
-                }
-            };
-        });
-
-        const allOptimized = results.every(r => r.status === AssessmentStatus.OPTIMIZED);
         return {
-            status: allOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-            lunDetails: results
+            status: lunDetails.every(lun => lun.status === AssessmentStatus.OPTIMIZED)
+                ? AssessmentStatus.OPTIMIZED
+                : AssessmentStatus.NOT_OPTIMIZED,
+            lunDetails
         };
     } catch (err) {
         logger.error('Exception running SSM for shared-storage:', err);
@@ -828,151 +777,78 @@ async function getSharedStorageAssessment(
     }
 }
 
-const DRIVE_LETTER_SECTIONS = ['data', 'log', 'tempDb'] as const;
-
 async function getDriveLetterAssessment(
+    accountId: string,
     credentialsId: string,
     region: string,
-    accountId: string,
     databaseHostId: string,
-    instanceRecord: WorkloadInstance,
-    instanceVolumeMapping: MappedOnTapVolumeResponse[],
-    instanceDetail?: DatabaseInstance
+    instanceRecord: WorkloadInstance
 ) {
-    logger.info('Calculate drive letter assessment for', {
+    logger.info('Fetch drive letter assessment for', {
         credentialsId,
         region,
         accountId,
         databaseHostId,
-        instanceName: instanceRecord?.name,
-        volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
+        databaseInstanceId: instanceRecord.id
     });
+
+    let errorMessage;
     try {
-        const detail = instanceDetail as DatabaseInstance;
-        logger.info('Instance detail for Drive Letter assessment:', {
-            instanceId: detail?.database_instance_id,
-            metadataKeys: Object.keys(detail?.metadata || {})
-        });
-
-        const { node1InstanceId, node2InstanceId } = (detail?.resource?.metadata || {}) as {
-            node1InstanceId?: string;
-            node2InstanceId?: string;
-        };
+        const { databaseInstanceObject, id: databaseInstanceId, activeNodeInstanceid } = instanceRecord;
+        const { metadata: resourceMetadata } = (databaseInstanceObject as DatabaseInstance).resource;
+        const { node1InstanceId, node2InstanceId } = resourceMetadata as Metadata;
         if (!node1InstanceId || !node2InstanceId) {
-            const message = 'Both node1InstanceId and node2InstanceId are required for drive letter assessment.';
-            logger.error(message);
-            return { error: message };
+            errorMessage = `Unable to fetch primary node and (or) standby node details for ${accountId}, ${credentialsId}, ${databaseHostId}, ${databaseInstanceId}.`;
+            logger.error(errorMessage);
+            throw new Error(errorMessage);
         }
-
-        const { activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(credentialsId, region, {
-            node1InstanceId,
-            node2InstanceId
-        });
-        logger.debug('Calculate drive letter assessment for active/standby node', {
-            activeNodeInstanceId,
-            standbyNodeInstanceId
-        });
-
-        let mappedVolumeDriveLetters: string[] = [];
-        const mappedVolumeDriveLetterMap: {
-            data: Record<string, string>;
-            log: Record<string, string>;
-            tempDb: Record<string, string>;
-        } = { data: {}, log: {}, tempDb: {} };
-
-        try {
-            if (!activeNodeInstanceId || !standbyNodeInstanceId) {
-                throw new Error(
-                    'Primary or Standby node information not found. Please ensure both nodes are configured for drive letter assessment.'
-                );
-            }
-            const fetchDriveDetailsCommand = [FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS(instanceRecord)];
-            let driveDetails: any = await callSsmExecution(
+        const isActiveNodePrimary = activeNodeInstanceid === node1InstanceId;
+        const [primaryNodeResponse, standbyNodeResponse] = await Promise.all([
+            callSsmExecution(
                 credentialsId,
                 region,
-                fetchDriveDetailsCommand,
-                standbyNodeInstanceId,
-                'Fetch drive letters for mapped volumes',
+                [FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS(instanceRecord)],
+                isActiveNodePrimary ? node1InstanceId : node2InstanceId,
+                `Fetch drive letters for mapped volumes on primary node ${
+                    isActiveNodePrimary ? node1InstanceId : node2InstanceId
+                }`,
                 accountId,
                 false,
                 undefined,
                 true
-            );
-            driveDetails = JSON.parse(driveDetails);
-            mappedVolumeDriveLetters = [];
-            DRIVE_LETTER_SECTIONS.forEach(section => {
-                mappedVolumeDriveLetterMap[section] = {};
-                if (Array.isArray(driveDetails[section])) {
-                    driveDetails[section].forEach(item => {
-                        const driveLetter = item?.driveLetter;
-                        if (driveLetter) {
-                            const key = item.name || item.lunUuid || item.ontapVolumeName;
-                            mappedVolumeDriveLetterMap[section][key] = driveLetter;
-                            mappedVolumeDriveLetters.push(driveLetter);
-                        }
-                    });
-                }
-            });
-            logger.debug('mappedVolumeDriveLetters for Drive Letter assessment', {
-                count: mappedVolumeDriveLetters.length
-            });
-        } catch (err) {
-            logger.error('Failed to fetch mapped volume drive letters:', err);
-            throw err;
-        }
-
-        if (mappedVolumeDriveLetters.length === 0 && Array.isArray(instanceVolumeMapping)) {
-            mappedVolumeDriveLetters = instanceVolumeMapping.map((vol: any) => vol?.driveLetter).filter(Boolean);
-            logger.debug('Drive Letter assessment: fallback mappedVolumeDriveLetters', {
-                count: mappedVolumeDriveLetters.length
-            });
-        }
-
-        let standbyNodeDriveLetters: string[] = [];
-        try {
-            if (!standbyNodeInstanceId) {
-                const message =
-                    'Standby node instance ID is missing. Please ensure both nodes are configured for drive letter assessment.';
-                logger.error(message);
-                return { error: message };
-            }
-            const standbyResp = await callSsmExecution(
+            ),
+            callSsmExecution(
                 credentialsId,
                 region,
                 [DRIVE_LETTER],
-                activeNodeInstanceId,
-                'Get drive letters on standby node',
+                isActiveNodePrimary ? node2InstanceId : node1InstanceId,
+                `Fetch available drive letters on standby node ${
+                    isActiveNodePrimary ? node2InstanceId : node1InstanceId
+                }`,
                 accountId,
                 false,
                 undefined,
                 true
-            );
-            const standbyRespParsed = sqlResponseParsing(standbyResp);
-            standbyNodeDriveLetters = Array.isArray(standbyRespParsed)
-                ? standbyRespParsed
-                      .map(letter => (typeof letter === 'string' ? letter.trim().toUpperCase() : ''))
-                      .filter(letter => /^[A-Z]$/.test(letter))
-                : [];
-            logger.debug(
-                `[Drive Letter Assessment] Standby node has ${standbyNodeDriveLetters.length} drive letters detected.`
-            );
-        } catch (err) {
-            logger.error(`[Drive Letter Assessment] Unable to fetch drive letters on standby node: ${err?.toString()}`);
-            return { error: err?.toString() };
-        }
+            )
+        ]);
 
-        const uniqueMappedVolumeDriveLetters = Array.from(new Set(mappedVolumeDriveLetters));
-        const allPresent = uniqueMappedVolumeDriveLetters.every(letter => standbyNodeDriveLetters.includes(letter));
-        const missingDriveLetters = uniqueMappedVolumeDriveLetters.filter(
-            letter => !standbyNodeDriveLetters.includes(letter)
-        );
-        logger.info(
-            `[Drive Letter Assessment] Assessment completed. All drive letters present: ${allPresent}. Missing drive letters: ${missingDriveLetters.length}.`
-        );
+        const primaryNodeParsedResponse = sqlResponseParsing(primaryNodeResponse);
+        const standbyNodeParsedResponse = sqlResponseParsing(standbyNodeResponse);
+        const driveLetterSections: string[] = ['data', 'log', 'tempDb'];
 
+        const primaryNodeDriveLetters = driveLetterSections.flatMap(section =>
+            (primaryNodeParsedResponse[section] || []).map((item: any) => item?.driveLetter).filter(Boolean)
+        );
+        const standbyNodeDriveLetters = Array.isArray(standbyNodeParsedResponse)
+            ? standbyNodeParsedResponse.map(letter => (typeof letter === 'string' ? letter.trim().toUpperCase() : ''))
+            : [];
+
+        const missingDriveLetters = [
+            ...new Set(primaryNodeDriveLetters.filter(letter => !standbyNodeDriveLetters.includes(letter)))
+        ];
         return {
-            status: allPresent ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-            details: { missingDriveLetters }
+            status: isEmpty(missingDriveLetters) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            details: { missingDriveLetters, primaryNodeDriveLetters }
         };
     } catch (err) {
         logger.error('Exception running SSM for drive-letter:', err);
@@ -980,24 +856,37 @@ async function getDriveLetterAssessment(
     }
 }
 
+interface HeartbeatSettings {
+    CrossSiteDelay: number;
+    SameSubnetDelay: number;
+    CrossSubnetDelay: number;
+    CrossSiteThreshold: number;
+    SameSubnetThreshold: number;
+    CrossSubnetThreshold: number;
+}
 async function getCombinedHighAvailabilityAssessment(
+    accountId: string,
     credentialsId: string,
     region: string,
-    accountId: string,
     instanceRecord: WorkloadInstance
 ) {
-    logger.info(`Running combined high availability SSM for instance "${instanceRecord?.name}"...`);
+    logger.info('Fetch cluster quorum, heartbeat settings, sql service status for instance', {
+        accountId,
+        credentialsId,
+        region,
+        databaseInstanceId: instanceRecord.id
+    });
+
     try {
         // Prepare all commands in a single SSM document execution
-        const sqlServerServicesCmd = SQL_SERVER_SERVICES(instanceRecord.name);
-        logger.info('SQL Server Services command:', sqlServerServicesCmd);
-        const commands = compact([CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS, sqlServerServicesCmd]);
+        const { name: instanceName, activeNodeInstanceid } = instanceRecord;
+        const commands = compact([CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS, SQL_SERVER_SERVICES(instanceName)]);
         const rawResponses = await callSsmExecution(
             credentialsId,
             region,
             commands,
-            instanceRecord.activeNodeInstanceid,
-            'Get High Availability Assessment: combined',
+            activeNodeInstanceid,
+            `Fetch cluster quorum, heartbeat settings, sql service status for instance ${instanceName} on node ${activeNodeInstanceid}`,
             accountId,
             false,
             undefined,
@@ -1006,60 +895,70 @@ async function getCombinedHighAvailabilityAssessment(
 
         // Parse SSM output into separate objects
         const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);
-        const [quorumRaw, heartbeatRaw, sqlServerServicesRaw] = rawResponsesParsed;
+        const [parsedQuorumData, parsedHeartSettingsData, parsedSqlServiceData] = rawResponsesParsed;
 
         // --- Cluster Quorum ---
-        const quorumResult = quorumRaw; // Already parsed object
-        let clusterQuorumResult;
-        if (!quorumResult || typeof quorumResult !== 'object') {
-            logger.error('Unable to parse cluster quorum output.');
-            clusterQuorumResult = {
-                status: AssessmentStatus.NOT_OPTIMIZED,
-                details: null,
-                error: 'Failed to parse quorum script output'
-            };
-        } else if (quorumResult.IsPhysicalDiskAndMajority === true) {
-            clusterQuorumResult = { status: AssessmentStatus.OPTIMIZED, details: quorumResult };
-        } else {
-            clusterQuorumResult = { status: AssessmentStatus.NOT_OPTIMIZED, details: quorumResult };
-        }
+        const clusterQuorumResult =
+            !parsedQuorumData || typeof parsedQuorumData !== 'object'
+                ? {
+                      status: AssessmentStatus.NOT_OPTIMIZED,
+                      details: null,
+                      error: 'Unable to parse quorum data from ssm response'
+                  }
+                : {
+                      status: parsedQuorumData.IsPhysicalDiskAndMajority
+                          ? AssessmentStatus.OPTIMIZED
+                          : AssessmentStatus.NOT_OPTIMIZED,
+                      details: parsedQuorumData
+                  };
 
         // --- Heartbeat Settings ---
-        const heartbeatSettingsParsed = heartbeatRaw; // Already parsed object
-        const recommended = storageGoldenConfigData.resiliency.heartbeatSettings;
-        let heartbeatResult;
+        const recommendedHeartbeatSettings = storageGoldenConfigData.resiliency.heartbeatSettings as HeartbeatSettings;
+        let heartbeatResult: {
+            status: AssessmentStatus;
+            details: HeartbeatSettings;
+            error?: string;
+        };
         if (
-            !heartbeatSettingsParsed ||
-            typeof heartbeatSettingsParsed !== 'object' ||
-            Array.isArray(heartbeatSettingsParsed)
+            !parsedHeartSettingsData ||
+            typeof parsedHeartSettingsData !== 'object' ||
+            Array.isArray(parsedHeartSettingsData)
         ) {
             heartbeatResult = {
                 status: AssessmentStatus.NOT_OPTIMIZED,
-                details: null,
+                details: parsedHeartSettingsData,
                 error: 'Heartbeat settings are missing or invalid'
             };
         } else {
-            const notOptimized: Record<string, { current: number; recommended: number }> = {};
-            let allOptimized = true;
-            const details: Record<string, { current: number; recommended: number }> = {};
-            for (const key of Object.keys(recommended) as (keyof typeof recommended)[]) {
-                const foundKey = Object.keys(heartbeatSettingsParsed).find(k => k.toLowerCase() === key.toLowerCase());
-                const current = foundKey ? Number(heartbeatSettingsParsed[foundKey]) : NaN;
-                const rec = recommended[key];
-                details[key] = { current, recommended: rec };
-                if (current !== rec) {
-                    notOptimized[key] = { current, recommended: rec };
-                    allOptimized = false;
-                }
-            }
-            heartbeatResult = allOptimized
-                ? { status: AssessmentStatus.OPTIMIZED, details: heartbeatSettingsParsed }
-                : { status: AssessmentStatus.NOT_OPTIMIZED, details };
+            const heartbeatDetails = Object.entries(recommendedHeartbeatSettings).reduce(
+                (acc, [key, recommendedValue]) => {
+                    const currentValue = parsedHeartSettingsData[key];
+                    acc[key] = {
+                        current: currentValue,
+                        recommended: recommendedValue,
+                        status:
+                            currentValue === recommendedValue
+                                ? AssessmentStatus.OPTIMIZED
+                                : AssessmentStatus.NOT_OPTIMIZED
+                    };
+                    return acc;
+                },
+                {} as Record<string, { current: number; recommended: number; status: AssessmentStatus }>
+            );
+
+            const allOptimized = Object.values(heartbeatDetails).every(
+                detail => detail.status === AssessmentStatus.OPTIMIZED
+            );
+
+            heartbeatResult = {
+                status: allOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+                details: parsedHeartSettingsData
+            };
         }
 
         // --- SQL Server Services ---
         let sqlServerServicesResult;
-        if (sqlServerServicesRaw === undefined) {
+        if (!parsedSqlServiceData) {
             // If missing, mark as not optimized
             sqlServerServicesResult = {
                 status: AssessmentStatus.NOT_OPTIMIZED,
@@ -1067,13 +966,12 @@ async function getCombinedHighAvailabilityAssessment(
                 error: 'SQL Server Services response missing'
             };
         } else {
-            const sqlServicesResp = sqlServerServicesRaw; // Already parsed object/array
             let services: any[] = [];
-            if (Array.isArray(sqlServicesResp)) {
-                services = sqlServicesResp;
-            } else if (sqlServicesResp && typeof sqlServicesResp === 'object') {
-                services = [sqlServicesResp];
-            }
+            services = Array.isArray(parsedSqlServiceData)
+                ? parsedSqlServiceData
+                : parsedSqlServiceData
+                ? [parsedSqlServiceData]
+                : [];
             const allManualAndRunning =
                 services.length > 0 &&
                 services.every(
@@ -1106,9 +1004,8 @@ async function initiateHighAvailabilityAssessment(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    parentJobId: string,
     instanceRecord: WorkloadInstance,
-    instanceVolumeMapping: MappedOnTapVolumeResponse[]
+    parentJobId: string
 ) {
     logger.info('Initiating High availability resiliency assessment for:', {
         accountId,
@@ -1118,64 +1015,11 @@ async function initiateHighAvailabilityAssessment(
         parentJobId
     });
 
-    if (!instanceRecord) {
-        logger.error('Instance record is required for high availability assessment.');
-        throw new Error('Instance record required for SSM checks');
-    }
-
-    const instanceDetail = (await getInstanceInfo(
-        accountId,
-        credentialsId,
-        databaseHostId,
-        instanceRecord.id
-    )) as DatabaseInstance;
-
     const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = instanceRecord;
+
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
     const jobName = 'High Availability Assessment';
     const jobDescription = jobName;
-
-    const fciCheck = checkFCIDeploymentType(instanceDetail, 'main');
-    if (fciCheck) {
-        logger.info(`High availability assessment skipped: ${fciCheck.error}`);
-        const jobStatus: JOBSTATUS = JOBSTATUS.FAILED;
-        const errorMessage = fciCheck.error;
-
-        const { id: highAvailabilityAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-            name: jobName,
-            description: jobDescription,
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            status: JOBSTATUS.FAILED,
-            type: JOBTYPE.ASSESSMENT
-        });
-
-        await createDatabaseInstanceConfigData([
-            {
-                account_id: accountId,
-                credentials_id: credentialsId,
-                region,
-                resource_id: databaseHostId,
-                database_instance_id: databaseInstanceId,
-                creation_time: new Date(Date.now()),
-                config_data_type: AssessmentCategories.HIGH_AVAILABILITY,
-                config_data: {
-                    sharedStorage: fciCheck,
-                    clusterQuorum: fciCheck,
-                    heartbeat: fciCheck,
-                    sqlServerServices: fciCheck,
-                    errorMessage
-                }
-            }
-        ]);
-        await updateJobDetails(accountId, highAvailabilityAssessmentJobId, {
-            endTime: Date.now(),
-            status: jobStatus,
-            error: errorMessage
-        });
-        return;
-    }
-
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
 
@@ -1195,27 +1039,10 @@ async function initiateHighAvailabilityAssessment(
     let sqlServerServicesResult: any;
 
     try {
-        logger.info('Running all high availability checks...');
         const [sharedStorage, driveLetter, combinedHighAvailability] = await Promise.all([
-            getSharedStorageAssessment(
-                credentialsId,
-                region,
-                accountId,
-                databaseHostId,
-                instanceRecord,
-                instanceVolumeMapping,
-                instanceDetail
-            ),
-            getDriveLetterAssessment(
-                credentialsId,
-                region,
-                accountId,
-                databaseHostId,
-                instanceRecord,
-                instanceVolumeMapping,
-                instanceDetail
-            ),
-            getCombinedHighAvailabilityAssessment(credentialsId, region, accountId, instanceRecord)
+            getSharedStorageAssessment(accountId, credentialsId, region, databaseHostId, instanceRecord),
+            getDriveLetterAssessment(accountId, credentialsId, region, databaseHostId, instanceRecord),
+            getCombinedHighAvailabilityAssessment(accountId, credentialsId, region, instanceRecord)
         ]);
 
         sharedStorageResult = sharedStorage;
@@ -1226,14 +1053,11 @@ async function initiateHighAvailabilityAssessment(
             heartbeat: heartbeatResult,
             sqlServerServices: sqlServerServicesResult
         } = combinedHighAvailability);
-
-        logger.info('All high availability checks completed.');
     } catch (err) {
         logger.error('Error running high availability assessment:', err);
         errorMessage = err?.toString?.() || String(err);
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        logger.info('Saving high availability assessment results...');
         await createDatabaseInstanceConfigData([
             {
                 account_id: accountId,
@@ -1258,11 +1082,6 @@ async function initiateHighAvailabilityAssessment(
         status: jobStatus,
         error: errorMessage
     });
-    logger.info(
-        `High availability assessment job updated. Status: ${jobStatus}${
-            errorMessage ? `, Error: ${errorMessage}` : ''
-        }`
-    );
 }
 
 async function getHighAvailabilityDriftData(
@@ -1271,6 +1090,7 @@ async function getHighAvailabilityDriftData(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
+    databaseInstanceName: string,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
 ): Promise<ParameterDriftResponseType[] | (ParameterDriftResponseType & { errorMessage: string })> {
     logger.info('Initiating High availability resiliency assessment for:', {
@@ -1299,64 +1119,52 @@ async function getHighAvailabilityDriftData(
 
         const haChecks: ParameterDriftResponseType[] = [
             {
+                ...resiliencyConfig.highAvailability.sharedStorage,
                 name: 'shared-storage',
                 status: (sharedStorage?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: resiliencyConfig.highAvailability.sharedStorage.recommendation,
-                severity: resiliencyConfig.highAvailability.sharedStorage.severity,
-                recommendation: resiliencyConfig.highAvailability.sharedStorage.recommendation,
+
                 objectsInViolation: Array.isArray(sharedStorage?.lunDetails)
                     ? sharedStorage.lunDetails
                           .filter((lun: any) => lun.status !== AssessmentStatus.OPTIMIZED)
                           .map((lun: any) => lun.lunName)
                     : [],
-                tags: resiliencyConfig.highAvailability.sharedStorage.tags,
                 totalObjectsAssessed: Array.isArray(sharedStorage?.lunDetails) ? sharedStorage.lunDetails.length : 0,
                 totalObjectsInViolation: Array.isArray(sharedStorage?.lunDetails)
                     ? sharedStorage.lunDetails.filter((lun: any) => lun.status !== AssessmentStatus.OPTIMIZED).length
-                    : 0,
-                resourceType: resiliencyConfig.highAvailability.sharedStorage.resourceType
+                    : 0
             },
             {
+                ...resiliencyConfig.highAvailability.driveLetter,
                 name: 'drive-letter',
                 status: (driveLetter?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: resiliencyConfig.highAvailability.driveLetter.recommendation,
-                severity: resiliencyConfig.highAvailability.driveLetter.severity,
-                recommendation: resiliencyConfig.highAvailability.driveLetter.recommendation,
                 objectsInViolation: Array.isArray(driveLetter?.details?.missingDriveLetters)
                     ? driveLetter.details.missingDriveLetters
                     : [],
-                tags: resiliencyConfig.highAvailability.driveLetter.tags,
-                totalObjectsAssessed: Array.isArray(driveLetter?.details?.missingDriveLetters)
-                    ? driveLetter.details.missingDriveLetters.length
+                totalObjectsAssessed: Array.isArray(driveLetter?.details?.primaryNodeDriveLetters)
+                    ? driveLetter.details.primaryNodeDriveLetters.length
                     : 0,
                 totalObjectsInViolation: Array.isArray(driveLetter?.details?.missingDriveLetters)
                     ? driveLetter.details.missingDriveLetters.length
-                    : 0,
-                resourceType: resiliencyConfig.highAvailability.driveLetter.resourceType
+                    : 0
             },
             {
+                ...resiliencyConfig.highAvailability.clusterQuorum,
                 name: 'cluster-quorum',
                 status: (clusterQuorum?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: resiliencyConfig.highAvailability.clusterQuorum.recommendation,
-                severity: resiliencyConfig.highAvailability.clusterQuorum.severity,
-                recommendation: resiliencyConfig.highAvailability.clusterQuorum.recommendation,
                 objectsInViolation:
                     clusterQuorum?.status !== AssessmentStatus.OPTIMIZED && clusterQuorum?.details
                         ? [
                               `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}, QuorumResourceName: ${clusterQuorum.details.quorumResourceName}`
                           ]
                         : [],
-                tags: resiliencyConfig.highAvailability.clusterQuorum.tags,
                 totalObjectsAssessed: 1,
-                totalObjectsInViolation: clusterQuorum?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0,
-                resourceType: resiliencyConfig.highAvailability.clusterQuorum.resourceType
+                totalObjectsInViolation: clusterQuorum?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
             },
             {
+                ...resiliencyConfig.highAvailability.heartbeat,
                 name: 'heartbeat-settings',
                 status: (heartbeat?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: resiliencyConfig.highAvailability.heartbeat.recommendation,
-                severity: resiliencyConfig.highAvailability.heartbeat.severity,
-                recommendation: resiliencyConfig.highAvailability.heartbeat.recommendation,
+
                 objectsInViolation:
                     heartbeat?.status !== AssessmentStatus.OPTIMIZED && heartbeat?.details
                         ? Object.entries(heartbeat.details)
@@ -1366,39 +1174,27 @@ async function getHighAvailabilityDriftData(
                               )
                               .map(([key]) => key)
                         : [],
-                tags: resiliencyConfig.highAvailability.heartbeat.tags,
+
                 totalObjectsAssessed: heartbeat?.details ? Object.keys(heartbeat.details).length : 0,
                 totalObjectsInViolation:
                     heartbeat?.details && typeof heartbeat.details === 'object'
                         ? Object.values(heartbeat.details).filter(
                               (value: any) => value && typeof value === 'object' && value.current !== value.recommended
                           ).length
-                        : 0,
-                resourceType: resiliencyConfig.highAvailability.heartbeat.resourceType
+                        : 0
             },
             {
+                ...resiliencyConfig.highAvailability.sqlServerService,
                 name: 'sqlServer-service',
                 status: (sqlServerServices?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                recommended: resiliencyConfig.highAvailability.sqlServerService.recommendation,
-                severity: resiliencyConfig.highAvailability.sqlServerService.severity,
-                recommendation: resiliencyConfig.highAvailability.sqlServerService.recommendation,
+
                 objectsInViolation:
-                    sqlServerServices?.status !== AssessmentStatus.OPTIMIZED &&
-                    Array.isArray(sqlServerServices?.details)
-                        ? sqlServerServices.details
-                        : [],
-                tags: resiliencyConfig.highAvailability.sqlServerService.tags,
-                totalObjectsAssessed: Array.isArray(sqlServerServices?.details) ? sqlServerServices.details.length : 0,
-                totalObjectsInViolation:
-                    sqlServerServices?.status !== AssessmentStatus.OPTIMIZED &&
-                    Array.isArray(sqlServerServices?.details)
-                        ? sqlServerServices.details.length
-                        : 0,
-                resourceType: resiliencyConfig.highAvailability.sqlServerService.resourceType
+                    sqlServerServices?.status !== AssessmentStatus.OPTIMIZED ? [databaseInstanceName] : [],
+
+                totalObjectsAssessed: 1,
+                totalObjectsInViolation: sqlServerServices?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
             }
         ];
-
-        logger.info(`High availability drift data calculated. ${haChecks.length} checks performed.`);
         return haChecks;
     } catch (error) {
         logger.error('Error calculating high availability drift data:', error);

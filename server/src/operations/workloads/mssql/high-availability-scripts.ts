@@ -1,4 +1,3 @@
-import { OntapRequestParams } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 
@@ -59,67 +58,37 @@ Get-Service -Name $serviceName -ErrorAction SilentlyContinue |
         ConvertTo-Json | Write-Output
 `;
 
-const GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN = (params: OntapRequestParams, lunUuids: string[]) => `
-# Get host IQN and LUN igroup/initiator names for multiple LUNs
+const GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN = (fsxId: string, fsxRegion: string, lunUuids: string[]) => `
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 $WarningPreference = 'SilentlyContinue'
-$FSxID = '${params.fsxId}'
-$FSxRegion = '${params.region}'
-$apiEndpoint = '${params.apiEndpoint}'
-$apiQueryFilter = 'fields=igroup'
+$FSxID = '${fsxId}'
+$FSxRegion = '${fsxRegion}'
 ${ontapRestRequest}
 
-# Fetch host IQN(s)
-$HostIQNs = (Get-InitiatorPort | Select-Object -ExpandProperty NodeAddress) -join ', '
+$hostIqns = (Get-InitiatorPort | Select-Object -ExpandProperty NodeAddress) -join ', '
+$response = [PSCustomObject]@{
+        hostIqns = $hostIqns
+        lunMappings = @()
+}
 
-# Fetch all LUN mappings
-$results = @()
-$lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "$apiEndpoint/protocols/san/lun-maps" -ApiQueryFilter $apiQueryFilter -method "GET"
-
+$lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "/protocols/san/lun-maps" -ApiQueryFilter 'fields=igroup' -method "GET"
 $filterLuns = @(${lunUuids.map(uuid => `'${uuid}'`).join(',')})
 
 if ($lunMapsResp.records) {
-        foreach ($lunMap in $lunMapsResp.records) {
-                $lunUuid = $lunMap.lun.uuid
-                if ($filterLuns -contains $lunUuid) {
-                        $igroupObj = $lunMap.igroup
-                        $igroupUuid = $null
-                        $igroupName = $null
-                        if ($igroupObj) {
-                                if ($igroupObj.PSObject.Properties['uuid']) {
-                                        $igroupUuid = $igroupObj.uuid
-                                }
-                                if ($igroupObj.PSObject.Properties['name']) {
-                                        $igroupName = $igroupObj.name
-                                }
+        $response.lunMappings = $lunMapsResp.records | Where-Object { $filterLuns -contains $_.lun.uuid } | ForEach-Object {
+                $igroup = $_.igroup
+                if (-not [string]::IsNullOrEmpty($igroup)) {
+                        [PSCustomObject]@{
+                                lunUuid = $_.lun.uuid
+                                igroupUuid = $igroup.uuid
+                                igroupName = $igroup.name
+                                initiatorNames = $igroup.initiators -split '[,\\s]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
                         }
-                        $initiators = @()
-                        if ($igroupObj -and $igroupObj.PSObject.Properties['initiators']) {
-                                $initiatorsRaw = $igroupObj.initiators
-                                foreach ($item in @($initiatorsRaw)) {
-                                        # Split by comma and whitespace, trim, and filter empty
-                                        $itemStr = "$item"
-                                        $initiators += ($itemStr -split '[,\\s]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-                                }
-                        }
-                        $result = [PSCustomObject]@{
-                                LUN_UUID = $lunUuid
-                                IGROUP_UUID = $igroupUuid
-                                IGROUP_NAME = $igroupName
-                                InitiatorNames = $initiators
-                        }
-                        $results += $result
                 }
         }
 }
 
-# Output both host IQN and LUN mapping results as a single object
-$output = [PSCustomObject]@{
-        HostIQN = $HostIQNs
-        LUNMappings = $results
-}
-$output | ConvertTo-Json -Compress
-
+$response | ConvertTo-Json -Depth 5 -Compress
 Stop-Transcript | Out-Null
 `;
 
