@@ -138,8 +138,8 @@ function getWindowsPrepareScript(scriptParams: {
         $maxTokens = ${maxTokens};
         $topP = ${topP};
         $logLevel = "${logLevel}";
-        $logsCountToConsider = ${logsCountToConsider}
-        $timestamp = ${logsAnalyzerFromTimestamp},
+        $logsCountToConsider = ${logsCountToConsider};
+        $timestamp = ${logsAnalyzerFromTimestamp};
         $logsWindowDuration = ${logsWindowDuration};
 
         function Invoke-RetryCommand {
