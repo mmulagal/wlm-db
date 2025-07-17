@@ -253,7 +253,7 @@ function getStartTimestampForAnalysis(timeWindowHours: number = 24) {
         return hoursAgoTimestamp(timeWindowHours);
     }
     const windowHrAgoTimestamp = hoursAgoTimestamp(timeWindowHours);
-    const startTimestamp = TIMESTAMP_LAST_LOG_PROCESSED > windowHrAgoTimestamp ? TIMESTAMP_LAST_LOG_PROCESSED : windowHrAgoTimestamp;
+    const startTimestamp = Math.max(TIMESTAMP_LAST_LOG_PROCESSED, windowHrAgoTimestamp);
     return startTimestamp;
 }
 
