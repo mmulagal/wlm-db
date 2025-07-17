@@ -116,7 +116,12 @@ async function getDatabaseInstanceTopology(
         const luns = mappedDetails.flatMap(i => extractRecords(i?.lunRecords));
         const combinedOntapVolumes = volumes.map(volume => ({
             ...volume,
-            luns: luns.filter(lun => lun.name.includes(volume.name))
+            luns: luns
+                .filter(lun => lun.name.includes(volume.name))
+                .map(lun => ({
+                    ...lun,
+                    name: lun.name.split('/').pop() // Extract the last part of the lun name
+                }))
         }));
 
         topologyData = {

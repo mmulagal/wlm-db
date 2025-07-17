@@ -278,21 +278,19 @@ const JobMonitoringTable = React.memo(() => {
             renderCell: (value: any, rowData: any, { updateRowState, rowsState }: any) => {
                 const currentRowState = rowsState[rowData.id];
                 const statusType = rowData?.status.toLowerCase();
-                const isIntegrityCheckJob = rowData?.name?.includes('Check data integrity');
+                const isExpandDisable =
+                    rowData?.name?.includes('Check data integrity') ||
+                    rowData?.type === JOB_MONITORING_TYPE.LOGS_ANALYSIS;
                 return (
                     <>
                         <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
 
-                        <div
-                            className={
-                                isIntegrityCheckJob ? `${styles.arrow} ${styles['arrow-disabled']}` : styles.arrow
-                            }
-                        >
+                        <div className={isExpandDisable ? `${styles.arrow} ${styles['arrow-disabled']}` : styles.arrow}>
                             <ArrowIcon
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
                                 onClick={(e: any) => {
                                     e.stopPropagation();
-                                    if (!isIntegrityCheckJob) {
+                                    if (!isExpandDisable) {
                                         getSubJobsData(rowData?.id); // calling sub jobs api on expand click
                                         expandTableRow(updateRowState, rowData, currentRowState, rowsState);
                                     }

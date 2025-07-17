@@ -10,12 +10,12 @@ const DummySelect = ({ fromJM = false }: DummySelectProps) => (
     <div className={styles.dummySelect}>
         <Popover
             popoverClass={styles['copy-popover']}
-            children={fromJM ? 'All credentials' : 'No Credentials selected'}
+            children={fromJM ? 'All credentials' : 'No Credentials'}
             trigger="hover"
             container={
                 <div className={styles.commonSelect}>
                     <DsTypography style={{ color: 'var(--text-disabled)' }} variant="Regular_14">
-                        {fromJM ? 'All credentials' : 'No Credentials selected'}
+                        {fromJM ? 'All credentials' : 'No Credentials'}
                     </DsTypography>
                     <svg
                         width="9"
@@ -33,12 +33,12 @@ const DummySelect = ({ fromJM = false }: DummySelectProps) => (
 
         <Popover
             popoverClass={styles['copy-popover']}
-            children={fromJM ? 'All regions' : 'No regions selected'}
+            children={fromJM ? 'All regions' : 'No regions'}
             trigger="hover"
             container={
                 <div className={styles.commonSelect}>
                     <DsTypography style={{ color: 'var(--text-disabled)' }} variant="Regular_14">
-                        {fromJM ? 'All regions' : 'No regions selected'}
+                        {fromJM ? 'All regions' : 'No regions'}
                     </DsTypography>
                     <svg
                         width="9"

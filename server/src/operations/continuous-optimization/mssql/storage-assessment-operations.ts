@@ -1,6 +1,6 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
-import { compact, countBy, isEmpty, isNull } from 'lodash-es';
+import { countBy, isEmpty, isNull } from 'lodash-es';
 import {
     AssessmentCategories,
     AssessmentStatus,
@@ -109,24 +109,6 @@ async function initiateStorageAssessmentCollection(
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
-        const volumeRecords =
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.volumeRecords)
-                .flat() || [];
-        const lunRecords =
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.lunRecords)
-                .flat() || [];
-        instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-        instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
-
-        const lunNames = !isEmpty(lunRecords)
-            ? lunRecords?.map(lun => lun.name)
-            : Object.values(instanceVolumeMapping)
-                  ?.map(i => i.lunNames)
-                  .flat() || [];
-
-        instanceRecord.mappedLunNames = compact(lunNames);
 
         const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
         const ssmComment = 'Get Storage Configuration Assessment';

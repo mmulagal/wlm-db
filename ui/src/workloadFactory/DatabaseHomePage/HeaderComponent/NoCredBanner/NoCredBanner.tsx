@@ -1,13 +1,18 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
 import { Button } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import { ReactComponent as Warning } from '../../../../assets/warning.svg';
+import { ReactComponent as Close } from '../../../../assets/close-icon.svg';
 import styles from './NoCredBanner.module.scss';
 import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 
 const NoCredBanner = ({ width }: any) => {
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
+    const [isVisible, setIsVisible] = useState(true);
     const { t } = useTranslation();
 
     const openCred = () => {
@@ -28,12 +33,26 @@ const NoCredBanner = ({ width }: any) => {
             'noopener,noreferrer'
         );
     };
+
+    const closeHandler = () => {
+        setIsVisible(false);
+    };
+
+    if (!isVisible) {
+        return null;
+    }
     return (
         <div className={styles.noCredBanner} style={{ width }}>
-            <div className={styles.firstSegment}>
-                <Warning />
-                <DsTypography variant="Regular_14">{t('databases.dashboard.no-credentials')}</DsTypography>
+            <div className={styles.topSection}>
+                <div className={styles.firstSegment}>
+                    <Warning />
+                    <DsTypography variant="Regular_14">{t('databases.dashboard.no-credentials')}</DsTypography>
+                </div>
+                <div onClick={closeHandler} className={styles.image}>
+                    <Close />
+                </div>
             </div>
+
             <div className={styles.secondSegment}>
                 <DsButton onClick={openCred} type="text">
                     {t('databases.dashboard.add-credentials')}

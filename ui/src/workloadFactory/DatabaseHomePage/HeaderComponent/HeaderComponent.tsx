@@ -1018,7 +1018,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                     }
-                    disabledReason={!credentialData || credentialData.length === 0 ? 'No credentials' : ''}
+                    disabledReason={!credentialData || credentialData.length === 0 ? 'No regions' : ''}
                 />
             </div>
         </div>

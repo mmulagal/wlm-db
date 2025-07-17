@@ -56,7 +56,10 @@ enum HEADERS {
     REFERER = 'referer',
     ACTIVE_TRACE_ID = 'active-trace-id',
     X_NETAPP_REFERER = 'x-netapp-referer',
-    X_NETAPP_CACHE_CONTROL = 'x-netapp-cache-control'
+    X_NETAPP_CACHE_CONTROL = 'x-netapp-cache-control',
+    X_AGENT_ID = 'x-agent-id',
+    X_ACCOUNT_ID = 'x-account-id',
+    NETAPP_WORKSPACE_ID = 'x-netapp-workspace-id'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -165,10 +168,10 @@ enum HttpErrorCodes {
     FORBIDDEN = 403,
     NOT_FOUND = 404,
     CONFLICT = 409,
+    PRECONDITION_FAILED = 412,
     VALIDATION_ERROR = 422,
     FAILED_DEPENDENCY = 424,
     TOO_MANY_REQUESTS = 429,
-
     // Server errors
     INTERNAL_SERVER_ERROR = 500,
     SERVICE_UNAVAILABLE = 503
@@ -1800,6 +1803,7 @@ const DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN: string = config.has('daily-dr
     : '0 0 0 * * *'; // Default to every 12 midnight everyday not set in config
 
 const DEMO_BYOL_INSTANCE_ID = 'i-p9o5n2m4l8k6byol';
+const JOB_MONITORING_ENDPOINT = 'databases/job-monitoring';
 
 export {
     WLMDB,
@@ -2170,5 +2174,6 @@ export {
     DEMO_BYOL_INSTANCE_ID,
     AWS_CLI_LINUX_RELATIVE_PATH,
     JQ_LINUX_RELATIVE_PATH,
-    MAKE_LINUX_RELATIVE_PATH
+    MAKE_LINUX_RELATIVE_PATH,
+    JOB_MONITORING_ENDPOINT
 };

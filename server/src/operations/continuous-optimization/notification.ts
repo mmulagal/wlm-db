@@ -1,11 +1,12 @@
 import throat from 'throat';
 import getLogger from '../../utils/logger';
 import { DatabaseInstancesIncludingResource } from '../../utils/common-types';
-import { WF_NOTIFICATION_PRIORITY, NOTIFICATION_TYPE, DatabaseTypes } from '../../utils/consts';
+import { WF_NOTIFICATION_PRIORITY, NOTIFICATION_TYPE, DatabaseTypes, WF_CONSOLE_ENDPOINT } from '../../utils/consts';
 
 import { listDatabaseInstancesPaginated } from '../../lib/database/db';
 import prepareWFNotificationRequest from '../wf-notification-operations';
 import { hasNotOptimizedStatus } from './assessment-utils';
+import { sanitizeSnsSubject } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -57,7 +58,7 @@ interface AccountAssessmentSummary {
  * - Splits logic into small, maintainable functions for clarity.
  */
 
-async function processWellArchitectedAssessmentNotifications(initiatedBy: string) {
+export default async function processWellArchitectedAssessmentNotifications(initiatedBy: string) {
     logger.info('Processing well-architected assessment notifications', { initiatedBy });
 
     // Accumulate only the summary per account
@@ -181,14 +182,18 @@ function buildNotificationsToSend(
     for (const [accountId, summary] of Object.entries(accountAssessmentMap)) {
         const { wellArchitectedCount, notOptimizedCount } = summary;
         const total = wellArchitectedCount + notOptimizedCount;
-        const subject = `${notOptimizedCount}/${total} instances in your account aren’t well-architected`;
-        const body = `All Microsoft SQL Server instances in your account ${accountId} have been analyzed for well-architected issues. Well-architected instances: ${wellArchitectedCount}, Not optimized instances: ${notOptimizedCount}. Review well-architected status findings and recommendations in the Databases inventory from the Workload Factory console.`;
+        const subject = `${notOptimizedCount} out of ${total} Microsoft SQL Server instances in your account aren't well-architected`;
+        const body =
+            `All Microsoft SQL Server instances in your account ${accountId} have been analyzed for well-architected issues.\n\n` +
+            `Well-architected instances: ${wellArchitectedCount}\n\n` +
+            `Not optimized instances: ${notOptimizedCount}\n\n` +
+            `Review well-architected status findings and recommendations in the Databases inventory from the Workload Factory console at ${WF_CONSOLE_ENDPOINT}`;
 
         notificationsToSend.push({
             accountId,
             notificationData: {
                 content: body,
-                subject,
+                subject: sanitizeSnsSubject(subject),
                 resourceType: 'Microsoft SQL Server instance',
                 resourceId: accountId,
                 priority: WF_NOTIFICATION_PRIORITY.WF_RECOMMENDATION,
@@ -219,5 +224,3 @@ async function buildAndSendNotifications(accountAssessmentMap: Record<string, Ac
         )
     );
 }
-
-export { processWellArchitectedAssessmentNotifications };
