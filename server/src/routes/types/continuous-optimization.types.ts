@@ -281,12 +281,6 @@ const StorageParameterDriftResponse = Type.Object({
 
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
-// const HighAvailabilityDriftResponse = Type.Object({
-//     highAvailability: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))
-// });
-
-// type HighAvailabilityDriftResponseType = Static<typeof HighAvailabilityDriftResponse>;
-
 const InstanceDismissResponse = Type.Object({
     configurationName: Type.String(),
     configState: Type.String(),
@@ -690,6 +684,4 @@ export {
     ContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
     DriftAssessmentResponsePerHostType
-    // HighAvailabilityDriftResponse,
-    // HighAvailabilityDriftResponseType
 };

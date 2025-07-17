@@ -761,8 +761,8 @@ async function getSharedStorageAssessment(
         const ontapParams: OntapRequestParams = {
             fsxId: instanceRecord.fsxFileSystem,
             region,
-            apiEndpoint: '', // Fill as needed
-            apiQueryFilter: '' // Fill as needed
+            apiEndpoint: '',
+            apiQueryFilter: ''
         };
 
         // Fetch for both nodes (in parallel if both exist)
@@ -777,8 +777,6 @@ async function getSharedStorageAssessment(
             .flatMap(iqns => iqns.split(',').map((iqn: string) => iqn.trim()))
             .filter(Boolean);
 
-        // Use LUN mappings from the first node (assuming both nodes see the same LUNs)
-        // If you want to merge from both, adjust accordingly
         const lunMappings = nodeResults[0]?.LUNMappings || [];
 
         // Assess each LUN
@@ -850,7 +848,6 @@ async function getDriveLetterAssessment(
         volumeMappingCount: Array.isArray(instanceVolumeMapping) ? instanceVolumeMapping.length : 0
     });
     try {
-        // Use passed instanceDetail (always provided from main)
         const detail = instanceDetail as DatabaseInstance;
         logger.info('Instance detail for Drive Letter assessment:', {
             instanceId: detail?.database_instance_id,
@@ -1007,7 +1004,7 @@ async function getCombinedHighAvailabilityAssessment(
             true
         );
 
-        // Parse SSM output into separate objects (already parsed by utility)
+        // Parse SSM output into separate objects
         const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);
         const [quorumRaw, heartbeatRaw, sqlServerServicesRaw] = rawResponsesParsed;
 
@@ -1224,7 +1221,6 @@ async function initiateHighAvailabilityAssessment(
         sharedStorageResult = sharedStorage;
         driveLetterResult = driveLetter;
 
-        // Destructure the combined result
         ({
             clusterQuorum: clusterQuorumResult,
             heartbeat: heartbeatResult,
@@ -1299,7 +1295,6 @@ async function getHighAvailabilityDriftData(
             `Assessment data found for: sharedStorage=${!!sharedStorage}, driveLetter=${!!driveLetter}, clusterQuorum=${!!clusterQuorum}, heartbeat=${!!heartbeat}, sqlServerServices=${!!sqlServerServices}`
         );
 
-        // Import golden config for recommendations, tags, severity, resourceType
         const resiliencyConfig = storageGoldenConfigData.resiliency;
 
         const haChecks: ParameterDriftResponseType[] = [
