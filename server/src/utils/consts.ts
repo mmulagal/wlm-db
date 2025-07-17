@@ -1803,6 +1803,7 @@ const DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN: string = config.has('daily-dr
     : '0 0 0 * * *'; // Default to every 12 midnight everyday not set in config
 
 const DEMO_BYOL_INSTANCE_ID = 'i-p9o5n2m4l8k6byol';
+const JOB_MONITORING_ENDPOINT = 'databases/job-monitoring';
 
 export {
     WLMDB,
@@ -2173,5 +2174,6 @@ export {
     DEMO_BYOL_INSTANCE_ID,
     AWS_CLI_LINUX_RELATIVE_PATH,
     JQ_LINUX_RELATIVE_PATH,
-    MAKE_LINUX_RELATIVE_PATH
+    MAKE_LINUX_RELATIVE_PATH,
+    JOB_MONITORING_ENDPOINT
 };
