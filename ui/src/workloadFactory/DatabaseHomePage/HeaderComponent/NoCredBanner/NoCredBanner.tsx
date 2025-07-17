@@ -1,12 +1,14 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
 import { Button } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import { ReactComponent as Warning } from '../../../../assets/warning.svg';
 import { ReactComponent as Close } from '../../../../assets/close-icon.svg';
 import styles from './NoCredBanner.module.scss';
 import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useState } from 'react';
 
 const NoCredBanner = ({ width }: any) => {
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
