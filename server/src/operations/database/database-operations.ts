@@ -410,6 +410,22 @@ async function updateDatabaseInstanceAssessmentResults(
     logger.info('Update instance configurations', { accountId, instanceId });
     return updateDatabaseInstance({ accountId, credentialsId, region, databaseHostId, instanceId, assessmentResults });
 }
+
+async function populateDbInstances(resourceDetails: ResourceDetails) {
+    const { account_id: accountId, credentials_id: credentialsId, region, resource_id: resourceId } = resourceDetails;
+    if (isEmpty(resourceDetails.database_instances)) {
+        try {
+            resourceDetails.database_instances = await listDatabaseInstances(
+                accountId,
+                { credentialsId, region, resourceId },
+                false
+            );
+        } catch (err) {
+            logger.error('Failed to list database instances', err);
+        }
+    }
+}
+
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -430,5 +446,6 @@ export {
     getPaginatedDatabaseInstances,
     updateDatabaseHostAssessmentData,
     updateDatabaseHostAssessmentResults,
-    updateDatabaseInstanceAssessmentResults
+    updateDatabaseInstanceAssessmentResults,
+    populateDbInstances
 };

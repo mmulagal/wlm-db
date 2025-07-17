@@ -83,6 +83,12 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+
+    .luns {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
 }
 
 .circleSVG {
@@ -97,6 +103,10 @@
 
 .notAvailable {
     color: var(--text-disabled) !important;
+}
+
+.fontSet {
+    font-size: 14px !important;
 }
 
 .notAvailableInformation {

@@ -2,6 +2,7 @@ import { DsFlashingDotsLoader, DsTypography, FlashingDotsLoader, TooltipInfo } f
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import styles from './ManagedInstanceOptimization.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import HostDistributionChart from '../HostDistribution/HostDistributionChart/HostDistributionChart';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
@@ -16,9 +17,8 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
     const { t } = useTranslation();
     const windowSize = useResize();
     const { allmssqlHostAssessmentLoading, allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
-        state => state.headers
-    );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
+        useAppSelector(state => state.headers);
 
     const instanceOptimizationSummary = useMemo(
         () => getManagedInstanceOptimizationSummary(allmssqlHostAssessmentData),
@@ -48,19 +48,24 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
         };
         return () => (
             <HostDistributionChart
-                color1={setColor(instanceOptimizationSummary?.optimizedPercent)}
+                color1={showNA ? 'var(--border)' : setColor(instanceOptimizationSummary?.optimizedPercent)}
                 color2="#E0E0E0"
-                data1={instanceOptimizationSummary?.optimizedPercent}
-                data2={100 - instanceOptimizationSummary?.optimizedPercent}
+                data1={showNA ? 0 : instanceOptimizationSummary?.optimizedPercent}
+                data2={showNA ? 100 : 100 - instanceOptimizationSummary?.optimizedPercent}
                 centerText="Optimization score"
-                centerValue={`${instanceOptimizationSummary?.optimizedPercent || 0}%`}
+                centerValue={
+                    showNA
+                        ? t('databases.general.not-available')
+                        : `${instanceOptimizationSummary?.optimizedPercent || 0}%`
+                }
                 loading={loading}
+                isDisabled={showNA}
             />
         );
-    }, [instanceOptimizationSummary, loading]);
+    }, [instanceOptimizationSummary, loading, showNA]);
 
     return (
-        <div className={styles.managedInstance}>
+        <div className={`${styles.managedInstance} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     {t('databases.general.manage-instances-well-architected-score')}
@@ -80,8 +85,14 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                             <div className={styles.contentSection}>
                                 <div className={styles.firstBlock}>
                                     <div className={styles.loadingState}>
-                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                            {instanceOptimizationSummary?.totalInstances}
+                                        <DsTypography
+                                            variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                            style={{ lineHeight: showNA ? '24px' : 'unset' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
+                                            {showNA
+                                                ? t('databases.general.not-available')
+                                                : instanceOptimizationSummary?.totalInstances}
                                         </DsTypography>
 
                                         {instanceOptimizationSummary?.hasDismissedOrPostponed && (
@@ -95,27 +106,41 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                         )}
                                     </div>
 
-                                    <DsTypography variant="Regular_14" style={{ whiteSpace: 'nowrap' }}>
+                                    <DsTypography
+                                        variant="Regular_14"
+                                        style={{ whiteSpace: 'nowrap' }}
+                                        className={showNA ? CommonStyles.notAvailable : ''}
+                                    >
                                         Total registered instances
                                     </DsTypography>
                                 </div>
                                 <SeparatorComponent variant="vertical" height="48px" />
 
                                 <SquareComponent
-                                    value={String(instanceOptimizationSummary?.optimizedInstances)}
+                                    value={
+                                        showNA
+                                            ? t('databases.general.not-available')
+                                            : String(instanceOptimizationSummary?.optimizedInstances)
+                                    }
                                     color="var(--chart-4)"
                                     text="Well-architected instances"
                                     isLoading={false}
                                     loadingInFirstRow={loading}
+                                    showNA={showNA}
                                 />
 
                                 <SeparatorComponent variant="vertical" height="48px" />
                                 <SquareComponent
-                                    value={String(instanceOptimizationSummary?.notOptimizedInstances)}
+                                    value={
+                                        showNA
+                                            ? t('databases.general.not-available')
+                                            : String(instanceOptimizationSummary?.notOptimizedInstances)
+                                    }
                                     color="var(--chart-disabled)"
                                     text="Not-optimized instances "
                                     isLoading={false}
                                     loadingInFirstRow={loading}
+                                    showNA={showNA}
                                 />
                             </div>
                         </div>
@@ -127,9 +152,15 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                             <div className={styles.secondPartSmallRes}>
                                 <div className={styles.headSectionSmall}>
                                     <div className={styles.manageInstanceTooltipSection}>
-                                        <DsTypography variant="Semibold_16" style={{ whiteSpace: 'nowrap' }}>
+                                        <DsTypography
+                                            variant="Semibold_16"
+                                            style={{ whiteSpace: 'nowrap' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
                                             Total registered instances &nbsp;
-                                            {instanceOptimizationSummary?.totalInstances}
+                                            {showNA
+                                                ? t('databases.general.not-available')
+                                                : instanceOptimizationSummary?.totalInstances}
                                         </DsTypography>
                                         {instanceOptimizationSummary?.hasDismissedOrPostponed && (
                                             <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>
@@ -145,14 +176,29 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
 
                                 <div className={styles.firstBlockSection}>
                                     <div className={styles.bottomRow}>
-                                        <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
-                                        <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
+                                        <div
+                                            className={styles.square}
+                                            style={{
+                                                backgroundColor: showNA ? 'var(--text-disabled)' : 'var(--chart-4)'
+                                            }}
+                                        />
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            style={{ lineHeight: 'unset' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
                                             Well-architected instances
                                         </DsTypography>
                                     </div>
                                     <div className={styles.loadingState}>
-                                        <DsTypography className={styles.valueText} variant="Semibold_14">
-                                            {String(instanceOptimizationSummary?.optimizedInstances)} instances
+                                        <DsTypography
+                                            className={`${styles.valueText} ${showNA ? CommonStyles.notAvailable : ''}`}
+                                            variant="Semibold_14"
+                                        >
+                                            {showNA
+                                                ? t('databases.general.not-available')
+                                                : String(instanceOptimizationSummary?.optimizedInstances)}{' '}
+                                            instances
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
@@ -160,14 +206,29 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
 
                                 <div className={styles.firstBlockSection} style={{ borderTop: 'none' }}>
                                     <div className={styles.bottomRow}>
-                                        <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
-                                        <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
+                                        <div
+                                            className={styles.square}
+                                            style={{
+                                                backgroundColor: showNA ? 'var(--text-disabled)' : 'var(--chart-2)'
+                                            }}
+                                        />
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            style={{ lineHeight: 'unset' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
                                             Not-optimized instances
                                         </DsTypography>
                                     </div>
                                     <div className={styles.loadingState}>
-                                        <DsTypography className={styles.valueText} variant="Semibold_14">
-                                            {String(instanceOptimizationSummary?.notOptimizedInstances)} instances
+                                        <DsTypography
+                                            className={`${styles.valueText} ${showNA ? CommonStyles.notAvailable : ''}`}
+                                            variant="Semibold_14"
+                                        >
+                                            {showNA
+                                                ? t('databases.general.not-available')
+                                                : String(instanceOptimizationSummary?.notOptimizedInstances)}{' '}
+                                            instances
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>

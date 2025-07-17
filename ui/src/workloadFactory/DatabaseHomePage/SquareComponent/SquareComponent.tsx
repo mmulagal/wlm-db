@@ -1,6 +1,7 @@
 import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
 import React from 'react';
 import styles from './SquareComponent.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 type SC = {
     value: string;
@@ -10,6 +11,7 @@ type SC = {
     isLoading?: boolean;
     loadingInFirstRow?: boolean;
     isSmall?: boolean;
+    showNA?: boolean;
 };
 
 const SquareComponent = ({
@@ -19,12 +21,16 @@ const SquareComponent = ({
     boldValue,
     loadingInFirstRow = false,
     isLoading = false,
-    isSmall = false
+    isSmall = false,
+    showNA = false
 }: SC) => (
     <div className={styles.container}>
         {!boldValue && (
             <div className={styles.headerArea}>
-                <Typography className={styles.valueText} variant="Semibold_14">
+                <Typography
+                    className={`${showNA ? '' : styles.valueText} ${showNA ? CommonStyles.notAvailable : ''}`}
+                    variant="Semibold_14"
+                >
                     {value}
                 </Typography>
 
@@ -41,12 +47,20 @@ const SquareComponent = ({
                 )}
             </div>
         )}
-        {boldValue && <Typography variant="Semibold_14">{value}</Typography>}
+        {boldValue && (
+            <Typography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                {value}
+            </Typography>
+        )}
         <div className={styles.bottomRow}>
-            <div className={styles.square} style={{ backgroundColor: color }} />
+            <div
+                className={`${styles.square} ${showNA ? CommonStyles.notAvailable : ''}`}
+                style={{ backgroundColor: showNA ? 'var(--text-disabled)' : color }}
+            />
             <Typography
                 variant="Regular_14"
                 style={{ lineHeight: 'unset', width: 'max-content', whiteSpace: 'nowrap' }}
+                className={showNA ? CommonStyles.notAvailable : ''}
             >
                 {text}
             </Typography>

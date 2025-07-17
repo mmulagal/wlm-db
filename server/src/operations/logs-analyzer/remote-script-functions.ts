@@ -95,6 +95,7 @@ function getWindowsPrepareScript(scriptParams: {
     inferenceProfileArn: string;
     jobId?: string;
     inferenceConfig?: InferenceConfigType;
+    logLevel?: string;
 }): string {
     logger.debug('Generating Windows prepare script with params:', scriptParams);
     const {
@@ -114,7 +115,8 @@ function getWindowsPrepareScript(scriptParams: {
             topP: 0.9
         },
         logsAnalyzerFromTimestamp,
-        logsCountToConsider
+        logsCountToConsider,
+        logLevel = LOG_LEVEL
     } = scriptParams;
 
     const { temperature, maxTokens, topP } = inferenceConfig;
@@ -137,7 +139,7 @@ function getWindowsPrepareScript(scriptParams: {
         $temperature = ${temperature};
         $maxTokens = ${maxTokens};
         $topP = ${topP};
-        $logLevel = "${LOG_LEVEL}";
+        $logLevel = "${logLevel}";
         $logsCountToConsider = ${logsCountToConsider}
         $timestamp = ${logsAnalyzerFromTimestamp}
 
@@ -229,6 +231,7 @@ function getLinuxPrepareScript(scriptParams: {
     inferenceProfileArn: string;
     jobId?: string;
     inferenceConfig?: InferenceConfigType;
+    logLevel?: string;
 }): string {
     logger.debug('Generating Linux prepare script with params:', scriptParams);
     const {
@@ -244,7 +247,8 @@ function getLinuxPrepareScript(scriptParams: {
             temperature: 0.5,
             maxTokens: 1000,
             topP: 0.9
-        }
+        },
+        logLevel = LOG_LEVEL
     } = scriptParams;
     const { temperature, maxTokens, topP } = inferenceConfig;
 
@@ -265,7 +269,7 @@ function getLinuxPrepareScript(scriptParams: {
     temperature = ${temperature};
     maxTokens = ${maxTokens};
     topP = ${topP};
-    logLevel='${LOG_LEVEL}';
+    logLevel='${logLevel}';
 
 retry_command() {
     local retries=5

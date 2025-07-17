@@ -1,4 +1,5 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as Savings } from '../../../assets/Savings.svg';
 import styles from './SandboxStorageSaving.module.scss';
@@ -8,8 +9,10 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { formatSize } from '../../../utils/utilityFunctions';
 
 const SandboxStorageSaving = () => {
+    const { t } = useTranslation();
     const windowSize = useResize();
-    const { isNA, getSandboxSavings } = useAppSelector(state => state.sandbox);
+    const { getSandboxSavings } = useAppSelector(state => state.sandbox);
+    const { showNA } = useAppSelector(state => state.headers);
     const { sandboxSavingsLoading: loading, sandboxSavings } = getSandboxSavings;
 
     const savingsPercentage = sandboxSavings?.sandboxSavingsPercentage
@@ -31,7 +34,7 @@ const SandboxStorageSaving = () => {
                 </div>
             );
         }
-        if (!isNA) {
+        if (!showNA) {
             return (
                 <div className={styles.progressBar}>
                     <div
@@ -56,7 +59,7 @@ const SandboxStorageSaving = () => {
                 </div>
             );
         }
-        if (isNA) {
+        if (showNA) {
             return (
                 <div className={styles.progressBar}>
                     <div
@@ -82,7 +85,7 @@ const SandboxStorageSaving = () => {
                             <Savings />
                         </div>
                         <div className={styles.rightSection}>
-                            {!isNA && (
+                            {!showNA && (
                                 <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                                     {loading && (
                                         <div className={styles.loadingContainer}>
@@ -92,15 +95,15 @@ const SandboxStorageSaving = () => {
                                     {!loading && savingsPercentToShow}
                                 </DsTypography>
                             )}
-                            {isNA && (
+                            {showNA && (
                                 <DsTypography
                                     variant="Regular_14"
                                     className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
-                            <DsTypography variant="Regular_14" className={isNA ? CommonStyles.notAvailable : ''}>
+                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
                                 Sandboxes storage savings
                             </DsTypography>
                         </div>
@@ -113,15 +116,19 @@ const SandboxStorageSaving = () => {
                             <div className={styles.bottomRow}>
                                 <div
                                     className={styles.square}
-                                    style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#A815F3' }}
+                                    style={{ backgroundColor: showNA ? 'var(--chart-disabled)' : '#A815F3' }}
                                 />
-                                {!isNA && (
+                                {!showNA && (
                                     <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
                                         {formatSize(sandboxSavings?.consumedStorage)}
                                     </DsTypography>
                                 )}
 
-                                <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
                                     {GENERAL.SANDBOX_CONSUMED_STORAGE}
                                 </DsTypography>
                             </div>
@@ -129,15 +136,19 @@ const SandboxStorageSaving = () => {
                             <div className={styles.bottomRow}>
                                 <div
                                     className={styles.square}
-                                    style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#68C6B3' }}
+                                    style={{ backgroundColor: showNA ? 'var(--chart-disabled)' : '#68C6B3' }}
                                 />
-                                {!isNA && (
+                                {!showNA && (
                                     <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
                                         {formatSize(sandboxSavings?.savedStorage)}
                                     </DsTypography>
                                 )}
 
-                                <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    style={{ lineHeight: 'unset' }}
+                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                >
                                     {windowSize.width > 1872 ? GENERAL.SANDBOX_STORAGE_SAVINGS : GENERAL.SAVINGS}
                                 </DsTypography>
                             </div>
@@ -153,7 +164,7 @@ const SandboxStorageSaving = () => {
                             <Savings />
                         </div>
                         <div className={styles.rightSection}>
-                            {!isNA && (
+                            {!showNA && (
                                 <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                                     {loading && (
                                         <div className={styles.loadingContainer}>
@@ -163,15 +174,15 @@ const SandboxStorageSaving = () => {
                                     {!loading && savingsPercentToShow}
                                 </DsTypography>
                             )}
-                            {isNA && (
+                            {showNA && (
                                 <DsTypography
                                     variant="Regular_14"
                                     className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
-                            <DsTypography variant="Regular_14" className={isNA ? CommonStyles.notAvailable : ''}>
+                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
                                 {GENERAL.SANDBOX_STORAGE_SAVINGS}
                             </DsTypography>
                         </div>
@@ -181,12 +192,12 @@ const SandboxStorageSaving = () => {
 
                     <div className={styles.consumedSaving}>
                         <div className={styles.valueContainer}>
-                            {loading && !isNA && (
+                            {loading && !showNA && (
                                 <div className={styles.loadingContainer}>
                                     <FlashingDotsLoader />
                                 </div>
                             )}
-                            {!loading && !isNA && (
+                            {!loading && !showNA && (
                                 <>
                                     <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                                         {formatSize(sandboxSavings?.savedStorage).split(' ')[0]}
@@ -200,16 +211,16 @@ const SandboxStorageSaving = () => {
                                     </DsTypography>
                                 </>
                             )}
-                            {isNA && (
+                            {showNA && (
                                 <DsTypography
                                     variant="Regular_14"
                                     className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                         </div>
-                        <DsTypography variant="Regular_14" className={isNA ? CommonStyles.notAvailable : ''}>
+                        <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
                             {GENERAL.SANDBOX_SAVINGS}
                         </DsTypography>
                     </div>
@@ -218,12 +229,12 @@ const SandboxStorageSaving = () => {
 
                     <div className={styles.consumedSaving}>
                         <div className={styles.valueContainer}>
-                            {loading && !isNA && (
+                            {loading && !showNA && (
                                 <div className={styles.loadingContainer}>
                                     <FlashingDotsLoader />
                                 </div>
                             )}
-                            {!loading && !isNA && (
+                            {!loading && !showNA && (
                                 <>
                                     <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                                         {formatSize(sandboxSavings?.consumedStorage).split(' ')[0]}
@@ -237,16 +248,16 @@ const SandboxStorageSaving = () => {
                                     </DsTypography>
                                 </>
                             )}
-                            {isNA && (
+                            {showNA && (
                                 <DsTypography
                                     variant="Regular_14"
                                     className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             )}
                         </div>
-                        <DsTypography variant="Regular_14" className={isNA ? CommonStyles.notAvailable : ''}>
+                        <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
                             {GENERAL.SANDBOX_CONSUMED_SAVING}
                         </DsTypography>
                     </div>

@@ -1,43 +1,12 @@
-import throat from 'throat';
 import {
     countDatabaseInstanceConfigRecords,
-    listDatabaseInstanceConfigData,
-    removeAllButLatestDatabaseInstanceConfigData
+    listDatabaseInstanceConfigData
 } from '../../lib/database/database-instance-config';
 import { ListDatabaseInstanceConfigDataParams } from '../../lib/database/db-types';
 import getLogger from '../../utils/logger';
 import { checkAccount, getNextToken } from '../../utils/utils';
 
 const logger = getLogger();
-
-async function purgeOlderAssessmentRecords() {
-    logger.info('Purging older assessment records');
-    const instanceAssessmentRecords = await listDatabaseInstanceConfigData({});
-    await Promise.all(
-        instanceAssessmentRecords.map(
-            throat(
-                3,
-                async ({
-                    account_id: accountId,
-                    region,
-                    credentials_id: credentialsId,
-                    resource_id: resourceId,
-                    database_instance_id: databaseInstanceId,
-                    creation_time: creationTime
-                }) => {
-                    await removeAllButLatestDatabaseInstanceConfigData(
-                        accountId,
-                        region,
-                        credentialsId,
-                        resourceId,
-                        databaseInstanceId,
-                        creationTime
-                    );
-                }
-            )
-        )
-    );
-}
 
 async function listInstanceConfigIncludingResourceAndInstance(params: ListDatabaseInstanceConfigDataParams) {
     logger.info('Listing database instance config data with resource and instance included', params);
@@ -76,4 +45,4 @@ async function paginateListInstanceConfigData(params: ListDatabaseInstanceConfig
     };
 }
 
-export { purgeOlderAssessmentRecords, listInstanceConfigIncludingResourceAndInstance, paginateListInstanceConfigData };
+export { listInstanceConfigIncludingResourceAndInstance, paginateListInstanceConfigData };

@@ -1,6 +1,5 @@
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
 import { Button } from '@netapp/design-system';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as Warning } from '../../../../assets/warning.svg';
 import styles from './NoCredBanner.module.scss';
@@ -10,7 +9,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 const NoCredBanner = ({ width }: any) => {
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
     const { t } = useTranslation();
-    const navigate = useNavigate();
+
     const openCred = () => {
         let url;
         if (isWorkloadFactoryStatus) {
@@ -19,15 +18,15 @@ const NoCredBanner = ({ width }: any) => {
             url = import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
         }
 
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.location.href = url;
     };
 
     const learnMore = () => {
-        if (isWorkloadFactoryStatus) {
-            navigate('../databases/marketing');
-        } else {
-            navigate('../fsxdb/marketing');
-        }
+        window.open(
+            'https://docs.netapp.com/us-en/workload-setup-admin/permissions-reference.html#why-use-permissions',
+            '_blank',
+            'noopener,noreferrer'
+        );
     };
     return (
         <div className={styles.noCredBanner} style={{ width }}>

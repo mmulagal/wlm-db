@@ -6,6 +6,7 @@ import {
     JobBasedManageResponseBody,
     MultiHostManageResponseBody,
     MultiInstanceManageMsSqlRequestBody,
+    MultiInstanceRegisterOracleRequestBody,
     PrepareResourceResponseBody,
     RegisterCredentialsRequestBody,
     RegisterCredentialsResponse,
@@ -37,6 +38,17 @@ const JobBasedManageSchema = {
     body: MultiInstanceManageMsSqlRequestBody,
     summary: 'Register SQL Server instances',
     description: 'Register SQL Server instances',
+    response: {
+        200: JobBasedManageResponseBody
+    }
+};
+
+const OracleRegisterInstancesSchema = {
+    ...RegisterBaseRequest,
+    params: AccountIdParams,
+    body: MultiInstanceRegisterOracleRequestBody,
+    summary: 'Register Oracle instances',
+    description: 'Register Oracle instances',
     response: {
         200: JobBasedManageResponseBody
     }
@@ -80,5 +92,6 @@ export {
     RegisterCredentialsSchema,
     SingleRegisterCredentialsSchema,
     PrepareForManageSchema,
-    ManageMsSqlSchemaV2
+    ManageMsSqlSchemaV2,
+    OracleRegisterInstancesSchema
 };

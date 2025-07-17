@@ -84,7 +84,11 @@ async function listLogsAnalysisReports(
 
     accountId = checkAccount(accountId);
 
-    return prisma.client.logs_analysis_reports.findMany({
+    // Two-step approach to avoid MySQL sort buffer issues:
+    // 1. Get sorted IDs only (lightweight, uses index efficiently)
+    // 2. Fetch full records for those IDs
+
+    const sortedIdQuery = await prisma.client.logs_analysis_reports.findMany({
         where: {
             account_id: accountId,
             resource_id: databaseHostId,
@@ -97,12 +101,23 @@ async function listLogsAnalysisReports(
                 [sort]: `${sortOrder}`
             }
         ],
-        ...(select && !isEmpty(select) && { select }),
+        select: { id: true }, // Only select ID - minimal memory usage
         ...(pageSize && pageSize > 0 && { take: pageSize }),
         ...(nextToken && {
             cursor: { id: nextToken },
             skip: 1
         })
+    });
+
+    if (sortedIdQuery.length === 0) {
+        return [];
+    }
+
+    return prisma.client.logs_analysis_reports.findMany({
+        where: {
+            id: { in: sortedIdQuery.map(r => r.id) }
+        },
+        ...(select && !isEmpty(select) && { select })
     });
 }
 

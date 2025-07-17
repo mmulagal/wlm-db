@@ -1,4 +1,5 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Source } from '../../../assets/Source.svg';
 import { ReactComponent as Sandbox } from '../../../assets/Sandbox.svg';
 
@@ -9,9 +10,10 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { getUniqueSourceDatabasesCount } from '../SandboxUtility';
 
 const SourceInformation = () => {
+    const { t } = useTranslation();
     const loading = useAppSelector(state => state?.sandbox?.getSandboxList?.sandboxListLoading);
     const { aggregatedSandboxList } = useAppSelector(state => state?.sandbox);
-    const { isNA } = useAppSelector(state => state.sandbox);
+    const { showNA } = useAppSelector(state => state.headers);
     return (
         <div className={styles.sourceInformation}>
             <div className={styles.wrapperContainer}>
@@ -20,7 +22,7 @@ const SourceInformation = () => {
                 </div>
 
                 <div className={styles.insideContainer}>
-                    {!isNA && (
+                    {!showNA && (
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                             {loading && (
                                 <div className={styles.loadingContainer}>
@@ -31,19 +33,19 @@ const SourceInformation = () => {
                         </DsTypography>
                     )}
 
-                    {isNA && (
+                    {showNA && (
                         <DsTypography
                             variant="Regular_14"
                             className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                         >
-                            {GENERAL.NOT_AVAILABLE}
+                            {t('databases.general.not-available')}
                         </DsTypography>
                     )}
 
                     <DsTypography
                         variant="Regular_14"
                         style={{ maxWidth: '119px' }}
-                        className={isNA ? CommonStyles.notAvailable : ''}
+                        className={showNA ? CommonStyles.notAvailable : ''}
                     >
                         {GENERAL.SANDBOX_SOURCE_DATABASES}
                     </DsTypography>
@@ -53,7 +55,7 @@ const SourceInformation = () => {
             <div className={styles.wrapperContainer}>
                 <Sandbox />
                 <div className={styles.insideContainer}>
-                    {!isNA && (
+                    {!showNA && (
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                             {loading && (
                                 <div className={styles.loadingContainer}>
@@ -63,15 +65,15 @@ const SourceInformation = () => {
                             {!loading && aggregatedSandboxList.length}
                         </DsTypography>
                     )}
-                    {isNA && (
+                    {showNA && (
                         <DsTypography
                             variant="Regular_14"
                             className={`${CommonStyles.notAvailable} ${CommonStyles.notAvailableInformation}`}
                         >
-                            {GENERAL.NOT_AVAILABLE}
+                            {t('databases.general.not-available')}
                         </DsTypography>
                     )}
-                    <DsTypography variant="Regular_14" className={isNA ? CommonStyles.notAvailable : ''}>
+                    <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
                         {GENERAL.SANDBOXES}
                     </DsTypography>
                 </div>

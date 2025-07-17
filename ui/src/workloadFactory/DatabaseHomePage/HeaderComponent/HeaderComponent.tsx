@@ -13,7 +13,7 @@ import {
 import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useDispatch } from 'react-redux';
-import { useNavigate, useNavigationType, NavigationType } from 'react-router-dom';
+import { useNavigate, useNavigationType, NavigationType, useLocation } from 'react-router-dom';
 import styles from './HeaderComponent.module.scss';
 
 // @ts-ignore
@@ -73,6 +73,7 @@ import {
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import DatabaseHomeApis from '../DatabaseHomeApis';
+import NoCredBanner from './NoCredBanner/NoCredBanner';
 
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
 import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCalulator';
@@ -122,6 +123,7 @@ import DashboardOptimizeInnerPage from '../../Dashboard/DashboardInnerPage/Dashb
 import { DsBlueXpMenu } from '../../../common/DsMenuBlueXP/DsBlueXpMenu';
 import WellArchitectDashboard from '../../GetWell/WellArchitectDashboard/WellArchitectDashboard';
 import RegisterWizard from '../../InventoryV2/InventoryTablesComponent/ManageInstanceWizard/RegisterWizard';
+import DummySelect from '../../../common/DummySelect/DummySelect';
 
 type Tab = {
     tab: string;
@@ -130,6 +132,7 @@ type Tab = {
 const HeaderComponent = ({ tab }: Tab) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const location = useLocation();
     const [statusChk, setStatusChk] = useState(false);
     const [pendingQueriesCounter, setPendingQueriesCounter] = useState(0);
     const { fetchOnPremData } = useOnPremData();
@@ -151,7 +154,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         headerSelectedCredSandbox,
         headerSelectedRegionSandbox,
         multiDataStatus,
-        multiDataLoading
+        multiDataLoading,
+        showNA
     } = useAppSelector(state => state.headers);
     const {
         isManagedHostListLoading,
@@ -231,6 +235,10 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
+            if (location.state && location.state.allowDashboardNoCred) {
+                setStatusChk(true);
+                return;
+            }
             if (
                 tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS ||
                 tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
@@ -958,11 +966,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
+                        !credentialData ||
+                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                     }
+                    disabledReason={!credentialData || credentialData.length === 0 ? 'No credentials' : ''}
                 />
             </div>
 
@@ -1000,11 +1011,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
+                        !credentialData ||
+                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                     }
+                    disabledReason={!credentialData || credentialData.length === 0 ? 'No credentials' : ''}
                 />
             </div>
         </div>
@@ -1042,6 +1056,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
+                        !credentialData ||
+                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
@@ -1094,6 +1110,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
                     isDisabled={
+                        !credentialData ||
+                        credentialData.length === 0 ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                         (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
@@ -1448,9 +1466,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                             </div>
 
                             {/* Add based on noCred flag */}
-                            {/* <div className={styles.noCredBanner}>
-                                <NoCredBanner width={'83.5%'} />
-                            </div> */}
+                            {showNA && (
+                                <div className={styles.noCredBanner}>
+                                    <NoCredBanner width="83.5%" />
+                                </div>
+                            )}
 
                             <Dashboard />
                         </div>
@@ -1465,9 +1485,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                             </div>
 
                             {/* Add based on noCred flag */}
-                            {/* <div className={styles.noCredBanner}>
-                                <NoCredBanner width={'87.3%'} />
-                            </div> */}
+                            {showNA && (
+                                <div className={styles.noCredBanner}>
+                                    <NoCredBanner width="87.3%" />
+                                </div>
+                            )}
 
                             <InventoryV2 />
                         </>
@@ -1476,7 +1498,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
-                                    <div />
+                                    {showNA && <DummySelect fromJM />}
+                                    {!showNA && <div />}
                                     <div className={styles.content}>
                                         <div className={styles.selectContainer}>
                                             <SelectField
@@ -1534,15 +1557,18 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.sandboxSection}>
                                 <div className={styles.contentArea}>
-                                    {selectSandboxComponents()}
+                                    {!showNA && selectSandboxComponents()}
+                                    {showNA && <DummySelect fromJM={false} />}
                                     <div className={styles.content}>{refreshComponentSandbox()}</div>
                                 </div>
                             </div>
 
                             {/* Add based on noCred flag */}
-                            {/* <div className={styles.noCredBanner}>
-                                <NoCredBanner width={'87.3%'} />
-                            </div> */}
+                            {showNA && (
+                                <div className={styles.noCredBanner}>
+                                    <NoCredBanner width="87.3%" />
+                                </div>
+                            )}
 
                             <Sandbox />
                         </>
@@ -1560,9 +1586,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                             </div>
 
                             {/* Add based on noCred flag */}
-                            {/* <div className={styles.noCredBanner}>
-                                <NoCredBanner width={'87.3%'} />
-                            </div> */}
+                            {showNA && (
+                                <div className={styles.noCredBanner}>
+                                    <NoCredBanner width="87.3%" />
+                                </div>
+                            )}
                             <ExploreSavings />
                         </>
                     )}

@@ -4,16 +4,17 @@ import { DatabaseHostInstanceSummaryParams } from './database-hosts.types';
 const LogsAnalyzerParams = DatabaseHostInstanceSummaryParams;
 
 const InferenceConfig = Type.Object({
-    temperature: Type.Number(),
-    topP: Type.Number(),
-    maxTokens: Type.Number()
+    temperature: Type.Optional(Type.Number()),
+    topP: Type.Optional(Type.Number()),
+    maxTokens: Type.Optional(Type.Number())
 });
 const LogsAnalyzerBody = Type.Optional(
     Type.Object({
         inferenceConfig: Type.Optional(InferenceConfig),
         logsAnalyzerS3SignedUrl: Type.Optional(Type.String()),
         logsCountToConsider: Type.Optional(Type.Number()),
-        logsAnalyzerFromTimestamp: Type.Optional(Type.Number())
+        logsAnalyzerFromTimestamp: Type.Optional(Type.Number()),
+        logLevel: Type.Optional(Type.String())
     })
 );
 

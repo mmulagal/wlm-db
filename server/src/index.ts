@@ -63,7 +63,6 @@ import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
-import chatbotRoutes from './routes/chatbot';
 import sandboxRoutes from './routes/sandbox';
 import { initiateCronOperations } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
@@ -214,7 +213,6 @@ const app = fastify({
             pricingRoutes(instance);
             databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);
-            chatbotRoutes(instance);
             workloadFactoryInternalRoutes(instance);
             discoverRoutes(instance);
             resourceRoutes(instance);

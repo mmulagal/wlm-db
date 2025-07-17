@@ -2,6 +2,7 @@ import { Button, Popover, Typography, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './JobMonitoringTable.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
@@ -42,6 +43,7 @@ import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../common/Lib/Table/Table';
 
 const JobMonitoringTable = React.memo(() => {
+    const { t } = useTranslation();
     const { setDialog } = useDialog();
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
@@ -276,21 +278,19 @@ const JobMonitoringTable = React.memo(() => {
             renderCell: (value: any, rowData: any, { updateRowState, rowsState }: any) => {
                 const currentRowState = rowsState[rowData.id];
                 const statusType = rowData?.status.toLowerCase();
-                const isIntegrityCheckJob = rowData?.name?.includes('Check data integrity');
+                const isExpandDisable =
+                    rowData?.name?.includes('Check data integrity') ||
+                    rowData?.type === JOB_MONITORING_TYPE.LOGS_ANALYSIS;
                 return (
                     <>
                         <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
 
-                        <div
-                            className={
-                                isIntegrityCheckJob ? `${styles.arrow} ${styles['arrow-disabled']}` : styles.arrow
-                            }
-                        >
+                        <div className={isExpandDisable ? `${styles.arrow} ${styles['arrow-disabled']}` : styles.arrow}>
                             <ArrowIcon
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
                                 onClick={(e: any) => {
                                     e.stopPropagation();
-                                    if (!isIntegrityCheckJob) {
+                                    if (!isExpandDisable) {
                                         getSubJobsData(rowData?.id); // calling sub jobs api on expand click
                                         expandTableRow(updateRowState, rowData, currentRowState, rowsState);
                                     }
@@ -319,14 +319,21 @@ const JobMonitoringTable = React.memo(() => {
             accessor: 'type',
             width: '140px',
             filterOptions: [
-                { value: JOB_MONITORING_TYPE.DEPLOYMENT, label: GENERAL.JM_TYPE_DEPLOYMENT },
-                { value: JOB_MONITORING_TYPE.CREATE_RESOURCE, label: GENERAL.JM_TYPE_CREATE_RESOURCE },
-                { value: JOB_MONITORING_TYPE.SANDBOX, label: GENERAL.JM_TYPE_SANDBOX },
-                { value: JOB_MONITORING_TYPE.ASSESSMENT, label: GENERAL.JM_TYPE_ASSESSMENT },
-                { value: JOB_MONITORING_TYPE.WELL_ARCHITECTED, label: GENERAL.JM_TYPE_OPTIMIZE },
-                { value: JOB_MONITORING_TYPE.REGISTER_RESOURCE, label: GENERAL.JM_TYPE_REGISTER_RESOURCE }
+                { value: JOB_MONITORING_TYPE.DEPLOYMENT, label: t('databases.job-monitor.jm-type-deployment') },
+                {
+                    value: JOB_MONITORING_TYPE.CREATE_RESOURCE,
+                    label: t('databases.job-monitor.jm-type-create-resource')
+                },
+                { value: JOB_MONITORING_TYPE.SANDBOX, label: t('databases.job-monitor.jm-type-sandbox') },
+                { value: JOB_MONITORING_TYPE.ASSESSMENT, label: t('databases.job-monitor.jm-type-assessment') },
+                { value: JOB_MONITORING_TYPE.WELL_ARCHITECTED, label: t('databases.job-monitor.jm-type-optimize') },
+                {
+                    value: JOB_MONITORING_TYPE.REGISTER_RESOURCE,
+                    label: t('databases.job-monitor.jm-type-register-resource')
+                },
+                { value: JOB_MONITORING_TYPE.LOGS_ANALYSIS, label: t('databases.job-monitor.jm-type-logs-analysis') }
             ],
-            renderCell: (cellData: any) => jobMonitoringTypeMapping(cellData)
+            renderCell: (cellData: any) => jobMonitoringTypeMapping(cellData, t)
         },
         {
             id: '3',

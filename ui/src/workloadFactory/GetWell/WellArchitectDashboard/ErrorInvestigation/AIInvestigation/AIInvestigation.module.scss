@@ -43,6 +43,20 @@
         .errorInfoRight {
             display: flex;
             gap: 24px;
+
+            .setSVG {
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                svg {
+                    width: 16px;
+                    height: 16px;
+                    margin-top: 3px;
+                    path {
+                        fill: var(--cyan-30);
+                    }
+                }
+            }
         }
     }
 

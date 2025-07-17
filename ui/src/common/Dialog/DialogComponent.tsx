@@ -52,10 +52,16 @@ const DialogComponent = ({
     const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
     const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
     const saveConfigFromSaving = useAppSelector(state => state.exploreSavings.saveConfigName);
+    const {
+        dialogError: { showDialogError = false, errorMessage = '' } = {},
+        dialogTooltip: { showTooltipInfo = false, tooltipText = '' } = {},
+        actionsDisabled
+    } = useAppSelector(state => state.dialogComponent);
+
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
-    const { selectedOptimizeConfig, protectionStatus } = useAppSelector(state => state.inventoryV2);
+    const { selectedOptimizeConfig } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const { password, confirmPassword } = useAppSelector(state => {
         if (dialogFrom === FROM_DIALOG.FSXADMIN) {
@@ -68,13 +74,17 @@ const DialogComponent = ({
     });
     const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
+    const { userName: exploreSavingsUserName, password: exploreSavingsPassword } = useAppSelector(
+        state => state.exploreSavings.serverDetails
+    );
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() =>
         (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
         ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading) ||
         (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
-        (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading))();
+        (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading) ||
+        (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS && actionsDisabled))();
 
     // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
     const primaryButtonClick = () => {
@@ -85,7 +95,8 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
             dialogFrom !== FROM_DIALOG.FSXADMIN &&
             dialogFrom !== FROM_DIALOG.SQLSERVER &&
-            dialogFrom !== FROM_DIALOG.SINGLE_AGENT
+            dialogFrom !== FROM_DIALOG.SINGLE_AGENT &&
+            dialogFrom !== FROM_DIALOG.EXPLORE_SAVINGS
         ) {
             closeDialog();
         }
@@ -117,9 +128,9 @@ const DialogComponent = ({
 
     const disabledCheck = () => {
         // SC integration step 1 dialog
-        if (dialogFrom === FROM_DIALOG.SINGLE_AGENT && protectionStatus === 'started') {
-            return true;
-        }
+        // if (dialogFrom === FROM_DIALOG.SINGLE_AGENT && protectionStatus === 'started') {
+        //     return true;
+        // }
         if (dialogFrom === FROM_DIALOG.LOADER) {
             return true;
         }
@@ -136,6 +147,12 @@ const DialogComponent = ({
         if (
             dialogFrom === FROM_DIALOG.FSXADMIN &&
             ((password.length === 0 && confirmPassword.length === 0) || password !== confirmPassword)
+        ) {
+            return true;
+        }
+        if (
+            dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS &&
+            (exploreSavingsUserName.length === 0 || exploreSavingsPassword.length === 0)
         ) {
             return true;
         }
@@ -182,17 +199,19 @@ const DialogComponent = ({
             <DialogHeader>{header}</DialogHeader>
             <DialogContent>{content}</DialogContent>
             <DialogFooter>
-                {/* Error condition will come here */}
-                {false && (
+                {/* Show error message if showDialogError is true which is stored in dialogComponentSlice so that the DialogComponents reloads when there is a change */}
+                {showDialogError && (
                     <div className={styles.errorMsg}>
                         <ErrorIcon className={styles.errorIcon} />
                         <DsTypography variant="Semibold_14">Error:</DsTypography>&nbsp;
                         <DsTypography variant="Regular_14" className={styles.errorMsgText}>
-                            'Error text'
+                            {errorMessage}
                         </DsTypography>
-                        <div className={styles.dialogFooterDialog}>
-                            <TooltipInfo>Text</TooltipInfo>
-                        </div>
+                        {showTooltipInfo && (
+                            <div className={styles.dialogFooterDialog}>
+                                <TooltipInfo>{tooltipText}</TooltipInfo>
+                            </div>
+                        )}
                     </div>
                 )}
 

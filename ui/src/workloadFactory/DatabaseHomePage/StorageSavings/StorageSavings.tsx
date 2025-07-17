@@ -1,10 +1,13 @@
 import React from 'react';
 import { FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './StorageSavings.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
+import { useAppSelector } from '../../../store/storeHooks';
 
 type StorageSavingsProps = {
     hostData: any;
@@ -12,7 +15,21 @@ type StorageSavingsProps = {
 };
 
 const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
+    const { t } = useTranslation();
+    const { showNA } = useAppSelector(state => state.headers);
     const handleProgressBar = () => {
+        if (hostData?.storageSavingsPercent === 0 || showNA) {
+            return (
+                <div
+                    className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                    style={{
+                        width: `${100}%`,
+                        backgroundColor: 'var(--chart-disabled)'
+                    }}
+                />
+            );
+        }
+
         if (
             hostData?.storageSavingsPercent !== 0 &&
             // @ts-ignore
@@ -53,22 +70,10 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                 </>
             );
         }
-
-        if (hostData?.storageSavingsPercent === 0) {
-            return (
-                <div
-                    className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                    style={{
-                        width: `${100}%`,
-                        backgroundColor: 'var(--chart-disabled)'
-                    }}
-                />
-            );
-        }
     };
 
     return (
-        <div className={styles.storageSaving}>
+        <div className={`${styles.storageSaving} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <div className={styles.storageSavingTooltipSection}>
                     <Typography variant="Regular_16" className={styles.title}>
@@ -78,13 +83,19 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                         <div className={styles.list}>
                             <div className={styles.listItem}>
                                 <Bullet />
-                                <Typography variant="Regular_13" className={styles.textWidth}>
+                                <Typography
+                                    variant="Regular_13"
+                                    className={`${styles.textWidth} ${showNA ? CommonStyles.notAvailable : ''}`}
+                                >
                                     {GENERAL.DB_SS_TT_1}
                                 </Typography>
                             </div>
                             <div className={styles.listItem}>
                                 <Bullet />
-                                <Typography variant="Regular_13" className={styles.textWidth}>
+                                <Typography
+                                    variant="Regular_13"
+                                    className={`${styles.textWidth} ${showNA ? CommonStyles.notAvailable : ''}`}
+                                >
                                     {GENERAL.DB_SS_TT_2}
                                 </Typography>
                             </div>
@@ -93,8 +104,14 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                 </div>
 
                 <div className={styles.rightTopValue}>
-                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                        {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
+                    <Typography
+                        variant={showNA ? 'Semibold_14' : 'Semibold_20'}
+                        style={{ lineHeight: 'unset' }}
+                        className={showNA ? CommonStyles.notAvailable : ''}
+                    >
+                        {showNA
+                            ? t('databases.general.not-available')
+                            : `${formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%`}
                     </Typography>
                     {hostsLoading && <FlashingDotsLoader />}
                 </div>
@@ -107,19 +124,29 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={hostData?.storageConsumes || GENERAL.NOT_AVAILABLE}
+                        value={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : hostData?.storageConsumes || t('databases.general.not-available')
+                        }
                         color="var(--chart-9)"
                         text="Consumed storage"
                         loadingInFirstRow={hostsLoading}
                         isSmall
+                        showNA={showNA}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={hostData?.storageSavings || GENERAL.NOT_AVAILABLE}
+                        value={
+                            showNA
+                                ? t('databases.general.not-available')
+                                : hostData?.storageSavings || t('databases.general.not-available')
+                        }
                         color="var(--chart-4)"
                         text="Storage Savings"
                         loadingInFirstRow={hostsLoading}
                         isSmall
+                        showNA={showNA}
                     />
                 </div>
             </div>

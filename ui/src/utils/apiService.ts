@@ -590,7 +590,10 @@ export const snapcenterAPI = createApi({
         }),
         getRBACPrivileges: builder.mutation({
             query: ({ accountID }) => ({
-                url: `v1/management/organizations/${accountID}/users`
+                url: `v1/management/organizations/${accountID}/users`,
+                headers: {
+                    Accept: 'application/vnd.netapp.bxp.users.extended+json'
+                }
             })
         }),
         assignRBACPrivileges: builder.mutation({
@@ -603,6 +606,13 @@ export const snapcenterAPI = createApi({
         listExistingHosts: builder.mutation({
             query: ({ accountID }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts?limit=50&offset=0&order_by=name+asc&deploymentModel=`
+            })
+        }),
+        generateCredentialID: builder.mutation({
+            query: ({ credentialID, regionID, payload }) => ({
+                url: `v1/ubr-protection/credentials/${credentialID}/regions/${regionID}/ubr-credentials`,
+                method: 'POST',
+                body: payload
             })
         })
     })
@@ -1204,9 +1214,10 @@ export const errorInvestigationApi = createApi({
             })
         }),
         scanErrorInvestigation: builder.mutation({
-            query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+            query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`,
-                method: 'POST'
+                method: 'POST',
+                body: payload
             })
         })
     })
@@ -1307,7 +1318,8 @@ export const {
     useDiscoverExistingFsxNMutation,
     useGetWorkSpaceIDMutation,
     useGetRBACPrivilegesMutation,
-    useListExistingHostsMutation
+    useListExistingHostsMutation,
+    useGenerateCredentialIDMutation
 } = snapcenterAPI;
 
 export const {

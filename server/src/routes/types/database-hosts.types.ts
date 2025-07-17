@@ -471,6 +471,19 @@ const NodeTopologyResponse = Type.Object({
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
 
+const VolumeLunDetailsResponse = Type.Object({
+    id: Type.Optional(Type.String({ description: 'ONTAP volume identifier' })),
+    name: Type.Optional(Type.String({ description: 'ONTAP volume name' })),
+    luns: Type.Optional(
+        Type.Array(
+            Type.Object({
+                id: Type.Optional(Type.String({ description: 'LUN identifier' })),
+                name: Type.Optional(Type.String({ description: 'LUN name' }))
+            })
+        )
+    )
+});
+
 const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
@@ -484,7 +497,14 @@ const DatabaseInstanceTopology = Type.Object({
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     availabilityZones: Type.Optional(Type.Array(Type.String())),
-    fileSystemStorageType: Type.Optional(Type.String({ enum: ['SSD', 'HDD'] }))
+    fileSystemStorageType: Type.Optional(Type.String({ enum: ['SSD', 'HDD'] })),
+    storageSummary: Type.Optional(
+        Type.Object({
+            volumes: Type.Optional(Type.Array(VolumeLunDetailsResponse)),
+            totalVolumes: Type.Optional(Type.Number()),
+            totalLuns: Type.Optional(Type.Number())
+        })
+    )
 });
 
 type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;

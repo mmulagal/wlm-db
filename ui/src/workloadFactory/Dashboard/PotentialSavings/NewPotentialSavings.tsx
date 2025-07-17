@@ -1,7 +1,9 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './PotentialSavings.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatNumberWithCustomComma, handleURL } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -15,6 +17,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
 
 const NewPotentialSavings = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
@@ -24,9 +27,8 @@ const NewPotentialSavings = () => {
     const [esCount, setEsCount] = useState<{ ebs: number; fsxw: number }>({ ebs: 0, fsxw: 0 });
     const [loading, setLoading] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
-        state => state.headers
-    );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
+        useAppSelector(state => state.headers);
     const noData = false;
     const noDataWithCount = false;
     const [noSavings, setNoSavings] = useState(false);
@@ -117,7 +119,7 @@ const NewPotentialSavings = () => {
                         isThin
                         data-testid="wlm-db-potential-savings"
                         onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
-                        isDisabled={loading}
+                        isDisabled={loading || showNA}
                     >
                         {GENERAL.ES_SAVINGS}
                     </DsButton>
@@ -139,7 +141,12 @@ const NewPotentialSavings = () => {
                                             {loading && <DsFlashingDotsLoader />}
                                         </div>
 
-                                        <DsTypography variant="Regular_14">EBS & FSx for Windows hosts</DsTypography>
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
+                                            EBS & FSx for Windows hosts
+                                        </DsTypography>
                                     </div>
 
                                     <SeparatorComponent variant="vertical" height="56px" />
@@ -151,7 +158,12 @@ const NewPotentialSavings = () => {
                                             </DsTypography>
                                             {loading && <DsFlashingDotsLoader />}
                                         </div>
-                                        <DsTypography variant="Regular_14">Savings percentage</DsTypography>
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
+                                            Savings percentage
+                                        </DsTypography>
                                     </div>
 
                                     <SeparatorComponent variant="vertical" height="56px" />
@@ -164,26 +176,47 @@ const NewPotentialSavings = () => {
                                             {loading && <DsFlashingDotsLoader />}
                                         </div>
 
-                                        <DsTypography variant="Regular_14">{GENERAL.POTENTIAL_SAVINGS}</DsTypography>
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
+                                            {GENERAL.POTENTIAL_SAVINGS}
+                                        </DsTypography>
                                     </div>
                                 </div>
                             )}
                             {noDataWithCount && (
                                 <div className={styles.noDataBanner}>
                                     <div className={styles.section}>
-                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                        <DsTypography
+                                            variant="Regular_24"
+                                            style={{ lineHeight: 'unset' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
                                             24
                                         </DsTypography>
-                                        <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_EBS}</DsTypography>
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
+                                            {GENERAL.SQL_SERVER_HOSTS_EBS}
+                                        </DsTypography>
                                     </div>
 
                                     <SeparatorComponent variant="vertical" height="54px" />
 
                                     <div className={styles.section}>
-                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                        <DsTypography
+                                            variant="Regular_24"
+                                            style={{ lineHeight: 'unset' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
                                             12
                                         </DsTypography>
-                                        <DsTypography variant="Regular_14">
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
                                             {GENERAL.SQL_SERVER_HOSTS_FSXW}
                                         </DsTypography>
                                     </div>
@@ -197,10 +230,18 @@ const NewPotentialSavings = () => {
                                 <div className={styles.potentialSavingsSwitch}>
                                     <PotentialSavingsSwitch />
                                     <div className={styles.potentialSavingsSwitchText}>
-                                        <DsTypography className={styles.firstTile} variant="Regular_14">
+                                        <DsTypography
+                                            className={`${styles.firstTile} ${showNA ? CommonStyles.notAvailable : ''}`}
+                                            variant="Regular_14"
+                                        >
                                             Switching to FSx for ONTAP won't save you money.
                                         </DsTypography>
-                                        <DsTypography className={styles.secondTile} variant="Regular_14">
+                                        <DsTypography
+                                            className={`${styles.secondTile} ${
+                                                showNA ? CommonStyles.notAvailable : ''
+                                            }`}
+                                            variant="Regular_14"
+                                        >
                                             Select Explore savings to review the cost breakdown.
                                         </DsTypography>
                                     </div>
@@ -221,38 +262,75 @@ const NewPotentialSavings = () => {
                             <div className={styles.topSection}>
                                 <div className={styles.subContent}>
                                     <div className={styles.loaderText}>
-                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                            {esCount?.ebs + esCount?.fsxw}
+                                        <DsTypography
+                                            variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                            style={{ lineHeight: 'unset' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
+                                            {showNA
+                                                ? t('databases.general.not-available')
+                                                : esCount?.ebs + esCount?.fsxw}
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
 
-                                    <DsTypography variant="Regular_14">EBS & FSx for Windows hosts</DsTypography>
+                                    <DsTypography
+                                        variant="Regular_14"
+                                        className={showNA ? CommonStyles.notAvailable : ''}
+                                    >
+                                        EBS & FSx for Windows hosts
+                                    </DsTypography>
                                 </div>
 
                                 <SeparatorComponent variant="vertical" height="56px" />
 
                                 <div className={styles.subContent}>
                                     <div className={styles.loaderText}>
-                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                            {formatNumberWithCustomComma(potentialSavingsValues?.savingsPercent || 0)}%
+                                        <DsTypography
+                                            variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                            style={{ lineHeight: 'unset' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
+                                            {showNA
+                                                ? t('databases.general.not-available')
+                                                : `${formatNumberWithCustomComma(
+                                                      potentialSavingsValues?.savingsPercent || 0
+                                                  )}%`}
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
-                                    <DsTypography variant="Regular_14">Savings percentage</DsTypography>
+                                    <DsTypography
+                                        variant="Regular_14"
+                                        className={showNA ? CommonStyles.notAvailable : ''}
+                                    >
+                                        Savings percentage
+                                    </DsTypography>
                                 </div>
 
                                 <SeparatorComponent variant="vertical" height="56px" />
 
                                 <div className={styles.subContent}>
                                     <div className={styles.loaderText}>
-                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                            ${formatNumberWithCustomComma(potentialSavingsValues?.savings || 0)}
+                                        <DsTypography
+                                            variant={showNA ? 'Regular_14' : 'Regular_24'}
+                                            style={{ lineHeight: 'unset' }}
+                                            className={showNA ? CommonStyles.notAvailable : ''}
+                                        >
+                                            {showNA
+                                                ? t('databases.general.not-available')
+                                                : `$${formatNumberWithCustomComma(
+                                                      potentialSavingsValues?.savings || 0
+                                                  )}`}
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
 
-                                    <DsTypography variant="Regular_14">{GENERAL.POTENTIAL_SAVINGS}</DsTypography>
+                                    <DsTypography
+                                        variant="Regular_14"
+                                        className={showNA ? CommonStyles.notAvailable : ''}
+                                    >
+                                        {GENERAL.POTENTIAL_SAVINGS}
+                                    </DsTypography>
                                 </div>
                             </div>
 
@@ -304,8 +382,16 @@ const NewPotentialSavings = () => {
 
                                 {/* Text section */}
                                 <div className={styles.textSection}>
-                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
-                                    <DsTypography variant="Semibold_20">{esCount?.ebs}</DsTypography>
+                                    {!showNA && (
+                                        <>
+                                            <div
+                                                className={styles.square}
+                                                style={{ backgroundColor: 'var(--chart-3)' }}
+                                            />
+                                            <DsTypography variant="Semibold_20">{esCount?.ebs}</DsTypography>
+                                        </>
+                                    )}
+
                                     <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_EBS}</DsTypography>
                                 </div>
                             </div>
@@ -352,8 +438,16 @@ const NewPotentialSavings = () => {
 
                                 {/* Text section */}
                                 <div className={styles.textSection}>
-                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
-                                    <DsTypography variant="Semibold_20">{esCount?.fsxw}</DsTypography>
+                                    {!showNA && (
+                                        <>
+                                            <div
+                                                className={styles.square}
+                                                style={{ backgroundColor: 'var(--chart-2)' }}
+                                            />
+                                            <DsTypography variant="Semibold_20">{esCount?.fsxw}</DsTypography>
+                                        </>
+                                    )}
+
                                     <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_FSXW}</DsTypography>
                                 </div>
                             </div>

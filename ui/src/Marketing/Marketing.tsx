@@ -13,7 +13,7 @@ import { ReactComponent as Thunder } from '../assets/thunder.svg';
 import { ReactComponent as Setting } from '../assets/settings.svg';
 import styles from './Marketing.module.scss';
 import CardComponent from './CardComponent/CardComponent';
-import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../utils/consts';
+import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE, FORM_TO_WLF_NAVIGATE_INVENTORY } from '../utils/consts';
 import { useAppSelector } from '../store/storeHooks';
 
 const Marketing = () => {
@@ -76,7 +76,6 @@ const Marketing = () => {
 
                         <div className={styles.buttonSection}>
                             <DsButton
-                                children=" Get Started"
                                 variant="Default"
                                 dropDown={{
                                     trigger: 'click',
@@ -136,7 +135,38 @@ const Marketing = () => {
                                         }
                                     ]
                                 }}
-                            />
+                            >
+                                Get Started
+                            </DsButton>
+                            <DsButton
+                                variant="secondary"
+                                onClick={() => {
+                                    // Always navigate to inventory, regardless of credentials
+                                    if (isWorkloadFactory) {
+                                        navigate(FORM_TO_WLF_NAVIGATE_INVENTORY, {
+                                            state: { allowDashboardNoCred: true }
+                                        });
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: {
+                                                pathname: './databases/inventory',
+                                                replace: true
+                                            }
+                                        });
+                                    } else {
+                                        navigate('../../fsxdb/inventory', { state: { allowDashboardNoCred: true } });
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: {
+                                                pathname: '../../fsxdb/inventory',
+                                                replace: true
+                                            }
+                                        });
+                                    }
+                                }}
+                            >
+                                Discover
+                            </DsButton>
                         </div>
                     </div>
 
@@ -144,7 +174,16 @@ const Marketing = () => {
                         <div>
                             <Unflattened />
                         </div>
-                        <div className={styles.arrowStyle} onClick={handleOpenModal}>
+                        <div
+                            className={styles.arrowStyle}
+                            onClick={handleOpenModal}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Expand illustration"
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' || e.key === ' ') handleOpenModal();
+                            }}
+                        >
                             <Expand />
                         </div>
                     </div>

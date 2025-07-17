@@ -124,7 +124,8 @@ export const FROM_DIALOG = {
     FSXADMIN: 'fsxadmin',
     SQLSERVER: 'sqlserver',
     SINGLE_AGENT: 'single_agent',
-    LOADER: ''
+    LOADER: '',
+    EXPLORE_SAVINGS: 'explore_savings'
 };
 
 export const DBType = {
@@ -202,7 +203,8 @@ export const JOB_MONITORING_TYPE = {
     ASSESSMENT: 'ASSESSMENT',
     OPTIMIZE: 'OPTIMIZATION',
     WELL_ARCHITECTED: 'WELL_ARCHITECTED',
-    REGISTER_RESOURCE: 'REGISTER_RESOURCE'
+    REGISTER_RESOURCE: 'REGISTER_RESOURCE',
+    LOGS_ANALYSIS: 'LOGS_ANALYSIS'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -957,3 +959,5 @@ export const ACTION_TYPE = {
     BULK: 'bulk',
     SINGLE: 'single'
 };
+
+export const MS_PER_HOUR = 60 * 60 * 1000;

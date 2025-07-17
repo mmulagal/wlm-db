@@ -202,7 +202,8 @@ async function handleLogsAnalysis(
     logsCountToConsider: number = LOGS_COUNT_TO_CONSIDER,
     logsAnalyzerFromTimestamp: number = 1,
     inferenceConfig?: InferenceConfigType,
-    logsAnalyzerS3SignedUrl?: string
+    logsAnalyzerS3SignedUrl?: string,
+    logLevel?: string
 ) {
     logger.info(
         `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`,
@@ -276,7 +277,8 @@ async function handleLogsAnalysis(
                       logsAnalyzerFromTimestamp,
                       inferenceProfileArn,
                       jobId,
-                      inferenceConfig
+                      inferenceConfig,
+                      logLevel
                   })
                 : getLinuxPrepareScript({
                       s3SignedUrl,
@@ -287,7 +289,8 @@ async function handleLogsAnalysis(
                       region,
                       inferenceProfileArn,
                       jobId,
-                      inferenceConfig
+                      inferenceConfig,
+                      logLevel
                   });
 
         const logsAnalysisResponse = await callSsmExecution(
@@ -359,7 +362,8 @@ async function triggerLogsAnalysis(
     logsCountToConsider?: number,
     logsAnalyzerFromTimestamp?: number,
     inferenceConfig?: InferenceConfigType,
-    logsAnalyzerS3SignedUrl?: string
+    logsAnalyzerS3SignedUrl?: string,
+    logLevel?: string
 ) {
     logger.info('Triggering logs analysis:', {
         accountId,
@@ -370,7 +374,8 @@ async function triggerLogsAnalysis(
         logsCountToConsider,
         logsAnalyzerFromTimestamp,
         inferenceConfig,
-        logsAnalyzerS3SignedUrl
+        logsAnalyzerS3SignedUrl,
+        logLevel
     });
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
@@ -414,7 +419,8 @@ async function triggerLogsAnalysis(
             logsCountToConsider,
             logsAnalyzerFromTimestamp,
             inferenceConfig,
-            logsAnalyzerS3SignedUrl
+            logsAnalyzerS3SignedUrl,
+            logLevel
         );
         return { jobId };
     } catch (error) {

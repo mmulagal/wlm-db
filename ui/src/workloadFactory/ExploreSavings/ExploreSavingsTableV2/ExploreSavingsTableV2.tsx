@@ -1,14 +1,14 @@
-import { Table, useTable, Typography, TableTopBar, Popover } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, Popover, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { t } from 'i18next';
 import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { onClickESHost } from '../ExploreSavingsUtils';
-import { WLF_TABS } from '../../../utils/consts';
+import { handleAuthenticate, onClickESHost } from '../ExploreSavingsUtils';
+import { FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import {
     renderAllocatedCapacity,
     renderCellData,
@@ -18,10 +18,17 @@ import {
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import AuthDialog from './AuthDialog/AuthDialog';
+import { useRegisterResourceCredentialsBulkMutation } from '../../../utils/apiService';
+import { resetServerDetailsCredentials } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { resetDialogComponent } from '../../../store/workloadFactory/dialogComponentSlice';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
     const windowSize = useResize();
+    const { setDialog, closeDialog } = useDialog();
+    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
@@ -34,6 +41,8 @@ const ExploreSavingsTableV2 = () => {
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
         state => state.headers
     );
+    const selectedExploreSavingsTabFileSystemType =
+        selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? GENERAL.EBS : GENERAL.FSX_FOR_WINDOWS;
 
     // const getInitialFilter = () => {
     //     if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
@@ -106,6 +115,36 @@ const ExploreSavingsTableV2 = () => {
         }
     }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
+    const handleDialog = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.explore-savings.authentication-required')}
+                content={<AuthDialog databaseHostName={rowData?.name} />}
+                primaryButton={t('databases.explore-savings.authenticate')}
+                secondaryButton={t('databases.explore-savings.close')}
+                closeCallback={() => {
+                    dispatch(resetDialogComponent());
+                    dispatch(resetServerDetailsCredentials());
+                    closeDialog();
+                }}
+                dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
+                callback={() => {
+                    handleAuthenticate(
+                        rowData,
+                        dispatch,
+                        selectedExploreSavingsTabFileSystemType,
+                        isWorkloadFactory,
+                        navigate,
+                        () => closeDialog(),
+                        t,
+                        registerResourceCredBulk
+                    );
+                }}
+                customClass={styles.protectionDialog}
+            />
+        );
+    };
+
     const lastColDetails = () => ({
         id: '11',
         Header: '',
@@ -114,23 +153,17 @@ const ExploreSavingsTableV2 = () => {
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
         renderCell: (cellData: any, rowData: any) =>
             !rowData?.isDetected ? (
-                <Popover
-                    popoverClass={styles['copy-popover']}
-                    children="To explore savings on this host first detect the instances."
-                    trigger="hover"
-                    isAppendedToBody
-                    container={
-                        <div
-                            className={styles.detectManageDisable}
-                            onClick={() => {}}
-                            id="explore-savings-table-button"
-                        >
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {GENERAL.ES_SAVINGS}
-                            </Typography>
-                        </div>
-                    }
-                />
+                <div
+                    className={styles.detectManage}
+                    onClick={() => {
+                        handleDialog(rowData);
+                    }}
+                    id="explore-savings-table-button"
+                >
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {GENERAL.ES_SAVINGS}
+                    </Typography>
+                </div>
             ) : (
                 <div
                     className={styles.detectManage}

@@ -1,4 +1,5 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './SandboxDistributionDate.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import SandboxChart from './SandboxChart/SandboxChart';
@@ -8,9 +9,11 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { getSandboxDistributionByAge } from '../SandboxUtility';
 
 const SandboxDistributionDate = () => {
+    const { t } = useTranslation();
     const windowSize = useResize();
     const loading = useAppSelector(state => state.sandbox.getSandboxList.sandboxListLoading);
-    const { isNA, aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const { showNA } = useAppSelector(state => state.headers);
     return (
         <div className={styles.sandboxDate}>
             <div className={styles.headSection}>
@@ -28,15 +31,15 @@ const SandboxDistributionDate = () => {
                     <div className={styles.individualRow}>
                         <div
                             className={styles.square}
-                            style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#68C6B3' }}
+                            style={{ backgroundColor: showNA ? 'var(--chart-disabled)' : '#68C6B3' }}
                         />
                         <DsTypography
                             variant="Regular_14"
-                            className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
+                            className={showNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                         >
                             {GENERAL.ONE_THIRTY_DAYS}
                         </DsTypography>
-                        {windowSize.width > 1428 && !isNA && (
+                        {windowSize.width > 1428 && !showNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
@@ -44,16 +47,16 @@ const SandboxDistributionDate = () => {
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
-                        {windowSize.width <= 1428 && !isNA && (
+                        {windowSize.width <= 1428 && !showNA && (
                             <DsTypography variant="Regular_14">{`(${
                                 getSandboxDistributionByAge(aggregatedSandboxList)['0-30']
                             })`}</DsTypography>
                         )}
-                        {isNA && (
+                        {showNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             </>
                         )}
@@ -62,15 +65,15 @@ const SandboxDistributionDate = () => {
                     <div className={styles.individualRow}>
                         <div
                             className={styles.square}
-                            style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#A815F3' }}
+                            style={{ backgroundColor: showNA ? 'var(--chart-disabled)' : '#A815F3' }}
                         />
                         <DsTypography
                             variant="Regular_14"
-                            className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
+                            className={showNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                         >
                             {GENERAL.THIRTY_SIXTY_DAYS}
                         </DsTypography>
-                        {windowSize.width > 1428 && !isNA && (
+                        {windowSize.width > 1428 && !showNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
@@ -78,16 +81,16 @@ const SandboxDistributionDate = () => {
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
-                        {windowSize.width <= 1428 && !isNA && (
+                        {windowSize.width <= 1428 && !showNA && (
                             <DsTypography variant="Regular_14">{`(${
                                 getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
                             })`}</DsTypography>
                         )}
-                        {isNA && (
+                        {showNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             </>
                         )}
@@ -96,16 +99,16 @@ const SandboxDistributionDate = () => {
                     <div className={styles.individualRow}>
                         <div
                             className={styles.square}
-                            style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#FDC300' }}
+                            style={{ backgroundColor: showNA ? 'var(--chart-disabled)' : '#FDC300' }}
                         />
                         <DsTypography
                             variant="Regular_14"
-                            className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
+                            className={showNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                         >
                             {GENERAL.SIXTY_PLUS_DAYS}
                         </DsTypography>
 
-                        {windowSize.width > 1428 && !isNA && (
+                        {windowSize.width > 1428 && !showNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
@@ -114,16 +117,16 @@ const SandboxDistributionDate = () => {
                             </>
                         )}
 
-                        {windowSize.width <= 1428 && !isNA && (
+                        {windowSize.width <= 1428 && !showNA && (
                             <DsTypography variant="Regular_14">{`(${
                                 getSandboxDistributionByAge(aggregatedSandboxList)['61+']
                             })`}</DsTypography>
                         )}
-                        {isNA && (
+                        {showNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {t('databases.general.not-available')}
                                 </DsTypography>
                             </>
                         )}

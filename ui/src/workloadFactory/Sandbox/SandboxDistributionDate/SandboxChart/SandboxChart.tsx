@@ -1,6 +1,7 @@
 import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
 import { Chart, registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './SandboxChart.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -10,9 +11,10 @@ import { getSandboxDistributionByAge } from '../../SandboxUtility';
 Chart.register(...registerables);
 
 const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
+    const { t } = useTranslation();
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
-    const { isNA } = useAppSelector(state => state.sandbox);
+    const { showNA } = useAppSelector(state => state.headers);
 
     const doughnutOptions = {
         plugins: {
@@ -50,25 +52,25 @@ const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
     return (
         <div className={styles.sandboxChart} id="chart-item">
             <div className={styles['center-text']}>
-                {!isNA && (
+                {!showNA && (
                     <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                         {aggregatedSandboxList.length}
                     </Typography>
                 )}
 
-                {isNA && (
+                {showNA && (
                     <Typography variant="Regular_16" className={CommonStyles.notAvailable}>
-                        {GENERAL.NOT_AVAILABLE}
+                        {t('databases.general.not-available')}
                     </Typography>
                 )}
-                <Typography variant="Regular_14" className={isNA ? ` ${CommonStyles.notAvailable}` : ''}>
+                <Typography variant="Regular_14" className={showNA ? ` ${CommonStyles.notAvailable}` : ''}>
                     {GENERAL.SANDBOXES}
                 </Typography>
                 {loading && <DsFlashingDotsLoader />}
             </div>
             {/* @ts-ignore */}
 
-            {(isNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle} />}
+            {(showNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle} />}
 
             {aggregatedSandboxList.length !== 0 && <canvas ref={ref} id="chart-area" width={184} height={184} />}
         </div>
