@@ -1,20 +1,19 @@
 {
-    "$metadata": {
-      "httpStatusCode": 200,
-      "requestId": "d71e6903-a4f5-4ed6-b2ea-9231ffe5e820",
-      "extendedRequestId": "undefined",
-      "cfId": "undefined",
-      "attempts": 1,
-      "totalRetryDelay": 0
-    },
-    "Parameter": {
-      "ARN": "arn:aws:ssm:ap-southeast-1:464262061435:parameter/netapp/wlmdb/WLMDB-SqlFciStack-1708993900292",
-      "DataType": "text",
-      "LastModifiedDate": "2024-02-27T00:40:38.303Z",
-      "Name": "/netapp/wlmdb/i-test-ec2",
-      "Type": "SecureString",
-      "Value":"{\"sql\":[{\"sqlinstancename\":\"MSSQLSERVER\",\"username\":\"sa\",\"password\":\"instance_MSSQLSERVER\"}]}",
-      "Version": 2
-    }
+  "$metadata": {
+    "httpStatusCode": 200,
+    "requestId": "d71e6903-a4f5-4ed6-b2ea-9231ffe5e820",
+    "extendedRequestId": "undefined",
+    "cfId": "undefined",
+    "attempts": 1,
+    "totalRetryDelay": 0
+  },
+  "Parameter": {
+    "ARN": "arn:aws:ssm:ap-southeast-1:464262061435:parameter/netapp/wlmdb/WLMDB-SqlFciStack-1708993900292",
+    "DataType": "text",
+    "LastModifiedDate": "2024-02-27T00:40:38.303Z",
+    "Name": "/netapp/wlmdb/i-test-ec2",
+    "Type": "SecureString",
+    "Value": "{\"sql\":[{\"sqlinstancename\":\"MSSQLSERVER\",\"username\":\"sa\",\"password\":\"instance_MSSQLSERVER\"}],\"domain\":[{\"sqlinstancename\":\"MSSQLSERVER\",\"username\":\"wlm\\\\user\",\"password\":\"whoami\"}]}",
+    "Version": 2
   }
-  
+}

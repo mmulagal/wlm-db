@@ -56,7 +56,10 @@ enum HEADERS {
     REFERER = 'referer',
     ACTIVE_TRACE_ID = 'active-trace-id',
     X_NETAPP_REFERER = 'x-netapp-referer',
-    X_NETAPP_CACHE_CONTROL = 'x-netapp-cache-control'
+    X_NETAPP_CACHE_CONTROL = 'x-netapp-cache-control',
+    X_AGENT_ID = 'x-agent-id',
+    X_ACCOUNT_ID = 'x-account-id',
+    NETAPP_WORKSPACE_ID = 'x-netapp-workspace-id'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -165,10 +168,10 @@ enum HttpErrorCodes {
     FORBIDDEN = 403,
     NOT_FOUND = 404,
     CONFLICT = 409,
+    PRECONDITION_FAILED = 412,
     VALIDATION_ERROR = 422,
     FAILED_DEPENDENCY = 424,
     TOO_MANY_REQUESTS = 429,
-
     // Server errors
     INTERNAL_SERVER_ERROR = 500,
     SERVICE_UNAVAILABLE = 503

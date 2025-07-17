@@ -68,6 +68,7 @@ const CredentialsIdRegionParams = Type.Object({
 });
 
 type AccountIdParamsType = Static<typeof AccountIdParams>;
+type CredentialsIdParamsType = Static<typeof CredentialsIdParams>;
 
 const NextTokenQueryString = Type.Object({
     nextToken: Type.Optional(Type.String()),
@@ -86,5 +87,6 @@ export {
     CredentialsIdParams,
     CredentialsIdRegionParams,
     CredentialsIdRegionQueryParams,
-    NextTokenQueryString
+    NextTokenQueryString,
+    CredentialsIdParamsType
 };
