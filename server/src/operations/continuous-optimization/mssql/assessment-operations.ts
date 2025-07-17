@@ -1,7 +1,7 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import moment from 'moment';
 import throat from 'throat';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import getLogger from '../../../utils/logger';
 import { extractSqlInstanceName, isDemo } from '../../../utils/utils';
@@ -30,6 +30,7 @@ import {
     AuditStatus,
     HttpErrorCodes,
     RESOURCESTYPE,
+    SqlServerDeploymentModel,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
 } from '../../../utils/consts';
 import {
@@ -55,7 +56,8 @@ import { calculateMaxDOPDrift, managedHostsMaxDOPAssessment } from './maxdop-ass
 import {
     initiateCrossRegionResiliencyAssessment,
     initiateAWSBackupAssessment,
-    getResilienceDriftAssessment
+    getResilienceDriftAssessment,
+    initiateHighAvailabilityAssessment
 } from './resilience-assessment-operation';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
@@ -225,7 +227,8 @@ async function fetchMssqlDriftAssessment(
         resilience: [
             AssessmentCategories.SNAPSHOT_POLICY,
             AssessmentCategories.AWS_BACKUP,
-            AssessmentCategories.CRR
+            AssessmentCategories.CRR,
+            AssessmentCategories.HIGH_AVAILABILITY
         ].some(category => fieldsValues.includes(category.toLowerCase())),
         clone: fieldsValues.includes(AssessmentCategories.CLONE.toLowerCase())
     };
@@ -261,6 +264,7 @@ async function fetchMssqlDriftAssessment(
                   region,
                   databaseHostId,
                   databaseInstanceId,
+                  databaseInstanceName,
                   fieldsValues,
                   databaseInstanceConfigData
               )
@@ -792,7 +796,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
             error
         });
     }
-    logger.info('Mapped ONTAP volumes data persisted successfully', { fields });
+
     const resourceWithInstanceName = `${databaseInstanceRecord.resourceName}\\${databaseInstanceRecord.name}`;
     const jobName = `Microsoft SQL Server assessment for instance ${resourceWithInstanceName}`;
     const jobDescription = `${jobName}. Review detailed findings and recommendations.`;
@@ -806,6 +810,28 @@ async function initiateInstanceLevelAssessmentDataCollection(
         type: JOBTYPE.ASSESSMENT,
         parentJobId: jobId
     });
+
+    const volumeRecords =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeRecords)
+            .flat() || [];
+    const lunRecords =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.lunRecords)
+            .flat() || [];
+    databaseInstanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
+    databaseInstanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
+
+    const lunNames = !isEmpty(lunRecords)
+        ? lunRecords?.map(lun => lun.name)
+        : Object.values(instanceVolumeMapping)
+              ?.map(i => i.lunNames)
+              .flat() || [];
+
+    databaseInstanceRecord.mappedLunNames = compact(lunNames);
+
+    const lunUuids = !isEmpty(lunRecords) ? lunRecords?.map(lun => lun.uuid) : [];
+    databaseInstanceRecord.mappedLunUuids = compact(lunUuids);
 
     fields.forEach(async field => {
         switch (field) {
@@ -866,6 +892,16 @@ async function initiateInstanceLevelAssessmentDataCollection(
                     resourceName,
                     databaseHostId,
                     databaseInstanceId,
+                    instanceLevelAssessmentJobId
+                );
+                break;
+            case AssessmentCategories.HIGH_AVAILABILITY:
+                await initiateHighAvailabilityAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceRecord,
                     instanceLevelAssessmentJobId
                 );
                 break;
@@ -943,7 +979,8 @@ async function triggerMssqlAssessment(
             database_instance_name: savedInstanceName,
             fsxn_ids: fileSystemId,
             fsx_svm_id: fsxSvmId,
-            sqlAuthEnabled
+            sqlAuthEnabled,
+            database_deployment_type: deploymentType
         } = newDatabaseInstanceDetails;
 
         const instanceRecord: WorkloadInstance = {
@@ -964,6 +1001,19 @@ async function triggerMssqlAssessment(
             fields = updateFieldsBasedOnDismissedConfigurations(fields, dismissedConfigurations);
         }
 
+        if (
+            deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
+            fields.includes(AssessmentCategories.HIGH_AVAILABILITY)
+        ) {
+            logger.warn('High availabilty assessment is not supported on standalone instance.', {
+                accountId,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId
+            });
+            fields = fields.filter(e => e !== AssessmentCategories.HIGH_AVAILABILITY);
+        }
+
         const shouldRunInstanceLevelAssessment = fields.some(field =>
             [
                 AssessmentCategories.STORAGE,
@@ -971,7 +1021,8 @@ async function triggerMssqlAssessment(
                 AssessmentCategories.CRR,
                 AssessmentCategories.AWS_BACKUP,
                 AssessmentCategories.CLONE,
-                AssessmentCategories.MAXDOP
+                AssessmentCategories.MAXDOP,
+                AssessmentCategories.HIGH_AVAILABILITY
             ].includes(field.toLowerCase() as AssessmentCategories)
         );
 

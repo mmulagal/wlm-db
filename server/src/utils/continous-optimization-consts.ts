@@ -13,7 +13,8 @@ enum AssessmentCategories {
     CLONE = 'clone',
     SNAPSHOT_POLICY = 'snapshot-policy',
     AWS_BACKUP = 'aws-backup',
-    CRR = 'crr'
+    CRR = 'crr',
+    HIGH_AVAILABILITY = 'high-availability'
 }
 
 enum AssessmentTriggeredBy {

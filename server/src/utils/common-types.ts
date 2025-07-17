@@ -104,6 +104,74 @@ interface AWSBackupAssessment {
     isAWSBackupEnabled: boolean;
     errorMessage?: string;
 }
+interface HighAvailabilityHeartbeatDetails {
+    crossSiteDelay: number;
+    sameSubnetDelay: number;
+    crossSubnetDelay: number;
+    crossSiteThreshold: number;
+    sameSubnetThreshold: number;
+    crossSubnetThreshold: number;
+}
+
+interface HighAvailabilityClusterQuorumDetails {
+    isMajority: boolean;
+    quorumType: number;
+    isPhysicalDisk: boolean;
+    quorumResourceName: string;
+    isPhysicalDiskAndMajority: boolean;
+}
+
+interface HighAvailabilityIgroupDetails {
+    igroupName: string;
+    igroupUuid: string;
+    initiatorNames: string[];
+    hostIqnsChecked: string[];
+}
+
+interface HighAvailabilityLunDetails {
+    status: string;
+    lunName: string;
+    lunUuid: string;
+    igroupDetails: HighAvailabilityIgroupDetails;
+}
+
+interface HighAvailabilitySharedStorage {
+    status: string;
+    lunDetails: HighAvailabilityLunDetails[];
+}
+
+interface HighAvailabilitySqlServerServiceDetail {
+    name: string;
+    status: string;
+    startType: string;
+}
+
+interface HighAvailabilityClusterDriveLetterDetails {
+    name: string;
+    status: string;
+    missingDriveLetters: string[];
+    primaryNodeDriveLetters: string[];
+}
+
+interface HighAvailabilityAssessment {
+    heartbeat?: {
+        status: string;
+        details: HighAvailabilityHeartbeatDetails;
+    };
+    driveLetter?: {
+        status: string;
+        details: HighAvailabilityClusterDriveLetterDetails;
+    };
+    clusterQuorum?: {
+        status: string;
+        details: HighAvailabilityClusterQuorumDetails;
+    };
+    sharedStorage?: HighAvailabilitySharedStorage;
+    sqlServerServices?: {
+        status: string;
+        details: HighAvailabilitySqlServerServiceDetail[];
+    };
+}
 
 interface CloneDetail {
     databaseHostName: string;
@@ -781,5 +849,6 @@ export {
     DatabaseInstanceRegistration,
     OracleCredential,
     SqlCredential,
-    OracleInstanceRegistration
+    OracleInstanceRegistration,
+    HighAvailabilityAssessment
 };
