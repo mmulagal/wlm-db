@@ -640,7 +640,7 @@ const HOST_AND_SQL_INFO_PS1 = [
                 $responseObject['sqlServerVersion'] = $sqlServerInfoFromRegistry['sqlServerVersion']
               }
               $isHadrEnabled = $sqlServerInfoFromRegistry['hadrEnabled']
-              $isClustered = $sqlServerInfoFromRegistry['isClusteored']
+              $isClustered = $sqlServerInfoFromRegistry['isClustered']
             }
             $responseObject['sqlServerName'] = (Get-WmiObject -Class Win32_ComputerSystem).Name
             
@@ -653,8 +653,8 @@ const HOST_AND_SQL_INFO_PS1 = [
               }
             }
             catch {
-              Write-Information "SQL query for deployment type failed: $_"
-              Write-Information "Continuing with registry values for deployment type"
+              Write-Information "SQL query for deployment type failed.Continuing with registry values for deployment type."
+              $responseObject['failureInfo'] += "SQL query for deployment type failed: $_\`n"
             }
             if($isHadrEnabled -eq $True ) {
               if($isReadReplicaCreated -eq $True) {
