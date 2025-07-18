@@ -370,7 +370,7 @@ async function handleLogsAnalysis(
         const [ssmLogsResponse] = await getCloudWatchLogs(credentialsId, region, logGroupName, logStreamName);
         const jsonSsmLogsResponse = parseConcatenatedJSON(ssmLogsResponse);
 
-        logger.info('Logs analysis compleeted successfully for jobId:', jobId);
+        logger.info('Logs analysis completed successfully for jobId:', jobId);
         logger.debug(`Logs analysis response: ${JSON.stringify(jsonSsmLogsResponse)}`);
 
         const [{ data: { startTime, endTime } = {} } = {}] =
