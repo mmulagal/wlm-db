@@ -1049,7 +1049,7 @@ function parseMultipleCommandResponse(response: string) {
     response = response.replaceAll('\\r\\n', '');
     response = response.replaceAll('\n', '');
     response = response.replaceAll('\\n', '');
-    const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
+    const jsonObjects = response.match(/(\{[^{}]*\}|\[[^[\]]*\])/g);
 
     return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
 }

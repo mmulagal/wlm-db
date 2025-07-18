@@ -1139,7 +1139,7 @@ export const handleAuthenticate = async (
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: `Authenticated database host ${rowData?.name} was successful.\nYou can now explore potential savings.`
+                        message: `Authenticated database host ${rowData?.name}.\nYou can now explore potential savings.`
                     })
                 );
             } else {

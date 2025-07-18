@@ -17,6 +17,8 @@ import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg'
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
+    useAddHostJobScMutation,
+    useAddHostScMutation,
     useAssignRBACPrivilegesMutation,
     useDiscoverExistingFsxNMutation,
     useGenerateCredentialIDMutation,
@@ -27,7 +29,7 @@ import {
     useListExistingHostsMutation,
     useUnmanageMssqlInstanceMutation
 } from '../../../../utils/apiService';
-import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
+import { addHostHandlerSc, manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { bxpRedirect, getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
@@ -95,6 +97,7 @@ import {
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
+import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -129,6 +132,8 @@ const InstancesTable = () => {
     const [listExistingHosts] = useListExistingHostsMutation();
     const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
     const [generateCredentialID] = useGenerateCredentialIDMutation();
+    const [addHostScApi] = useAddHostScMutation();
+    const [addHostJobScApi] = useAddHostJobScMutation();
 
     useEffect(() => {
         setLoading(
@@ -413,29 +418,16 @@ const InstancesTable = () => {
         );
     };
 
-    //Function to handle Add host
-    const addHostHandler = async (rowData: any) => {
-        dispatch(
-            startProtectionStep1(
-                `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`
-            )
-        );
-        const state: any = store.getState().snapCenter;
-        const payload = {
-            connectorId: state.selectedAgent[0]?.id,
-            ec2InstanceIds: [rowData.ec2InstanceId],
-            sqlInstanceName: rowData.databaseInstanceName,
-            resourceId: rowData.resourceId,
-            workspaceId: state?.workSpaceData?.id
-        };
-        await generateCredentialID({
-            credentialID: rowData.credentialId,
-            regionID: rowData.regionId,
-            payload: payload
-        });
-    };
-
     const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any) => {
+        const state = store.getState();
+        const dialogKeyValue = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
+        const protectionState = state.snapCenter.protectionProcessState[dialogKeyValue];
+        if (protectionState?.step1Status === 'running' || protectionState?.step2Status === 'running') {
+            dispatch(setActionsDisabled(true));
+        } else {
+            dispatch(setActionsDisabled(false));
+        }
+
         setDialog(
             <DialogComponent
                 header={
@@ -448,13 +440,7 @@ const InstancesTable = () => {
                         )}
                     </div>
                 }
-                content={
-                    <SingleAgentDialog
-                        agents={connectors}
-                        hostExists={hostExists}
-                        dialogKey={`${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`}
-                    />
-                }
+                content={<SingleAgentDialog agents={connectors} hostExists={hostExists} dialogKey={dialogKeyValue} />}
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
                 secondaryButton={t('databases.inventory.cancel')}
                 closeCallback={() => {
@@ -464,7 +450,7 @@ const InstancesTable = () => {
                     if (hostExists) {
                         bxpRedirect(isWorkloadFactory);
                     } else {
-                        addHostHandler(rowData);
+                        addHostHandlerSc(rowData, dispatch, generateCredentialID, addHostScApi, addHostJobScApi, t);
                     }
                 }}
                 customClass={styles.protectionDialog}
@@ -1204,7 +1190,9 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'investigateErrors',
-                            displayName: 'Investigate errors'
+                            displayName: 'Investigate errors',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
                         {
                             id: 'viewInstance',
@@ -1242,7 +1230,8 @@ const InstancesTable = () => {
                         {
                             id: 'protect',
                             displayName: 'Protect',
-                            disabled: !rowData?.fsxId
+                            disabled: disableOption || !rowData?.fsxId,
+                            infoText: disableMessage
                         },
 
                         {

@@ -266,7 +266,9 @@
             "next-steps": "Next steps",
             "assign-protection-policy-sql": "Assign a protection policy for your SQL Server.",
             "multi-agent-text": "Select the Connector where you want the workload to be registered and protected.",
-            "agent": "Connector"
+            "agent": "Connector",
+            "validate-host-failed": "Failed to validate the host",
+            "package-installation-failed": "Failed to install the package"
         },
         "log-analyzer": {
             "error-investigation": "Error analyzer",

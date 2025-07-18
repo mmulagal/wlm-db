@@ -83,7 +83,9 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
         api.endpoint === 'getWorkSpaceID' ||
         api.endpoint === 'getRBACPrivileges' ||
         api.endpoint === 'listExistingHosts' ||
-        api.endpoint === 'assignRBACPrivileges'
+        api.endpoint === 'assignRBACPrivileges' ||
+        api.endpoint === 'addHostSc' ||
+        api.endpoint === 'addHostJobSc'
     ) {
         if (api.endpoint === 'discoverExistingFsxN') {
             return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
@@ -614,6 +616,23 @@ export const snapcenterAPI = createApi({
                 method: 'POST',
                 body: payload
             })
+        }),
+        addHostSc: builder.mutation({
+            query: ({ accountID, payload, agentID, workspaceID }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts`,
+                method: 'POST',
+                body: payload,
+                headers: {
+                    'x-account-id': accountID,
+                    'x-agent-id': agentID,
+                    'x-netapp-workspace-id': workspaceID
+                }
+            })
+        }),
+        addHostJobSc: builder.mutation({
+            query: ({ accountID, jobID }) => ({
+                url: `cbs-backend/api/account/${accountID}/v1/jobs/${jobID}`
+            })
         })
     })
 });
@@ -1082,12 +1101,12 @@ export const getWellApi = createApi({
     endpoints: builder => ({
         getMssqlAssessmentData: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,clone,snapshot-policy,aws-backup,crr`
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
             })
         }),
         getMssqlAssessmentDataForHost: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,clone,snapshot-policy,aws-backup,crr`
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment`
             })
         }),
         triggerInstanceAssessment: builder.mutation({
@@ -1319,7 +1338,9 @@ export const {
     useGetWorkSpaceIDMutation,
     useGetRBACPrivilegesMutation,
     useListExistingHostsMutation,
-    useGenerateCredentialIDMutation
+    useGenerateCredentialIDMutation,
+    useAddHostScMutation,
+    useAddHostJobScMutation
 } = snapcenterAPI;
 
 export const {

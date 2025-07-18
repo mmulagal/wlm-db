@@ -17,7 +17,8 @@ import {
     DatabaseHostOptionalInstanceSummaryParams,
     PgSqlDbHostSummaryListResponse,
     PgSqlDbHostsSummaryResponse,
-    OracleDbHostsSummaryResponse
+    OracleDbHostsSummaryResponse,
+    OracleDbHostSummaryListResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams } from '../types/generic.types';
 
@@ -143,6 +144,16 @@ const PgSqlDbHostsSummarySchema = {
     }
 };
 
+const OracleDbHostsSummarySchema = {
+    ...resourceRequest,
+    summary: 'Get Oracle database hosts details',
+    description: 'Get Oracle database hosts summary details',
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: OracleDbHostSummaryListResponse
+    }
+};
+
 const DatabaseHostDetailsSchemaV2 = {
     ...resourceRequest,
     summary: 'Fetch database server details',
@@ -235,5 +246,6 @@ export {
     GetCollationDetailsSchemaV2,
     PgSqlDbHostsSummarySchema,
     PgSqlDbHostDetailsSchema,
-    oracleDbHostDetailsSchema
+    oracleDbHostDetailsSchema,
+    OracleDbHostsSummarySchema
 };

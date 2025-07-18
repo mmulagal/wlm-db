@@ -42,12 +42,13 @@ const Home = () => {
                     (msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE ||
                         msg?.data?.type === BXP_MESSAGES.SERVICE_ON_READY)
                 ) {
-                    if (statusData && !statusData?.isActive) {
-                        postBlueXPMessage({
-                            type: BlueXPListeners.navigate,
-                            payload: { pathname: './fsxdb/marketing', replace: true }
-                        });
-                    } else if (msg?.data?.payload?.pathname === '/fsxdb/mssql-deploy-wizard') {
+                    // if (statusData && !statusData?.isActive) {
+                    //     postBlueXPMessage({
+                    //         type: BlueXPListeners.navigate,
+                    //         payload: { pathname: './fsxdb/marketing', replace: true }
+                    //     });
+                    // }
+                    if (msg?.data?.payload?.pathname === '/fsxdb/mssql-deploy-wizard') {
                         navigate('../fsxdb/mssql-deploy-wizard');
                     } else if (msg?.data?.payload?.pathname === '/fsxdb/postgreSQL-deploy-wizard') {
                         navigate('../fsxdb/postgreSQL-deploy-wizard');

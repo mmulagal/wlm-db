@@ -184,7 +184,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const [queue, setQueue] = useState<any>([]);
     // const [multiDataStatus, setMultiDataStatus] = useState<any>({});
 
-    const { refreshTime, refreshTimeSandbox } = useAppSelector(state => state.headers);
+    const { refreshTime, refreshTimeSandbox, secondaryCTAFlow } = useAppSelector(state => state.headers);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
@@ -235,7 +235,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            if (location.state && location.state.allowDashboardNoCred) {
+            if (secondaryCTAFlow) {
                 setStatusChk(true);
                 return;
             }
@@ -288,16 +288,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM));
                     setExploreSavingsSubTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM, dispatch);
                 }
-            } else if (!isWorkloadFactory) {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: '../fsxdb/marketing', replace: true }
-                });
-            } else {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: './marketing', replace: true }
-                });
             }
         } else {
             setStatusChk(false);

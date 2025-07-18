@@ -23,7 +23,7 @@
                 {
                     "instanceName": "MSSQLSERVER3",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "DOWN",
                     "isDefault": false
                 },
                 {
@@ -496,7 +496,7 @@
                 {
                     "databaseInstanceId": "13",                             
                     "databaseInstanceName": "MSSQLSERVER3",                           
-                    "status": "Up",
+                    "status": "Down",
                     "databaseCount": 0,
                     "databaseServer": {
                         "operatingSystem": "Windows Server 2019",

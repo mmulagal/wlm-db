@@ -3393,5 +3393,47 @@
                 }
             ]
         }
-    }
+    },
+    "getInstanceResponse": [
+        {
+            "instanceName": "MSSQLSERVER",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQL-Managed-Host-ProdPROD-MarketingCampaigns",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQL-Managed-Host-ProdPROD-SupplierManagement",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQL-Managed-Host-ProdPROD-ProductCatalog",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQL-Managed-Host-DEVDEV-SalesAnalytics",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQL-Managed-Host-DEVDEV-ProjectManagement",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQLServer-PreProd-02PreProd-BusinessIntelligence",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQLServer-Prod-02Prod-HelpDesk",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQLServer-Dev-02Dev-VendorManagement",
+            "instanceState": "Running"
+        },
+        {
+            "instanceName": "MSSQL$SQLServer-UAT-02UAT-QualityControl",
+            "instanceState": "Running"
+        }
+    ]
 }
