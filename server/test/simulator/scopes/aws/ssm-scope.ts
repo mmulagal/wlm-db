@@ -49,7 +49,9 @@ import {
     GET_DEFAULT_DRIVES,
     sqlQueryExecution,
     CHECK_SCRIPT_AVAILABILITY_AND_VERSION,
-    sqlQueryExecutionWithAuth
+    sqlQueryExecutionWithAuth,
+    GET_FQDN,
+    GET_NODE_IP_ADDRESS
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
     SERVER_DETAILS,
@@ -357,6 +359,11 @@ const getSandboxDetails = {
 const instanceDetails = {
     commands: [INSTANCE_DETAILS]
 };
+
+const instanceDetailsWithFqdnAndIp = {
+    commands: [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS]
+};
+
 const getVolumeLunMappingsCommand = {
     commands: [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')]
 };
@@ -905,7 +912,9 @@ ssmMock
         const commentString = /# Get the installed SQL Server version/;
         return commentString.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getInstalledSqlServerVersionCommand'));
+    .resolves(getSampleCommandResponse('getInstalledSqlServerVersionCommand'))
+    .on(SendCommandCommand, { Parameters: instanceDetailsWithFqdnAndIp })
+    .resolves(getSampleCommandResponse('instanceDetailsWithFqdnAndIp'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1337,6 +1346,19 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'optimizeNetworkAdapters',
             JSON.stringify(getCommandInvocationResponse.getInstalledSqlVersion)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-instanceDetailsWithFqdnAndIp'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'instanceDetailsWithFqdnAndIp',
+            `${JSON.stringify(getCommandInvocationResponse.getInstanceResponse)},${JSON.stringify({
+                fqdn: 'dev.wlm.com'
+            })},${JSON.stringify({
+                ipAddress: '168.154.0.0'
+            })}`
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

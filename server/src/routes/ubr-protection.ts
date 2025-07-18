@@ -5,7 +5,7 @@ import { GenerateUbrCredentialsSchema } from './schemas/ubr-protection.schema';
 import { generateUbrCredentials } from '../operations/ubr-protection-operations';
 
 const UBR_PROTECTION_API_PREFIX_PATH = '/v1/ubr-protection/credentials/:credentialsId/regions/:region/ubr-credentials';
-export default function ubrIntegrationRoutes(fastify: FastifyInstance) {
+export default function ubrProtectionRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server.post(UBR_PROTECTION_API_PREFIX_PATH, { schema: GenerateUbrCredentialsSchema }, async request => {

@@ -52,6 +52,7 @@ import continuousOptimizationRoutes from './routes/continuous-optimization';
 import notificationRoutes from './routes/notification';
 import logsAnalyzerRoutes from './routes/logs-analyzer';
 import registerRoutes from './routes/register';
+import ubrProtectionRoutes from './routes/ubr-protection';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -223,6 +224,7 @@ const app = fastify({
             logsAnalyzerRoutes(instance);
             sandboxRoutes(instance);
             registerRoutes(instance);
+            ubrProtectionRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }
