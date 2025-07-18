@@ -648,13 +648,109 @@ const InstancesTable = () => {
         return rowData?.status;
     };
 
+     // Helper function to get the computed display value and disable message for Well-architected status
+    const getOptimizationStatusData = (rowData: any) => {
+        let disableMsg = '';
+        const cellData = rowData.optimizationStatus;
+        
+        const getDisableMessage = () => {
+            if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+                return GENERAL.NON_MSSQL_ASSESSMENT_NA;
+            }
+            if (
+                rowData?.status === INVENTORY_STATUS.OFFLINE ||
+                rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
+                rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
+                rowData?.status === INVENTORY_STATUS.STOPPED
+            ) {
+                return GENERAL.ONLINE_INSTANCE_ASSESS;
+            }
+
+            if (
+                (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                    rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+                (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
+            ) {
+                return GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
+            }
+
+            if (
+                (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                    rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+                (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+            ) {
+                return GENERAL.FSXN_OPTIMIZE_SUPPORTED;
+            }
+
+            if (
+                rowData?.serverInstallationMode === GENERAL.AOAG &&
+                rowData.fileSystemType &&
+                rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
+            ) {
+                if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+                    return GENERAL.ASSESSMENT_AOAG_DETECTED;
+                }
+                if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                    return GENERAL.ASSESSMENT_AOAG_UNDETECTED;
+                }
+            }
+
+            if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+                if (
+                    rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                    rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
+                ) {
+                    return GENERAL.ASSESSMENT_FOR_MANAGE;
+                }
+                if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                    return GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
+                }
+            }
+
+            if (
+                (!cellData && !rowData?.optimizationStatusLoading) ||
+                cellData === INVENTORY_STATUS.IN_PROGRESS
+            ) {
+                return t('databases.well-architect.assessment-in-progress');
+            }
+            return '';
+        };
+
+        disableMsg = getDisableMessage();
+        
+        if (disableMsg) {
+            return { displayValue: "Not analyzed", disableMsg, isDisabled: true };
+        }
+        if (rowData?.optimizationStatusLoading) {
+                    return <DsFlashingDotsLoader />;
+        }
+        return { displayValue: cellData || GENERAL.NOT_AVAILABLE, disableMsg: '', isDisabled: false };
+    };
+
     const updatedTableData = useMemo(
         () =>
             instanceTableRows?.map((row: any) => {
                 const { isDisabled, errorMessage } = disableManageCheck(row);
+                const optimizationData = getOptimizationStatusData(row);
+                let optimizationStatus, optimizationDisableMsg, optimizationIsDisabled;
+                if (
+                    typeof optimizationData === 'object' &&
+                    optimizationData !== null &&
+                    'displayValue' in optimizationData
+                ) {
+                    optimizationStatus = optimizationData.displayValue;
+                    optimizationDisableMsg = optimizationData.disableMsg;
+                    optimizationIsDisabled = optimizationData.isDisabled;
+                } else {
+                    optimizationStatus = optimizationData;
+                    optimizationDisableMsg = '';
+                    optimizationIsDisabled = false;
+                }
                 return {
                     ...row,
                     statusAccessor: setStatusForFilter(row),
+                    optimizationStatus,
+                    optimizationDisableMsg,
                     cellProps: {
                         ...row.cellProps,
                         isDisabled,
@@ -669,6 +765,7 @@ const InstancesTable = () => {
             }),
         [instanceTableRows]
     );
+
 
     const isUnregisteredRows = useMemo(
         () =>
@@ -897,80 +994,8 @@ const InstancesTable = () => {
             width: '240px',
             filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
-                let disableMsg = '';
-                const disableMenu = () => {
-                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
-                        disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
-                        return true;
-                    }
-                    if (
-                        rowData?.status === INVENTORY_STATUS.OFFLINE ||
-                        rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
-                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
-                        rowData?.status === INVENTORY_STATUS.STOPPED
-                    ) {
-                        disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
-                        return true;
-                    }
-
-                    if (
-                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                        (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
-                    ) {
-                        disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
-                        return true;
-                    }
-
-                    if (
-                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
-                    ) {
-                        disableMsg = GENERAL.FSXN_OPTIMIZE_SUPPORTED;
-                        return true;
-                    }
-
-                    if (
-                        rowData?.serverInstallationMode === GENERAL.AOAG &&
-                        rowData.fileSystemType &&
-                        rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
-                    ) {
-                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                            disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
-                            return true;
-                        }
-                        if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                            disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
-                            return true;
-                        }
-                    }
-
-                    if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
-                        if (
-                            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                            rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
-                        ) {
-                            disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
-                            return true;
-                        }
-                        if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                            disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
-                            return true;
-                        }
-                    }
-
-                    if (
-                        (!cellData && !rowData?.optimizationStatusLoading) ||
-                        cellData === INVENTORY_STATUS.IN_PROGRESS
-                    ) {
-                        disableMsg = t('databases.well-architect.assessment-in-progress');
-                        return true;
-                    }
-                    return false;
-                };
-
-                if (disableMenu()) {
+                // If the computed display value is "Not analyzed", show with tooltip
+                if (cellData === "Not analyzed") {
                     return (
                         <div className={styles.naContainer}>
                             <Popover
@@ -980,7 +1005,7 @@ const InstancesTable = () => {
                                 placement="auto"
                                 container={<TooltipIcon />}
                             >
-                                <DsTypography variant="Regular_14">{disableMsg}</DsTypography>
+                                <DsTypography variant="Regular_14">{rowData.optimizationDisableMsg}</DsTypography>
                             </Popover>
                             <DsTypography variant="Regular_14">Not analyzed</DsTypography>
                         </div>
