@@ -505,7 +505,7 @@ const InstancesTable = () => {
             if (!fsxExists) {
                 if (isCancelled(key)) return;
 
-                const registerFsxRes = await discoverExistingFsxN({
+                await discoverExistingFsxN({
                     accountID: store.getState().auth.accountId,
                     credentialID: rowData.credentialId,
                     workSpaceID: workSpaceRes,
