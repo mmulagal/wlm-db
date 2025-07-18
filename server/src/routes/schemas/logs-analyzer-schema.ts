@@ -28,7 +28,7 @@ const GetLogsAnalyzerSchema = {
     params: LogsAnalyzerParams,
     querystring: Type.Object({
         jobId: Type.Optional(Type.String()),
-        reportId: Type.Optional(Type.String())
+        id: Type.Optional(Type.String())
     }),
     summary: 'Get logs analysis for a specific database instance in a remote database host machine',
     response: {

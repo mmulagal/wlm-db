@@ -543,14 +543,18 @@ async function getLogsAnalysisReport(
 
     const reports = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId, reportId);
 
+    if (reports.length === 0) {
+        const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
     const aggregatedReport = aggregateErrorCountAcrossReports(reports, accountId, jobId);
 
     if (aggregatedReport && aggregatedReport.length > 0) {
         return { remediationRecommendation: aggregatedReport };
     }
-    const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
-    logger.error(errorMessage);
-    throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    return { remediationRecommendation: [] as RemediationRecommendationObjectType[] };
 }
 
 async function listLogsAnalysisReportsIdentifiers(
