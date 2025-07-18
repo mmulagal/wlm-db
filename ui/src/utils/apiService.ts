@@ -83,7 +83,9 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
         api.endpoint === 'getWorkSpaceID' ||
         api.endpoint === 'getRBACPrivileges' ||
         api.endpoint === 'listExistingHosts' ||
-        api.endpoint === 'assignRBACPrivileges'
+        api.endpoint === 'assignRBACPrivileges' ||
+        api.endpoint === 'addHostSc' ||
+        api.endpoint === 'addHostJobSc'
     ) {
         if (api.endpoint === 'discoverExistingFsxN') {
             return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
@@ -613,6 +615,18 @@ export const snapcenterAPI = createApi({
                 url: `v1/ubr-protection/credentials/${credentialID}/regions/${regionID}/ubr-credentials`,
                 method: 'POST',
                 body: payload
+            })
+        }),
+        addHostSc: builder.mutation({
+            query: ({ accountID, payload }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts`,
+                method: 'POST',
+                body: payload
+            })
+        }),
+        addHostJobSc: builder.mutation({
+            query: ({ accountID, jobID }) => ({
+                url: `cbs-backend/api/account/${accountID}/v1/jobs/${jobID}`
             })
         })
     })
@@ -1319,7 +1333,9 @@ export const {
     useGetWorkSpaceIDMutation,
     useGetRBACPrivilegesMutation,
     useListExistingHostsMutation,
-    useGenerateCredentialIDMutation
+    useGenerateCredentialIDMutation,
+    useAddHostScMutation,
+    useAddHostJobScMutation
 } = snapcenterAPI;
 
 export const {

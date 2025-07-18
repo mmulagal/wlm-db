@@ -16,9 +16,11 @@ import {
     DETECT_HOST_VAR,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
+    JOB_MONITORING_STATUS,
     PARTNER_NODE,
     PREPARE_API_ENDPOINT,
     PROTECTION_TEXT_STATUS,
+    SC_JOB_INTERVAL,
     SQL_DEPLOYMENT_MODE,
     STATUS_CONST,
     WLF_TABS
@@ -57,6 +59,13 @@ import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
 import CopyToClipboardCommon from '../../common/CopyToClipboard/copyToClipboard';
+import {
+    completeProtectionStep1,
+    completeProtectionStep2,
+    resetProtectionProcess,
+    startProtectionStep1
+} from '../../store/workloadFactory/snapcenterSlice';
+import { setActionsDisabled, setDialogErrorWithTooltip } from '../../store/workloadFactory/dialogComponentSlice';
 
 export const uniqueHostRow = (id: string, cred: string, region: string) => `${id}_${cred}_${region}`;
 
@@ -3467,4 +3476,146 @@ export const fixIssueDisableMsg = (rowData: any) => {
         }
     }
     return disableMsg;
+};
+
+export const addHostJobPolling = async (addHostJobScApi: any, jobId: string, dispatch: any, dialogKey: string) => {
+    let step1Done = false;
+    const jobInterval = setInterval(() => {
+        addHostJobScApi({
+            accountID: store.getState().auth.accountId,
+            jobID: jobId
+        }).then((jobRes: any) => {
+            const status = jobRes?.data?.status;
+            if (status === JOB_MONITORING_STATUS.FAILED) {
+                let errorMsg = '';
+                if (jobRes?.data?.subJobs) {
+                    jobRes.data.subJobs.forEach((subJob: { name?: string }) => {
+                        if (subJob?.name?.includes('Package Installation') && status === JOB_MONITORING_STATUS.FAILED) {
+                            errorMsg = 'Package Installation failed.';
+                        } else if (subJob?.name?.includes('Validate Host') && status === JOB_MONITORING_STATUS.FAILED) {
+                            errorMsg = 'Validate Host failed.';
+                        }
+                    });
+                }
+                if (errorMsg) {
+                    dispatch(
+                        setDialogErrorWithTooltip({
+                            showDialogError: true,
+                            errorMessage: errorMsg,
+                            showTooltipInfo: true,
+                            tooltipText: errorMsg
+                        })
+                    );
+                }
+                clearInterval(jobInterval);
+            } else {
+                let errorMsg = '';
+                jobRes.data.subJobs.forEach((subJob: { name?: string; status?: string }) => {
+                    if (subJob?.name?.includes('Validate Host') && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
+                        errorMsg = 'Validate Host failed.';
+                        dispatch(resetProtectionProcess(dialogKey));
+                        return;
+                    }
+                    if (
+                        subJob?.name?.includes('Validate Host') &&
+                        subJob?.status === JOB_MONITORING_STATUS.COMPLETED &&
+                        !step1Done
+                    ) {
+                        dispatch(completeProtectionStep1(dialogKey));
+                        step1Done = true;
+                    }
+                    if (
+                        subJob?.name?.includes('Package Installation') &&
+                        subJob?.status === JOB_MONITORING_STATUS.FAILED
+                    ) {
+                        errorMsg = 'Package Installation failed.';
+                        dispatch(resetProtectionProcess(dialogKey));
+                        return;
+                    }
+                    if (
+                        subJob?.name?.includes('Package Installation') &&
+                        subJob?.status === JOB_MONITORING_STATUS.COMPLETED &&
+                        step1Done
+                    ) {
+                        dispatch(completeProtectionStep2(dialogKey));
+                        clearInterval(jobInterval);
+                    }
+                });
+                if (errorMsg) {
+                    dispatch(
+                        setDialogErrorWithTooltip({
+                            showDialogError: true,
+                            errorMessage: errorMsg,
+                            showTooltipInfo: true,
+                            tooltipText: errorMsg
+                        })
+                    );
+                    clearInterval(jobInterval);
+                }
+            }
+        });
+    }, SC_JOB_INTERVAL);
+};
+
+// Function to handle Add host
+export const addHostHandlerSc = async (
+    rowData: any,
+    dispatch: any,
+    generateCredentialID: any,
+    addHostScApi: any,
+    addHostJobScApi: any
+) => {
+    dispatch(setActionsDisabled(true));
+    dispatch(
+        startProtectionStep1(
+            `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`
+        )
+    );
+    const state: any = store.getState().snapCenter;
+    const payload = {
+        connectorId: state.selectedAgent[0]?.id,
+        ec2InstanceIds: [rowData.ec2InstanceId],
+        sqlInstanceName: rowData.databaseInstanceName,
+        resourceId: rowData.resourceId,
+        workspaceId: state?.workSpaceData?.id
+    };
+    const credIdResponse = await generateCredentialID({
+        credentialID: rowData.credentialId,
+        regionID: rowData.regionId,
+        payload
+    });
+    if (credIdResponse?.data?.credentialsId) {
+        // Do something with the credentialsId
+        const addHostResponse = await addHostScApi({
+            accountID: store.getState().auth.accountId,
+            payload: {
+                workloadType: 'SQL',
+                hostName: '10.0.140.146',
+                credentialsId: credIdResponse?.data?.credentialsId,
+                connectorId: state.selectedAgent[0]?.id,
+                pluginPort: 8145,
+                installPath: 'C:\\Program Files\\NetApp\\SnapCenter',
+                usegMSA: false,
+                useManualInstall: false,
+                aJOBddHostsInCluster: false,
+                skipPreInstallChecks: false,
+                hostOSType: 'Windows'
+            }
+        });
+        if (addHostResponse?.data?.jobId) {
+            // Getting job id
+            const { jobId } = addHostResponse.data;
+            const dialogKey = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
+            addHostJobPolling(addHostJobScApi, jobId, dispatch, dialogKey);
+        } else {
+            dispatch(
+                setDialogErrorWithTooltip({
+                    showDialogError: true,
+                    errorMessage: addHostResponse?.data?.errorMessage || addHostResponse?.error?.data?.message,
+                    showTooltipInfo: true,
+                    tooltipText: addHostResponse?.data?.errorMessage || addHostResponse?.error?.data?.message
+                })
+            );
+        }
+    }
 };
