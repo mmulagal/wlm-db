@@ -387,7 +387,7 @@ const loadDatabaseDetectionModules = `
                     SET HEADING OFF
                     SET LINESIZE 500
                     SELECT JSON_OBJECT(
-                            'instance_id' value INSTANCE_NUMBER,
+                            'instance_id' value INSTANCE_NAME,
                             'instance_name' value INSTANCE_NAME,
                             'host_name' value HOST_NAME,
                             'version' value VERSION,
