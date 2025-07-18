@@ -640,20 +640,21 @@ const HOST_AND_SQL_INFO_PS1 = [
                 $responseObject['sqlServerVersion'] = $sqlServerInfoFromRegistry['sqlServerVersion']
               }
               $isHadrEnabled = $sqlServerInfoFromRegistry['hadrEnabled']
-              $isClustered = $sqlServerInfoFromRegistry['isClustered']
+              $isClustered = $sqlServerInfoFromRegistry['isClusteored']
             }
             $responseObject['sqlServerName'] = (Get-WmiObject -Class Win32_ComputerSystem).Name
             
-            try{
-            if($deploymentTypeCheck) {
-              $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
-              $isHadrEnabled = $deploymentTypeCheckParsed.IsHadrEnabled
-              $isClustered = $deploymentTypeCheckParsed.IsClustered
-              $isReadReplicaCreated = $deploymentTypeCheckParsed.isReadReplicaCreated
+            try {
+              if($deploymentTypeCheck) {
+                $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
+                $isHadrEnabled = $deploymentTypeCheckParsed.IsHadrEnabled
+                $isClustered = $deploymentTypeCheckParsed.IsClustered
+                $isReadReplicaCreated = $deploymentTypeCheckParsed.isReadReplicaCreated
               }
-            } catch {
-                Write-Information "SQL query for deplyment type failed: $_"
-                Write-Information "Continuing with registry values for deplyment type"
+            }
+            catch {
+              Write-Information "SQL query for deployment type failed: $_"
+              Write-Information "Continuing with registry values for deployment type"
             }
             if($isHadrEnabled -eq $True ) {
               if($isReadReplicaCreated -eq $True) {
