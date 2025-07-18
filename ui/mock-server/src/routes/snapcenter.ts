@@ -7,19 +7,19 @@ import ScJobResponse from '../data/scJobResponse.json';
 
 const router = require('express').Router();
 
-router.get(`/agents-mgmt/list-connectors/:accountID`, async (req: {}, res: any) => {
+router.get('/agents-mgmt/list-connectors/:accountID', async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, Connectors);
     }, 100);
 });
 
-router.get(`/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts`, async (req: {}, res: any) => {
+router.get('/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts', async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, listHosts);
     }, 500);
 });
 
-router.get(`/fsx-ontap/working-environments/:accountID`, async (req: {}, res: any) => {
+router.get('/fsx-ontap/working-environments/:accountID', async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, [
             {
@@ -33,20 +33,20 @@ router.get(`/fsx-ontap/working-environments/:accountID`, async (req: {}, res: an
     }, 500);
 });
 
-router.get(`/v1/management/organizations/:accountID/users`, async (req: {}, res: any) => {
+router.get('/v1/management/organizations/:accountID/users', async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, RBACList);
     }, 500);
 });
 
-router.get(`/v1/management/organizations/:accountID/resources`, async (req: {}, res: any) => {
+router.get('/v1/management/organizations/:accountID/resources', async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, WorkSpaceID);
     }, 10);
 });
 
 router.post(
-    `/accounts/:accountID/fsx/v2/credentials/:credentialID/regions/:regionID/bluexp/register-file-systems`,
+    '/accounts/:accountID/fsx/v2/credentials/:credentialID/regions/:regionID/bluexp/register-file-systems',
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, [
@@ -63,7 +63,7 @@ router.post(
 );
 
 router.post(
-    `/v1/management/organizations/:accountID/roles/381a2b6e-693b-4829-95a5-fbd753db30c7/users`,
+    '/v1/management/organizations/:accountID/roles/381a2b6e-693b-4829-95a5-fbd753db30c7/users',
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, '');

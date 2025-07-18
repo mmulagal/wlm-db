@@ -13,6 +13,7 @@ import { DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector } from '../../store/storeHooks';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
+// eslint-disable-next-line import/no-cycle
 import { isValidSqlUsername } from '../../utils/utilityFunctions';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
 

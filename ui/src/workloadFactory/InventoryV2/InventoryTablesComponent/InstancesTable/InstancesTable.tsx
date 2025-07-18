@@ -450,7 +450,7 @@ const InstancesTable = () => {
                     if (hostExists) {
                         bxpRedirect(isWorkloadFactory);
                     } else {
-                        addHostHandlerSc(rowData, dispatch, generateCredentialID, addHostScApi, addHostJobScApi);
+                        addHostHandlerSc(rowData, dispatch, generateCredentialID, addHostScApi, addHostJobScApi, t);
                     }
                 }}
                 customClass={styles.protectionDialog}

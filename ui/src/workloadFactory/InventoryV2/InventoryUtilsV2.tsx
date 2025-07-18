@@ -3478,8 +3478,16 @@ export const fixIssueDisableMsg = (rowData: any) => {
     return disableMsg;
 };
 
-export const addHostJobPolling = async (addHostJobScApi: any, jobId: string, dispatch: any, dialogKey: string) => {
+export const addHostJobPolling = async (
+    addHostJobScApi: any,
+    jobId: string,
+    dispatch: any,
+    dialogKey: string,
+    translation: any
+) => {
     let step1Done = false;
+    const firstStepName = 'Validate Host';
+    const secondStepName = 'Package Installation';
     const jobInterval = setInterval(() => {
         addHostJobScApi({
             accountID: store.getState().auth.accountId,
@@ -3490,10 +3498,10 @@ export const addHostJobPolling = async (addHostJobScApi: any, jobId: string, dis
                 let errorMsg = '';
                 if (jobRes?.data?.subJobs) {
                     jobRes.data.subJobs.forEach((subJob: { name?: string }) => {
-                        if (subJob?.name?.includes('Package Installation') && status === JOB_MONITORING_STATUS.FAILED) {
-                            errorMsg = 'Package Installation failed.';
-                        } else if (subJob?.name?.includes('Validate Host') && status === JOB_MONITORING_STATUS.FAILED) {
-                            errorMsg = 'Validate Host failed.';
+                        if (subJob?.name?.includes(firstStepName) && status === JOB_MONITORING_STATUS.FAILED) {
+                            errorMsg = translation('databases.inventory.validate-host-failed');
+                        } else if (subJob?.name?.includes(secondStepName) && status === JOB_MONITORING_STATUS.FAILED) {
+                            errorMsg = translation('databases.inventory.package-installation-failed');
                         }
                     });
                 }
@@ -3511,29 +3519,26 @@ export const addHostJobPolling = async (addHostJobScApi: any, jobId: string, dis
             } else {
                 let errorMsg = '';
                 jobRes.data.subJobs.forEach((subJob: { name?: string; status?: string }) => {
-                    if (subJob?.name?.includes('Validate Host') && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
-                        errorMsg = 'Validate Host failed.';
+                    if (subJob?.name?.includes(firstStepName) && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
+                        errorMsg = translation('databases.inventory.validate-host-failed');
                         dispatch(resetProtectionProcess(dialogKey));
                         return;
                     }
                     if (
-                        subJob?.name?.includes('Validate Host') &&
+                        subJob?.name?.includes(firstStepName) &&
                         subJob?.status === JOB_MONITORING_STATUS.COMPLETED &&
                         !step1Done
                     ) {
                         dispatch(completeProtectionStep1(dialogKey));
                         step1Done = true;
                     }
-                    if (
-                        subJob?.name?.includes('Package Installation') &&
-                        subJob?.status === JOB_MONITORING_STATUS.FAILED
-                    ) {
-                        errorMsg = 'Package Installation failed.';
+                    if (subJob?.name?.includes(secondStepName) && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
+                        errorMsg = translation('databases.inventory.package-installation-failed');
                         dispatch(resetProtectionProcess(dialogKey));
                         return;
                     }
                     if (
-                        subJob?.name?.includes('Package Installation') &&
+                        subJob?.name?.includes(secondStepName) &&
                         subJob?.status === JOB_MONITORING_STATUS.COMPLETED &&
                         step1Done
                     ) {
@@ -3563,7 +3568,8 @@ export const addHostHandlerSc = async (
     dispatch: any,
     generateCredentialID: any,
     addHostScApi: any,
-    addHostJobScApi: any
+    addHostJobScApi: any,
+    translation: any
 ) => {
     dispatch(setActionsDisabled(true));
     dispatch(
@@ -3590,7 +3596,7 @@ export const addHostHandlerSc = async (
             accountID: store.getState().auth.accountId,
             payload: {
                 workloadType: 'SQL',
-                hostName: '10.0.140.146',
+                hostName: '10.0.140.146', // ToDo - to be updated once database-host will have ip
                 credentialsId: credIdResponse?.data?.credentialsId,
                 connectorId: state.selectedAgent[0]?.id,
                 pluginPort: 8145,
@@ -3606,7 +3612,7 @@ export const addHostHandlerSc = async (
             // Getting job id
             const { jobId } = addHostResponse.data;
             const dialogKey = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
-            addHostJobPolling(addHostJobScApi, jobId, dispatch, dialogKey);
+            addHostJobPolling(addHostJobScApi, jobId, dispatch, dialogKey, translation);
         } else {
             dispatch(
                 setDialogErrorWithTooltip({
