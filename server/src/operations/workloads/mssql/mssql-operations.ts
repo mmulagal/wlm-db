@@ -56,12 +56,15 @@ import {
     sqlResponseParsing,
     getOriginalDatabaseInstanceName,
     isDemo,
-    generateSqlResourceId
+    generateSqlResourceId,
+    parseMultipleCommandResponse
 } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { getResources } from '../../database/database-operations';
 import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
 import {
+    GET_FQDN,
+    GET_NODE_IP_ADDRESS,
     INSTANCE_DETAILS,
     RESOURCE_UTILIZATION,
     sqlQueryExecution,
@@ -773,7 +776,7 @@ async function getActiveSqlInstanceName(
 ) {
     logger.info('Fetch active MSSQL instance Name', { credentialsId, region });
 
-    const commands = [INSTANCE_DETAILS];
+    const commands = [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS];
     try {
         for await (const nodeId of nodeIds) {
             const response = await callSsmExecution(
@@ -786,9 +789,11 @@ async function getActiveSqlInstanceName(
                 false
             );
             if (response) {
-                const parsedResponse = sqlResponseParsing(response);
-
-                const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+                const parsedResponse = parseMultipleCommandResponse(response);
+                const [parsedInstancesDetails, { fqdn }, { ipAddress }] = parsedResponse;
+                const instancesDetails = Array.isArray(parsedInstancesDetails)
+                    ? parsedInstancesDetails
+                    : [parsedInstancesDetails];
                 const { sql, domain } = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
 
                 let selectedInstance = instancesDetails.find(
@@ -817,10 +822,10 @@ async function getActiveSqlInstanceName(
                 }
                 if (selectedInstance !== undefined) {
                     const instanceName = getDatabaseInstanceName(selectedInstance, isDefaultInstance);
-                    return { instanceName, instancesDetails };
+                    return { instanceName, instancesDetails, fqdn, ipAddress };
                 }
 
-                return { instanceName: selectedInstance, instancesDetails };
+                return { instanceName: selectedInstance, instancesDetails, fqdn, ipAddress };
             }
         }
     } catch (error) {
@@ -1026,6 +1031,8 @@ interface ActiveSqlNodeDetails {
     instanceName: string;
     ssmConnectionStatus: string;
     instancesDetails: InstanceDetails[];
+    fqdn?: string;
+    ipAddress?: string;
 }
 
 async function getActiveSqlNode(
@@ -1069,11 +1076,15 @@ async function getActiveSqlNode(
                 return oracleInstanceDetails;
             }
 
-            const { instanceName, instancesDetails = [] } =
-                (await getActiveSqlInstanceName(credentialsId, region, {
-                    nodeIds: [node1InstanceId],
-                    sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
-                })) || {};
+            const {
+                instanceName,
+                instancesDetails = [],
+                fqdn,
+                ipAddress
+            } = (await getActiveSqlInstanceName(credentialsId, region, {
+                nodeIds: [node1InstanceId],
+                sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
+            })) || {};
             if (instanceName) {
                 return {
                     isSSMConnected: true,
@@ -1081,7 +1092,9 @@ async function getActiveSqlNode(
                     standbyNodeInstanceId: node2InstanceId,
                     instanceName,
                     ssmConnectionStatus: connectionStatus.Status,
-                    instancesDetails
+                    instancesDetails,
+                    fqdn,
+                    ipAddress
                 };
             }
         } else {
@@ -1094,11 +1107,15 @@ async function getActiveSqlNode(
         if (node2InstanceId) {
             connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId, accountId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                const { instanceName, instancesDetails = [] } =
-                    (await getActiveSqlInstanceName(credentialsId, region, {
-                        nodeIds: [node2InstanceId],
-                        sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
-                    })) || {};
+                const {
+                    instanceName,
+                    instancesDetails = [],
+                    fqdn,
+                    ipAddress
+                } = (await getActiveSqlInstanceName(credentialsId, region, {
+                    nodeIds: [node2InstanceId],
+                    sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
+                })) || {};
                 if (instanceName) {
                     return {
                         isSSMConnected: true,
@@ -1106,7 +1123,9 @@ async function getActiveSqlNode(
                         standbyNodeInstanceId: node1InstanceId,
                         instanceName,
                         ssmConnectionStatus: connectionStatus.Status,
-                        instancesDetails
+                        instancesDetails,
+                        fqdn,
+                        ipAddress
                     };
                 }
             }
