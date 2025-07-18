@@ -5,6 +5,7 @@ import getLogger from '../../utils/logger';
 import { getWfServiceToken } from './auth';
 
 const logger = getLogger();
+
 // Notification interface
 interface WFNotification {
     content: string;

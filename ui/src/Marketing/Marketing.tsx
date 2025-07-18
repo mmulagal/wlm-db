@@ -1,6 +1,7 @@
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { ReactComponent as KB } from '../assets/DS - KB illustration.svg';
 import { ReactComponent as Unflattened } from '../assets/un-flattened 2.svg';
 import { ReactComponent as UnflattenedLarge } from '../assets/un-flattened-enlarge.svg';
@@ -15,39 +16,20 @@ import styles from './Marketing.module.scss';
 import CardComponent from './CardComponent/CardComponent';
 import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE, FORM_TO_WLF_NAVIGATE_INVENTORY } from '../utils/consts';
 import { useAppSelector } from '../store/storeHooks';
+import { setSecondaryCTAFlow } from '../store/workloadFactory/headersSlice';
 
 const Marketing = () => {
     const navigate = useNavigate();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { secondaryCTAFlow } = useAppSelector(state => state?.headers);
     const [isModalOpen, setModalOpen] = useState(false);
+    const dispatch = useDispatch();
     const handleOpenModal = () => {
         setModalOpen(true);
     };
 
     const handleCloseModal = () => {
         setModalOpen(false);
-    };
-
-    const handleNavigation = () => {
-        if (isWorkloadFactory) {
-            navigate(WLF_TO_FORM_NAVIGATE);
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: {
-                    pathname: './mssql-deploy-wizard',
-                    replace: true
-                }
-            });
-        } else {
-            navigate('../../fsxdb/mssql-deploy-wizard');
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: {
-                    pathname: '../../fsxdb/mssql-deploy-wizard',
-                    replace: true
-                }
-            });
-        }
     };
 
     return (
@@ -60,7 +42,7 @@ const Marketing = () => {
                 <div className={styles.section2}>
                     <div className={styles.section2LeftSde}>
                         <DsTypography variant="Regular_40" style={{ lineHeight: 'unset', whiteSpace: 'nowrap' }}>
-                            Workload Factory for databases on AWS 
+                            Workload Factory for databases on AWS
                         </DsTypography>
 
                         <div className={styles.textSection}>
@@ -70,7 +52,7 @@ const Marketing = () => {
                                 performance and cost. It provides centralized operations and monitoring of your database
                                 workflows, and integrates into your existing operational workflow through automatically
                                 created infrastructure-as-code snippets. This helps you save you significant effort,
-                                time, and costs in configuring and operating your database workloads. 
+                                time, and costs in configuring and operating your database workloads.
                             </DsTypography>
                         </div>
 
@@ -141,6 +123,7 @@ const Marketing = () => {
                             <DsButton
                                 variant="secondary"
                                 onClick={() => {
+                                    dispatch(setSecondaryCTAFlow(true));
                                     // Always navigate to inventory, regardless of credentials
                                     if (isWorkloadFactory) {
                                         navigate(FORM_TO_WLF_NAVIGATE_INVENTORY, {

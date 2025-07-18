@@ -8,6 +8,15 @@
     margin-bottom: 40px;
     gap: 8px;
 
+    .topSection {
+        display: flex;
+        justify-content: space-between;
+
+        .image {
+            cursor: pointer;
+        }
+    }
+
     .firstSegment {
         display: flex;
         align-items: center;

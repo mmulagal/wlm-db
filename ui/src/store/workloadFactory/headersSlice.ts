@@ -33,13 +33,17 @@ const initialHeaderState: HeaderTypeEntities = {
     dashboardRefresh: false,
     multiDataStatus: {},
     multiDataLoading: false,
-    showNA: false
+    showNA: false,
+    secondaryCTAFlow: false
 };
 
 const headersSlice = createSlice({
     name: 'headers',
     initialState: initialHeaderState,
     reducers: {
+        setSecondaryCTAFlow: (state, action: PayloadAction<boolean>) => {
+            state.secondaryCTAFlow = action.payload;
+        },
         setHeaderSelectedCred(state, action: PayloadAction<any>) {
             state.headerSelectedCred = action.payload;
         },
@@ -110,6 +114,7 @@ const headersSlice = createSlice({
 });
 
 export const {
+    setSecondaryCTAFlow,
     setHeaderSelectedCred,
     setHeaderSelectedCredSandbox,
     setHeaderSelectedMultiCred,

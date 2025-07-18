@@ -44,21 +44,6 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
     }, [dialogKey, dispatch]);
 
     useEffect(() => {
-        if (protectionState?.step1Status === 'running') {
-            const timer1 = setTimeout(() => {
-                dispatch(completeProtectionStep1(dialogKey));
-            }, 5000);
-            return () => clearTimeout(timer1);
-        }
-    }, [protectionState?.step1Status, dialogKey, dispatch]);
-
-    useEffect(() => {
-        if (protectionState?.step2Status === 'running') {
-            const timer2 = setTimeout(() => {
-                dispatch(completeProtectionStep2(dialogKey));
-            }, 5000);
-            return () => clearTimeout(timer2);
-        }
         if (protectionState?.step2Status === 'done') {
             setTimeout(() => {
                 setDialog(

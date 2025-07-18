@@ -256,6 +256,62 @@ const GOLDEN_CONFIG = {
             resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
             recommendation:
                 'Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.'
+        },
+        heartbeatSettings: {
+            SameSubnetDelay: 1000,
+            SameSubnetThreshold: 10,
+            CrossSubnetDelay: 1000,
+            CrossSubnetThreshold: 20,
+            CrossSiteDelay: 1000,
+            CrossSiteThreshold: 20
+        },
+        highAvailability: {
+            sharedStorage: {
+                parameter: 'shared-storage',
+                value: true,
+                severity: SEVERITY.CRITICAL,
+                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+                recommendation: 'All shared disks (iSCSI LUNs) should be accessible by both nodes to allow failover.',
+                recommended: ''
+            },
+            driveLetter: {
+                parameter: 'drive-letter-consistency',
+                value: true,
+                severity: SEVERITY.WARNING,
+                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+                recommendation: 'Validate availability of same drive letters on standby node.',
+                recommended: ''
+            },
+            clusterQuorum: {
+                parameter: 'cluster-quorum-configuration',
+                value: 'majority',
+                severity: SEVERITY.CRITICAL,
+                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+                recommendation: 'The quorum configuration should be appropriate for the cluster size and environment.',
+                recommended: ''
+            },
+            heartbeat: {
+                parameter: 'cluster-heartbeat-interval',
+                value: 1000,
+                severity: SEVERITY.WARNING,
+                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+                recommendation: 'Cluster heartbeat settings should be optimized to prevent unnecessary failovers.',
+                recommended: ''
+            },
+            sqlServerService: {
+                parameter: 'sql-server-service-recovery',
+                value: 'automatic',
+                severity: SEVERITY.CRITICAL,
+                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+                recommendation:
+                    'SQL Server services should be set to start automatically and run on the primary node and stopped on the secondary node.',
+                recommended: ''
+            }
         }
     }
 };

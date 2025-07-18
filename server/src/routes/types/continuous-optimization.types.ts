@@ -326,6 +326,7 @@ const DriftAssessmentResponse = Type.Object({
     snapshotPolicy: Type.Optional(GenericAssessmentResponse),
     crr: Type.Optional(GenericAssessmentResponse),
     awsBackup: Type.Optional(GenericAssessmentResponse),
+    highAvailability: Type.Optional(Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     dismissedConfigurations: Type.Optional(dismissedConfigurationsResponse),
     fileSystemId: Type.Optional(Type.String()),

@@ -26,7 +26,9 @@ import {
     DatabaseTypes,
     AuditStatus,
     WF_NOTIFICATION_PRIORITY,
-    NOTIFICATION_TYPE
+    NOTIFICATION_TYPE,
+    WF_CONSOLE_ENDPOINT,
+    JOB_MONITORING_ENDPOINT
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -286,14 +288,24 @@ async function modifyMasterJobStatus(
 
         const notificationData = {
             content: isFailed
-                ? `The ${databaseType} deployment host has failed. See more details in job monitoring`
+                ? `The ${databaseType} deployment host has failed. See more details in job monitoring ${WF_CONSOLE_ENDPOINT}/${JOB_MONITORING_ENDPOINT}`
                 : `The ${databaseType} deployment host has been completed successfully`,
             subject: sanitizeSnsSubject(rawSubject),
             resourceName: stackName,
             resourceId: stackName,
             notificationType: NOTIFICATION_TYPE.DEPLOYMENT,
             resourceType: `${databaseType} host`,
-            priority: isFailed ? WF_NOTIFICATION_PRIORITY.WF_ERROR : WF_NOTIFICATION_PRIORITY.WF_SUCCESS
+            priority: isFailed ? WF_NOTIFICATION_PRIORITY.WF_ERROR : WF_NOTIFICATION_PRIORITY.WF_SUCCESS,
+            // only for bluexp this action will be available
+            ...(isFailed && {
+                actionRequired: {
+                    to: '/fsxdb/job-monitoring',
+                    label: 'Go To Job Monitoring',
+                    state: {
+                        jobId: masterJob.id
+                    }
+                }
+            })
         };
         try {
             await prepareWFNotificationRequest(accountId, notificationData);

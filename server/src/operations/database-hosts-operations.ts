@@ -2152,7 +2152,11 @@ async function getDatabaseInstancesSummary(
         databaseInstanceDetails.status = ServerState.UP;
         const instanceServerDetails = serverDetails?.[instanceName];
         if (shouldQueryServerDetails && instanceServerDetails) {
-            if (isDemoFlow && databaseInstancetopologyData[index].serverInstallationMode === 'Standalone') {
+            if (
+                isDemoFlow &&
+                databaseInstancetopologyData &&
+                databaseInstancetopologyData[index].serverInstallationMode === 'Standalone'
+            ) {
                 instanceServerDetails.nodeNames = [instanceServerDetails.nodeNames[0]];
                 delete instanceServerDetails.clusterName;
             }

@@ -13,6 +13,7 @@ import { DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector } from '../../store/storeHooks';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
+// eslint-disable-next-line import/no-cycle
 import { isValidSqlUsername } from '../../utils/utilityFunctions';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
 
@@ -61,7 +62,7 @@ const DialogComponent = ({
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
-    const { selectedOptimizeConfig, protectionStatus } = useAppSelector(state => state.inventoryV2);
+    const { selectedOptimizeConfig } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const { password, confirmPassword } = useAppSelector(state => {
         if (dialogFrom === FROM_DIALOG.FSXADMIN) {
@@ -84,7 +85,8 @@ const DialogComponent = ({
         ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading) ||
         (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
         (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading) ||
-        (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS && actionsDisabled))();
+        (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS && actionsDisabled) ||
+        (dialogFrom === FROM_DIALOG.SINGLE_AGENT && actionsDisabled))();
 
     // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
     const primaryButtonClick = () => {
@@ -127,10 +129,6 @@ const DialogComponent = ({
         dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
-        // SC integration step 1 dialog
-        if (dialogFrom === FROM_DIALOG.SINGLE_AGENT && protectionStatus === 'started') {
-            return true;
-        }
         if (dialogFrom === FROM_DIALOG.LOADER) {
             return true;
         }

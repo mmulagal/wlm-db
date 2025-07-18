@@ -44,7 +44,7 @@ import { Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import { listAllManagedInstances } from './database/database-operations';
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
-import { processWellArchitectedAssessmentNotifications } from './continuous-optimization/notification';
+import processWellArchitectedAssessmentNotifications from './continuous-optimization/notification';
 import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/database-instance-config';
 
 const logger = getLogger();
