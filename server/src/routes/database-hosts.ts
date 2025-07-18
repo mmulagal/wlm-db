@@ -18,7 +18,8 @@ import {
     PgSqlDbHostDetailsSchema,
     PgSqlDbHostsSummarySchema,
     DatabaseHostDiagramSchema,
-    oracleDbHostDetailsSchema
+    oracleDbHostDetailsSchema,
+    OracleDbHostsSummarySchema
 } from './schemas/database-hosts-schemas';
 import { DatabaseTypes } from '../utils/consts';
 import castRequest from './utils';
@@ -247,6 +248,28 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region,
                     fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${ORACLE_API_PREFIX_PATH}/database-hosts`,
+            { schema: OracleDbHostsSummarySchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    query: { fields, nextToken, vpcId, fsxId, pageSize }
+                } = castRequest(request);
+                const response = await getDatabaseHostsSummaryV2(
+                    accountId,
+                    region,
+                    credentialsId,
+                    fields,
+                    nextToken,
+                    vpcId,
+                    fsxId,
+                    pageSize,
+                    DatabaseTypes.ORACLE
                 );
                 return reply.send(response);
             }
