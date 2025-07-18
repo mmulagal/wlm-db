@@ -633,7 +633,7 @@ export const snapcenterAPI = createApi({
         deleteHostSc: builder.mutation({
             query: ({ accountID, agentID, workspaceID, hostId }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts/${hostId}`,
-                method: 'PUT',
+                method: 'DELETE',
                 headers: {
                     'x-account-id': accountID,
                     'x-agent-id': agentID,
