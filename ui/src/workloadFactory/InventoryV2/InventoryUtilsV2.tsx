@@ -3518,9 +3518,9 @@ export const addHostJobPolling = async (
                 clearInterval(jobInterval);
             } else {
                 let errorMsg = '';
-                jobRes.data.subJobs.forEach((subJob: { name?: string; status?: string }) => {
+                jobRes.data.subJobs.forEach((subJob: { name?: string; status?: string; error?: string }) => {
                     if (subJob?.name?.includes(firstStepName) && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
-                        errorMsg = translation('databases.inventory.validate-host-failed');
+                        errorMsg = subJob?.error || translation('databases.inventory.validate-host-failed');
                         dispatch(resetProtectionProcess(dialogKey));
                         return;
                     }
@@ -3533,7 +3533,7 @@ export const addHostJobPolling = async (
                         step1Done = true;
                     }
                     if (subJob?.name?.includes(secondStepName) && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
-                        errorMsg = translation('databases.inventory.package-installation-failed');
+                        errorMsg = subJob?.error || translation('databases.inventory.package-installation-failed');
                         dispatch(resetProtectionProcess(dialogKey));
                         return;
                     }
@@ -3577,6 +3577,7 @@ export const addHostHandlerSc = async (
             `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`
         )
     );
+    const dialogKey = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
     const state: any = store.getState().snapCenter;
     const payload = {
         connectorId: state.selectedAgent[0]?.id,
@@ -3585,43 +3586,54 @@ export const addHostHandlerSc = async (
         resourceId: rowData.resourceId,
         workspaceId: state?.workSpaceData?.id
     };
-    const credIdResponse = await generateCredentialID({
-        credentialID: rowData.credentialId,
-        regionID: rowData.regionId,
-        payload
-    });
-    if (credIdResponse?.data?.credentialsId) {
-        // Do something with the credentialsId
-        const addHostResponse = await addHostScApi({
-            accountID: store.getState().auth.accountId,
-            payload: {
-                workloadType: 'SQL',
-                hostName: '10.0.140.146', // ToDo - to be updated once database-host will have ip
-                credentialsId: credIdResponse?.data?.credentialsId,
-                connectorId: state.selectedAgent[0]?.id,
-                pluginPort: 8145,
-                installPath: 'C:\\Program Files\\NetApp\\SnapCenter',
-                usegMSA: false,
-                useManualInstall: false,
-                aJOBddHostsInCluster: false,
-                skipPreInstallChecks: false,
-                hostOSType: 'Windows'
-            }
+    try {
+        const credIdResponse = await generateCredentialID({
+            credentialID: rowData.credentialId,
+            regionID: rowData.regionId,
+            payload
         });
-        if (addHostResponse?.data?.jobId) {
-            // Getting job id
-            const { jobId } = addHostResponse.data;
-            const dialogKey = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
-            addHostJobPolling(addHostJobScApi, jobId, dispatch, dialogKey, translation);
+        if (credIdResponse?.data?.credentialsId) {
+            // Do something with the credentialsId
+            const addHostResponse = await addHostScApi({
+                accountID: store.getState().auth.accountId,
+                payload: {
+                    workloadType: 'SQL',
+                    hostName: '10.0.143.176', // ToDo - to be updated once database-host will have ip
+                    credentialsId: credIdResponse?.data?.credentialsId,
+                    connectorId: state.selectedAgent[0]?.id,
+                    pluginPort: 8145,
+                    installPath: 'C:\\Program Files\\NetApp\\SnapCenter',
+                    usegMSA: false,
+                    useManualInstall: false,
+                    aJOBddHostsInCluster: false,
+                    skipPreInstallChecks: false,
+                    hostOSType: 'Windows'
+                },
+                agentID: state.selectedAgent[0]?.id,
+                workspaceID: state?.workSpaceData?.id
+            });
+            if (addHostResponse?.data?.jobId) {
+                // Getting job id
+                const { jobId } = addHostResponse.data;
+                addHostJobPolling(addHostJobScApi, jobId, dispatch, dialogKey, translation);
+            } else {
+                dispatch(resetProtectionProcess(dialogKey));
+                dispatch(setActionsDisabled(false));
+                dispatch(
+                    setDialogErrorWithTooltip({
+                        showDialogError: true,
+                        errorMessage: addHostResponse?.data?.errorMessage || addHostResponse?.error?.message,
+                        showTooltipInfo: true,
+                        tooltipText: addHostResponse?.data?.errorMessage || addHostResponse?.error?.message
+                    })
+                );
+            }
         } else {
-            dispatch(
-                setDialogErrorWithTooltip({
-                    showDialogError: true,
-                    errorMessage: addHostResponse?.data?.errorMessage || addHostResponse?.error?.data?.message,
-                    showTooltipInfo: true,
-                    tooltipText: addHostResponse?.data?.errorMessage || addHostResponse?.error?.data?.message
-                })
-            );
+            dispatch(resetProtectionProcess(dialogKey));
+            dispatch(setActionsDisabled(false));
         }
+    } catch (error) {
+        dispatch(resetProtectionProcess(dialogKey));
+        dispatch(setActionsDisabled(false));
     }
 };

@@ -618,10 +618,15 @@ export const snapcenterAPI = createApi({
             })
         }),
         addHostSc: builder.mutation({
-            query: ({ accountID, payload }) => ({
+            query: ({ accountID, payload, agentID, workspaceID }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts`,
                 method: 'POST',
-                body: payload
+                body: payload,
+                headers: {
+                    'x-account-id': accountID,
+                    'x-agent-id': agentID,
+                    'x-netapp-workspace-id': workspaceID
+                }
             })
         }),
         addHostJobSc: builder.mutation({
@@ -1096,12 +1101,12 @@ export const getWellApi = createApi({
     endpoints: builder => ({
         getMssqlAssessmentData: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,clone,snapshot-policy,aws-backup,crr`
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
             })
         }),
         getMssqlAssessmentDataForHost: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,clone,snapshot-policy,aws-backup,crr`
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment`
             })
         }),
         triggerInstanceAssessment: builder.mutation({
