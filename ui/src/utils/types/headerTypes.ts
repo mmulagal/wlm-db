@@ -2,6 +2,7 @@ import { StatusRes } from './databaseHomeTypes';
 import { Credentials, Regions } from './mssqlTypes';
 
 export interface HeaderTypeEntities {
+    secondaryCTAFlow: boolean;
     headerSelectedCred: any;
     headerSelectedCredSandbox: any;
     headerSelectedRegionSandbox: any;
