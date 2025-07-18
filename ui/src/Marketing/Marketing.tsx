@@ -1,6 +1,7 @@
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { ReactComponent as KB } from '../assets/DS - KB illustration.svg';
 import { ReactComponent as Unflattened } from '../assets/un-flattened 2.svg';
 import { ReactComponent as UnflattenedLarge } from '../assets/un-flattened-enlarge.svg';
@@ -15,7 +16,6 @@ import styles from './Marketing.module.scss';
 import CardComponent from './CardComponent/CardComponent';
 import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE, FORM_TO_WLF_NAVIGATE_INVENTORY } from '../utils/consts';
 import { useAppSelector } from '../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { setSecondaryCTAFlow } from '../store/workloadFactory/headersSlice';
 
 const Marketing = () => {

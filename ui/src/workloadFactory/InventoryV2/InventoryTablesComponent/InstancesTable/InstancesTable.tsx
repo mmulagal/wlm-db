@@ -1190,7 +1190,9 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'investigateErrors',
-                            displayName: 'Investigate errors'
+                            displayName: 'Investigate errors',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
                         {
                             id: 'viewInstance',
@@ -1228,7 +1230,8 @@ const InstancesTable = () => {
                         {
                             id: 'protect',
                             displayName: 'Protect',
-                            disabled: !rowData?.fsxId
+                            disabled: disableOption || !rowData?.fsxId,
+                            infoText: disableMessage
                         },
 
                         {
