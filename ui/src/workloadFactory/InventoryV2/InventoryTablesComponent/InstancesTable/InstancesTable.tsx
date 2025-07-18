@@ -721,9 +721,6 @@ const InstancesTable = () => {
         if (disableMsg) {
             return { displayValue: "Not analyzed", disableMsg, isDisabled: true };
         }
-        if (rowData?.optimizationStatusLoading) {
-                    return <DsFlashingDotsLoader />;
-        }
         return { displayValue: cellData || GENERAL.NOT_AVAILABLE, disableMsg: '', isDisabled: false };
     };
 
