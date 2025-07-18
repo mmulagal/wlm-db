@@ -20,6 +20,7 @@ import {
     useAddHostJobScMutation,
     useAddHostScMutation,
     useAssignRBACPrivilegesMutation,
+    useDeleteHostScMutation,
     useDiscoverExistingFsxNMutation,
     useGenerateCredentialIDMutation,
     useGetConnectorsMutation,
@@ -134,6 +135,7 @@ const InstancesTable = () => {
     const [generateCredentialID] = useGenerateCredentialIDMutation();
     const [addHostScApi] = useAddHostScMutation();
     const [addHostJobScApi] = useAddHostJobScMutation();
+    const [deleteHostSc] = useDeleteHostScMutation();
 
     useEffect(() => {
         setLoading(
@@ -356,11 +358,30 @@ const InstancesTable = () => {
             if (isCancelled(key)) return;
 
             let hostExists = false;
+
+            //Getting workspace id
+            const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+            if (workSpaceRes?.data?.items?.length) {
+                dispatch(setWorkSpaceData(workSpaceRes.data.items[0]));
+            }
+
             if (hostsRes?.data?.hosts?.length > 0) {
-                hostExists = hostsRes?.data?.hosts?.some((host: any) => {
+                const foundHost = hostsRes?.data?.hosts?.find((host: any) => {
                     const hostNameBeforeDot = host.name.split('.')[0];
                     return hostNameBeforeDot === rowData.hostRow.name;
                 });
+
+                if (foundHost && foundHost?.overallStatus !== 'NoPlugins' && foundHost?.overallStatus !== 'Stopped') {
+                    hostExists = true;
+                } else if (foundHost && foundHost?.overallStatus === 'NoPlugins') {
+                    const deleteHostRes = await deleteHostSc({
+                        accountID: store.getState().auth.accountId,
+                        hostId: foundHost.id,
+                        agentID: foundHost.connectorId,
+                        workspaceID: workSpaceRes.data.items[0]?.id
+                    });
+                    //Here job starts
+                }
             }
 
             // Always store result so next time we skip API call
@@ -467,21 +488,31 @@ const InstancesTable = () => {
 
             const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
 
-            const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
-            if (workSpaceRes?.data?.items?.length) {
-                dispatch(setWorkSpaceData(workSpaceRes.data.items[0]));
+            const workSpaceIdExists = store.getState().snapCenter.workSpaceData?.id;
+
+            let workSpaceRes = '';
+
+            if (!workSpaceIdExists) {
+                const workSpaceResponse = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+                if (workSpaceResponse?.data?.items?.length) {
+                    workSpaceRes = workSpaceResponse.data.items[0].id;
+                    dispatch(setWorkSpaceData(workSpaceResponse.data.items[0]));
+                }
+            } else {
+                workSpaceRes = workSpaceIdExists;
             }
 
             if (!fsxExists) {
                 if (isCancelled(key)) return;
 
-                await discoverExistingFsxN({
+                const registerFsxRes = await discoverExistingFsxN({
                     accountID: store.getState().auth.accountId,
                     credentialID: rowData.credentialId,
-                    workSpaceID: workSpaceRes?.data?.items[0]?.id,
+                    workSpaceID: workSpaceRes,
                     regionID: rowData.regionId,
                     payload: [rowData.fsxId]
                 });
+
                 if (isCancelled(key)) return;
             }
             dispatch(setDataForRow({ key, stepData: { fsxChecked: true } }));

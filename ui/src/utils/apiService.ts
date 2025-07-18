@@ -85,7 +85,8 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
         api.endpoint === 'listExistingHosts' ||
         api.endpoint === 'assignRBACPrivileges' ||
         api.endpoint === 'addHostSc' ||
-        api.endpoint === 'addHostJobSc'
+        api.endpoint === 'addHostJobSc' ||
+        api.endpoint === 'deleteHostSc'
     ) {
         if (api.endpoint === 'discoverExistingFsxN') {
             return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
@@ -622,6 +623,17 @@ export const snapcenterAPI = createApi({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts`,
                 method: 'POST',
                 body: payload,
+                headers: {
+                    'x-account-id': accountID,
+                    'x-agent-id': agentID,
+                    'x-netapp-workspace-id': workspaceID
+                }
+            })
+        }),
+        deleteHostSc: builder.mutation({
+            query: ({ accountID, agentID, workspaceID, hostId }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts/${hostId}`,
+                method: 'PUT',
                 headers: {
                     'x-account-id': accountID,
                     'x-agent-id': agentID,
@@ -1340,6 +1352,7 @@ export const {
     useListExistingHostsMutation,
     useGenerateCredentialIDMutation,
     useAddHostScMutation,
+    useDeleteHostScMutation,
     useAddHostJobScMutation
 } = snapcenterAPI;
 

@@ -3562,6 +3562,13 @@ export const addHostJobPolling = async (
     }, SC_JOB_INTERVAL);
 };
 
+const errorMapping = (error: string, rowData: any) => {
+    if (error.includes("Cannot read properties of undefined (reading 'includes')")) {
+        return `The host ${rowData.name} already exists.`;
+    }
+    return error;
+};
+
 // Function to handle Add host
 export const addHostHandlerSc = async (
     rowData: any,
@@ -3605,7 +3612,7 @@ export const addHostHandlerSc = async (
                     installPath: 'C:\\Program Files\\NetApp\\SnapCenter',
                     usegMSA: false,
                     useManualInstall: false,
-                    aJOBddHostsInCluster: false,
+                    addHostsInCluster: false,
                     skipPreInstallChecks: false,
                     hostOSType: 'Windows'
                 },
@@ -3622,9 +3629,13 @@ export const addHostHandlerSc = async (
                 dispatch(
                     setDialogErrorWithTooltip({
                         showDialogError: true,
-                        errorMessage: addHostResponse?.data?.errorMessage || addHostResponse?.error?.message,
+                        errorMessage:
+                            addHostResponse?.data?.errorMessage ||
+                            errorMapping(addHostResponse?.error?.message, rowData),
                         showTooltipInfo: true,
-                        tooltipText: addHostResponse?.data?.errorMessage || addHostResponse?.error?.message
+                        tooltipText:
+                            addHostResponse?.data?.errorMessage ||
+                            errorMapping(addHostResponse?.error?.message, rowData)
                     })
                 );
             }
