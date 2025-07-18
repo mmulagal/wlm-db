@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { STORAGE_TYPE } from '@prisma/client';
 import { describeSubnets } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
@@ -98,15 +99,14 @@ async function getDatabaseInstanceTopology(
             });
         }
 
-        const [{ config_data: mappedStorageDetails }] =
-            (await listDatabaseInstanceConfigData({
-                accountId,
-                credentialsId,
-                region,
-                resourceId,
-                databaseInstanceId,
-                configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
-            })) || {};
+        const [{ config_data: mappedStorageDetails } = { config_data: {} }] = (await listDatabaseInstanceConfigData({
+            accountId,
+            credentialsId,
+            region,
+            resourceId,
+            databaseInstanceId,
+            configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
+        })) || [{}];
 
         const extractRecords = (records: Array<{ uuid: string; name: string }> = []) =>
             records.map(({ uuid, name }) => ({ id: uuid, name }));
@@ -133,7 +133,7 @@ async function getDatabaseInstanceTopology(
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
             ...(availabilityZones && { availabilityZone: availabilityZones }),
             ...(fileSystemStorageType && { fileSystemStorageType }),
-            ...(combinedOntapVolumes && {
+            ...(!isEmpty(combinedOntapVolumes) && {
                 storageSummary: {
                     volumes: combinedOntapVolumes,
                     totalVolumes: volumes?.length || 0,
