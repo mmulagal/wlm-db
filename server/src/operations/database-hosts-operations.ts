@@ -738,7 +738,9 @@ async function getNodeTopology(
     resourceId: string,
     resourceData: ResourceDetails,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string
+    standbyNodeInstanceId?: string,
+    fqdn?: string,
+    ipAddress?: string
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', {
         accountId,
@@ -881,7 +883,9 @@ async function getNodeTopology(
                         ...(activeSubnetId && { subnetId: activeSubnetId }),
                         ...(activeNodeStatus && { nodeStatus: activeNodeStatus })
                     }
-                ]
+                ],
+                fqdn,
+                nodeIpAddress: ipAddress
             }),
             ...(activeDirectoryDetails && { activeDirectoryDetails })
         };
@@ -1134,18 +1138,17 @@ async function getDatabaseHostSummaryV2(
         throw createError(HttpErrorCodes.FAILED_DEPENDENCY, error);
     }
 
-    let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
-        credentialsId,
-        region,
-        {
-            node1InstanceId,
-            node2InstanceId,
-            resourceId,
-            accountId,
-            resourceType: resourceType as DatabaseTypes,
-            sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
-        }
-    );
+    const activeSqlNodeResult = await getActiveSqlNode(credentialsId, region, {
+        node1InstanceId,
+        node2InstanceId,
+        resourceId,
+        accountId,
+        resourceType: resourceType as DatabaseTypes,
+        sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
+    });
+    let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = activeSqlNodeResult;
+    // fqdn and ipAddress may not exist on all return types, so use optional chaining
+    const { fqdn, ipAddress } = activeSqlNodeResult as any;
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
         name: resourceName || '',
@@ -1186,7 +1189,10 @@ async function getDatabaseHostSummaryV2(
                           region,
                           instancesManaged,
                           resourceId,
-                          instancesDetails
+                          instancesDetails?.map((instance: any) => ({
+                              ...instance,
+                              isManaged: instance.isManaged ?? true
+                          }))
                       )
                     : resourceType === DatabaseTypes.ORACLE
                     ? await getOracleDatabaseInstancesDetails(
@@ -1194,7 +1200,10 @@ async function getDatabaseHostSummaryV2(
                           region,
                           instancesManaged,
                           resourceId,
-                          instancesDetails
+                          instancesDetails?.map((instance: any) => ({
+                              ...instance,
+                              isManaged: instance.isManaged ?? true
+                          }))
                       )
                     : await getDatabaseInstancesDetails(
                           credentialsId,
@@ -1215,7 +1224,9 @@ async function getDatabaseHostSummaryV2(
                         resourceId,
                         resourceDetail,
                         activeNodeInstanceId || node1InstanceId,
-                        standbyNodeInstanceId || node2InstanceId
+                        standbyNodeInstanceId || node2InstanceId,
+                        fqdn,
+                        ipAddress
                     ).catch(error => {
                         logger.error(`Error while fetching data: ${error}.`);
                         if (DATABASE_HOSTS_INDEX_MAPPING_V2[promises.length - 1]) {

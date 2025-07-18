@@ -1184,7 +1184,7 @@ const restGetUtilForOntap = (
     return (Deflate-String $response)
 `;
 // prettier-ignore
-const INSTANCE_DETAILS = 'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*)"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json';
+const INSTANCE_DETAILS = 'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*)"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json -Compress';
 
 const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
     $ProgressPreference = 'SilentlyContinue'
@@ -1793,6 +1793,17 @@ $result | ConvertTo-Json -Depth 5
 exit 0
 `;
 
+const GET_NODE_IP_ADDRESS = `
+    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
+	$ipAddress = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/local-ipv4
+    @{ ipAddress = $ipAddress } | ConvertTo-Json -Compress
+`;
+
+const GET_FQDN = `
+    $fqdn = [System.Net.Dns]::GetHostByName($env:computerName).HostName
+    @{ fqdn = $fqdn } | ConvertTo-Json -Compress
+`;
+
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -1813,5 +1824,7 @@ export {
     sqlQueryExecutionWithAuth,
     compressResponse,
     GET_FCI_NAME,
-    trendGraphCreateScript
+    trendGraphCreateScript,
+    GET_NODE_IP_ADDRESS,
+    GET_FQDN
 };

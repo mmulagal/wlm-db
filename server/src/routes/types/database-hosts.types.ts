@@ -468,7 +468,9 @@ const NodeTopologyResponse = Type.Object({
     vpcCidr: Type.Optional(Type.String()),
     keyPairName: Type.Optional(Type.String()),
     ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
-    activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
+    activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse),
+    fqdn: Type.Optional(Type.String({ description: 'FQDN of the active node' })),
+    nodeIpAddress: Type.Optional(Type.String({ description: 'IP address of the active node' }))
 });
 
 const VolumeLunDetailsResponse = Type.Object({
