@@ -644,12 +644,17 @@ const HOST_AND_SQL_INFO_PS1 = [
             }
             $responseObject['sqlServerName'] = (Get-WmiObject -Class Win32_ComputerSystem).Name
             
+            try{
             if($deploymentTypeCheck) {
-             $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
-             $isHadrEnabled = $deploymentTypeCheckParsed.IsHadrEnabled
-             $isClustered = $deploymentTypeCheckParsed.IsClustered
-             $isReadReplicaCreated = $deploymentTypeCheckParsed.isReadReplicaCreated
-             }     
+              $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
+              $isHadrEnabled = $deploymentTypeCheckParsed.IsHadrEnabled
+              $isClustered = $deploymentTypeCheckParsed.IsClustered
+              $isReadReplicaCreated = $deploymentTypeCheckParsed.isReadReplicaCreated
+              }
+            } catch {
+                Write-Information "SQL query for deplyment type failed: $_"
+                Write-Information "Continuing with registry values for deplyment type"
+            }
             if($isHadrEnabled -eq $True ) {
               if($isReadReplicaCreated -eq $True) {
                 $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
