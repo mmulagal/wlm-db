@@ -66,7 +66,9 @@ const ScrollableCard = () => {
                             <DsTypography variant="Semibold_16">
                                 {t('databases.log-analyzer.second-card-point-3-heading')}
                             </DsTypography>
-                            <DsTypography variant="Regular_14">{t('second-card-point-3-text')}</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.second-card-point-3-text')}
+                            </DsTypography>
                         </div>
 
                         <div className={styles.contentArea}>
@@ -108,7 +110,12 @@ const ScrollableCard = () => {
                         aria-label={`Go to slide ${index + 1}`}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="30" height="2" viewBox="0 0 30 2" fill="none">
-                            <rect width="30" height="2" rx="1" fill={activeSlide === index ? '#404040' : '#A7A7A7'} />
+                            <rect
+                                width="30"
+                                height="2"
+                                rx="1"
+                                fill={activeSlide === index ? '(var--text-primary)' : 'var(--text-disabled)'}
+                            />
                         </svg>
                     </div>
                 ))}
