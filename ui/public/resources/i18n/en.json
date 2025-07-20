@@ -229,7 +229,8 @@
             "missing-modules-content-3": "Missing instance profile permission - 'cloudwatch:PutMetricData'",
             "missing-modules-content-4": "Partial data displayed due to one of the following reasons:",
             "associated_volumes": "Associated volume",
-            "associated_luns": "Associated LUN",
+            "associated_lun": "Associated LUN",
+            "associated_luns": "Associated LUNs",
             "fsx-for-ontap:": "FSx for ONTAP"
         },
         "inventory": {
