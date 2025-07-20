@@ -326,7 +326,21 @@
                 "24": "Indicates a media failure. The system administrator may have to restore the database. You may also have to call your hardware vendor."
             },
             "scan-trigger-error": "Error in triggering scan",
-            "scan-failed": "Error investigation scan failed"
+            "scan-failed": "Error investigation scan failed",
+            "first-card-heading": "Effortless SQL Server Optimization",
+            "first-card-heading-text": " Transform your database management with Amazon Bedrock analysis of SQL error log investigation. Scan your SQL instance logs, get grouped insights by unique errors, severity, and categories, and unlock clear, human-readable explanations with actionable remediation steps.",
+            "second-card-heading": "Agentic AI",
+            "second-card-heading-text": "Error investigation benefits",
+            "second-card-point-1-heading": "Smart Error Grouping",
+            "second-card-point-1-text": " Organize errors by uniqueness, severity, and category for clarity.",
+            "second-card-point-2-heading": "AI-Powered Insights",
+            "second-card-point-2-text": "Dive into enriched error details with automated external searches.",
+            "second-card-point-3-heading": "Plain Language Explanations",
+            "second-card-point-3-text": "Understand issues without needing advanced DBA expertise",
+            "second-card-point-4-heading": "Guided Remediation",
+            "second-card-point-4-text": "Follow best-practice steps to resolve issues and boost performance",
+            "second-card-point-5-heading": "Resolve errors faster",
+            "second-card-point-5-text": "Resolve errors faster and keep your databases running smoothly with ease."
         },
         "dashboard": {
             "no-credentials": "No credentials",

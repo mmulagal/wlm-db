@@ -1,0 +1,73 @@
+.scrollableCard {
+    //width: 32.39%;
+    width: 520px;
+    height: 684px;
+    min-height: 684px;
+    background: var(--content-background);
+    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, var(--border));
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+
+    .topSection {
+        height: 280px;
+        background: var(--hover-background);
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 40px;
+    }
+
+    .middleSection {
+        margin-top: 32px;
+        padding: 0 40px;
+        flex: 1;
+
+        .contentSection {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+    }
+
+    .bottomSection {
+        height: 40px;
+        margin-top: auto;
+
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+    }
+
+    .secondaryTopSection {
+        background: var(--hover-background);
+        height: 161px;
+        width: 100%;
+        padding: 24px 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+
+        .rightSection {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+    }
+
+    .secondaryMiddleSection {
+        margin-top: 16px;
+        padding: 0 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+
+        .contentArea {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+    }
+}
