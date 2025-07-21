@@ -15,7 +15,6 @@ import {
 import { CommandInvocationStatus, ConnectionStatus, SendCommandCommandInput } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { deleteDatabaseInstance, deleteResource, listDatabaseInstances } from '../lib/database/db';
-import { getResources } from './database/database-operations';
 import {
     describeInstancesWithPagination,
     paginateDescribeEbsVolumes,
@@ -1126,14 +1125,17 @@ async function unmanageDatabaseInstance(
     if (databaseInstanceList.length > 0) {
         const databaseInstanceIds = databaseInstanceList.split(',');
 
-        const preDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
+        const preDeleteResult = await listDatabaseInstances(accountId, {
+            credentialsId,
+            resourceId,
+            shouldIncludeResource: true
+        });
+        const preDeleteDatabaseInstances = Array.isArray(preDeleteResult) ? preDeleteResult : preDeleteResult.items;
 
         const instanceDetails = preDeleteDatabaseInstances.find(
             item => item.database_instance_id === databaseInstanceList
         );
-        const {
-            items: [resourceDetails]
-        } = await getResources(accountId, resourceId, credentialsId);
+        const resourceDetails = preDeleteDatabaseInstances[0]?.resource;
 
         updateLongRunningAuditGroup(
             undefined,
@@ -1146,7 +1148,9 @@ async function unmanageDatabaseInstance(
 
         await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
 
-        const postDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
+        const postDeleteResult = await listDatabaseInstances(accountId, { credentialsId, resourceId });
+        const postDeleteDatabaseInstances = Array.isArray(postDeleteResult) ? postDeleteResult : postDeleteResult.items;
+
         databaseInstanceIds.forEach(databaseInstanceId => {
             if (preDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
                 if (postDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {

@@ -100,12 +100,12 @@ async function handleOptimizeRssOptimization(
     let shouldRollbackClusterOwnership = false;
     let ownerNode: string = '';
     let errorMessage = '';
-    const [{ metadata, resource_name: resourceName, assessment_data: assessmentData }] = await listResources(
+    const [{ metadata, resource_name: resourceName, assessment_data: assessmentData }] = await listResources({
         accountId,
-        databaseHostId,
-        credentialsId,
+        resourceId: databaseHostId,
+        credentialIds: credentialsId,
         region
-    );
+    });
     if (isUndefined(resourceName) || isEmpty(metadata)) {
         const errMsg = `Resource not found for database host ${accountId}, ${databaseHostId}, ${credentialsId}, ${region}`;
         logger.error(errMsg);

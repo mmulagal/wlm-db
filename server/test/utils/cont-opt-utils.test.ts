@@ -1,6 +1,6 @@
 import { createResource, listResources } from '../../src/lib/database/db';
 import { ResourceAssessmentData } from '../../src/utils/common-types';
-import { ACCOUNT_ID, DEFAULT_AWS_REGION } from '../../src/utils/consts';
+import { ACCOUNT_ID, DEFAULT_AWS_REGION, RESOURCE_DEFAULT_SELECT_FIELDS } from '../../src/utils/consts';
 import { updateAssessmentErrorInResourceTable } from '../../src/utils/cont-opt-utils';
 import { DEFAULT_AWS_CREDENTIALS_ID } from './consts';
 
@@ -39,7 +39,13 @@ describe('Cont opt utils tests', () => {
         expect(response?.count).toEqual(1);
 
         const [{ assessment_data: assessmentData } = {}] =
-            (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
+            (await listResources({
+                accountId: ACCOUNT_ID,
+                resourceId: RESOURCE_ID,
+                credentialIds: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                selectKeys: [...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data', 'configurations']
+            })) || [];
         const fetchedAssessmentData = assessmentData as unknown as ResourceAssessmentData;
         expect(fetchedAssessmentData?.errors?.compute).toEqual('Error in compute assessment');
     });

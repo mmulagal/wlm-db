@@ -3,7 +3,7 @@ import {
     calculateComputeDrift,
     managedHostsComputeAssessment
 } from '../../../src/operations/continuous-optimization/compute-assessment-operations';
-import { DEMO_AWS_ACCOUNT_ID } from '../../../src/utils/consts';
+import { DEMO_AWS_ACCOUNT_ID, RESOURCE_DEFAULT_SELECT_FIELDS } from '../../../src/utils/consts';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/aws/fsx-scope';
@@ -61,7 +61,13 @@ beforeAll(async () => {
 describe('Compute assessment operations', () => {
     it('Should calculate compute drift', async () => {
         const [resource = {}] =
-            (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
+            (await listResources({
+                accountId: ACCOUNT_ID,
+                resourceId: RESOURCE_ID,
+                credentialIds: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                selectKeys: [...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data', 'configurations']
+            })) || [];
         const { assessment_data: assessmentData } = resource as {
             metadata?: Metadata;
             assessment_data?: ResourceAssessmentData;

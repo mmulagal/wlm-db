@@ -60,6 +60,7 @@ import { getDriveInfo } from './createdb-operations';
 import { sqlQueryExecution, sqlQueryExecutionWithAuth } from './workloads/mssql/ssm-script-utils';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { GET_SANDBOXES } from './workloads/mssql/queries';
+import { DatabaseInstanceRecord } from '../lib/database/db-types';
 
 const logger = getLogger();
 const TIME_WINDOW = 60; // 60 seconds
@@ -108,10 +109,11 @@ async function getSandboxDetails(
     });
 
     if (isEmpty(managedInstances)) {
-        managedInstances = await listDatabaseInstances(accountId, {
+        const managedResult = await listDatabaseInstances(accountId, {
             credentialsId,
             resourceId
         });
+        managedInstances = Array.isArray(managedResult) ? managedResult : managedResult.items;
     }
 
     const instances =
@@ -273,18 +275,16 @@ async function getSandboxDetails(
 
 async function getSandboxesInfo(accountId: string, credentialsId: string, region: string, nextToken?: string) {
     logger.info('Get Sandboxes Info', accountId, credentialsId, region, nextToken);
-    const resourceDetails = await listResources(
+    const resourceDetails = await listResources({
         accountId,
-        undefined,
-        credentialsId,
+        credentialIds: credentialsId,
         region,
-        RESOURCESTYPE.MSSQL,
-        undefined,
-        isDemoFlow ? undefined : { sandboxCreated: true },
-        SANDBOX_API_SIZE,
+        resourceType: RESOURCESTYPE.MSSQL,
+        metaFilters: isDemoFlow ? undefined : { sandboxCreated: true },
+        pageSize: SANDBOX_API_SIZE,
         nextToken,
-        !isDemoFlow
-    );
+        includeDatabaseInstances: true
+    });
 
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
@@ -336,12 +336,15 @@ async function getSandboxInfoByInstanceId(
 ) {
     logger.info('Get Sandboxes Info by Instance Id', accountId, credentialsId, region);
 
-    const [managedInstance] = await listDatabaseInstances(accountId, {
+    const managedResult = await listDatabaseInstances(accountId, {
         credentialsId,
         region,
         resourceId: databaseHostId,
-        sqlInstanceId: databaseInstanceId
+        sqlInstanceId: databaseInstanceId,
+        shouldIncludeResource: true
     });
+    const managedInstances = Array.isArray(managedResult) ? managedResult : managedResult.items;
+    const [managedInstance] = managedInstances;
 
     if (isEmpty(managedInstance)) {
         logger.error('No managed instance found for the given database host ID.');
@@ -370,22 +373,18 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
             sandboxSavingsPercentage: 0
         };
 
-        const resourceDetails: ResourceDetails[] = await listResources(
+        const resourceDetails = await listResources({
             accountId,
-            undefined,
-            credentialsId,
+            credentialIds: credentialsId,
             region,
-            RESOURCESTYPE.MSSQL,
-            undefined,
-            isDemoFlow
+            resourceType: RESOURCESTYPE.MSSQL,
+            metaFilters: isDemoFlow
                 ? undefined
                 : {
                       sandboxCreated: true
                   },
-            undefined,
-            undefined,
-            true
-        );
+            includeDatabaseInstances: true
+        });
 
         if (isEmpty(resourceDetails)) {
             logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
@@ -395,7 +394,8 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
         const fsxGroups: { [key: string]: ResourceDetails[] } = {};
 
         resourceDetails.forEach(resource => {
-            resource.database_instances?.forEach(instance => {
+            const dbResource = resource as ResourceDetails & { database_instances?: DatabaseInstanceRecord[] };
+            dbResource?.database_instances?.forEach(instance => {
                 const fsxId = instance.fsxn_ids;
                 if (fsxId) {
                     fsxGroups[fsxId] = fsxGroups[fsxId] || [];
@@ -1673,7 +1673,10 @@ async function updateMetadataForSanbox(
     logger.info('Updating metadata for sandbox operation', accountId, credentialsId, region, databaseHostId);
     const {
         items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId);
+    } = await getResources({
+        accountId,
+        resourceId: databaseHostId
+    });
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -1710,7 +1713,10 @@ async function updateMetadataForSanboxDeletion(
     } = resourceDetails;
     const {
         items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId);
+    } = await getResources({
+        accountId,
+        resourceId: databaseHostId
+    });
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -3370,14 +3376,14 @@ async function runSandboxPreValidations(
 ) {
     logger.info('Run sandbox pre-validations', { accountId, credentialsId, region, source, dest });
 
-    let [[srcResourceDetail], [srcInstanceDetail], [destResourceDetail], [destInstanceDetail]] = await Promise.all([
-        listResources(accountId, source.host),
+    const [[srcResourceDetail], srcInstanceResult, [destResourceDetailTemp], destInstanceResult] = await Promise.all([
+        listResources({ accountId, resourceId: source.host }),
         listDatabaseInstances(accountId, {
             credentialsId,
             resourceId: source.host,
             sqlInstanceId: source.instance
         }),
-        source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host),
+        source.host === dest.host ? Promise.resolve([]) : listResources({ accountId, resourceId: dest.host }),
         source.host === dest.host && source.instance === dest.instance
             ? Promise.resolve([])
             : listDatabaseInstances(accountId, {
@@ -3386,6 +3392,14 @@ async function runSandboxPreValidations(
                   sqlInstanceId: dest.instance
               })
     ]);
+
+    const srcInstances = Array.isArray(srcInstanceResult) ? srcInstanceResult : srcInstanceResult.items;
+    const destInstances = Array.isArray(destInstanceResult) ? destInstanceResult : destInstanceResult.items;
+    const [srcInstanceDetail] = srcInstances;
+    const [destInstanceDetailTemp] = destInstances;
+
+    let destResourceDetail = destResourceDetailTemp;
+    let destInstanceDetail = destInstanceDetailTemp;
 
     if (source.host === dest.host) {
         destResourceDetail = srcResourceDetail;

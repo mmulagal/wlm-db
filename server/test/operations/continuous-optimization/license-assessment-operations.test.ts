@@ -150,7 +150,13 @@ beforeAll(async () => {
 describe('License assessment operations', () => {
     it('Should calculate license drift', async () => {
         const [{ assessment_data: assessmentData }] =
-            (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
+            (await listResources({
+                accountId: ACCOUNT_ID,
+                resourceId: RESOURCE_ID,
+                credentialIds: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                selectKeys: ['assessment_data']
+            })) || [];
         const response = await calculateLicenseDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,

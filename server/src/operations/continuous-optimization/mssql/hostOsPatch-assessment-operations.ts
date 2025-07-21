@@ -259,7 +259,12 @@ async function runOsPatchAssessment(
             );
 
             const [{ metadata = {} } = {}] =
-                (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+                (await listResources({
+                    accountId,
+                    resourceId: databaseHostId,
+                    credentialIds: credentialsId,
+                    region
+                })) || [];
             const metadataObject = metadata as unknown as Metadata;
             await checkIfWindowsUpdateCatalogReachable(
                 accountId,
@@ -327,7 +332,7 @@ async function updatePatchBaselineStatusForHost(
     databaseHostId: string,
     hostOsPatchAssessment?: HostOsPatchAssessmentObject[]
 ) {
-    const resources = (await listResources(accountId, databaseHostId)) || [];
+    const resources = (await listResources({ accountId, resourceId: databaseHostId })) || [];
 
     if (!isEmpty(resources) && !isEmpty(hostOsPatchAssessment)) {
         await Promise.all(

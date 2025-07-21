@@ -367,12 +367,12 @@ async function getMappedVolumeDetailForInstance(
     });
 
     try {
-        const [{ metadata, resource_id: resourceId }] = await listResources(
+        const [{ metadata, resource_id: resourceId }] = await listResources({
             accountId,
-            databaseHostId,
-            credentialsId,
+            resourceId: databaseHostId,
+            credentialIds: credentialsId,
             region
-        );
+        });
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
         const { activeNodeInstanceId = '' } = await getActiveSqlNode(credentialsId, region, {

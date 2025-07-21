@@ -15,7 +15,13 @@ async function updateAssessmentErrorInResourceTable(
 ) {
     try {
         const [{ assessment_data: assessmentData } = {}] =
-            (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+            (await listResources({
+                accountId,
+                resourceId: databaseHostId,
+                credentialIds: credentialsId,
+                region,
+                selectKeys: ['assessment_data']
+            })) || [];
         const existingAssessmentData = assessmentData as ResourceAssessmentData | undefined;
         let assessmentErrors = {};
         switch (assessmentType) {

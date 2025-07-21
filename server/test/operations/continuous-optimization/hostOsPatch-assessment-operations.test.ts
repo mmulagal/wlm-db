@@ -52,7 +52,12 @@ beforeAll(async () => {
 describe('Host OS Patch assessment operations', () => {
     it('Should calculate host os patch drift', async () => {
         const [{ assessment_data: assessmentData }] =
-            (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
+            (await listResources({
+                accountId: ACCOUNT_ID,
+                resourceId: RESOURCE_ID,
+                credentialIds: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION
+            })) || [];
         try {
             await calculateHostOsPatchDrift(
                 ACCOUNT_ID,

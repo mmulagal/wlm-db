@@ -1805,6 +1805,41 @@ const DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN: string = config.has('daily-dr
 const DEMO_BYOL_INSTANCE_ID = 'i-p9o5n2m4l8k6byol';
 const JOB_MONITORING_ENDPOINT = 'databases/job-monitoring';
 
+const RESOURCE_DEFAULT_SELECT_FIELDS = [
+    'id',
+    'account_id',
+    'credentials_id',
+    'storage_type',
+    'resource_id',
+    'resource_name',
+    'resource_type',
+    'cloud_provider_account_id',
+    'region',
+    'metadata'
+];
+
+const INSTANCE_DEFAULT_SELECT_FIELDS = [
+    'id',
+    'account_id',
+    'credentials_id',
+    'resource_id',
+    'database_instance_id',
+    'database_instance_name',
+    'fsxn_ids',
+    'is_default',
+    'database_deployment_type',
+    'database_type',
+    'created_time',
+    'updated_time',
+    'source',
+    'number_of_user_dbs_created',
+    'sandbox_created',
+    'storage_protocol',
+    'fsx_svm_id',
+    'metadata',
+    'configurations'
+];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -2175,5 +2210,7 @@ export {
     AWS_CLI_LINUX_RELATIVE_PATH,
     JQ_LINUX_RELATIVE_PATH,
     MAKE_LINUX_RELATIVE_PATH,
-    JOB_MONITORING_ENDPOINT
+    JOB_MONITORING_ENDPOINT,
+    RESOURCE_DEFAULT_SELECT_FIELDS,
+    INSTANCE_DEFAULT_SELECT_FIELDS
 };

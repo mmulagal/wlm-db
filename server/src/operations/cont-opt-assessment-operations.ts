@@ -61,7 +61,8 @@ async function cronAssessmentCollection(initiatedBy: string) {
     logger.info('Cron assessment collection', { initiatedBy });
 
     const allManagedInstances = (await listAllManagedInstances(undefined, {
-        databaseType: DatabaseTypes.MS_SQL_SERVER
+        databaseType: DatabaseTypes.MS_SQL_SERVER,
+        shouldIncludeResource: true
     })) as DatabaseInstancesIncludingResource[];
 
     if (isEmpty(allManagedInstances)) {

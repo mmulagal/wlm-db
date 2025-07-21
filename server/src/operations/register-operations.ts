@@ -411,7 +411,13 @@ async function registerSqlInstance(
         if (!isDemoFlow || !databaseHostId) {
             const {
                 items: [resourceDetails]
-            } = await getResources(accountId, resourceId, credentialsId, region, undefined, undefined, undefined, true);
+            } = await getResources({
+                accountId,
+                resourceId,
+                credentialsId,
+                region,
+                includeDatabaseInstances: true
+            });
             isResourceTobeCreated = !resourceDetails;
             if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
                 alreadyManagedDatabaseInstances = resourceDetails.database_instances;
@@ -514,16 +520,13 @@ async function registerSqlInstance(
                             resourceId = generateSqlResourceId(node1InstanceId, partnerEc2InstanceId);
                             const {
                                 items: [resourceDetails]
-                            } = await getResources(
+                            } = await getResources({
                                 accountId,
                                 resourceId,
                                 credentialsId,
                                 region,
-                                undefined,
-                                undefined,
-                                undefined,
-                                true
-                            );
+                                includeDatabaseInstances: true
+                            });
                             isResourceTobeCreated = !resourceDetails;
                             alreadyManagedDatabaseInstances = resourceDetails?.database_instances || [];
                         } else if (!sqlInstanceInfo.serverGuid) {
@@ -1014,15 +1017,23 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                         resourceId = generateSqlResourceId(node1InstanceId, node2InstanceId);
                         const {
                             items: [resourceDetails]
-                        } = await getResources(accountId, resourceId, credentialsId, region);
+                        } = await getResources({
+                            accountId,
+                            resourceId,
+                            credentialsId,
+                            region
+                        });
 
                         isResourceTobeCreated = !resourceDetails;
                     }
-                    const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
+                    const alreadyManagedResult = await listDatabaseInstances(accountId, {
                         credentialsId,
                         resourceId,
                         region
                     });
+                    const alreadyManagedDatabaseInstances = Array.isArray(alreadyManagedResult)
+                        ? alreadyManagedResult
+                        : alreadyManagedResult.items;
 
                     const itemsStatus: {
                         databaseInstanceName: string;
@@ -1486,7 +1497,13 @@ async function registerOracleInstance(
         if (!isDemoFlow || !databaseHostId) {
             const {
                 items: [resourceDetails]
-            } = await getResources(accountId, resourceId, credentialsId, region, undefined, undefined, undefined, true);
+            } = await getResources({
+                accountId,
+                resourceId,
+                credentialsId,
+                region,
+                includeDatabaseInstances: true
+            });
             isResourceTobeCreated = !resourceDetails;
             if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
                 alreadyRegisteredDatabaseInstances = resourceDetails.database_instances;

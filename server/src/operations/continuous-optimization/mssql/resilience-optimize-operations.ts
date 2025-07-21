@@ -114,18 +114,21 @@ async function getAvailableSnapshotPolicyList(
         errorMessage: ''
     };
     try {
+        const dbInstancesResult = await listDatabaseInstances(accountId, {
+            resourceId: databaseHostId,
+            credentialsId,
+            sqlInstanceId: databaseInstanceId,
+            region,
+            shouldIncludeResource: true
+        });
+        const dbInstances = Array.isArray(dbInstancesResult) ? dbInstancesResult : dbInstancesResult?.items || [];
         const [
             {
                 resource: { metadata, resource_id: resourceId },
                 fsx_svm_id: svmRecord,
                 fsxn_ids: fsxnIds
             }
-        ] = await listDatabaseInstances(accountId, {
-            resourceId: databaseHostId,
-            credentialsId,
-            sqlInstanceId: databaseInstanceId,
-            region
-        });
+        ] = dbInstances;
 
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         const { activeNodeInstanceId = '' } = await getActiveSqlNode(credentialsId, region, {

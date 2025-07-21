@@ -930,18 +930,16 @@ async function getDatabaseHostsSummaryV2(
 
     const apiPageSize = pageSize || V2_API_PAGE_SIZE;
 
-    const resourceDetails = await listResources(
+    const resourceDetails = await listResources({
         accountId,
-        undefined,
-        customerCredentialsId,
-        awsRegion,
-        databaseType,
+        credentialIds: customerCredentialsId,
+        region: awsRegion,
+        resourceType: databaseType,
         fsxId,
-        undefined,
-        apiPageSize,
+        pageSize: apiPageSize,
         nextToken,
-        !isDemoFlow
-    );
+        includeDatabaseInstances: true
+    });
 
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
@@ -1055,18 +1053,13 @@ async function getDatabaseHostSummaryV2(
 ) {
     logger.info('Fetching details about a database host ', accountId, databaseHostId, fields, isManagedResource);
     if (isEmpty(resourceDetail)) {
-        [resourceDetail] = await listResources(
+        [resourceDetail] = await listResources({
             accountId,
-            databaseHostId,
-            customerCredentialsId,
-            awsRegion,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            true
-        );
+            resourceId: databaseHostId,
+            credentialIds: customerCredentialsId,
+            region: awsRegion,
+            includeDatabaseInstances: true
+        });
     }
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -1096,10 +1089,19 @@ async function getDatabaseHostSummaryV2(
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
     if (instancesManaged && isEmpty(instancesManaged)) {
-        instancesManaged =
-            resourceDetail.database_instances && !isEmpty(resourceDetail.database_instances)
-                ? resourceDetail.database_instances.map(instance => ({ ...instance, resource: resourceDetail }))
-                : await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+        if (resourceDetail.database_instances && !isEmpty(resourceDetail.database_instances)) {
+            instancesManaged = resourceDetail.database_instances.map(instance => ({
+                ...instance,
+                resource: resourceDetail
+            }));
+        } else {
+            const dbInstancesResult = await listDatabaseInstances(accountId, {
+                resourceId,
+                credentialsId,
+                region
+            });
+            instancesManaged = Array.isArray(dbInstancesResult) ? dbInstancesResult : dbInstancesResult.items ?? [];
+        }
     }
 
     if (isDemo()) {
@@ -1433,7 +1435,13 @@ async function getDatabaseHostInstanceSummary(
     );
     const [resourceDetails] = newDatabaseInstanceDetails.resource
         ? [newDatabaseInstanceDetails.resource]
-        : await listResources(accountId, databaseHostId, credentialsId, region);
+        : await listResources({
+              accountId,
+              resourceId: databaseHostId,
+              credentialIds: credentialsId,
+              region,
+              includeDatabaseInstances: true
+          });
 
     const [databaseInstanceSummary] = await getDatabaseInstancesSummary(
         accountId,
@@ -1704,12 +1712,15 @@ async function getInstanceDetails(
 
     // If either resource or databaseInstanceDetails is empty, make both DB calls
     if (isEmpty(resource) || isEmpty(dbInstanceDetails)) {
-        [instanceDetails] = await listDatabaseInstances(accountId, {
+        const instanceResult = await listDatabaseInstances(accountId, {
             resourceId: databaseHostId,
             credentialsId,
             sqlInstanceId: databaseInstanceId,
-            region
+            region,
+            shouldIncludeResource: true
         });
+        const instances = Array.isArray(instanceResult) ? instanceResult : instanceResult.items;
+        [instanceDetails] = instances;
         resourceDetails = instanceDetails?.resource;
     }
 
@@ -2354,7 +2365,14 @@ async function getAllClusterNodeDetails(
     }
 
     if (!node1InstanceId) {
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        const [{ metadata = {} } = {}] =
+            (await listResources({
+                accountId,
+                resourceId: databaseHostId,
+                credentialIds: credentialsId,
+                region,
+                selectKeys: ['metadata']
+            })) || [];
         ({ node1InstanceId } = metadata as unknown as Metadata);
     }
 
@@ -2379,17 +2397,10 @@ async function getAllClusterNodeDetails(
 async function triggerInstancePerformanceAssessment(initiatedBy: string) {
     logger.info('Trigger instance performance assessment for all hosts', { initiatedBy });
 
-    const { items: allmanagedResources } = await getResources(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        MSSQL,
-        undefined,
-        undefined,
-        false,
-        true
-    );
+    const { items: allmanagedResources } = await getResources({
+        resourceType: MSSQL,
+        allRecords: true
+    });
     if (isEmpty(allmanagedResources)) {
         logger.info('No successfully managed MSSQL database hosts found.');
         return;

@@ -2143,7 +2143,13 @@ async function optimizeOperatingSystemSettings(
 
     const {
         items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
+    } = await getResources({
+        accountId,
+        resourceId: databaseHostId,
+        credentialsId,
+        region,
+        resourceType: RESOURCESTYPE.MSSQL
+    });
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;

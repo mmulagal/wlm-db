@@ -481,12 +481,12 @@ async function handleBulkComputeOptimization(
                             if (isEmpty(sqlServerInstances)) {
                                 logger.error(`No instances given for resource ${databaseHostId}.`);
                             }
-                            const [{ resource_name: resourceName }] = await listResources(
+                            const [{ resource_name: resourceName }] = await listResources({
                                 accountId,
-                                databaseHostId,
-                                credentialsId,
-                                region
-                            );
+                                resourceId: databaseHostId,
+                                credentialIds: credentialsId,
+                                selectKeys: ['resource_name']
+                            });
                             const jobMetadata: JobMetadata = {
                                 hostsToOptimize: await formatJobMetadata(hostsToOptimize)
                             };
@@ -667,16 +667,12 @@ async function validateAndFilterDatabaseHosts<T extends { credentialsId: string;
 async function validateRequestDetails(accountId: string, credentialsId: string, region: string) {
     logger.info(`Validating request details: ${accountId}, ${credentialsId}, ${region}`);
 
-    const [resourceDetail] = await listResources(
+    const [resourceDetail] = await listResources({
         accountId,
-        undefined,
-        credentialsId,
+        credentialIds: credentialsId,
         region,
-        undefined,
-        undefined,
-        undefined,
-        1
-    );
+        pageSize: 1
+    });
 
     if (isEmpty(resourceDetail)) {
         return false;

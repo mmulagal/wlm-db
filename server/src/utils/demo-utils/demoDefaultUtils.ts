@@ -284,7 +284,7 @@ async function createDemoResourcesPerRegion(
             }
 
             if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
-                const [resource] = await listResources(accountId, resourceId);
+                const [resource] = await listResources({ accountId, resourceId, includeDatabaseInstances: true });
                 if (!isEmpty(resource?.metadata)) {
                     (resource.metadata as unknown as Metadata).sandboxes = (
                         (resource?.metadata as unknown as Metadata)?.sandboxes ?? []

@@ -85,15 +85,14 @@ async function getManagedResources(
     const regionsList = regions?.split(',');
     const databaseTypesList = databaseTypes?.split(',');
 
-    const { items, nextToken, count } = await getResources(
+    const { items, nextToken, count } = await getResources({
         accountId,
-        undefined,
-        credentialIdsList,
-        regionsList,
-        databaseTypesList,
+        credentialsId: credentialIdsList,
+        region: regionsList,
+        resourceType: databaseTypesList,
         pageSize,
-        clientNextToken
-    );
+        nextToken: clientNextToken
+    });
 
     return {
         items: items.map(

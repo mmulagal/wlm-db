@@ -318,7 +318,13 @@ async function handleHostLevelConfigurations(record: ConfigurationRecord) {
     let updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
 
     try {
-        [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+        [resourceDetails] = await listResources({
+            accountId,
+            resourceId: databaseHostId,
+            credentialIds: credentialsId,
+            region,
+            includeDatabaseInstances: true
+        });
     } catch (error) {
         logger.error('Error fetching resource details:', error);
     }

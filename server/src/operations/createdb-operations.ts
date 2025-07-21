@@ -369,16 +369,14 @@ async function getDriveInfo(
 
     const {
         items: [resourceDetail]
-    } = await getResources(
+    } = await getResources({
         accountId,
-        databaseHostId,
+        resourceId: databaseHostId,
         credentialsId,
         region,
-        RESOURCESTYPE.MSSQL,
-        undefined,
-        undefined,
-        true
-    );
+        resourceType: RESOURCESTYPE.MSSQL,
+        includeDatabaseInstances: true
+    });
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -489,7 +487,7 @@ async function deployDatabase(
     try {
         const {
             items: [resourceDetail]
-        } = await getResources(accountId, databaseHostId);
+        } = await getResources({ accountId, resourceId: databaseHostId });
 
         let {
             resource_id: resourceId,
@@ -1800,7 +1798,13 @@ async function getCollationDetails(
         }
         const {
             items: [resourceDetail]
-        } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
+        } = await getResources({
+            accountId,
+            resourceId: databaseHostId,
+            credentialsId,
+            region,
+            resourceType: RESOURCESTYPE.MSSQL
+        });
 
         if (isEmpty(resourceDetail)) {
             const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;

@@ -85,8 +85,13 @@ describe('calculateRssConfigDrift', () => {
 
     it('run RSS config assessment drift data', async () => {
         const [{ metadata = {}, assessment_data: assessmentData } = {}] =
-            (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
-
+            (await listResources({
+                accountId: ACCOUNT_ID,
+                resourceId: RESOURCE_ID,
+                credentialIds: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                selectKeys: ['metadata', 'assessment_data']
+            })) || [];
         const rssConfigAssessmentResponse = await calculateRssConfigDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,

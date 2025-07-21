@@ -1,9 +1,15 @@
 import throat from 'throat';
 import getLogger from '../../utils/logger';
 import { DatabaseInstancesIncludingResource } from '../../utils/common-types';
-import { WF_NOTIFICATION_PRIORITY, NOTIFICATION_TYPE, DatabaseTypes, WF_CONSOLE_ENDPOINT } from '../../utils/consts';
+import {
+    WF_NOTIFICATION_PRIORITY,
+    NOTIFICATION_TYPE,
+    DatabaseTypes,
+    WF_CONSOLE_ENDPOINT,
+    INSTANCE_DEFAULT_SELECT_FIELDS
+} from '../../utils/consts';
 
-import { listDatabaseInstancesPaginated } from '../../lib/database/db';
+import { listDatabaseInstances } from '../../lib/database/db';
 import prepareWFNotificationRequest from '../wf-notification-operations';
 import { hasNotOptimizedStatus } from './assessment-utils';
 import { sanitizeSnsSubject } from '../../utils/utils';
@@ -72,12 +78,19 @@ export default async function processWellArchitectedAssessmentNotifications(init
             // This await is intentional: we process each page sequentially to avoid high memory usage and ensure order.
             // Using await in the loop is appropriate here because each page must be processed before fetching the next.
             // eslint-disable-next-line no-await-in-loop
-            const { items: managedInstances, nextToken: newNextToken } = await listDatabaseInstancesPaginated(
-                undefined,
-                { databaseType: DatabaseTypes.MS_SQL_SERVER },
-                PAGE_SIZE,
-                nextToken
-            );
+            const response = await listDatabaseInstances(undefined, {
+                databaseType: DatabaseTypes.MS_SQL_SERVER,
+                shouldIncludeResource: true,
+                additionalResourceFields: ['assessment_results'],
+                pageSize: PAGE_SIZE,
+                nextToken,
+                selectKeys: [...INSTANCE_DEFAULT_SELECT_FIELDS, 'assessment_results']
+            });
+            const { items: managedInstances, nextToken: newNextToken } = response as {
+                items: DatabaseInstancesIncludingResource[];
+                nextToken?: string;
+                totalCount: number;
+            };
 
             // Group managedInstances by account_id for this page
             const managedInstancesGroupedByAccountId = managedInstances.reduce(
@@ -115,20 +128,9 @@ export default async function processWellArchitectedAssessmentNotifications(init
                                             region,
                                             resource_id: resourceId,
                                             database_instance_id: databaseInstanceId,
-                                            metadata
+                                            assessment_results: assessmentResults
                                         } = managedInstance;
 
-                                        // Safe check for assessmentResults in metadata
-                                        let assessmentResults: any | undefined;
-                                        if (
-                                            metadata &&
-                                            typeof metadata === 'object' &&
-                                            !Array.isArray(metadata) &&
-                                            'assessmentResults' in metadata
-                                        ) {
-                                            assessmentResults = (metadata as { assessmentResults?: any })
-                                                .assessmentResults;
-                                        }
                                         if (!assessmentResults) {
                                             return;
                                         }

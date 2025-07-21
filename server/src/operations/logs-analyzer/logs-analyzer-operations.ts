@@ -467,7 +467,8 @@ async function triggerLogsAnalysis(
         credentialsId,
         region,
         resourceId: databaseHostId,
-        sqlInstanceId: databaseInstanceId
+        sqlInstanceId: databaseInstanceId,
+        shouldIncludeResource: true
     })) as DatabaseInstancesIncludingResource[];
 
     if (isEmpty(managedInstance)) {

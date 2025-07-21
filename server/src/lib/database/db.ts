@@ -3,17 +3,21 @@ import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount, isDemo, getInstancesWithResourceForDemo } from '../../utils/utils';
-import { TCO_FEATURE } from '../../utils/consts';
-import { Deployment, Event, Resource, Config, DatabaseInstanceRecord, ListDatabaseInstancesRecord } from './db-types';
+import { INSTANCE_DEFAULT_SELECT_FIELDS, RESOURCE_DEFAULT_SELECT_FIELDS, TCO_FEATURE } from '../../utils/consts';
+import {
+    Deployment,
+    Event,
+    Resource,
+    Config,
+    DatabaseInstanceRecord,
+    ListDatabaseInstancesRecord,
+    ListResourcesParams,
+    PaginatedDatabaseInstancesResponse
+} from './db-types';
 import { ResourceDetails } from '../../utils/common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
-interface PaginatedDatabaseInstancesResponse {
-    items: any[];
-    nextToken?: string;
-    totalCount: number;
-}
 
 async function listDeployments(
     accountId?: string,
@@ -243,18 +247,22 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
     });
 }
 
-async function listResources(
-    accountId?: string,
-    resourceId?: string,
-    credentialIds?: string | string[],
-    region?: string | string[],
-    resourceType?: string | string[],
-    fsxId?: string,
-    metaFilters?: { [x: string]: string | number | boolean },
-    pageSize?: number,
-    nextToken?: string,
-    includeDatabaseInstances?: boolean
-) {
+async function listResources(params: ListResourcesParams = {}) {
+    let {
+        accountId,
+        resourceId,
+        credentialIds,
+        region,
+        resourceType,
+        fsxId,
+        metaFilters,
+        pageSize,
+        nextToken,
+        includeDatabaseInstances,
+        selectKeys
+    } = params;
+
+    selectKeys = selectKeys && selectKeys.length > 0 ? selectKeys : RESOURCE_DEFAULT_SELECT_FIELDS;
     logger.info('Listing resources for params', {
         accountId,
         resourceId,
@@ -264,7 +272,8 @@ async function listResources(
         metaFilters,
         pageSize,
         nextToken,
-        includeDatabaseInstances
+        includeDatabaseInstances,
+        selectKeys
     });
 
     if (accountId) {
@@ -274,7 +283,14 @@ async function listResources(
     region = region ? (isArray(region) ? region : [region]) : undefined;
     credentialIds = credentialIds ? (isArray(credentialIds) ? credentialIds : [credentialIds]) : undefined;
 
-    const response = await prisma.client.resource.findMany({
+    const select: Record<string, any> = Object.fromEntries(selectKeys.map(key => [key, true]));
+    if (includeDatabaseInstances) {
+        select.database_instances = {
+            select: Object.fromEntries(INSTANCE_DEFAULT_SELECT_FIELDS.map(field => [field, true]))
+        };
+    }
+
+    const response: any[] = await prisma.client.resource.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(resourceId && { resource_id: resourceId }),
@@ -305,11 +321,7 @@ async function listResources(
             cursor: { id: nextToken },
             skip: 1
         }),
-        ...(includeDatabaseInstances && {
-            include: {
-                database_instances: true
-            }
-        })
+        select
     });
 
     if (!isEmpty(response) && isDemoFlow && includeDatabaseInstances) {
@@ -673,41 +685,115 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
     });
 }
 
+function buildDatabaseInstancesSelect(
+    selectKeys?: string[],
+    shouldIncludeResource?: boolean,
+    additionalResourceFields?: string[]
+) {
+    const defaultKeys = selectKeys?.length ? selectKeys : INSTANCE_DEFAULT_SELECT_FIELDS;
+    const select: Record<string, any> = Object.fromEntries(defaultKeys.map(key => [key, true]));
+
+    if (shouldIncludeResource) {
+        const resourceFields = [...RESOURCE_DEFAULT_SELECT_FIELDS];
+        if (additionalResourceFields?.length) {
+            resourceFields.push(...additionalResourceFields);
+        }
+        select.resource = {
+            select: Object.fromEntries(resourceFields.map(field => [field, true]))
+        };
+    }
+
+    return select;
+}
+
+async function handleDemoFlowMapping(
+    items: any[],
+    accountId?: string,
+    credentialsId?: string,
+    additionalResourceFields?: string[]
+) {
+    if (!isEmpty(items) && isDemoFlow) {
+        const resourceSelectKeys = [...RESOURCE_DEFAULT_SELECT_FIELDS];
+        if (additionalResourceFields?.length) {
+            resourceSelectKeys.push(...additionalResourceFields);
+        }
+
+        const filteredResource = await listResources({
+            accountId,
+            credentialIds: credentialsId,
+            selectKeys: resourceSelectKeys
+        });
+        return getInstancesWithResourceForDemo(items, filteredResource);
+    }
+    return items;
+}
+
 async function listDatabaseInstances(
     accountId?: string,
-    record?: ListDatabaseInstancesRecord,
-    shouldIncludeResource: boolean = true
-) {
+    record?: ListDatabaseInstancesRecord
+): Promise<any[] | PaginatedDatabaseInstancesResponse> {
     logger.info('List database instances for given account and record', { accountId, record });
 
-    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region, databaseType } = record ?? {};
-    accountId = accountId ? checkAccount(accountId) : '';
+    const {
+        pageSize,
+        nextToken,
+        shouldIncludeResource,
+        additionalResourceFields,
+        credentialsId,
+        resourceId,
+        sqlInstanceId,
+        sqlInstanceName,
+        isDefault,
+        region,
+        databaseType,
+        selectKeys
+    } = record ?? {};
+    accountId = accountId ? checkAccount(accountId) : undefined;
+    const whereClause = {
+        ...(accountId && { account_id: accountId }),
+        ...(credentialsId && { credentials_id: credentialsId }),
+        ...(resourceId && { resource_id: resourceId }),
+        ...(sqlInstanceId && { database_instance_id: sqlInstanceId }),
+        ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
+        ...(region && { region }),
+        ...(isDefault && { is_default: isDefault }),
+        ...(databaseType && { database_type: databaseType })
+    };
 
-    let databaseInstances = await prisma.client.database_instances.findMany({
-        where: {
-            ...(accountId && { account_id: accountId }),
-            ...(credentialsId && { credentials_id: credentialsId }),
-            ...(resourceId && { resource_id: resourceId }),
-            ...(sqlInstanceId && { database_instance_id: sqlInstanceId }),
-            ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
-            ...(region && { region }),
-            ...(isDefault && { is_default: isDefault }),
-            ...(databaseType && { database_type: databaseType })
-        },
-        orderBy: {
-            id: 'asc'
-        },
-        include: {
-            resource: shouldIncludeResource
-        }
-    });
+    const select = buildDatabaseInstancesSelect(selectKeys, shouldIncludeResource, additionalResourceFields);
 
-    if (!isEmpty(databaseInstances) && isDemoFlow) {
-        // relational mapping in prismock has some issues. So we need to map the resource to the database instance
-        const filteredResource = await listResources(accountId, undefined, credentialsId);
-        databaseInstances = await getInstancesWithResourceForDemo(databaseInstances, filteredResource);
+    const queryOptions = {
+        where: whereClause,
+        orderBy: { id: 'asc' as const },
+        select,
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
+    };
+
+    let items = await prisma.client.database_instances.findMany(queryOptions);
+    let totalCount: number | undefined;
+
+    if (pageSize) {
+        totalCount = await prisma.client.database_instances.count({ where: whereClause });
     }
-    return databaseInstances;
+
+    if (shouldIncludeResource) {
+        items = await handleDemoFlowMapping(items, accountId, credentialsId, additionalResourceFields);
+    }
+
+    if (pageSize && totalCount !== undefined) {
+        const newNextToken = items.length === pageSize ? String(items[items.length - 1].id) : undefined;
+        return {
+            items,
+            nextToken: newNextToken,
+            totalCount
+        };
+    }
+
+    return items;
 }
 
 async function deleteDatabaseInstance(
@@ -829,66 +915,6 @@ async function deleteOlderDeployments(olderDate: number) {
     });
 }
 
-async function listDatabaseInstancesPaginated(
-    accountId?: string,
-    record?: ListDatabaseInstancesRecord,
-    pageSize: number = 50,
-    nextToken?: string // This will be the last seen id as a string
-): Promise<PaginatedDatabaseInstancesResponse> {
-    logger.info('List paginated database instances for given account and record', {
-        accountId,
-        record,
-        pageSize,
-        nextToken
-    });
-
-    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region, databaseType } = record ?? {};
-    accountId = accountId ? checkAccount(accountId) : '';
-
-    const whereClause = {
-        ...(accountId && { account_id: accountId }),
-        ...(credentialsId && { credentials_id: credentialsId }),
-        ...(resourceId && { resource_id: resourceId }),
-        ...(sqlInstanceId && { database_instance_id: sqlInstanceId }),
-        ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
-        ...(region && { region }),
-        ...(isDefault && { is_default: isDefault }),
-        ...(databaseType && { database_type: databaseType })
-    };
-
-    const queryOptions: any = {
-        where: whereClause,
-        orderBy: { id: 'asc' },
-        include: { resource: true },
-        take: pageSize,
-        ...(nextToken && {
-            cursor: { id: nextToken },
-            skip: 1
-        })
-    };
-
-    const [databaseInstances, totalCount] = await Promise.all([
-        prisma.client.database_instances.findMany(queryOptions),
-        prisma.client.database_instances.count({ where: whereClause })
-    ]);
-
-    let items = databaseInstances;
-
-    if (!isEmpty(items) && isDemoFlow) {
-        const filteredResource = await listResources(accountId, undefined, credentialsId);
-        items = await getInstancesWithResourceForDemo(items, filteredResource);
-    }
-
-    // Set nextToken as the last item's id if there are more items
-    const newNextToken = items.length === pageSize ? String(items[items.length - 1].id) : undefined;
-
-    return {
-        items,
-        nextToken: newNextToken,
-        totalCount
-    };
-}
-
 export {
     listDeployments,
     createDeployment,
@@ -918,6 +944,5 @@ export {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    deleteOlderDeployments,
-    listDatabaseInstancesPaginated
+    deleteOlderDeployments
 };

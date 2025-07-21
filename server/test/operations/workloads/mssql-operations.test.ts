@@ -147,7 +147,7 @@ describe('MSSQL Resource methods', () => {
     it('Delete MSSQL resource', async () => {
         const resp = await deleteResourceById(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
         expect(resp.message).toEqual('Resource successfully deleted');
-        const listResp = await listResources(ACCOUNT_ID);
+        const listResp = await listResources({ accountId: ACCOUNT_ID });
         const mssqlResource = listResp.find(res => res.resource_id === '36E53042-04E8-40C9-AE69-26E56CB0D216');
         expect(mssqlResource).toBeUndefined();
         const fsxResource = listResp.find(res => res.resource_id === 'fs-f6082f35c1db');

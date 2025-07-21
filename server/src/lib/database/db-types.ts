@@ -79,6 +79,11 @@ interface ListDatabaseInstancesRecord {
     credentialsId?: string;
     region?: string | null;
     databaseType?: string;
+    selectKeys?: string[];
+    shouldIncludeResource?: boolean;
+    additionalResourceFields?: string[];
+    pageSize?: number;
+    nextToken?: string;
 }
 
 interface DatabaseInstanceConfigData {
@@ -112,6 +117,38 @@ type CountDatabaseInstanceConfigRecordsParams = Omit<
     'include' | 'select' | 'pageSize' | 'nextToken'
 >;
 
+interface ListResourcesParams {
+    accountId?: string;
+    resourceId?: string;
+    credentialIds?: string | string[];
+    region?: string | string[];
+    resourceType?: string | string[];
+    fsxId?: string;
+    metaFilters?: { [x: string]: string | number | boolean };
+    pageSize?: number;
+    nextToken?: string;
+    includeDatabaseInstances?: boolean;
+    selectKeys?: string[];
+}
+
+interface GetResourcesParams {
+    accountId?: string;
+    resourceId?: string;
+    credentialsId?: string | string[];
+    region?: string | string[];
+    resourceType?: string | string[];
+    pageSize?: number;
+    nextToken?: string;
+    includeDatabaseInstances?: boolean;
+    allRecords?: boolean;
+    assessmentData?: boolean;
+}
+interface PaginatedDatabaseInstancesResponse {
+    items: any[];
+    nextToken?: string;
+    totalCount: number;
+}
+
 export {
     Deployment,
     Event,
@@ -121,5 +158,8 @@ export {
     ListDatabaseInstancesRecord,
     DatabaseInstanceConfigData,
     ListDatabaseInstanceConfigDataParams,
-    CountDatabaseInstanceConfigRecordsParams
+    CountDatabaseInstanceConfigRecordsParams,
+    ListResourcesParams,
+    GetResourcesParams,
+    PaginatedDatabaseInstancesResponse
 };

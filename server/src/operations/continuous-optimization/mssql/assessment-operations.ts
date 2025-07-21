@@ -29,6 +29,7 @@ import {
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
     AuditStatus,
     HttpErrorCodes,
+    RESOURCE_DEFAULT_SELECT_FIELDS,
     RESOURCESTYPE,
     SqlServerDeploymentModel,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
@@ -354,7 +355,15 @@ async function fetchMssqlDriftAssessmentPerHost(
     if (isEmpty(resourceDetail)) {
         const {
             items: [resource]
-        } = await getResources(accountId, databaseHostId, credentialsId, region, undefined, undefined, undefined, true);
+        } = await getResources({
+            accountId,
+            resourceId: databaseHostId,
+            credentialsId,
+            region,
+            includeDatabaseInstances: true,
+            allRecords: false,
+            assessmentData: true
+        });
         if (!resource) {
             const message = `No database host by id ${databaseHostId} for ${accountId} is found.`;
             logger.info(message);
@@ -461,18 +470,16 @@ async function fetchMssqlDriftAssessmentPerAccount(
 
     pageSize = pageSize || 50;
 
-    const resourceDetails = await listResources(
+    const resourceDetails = await listResources({
         accountId,
-        undefined,
-        credentialsId,
+        credentialIds: credentialsId,
         region,
-        RESOURCESTYPE.MSSQL,
-        undefined,
-        undefined,
+        resourceType: RESOURCESTYPE.MSSQL,
         pageSize,
         nextToken,
-        true
-    );
+        includeDatabaseInstances: true,
+        selectKeys: [...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data', 'configurations']
+    });
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId} in region ${region}.`);
         return { count: 0, assessmentsPerAccount: [], nextToken: '' };

@@ -79,12 +79,12 @@ describe('handleOptimizeRssOptimization', () => {
             ['Ethernet 3']
         );
         expect(jobId).toBeDefined();
-        const [{ metadata }] = await listResources(
-            ACCOUNT_ID,
-            RESOURCE_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION
-        );
+        const [{ metadata }] = await listResources({
+            accountId: ACCOUNT_ID,
+            resourceId: RESOURCE_ID,
+            credentialIds: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION
+        });
         expect((metadata as unknown as Metadata)?.isRssConfigOptimized).toEqual(['Ethernet 3']);
     });
 });

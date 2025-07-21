@@ -12,8 +12,7 @@ import {
     countResources,
     listDatabaseInstances,
     updateDatabaseInstance,
-    updateResource,
-    listDatabaseInstancesPaginated
+    updateResource
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -23,10 +22,16 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
-import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND } from '../../utils/consts';
+import {
+    CONFIG_NOT_FOUND,
+    HttpErrorCodes,
+    RESOURCE_DEFAULT_SELECT_FIELDS,
+    RESOURCESTYPE,
+    STACK_NOT_FOUND
+} from '../../utils/consts';
 import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { ListDatabaseInstancesRecord } from '../../lib/database/db-types';
+import { ListDatabaseInstancesRecord, GetResourcesParams } from '../../lib/database/db-types';
 import { getNextToken } from '../../utils/utils';
 
 const logger = getLogger();
@@ -231,45 +236,51 @@ async function getDeployments(
 }
 
 async function getResources(
-    accountId?: string,
-    resourceId?: string,
-    credentialsId?: string | string[],
-    region?: string | string[],
-    resourceType?: string | string[],
-    pageSize: number | undefined = 200,
-    nextToken?: string,
-    includeDatabaseInstances?: boolean,
-    allRecords?: boolean
+    params: GetResourcesParams
 ): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
+    const {
+        accountId,
+        resourceId,
+        credentialsId,
+        region,
+        resourceType: inputResourceType,
+        pageSize = 200,
+        nextToken,
+        includeDatabaseInstances,
+        allRecords,
+        assessmentData
+    } = params;
+
     logger.info(' Get the Resources', {
         accountId,
         resourceId,
         credentialsId,
         region,
-        resourceType,
+        resourceType: inputResourceType,
         pageSize,
-        nextToken
+        nextToken,
+        assessmentData
     });
 
-    resourceType = resourceType || [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL];
+    const resourceType = inputResourceType || [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL];
 
+    let finalPageSize: number | undefined = pageSize;
     if (allRecords) {
-        pageSize = undefined;
+        finalPageSize = undefined;
     }
 
     try {
-        const recordsPromise = listResources(
+        const recordsPromise = listResources({
             accountId,
             resourceId,
-            credentialsId,
+            credentialIds: credentialsId,
             region,
             resourceType,
-            undefined,
-            undefined,
-            pageSize,
+            pageSize: finalPageSize,
             nextToken,
-            includeDatabaseInstances
-        );
+            includeDatabaseInstances,
+            selectKeys: [...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data', 'configurations']
+        });
 
         const countPromise = countResources(accountId);
 
@@ -278,12 +289,16 @@ async function getResources(
         } = await countPromise;
 
         const records = await recordsPromise;
-        const items = trimAccountIdForDemo(records);
+        const items = trimAccountIdForDemo(records) as Array<ResourceDetails>;
 
+        const filteredItems = items.filter((item): item is ResourceDetails => item.id !== null);
+        const filteredItemsWithStringId = filteredItems as Array<ResourceDetails & { id: string }>;
         return {
-            count: items?.length,
-            items,
-            ...(pageSize && { nextToken: getNextToken(items, totalResourcesCount, pageSize) })
+            count: filteredItems.length,
+            items: filteredItems,
+            ...(finalPageSize && {
+                nextToken: getNextToken(filteredItemsWithStringId, totalResourcesCount, finalPageSize)
+            })
         };
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');
@@ -315,12 +330,17 @@ async function getInstanceInfo(
     databaseInstanceId: string,
     region?: string
 ) {
-    const [instanceDetail] = await listDatabaseInstances(accountId, {
+    const result = await listDatabaseInstances(accountId, {
         credentialsId,
         resourceId: databaseHostId,
         sqlInstanceId: databaseInstanceId,
-        region
+        region,
+        shouldIncludeResource: true,
+        additionalResourceFields: ['assessment_data', 'configurations']
     });
+
+    const instances = Array.isArray(result) ? result : result.items;
+    const [instanceDetail] = instances;
 
     if (isEmpty(instanceDetail)) {
         const errorMessage = `No database instance by id ${databaseInstanceId} in host by id ${databaseHostId} for ${accountId} is found.`;
@@ -368,14 +388,9 @@ async function updateDatabaseHostConfigurations(
     return updateResource({ accountId, credentialsId, region, resourceId, updatedConfigs });
 }
 
-async function getPaginatedDatabaseInstances(
-    accountId?: string,
-    record?: ListDatabaseInstancesRecord,
-    pageSize: number = 50,
-    nextToken?: string
-) {
-    logger.info('Get paginated database instances', { accountId, record, pageSize, nextToken });
-    return listDatabaseInstancesPaginated(accountId, record, pageSize, nextToken);
+async function getPaginatedDatabaseInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
+    logger.info('Get paginated database instances', { accountId, record });
+    return listDatabaseInstances(accountId, record);
 }
 
 async function updateDatabaseHostAssessmentData(
@@ -415,11 +430,8 @@ async function populateDbInstances(resourceDetails: ResourceDetails) {
     const { account_id: accountId, credentials_id: credentialsId, region, resource_id: resourceId } = resourceDetails;
     if (isEmpty(resourceDetails.database_instances)) {
         try {
-            resourceDetails.database_instances = await listDatabaseInstances(
-                accountId,
-                { credentialsId, region, resourceId },
-                false
-            );
+            const result = await listDatabaseInstances(accountId, { credentialsId, region, resourceId });
+            resourceDetails.database_instances = Array.isArray(result) ? result : result.items;
         } catch (err) {
             logger.error('Failed to list database instances', err);
         }

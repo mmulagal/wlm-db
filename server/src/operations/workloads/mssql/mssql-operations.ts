@@ -98,7 +98,7 @@ async function getResourceDetails(resourceId: string) {
     try {
         ({
             items: [{ credentials_id: credentialsId, metadata, region }]
-        } = await getResources(accountId, resourceId, undefined, undefined, DatabaseTypes.MS_SQL_SERVER));
+        } = await getResources({ accountId, resourceId, resourceType: DatabaseTypes.MS_SQL_SERVER }));
     } catch (error) {
         throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
     }
@@ -159,7 +159,12 @@ async function getDataBasesSummary(
         databaseInstances?.length
     );
 
-    const [resourceDetail] = await listResources(accountId, resourceId, credentialsId);
+    const [resourceDetail] = await listResources({
+        accountId,
+        resourceId,
+        credentialIds: credentialsId,
+        includeDatabaseInstances: true
+    });
     if (!resourceDetail) {
         throw createError(HttpErrorCodes.NOT_FOUND, `Resource not found for resource id: ${resourceId}`);
     }
@@ -682,7 +687,7 @@ async function discoverMsSqlServer(
     );
     const {
         items: [resourceDetails]
-    } = await getResources(accountId, resourceId);
+    } = await getResources({ accountId, resourceId });
 
     if (!isEmpty(resourceDetails)) {
         throw createError(409, 'MSSQL server already exists in your tenancy account');
@@ -984,7 +989,12 @@ async function getNativeSQLBackedupDatabases(
     logger.info('Fetch SQL native protection status', { resourceId, isSqlAuthEnabled, accountId, credentialsId });
 
     try {
-        const [resourceDetail] = await listResources(accountId, resourceId, credentialsId);
+        const [resourceDetail] = await listResources({
+            accountId,
+            resourceId,
+            credentialIds: credentialsId,
+            includeDatabaseInstances: true
+        });
         if (!resourceDetail) {
             throw createError(HttpErrorCodes.NOT_FOUND, `Resource not found for resource id: ${resourceId}`);
         }
@@ -1188,23 +1198,22 @@ async function getDatabaseEnvironmentDetails(
         );
     }
 
-    const databaseInstanceInfo = await listDatabaseInstances(
-        accountId,
-        {
-            credentialsId,
-            resourceId,
-            sqlInstanceName: databaseInstanceName
-        },
-        false
-    );
+    const databaseInstanceInfo = await listDatabaseInstances(accountId, {
+        credentialsId,
+        resourceId,
+        sqlInstanceName: databaseInstanceName
+    });
 
     if (!isEmpty(databaseInstanceInfo)) {
         isManagedDatabaseInstance = true;
-        [{ is_default: isDefaultInstance }] = databaseInstanceInfo;
+        const dbInstancesArray = Array.isArray(databaseInstanceInfo)
+            ? databaseInstanceInfo
+            : databaseInstanceInfo?.items ?? [];
+        [{ is_default: isDefaultInstance }] = dbInstancesArray;
 
         // Currently the DB environment is expected to be on a single FSxN/SVM
-        [{ fsxn_ids: fsxId }] = databaseInstanceInfo;
-        const [{ fsx_svm_id: temp } = {}] = databaseInstanceInfo || [];
+        [{ fsxn_ids: fsxId }] = dbInstancesArray;
+        const [{ fsx_svm_id: temp } = {}] = dbInstancesArray;
         svmId = temp![fsxId as keyof typeof temp];
     }
 
@@ -1245,17 +1254,15 @@ async function checkDatabaseExists(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         if (sqlInstanceId) {
-            const { userDatabase } = ((
-                await listDatabaseInstances(accountId, { sqlInstanceId, credentialsId }, false)
-            )[0]?.metadata || {
-                userDatabase: undefined
-            }) as { userDatabase: any[] };
+            const dbInstancesResult = await listDatabaseInstances(accountId, { sqlInstanceId, credentialsId });
+            const dbInstance = Array.isArray(dbInstancesResult) ? dbInstancesResult[0] : dbInstancesResult?.items?.[0];
+            const { userDatabase } = (dbInstance?.metadata || { userDatabase: undefined }) as { userDatabase: any[] };
             return userDatabase?.some(db => db.name === databaseName) ?? false;
         }
 
-        const { userDatabase } = ((await listResources(accountId, databaseHostId, credentialsId))[0]?.metadata || {
-            userDatabase: undefined
-        }) as { userDatabase: any[] };
+        const { userDatabase } = ((
+            await listResources({ accountId, resourceId: databaseHostId, credentialIds: credentialsId })
+        )[0]?.metadata || { userDatabase: undefined }) as { userDatabase: any[] };
         return userDatabase?.some(db => db.name === databaseName) ?? false;
     }
 

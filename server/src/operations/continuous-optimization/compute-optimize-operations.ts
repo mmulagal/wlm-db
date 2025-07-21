@@ -8,7 +8,7 @@ import {
     ResourceAssessmentData,
     SsmSqlServerRunningStatus
 } from '../../utils/common-types';
-import { AuditStatus } from '../../utils/consts';
+import { AuditStatus, RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/consts';
 import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
@@ -596,8 +596,13 @@ export default async function optimizeCompute(
         instanceType
     });
 
-    const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
-
+    const resourceDetails = await listResources({
+        accountId,
+        resourceId: databaseHostId,
+        credentialIds: credentialsId,
+        region,
+        selectKeys: [...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data', 'configurations']
+    });
     const [{ resource_name: resourceName, metadata, assessment_data: assessmentData }] = resourceDetails;
 
     const { recommendationOptions } = await calculateComputeDrift(
