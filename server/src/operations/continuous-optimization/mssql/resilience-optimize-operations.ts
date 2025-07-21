@@ -52,8 +52,8 @@ import {
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
-import { listInstanceConfigIncludingResourceAndInstance } from '../../database/instance-config-operations';
 import { ADD_INITIATOR_TO_IGROUP } from '../../workloads/mssql/high-availability-scripts';
+import { listInstanceConfigIncludingResourceAndInstance } from '../../database/instance-config-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -460,7 +460,8 @@ async function prepareHASharedStorageOptimizationData(
                             ...instance,
                             region: databaseHost.region,
                             credentialsId: databaseHost.credentialsId,
-                            databaseHostId: databaseHost.id
+                            databaseHostId: databaseHost.id,
+                            databaseInstanceId: instance.databaseInstanceId
                         });
                     }
                 }
@@ -509,7 +510,6 @@ async function prepareHASharedStorageOptimizationData(
             }
         }
 
-        // TypeBox can't represent Map, so we use Type.Any() in the schema and cast here
         return {
             instance: flattenedInstance,
             lunsToOptimize,
@@ -586,7 +586,6 @@ async function optimizeHASharedStorageData(
     }
 }
 
-// --- Main Function ---
 async function handleSharedStorageOptimize(
     accountId: string,
     ontapLunUuids: string[] | undefined,
