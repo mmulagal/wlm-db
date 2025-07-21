@@ -3479,21 +3479,62 @@ export const fixIssueDisableMsg = (rowData: any) => {
     return disableMsg;
 };
 
+const callDeleteHost = async (
+    addHostJobScApi: any,
+    dispatch: any,
+    translation: any,
+    hostId: string,
+    deleteHostSc: any
+) => {
+    const state: any = store.getState().snapCenter;
+    const deleteHostRes = await deleteHostSc({
+        accountID: store.getState().auth.accountId,
+        hostId: hostId,
+        agentID: state.selectedAgent[0]?.id,
+        workspaceID: state?.workSpaceData?.id
+    });
+
+    // Here job starts
+    if (deleteHostRes?.data?.jobId) {
+        const { jobId } = deleteHostRes.data;
+
+        await deleteHostJobPolling(addHostJobScApi, jobId, dispatch, translation);
+    }
+};
+
+const errorMsgCall = (dispatch: any, errorMsg: string, errorMsgTooltip: string) => {
+    dispatch(setActionsDisabled(false));
+    dispatch(
+        setDialogErrorWithTooltip({
+            showDialogError: true,
+            errorMessage: errorMsg,
+            showTooltipInfo: true,
+            tooltipText: errorMsgTooltip
+        })
+    );
+};
+
 export const addHostJobPolling = async (
     addHostJobScApi: any,
     jobId: string,
     dispatch: any,
     dialogKey: string,
-    translation: any
+    translation: any,
+    deleteHostSc: any
 ) => {
     let step1Done = false;
     const firstStepName = 'Validate Host';
     const secondStepName = 'Package Installation';
-    const jobInterval = setInterval(() => {
-        addHostJobScApi({
-            accountID: store.getState().auth.accountId,
-            jobID: jobId
-        }).then((jobRes: any) => {
+    let hasCalledDeleteHost = false;
+    let isProcessing = false;
+    const jobInterval = setInterval(async () => {
+        if (isProcessing) return;
+        isProcessing = true;
+        try {
+            const jobRes = await addHostJobScApi({
+                accountID: store.getState().auth.accountId,
+                jobID: jobId
+            });
             const status = jobRes?.data?.status;
             if (status === JOB_MONITORING_STATUS.FAILED) {
                 let errorMsg = '';
@@ -3520,11 +3561,16 @@ export const addHostJobPolling = async (
             } else {
                 let errorMsg = '';
                 let errorMsgTooltip = '';
-                jobRes.data.subJobs.forEach((subJob: { name?: string; status?: string; error?: string }) => {
+                const subJobs = jobRes?.data?.subJobs || [];
+
+                for (const subJob of subJobs) {
                     if (subJob?.name?.includes(firstStepName) && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
                         errorMsg = translation('databases.inventory.validate-host-failed');
                         errorMsgTooltip = subJob?.error || translation('databases.inventory.validate-host-failed');
                         dispatch(resetProtectionProcess(dialogKey));
+
+                        errorMsgCall(dispatch, errorMsg, errorMsgTooltip);
+                        clearInterval(jobInterval);
                         return;
                     }
                     if (
@@ -3535,11 +3581,22 @@ export const addHostJobPolling = async (
                         dispatch(completeProtectionStep1(dialogKey));
                         step1Done = true;
                     }
-                    if (subJob?.name?.includes(secondStepName) && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
+                    if (
+                        !hasCalledDeleteHost &&
+                        subJob?.name?.includes(secondStepName) &&
+                        subJob?.status === JOB_MONITORING_STATUS.FAILED
+                    ) {
+                        hasCalledDeleteHost = true;
+                        //calling delete host api to remove the stale entry
+                        await callDeleteHost(addHostJobScApi, dispatch, translation, subJob?.data?.host, deleteHostSc);
+
                         errorMsg = translation('databases.inventory.package-installation-failed');
                         errorMsgTooltip =
                             subJob?.error || translation('databases.inventory.package-installation-failed');
                         dispatch(resetProtectionProcess(dialogKey));
+
+                        errorMsgCall(dispatch, errorMsg, errorMsgTooltip);
+                        clearInterval(jobInterval);
                         return;
                     }
                     if (
@@ -3550,21 +3607,13 @@ export const addHostJobPolling = async (
                         dispatch(completeProtectionStep2(dialogKey));
                         clearInterval(jobInterval);
                     }
-                });
-                if (errorMsg) {
-                    dispatch(setActionsDisabled(false));
-                    dispatch(
-                        setDialogErrorWithTooltip({
-                            showDialogError: true,
-                            errorMessage: errorMsg,
-                            showTooltipInfo: true,
-                            tooltipText: errorMsgTooltip
-                        })
-                    );
-                    clearInterval(jobInterval);
                 }
             }
-        });
+        } catch (error) {
+            clearInterval(jobInterval);
+        } finally {
+            isProcessing = false;
+        }
     }, SC_JOB_INTERVAL);
 };
 
@@ -3620,7 +3669,8 @@ export const addHostHandlerSc = async (
     generateCredentialID: any,
     addHostScApi: any,
     addHostJobScApi: any,
-    translation: any
+    translation: any,
+    deleteHostSc: any
 ) => {
     dispatch(setActionsDisabled(true));
     dispatch(
@@ -3666,7 +3716,7 @@ export const addHostHandlerSc = async (
             if (addHostResponse?.data?.jobId) {
                 // Getting job id
                 const { jobId } = addHostResponse.data;
-                addHostJobPolling(addHostJobScApi, jobId, dispatch, dialogKey, translation);
+                addHostJobPolling(addHostJobScApi, jobId, dispatch, dialogKey, translation, deleteHostSc);
             } else {
                 dispatch(resetProtectionProcess(dialogKey));
                 dispatch(setActionsDisabled(false));
@@ -3697,7 +3747,7 @@ export const addHostHandlerSc = async (
 export const getOptimizationStatusData = (rowData: any, t: any) => {
     let disableMsg = '';
     const cellData = rowData.optimizationStatus;
-    
+
     const getDisableMessage = () => {
         if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
             return GENERAL.NON_MSSQL_ASSESSMENT_NA;
@@ -3752,19 +3802,16 @@ export const getOptimizationStatusData = (rowData: any, t: any) => {
             }
         }
 
-        if (
-            (!cellData && !rowData?.optimizationStatusLoading) ||
-            cellData === INVENTORY_STATUS.IN_PROGRESS
-        ) {
+        if ((!cellData && !rowData?.optimizationStatusLoading) || cellData === INVENTORY_STATUS.IN_PROGRESS) {
             return t('databases.well-architect.assessment-in-progress');
         }
         return '';
     };
 
     disableMsg = getDisableMessage();
-    
+
     if (disableMsg) {
-        return { displayValue: "Not analyzed", disableMsg, isDisabled: true };
+        return { displayValue: 'Not analyzed', disableMsg, isDisabled: true };
     }
     return { displayValue: cellData || GENERAL.NOT_AVAILABLE, disableMsg: '', isDisabled: false };
 };

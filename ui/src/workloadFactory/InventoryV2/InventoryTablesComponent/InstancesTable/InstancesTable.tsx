@@ -380,24 +380,6 @@ const InstancesTable = () => {
 
                 if (foundHost && foundHost?.overallStatus !== 'NoPlugins' && foundHost?.overallStatus !== 'Stopped') {
                     hostExists = true;
-                } else if (foundHost && foundHost?.overallStatus === 'NoPlugins') {
-                    const deleteHostRes = await deleteHostSc({
-                        accountID: store.getState().auth.accountId,
-                        hostId: foundHost.id,
-                        agentID: foundHost.connectorId,
-                        workspaceID: workSpaceRes.data.items[0]?.id
-                    });
-
-                    // Here job starts
-                    if (deleteHostRes?.data?.jobId) {
-                        const { jobId } = deleteHostRes.data;
-
-                        const result = await deleteHostJobPolling(addHostJobScApi, jobId, dispatch, t);
-
-                        if (result === 'FAILED') {
-                            return;
-                        }
-                    }
                 }
             }
 
@@ -488,7 +470,15 @@ const InstancesTable = () => {
                     if (hostExists) {
                         bxpRedirect(isWorkloadFactory);
                     } else {
-                        addHostHandlerSc(rowData, dispatch, generateCredentialID, addHostScApi, addHostJobScApi, t);
+                        addHostHandlerSc(
+                            rowData,
+                            dispatch,
+                            generateCredentialID,
+                            addHostScApi,
+                            addHostJobScApi,
+                            t,
+                            deleteHostSc
+                        );
                     }
                 }}
                 customClass={styles.protectionDialog}
@@ -687,7 +677,6 @@ const InstancesTable = () => {
             }),
         [instanceTableRows]
     );
-
 
     const isUnregisteredRows = useMemo(
         () =>
@@ -917,7 +906,7 @@ const InstancesTable = () => {
             filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
                 // If the computed display value is "Not analyzed", show with tooltip
-                if (cellData === "Not analyzed") {
+                if (cellData === 'Not analyzed') {
                     return (
                         <div className={styles.naContainer}>
                             <Popover
