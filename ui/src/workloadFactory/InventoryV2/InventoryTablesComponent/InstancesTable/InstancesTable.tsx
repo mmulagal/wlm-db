@@ -33,6 +33,7 @@ import {
 import {
     addHostHandlerSc,
     deleteHostJobPolling,
+    getOptimizationStatusData,
     manageActionCol,
     uniqueHostRow,
     updateInstanceStatus
@@ -648,87 +649,11 @@ const InstancesTable = () => {
         return rowData?.status;
     };
 
-     // Helper function to get the computed display value and disable message for Well-architected status
-    const getOptimizationStatusData = (rowData: any) => {
-        let disableMsg = '';
-        const cellData = rowData.optimizationStatus;
-        
-        const getDisableMessage = () => {
-            if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
-                return GENERAL.NON_MSSQL_ASSESSMENT_NA;
-            }
-            if (
-                rowData?.status === INVENTORY_STATUS.OFFLINE ||
-                rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
-                rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
-                rowData?.status === INVENTORY_STATUS.STOPPED
-            ) {
-                return GENERAL.ONLINE_INSTANCE_ASSESS;
-            }
-
-            if (
-                (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                    rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
-            ) {
-                return GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
-            }
-
-            if (
-                (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                    rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
-            ) {
-                return GENERAL.FSXN_OPTIMIZE_SUPPORTED;
-            }
-
-            if (
-                rowData?.serverInstallationMode === GENERAL.AOAG &&
-                rowData.fileSystemType &&
-                rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
-            ) {
-                if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                    return GENERAL.ASSESSMENT_AOAG_DETECTED;
-                }
-                if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                    return GENERAL.ASSESSMENT_AOAG_UNDETECTED;
-                }
-            }
-
-            if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
-                if (
-                    rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                    rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
-                ) {
-                    return GENERAL.ASSESSMENT_FOR_MANAGE;
-                }
-                if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                    return GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
-                }
-            }
-
-            if (
-                (!cellData && !rowData?.optimizationStatusLoading) ||
-                cellData === INVENTORY_STATUS.IN_PROGRESS
-            ) {
-                return t('databases.well-architect.assessment-in-progress');
-            }
-            return '';
-        };
-
-        disableMsg = getDisableMessage();
-        
-        if (disableMsg) {
-            return { displayValue: "Not analyzed", disableMsg, isDisabled: true };
-        }
-        return { displayValue: cellData || GENERAL.NOT_AVAILABLE, disableMsg: '', isDisabled: false };
-    };
-
     const updatedTableData = useMemo(
         () =>
             instanceTableRows?.map((row: any) => {
                 const { isDisabled, errorMessage } = disableManageCheck(row);
-                const optimizationData = getOptimizationStatusData(row);
+                const optimizationData = getOptimizationStatusData(row, t);
                 let optimizationStatus, optimizationDisableMsg, optimizationIsDisabled;
                 if (
                     typeof optimizationData === 'object' &&
