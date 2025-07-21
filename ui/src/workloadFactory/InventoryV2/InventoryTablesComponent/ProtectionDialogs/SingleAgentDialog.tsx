@@ -17,12 +17,7 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { bxpRedirect } from '../../../../utils/utilityFunctions';
 import StepTwoDialog from './StepTwoDialog';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
-import {
-    completeProtectionStep1,
-    completeProtectionStep2,
-    resetProtectionProcess,
-    setSelectedAgent
-} from '../../../../store/workloadFactory/snapcenterSlice';
+import { resetProtectionProcess, setSelectedAgent } from '../../../../store/workloadFactory/snapcenterSlice';
 import { SNAPCENTER_STATUS } from '../../../../utils/consts';
 
 const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
@@ -41,6 +36,7 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
         if (!protectionState) {
             dispatch(resetProtectionProcess(dialogKey));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dialogKey, dispatch]);
 
     useEffect(() => {
@@ -74,12 +70,13 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
                 );
             }, 0);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [protectionState?.step2Status, dialogKey, dispatch]);
 
     // map to dropdown format
     const generateDropDownValues = useMemo(
         () =>
-            agents.map((item: { agent: any }, index: number) => {
+            agents.map((item: { agent: any }) => {
                 const { agent } = item;
                 return {
                     id: agent.agentId,
@@ -97,6 +94,7 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
                 dispatch(setSelectedAgent([generateDropDownValues[0]]));
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [agents, generateDropDownValues]);
 
     const labelForDropDown = () => {

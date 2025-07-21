@@ -181,6 +181,10 @@
 
             .buttonClass {
                 margin-top: 8px;
+
+                [class*='Button-module_content'] {
+                    text-transform: none !important;
+                }
             }
         }
         .titleMainContent {
