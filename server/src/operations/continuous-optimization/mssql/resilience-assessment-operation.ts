@@ -531,7 +531,7 @@ async function initiateCrossRegionResiliencyAssessment(
     });
 
     try {
-        if (isEmpty(instanceVolumeMapping)) {
+        if (isEmpty(instanceRecord.mappedVolumesUuids)) {
             errorMessageText = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
             logger.error(errorMessageText);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessageText);
@@ -1029,7 +1029,8 @@ async function initiateHighAvailabilityAssessment(
         resourceName: resourceWithInstanceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId
     });
 
     let sharedStorageResult: any;

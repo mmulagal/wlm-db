@@ -16,13 +16,7 @@ import {
     StorageParameterDriftResponseType,
     GenericViolationResponseType
 } from '../../../routes/types/continuous-optimization.types';
-import {
-    LogDriveDetails,
-    MappedOnTapVolumeResponse,
-    StorageAssessment,
-    TempDbDriveDetails,
-    WorkloadInstance
-} from '../../../utils/common-types';
+import { LogDriveDetails, StorageAssessment, TempDbDriveDetails, WorkloadInstance } from '../../../utils/common-types';
 import {
     calculateFsxStorageCapacityForHeadroomOptimization,
     convertToBytes,
@@ -84,7 +78,6 @@ async function initiateStorageAssessmentCollection(
     databaseHostId: string,
     parentJobId: string,
     instanceRecord: WorkloadInstance,
-    instanceVolumeMapping: MappedOnTapVolumeResponse[],
     jobTriggers: STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES = STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
 ) {
     logger.info('Initiating storage assessment data collection', {
@@ -104,7 +97,7 @@ async function initiateStorageAssessmentCollection(
     const { resourceName, name: databaseInstanceName } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
     try {
-        if (isEmpty(instanceVolumeMapping)) {
+        if (isEmpty(instanceRecord.mappedVolumesUuids)) {
             errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
@@ -215,11 +208,6 @@ async function initiateStorageAssessmentCollection(
         errorMessage = `Error while initiating storage assessment collection. ${error}`;
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        await updateJobDetails(accountId, parentJobId, {
-            endTime: Date.now(),
-            status: jobStatus,
-            error: errorMessage
-        });
         if (snapshotPolicyAssessmentJobId) {
             await updateJobDetails(accountId, snapshotPolicyAssessmentJobId, {
                 endTime: Date.now(),

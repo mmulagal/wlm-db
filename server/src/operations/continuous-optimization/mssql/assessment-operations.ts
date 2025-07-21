@@ -51,7 +51,7 @@ import {
     listDatabaseInstanceConfigData
 } from '../../../lib/database/database-instance-config';
 import { getMappedOntapVolumes } from '../../aws/fsx-operations';
-import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { registerJob, updateParentJobStatus } from '../../database/job-operations';
 import { calculateCloneDrift, managedHostsCloneAssessment } from './clone-assessment-operations';
 import { calculateMaxDOPDrift, managedHostsMaxDOPAssessment } from './maxdop-assessment-operations';
 import {
@@ -743,7 +743,14 @@ async function initiateInstanceLevelAssessmentDataCollection(
     jobId: string,
     fields: string[]
 ) {
-    const { id: databaseInstanceId, activeNodeInstanceid, fsxFileSystem, resourceName } = databaseInstanceRecord;
+    const {
+        id: databaseInstanceId,
+        activeNodeInstanceid,
+        fsxFileSystem,
+        resourceName,
+        name: databaseInstanceName,
+        sqlAuthEnabled
+    } = databaseInstanceRecord;
 
     logger.info('Initiate instance level assessment collection', {
         accountId,
@@ -766,28 +773,43 @@ async function initiateInstanceLevelAssessmentDataCollection(
         isDemoFlow ? svm : svm?.StorageVirtualMachineId === databaseInstanceRecord.svmId
     )?.UUID;
 
-    const instanceVolumeMapping = (await getMappedOntapVolumes(
-        credentialsId,
-        region,
-        fsxFileSystem,
-        false,
-        activeNodeInstanceid,
-        [databaseInstanceRecord.name],
-        databaseInstanceRecord.sqlAuthEnabled,
-        true,
-        accountId,
-        ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
-        databaseInstanceRecord.svmOntapUuid
-    )) as MappedOnTapVolumeResponse[];
-
+    let instanceVolumeMapping: MappedOnTapVolumeResponse[] = [];
     try {
+        instanceVolumeMapping = (await getMappedOntapVolumes(
+            credentialsId,
+            region,
+            fsxFileSystem,
+            false,
+            activeNodeInstanceid,
+            [databaseInstanceName],
+            sqlAuthEnabled,
+            true,
+            accountId,
+            ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+            databaseInstanceRecord.svmOntapUuid
+        )) as MappedOnTapVolumeResponse[];
+
+        const volumeRecords = Object.values(instanceVolumeMapping).flatMap(i => i?.volumeRecords || []);
+        const lunRecords = Object.values(instanceVolumeMapping).flatMap(i => i?.lunRecords || []);
+        databaseInstanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
+        databaseInstanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
+
+        const lunNames =
+            lunRecords?.flatMap(lun => lun.name) ||
+            Object.values(instanceVolumeMapping)?.flatMap(i => i.lunNames) ||
+            [];
+        databaseInstanceRecord.mappedLunNames = compact(lunNames);
+
+        const lunUuids = !isEmpty(lunRecords) ? lunRecords?.map(lun => lun.uuid) : [];
+        databaseInstanceRecord.mappedLunUuids = compact(lunUuids);
+
         await createDatabaseInstanceConfigData([
             {
                 account_id: accountId,
                 credentials_id: credentialsId,
                 region,
                 resource_id: databaseHostId,
-                database_instance_id: databaseInstanceRecord.id,
+                database_instance_id: databaseInstanceId,
                 creation_time: new Date(),
                 config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
                 config_data: instanceVolumeMapping
@@ -804,9 +826,17 @@ async function initiateInstanceLevelAssessmentDataCollection(
         });
     }
 
+    const instanceDetailsForJob = JSON.stringify({
+        hostName: resourceName,
+        resourceId: databaseHostId,
+        databaseInstanceId,
+        databaseInstanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    });
+
     const resourceWithInstanceName = `${databaseInstanceRecord.resourceName}\\${databaseInstanceRecord.name}`;
     const jobName = `Microsoft SQL Server assessment for instance ${resourceWithInstanceName}`;
-    const jobDescription = `${jobName}. Review detailed findings and recommendations.`;
+    const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
 
     const { id: instanceLevelAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
         name: jobName,
@@ -818,28 +848,6 @@ async function initiateInstanceLevelAssessmentDataCollection(
         parentJobId: jobId
     });
 
-    const volumeRecords =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeRecords)
-            .flat() || [];
-    const lunRecords =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.lunRecords)
-            .flat() || [];
-    databaseInstanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-    databaseInstanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
-
-    const lunNames = !isEmpty(lunRecords)
-        ? lunRecords?.map(lun => lun.name)
-        : Object.values(instanceVolumeMapping)
-              ?.map(i => i.lunNames)
-              .flat() || [];
-
-    databaseInstanceRecord.mappedLunNames = compact(lunNames);
-
-    const lunUuids = !isEmpty(lunRecords) ? lunRecords?.map(lun => lun.uuid) : [];
-    databaseInstanceRecord.mappedLunUuids = compact(lunUuids);
-
     fields.forEach(async field => {
         switch (field) {
             case AssessmentCategories.STORAGE || AssessmentCategories.SNAPSHOT_POLICY:
@@ -850,7 +858,6 @@ async function initiateInstanceLevelAssessmentDataCollection(
                     databaseHostId,
                     instanceLevelAssessmentJobId,
                     databaseInstanceRecord,
-                    instanceVolumeMapping,
                     field === AssessmentCategories.STORAGE
                         ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
                         : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
@@ -917,6 +924,8 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 break;
         }
     });
+
+    await updateParentJobStatus(accountId, instanceLevelAssessmentJobId);
 }
 
 async function triggerMssqlAssessment(
@@ -1077,11 +1086,7 @@ async function triggerMssqlAssessment(
         }
     } finally {
         if (isOnDemandAssessment) {
-            await updateJobDetails(accountId, parentJobId, {
-                status: jobStatus,
-                error: errorMessage,
-                endTime: Date.now()
-            });
+            await updateParentJobStatus(accountId, parentJobId);
             if (initiatedBy === AssessmentTriggeredBy.USER) {
                 updateLongRunningAuditGroup(
                     jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED
