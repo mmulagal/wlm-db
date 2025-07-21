@@ -103,8 +103,6 @@ $FSxID = '${fsxId}'
 $FSxRegion = '${region}'
 $IgroupName = '${igroupName}'
 $Initiator = '${initiator}'
-$MgmtDNS = '198.19.255.96'
-$sqlvmname = ' wlmdb_sqlsvm_1737955806953'
 
 $response = @{
                 result = 'success'
@@ -114,7 +112,7 @@ try {
     $FSxCredentials = $FSxNDetails.FSxCredentials
     $FSxHostName = $FSxNDetails.FSxHostName
                     
-    Connect-NcController -Name $FSxHostName -Credential $FSxCredentials -Vserver $sqlvmname
+    Connect-NcController -Name $FSxHostName -Credential $FSxCredentials 
     Add-NcIgroupInitiator -Name $IgroupName -Initiator $Initiator
 } catch {
         $response.result = 'failed'
@@ -124,23 +122,11 @@ try {
         return $response
 `;
 
-const SET_HEARTBEAT_SETTINGS = `
-
-# Set the desired heartbeat settings
-(Get-Cluster).SameSubnetDelay = 1000
-(Get-Cluster).SameSubnetThreshold = 10
-(Get-Cluster).CrossSubnetDelay = 1000
-(Get-Cluster).CrossSubnetThreshold = 20
-(Get-Cluster).CrossSiteDelay = 1000
-(Get-Cluster).CrossSiteThreshold = 20
-`;
-
 export {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
     GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN,
-    ADD_INITIATOR_TO_IGROUP,
-    SET_HEARTBEAT_SETTINGS
+    ADD_INITIATOR_TO_IGROUP
 };
