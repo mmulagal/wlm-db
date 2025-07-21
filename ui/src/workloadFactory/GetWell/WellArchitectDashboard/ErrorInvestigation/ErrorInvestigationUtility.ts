@@ -170,11 +170,8 @@ export const getStartAndEndTimeFromRange = (
             }
             return hour;
         };
-        const maxHourDate = new Date(maxHour);
-        const minuteStr = maxHourDate.getMinutes().toString().padStart(2, '0');
-
-        // Use maxHour as reference date
         const refDate = new Date(maxHour);
+        const minuteStr = refDate.getMinutes().toString().padStart(2, '0');
         // Calculate start and end using timeRange, but clamp between minHour and maxHour
         const startHour = parseHour(timeRange.from, timeRange.fromPeriod);
         const endHour = parseHour(timeRange.to, timeRange.toPeriod);
@@ -182,7 +179,10 @@ export const getStartAndEndTimeFromRange = (
         const start = new Date(refDate);
         start.setHours(startHour, Number(minuteStr), 0, 0);
         const end = new Date(refDate);
-        end.setHours(Number(minuteStr) > 0 ? endHour - 1 : endHour, Number(minuteStr), 0, 0);
+        // Adjust the end hour if there are minutes present in the reference date.
+        // This ensures that the end time aligns correctly with the specified time range.
+        const adjustedEndHour = Number(minuteStr) > 0 ? endHour - 1 : endHour;
+        end.setHours(adjustedEndHour, Number(minuteStr), 0, 0);
         return {
             startTime: start.getTime(),
             endTime: end.getTime()
