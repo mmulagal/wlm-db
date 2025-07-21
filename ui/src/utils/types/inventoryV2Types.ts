@@ -327,6 +327,8 @@ export interface ManagedHostsRowInterface {
         ec2InstanceName?: string;
     }>;
     nodeTopology?: {
+        fqdn?: string;
+        nodeIpAddress?: string;
         awsAccount?: string;
         region?: string;
         vpcId?: string;

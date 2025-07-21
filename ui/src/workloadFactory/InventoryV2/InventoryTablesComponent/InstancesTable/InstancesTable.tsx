@@ -359,7 +359,7 @@ const InstancesTable = () => {
 
             let hostExists = false;
 
-            //Getting workspace id
+            // Getting workspace id
             const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
             if (workSpaceRes?.data?.items?.length) {
                 dispatch(setWorkSpaceData(workSpaceRes.data.items[0]));
@@ -380,7 +380,7 @@ const InstancesTable = () => {
                         agentID: foundHost.connectorId,
                         workspaceID: workSpaceRes.data.items[0]?.id
                     });
-                    //Here job starts
+                    // Here job starts
                 }
             }
 

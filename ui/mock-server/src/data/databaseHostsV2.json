@@ -34,6 +34,8 @@
                 }
             ],
             "nodeTopology": {
+                "fqdn": "stvyqg.wlmqaauto.com",
+                "nodeIpAddress": "10.0.130.16",
                 "awsAccount": "1234",
                 "region": "US East (N.Virginia)",
                 "vpcId": "vpc1",
@@ -950,6 +952,8 @@
                 }
             ],
             "nodeTopology": {
+                "fqdn": "stvyqg1.wlmqaauto.com",
+                "nodeIpAddress": "10.0.130.161",
                 "awsAccount": "1234",
                 "region": "US East (N.Virginia)",
                 "vpcId": "vpc1",
@@ -1854,6 +1858,8 @@
                 }
             ],
             "nodeTopology": {
+                "fqdn": "stvyqg2.wlmqaauto.com",
+                "nodeIpAddress": "10.0.130.162",
                 "awsAccount": "1234",
                 "region": "US East (N.Virginia)",
                 "vpcId": "vpc1",
@@ -2746,6 +2752,8 @@
                 }
             ],
             "nodeTopology": {
+                "fqdn": "stvyqg3.wlmqaauto.com",
+                "nodeIpAddress": "10.0.130.163",
                 "awsAccount": "1234",
                 "region": "US East (N.Virginia)",
                 "vpcId": "vpc1",
@@ -3613,6 +3621,8 @@
             "ssmStatus": "Connected",
             "databaseInstanceDetails": [],
             "nodeTopology": {
+                "fqdn": "stvyqg4.wlmqaauto.com",
+                "nodeIpAddress": "10.0.130.164",
                 "awsAccount": "1234",
                 "region": "US East (N.Virginia)",
                 "vpcId": "vpc1",
@@ -4503,6 +4513,8 @@
                 }
             ],
             "nodeTopology": {
+                "fqdn": "stvyqg5.wlmqaauto.com",
+                "nodeIpAddress": "10.0.130.165",
                 "awsAccount": "1234",
                 "region": "US East (N.Virginia)",
                 "vpcId": "vpc1",

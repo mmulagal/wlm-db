@@ -149,6 +149,8 @@ export const formatManagedRows = (
         vpcId: managedRow?.nodeTopology?.vpcId,
         vpcName: managedRow?.nodeTopology?.vpcName,
         vpcCidr: managedRow?.nodeTopology?.vpcCidr,
+        fqdn: managedRow?.nodeTopology?.fqdn,
+        nodeIpAddress: managedRow?.nodeTopology?.nodeIpAddress,
         action: ssmState === INVENTORY_STATUS.ONLINE && totalInstanceCount > 0 ? INVENTORY_ACTIONS.MANAGE : '', // This is default for managed rows,
         actionDisable: totalInstanceCount === managedInstanceCount,
         isManagedHost: true,
@@ -3518,9 +3520,11 @@ export const addHostJobPolling = async (
                 clearInterval(jobInterval);
             } else {
                 let errorMsg = '';
+                let errorMsgTooltip = '';
                 jobRes.data.subJobs.forEach((subJob: { name?: string; status?: string; error?: string }) => {
                     if (subJob?.name?.includes(firstStepName) && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
-                        errorMsg = subJob?.error || translation('databases.inventory.validate-host-failed');
+                        errorMsg = translation('databases.inventory.validate-host-failed');
+                        errorMsgTooltip = subJob?.error || translation('databases.inventory.validate-host-failed');
                         dispatch(resetProtectionProcess(dialogKey));
                         return;
                     }
@@ -3533,7 +3537,9 @@ export const addHostJobPolling = async (
                         step1Done = true;
                     }
                     if (subJob?.name?.includes(secondStepName) && subJob?.status === JOB_MONITORING_STATUS.FAILED) {
-                        errorMsg = subJob?.error || translation('databases.inventory.package-installation-failed');
+                        errorMsg = translation('databases.inventory.package-installation-failed');
+                        errorMsgTooltip =
+                            subJob?.error || translation('databases.inventory.package-installation-failed');
                         dispatch(resetProtectionProcess(dialogKey));
                         return;
                     }
@@ -3547,12 +3553,13 @@ export const addHostJobPolling = async (
                     }
                 });
                 if (errorMsg) {
+                    dispatch(setActionsDisabled(false));
                     dispatch(
                         setDialogErrorWithTooltip({
                             showDialogError: true,
                             errorMessage: errorMsg,
                             showTooltipInfo: true,
-                            tooltipText: errorMsg
+                            tooltipText: errorMsgTooltip
                         })
                     );
                     clearInterval(jobInterval);
@@ -3605,7 +3612,7 @@ export const addHostHandlerSc = async (
                 accountID: store.getState().auth.accountId,
                 payload: {
                     workloadType: 'SQL',
-                    hostName: '10.0.143.176', // ToDo - to be updated once database-host will have ip
+                    hostName: rowData?.hostRow?.nodeIpAddress,
                     credentialsId: credIdResponse?.data?.credentialsId,
                     connectorId: state.selectedAgent[0]?.id,
                     pluginPort: 8145,
