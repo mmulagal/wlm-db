@@ -30,11 +30,13 @@ const StepTwoDialog = () => {
                 <div className={styles.row} style={{ marginTop: '8px' }}>
                     <div className={styles.item}>
                         <DsTypography variant="Semibold_14">2 |</DsTypography>
-                        <DsTypography variant="Semibold_14">{t('databases.inventory.add-agent')}</DsTypography>
+                        <DsTypography variant="Semibold_14">{t('databases.inventory.assign-policy')}</DsTypography>
                     </div>
                     <div className={styles.item}>
                         <div className={styles.extraSpace} />
-                        <DsTypography variant="Semibold_14">{t('databases.inventory.assign-policy')}</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.inventory.assign-policy-redirect-text')}
+                        </DsTypography>
                     </div>
                 </div>
             </div>
