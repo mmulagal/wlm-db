@@ -274,7 +274,8 @@
             "delete-host-failed": "Failed to delete existing host"
         },
         "log-analyzer": {
-            "error-investigation": "Error analyzer",
+            "error-investigation": "Error investigation",
+            "ai-tag": "AI",
             "ai-investigation": "AI-generated analysis",
             "unique-errors": "Unique errors",
             "loading-data": "Loading data",

@@ -80,6 +80,9 @@ const WellArchitectTabs = () => {
                 >
                     {t('databases.log-analyzer.error-investigation')}
                 </DsTypography>
+                <DsTypography variant="Semibold_13" className={styles.tag}>
+                    {t('databases.log-analyzer.ai-tag')}
+                </DsTypography>
             </div>
 
             <div
