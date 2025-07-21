@@ -411,16 +411,12 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 } = castRequest(request);
 
                 // Destructure required values from the first element of hostsToOptimize
-                const [{ credentialsId, region, databaseHostId, databaseInstanceId } = {}] = hostsToOptimize || [];
+                // const [{ credentialsId, region } = {}] = hostsToOptimize || [];
 
                 const response = await handleHASharedStorageOptimization(
                     accountId,
-                    credentialsId,
-                    region,
                     OptimizeHighAvailabilityParams.SHARED_STORAGE,
-                    databaseHostId,
-                    databaseInstanceId,
-                    { hostsToOptimize }
+                    hostsToOptimize
                 );
                 return reply.send(response);
             }

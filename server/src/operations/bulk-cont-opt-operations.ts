@@ -8,10 +8,10 @@ import {
     BulkOptimizeCloneInHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType,
-    BulkOptimizeHASharedStorageBodyType,
     CloneDetailType,
     OptimizeClonesPerHostRequestBodyType,
-    OptimizePerHostRequestBodyType
+    OptimizePerHostRequestBodyType,
+    OptimizeHASharedStorageRequestBodyType
 } from '../routes/types/continuous-optimization.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import {
@@ -563,20 +563,34 @@ async function handleBulkComputeOptimization(
 
 async function handleHASharedStorageOptimization(
     accountId: string,
-    credentialsId: string,
-    region: string,
     optimizationCategory: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    body: BulkOptimizeHASharedStorageBodyType
+    hostsToOptimize: {
+        configurationName: OptimizeHighAvailabilityParams;
+        databaseHosts: OptimizeHASharedStorageRequestBodyType[];
+    }[]
 ) {
+    if (isEmpty(hostsToOptimize)) {
+        const errorMessage = 'databaseHosts cannot be empty.';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+
+    // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
+    await Promise.all(
+        hostsToOptimize.map(async host => {
+            host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeHASharedStorageRequestBodyType>(
+                accountId,
+                host.databaseHosts
+            );
+        })
+    );
     const jobMetadata: JobMetadata = {
-        hostsToOptimize: await formatJobMetadata(body.hostsToOptimize)
+        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
     };
 
     const jobDescription = 'Fix shared storage for High Availability Cluster';
     logger.info(
-        `Starting shared storage optimization for High Availability Cluster. Account: ${accountId}, Credentials: ${credentialsId}, Region: ${region}, Category: ${optimizationCategory}, Host: ${databaseHostId}, Instance: ${databaseInstanceId}`
+        `Starting shared storage optimization for High Availability Cluster. Account: ${accountId}, Category: ${optimizationCategory}`
     );
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
@@ -591,45 +605,28 @@ async function handleHASharedStorageOptimization(
     );
 
     try {
-        const ontapLunUuids = body.hostsToOptimize?.[0]?.databaseHosts?.[0]?.sqlServerInstances?.[0]?.ontapLunUuids;
+        const ontapLunUuids = hostsToOptimize?.[0]?.databaseHosts?.[0]?.sqlServerInstances?.[0]?.ontapLunUuids;
 
         logger.info(`ONTAP LUN UUIDs extracted for optimization: ${JSON.stringify(ontapLunUuids)}`);
 
         if (!ontapLunUuids) {
-            logger.warn(
-                `No ONTAP LUN UUIDs found. Skipping shared storage optimization for host ${databaseHostId}, instance ${databaseInstanceId}.`
-            );
+            logger.warn('No ONTAP LUN UUIDs found. Skipping shared storage optimization');
             return;
         }
 
         switch (optimizationCategory) {
             case OptimizeHighAvailabilityParams.SHARED_STORAGE:
-                logger.info(
-                    `Initiating shared storage optimization for host ${databaseHostId}, instance ${databaseInstanceId}.`
-                );
-                await handleSharedStorageOptimize(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    ontapLunUuids,
-                    parentJobId
-                );
+                logger.info('Initiating shared storage optimization');
+                await handleSharedStorageOptimize(accountId, ontapLunUuids, hostsToOptimize, parentJobId);
                 break;
             default:
-                logger.warn(
-                    `Optimization category "${optimizationCategory}" is not supported for host ${databaseHostId}, instance ${databaseInstanceId}.`
-                );
+                logger.warn(`Optimization category "${optimizationCategory}" is not supported`);
                 break;
         }
     } catch (error: unknown) {
-        logger.error(
-            `Failed to optimize shared storage for host ${databaseHostId}, instance ${databaseInstanceId}. Reason: ${
-                (error as Error)?.message || error
-            }`,
-            { stack: (error as Error)?.stack }
-        );
+        logger.error(`Failed to optimize shared storage. Reason: ${(error as Error)?.message || error}`, {
+            stack: (error as Error)?.stack
+        });
     }
     return { jobId: parentJobId };
 }

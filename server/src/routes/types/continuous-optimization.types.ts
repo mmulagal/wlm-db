@@ -624,13 +624,14 @@ const OptimizeHASharedStorageRequestBody = Type.Object({
     id: Type.String({ minLength: 1 }),
     sqlServerInstances: Type.Array(
         Type.Object({
-            database_instance_id: Type.String({ minLength: 1 }),
+            databaseInstanceId: Type.String({ minLength: 1 }),
             ontapLunUuids: Type.Array(Type.String({ minLength: 1 }))
         })
     ),
     credentialsId: Type.String({ minLength: 1 }),
     region: Type.String({ minLength: 1 })
 });
+type OptimizeHASharedStorageRequestBodyType = Static<typeof OptimizeHASharedStorageRequestBody>;
 
 const BulkOptimizeHASharedStorageRequestBody = Type.Object({
     configurationName: Type.Enum(OptimizeHighAvailabilityParams),
@@ -710,5 +711,7 @@ export {
     AssessmentQueryStringPerAccount,
     DriftAssessmentResponsePerHostType,
     BulkOptimizeHASharedStorageBody,
-    BulkOptimizeHASharedStorageBodyType
+    BulkOptimizeHASharedStorageBodyType,
+    OptimizeHASharedStorageRequestBodyType,
+    OptimizeHASharedStorageRequestBody
 };

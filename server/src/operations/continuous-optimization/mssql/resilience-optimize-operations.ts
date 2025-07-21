@@ -10,7 +10,8 @@ import {
     SnapshotPolicyDetailsType,
     SnapshotPolicyType,
     SnapshotScheduleType,
-    BulkOptimizeSnapshotPolicyParamsType
+    BulkOptimizeSnapshotPolicyParamsType,
+    OptimizeHASharedStorageRequestBodyType
 } from '../../../routes/types/continuous-optimization.types';
 import {
     DatabaseInstanceMetadata,
@@ -34,7 +35,7 @@ import { isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
 import { getMappedOntapVolumes } from '../../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
-import { updateJobDetails } from '../../database/job-operations';
+import { updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { listDatabaseInstances } from '../../../lib/database/db';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
@@ -42,6 +43,7 @@ import {
     AssessmentCategories,
     AssessmentTriggeredBy,
     OPTIMIZE_RESILIENCY_CONFIGS,
+    OptimizeHighAvailabilityParams,
     OptimizeStorageConfigs
 } from '../../../utils/continous-optimization-consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
@@ -439,116 +441,172 @@ async function handleResiliecyOptimize(
 
 async function handleSharedStorageOptimize(
     accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
     ontapLunUuids: string[] | undefined,
+    hostsToOptimize: {
+        configurationName: OptimizeHighAvailabilityParams;
+        databaseHosts: OptimizeHASharedStorageRequestBodyType[];
+    }[],
     parentJobId: string
 ) {
-    logger.info('Starting shared storage optimization.', {
-        region,
-        accountId,
-        credentialsId,
-        databaseInstanceId,
-        databaseHostId,
-        ontapLunUuidsLength: ontapLunUuids?.length,
-        ontapLunUuids,
-        parentJobId
-    });
+    // Step 1: Flatten all instances to optimize
+    type FlattenedInstance = {
+        databaseInstanceId: string;
+        ontapLunUuids: string[];
+        region: string;
+        credentialsId: string;
+        databaseHostId: string;
+    };
 
-    const [persistedConfig] = await listInstanceConfigIncludingResourceAndInstance({
-        accountId,
-        region,
-        credentialsId,
-        resourceId: databaseHostId,
-        databaseInstanceId,
-        configDataType: AssessmentCategories.HIGH_AVAILABILITY,
-        pageSize: 1
-    });
+    const flattenedInstances: FlattenedInstance[] = [];
+    for (const host of hostsToOptimize) {
+        if (host.databaseHosts && Array.isArray(host.databaseHosts)) {
+            for (const databaseHost of host.databaseHosts) {
+                if (databaseHost.sqlServerInstances && Array.isArray(databaseHost.sqlServerInstances)) {
+                    for (const instance of databaseHost.sqlServerInstances) {
+                        flattenedInstances.push({
+                            ...instance,
+                            region: databaseHost.region,
+                            credentialsId: databaseHost.credentialsId,
+                            databaseHostId: databaseHost.id
+                        });
+                    }
+                }
+            }
+        }
+    }
 
-    const sharedStorage = persistedConfig?.config_data?.sharedStorage;
-    if (!sharedStorage || !Array.isArray(sharedStorage.lunDetails)) {
-        logger.error('No shared storage details found. Optimization cannot proceed.');
+    if (flattenedInstances.length === 0) {
+        logger.warn('No instances found to optimize shared storage.');
         return;
     }
 
-    const allHostIqnsArr: string[] = Array.isArray(sharedStorage.allHostIqns)
-        ? sharedStorage.allHostIqns
-        : typeof sharedStorage.allHostIqns === 'string'
-        ? sharedStorage.allHostIqns.split(' ').filter(Boolean)
-        : [];
+    // Step 2: Process all instances in parallel
+    await Promise.all(
+        flattenedInstances.map(async instance => {
+            const { databaseInstanceId, region, credentialsId, databaseHostId } = instance;
 
-    type LunDetail = {
-        lunUuid: string;
-        igroupDetails?: { igroupName: string; igroupUuid: string; initiatorNames: string[] | string };
-        igroupName?: string;
-        igroupUuid?: string;
-        initiatorNames?: string[] | string;
-    };
-    const lunsToOptimize: LunDetail[] = Array.isArray(ontapLunUuids)
-        ? sharedStorage.lunDetails.filter((lun: LunDetail) => ontapLunUuids.includes(lun.lunUuid))
-        : [];
-
-    const igroupMissingIqnsMap = new Map<string, { igroupName: string; missingIqns: Set<string> }>();
-
-    for (const lun of lunsToOptimize) {
-        const igroupDetails = lun.igroupDetails || {
-            igroupName: lun.igroupName,
-            igroupUuid: lun.igroupUuid,
-            initiatorNames: lun.initiatorNames
-        };
-        const initiatorNamesArr: string[] = Array.isArray(igroupDetails.initiatorNames)
-            ? igroupDetails.initiatorNames
-            : typeof igroupDetails.initiatorNames === 'string'
-            ? igroupDetails.initiatorNames.split(' ').filter(Boolean)
-            : [];
-        const missingInitiators = allHostIqnsArr.filter(iqn => !initiatorNamesArr.includes(iqn));
-        if (typeof igroupDetails.igroupUuid === 'string') {
-            if (!igroupMissingIqnsMap.has(igroupDetails.igroupUuid)) {
-                igroupMissingIqnsMap.set(igroupDetails.igroupUuid, {
-                    igroupName: igroupDetails.igroupName ?? '',
-                    missingIqns: new Set()
-                });
-            }
-            const entry = igroupMissingIqnsMap.get(igroupDetails.igroupUuid)!;
-            missingInitiators.forEach(iqn => entry.missingIqns.add(iqn));
-        }
-    }
-
-    const igroupUuidsToFetch = Array.from(igroupMissingIqnsMap.keys());
-    if (igroupUuidsToFetch.length > 0) {
-        const { instanceRecord } = await getActiveNodeInfo(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
-        );
-        const { fsxFileSystem, id: instanceId } = instanceRecord;
-        if (!fsxFileSystem) {
-            logger.error('FSx file system is not defined. Cannot add initiators to igroup.');
-            return;
-        }
-        const commands: string[] = [];
-        for (const uuid of igroupUuidsToFetch) {
-            const { missingIqns } = igroupMissingIqnsMap.get(uuid)!;
-            missingIqns.forEach(iqn => {
-                commands.push(ADD_INITIATOR_TO_IGROUP(fsxFileSystem, region, iqn, uuid));
+            logger.info('Starting shared storage optimization.', {
+                region,
+                accountId,
+                credentialsId,
+                databaseInstanceId,
+                databaseHostId,
+                ontapLunUuidsLength: ontapLunUuids?.length,
+                ontapLunUuids,
+                parentJobId
             });
-        }
-        await callSsmExecution(credentialsId, region, commands, instanceId, 'Add initiators to igroup', accountId);
-    }
 
-    await onDemandTriggerMssqlDriftAssessment(
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceId,
-        AssessmentTriggeredBy.SYSTEM,
-        AssessmentCategories.HIGH_AVAILABILITY
+            // Step 3: Fetch persisted config
+            const [persistedConfig] = await listInstanceConfigIncludingResourceAndInstance({
+                accountId,
+                region,
+                credentialsId,
+                resourceId: databaseHostId,
+                databaseInstanceId,
+                configDataType: AssessmentCategories.HIGH_AVAILABILITY,
+                pageSize: 1
+            });
+
+            const sharedStorage = persistedConfig?.config_data?.sharedStorage;
+            if (!sharedStorage || !Array.isArray(sharedStorage.lunDetails)) {
+                logger.error('No shared storage details found. Optimization cannot proceed.');
+                return;
+            }
+
+            const allHostIqnsArr: string[] = Array.isArray(sharedStorage.allHostIqns)
+                ? sharedStorage.allHostIqns
+                : typeof sharedStorage.allHostIqns === 'string'
+                ? sharedStorage.allHostIqns.split(' ').filter(Boolean)
+                : [];
+
+            type LunDetail = {
+                lunUuid: string;
+                igroupDetails?: { igroupName: string; igroupUuid: string; initiatorNames: string[] | string };
+                igroupName?: string;
+                igroupUuid?: string;
+                initiatorNames?: string[] | string;
+            };
+
+            // Step 4: Filter LUNs to optimize
+            const lunsToOptimize: LunDetail[] = Array.isArray(ontapLunUuids)
+                ? sharedStorage.lunDetails.filter((lun: LunDetail) => ontapLunUuids.includes(lun.lunUuid))
+                : [];
+
+            const igroupMissingIqnsMap = new Map<string, { igroupName: string; missingIqns: Set<string> }>();
+
+            for (const lun of lunsToOptimize) {
+                const igroupDetails = lun.igroupDetails || {
+                    igroupName: lun.igroupName,
+                    igroupUuid: lun.igroupUuid,
+                    initiatorNames: lun.initiatorNames
+                };
+                const initiatorNamesArr: string[] = Array.isArray(igroupDetails.initiatorNames)
+                    ? igroupDetails.initiatorNames
+                    : typeof igroupDetails.initiatorNames === 'string'
+                    ? igroupDetails.initiatorNames.split(' ').filter(Boolean)
+                    : [];
+                const missingInitiators = allHostIqnsArr.filter(iqn => !initiatorNamesArr.includes(iqn));
+                if (typeof igroupDetails.igroupUuid === 'string') {
+                    if (!igroupMissingIqnsMap.has(igroupDetails.igroupUuid)) {
+                        igroupMissingIqnsMap.set(igroupDetails.igroupUuid, {
+                            igroupName: igroupDetails.igroupName ?? '',
+                            missingIqns: new Set()
+                        });
+                    }
+                    const entry = igroupMissingIqnsMap.get(igroupDetails.igroupUuid)!;
+                    missingInitiators.forEach(iqn => entry.missingIqns.add(iqn));
+                }
+            }
+
+            // Step 5: Add missing initiators to igroups if needed
+            const igroupUuidsToFetch = Array.from(igroupMissingIqnsMap.keys());
+            if (igroupUuidsToFetch.length > 0) {
+                const { instanceRecord } = await getActiveNodeInfo(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId
+                );
+                const { fsxFileSystem, id: instanceId } = instanceRecord;
+                if (!fsxFileSystem) {
+                    logger.error('FSx file system is not defined. Cannot add initiators to igroup.');
+                    return;
+                }
+                const commands: string[] = [];
+                for (const uuid of igroupUuidsToFetch) {
+                    const { missingIqns } = igroupMissingIqnsMap.get(uuid)!;
+                    missingIqns.forEach(iqn => {
+                        commands.push(ADD_INITIATOR_TO_IGROUP(fsxFileSystem, region, iqn, uuid));
+                    });
+                }
+                await callSsmExecution(
+                    credentialsId,
+                    region,
+                    commands,
+                    instanceId,
+                    'Add initiators to igroup',
+                    accountId
+                );
+            }
+
+            // Step 6: Trigger drift assessment
+            await onDemandTriggerMssqlDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.HIGH_AVAILABILITY
+            );
+        })
     );
+    const status = await updateParentJobStatus(accountId, parentJobId);
+    if (status === JOBSTATUS.COMPLETED) {
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    } else if (status === JOBSTATUS.FAILED) {
+        updateLongRunningAuditGroup(AuditStatus.FAILED, `Error occurred while fixing clone for account ${accountId}`);
+    }
 }
-
 export { getAvailableSnapshotPolicyList, handleResiliecyOptimize, handleSharedStorageOptimize };
