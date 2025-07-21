@@ -30,7 +30,13 @@ import {
     useListExistingHostsMutation,
     useUnmanageMssqlInstanceMutation
 } from '../../../../utils/apiService';
-import { addHostHandlerSc, manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
+import {
+    addHostHandlerSc,
+    deleteHostJobPolling,
+    manageActionCol,
+    uniqueHostRow,
+    updateInstanceStatus
+} from '../../InventoryUtilsV2';
 import { bxpRedirect, getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
@@ -380,7 +386,17 @@ const InstancesTable = () => {
                         agentID: foundHost.connectorId,
                         workspaceID: workSpaceRes.data.items[0]?.id
                     });
+
                     // Here job starts
+                    if (deleteHostRes?.data?.jobId) {
+                        const { jobId } = deleteHostRes.data;
+
+                        const result = await deleteHostJobPolling(addHostJobScApi, jobId, dispatch, t);
+
+                        if (result === 'FAILED') {
+                            return;
+                        }
+                    }
                 }
             }
 

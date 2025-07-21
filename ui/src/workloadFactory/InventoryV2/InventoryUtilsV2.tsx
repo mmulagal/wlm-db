@@ -3569,6 +3569,44 @@ export const addHostJobPolling = async (
     }, SC_JOB_INTERVAL);
 };
 
+export const deleteHostJobPolling = (
+    addHostJobScApi: any,
+    jobId: string,
+    dispatch: any,
+    translation: any
+): Promise<'SUCCESS' | 'FAILED'> => {
+    return new Promise(resolve => {
+        const jobInterval = setInterval(() => {
+            addHostJobScApi({
+                accountID: store.getState().auth.accountId,
+                jobID: jobId
+            })
+                .then((jobRes: any) => {
+                    const status = jobRes?.data?.status;
+
+                    if (status === JOB_MONITORING_STATUS.FAILED) {
+                        clearInterval(jobInterval);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: jobRes?.data?.error || translation('databases.inventory.delete-host-failed')
+                            })
+                        );
+                        resolve('FAILED');
+                    } else if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                        clearInterval(jobInterval);
+                        resolve('SUCCESS');
+                    }
+                    // else still polling
+                })
+                .catch(() => {
+                    clearInterval(jobInterval);
+                    resolve('FAILED');
+                });
+        }, SC_JOB_INTERVAL);
+    });
+};
+
 const errorMapping = (error: string, rowData: any) => {
     if (error.includes("Cannot read properties of undefined (reading 'includes')")) {
         return `The host ${rowData.name} already exists.`;
@@ -3601,19 +3639,20 @@ export const addHostHandlerSc = async (
         workspaceId: state?.workSpaceData?.id
     };
     try {
+        const credID = '9b427232-1878-4a51-8952-cc99ad9ec04f';
         const credIdResponse = await generateCredentialID({
             credentialID: rowData.credentialId,
             regionID: rowData.regionId,
             payload
         });
-        if (credIdResponse?.data?.credentialsId) {
+        if (credID) {
             // Do something with the credentialsId
             const addHostResponse = await addHostScApi({
                 accountID: store.getState().auth.accountId,
                 payload: {
                     workloadType: 'SQL',
                     hostName: rowData?.hostRow?.nodeIpAddress,
-                    credentialsId: credIdResponse?.data?.credentialsId,
+                    credentialsId: credID,
                     connectorId: state.selectedAgent[0]?.id,
                     pluginPort: 8145,
                     installPath: 'C:\\Program Files\\NetApp\\SnapCenter',
