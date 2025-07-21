@@ -1822,6 +1822,7 @@ const INSTANCE_DEFAULT_SELECT_FIELDS = [
     'id',
     'account_id',
     'credentials_id',
+    'region',
     'resource_id',
     'database_instance_id',
     'database_instance_name',
