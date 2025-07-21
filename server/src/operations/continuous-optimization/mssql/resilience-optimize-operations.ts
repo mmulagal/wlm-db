@@ -47,6 +47,8 @@ import {
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
+import { listInstanceConfigIncludingResourceAndInstance } from '../../database/instance-config-operations';
+import { ADD_INITIATOR_TO_IGROUP } from '../../workloads/mssql/high-availability-scripts';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -435,4 +437,185 @@ async function handleResiliecyOptimize(
     return { jobId };
 }
 
-export { getAvailableSnapshotPolicyList, handleResiliecyOptimize };
+async function handleSharedStorageOptimize(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    ontapLunUuids: string[] | undefined,
+    parentJobId: string
+) {
+    logger.info('Optimize shared storage for:', {
+        region,
+        accountId,
+        credentialsId,
+        databaseInstanceId,
+        databaseHostId,
+        ontapLunUuidsLength: ontapLunUuids?.length,
+        ontapLunUuids,
+        parentJobId
+    });
+
+    // Fetch persisted configuration data
+    const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
+        accountId,
+        region,
+        credentialsId,
+        resourceId: databaseHostId,
+        databaseInstanceId,
+        configDataType: AssessmentCategories.HIGH_AVAILABILITY,
+        pageSize: 1
+    });
+    logger.debug('persistedConfigurationData:', JSON.stringify(persistedConfigurationData, null, 2));
+
+    const sharedStorage = persistedConfigurationData?.config_data?.sharedStorage;
+    logger.info('sharedStorage:', JSON.stringify(sharedStorage, null, 2));
+    if (!sharedStorage || !Array.isArray(sharedStorage.lunDetails)) {
+        logger.error('No shared storage details found in persisted configuration data');
+        return;
+    }
+
+    // Normalize allHostIqns to a string array
+    const allHostIqnsArr: string[] = Array.isArray(sharedStorage.allHostIqns)
+        ? sharedStorage.allHostIqns
+        : typeof sharedStorage.allHostIqns === 'string'
+        ? sharedStorage.allHostIqns.split(' ').filter(Boolean)
+        : [];
+    logger.debug('allHostIqnsArr:', allHostIqnsArr);
+
+    // Filter LUNs to optimize
+    type LunDetail = {
+        lunUuid: string;
+        igroupDetails?: { igroupName: string; igroupUuid: string; initiatorNames: string[] | string };
+        igroupName?: string;
+        igroupUuid?: string;
+        initiatorNames?: string[] | string;
+    };
+    const lunsToOptimize: LunDetail[] = Array.isArray(ontapLunUuids)
+        ? sharedStorage.lunDetails.filter((lun: LunDetail) => ontapLunUuids.includes(lun.lunUuid))
+        : [];
+    logger.debug('lunsToOptimize:', JSON.stringify(lunsToOptimize, null, 2));
+
+    // Map: igroupUuid -> { igroupName, Set of missing IQNs }
+    const igroupMissingIqnsMap = new Map<string, { igroupName: string; missingIqns: Set<string> }>();
+
+    for (const lun of lunsToOptimize) {
+        const igroupDetails = lun.igroupDetails || {
+            igroupName: lun.igroupName,
+            igroupUuid: lun.igroupUuid,
+            initiatorNames: lun.initiatorNames
+        };
+        logger.debug('Processing lun:', {
+            lunUuid: lun.lunUuid,
+            igroupDetails
+        });
+
+        // Normalize initiatorNames to a string array
+        const initiatorNamesArr: string[] = Array.isArray(igroupDetails.initiatorNames)
+            ? igroupDetails.initiatorNames
+            : typeof igroupDetails.initiatorNames === 'string'
+            ? igroupDetails.initiatorNames.split(' ').filter(Boolean)
+            : [];
+        logger.debug('initiatorNamesArr:', initiatorNamesArr);
+
+        // Find missing IQNs
+        const missingInitiators = allHostIqnsArr.filter(iqn => !initiatorNamesArr.includes(iqn));
+        logger.debug('missingInitiators:', missingInitiators);
+
+        if (typeof igroupDetails.igroupUuid === 'string') {
+            if (!igroupMissingIqnsMap.has(igroupDetails.igroupUuid)) {
+                igroupMissingIqnsMap.set(igroupDetails.igroupUuid, {
+                    igroupName: igroupDetails.igroupName ?? '',
+                    missingIqns: new Set()
+                });
+            }
+            const entry = igroupMissingIqnsMap.get(igroupDetails.igroupUuid)!;
+            missingInitiators.forEach(iqn => entry.missingIqns.add(iqn));
+        }
+
+        logger.debug(missingInitiators.length > 0 ? 'Missing initiators for LUN' : 'No missing initiators for LUN', {
+            lunUuid: lun.lunUuid,
+            igroupName: igroupDetails.igroupName,
+            missingInitiators
+        });
+    }
+
+    logger.debug(
+        'igroupMissingIqnsMap:',
+        Array.from(igroupMissingIqnsMap.entries()).map(([uuid, { igroupName, missingIqns }]) => ({
+            uuid,
+            igroupName,
+            missingIqns: Array.from(missingIqns)
+        }))
+    );
+
+    // Prepare commands for igroups with missing IQNs
+    const igroupUuidsToFetch = Array.from(igroupMissingIqnsMap.keys());
+    logger.debug('igroupUuidsToFetch:', igroupUuidsToFetch);
+
+    if (igroupUuidsToFetch.length > 0) {
+        // Fetch fsxFileSystem and instanceId
+        const { instanceRecord } = await getActiveNodeInfo(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+        logger.debug('instanceRecord:', JSON.stringify(instanceRecord, null, 2));
+        const { fsxFileSystem, id: instanceId } = instanceRecord;
+
+        if (!fsxFileSystem) {
+            logger.error('fsxFileSystem is not defined. Cannot generate ADD_INITIATOR_TO_IGROUP commands.');
+            return;
+        }
+
+        // Build all commands
+        const commands: string[] = [];
+        for (const uuid of igroupUuidsToFetch) {
+            const { missingIqns } = igroupMissingIqnsMap.get(uuid)!;
+            missingIqns.forEach(iqn => {
+                const cmd = ADD_INITIATOR_TO_IGROUP(fsxFileSystem, region, iqn, uuid);
+                logger.info('Generated command:', cmd);
+                commands.push(cmd);
+            });
+        }
+        logger.debug('All commands to execute:', commands);
+
+        const rawResponses = await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            instanceId,
+            'Add initiators to igroup',
+            accountId
+        );
+        logger.info('Called ADD_INITIATOR_TO_IGROUP for igroupUuids', {
+            igroupUuidsToFetch,
+            igroupMissingIqnsMap: Array.from(igroupMissingIqnsMap.entries()).reduce(
+                (acc, [uuid, { igroupName, missingIqns }]) => {
+                    acc[uuid] = { igroupName, missingIqns: Array.from(missingIqns) };
+                    return acc;
+                },
+                {} as Record<string, { igroupName: string; missingIqns: string[] }>
+            ),
+            rawResponses
+        });
+    }
+
+    logger.debug('parentJobId value:', parentJobId);
+
+    // Trigger assessment after optimization
+    await onDemandTriggerMssqlDriftAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        AssessmentTriggeredBy.SYSTEM,
+        AssessmentCategories.HIGH_AVAILABILITY
+    );
+}
+
+export { getAvailableSnapshotPolicyList, handleResiliecyOptimize, handleSharedStorageOptimize };

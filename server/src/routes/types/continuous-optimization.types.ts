@@ -8,6 +8,7 @@ import {
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeCloneParams,
     OptimizeComputeParams,
+    OptimizeHighAvailabilityParams,
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
@@ -459,6 +460,7 @@ const OptimizePerHostRequestBody = Type.Intersect([
         region: Type.String(),
         instanceType: Type.Optional(Type.String()),
         networkAdapters: Type.Optional(Type.Array(Type.String()))
+        // ontapLunUuids: Type.Optional(Type.Array(Type.String({ minLength: 1, description: 'Relevant for shared-storage opt HA' })))
     }),
     UpdateFSxNBackupRequestBody
 ]);
@@ -490,7 +492,8 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
         ...OptimizeStorageTierParams,
         ...OptimizeComputeParams,
         ...OptimizeMaxDopParams,
-        ...OPTIMIZE_RESILIENCY_CONFIGS
+        ...OPTIMIZE_RESILIENCY_CONFIGS,
+        ...OptimizeHighAvailabilityParams
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
@@ -617,6 +620,28 @@ const BulkOptimizeCloneBody = Type.Object({
 });
 type BulkOptimizeCloneBodyType = Static<typeof BulkOptimizeCloneBody>;
 
+const OptimizeHASharedStorageRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    sqlServerInstances: Type.Array(
+        Type.Object({
+            database_instance_id: Type.String({ minLength: 1 }),
+            ontapLunUuids: Type.Array(Type.String({ minLength: 1 }))
+        })
+    ),
+    credentialsId: Type.String({ minLength: 1 }),
+    region: Type.String({ minLength: 1 })
+});
+
+const BulkOptimizeHASharedStorageRequestBody = Type.Object({
+    configurationName: Type.Enum(OptimizeHighAvailabilityParams),
+    databaseHosts: Type.Array(OptimizeHASharedStorageRequestBody)
+});
+
+const BulkOptimizeHASharedStorageBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeHASharedStorageRequestBody)
+});
+type BulkOptimizeHASharedStorageBodyType = Static<typeof BulkOptimizeHASharedStorageBody>;
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -683,5 +708,7 @@ export {
     BulkDismissConfigurationBodyType,
     ContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
-    DriftAssessmentResponsePerHostType
+    DriftAssessmentResponsePerHostType,
+    BulkOptimizeHASharedStorageBody,
+    BulkOptimizeHASharedStorageBodyType
 };

@@ -4,6 +4,7 @@ import {
     AssessmentTriggeredBy,
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
+    OptimizeHighAvailabilityParams,
     OptimizeStorageParams
 } from '../utils/continous-optimization-consts';
 import {
@@ -25,7 +26,8 @@ import {
     OptimizeResilienceSchema,
     BulkOptimizeAwsBackupSchema,
     BulkOptimizeCloneSchema,
-    BulkDismissConfigurationSchema
+    BulkDismissConfigurationSchema,
+    BulkOptimizeSharedStorageSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -38,7 +40,8 @@ import castRequest from './utils';
 import {
     bulkCloneOptimization,
     bulkComputeOptimization,
-    bulkOptimization
+    bulkOptimization,
+    handleHASharedStorageOptimization
 } from '../operations/bulk-cont-opt-operations';
 import {
     getAvailableSnapshotPolicyList,
@@ -353,6 +356,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
+        // add apis for high availability here..
         .post(
             `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/resiliency/aws-backup`,
             { schema: BulkOptimizeAwsBackupSchema },
@@ -393,6 +397,30 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const response = await bulkCloneOptimization(
                     accountId,
                     hostsToOptimize as BulkOptimizeCloneInHostRequestBodyType[]
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/shared-storage`,
+            { schema: BulkOptimizeSharedStorageSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                // Destructure required values from the first element of hostsToOptimize
+                const [{ credentialsId, region, databaseHostId, databaseInstanceId } = {}] = hostsToOptimize || [];
+
+                const response = await handleHASharedStorageOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    OptimizeHighAvailabilityParams.SHARED_STORAGE,
+                    databaseHostId,
+                    databaseInstanceId,
+                    { hostsToOptimize }
                 );
                 return reply.send(response);
             }

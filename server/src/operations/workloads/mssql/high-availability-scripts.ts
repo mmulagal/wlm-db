@@ -1,4 +1,4 @@
-import { ontapRestRequest } from './common-templates';
+import { ontapRestRequest, ontapRestRequestBootstrap } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 
 const DRIVE_LETTER = `
@@ -92,10 +92,55 @@ $response | ConvertTo-Json -Depth 5 -Compress
 Stop-Transcript | Out-Null
 `;
 
+const ADD_INITIATOR_TO_IGROUP = (fsxId: string, region: string, initiator: string, igroupName: string) => `
+# Add initiator to igroup Script
+Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
+
+$WarningPreference = 'SilentlyContinue';
+${ontapRestRequestBootstrap}
+
+$FSxID = '${fsxId}'
+$FSxRegion = '${region}'
+$IgroupName = '${igroupName}'
+$Initiator = '${initiator}'
+$MgmtDNS = '198.19.255.96'
+$sqlvmname = ' wlmdb_sqlsvm_1737955806953'
+
+$response = @{
+                result = 'success'
+                error = ''}
+try {
+    $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
+    $FSxCredentials = $FSxNDetails.FSxCredentials
+    $FSxHostName = $FSxNDetails.FSxHostName
+                    
+    Connect-NcController -Name $FSxHostName -Credential $FSxCredentials -Vserver $sqlvmname
+    Add-NcIgroupInitiator -Name $IgroupName -Initiator $Initiator
+} catch {
+        $response.result = 'failed'
+        $response.error = $($_.Exception.Message)
+        Write-Error "Failed to add initiator to igroup: $($_.Exception.Message)"
+}
+        return $response
+`;
+
+const SET_HEARTBEAT_SETTINGS = `
+
+# Set the desired heartbeat settings
+(Get-Cluster).SameSubnetDelay = 1000
+(Get-Cluster).SameSubnetThreshold = 10
+(Get-Cluster).CrossSubnetDelay = 1000
+(Get-Cluster).CrossSubnetThreshold = 20
+(Get-Cluster).CrossSiteDelay = 1000
+(Get-Cluster).CrossSiteThreshold = 20
+`;
+
 export {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
-    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
+    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN,
+    ADD_INITIATOR_TO_IGROUP,
+    SET_HEARTBEAT_SETTINGS
 };

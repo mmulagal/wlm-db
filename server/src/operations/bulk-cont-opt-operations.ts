@@ -8,6 +8,7 @@ import {
     BulkOptimizeCloneInHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType,
+    BulkOptimizeHASharedStorageBodyType,
     CloneDetailType,
     OptimizeClonesPerHostRequestBodyType,
     OptimizePerHostRequestBodyType
@@ -29,7 +30,8 @@ import {
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeComputeJobNames,
-    OptimizeComputeParams
+    OptimizeComputeParams,
+    OptimizeHighAvailabilityParams
 } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
@@ -48,6 +50,7 @@ import {
 import { getMappedVolumeDetailForInstance } from './continuous-optimization/mssql/clone-optimization-operations';
 import { getInstanceInfo } from './database/database-operations';
 import { updateOptimizedConfigMetaData } from './demo-operations';
+import { handleSharedStorageOptimize } from './continuous-optimization/mssql/resilience-optimize-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -558,6 +561,98 @@ async function handleBulkComputeOptimization(
     }
 }
 
+async function handleHASharedStorageOptimization(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    optimizationCategory: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    body: BulkOptimizeHASharedStorageBodyType
+) {
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: await formatJobMetadata(body.hostsToOptimize)
+    };
+
+    const jobDescription = 'Fix shared storage for High Availability Cluster';
+
+    // First Job Created
+    const parentJobId = await handleOptimizeJobCreation(
+        accountId,
+        '',
+        '',
+        accountId,
+        JOBTYPE.WELL_ARCHITECTED,
+        jobDescription,
+        jobDescription,
+        undefined,
+        jobMetadata
+    );
+
+    // Debug: Print all values
+    logger.info('handleHASharedStorageOptimization input values', {
+        accountId,
+        credentialsId,
+        region,
+        optimizationCategory,
+        databaseHostId,
+        databaseInstanceId,
+        body,
+        jobMetadata,
+        jobDescription,
+        parentJobId
+    });
+
+    try {
+        const ontapLunUuids = body.hostsToOptimize?.[0]?.databaseHosts?.[0]?.sqlServerInstances?.[0]?.ontapLunUuids;
+
+        logger.info('Extracted ontapLunUuids:', { ontapLunUuids });
+
+        if (!ontapLunUuids) {
+            logger.warn(
+                `No ontapLunUuids found for optimization. Skipping optimization for host ${databaseHostId}, instance ${databaseInstanceId}.`
+            );
+            return;
+        }
+
+        switch (optimizationCategory) {
+            case OptimizeHighAvailabilityParams.SHARED_STORAGE:
+                logger.info('Calling handleSharedStorageOptimize with:', {
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    ontapLunUuids,
+                    parentJobId
+                });
+                await handleSharedStorageOptimize(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    ontapLunUuids,
+                    parentJobId
+                );
+                break;
+            default:
+                logger.warn(
+                    `Unsupported optimization category: ${optimizationCategory} for host ${databaseHostId}, instance ${databaseInstanceId}.`
+                );
+                break;
+        }
+    } catch (error: unknown) {
+        logger.error(
+            `Error occurred while optimizing storage tier for host ${databaseHostId}, instance ${databaseInstanceId}, configuration category ${optimizationCategory}. Error: ${
+                (error as Error)?.message || error
+            }`,
+            { stack: (error as Error)?.stack }
+        );
+    }
+    return { jobId: parentJobId };
+}
+
 async function fetchInstanceConfigurationAndVolumeMapping(
     accountId: string,
     credentialsId: string,
@@ -681,4 +776,4 @@ async function validateRequestDetails(accountId: string, credentialsId: string, 
     return true;
 }
 
-export { bulkOptimization, bulkComputeOptimization, bulkCloneOptimization };
+export { bulkOptimization, bulkComputeOptimization, bulkCloneOptimization, handleHASharedStorageOptimization };

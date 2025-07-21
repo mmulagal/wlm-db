@@ -23,7 +23,8 @@ import {
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
     ContinuousOptimizationQueryString,
-    AssessmentQueryStringPerAccount
+    AssessmentQueryStringPerAccount,
+    BulkOptimizeHASharedStorageBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -260,6 +261,20 @@ const BulkOptimizeCloneSchema = {
     }
 };
 
+const BulkOptimizeSharedStorageSchema = {
+    ...BulkOptimizeGeneralSchema,
+    params: AccountIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: BulkOptimizeHASharedStorageBody,
+    summary: 'Fix shared storage parameters as part of High Availability Cluster configuration',
+    description: 'Fix shared storage parameters as per the best practice for selected database instances.',
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -279,5 +294,6 @@ export {
     BulkOptimizeMaxDopSchema,
     BulkOptimizeAwsBackupSchema,
     BulkOptimizeCloneSchema,
-    BulkDismissConfigurationSchema
+    BulkDismissConfigurationSchema,
+    BulkOptimizeSharedStorageSchema
 };
