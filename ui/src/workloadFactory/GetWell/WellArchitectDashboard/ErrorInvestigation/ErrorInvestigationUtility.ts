@@ -151,14 +151,11 @@ export const getStartAndEndTimeFromRange = (
     }
     if (data?.length > 0 && selectedTimeFrame.includes(' - ') && timeRange) {
         // Calculate minHour and maxHour from data
-        let minHour = Number.POSITIVE_INFINITY;
         let maxHour = 0;
         result.forEach(obj => {
             const hourly = obj.hourlyErrorCounts;
             if (Array.isArray(hourly) && hourly.length > 0) {
-                const objMin = Math.min(...hourly.map(h => h.hour));
                 const objMax = Math.max(...hourly.map(h => h.hour));
-                if (objMin < minHour) minHour = objMin;
                 if (objMax > maxHour) maxHour = objMax;
             }
         });
@@ -173,19 +170,19 @@ export const getStartAndEndTimeFromRange = (
             }
             return hour;
         };
+        const maxHourDate = new Date(maxHour);
+        const minuteStr = maxHourDate.getMinutes().toString().padStart(2, '0');
+
         // Use maxHour as reference date
         const refDate = new Date(maxHour);
         // Calculate start and end using timeRange, but clamp between minHour and maxHour
         const startHour = parseHour(timeRange.from, timeRange.fromPeriod);
         const endHour = parseHour(timeRange.to, timeRange.toPeriod);
         // Build start and end timestamps with the same date as refDate
-        let start = new Date(refDate);
-        start.setHours(startHour, 0, 0, 0);
-        let end = new Date(refDate);
-        end.setHours(endHour, 0, 0, 0);
-        // Clamp start and end between minHour and maxHour
-        if (start.getTime() < minHour) start = new Date(minHour);
-        if (end.getTime() > maxHour) end = new Date(maxHour);
+        const start = new Date(refDate);
+        start.setHours(startHour, Number(minuteStr), 0, 0);
+        const end = new Date(refDate);
+        end.setHours(Number(minuteStr) > 0 ? endHour - 1 : endHour, Number(minuteStr), 0, 0);
         return {
             startTime: start.getTime(),
             endTime: end.getTime()
@@ -266,6 +263,9 @@ export const getMaxGraceValueLineGraph = (data: number[]) => {
 // New helper to generate hour labels between two timestamps (inclusive)
 export const getHourLabelsBetween = (start: number, end: number) => {
     const labels = [];
+    if (start === 0 && end === 0) {
+        return []; // Return empty if start and end are 0
+    }
     for (let t = start; t <= end; t += MS_PER_HOUR) {
         const date = new Date(t);
         const hour = date.getHours().toString().padStart(2, '0');
