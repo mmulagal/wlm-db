@@ -441,6 +441,18 @@ async function handleResiliecyOptimize(
     }
     return { jobId };
 }
+async function getSharedStorage(accountId: string, instance: FlattenedInstanceType): Promise<any> {
+    const [persistedConfig] = await listInstanceConfigIncludingResourceAndInstance({
+        accountId,
+        region: instance.region,
+        credentialsId: instance.credentialsId,
+        resourceId: instance.databaseHostId,
+        databaseInstanceId: instance.databaseInstanceId,
+        configDataType: AssessmentCategories.HIGH_AVAILABILITY,
+        pageSize: 1
+    });
+    return persistedConfig?.config_data?.sharedStorage;
+}
 
 async function prepareHASharedStorageOptimizationData(
     hostsToOptimize: {
@@ -448,7 +460,7 @@ async function prepareHASharedStorageOptimizationData(
         databaseHosts: OptimizeHASharedStorageRequestBodyType[];
     }[],
     ontapLunUuids: string[] | undefined,
-    getSharedStorage: (instance: FlattenedInstanceType) => Promise<any>
+    fetchSharedStorage: (instance: FlattenedInstanceType) => Promise<any>
 ): Promise<OptimizationPreparationType[]> {
     const flattenedInstances: FlattenedInstanceType[] = [];
     for (const host of hostsToOptimize) {
@@ -468,8 +480,9 @@ async function prepareHASharedStorageOptimizationData(
             }
         }
     }
+
     const preparationsPromises = flattenedInstances.map(async flattenedInstance => {
-        const sharedStorage = await getSharedStorage(flattenedInstance);
+        const sharedStorage = await fetchSharedStorage(flattenedInstance);
 
         let allHostIqnsArr: string[] = [];
         if (Array.isArray(sharedStorage?.allHostIqns)) {
@@ -556,11 +569,13 @@ async function optimizeHASharedStorageData(
         databaseHostId,
         databaseInstanceId
     );
-    const { fsxFileSystem, id: instanceId } = instanceRecord;
+    const { fsxFileSystem, activeNodeInstanceid } = instanceRecord;
     if (!fsxFileSystem) {
         logger.error('FSx file system is not defined. Cannot add initiators to igroup.');
         return;
     }
+    logger.info('igroupUuidsToFetch:', igroupUuidsToFetch);
+    logger.info('igroupMissingIqnsMap:', Array.from(igroupMissingIqnsMap.entries()));
     const commands: string[] = [];
     for (const uuid of igroupUuidsToFetch) {
         const { missingIqns } = igroupMissingIqnsMap.get(uuid)!;
@@ -568,8 +583,16 @@ async function optimizeHASharedStorageData(
             commands.push(ADD_INITIATOR_TO_IGROUP(fsxFileSystem, region, iqn, uuid));
         });
     }
+    logger.info('Running SSM commands to add initiators to igroup:', { commands });
     try {
-        await callSsmExecution(credentialsId, region, commands, instanceId, 'Add initiators to igroup', accountId);
+        await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceid,
+            'Add initiators to igroup',
+            accountId
+        );
         await updateJobDetails(accountId, subJobId, {
             status: JOBSTATUS.COMPLETED,
             endTime: Date.now()
@@ -595,20 +618,9 @@ async function handleSharedStorageOptimize(
     }[],
     parentJobId: string
 ) {
-    async function getSharedStorage(instance: FlattenedInstanceType) {
-        const [persistedConfig] = await listInstanceConfigIncludingResourceAndInstance({
-            accountId,
-            region: instance.region,
-            credentialsId: instance.credentialsId,
-            resourceId: instance.databaseHostId,
-            databaseInstanceId: instance.databaseInstanceId,
-            configDataType: AssessmentCategories.HIGH_AVAILABILITY,
-            pageSize: 1
-        });
-        return persistedConfig?.config_data?.sharedStorage;
-    }
+    const getStorage = (instance: FlattenedInstanceType) => getSharedStorage(accountId, instance);
 
-    const preparations = await prepareHASharedStorageOptimizationData(hostsToOptimize, ontapLunUuids, getSharedStorage);
+    const preparations = await prepareHASharedStorageOptimizationData(hostsToOptimize, ontapLunUuids, getStorage);
 
     if (preparations.length === 0) {
         logger.warn('No instances found to optimize shared storage.');
@@ -631,16 +643,27 @@ async function handleSharedStorageOptimize(
                 parentJobId
             });
 
-            await optimizeHASharedStorageData(
-                igroupMissingIqnsMap,
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId
+            // Check if there are any missing IQNs to add
+            const hasMissingIqns = Array.from(igroupMissingIqnsMap.values()).some(
+                entry =>
+                    (entry as { missingIqns: Set<string> }).missingIqns &&
+                    (entry as { missingIqns: Set<string> }).missingIqns.size > 0
             );
 
-            // Trigger drift assessment
+            if (hasMissingIqns) {
+                await optimizeHASharedStorageData(
+                    igroupMissingIqnsMap,
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId
+                );
+            } else {
+                logger.info('No missing IQNs found, skipping SSM execution and proceeding to drift assessment.');
+            }
+
+            // Always trigger drift assessment
             await onDemandTriggerMssqlDriftAssessment(
                 accountId,
                 credentialsId,
