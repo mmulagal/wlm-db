@@ -127,6 +127,7 @@ export interface AssessmentResponseInterface {
 
 export interface HostAssessmentResponseInterface {
     databaseInstanceId: string;
+    deploymentType?: string;
     assessments?: AssessmentResponseInterface;
     error?: string;
 }

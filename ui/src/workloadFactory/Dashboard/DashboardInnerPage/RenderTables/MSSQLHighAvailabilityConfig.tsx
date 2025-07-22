@@ -57,7 +57,7 @@ const MSSQLHighAvailabilityConfig = () => {
                 if (!instanceData?.error) {
                     const mssqlHAData = instanceData?.assessments?.highAvailability || [];
 
-                    if (mssqlHAData && Array.isArray(mssqlHAData)) {
+                    if (mssqlHAData && Array.isArray(mssqlHAData) && instanceData?.deploymentType === GENERAL.FCI) {
                         // Filter for not-optimized configurations only
                         const notOptimized = mssqlHAData
                             .filter((item: any) => item.status !== 'optimized' && !item?.errorMessage)

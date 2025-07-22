@@ -725,8 +725,8 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     isScheduledLoclaSnapshotOptimized &&
                     isCRROptimized &&
                     isScheduledAWSBackUpOptimized &&
-                    isMssqlHighAvailabilityOptimized &&
-                    isAllMssqlHighAvailability
+                    (instance?.deploymentType !== GENERAL.FCI ||
+                        (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability))
                 ) {
                     assessmentGroupedByCategory.resiliency++;
                 }
@@ -1123,7 +1123,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     getAssessmentGroupedByConfigurations?.severityObj?.crr;
 
                 getAssessmentGroupedByConfigurations.mssqlhighAvailability +=
-                    isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability ? 1 : 0;
+                    instance?.deploymentType !== GENERAL.FCI ||
+                    (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability)
+                        ? 1
+                        : 0;
                 getAssessmentGroupedByConfigurations.severityObj.mssqlhighAvailability = 'Critical';
             }
         });
