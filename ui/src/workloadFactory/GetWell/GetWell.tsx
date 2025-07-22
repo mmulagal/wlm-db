@@ -109,6 +109,8 @@ const GetWell = () => {
     useEffect(() => {
         if (loading === false && (!gwTimestamp || gwTimestamp === '0')) {
             setShowChartArea(false);
+        } else if (loading === false && gwTimestamp && gwTimestamp !== '0') {
+            setShowChartArea(true);
         }
     }, [loading]);
 
