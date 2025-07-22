@@ -67,7 +67,7 @@ const Home = () => {
     });
 
     useEffect(() => {
-        if (isWorkloadFactory && navigationPath) {
+        if (isWorkloadFactory && navigationPath && navigationPath !== 'databases/explore-savings-ebs') {
             navigate(navigationPath);
         }
     }, [navigationPath]);
