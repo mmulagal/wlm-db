@@ -997,6 +997,49 @@ const getOracleDbMountDetails = (ec2InstanceId: string) => `
 
 const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: string, region: string) => `
     ${getOracleDbMountDetails(ec2InstanceId)}
+    processMountDetail() {
+        local mountDetail="$1"
+        local fileTypeVolumes="[]"
+        local mountIP=$(echo "$mountDetail" | jq -r '.mountIP')
+        local mountPoint=$(echo "$mountDetail" | jq -r '.mountPoint')
+        local mountProtocol=$(echo "$mountDetail" | jq -r '.protocol')
+        local isAsm=$(echo "$mountDetail" | jq -r '.isAsmManaged')
+        local volumeName
+        local lunName
+        local volumeEntry
+        local lunExists
+        local lunRecord
+        
+        if [ -z "$protocol" ]; then
+            protocol="$mountProtocol"
+        fi
+        
+        if [ "$isAsm" == "true" ]; then
+            isASMManaged="true"
+        fi
+
+        ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
+        
+        volumeName="$mountedVolume"
+        
+        if [ "$mountProtocol" == "iSCSI" ]; then
+            # For iSCSI, extract LUN details
+            lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\", \\"lunName\\": \\"$lunName\\"}"
+            
+            lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
+            if [ -z "$lunExists" ]; then
+                lunRecord="{\\"name\\": \\"$(echo "$response" | jq -r '.records[0].name')\\", \\"serial\\": \\"$mountPoint\\"}"
+                lunRecords=$(echo "$lunRecords" | jq --argjson lr "$lunRecord" '. += [$lr]')
+            fi
+        else
+            # For NFS
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\"}"
+        fi
+        
+        fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
+        echo "$fileTypeVolumes"
+    }
     filesystemid="${fsxnId}"
     region="${region}"
     volumeMappings="[]"
@@ -1020,39 +1063,8 @@ const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: stri
                 mountDetails=$(echo "$sidData" | jq -c --arg ft "$fileType" '.mountDetails[$ft] // []')
                 
                 for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
-                    mountIP=$(echo "$mountDetail" | jq -r '.mountIP')
-                    mountPoint=$(echo "$mountDetail" | jq -r '.mountPoint')
-                    mountProtocol=$(echo "$mountDetail" | jq -r '.protocol')
-                    isAsm=$(echo "$mountDetail" | jq -r '.isAsmManaged')
-                    
-                    if [ -z "$protocol" ]; then
-                        protocol="$mountProtocol"
-                    fi
-                    
-                    if [ "$isAsm" == "true" ]; then
-                        isASMManaged="true"
-                    fi
-
-                    ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
-                    
-                    volumeName="$mountedVolume"
-                    
-                    if [ "$mountProtocol" == "iSCSI" ]; then
-                        # For iSCSI, extract LUN details
-                        lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
-                        volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\", \\"lunName\\": \\"$lunName\\"}"
-                        
-                        lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
-                        if [ -z "$lunExists" ]; then
-                            lunRecord="{\\"name\\": \\"$(echo "$response" | jq -r '.records[0].name')\\", \\"serial\\": \\"$mountPoint\\"}"
-                            lunRecords=$(echo "$lunRecords" | jq --argjson lr "$lunRecord" '. += [$lr]')
-                        fi
-                    else
-                        # For NFS
-                        volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\"}"
-                    fi
-                    
-                    fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
+                    volMappings=$(processMountDetail "$mountDetail")
+                    fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
                 done
                 
                 ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
@@ -1073,37 +1085,8 @@ const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: stri
                     mountDetails=$(echo "$sidData" | jq -c --arg pdb "$pdb" --arg ft "$fileType" '.pdbMountDetails[$pdb][$ft] // []')
                     
                     for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
-                        mountIP=$(echo "$mountDetail" | jq -r '.mountIP')
-                        mountPoint=$(echo "$mountDetail" | jq -r '.mountPoint')
-                        mountProtocol=$(echo "$mountDetail" | jq -r '.protocol')
-                        isAsm=$(echo "$mountDetail" | jq -r '.isAsmManaged')
-                        if [ -z "$protocol" ]; then
-                            protocol="$mountProtocol"
-                        fi
-                        
-                        if [ "$isAsm" == "true" ]; then
-                            isASMManaged="true"
-                        fi
-                        ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
-                        volumeName="$mountedVolume"
-                        
-                        if [ "$mountProtocol" == "iSCSI" ]; then
-                            # For iSCSI, extract LUN details
-                            lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
-                            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\", \\"lunName\\": \\"$lunName\\"}"
-                            
-                            # Add to LUN records if not already present
-                            lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
-                            if [ -z "$lunExists" ]; then
-                                lunRecord="{\\"name\\": \\"$(echo "$response" | jq -r '.records[0].name')\\", \\"serial\\": \\"$mountPoint\\"}"
-                                lunRecords=$(echo "$lunRecords" | jq --argjson lr "$lunRecord" '. += [$lr]')
-                            fi
-                        else
-                            # For NFS
-                            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\"}"
-                        fi
-                        
-                        fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
+                        volMappings=$(processMountDetail "$mountDetail")
+                        fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
                     done
                     
                     pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
