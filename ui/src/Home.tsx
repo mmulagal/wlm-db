@@ -1,7 +1,6 @@
 import React, { Suspense, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -31,7 +30,6 @@ const Home = () => {
     const { statusData } = useAppSelector(state => state.headers.getStatus);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const location = useLocation();
 
     // This code is only for BlueXP
     useRunOnce(() => {
