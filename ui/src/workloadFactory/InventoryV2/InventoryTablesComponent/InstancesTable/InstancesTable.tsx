@@ -1209,45 +1209,59 @@ const InstancesTable = () => {
                             displayName: 'Deregister'
                         });
                     } else if (rowData.hostType === DBType.MSSQL) {
-                        if (localStorage.getItem('protection') === 'true') {
-                            menu.push({
-                                id: 'protect',
-                                displayName: 'Protect'
-                            });
-                        }
                         menu.push(
+                            {
+                                id: 'optimize',
+                                displayName: t('databases.well-architect.well-architect-state'),
+                                disabled: disableOption,
+                                infoText: disableMessage
+                            },
+                            {
+                                id: 'investigateErrors',
+                                displayName: 'Investigate errors',
+                                disabled: disableOption,
+                                infoText: disableMessage
+                            },
                             {
                                 id: 'viewInstance',
                                 displayName: 'Manage instance',
                                 disabled: disableOption,
-                                infoText: disableMessage
+                                infoText: disableMessage,
+                                subMenu: [
+                                    {
+                                        id: 'viewInstance',
+                                        displayName: 'Instance dashboard',
+                                        disabled: disableOption,
+                                        infoText: disableMessage
+                                    },
+                                    {
+                                        id: 'viewDatabases',
+                                        displayName: 'View databases',
+                                        disabled: disableOption,
+                                        infoText: disableMessage
+                                    },
+
+                                    {
+                                        id: 'createUserDb',
+                                        displayName: 'Create database',
+                                        disabled: disableOption || disableCreateDb,
+                                        infoText: disableMessage || disableCreateDbMsg
+                                    },
+                                    {
+                                        id: 'createSandbox',
+                                        displayName: 'Create sandbox',
+                                        disabled: disableOption,
+                                        infoText: disableMessage
+                                    }
+                                ]
                             },
                             {
-                                id: 'optimize',
-                                displayName: GENERAL.WELL_ARCHITECTED_STATUS,
-                                disabled: disableOption,
+                                id: 'protect',
+                                displayName: 'Protect',
+                                disabled: disableOption || !rowData?.fsxId,
                                 infoText: disableMessage
                             },
 
-                            {
-                                id: 'viewDatabases',
-                                displayName: 'View databases',
-                                disabled: disableOption,
-                                infoText: disableMessage
-                            },
-
-                            {
-                                id: 'createUserDb',
-                                displayName: 'Create database',
-                                disabled: disableOption || disableCreateDb,
-                                infoText: disableMessage || disableCreateDbMsg
-                            },
-                            {
-                                id: 'createSandbox',
-                                displayName: 'Create sandbox',
-                                disabled: disableOption,
-                                infoText: disableMessage
-                            },
                             {
                                 id: 'unManage',
                                 displayName: 'Deregister'
