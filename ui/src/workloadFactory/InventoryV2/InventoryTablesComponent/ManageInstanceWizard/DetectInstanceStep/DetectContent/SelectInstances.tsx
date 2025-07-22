@@ -79,7 +79,7 @@ const SelectInstances = () => {
     const options = useMemo(
         () =>
             instanceTableRows?.flatMap((row: any) => {
-                const { colText, disableMsg } = manageActionCol(row);
+                const { colText, disableMsg } = manageActionCol(t, row);
                 if (colText !== ACTION_CTA.MANAGE_INSTANCES || disableMsg !== '') return [];
 
                 const isAlreadySelectedAndAuthorized = selectedMultiDetectInstances.some(

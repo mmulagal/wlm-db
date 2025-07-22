@@ -1,4 +1,5 @@
 import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
+import { TFunction } from 'i18next';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import store from '../../store/store';
 import {
@@ -3370,7 +3371,7 @@ export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any,
     return triggeredPrepare;
 };
 
-export const manageActionCol = (rowData?: any) => {
+export const manageActionCol = (translation: TFunction, rowData?: any) => {
     let colText = '';
     let disableMsg = '';
     if (
@@ -3410,7 +3411,7 @@ export const manageActionCol = (rowData?: any) => {
     }
 
     if (colText === ACTION_CTA.FIX_ISSUES || colText === ACTION_CTA.WELL_ARCHITECTED) {
-        disableMsg = fixIssueDisableMsg(rowData);
+        disableMsg = fixIssueDisableMsg(rowData, translation);
     }
     return {
         colText,
@@ -3418,10 +3419,14 @@ export const manageActionCol = (rowData?: any) => {
     };
 };
 
-export const fixIssueDisableMsg = (rowData: any) => {
+export const fixIssueDisableMsg = (rowData: any, translation: TFunction) => {
     let disableMsg = '';
-    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+    if (rowData?.hostType === DBType.POSTGRESQL) {
         disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
+        return disableMsg;
+    }
+    if (rowData?.hostType === DBType.ORACLE) {
+        disableMsg = translation('databases.general.coming-soon');
         return disableMsg;
     }
     if (

@@ -31,7 +31,13 @@ export interface InventorySliceData {
         databaseHostsLoading: boolean;
         fullHostDataLoading: boolean;
     };
+    getOracleDatabaseHosts: {
+        databaseHostsData: any;
+        databaseHostsLoading: boolean;
+        fullHostDataLoading: boolean;
+    };
     multiPgSqlDatabaseHostsData: any;
+    multiOracleDatabaseHostsData: any;
     discoveredHosts: {
         discoveredHostData: any;
         discoverHostLoading: boolean;
