@@ -492,6 +492,7 @@ async function optimizeHASharedStorageData(
     );
 
     const parsedResponse = sqlResponseParsing(response);
+
     return parsedResponse;
 }
 
@@ -548,10 +549,15 @@ async function handleSharedStorageOptimize(
                     description: `Fix shared storage for ${serverNameWithHostName}`,
                     parentJobId
                 });
-                try {
-                    const { highAvailability: { sharedStorage } = {} } = configData;
 
-                    const { lunDetails, allHostIqns } = sharedStorage;
+                try {
+                    if (!configData) {
+                        errorMessage = 'Assessment record is missing';
+                        logger.error(errorMessage);
+                        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+                    }
+
+                    const { sharedStorage: { lunDetails, allHostIqns } = {} } = configData;
 
                     if (isEmpty(lunDetails) || isEmpty(allHostIqns)) {
                         errorMessage = 'Lun details and (or) host iqns are missing.';
@@ -607,9 +613,9 @@ async function handleSharedStorageOptimize(
                         );
                     }
                 } catch (error: any) {
-                    errorMessage = `Optimizing shared storage failed with error ${error.message}.`;
-                    logger.error(errorMessage);
-                    jobStatus = JOBSTATUS.FAILED;
+                    errorMessage = `${error.message}.`;
+                    logger.error(`Optimizing shared storage failed with error ${errorMessage}`);
+                    jobStatus = jobStatus !== JOBSTATUS.WARNING ? JOBSTATUS.FAILED : jobStatus;
                 } finally {
                     await updateJobDetails(accountId, instanceOptimizeJobId, {
                         status: jobStatus,

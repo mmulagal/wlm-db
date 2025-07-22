@@ -112,18 +112,18 @@ try {
         $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
         $FSxCredentials = $FSxNDetails.FSxCredentials
         $FSxHostName = $FSxNDetails.FSxHostName              
-        Connect-NcController -Name $FSxHostName -Credential $FSxCredentials 
+        $null = Connect-NcController -Name $FSxHostName -Credential $FSxCredentials 
         
         foreach ($IgroupMissingIqn in $IgroupMissingIqnsMap) {
                 $IgroupName = $IgroupMissingIqn.igroupName
                 $Initiators = $IgroupMissingIqn.missingIqns
                 foreach ($Initiator in $Initiators) {
                         try {
-                                Add-NcIgroupInitiator -Name $IgroupName -Initiator $Initiator
+                                Add-NcIgroupInitiator -Name $IgroupName -Initiator $Initiator 
                         } catch {
                                 $response.result = 'partial'
                                 $response.error += $($_.Exception.Message)
-                                Write-Error "Failed to add initiator $Initiator to igroup $IgroupName: $($_.Exception.Message)"
+                                Write-Error "Failed to add initiator $Initiator to igroup $IgroupName : $($_.Exception.Message)"
                         }
                 }
         }
