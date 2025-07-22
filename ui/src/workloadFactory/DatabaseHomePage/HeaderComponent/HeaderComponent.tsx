@@ -189,6 +189,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
+    const topBarFlag = useAppSelector(state => state?.auth?.features?.active['NetApp.NewNav/*']);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -1190,190 +1191,197 @@ const HeaderComponent = ({ tab }: Tab) => {
                         </div>
                     </div>
                 ) : (
-                    <div className={styles.firstSection}>
-                        <div className={styles.withWorkLoad}>
-                            <div className={styles.firstRow}>
-                                {!isWorkloadFactory && (
-                                    <>
-                                        <BlueXPDatabase />
-                                        <Typography
-                                            variant="Regular_20"
-                                            className={styles.heading}
-                                            style={{
-                                                color: 'var(--text-button-primary)',
-                                                position: 'relative',
-                                                top: '5px'
-                                            }}
-                                        >
-                                            {GENERAL.DATABASES}
-                                        </Typography>
-                                    </>
-                                )}
-                                {isWorkloadFactory && (
-                                    <Typography variant="Regular_24" className={styles.heading}>
-                                        {GENERAL.DATABASES}
-                                    </Typography>
-                                )}
-                            </div>
+                    <>
+                        {!(isWorkloadFactory && topBarFlag) && (
+                            <div className={styles.firstSection}>
+                                <div className={styles.withWorkLoad}>
+                                    <div className={styles.firstRow}>
+                                        {!isWorkloadFactory && (
+                                            <>
+                                                <BlueXPDatabase />
+                                                <Typography
+                                                    variant="Regular_20"
+                                                    className={styles.heading}
+                                                    style={{
+                                                        color: 'var(--text-button-primary)',
+                                                        position: 'relative',
+                                                        top: '5px'
+                                                    }}
+                                                >
+                                                    {GENERAL.DATABASES}
+                                                </Typography>
+                                            </>
+                                        )}
+                                        {isWorkloadFactory && (
+                                            <Typography variant="Regular_24" className={styles.heading}>
+                                                {GENERAL.DATABASES}
+                                            </Typography>
+                                        )}
+                                    </div>
 
-                            <div className={styles.secondRow}>
-                                <div className={styles.overviewTabs}>
-                                    <Typography
-                                        variant="Regular_14"
-                                        className={
-                                            selectedHeaderTab === WLF_TABS.DASHBOARD ||
-                                            selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE ||
-                                            selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE
-                                                ? `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart1
-                                                          : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
-                                                  } ${
-                                                      isWorkloadFactory
-                                                          ? styles.active
-                                                          : `${styles.active} ${styles.activeBlueXPActive}`
-                                                  }`
-                                                : `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart1
-                                                          : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
-                                                  }`
-                                        }
-                                        onClick={() => {
-                                            handleClick(WLF_TABS.DASHBOARD);
-                                        }}
-                                        id="dashboard"
-                                    >
-                                        {GENERAL.TAB_DASHBOARD}
-                                    </Typography>
-                                    <Typography
-                                        variant="Regular_14"
-                                        className={
-                                            selectedHeaderTab === WLF_TABS.INVENTORY ||
-                                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                                            selectedHeaderTab === WLF_TABS.OPTIMIZE
-                                                ? `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart2
-                                                          : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
-                                                  } ${
-                                                      isWorkloadFactory
-                                                          ? styles.active
-                                                          : `${styles.active} ${styles.activeBlueXPActive}`
-                                                  }`
-                                                : `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart2
-                                                          : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
-                                                  }`
-                                        }
-                                        onClick={() => {
-                                            handleClick(WLF_TABS.INVENTORY);
-                                        }}
-                                        id="inventory"
-                                    >
-                                        {GENERAL.TAB_INVENTORY}
-                                    </Typography>
+                                    <div className={styles.secondRow}>
+                                        <div className={styles.overviewTabs}>
+                                            <Typography
+                                                variant="Regular_14"
+                                                className={
+                                                    selectedHeaderTab === WLF_TABS.DASHBOARD ||
+                                                    selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE ||
+                                                    selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE
+                                                        ? `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart1
+                                                                  : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                                          } ${
+                                                              isWorkloadFactory
+                                                                  ? styles.active
+                                                                  : `${styles.active} ${styles.activeBlueXPActive}`
+                                                          }`
+                                                        : `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart1
+                                                                  : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                                          }`
+                                                }
+                                                onClick={() => {
+                                                    handleClick(WLF_TABS.DASHBOARD);
+                                                }}
+                                                id="dashboard"
+                                            >
+                                                {GENERAL.TAB_DASHBOARD}
+                                            </Typography>
+                                            <Typography
+                                                variant="Regular_14"
+                                                className={
+                                                    selectedHeaderTab === WLF_TABS.INVENTORY ||
+                                                    selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                                    selectedHeaderTab === WLF_TABS.OPTIMIZE
+                                                        ? `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart2
+                                                                  : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                                          } ${
+                                                              isWorkloadFactory
+                                                                  ? styles.active
+                                                                  : `${styles.active} ${styles.activeBlueXPActive}`
+                                                          }`
+                                                        : `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart2
+                                                                  : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                                          }`
+                                                }
+                                                onClick={() => {
+                                                    handleClick(WLF_TABS.INVENTORY);
+                                                }}
+                                                id="inventory"
+                                            >
+                                                {GENERAL.TAB_INVENTORY}
+                                            </Typography>
 
-                                    <Typography
-                                        variant="Regular_14"
-                                        className={
-                                            selectedHeaderTab === WLF_TABS.SANDBOXES
-                                                ? `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart4
-                                                          : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
-                                                  } ${
-                                                      isWorkloadFactory
-                                                          ? styles.active
-                                                          : `${styles.active} ${styles.activeBlueXPActive}`
-                                                  }`
-                                                : `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart4
-                                                          : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
-                                                  }`
-                                        }
-                                        onClick={() => {
-                                            dispatch(setSandboxAgeRange({ range: '', from: 'Header' }));
-                                            handleClick(WLF_TABS.SANDBOXES);
-                                        }}
-                                        id="sandboxes"
-                                    >
-                                        Sandboxes
-                                    </Typography>
+                                            <Typography
+                                                variant="Regular_14"
+                                                className={
+                                                    selectedHeaderTab === WLF_TABS.SANDBOXES
+                                                        ? `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart4
+                                                                  : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                                          } ${
+                                                              isWorkloadFactory
+                                                                  ? styles.active
+                                                                  : `${styles.active} ${styles.activeBlueXPActive}`
+                                                          }`
+                                                        : `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart4
+                                                                  : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                                          }`
+                                                }
+                                                onClick={() => {
+                                                    dispatch(setSandboxAgeRange({ range: '', from: 'Header' }));
+                                                    handleClick(WLF_TABS.SANDBOXES);
+                                                }}
+                                                id="sandboxes"
+                                            >
+                                                Sandboxes
+                                            </Typography>
 
-                                    <Typography
-                                        variant="Regular_14"
-                                        className={
-                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
-                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
-                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
-                                                ? `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart5
-                                                          : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
-                                                  } ${
-                                                      isWorkloadFactory
-                                                          ? styles.active
-                                                          : `${styles.active} ${styles.activeBlueXPActive}`
-                                                  }`
-                                                : `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart5
-                                                          : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
-                                                  }`
-                                        }
-                                        onClick={() => {
-                                            handleClick(WLF_TABS.EXPLORE_SAVINGS);
-                                        }}
-                                        id="explore-savings"
-                                    >
-                                        Explore savings
-                                    </Typography>
+                                            <Typography
+                                                variant="Regular_14"
+                                                className={
+                                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                                                    selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                                                    selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
+                                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                                                        ? `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart5
+                                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                                          } ${
+                                                              isWorkloadFactory
+                                                                  ? styles.active
+                                                                  : `${styles.active} ${styles.activeBlueXPActive}`
+                                                          }`
+                                                        : `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart5
+                                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                                          }`
+                                                }
+                                                onClick={() => {
+                                                    handleClick(WLF_TABS.EXPLORE_SAVINGS);
+                                                }}
+                                                id="explore-savings"
+                                            >
+                                                Explore savings
+                                            </Typography>
 
-                                    <Typography
-                                        variant="Regular_14"
-                                        className={
-                                            selectedHeaderTab === WLF_TABS.JOB_MONITORING
-                                                ? `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart3
-                                                          : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
-                                                  } ${
-                                                      isWorkloadFactory
-                                                          ? styles.active
-                                                          : `${styles.active} ${styles.activeBlueXPActive}`
-                                                  }`
-                                                : `${
-                                                      isWorkloadFactory
-                                                          ? styles.headerPart3
-                                                          : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
-                                                  }`
-                                        }
-                                        onClick={() => {
-                                            handleClick(WLF_TABS.JOB_MONITORING);
-                                        }}
-                                        id="job-monitoring"
-                                    >
-                                        {GENERAL.TAB_JOB_MONITORING}
-                                    </Typography>
+                                            <Typography
+                                                variant="Regular_14"
+                                                className={
+                                                    selectedHeaderTab === WLF_TABS.JOB_MONITORING
+                                                        ? `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart3
+                                                                  : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                                          } ${
+                                                              isWorkloadFactory
+                                                                  ? styles.active
+                                                                  : `${styles.active} ${styles.activeBlueXPActive}`
+                                                          }`
+                                                        : `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart3
+                                                                  : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                                          }`
+                                                }
+                                                onClick={() => {
+                                                    handleClick(WLF_TABS.JOB_MONITORING);
+                                                }}
+                                                id="job-monitoring"
+                                            >
+                                                {GENERAL.TAB_JOB_MONITORING}
+                                            </Typography>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        {!isWorkloadFactory && (
-                            <div className={styles.thirdRow}>
-                                <DsBlueXpMenu className="hamburgerMenu" domain={import.meta.env.VITE_APP_WF_DOMAIN!} />
+                                {!isWorkloadFactory && (
+                                    <div className={styles.thirdRow}>
+                                        <DsBlueXpMenu
+                                            className="hamburgerMenu"
+                                            domain={import.meta.env.VITE_APP_WF_DOMAIN!}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         )}
-                    </div>
+                    </>
                 )}
 
-                <div className={styles.extraSpace} />
+                {!(isWorkloadFactory && topBarFlag) && <div className={styles.extraSpace} />}
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
