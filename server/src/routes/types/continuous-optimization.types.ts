@@ -331,7 +331,8 @@ const DriftAssessmentResponse = Type.Object({
     dismissedConfigurations: Type.Optional(dismissedConfigurationsResponse),
     fileSystemId: Type.Optional(Type.String()),
     ec2InstanceId: Type.Optional(Type.String()),
-    databaseInstanceName: Type.Optional(Type.String())
+    databaseInstanceName: Type.Optional(Type.String()),
+    deploymentType: Type.Optional(Type.String())
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
