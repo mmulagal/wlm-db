@@ -1,4 +1,5 @@
 import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
+import { TFunction } from 'i18next';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import store from '../../store/store';
 import {
@@ -3370,7 +3371,7 @@ export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any,
     return triggeredPrepare;
 };
 
-export const manageActionCol = (rowData?: any) => {
+export const manageActionCol = (translation: TFunction, rowData?: any) => {
     let colText = '';
     let disableMsg = '';
     if (
@@ -3410,7 +3411,7 @@ export const manageActionCol = (rowData?: any) => {
     }
 
     if (colText === ACTION_CTA.FIX_ISSUES || colText === ACTION_CTA.WELL_ARCHITECTED) {
-        disableMsg = fixIssueDisableMsg(rowData);
+        disableMsg = fixIssueDisableMsg(rowData, translation);
     }
     return {
         colText,
@@ -3418,10 +3419,14 @@ export const manageActionCol = (rowData?: any) => {
     };
 };
 
-export const fixIssueDisableMsg = (rowData: any) => {
+export const fixIssueDisableMsg = (rowData: any, translation: TFunction) => {
     let disableMsg = '';
-    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+    if (rowData?.hostType === DBType.POSTGRESQL) {
         disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
+        return disableMsg;
+    }
+    if (rowData?.hostType === DBType.ORACLE) {
+        disableMsg = translation('databases.general.coming-soon');
         return disableMsg;
     }
     if (
@@ -3489,7 +3494,7 @@ const callDeleteHost = async (
     const state: any = store.getState().snapCenter;
     const deleteHostRes = await deleteHostSc({
         accountID: store.getState().auth.accountId,
-        hostId: hostId,
+        hostId,
         agentID: state.selectedAgent[0]?.id,
         workspaceID: state?.workSpaceData?.id
     });
@@ -3587,7 +3592,7 @@ export const addHostJobPolling = async (
                         subJob?.status === JOB_MONITORING_STATUS.FAILED
                     ) {
                         hasCalledDeleteHost = true;
-                        //calling delete host api to remove the stale entry
+                        // calling delete host api to remove the stale entry
                         await callDeleteHost(addHostJobScApi, dispatch, translation, subJob?.data?.host, deleteHostSc);
 
                         errorMsg = translation('databases.inventory.package-installation-failed');
@@ -3622,8 +3627,7 @@ export const deleteHostJobPolling = (
     jobId: string,
     dispatch: any,
     translation: any
-): Promise<'SUCCESS' | 'FAILED'> => {
-    return new Promise(resolve => {
+): Promise<'SUCCESS' | 'FAILED'> => new Promise(resolve => {
         const jobInterval = setInterval(() => {
             addHostJobScApi({
                 accountID: store.getState().auth.accountId,
@@ -3653,7 +3657,6 @@ export const deleteHostJobPolling = (
                 });
         }, SC_JOB_INTERVAL);
     });
-};
 
 const errorMapping = (error: string, rowData: any) => {
     if (error.includes("Cannot read properties of undefined (reading 'includes')")) {

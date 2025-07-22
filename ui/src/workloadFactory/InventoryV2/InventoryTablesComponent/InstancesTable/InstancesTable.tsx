@@ -28,7 +28,9 @@ import {
     useGetRBACPrivilegesMutation,
     useGetWorkSpaceIDMutation,
     useListExistingHostsMutation,
-    useUnmanageMssqlInstanceMutation
+    useUnmanageMssqlInstanceMutation,
+    useUnmanageOracleInstanceMutation,
+    useUnmanagePgsqlInstanceMutation
 } from '../../../../utils/apiService';
 import {
     addHostHandlerSc,
@@ -132,6 +134,8 @@ const InstancesTable = () => {
     const dispatch = useDispatch();
 
     const [unmanageApi] = useUnmanageMssqlInstanceMutation();
+    const [unmanageApiPgsql] = useUnmanagePgsqlInstanceMutation();
+    const [unmanageApiOracle] = useUnmanageOracleInstanceMutation();
     const [getConnector] = useGetConnectorsMutation();
     const [getFsxDetails] = useGetFsxDetailsMutation();
     const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
@@ -205,6 +209,91 @@ const InstancesTable = () => {
         return undefined;
     };
 
+    const getUnmanageApiByHostType = (
+        hostType: string,
+        apis: {
+            mssql: Function;
+            pgsql: Function;
+            oracle: Function;
+        }
+    ) => {
+        switch (hostType) {
+            case DBType.MSSQL:
+                return apis.mssql;
+            case DBType.POSTGRESQL:
+                return apis.pgsql;
+            case DBType.ORACLE:
+                return apis.oracle;
+            default:
+                return null;
+        }
+    };
+
+    const handleDeRegister = (rowData: any) => {
+        const updatedState = store.getState();
+        const { inProgressInstances: inProgressInstancesL, inventoryTableData }: any = updatedState.inventoryV2;
+        const targettedHost =
+            inventoryTableData[uniqueHostRow(rowData.resourceId, rowData?.credentialId, rowData?.regionId)] ||
+            inventoryTableData[uniqueHostRow(rowData.ec2InstanceId, rowData?.credentialId, rowData?.regionId)];
+        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
+        );
+        const inProgressId = uniqueHostRow(
+            `${rowData?.ec2InstanceId}_${rowData?.databaseInstanceName}`,
+            rowData?.credentialId,
+            rowData?.regionId
+        );
+        dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstancesL), inProgressId])));
+
+        const unmanageApiFn = getUnmanageApiByHostType(rowData.hostType, {
+            mssql: unmanageApi,
+            pgsql: unmanageApiPgsql,
+            oracle: unmanageApiOracle
+        });
+
+        if (!unmanageApiFn) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: `Unsupported database type for deregister: ${rowData.hostType}`
+                })
+            );
+            return;
+        }
+        unmanageApiFn({
+            credentialsId: targettedHost?.credentialId,
+            regionId: targettedHost?.regionId,
+            resourceId: targettedHost?.resourceId,
+            dbInstanceId: targettedDbInstance?.databaseInstanceId
+        }).then((res: any) => {
+            const updatedStateA = store.getState();
+            const inProgressInstancesA = updatedStateA?.inventoryV2.inProgressInstances;
+            const updatedInProgressInstances = new Set([...inProgressInstancesA]);
+            updatedInProgressInstances.delete(inProgressId);
+            dispatch(setInProgressInstances(updatedInProgressInstances));
+            if (res?.data?.items) {
+                if (res?.data?.items?.[0]?.errorMessage) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: GENERAL.UNMANAGE_INSTANCE_FAILED_MSG(rowData?.databaseInstanceName),
+                            additionalText: res?.data?.items?.[0]?.errorMessage
+                        })
+                    );
+                } else {
+                    const updatedInventoryTableData = updateInstanceStatus('unmanage', rowData, rowData);
+                    dispatch(setInventoryTableData(updatedInventoryTableData));
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: GENERAL.UNMANAGE_INSTANCE_SUCCESS_MSG(rowData?.databaseInstanceName)
+                        })
+                    );
+                }
+            }
+        });
+    };
+
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
@@ -222,59 +311,7 @@ const InstancesTable = () => {
                 }
                 primaryButton="Deregister"
                 secondaryButton="Close"
-                callback={() => {
-                    const updatedState = store.getState();
-                    const { inProgressInstances: inProgressInstancesL, inventoryTableData }: any =
-                        updatedState.inventoryV2;
-                    const targettedHost =
-                        inventoryTableData[
-                            uniqueHostRow(rowData.resourceId, rowData?.credentialId, rowData?.regionId)
-                        ] ||
-                        inventoryTableData[
-                            uniqueHostRow(rowData.ec2InstanceId, rowData?.credentialId, rowData?.regionId)
-                        ];
-                    const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
-                        (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
-                    );
-                    const inProgressId = uniqueHostRow(
-                        `${rowData?.ec2InstanceId}_${rowData?.databaseInstanceName}`,
-                        rowData?.credentialId,
-                        rowData?.regionId
-                    );
-                    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstancesL), inProgressId])));
-                    unmanageApi({
-                        credentialsId: targettedHost?.credentialId,
-                        regionId: targettedHost?.regionId,
-                        resourceId: targettedHost?.resourceId,
-                        dbInstanceId: targettedDbInstance?.databaseInstanceId
-                    }).then((res: any) => {
-                        const updatedStateA = store.getState();
-                        const inProgressInstancesA = updatedStateA?.inventoryV2.inProgressInstances;
-                        const updatedInProgressInstances = new Set([...inProgressInstancesA]);
-                        updatedInProgressInstances.delete(inProgressId);
-                        dispatch(setInProgressInstances(updatedInProgressInstances));
-                        if (res?.data?.items) {
-                            if (res?.data?.items?.[0]?.errorMessage) {
-                                dispatch(
-                                    addNotification({
-                                        notificationType: NOTIFICATION_TYPES.ERROR,
-                                        message: GENERAL.UNMANAGE_INSTANCE_FAILED_MSG(rowData?.databaseInstanceName),
-                                        additionalText: res?.data?.items?.[0]?.errorMessage
-                                    })
-                                );
-                            } else {
-                                const updatedInventoryTableData = updateInstanceStatus('unmanage', rowData, rowData);
-                                dispatch(setInventoryTableData(updatedInventoryTableData));
-                                dispatch(
-                                    addNotification({
-                                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                        message: GENERAL.UNMANAGE_INSTANCE_SUCCESS_MSG(rowData?.databaseInstanceName)
-                                    })
-                                );
-                            }
-                        }
-                    });
-                }}
+                callback={() => handleDeRegister(rowData)}
                 closeCallback={() => {
                     closeDialog();
                 }}
@@ -598,7 +635,7 @@ const InstancesTable = () => {
     const disableManageCheck = (rowData: any) => {
         let errorMessage = '';
         let isDisabled = false;
-        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
             isDisabled = true;
             errorMessage = GENERAL.NON_MSSQL_BULK_CTA;
         } else if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
@@ -644,7 +681,7 @@ const InstancesTable = () => {
             instanceTableRows?.map((row: any) => {
                 const { isDisabled, errorMessage } = disableManageCheck(row);
                 const optimizationData = getOptimizationStatusData(row, t);
-                let optimizationStatus, optimizationDisableMsg, optimizationIsDisabled;
+                let optimizationStatus; let optimizationDisableMsg; let optimizationIsDisabled;
                 if (
                     typeof optimizationData === 'object' &&
                     optimizationData !== null &&
@@ -681,7 +718,7 @@ const InstancesTable = () => {
     const isUnregisteredRows = useMemo(
         () =>
             instanceTableRows?.some((row: any) => {
-                const { colText, disableMsg } = manageActionCol(row);
+                const { colText, disableMsg } = manageActionCol(t, row);
                 return colText === ACTION_CTA.MANAGE_INSTANCES && disableMsg === '';
             }),
         [instanceTableRows]
@@ -1076,7 +1113,7 @@ const InstancesTable = () => {
             width: '200px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const { colText, disableMsg } = manageActionCol(rowData);
+                const { colText, disableMsg } = manageActionCol(t, rowData);
                 return (
                     <>
                         {disableMsg ? (
@@ -1164,64 +1201,57 @@ const InstancesTable = () => {
                 }
 
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
-                    menu.push(
-                        {
-                            id: 'optimize',
-                            displayName: t('databases.well-architect.well-architect-state'),
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
-                        {
-                            id: 'investigateErrors',
-                            displayName: 'Investigate errors',
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
-                        {
-                            id: 'viewInstance',
-                            displayName: 'Manage instance',
-                            disabled: disableOption,
-                            infoText: disableMessage,
-                            subMenu: [
-                                {
-                                    id: 'viewInstance',
-                                    displayName: 'Instance dashboard',
-                                    disabled: disableOption,
-                                    infoText: disableMessage
-                                },
-                                {
-                                    id: 'viewDatabases',
-                                    displayName: 'View databases',
-                                    disabled: disableOption,
-                                    infoText: disableMessage
-                                },
-
-                                {
-                                    id: 'createUserDb',
-                                    displayName: 'Create database',
-                                    disabled: disableOption || disableCreateDb,
-                                    infoText: disableMessage || disableCreateDbMsg
-                                },
-                                {
-                                    id: 'createSandbox',
-                                    displayName: 'Create sandbox',
-                                    disabled: disableOption,
-                                    infoText: disableMessage
-                                }
-                            ]
-                        },
-                        {
-                            id: 'protect',
-                            displayName: 'Protect',
-                            disabled: disableOption || !rowData?.fsxId,
-                            infoText: disableMessage
-                        },
-
-                        {
+                    if (rowData.hostType === DBType.ORACLE || rowData.hostType === DBType.POSTGRESQL) {
+                        menu.push({
                             id: 'unManage',
                             displayName: 'Deregister'
+                        });
+                    } else if (rowData.hostType === DBType.MSSQL) {
+                        if (localStorage.getItem('protection') === 'true') {
+                            menu.push({
+                                id: 'protect',
+                                displayName: 'Protect'
+                            });
                         }
-                    );
+                        menu.push(
+                            {
+                                id: 'viewInstance',
+                                displayName: 'Manage instance',
+                                disabled: disableOption,
+                                infoText: disableMessage
+                            },
+                            {
+                                id: 'optimize',
+                                displayName: GENERAL.WELL_ARCHITECTED_STATUS,
+                                disabled: disableOption,
+                                infoText: disableMessage
+                            },
+
+                            {
+                                id: 'viewDatabases',
+                                displayName: 'View databases',
+                                disabled: disableOption,
+                                infoText: disableMessage
+                            },
+
+                            {
+                                id: 'createUserDb',
+                                displayName: 'Create database',
+                                disabled: disableOption || disableCreateDb,
+                                infoText: disableMessage || disableCreateDbMsg
+                            },
+                            {
+                                id: 'createSandbox',
+                                displayName: 'Create sandbox',
+                                disabled: disableOption,
+                                infoText: disableMessage
+                            },
+                            {
+                                id: 'unManage',
+                                displayName: 'Deregister'
+                            }
+                        );
+                    }
                 }
 
                 let disableMsg = '';
@@ -1234,12 +1264,7 @@ const InstancesTable = () => {
                     ) {
                         return true;
                     }
-                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
-                        disableMsg = GENERAL.PGSQL_CTA_NA;
-                        width = '110px';
-                        height = '33px';
-                        return true;
-                    }
+
                     // if (rowData?.loading) {
                     //     disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
                     //     width = '170px';

@@ -7,7 +7,9 @@ import {
     addDatabaseHostsDataV2,
     addMultiMssqlDatabaseHostsDataV2,
     addMultiPgSqlDatabaseHostsData,
+    addMultiOracleDatabaseHostsData,
     addPgSqlDatabaseHostsData,
+    addOracleDatabaseHostsData,
     resetPerComboData,
     resetRefreshData,
     setAllMssqlHostAssessmentLoading,
@@ -29,8 +31,10 @@ import {
     setIsDiscoveredPgsqlHostData,
     setIsFullHostDataLoading,
     setIsFullPgSqlHostDataLoading,
+    setIsFullOracleHostDataLoading,
     setIsManagedHostListLoading,
     setIsPgSqlDatabaseHostsLoading,
+    setIsOracleDatabaseHostsLoading,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
     setPgsqlInstancesData,
@@ -38,7 +42,8 @@ import {
     setPotentialSavingsHostData,
     setRemoveSecNodeDiscoveredList,
     setResetManagedData,
-    setUnManagedPerfInstanceIdsList
+    setUnManagedPerfInstanceIdsList,
+    resetInventoryLoading
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
     useCreateDemoResourcesMutation,
@@ -57,7 +62,9 @@ import {
     useLazyGetPgsqlDatabaseHostsFullDataV2Query,
     useLazyGetPgSqlDatabaseHostsListQuery,
     useLazyGetSandboxListQuery,
-    useLazyGetSandboxSavingsQuery
+    useLazyGetSandboxSavingsQuery,
+    useLazyGetOracleDatabaseHostsListQuery,
+    useLazyGetOracleDatabaseHostsFullDataV2Query
 } from '../../utils/apiService';
 import {
     addInstanceIdToGetPerf,
@@ -102,6 +109,8 @@ const InventoryApisV3 = () => {
     const { databaseHostsData: pgsqlDatabaseHostsData, fullHostDataLoading: pgsqlFullHostDataLoading } = useAppSelector(
         state => state.inventoryV2.getPgSqlDatabaseHosts
     );
+    const { databaseHostsData: oracleDatabaseHostsData, fullHostDataLoading: oracleFullHostDataLoading } =
+        useAppSelector(state => state.inventoryV2.getOracleDatabaseHosts);
     const {
         headerSelectedCred,
         headerSelectedRegion,
@@ -129,7 +138,9 @@ const InventoryApisV3 = () => {
     const allmssqlHostAssessmentDataS = useAppSelector(state => state.inventoryV2.allmssqlHostAssessmentData);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
-    const { multiMssqlDatabaseHostsData, multiPgSqlDatabaseHostsData } = useAppSelector(state => state.inventoryV2);
+    const { multiMssqlDatabaseHostsData, multiPgSqlDatabaseHostsData, multiOracleDatabaseHostsData } = useAppSelector(
+        state => state.inventoryV2
+    );
     const dashSandboxSavingsData = useAppSelector(state => state.inventoryV2.dashSandboxSavings.data);
     const dashSandboxListData = useAppSelector(state => state.inventoryV2.dashSandboxList.data);
 
@@ -150,6 +161,10 @@ const InventoryApisV3 = () => {
     const [getPgSqlDatabaseHostsListApi] = useLazyGetPgSqlDatabaseHostsListQuery();
     const [pgsqlTopologyHostData, setPgsqlTopologyHostData] = useState<any>({});
 
+    // oracle database-hosts without fields values
+    const [getOracleDatabaseHostsListApi] = useLazyGetOracleDatabaseHostsListQuery();
+    const [oracleTopologyHostData, setOracleTopologyHostData] = useState<any>({});
+
     // database-hosts with fields values
     const [getDatabaseHostsFullDataApi] = useLazyGetDatabaseHostsFullDataV2Query();
     const [fullHostData, setFullHostData] = useState<any>({});
@@ -157,6 +172,10 @@ const InventoryApisV3 = () => {
     // pgsql database-hosts with fields values
     const [getPgSqlDatabaseHostsFullDataApi] = useLazyGetPgsqlDatabaseHostsFullDataV2Query();
     const [fullPgsqlHostData, setFullPgsqlHostData] = useState<any>({});
+
+    // oracle database-hosts with fields values
+    const [getOracleDatabaseHostsFullDataApi] = useLazyGetOracleDatabaseHostsFullDataV2Query();
+    const [fullOracleHostData, setFullOracleHostData] = useState<any>({});
 
     // Potential savings API for EBS and FSxW
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
@@ -390,27 +409,25 @@ const InventoryApisV3 = () => {
         if (managedList?.length > 0) {
             const fullHostData: any = {};
             const fullPgsqlHostData: any = {};
+            const fullOracleHostData: any = {};
             const topologyHostData: any = {};
             const pgsqlTopologyHostData: any = {};
+            const oracleTopologyHostData: any = {};
             const assessmentData: any = [];
             const sandboxListData: any = [];
             const sandboxSavingsData: any = [];
             getDatabaseHostsList(topologyHostData, null, credId, regionId);
             getPgSqlDatabaseHostsList(pgsqlTopologyHostData, null, credId, regionId);
+            getOracleDatabaseHostsList(oracleTopologyHostData, null, credId, regionId);
             getDatabaseHostsFullData(fullHostData, null, credId, regionId);
             getPgsqlDatabaseHostsFullData(fullPgsqlHostData, null, credId, regionId);
+            getOracleDatabaseHostsFullData(fullOracleHostData, null, credId, regionId);
             getAllMssqlHostAssessmentData(assessmentData, null, credId, regionId);
             // sandbox APIs
             getAllSandboxListData(sandboxListData, null, credId, regionId);
             getAllSandboxSavingsData(sandboxSavingsData, credId, regionId);
         } else {
-            dispatch(setIsDatabaseHostsLoading(false));
-            dispatch(setIsPgSqlDatabaseHostsLoading(false));
-            dispatch(setIsFullHostDataLoading(false));
-            dispatch(setIsFullPgSqlHostDataLoading(false));
-            dispatch(setAllMssqlHostAssessmentLoading(false));
-            dispatch(setDashSandboxListLoading(false));
-            dispatch(setDashSandboxSavingsLoading(false));
+            dispatch(resetInventoryLoading());
         }
     };
 
@@ -509,6 +526,58 @@ const InventoryApisV3 = () => {
             } catch (error) {
                 dispatch(setIsPgSqlDatabaseHostsLoading(false));
                 setPgsqlTopologyHostData(managedList);
+            }
+        }
+    };
+
+    // This function is to get basic managed rows info for oracle. This output is used only in dashboard page as of now.
+    const getOracleDatabaseHostsList = async (
+        managedList: string[],
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getOracleDatabaseHostsListApi({
+                    credentialId: credId,
+                    regionId,
+                    nextToken
+                });
+                if (
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+                ) {
+                    dispatch(setResetManagedData(false));
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.id) {
+                                managedList = { ...managedList, [uniqueHostRow(perRow?.id, credId, regionId)]: perRow };
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            setOracleTopologyHostData(managedList);
+                            getOracleDatabaseHostsList(
+                                managedList,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setIsOracleDatabaseHostsLoading(false));
+                            setOracleTopologyHostData(managedList);
+                        }
+                    } else {
+                        dispatch(setIsOracleDatabaseHostsLoading(false));
+                        setOracleTopologyHostData(managedList);
+                    }
+                }
+            } catch (error) {
+                dispatch(setIsOracleDatabaseHostsLoading(false));
+                setOracleTopologyHostData(managedList);
             }
         }
     };
@@ -615,6 +684,59 @@ const InventoryApisV3 = () => {
             } catch (error) {
                 dispatch(setIsFullPgSqlHostDataLoading(false));
                 setFullPgsqlHostData(managedList);
+            }
+        }
+    };
+
+    // This function is to get all managed rows data for oracle. This output is used both in managed tab and dashboard page.
+    const getOracleDatabaseHostsFullData = async (
+        managedList: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getOracleDatabaseHostsFullDataApi({
+                    credentialId: credId,
+                    regionId,
+                    nextToken,
+                    isDemoMode
+                });
+                if (
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+                ) {
+                    dispatch(setResetManagedData(false));
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.id) {
+                                managedList = { ...managedList, [uniqueHostRow(perRow?.id, credId, regionId)]: perRow };
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            setFullOracleHostData(managedList);
+                            getOracleDatabaseHostsFullData(
+                                managedList,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setIsFullOracleHostDataLoading(false));
+                            setFullOracleHostData(managedList);
+                        }
+                    } else {
+                        dispatch(setIsFullOracleHostDataLoading(false));
+                        setFullOracleHostData(managedList);
+                    }
+                }
+            } catch (error) {
+                dispatch(setIsFullOracleHostDataLoading(false));
+                setFullOracleHostData(managedList);
             }
         }
     };
@@ -1622,9 +1744,11 @@ const InventoryApisV3 = () => {
         // reset for getDatabaseHostsList
         setTopologyHostData({});
         setPgsqlTopologyHostData({});
+        setOracleTopologyHostData({});
         // reset for getDatabaseHostsFullData
         setFullHostData({});
         setFullPgsqlHostData({});
+        setFullOracleHostData({});
         // reset for discovery
         // Instances API reset
         // Running instanceList reset
@@ -1741,6 +1865,37 @@ const InventoryApisV3 = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullPgsqlHostData, pgsqlTopologyHostData, pgsqlFullHostDataLoading]);
+
+    // This will combine fullHostData (getDatabaseHostsFullData) and topologyHostData (getDatabaseHostsList) data and store in single object for oracle.
+    useEffect(() => {
+        const state = store.getState();
+        const { resetManagedData } = state.inventoryV2;
+        if (!resetManagedData) {
+            let databaseHostDataObj: any = {};
+            Object.keys(oracleTopologyHostData).map((key: string) => {
+                if (key in fullOracleHostData) {
+                    const perObj = {
+                        ...oracleTopologyHostData[key],
+                        ...fullOracleHostData[key],
+                        loading: false,
+                        databaseHostStatus: oracleTopologyHostData[key]?.databaseHostStatus
+                    };
+                    databaseHostDataObj = {
+                        ...databaseHostDataObj,
+                        ...{ [key]: { ...perObj, hostType: GENERAL.ORACLE_TYPE } }
+                    };
+                } else {
+                    const perObj = { ...oracleTopologyHostData[key], loading: !!oracleFullHostDataLoading };
+                    databaseHostDataObj = {
+                        ...databaseHostDataObj,
+                        ...{ [key]: { ...perObj, hostType: GENERAL.ORACLE_TYPE } }
+                    };
+                }
+            });
+            dispatch(addOracleDatabaseHostsData(databaseHostDataObj));
+            dispatch(addMultiOracleDatabaseHostsData({ ...multiOracleDatabaseHostsData, ...databaseHostDataObj }));
+        }
+    }, [fullOracleHostData, oracleTopologyHostData, oracleFullHostDataLoading]);
 
     // This data is coming from discover API
     useEffect(() => {
@@ -1951,6 +2106,29 @@ const InventoryApisV3 = () => {
             }
         }
     }, [pgsqlDatabaseHostsData]);
+
+    // This data is coming from database-hosts oracle API
+    useEffect(() => {
+        const state = store.getState();
+        const { resetManagedData } = state.inventoryV2;
+        if (!resetManagedData && oracleDatabaseHostsData) {
+            const formattedInventoryTableData = formatInventoryTableData(oracleDatabaseHostsData);
+
+            // To Avoid overriding
+            const updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
+                const mergedDataArray = {
+                    ...mssqlInstancesDataRef.current,
+                    ...pgsqlInstancesDataRef.current,
+                    ...oracleInstancesDataRef.current
+                };
+                const updatedInventoryData = updateInstancesApiResponse(mergedDataArray, updatedResult);
+                dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
+            } else {
+                dispatch(setInventoryTableData(updatedResult));
+            }
+        }
+    }, [oracleDatabaseHostsData]);
 
     useEffect(() => {
         const state = store.getState();

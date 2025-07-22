@@ -23,7 +23,13 @@ const initialInventoryV2State: InventorySliceData = {
         databaseHostsLoading: false,
         fullHostDataLoading: false
     },
+    getOracleDatabaseHosts: {
+        databaseHostsData: null,
+        databaseHostsLoading: false,
+        fullHostDataLoading: false
+    },
     multiPgSqlDatabaseHostsData: null,
+    multiOracleDatabaseHostsData: null,
     discoveredHosts: {
         discoveredHostData: null,
         discoverHostLoading: false
@@ -164,11 +170,17 @@ const inventoryV2Slice = createSlice({
         setIsPgSqlDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
             state.getPgSqlDatabaseHosts.databaseHostsLoading = action.payload;
         },
+        setIsOracleDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
+            state.getOracleDatabaseHosts.databaseHostsLoading = action.payload;
+        },
         setIsFullHostDataLoading: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.fullHostDataLoading = action.payload;
         },
         setIsFullPgSqlHostDataLoading: (state, action: PayloadAction<any>) => {
             state.getPgSqlDatabaseHosts.fullHostDataLoading = action.payload;
+        },
+        setIsFullOracleHostDataLoading: (state, action: PayloadAction<any>) => {
+            state.getOracleDatabaseHosts.fullHostDataLoading = action.payload;
         },
         addDatabaseHostsDataV2: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.databaseHostsData = action.payload;
@@ -176,11 +188,17 @@ const inventoryV2Slice = createSlice({
         addPgSqlDatabaseHostsData: (state, action: PayloadAction<any>) => {
             state.getPgSqlDatabaseHosts.databaseHostsData = action.payload;
         },
+        addOracleDatabaseHostsData: (state, action: PayloadAction<any>) => {
+            state.getOracleDatabaseHosts.databaseHostsData = action.payload;
+        },
         addMultiMssqlDatabaseHostsDataV2: (state, action: PayloadAction<any>) => {
             state.multiMssqlDatabaseHostsData = action.payload;
         },
         addMultiPgSqlDatabaseHostsData: (state, action: PayloadAction<any>) => {
             state.multiPgSqlDatabaseHostsData = action.payload;
+        },
+        addMultiOracleDatabaseHostsData: (state, action: PayloadAction<any>) => {
+            state.multiOracleDatabaseHostsData = action.payload;
         },
         setIsDiscoveredHostData: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoveredHostData = action.payload;
@@ -363,14 +381,16 @@ const inventoryV2Slice = createSlice({
             state.perfMssqlInstancesData = {};
             state.unManagedPerfInstanceIdsList = [];
         },
-        resetInventoryLoading: (state, action: PayloadAction<any>) => {
+        resetInventoryLoading: state => {
             state.createResourceApiLoading = false;
             state.resetManagedData = false;
             state.isManagedHostListLoading = false;
             state.getDatabaseHosts.databaseHostsLoading = false;
             state.getPgSqlDatabaseHosts.databaseHostsLoading = false;
+            state.getOracleDatabaseHosts.databaseHostsLoading = false;
             state.getDatabaseHosts.fullHostDataLoading = false;
             state.getPgSqlDatabaseHosts.fullHostDataLoading = false;
+            state.getOracleDatabaseHosts.fullHostDataLoading = false;
             state.allmssqlHostAssessmentLoading = false;
             state.discoveredHosts.discoverHostLoading = false;
             state.discoveredOracleHosts.discoverOracleHostLoading = false;
@@ -397,10 +417,13 @@ export const {
     setIsManagedHostListLoading,
     setIsDatabaseHostsLoading,
     setIsPgSqlDatabaseHostsLoading,
+    setIsOracleDatabaseHostsLoading,
     setIsFullHostDataLoading,
     setIsFullPgSqlHostDataLoading,
+    setIsFullOracleHostDataLoading,
     addDatabaseHostsDataV2,
     addPgSqlDatabaseHostsData,
+    addOracleDatabaseHostsData,
     setIsDiscoveredHostData,
     setIsDiscoverHostLoading,
     setIsDiscoveredOracleHostData,
@@ -443,6 +466,7 @@ export const {
     resetRefreshData,
     addMultiMssqlDatabaseHostsDataV2,
     addMultiPgSqlDatabaseHostsData,
+    addMultiOracleDatabaseHostsData,
     setDashSandboxList,
     setDashSandboxSavings,
     setCreateResourceApiLoading,
