@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ReactComponent as ReviewDisabled } from '../../../../..//assets/Review-disabled.svg';
+import { ReactComponent as ReviewDisabled } from '../../../../../assets/Review-disabled.svg';
 import {
     AccordionItem,
     ManageInstanceAccordion
