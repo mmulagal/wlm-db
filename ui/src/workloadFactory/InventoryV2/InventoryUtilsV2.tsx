@@ -3030,7 +3030,7 @@ export const getOptimizationStatus = (
     const instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
     if (instanceRow && instanceRow?.assessments && instanceRow?.assessments?.lastAssessmentTimestamp) {
-        const { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessments, {});
+        const { cardsData } = getCardsData(instanceRow?.assessments, {});
         const optBreakDown = formatOptimizationBreakDown(cardsData);
         optimizationStatus =
             optBreakDown?.total?.notOptimized !== 0
@@ -3627,7 +3627,8 @@ export const deleteHostJobPolling = (
     jobId: string,
     dispatch: any,
     translation: any
-): Promise<'SUCCESS' | 'FAILED'> => new Promise(resolve => {
+): Promise<'SUCCESS' | 'FAILED'> =>
+    new Promise(resolve => {
         const jobInterval = setInterval(() => {
             addHostJobScApi({
                 accountID: store.getState().auth.accountId,

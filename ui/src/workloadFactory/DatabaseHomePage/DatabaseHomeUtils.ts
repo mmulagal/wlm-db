@@ -1,5 +1,4 @@
-// ToDo - Write utils dunction for dashboard page here
-import { get } from 'lodash';
+// eslint-disable-next-line import/no-cycle
 import store from '../../store/store';
 import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
@@ -678,6 +677,26 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     instanceAssessmentData?.awsBackup?.status,
                     instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
                 );
+                const isAllMssqlHighAvailability =
+                    instanceAssessmentData?.highAvailability?.length === 5 &&
+                    instanceAssessmentData?.highAvailability.every((item: any) =>
+                        [
+                            'shared-storage',
+                            'drive-letter',
+                            'cluster-quorum',
+                            'heartbeat-settings',
+                            'sqlServer-service'
+                        ].includes(item?.name)
+                    );
+
+                const isMssqlHighAvailabilityOptimized = instanceAssessmentData?.highAvailability?.every(
+                    (item: any) => {
+                        const configState = instanceAssessmentData?.dismissedConfigurations?.highAvailability?.find(
+                            (config: any) => config.configurationName === item.name
+                        )?.configState;
+                        return isOptimized(item?.status, configState);
+                    }
+                );
 
                 const isCloneOptimized = isOptimized(
                     instanceAssessmentData?.clone?.status,
@@ -702,7 +721,13 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 if (isApplicationOptimized && isMicrosoftSqlPatchOptimized && isMaxdopPatchOptimized) {
                     assessmentGroupedByCategory.application++;
                 }
-                if (isScheduledLoclaSnapshotOptimized && isCRROptimized && isScheduledAWSBackUpOptimized) {
+                if (
+                    isScheduledLoclaSnapshotOptimized &&
+                    isCRROptimized &&
+                    isScheduledAWSBackUpOptimized &&
+                    isMssqlHighAvailabilityOptimized &&
+                    isAllMssqlHighAvailability
+                ) {
                     assessmentGroupedByCategory.resiliency++;
                 }
 
@@ -716,9 +741,14 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
 };
 
 export const setConfigState = (configState: any, configName: string, state: string) => {
-    if (state && !configState[configName]?.includes(state)) {
+    // Initialize array if it doesn't exist
+    if (!configState[configName]) {
+        configState[configName] = [];
+    }
+
+    if (state && !configState[configName].includes(state)) {
         configState[configName] = [...configState[configName], state];
-    } else if (!state && !configState[configName]?.includes(CONFIG_STATES.ACTIVE)) {
+    } else if (!state && !configState[configName].includes(CONFIG_STATES.ACTIVE)) {
         configState[configName] = [...configState[configName], CONFIG_STATES.ACTIVE];
     }
     return configState;
@@ -743,6 +773,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         maxdopPatch: 0,
         scheduledLocalSnapshot: 0,
         scheduledawsBackup: 0,
+        mssqlhighAvailability: 0,
         clone: 0,
         crr: 0,
         total: 0,
@@ -767,6 +798,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         maxdopPatch: [],
         scheduledLocalSnapshot: [],
         scheduledawsBackup: [],
+        mssqlhighAvailability: [],
         clone: [],
         crr: []
     };
@@ -894,6 +926,28 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                         setConfigState(configState, 'operatingSystem', configStateVal);
                         return isOptimized(item?.status, configStateVal);
                     });
+
+                const isMssqlHighAvailabilityOptimized =
+                    instanceAssessmentData &&
+                    instanceAssessmentData?.highAvailability &&
+                    instanceAssessmentData?.highAvailability?.every((item: any) => {
+                        const configStateVal = instanceAssessmentData?.dismissedConfigurations?.highAvailability?.find(
+                            (config: any) => config?.configurationName === item.name
+                        )?.configState;
+                        setConfigState(configState, 'highAvailability', configStateVal);
+                        return isOptimized(item?.status, configStateVal);
+                    });
+                const isAllMssqlHighAvailability =
+                    instanceAssessmentData?.highAvailability?.length === 5 &&
+                    instanceAssessmentData?.highAvailability.every((item: any) =>
+                        [
+                            'shared-storage',
+                            'drive-letter',
+                            'cluster-quorum',
+                            'heartbeat-settings',
+                            'sqlServer-service'
+                        ].includes(item?.name)
+                    );
                 const isComputeRightsizingOptimized = isOptimized(
                     instanceAssessmentData?.compute?.status,
                     instanceAssessmentData?.dismissedConfigurations?.compute?.configState
@@ -1067,6 +1121,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.severityObj.crr =
                     GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.crr;
+
+                getAssessmentGroupedByConfigurations.mssqlhighAvailability +=
+                    isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.mssqlhighAvailability = 'Critical';
             }
         });
     });
@@ -1097,11 +1155,11 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                const { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(
-                    instance?.assessments,
-                    {}
+                const { cardsData } = getCardsData(instance?.assessments, {});
+                const optBreakDown = formatOptimizationBreakDown(
+                    cardsData,
+                    instance?.assessments?.databaseStorageType || ''
                 );
-                const optBreakDown = formatOptimizationBreakDown(cardsData);
                 let score = '';
                 score = `${optBreakDown?.total?.percent || '0'}%`;
                 const optimized = optBreakDown?.total?.optimized || 0;

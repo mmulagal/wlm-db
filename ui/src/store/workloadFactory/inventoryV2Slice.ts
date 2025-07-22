@@ -345,8 +345,10 @@ const inventoryV2Slice = createSlice({
             state.isManagedHostListLoading = true;
             state.getDatabaseHosts.databaseHostsLoading = true;
             state.getPgSqlDatabaseHosts.databaseHostsLoading = true;
+            state.getOracleDatabaseHosts.databaseHostsLoading = true;
             state.getDatabaseHosts.fullHostDataLoading = true;
             state.getPgSqlDatabaseHosts.fullHostDataLoading = true;
+            state.getOracleDatabaseHosts.fullHostDataLoading = true;
             state.allmssqlHostAssessmentLoading = true;
             state.getDatabaseHosts.databaseHostsData = null;
             state.getPgSqlDatabaseHosts.databaseHostsData = null;
@@ -395,6 +397,17 @@ const inventoryV2Slice = createSlice({
             state.discoveredHosts.discoverHostLoading = false;
             state.discoveredOracleHosts.discoverOracleHostLoading = false;
             state.discoveredPgsqlHosts.discoverPgsqlHostLoading = false;
+            state.dashSandboxList.loading = false;
+            state.dashSandboxSavings.loading = false;
+        },
+        resetManagedInventoryData: state => {
+            state.getDatabaseHosts.databaseHostsLoading = false;
+            state.getPgSqlDatabaseHosts.databaseHostsLoading = false;
+            state.getOracleDatabaseHosts.databaseHostsLoading = false;
+            state.getDatabaseHosts.fullHostDataLoading = false;
+            state.getPgSqlDatabaseHosts.fullHostDataLoading = false;
+            state.getOracleDatabaseHosts.fullHostDataLoading = false;
+            state.allmssqlHostAssessmentLoading = false;
             state.dashSandboxList.loading = false;
             state.dashSandboxSavings.loading = false;
         }
@@ -471,6 +484,7 @@ export const {
     setDashSandboxSavings,
     setCreateResourceApiLoading,
     resetInventoryLoading,
+    resetManagedInventoryData,
     setManageSingleInstanceChecks,
     setManageSingleInstanceReadiness,
     setManageSingleInstanceData,

@@ -1226,6 +1226,68 @@
         "totalObjectsInViolation": 1,
         "resourceType": "Filesystem"
     },
+    "highAvailability": [
+        {
+            "name": "shared-storage",
+            "status": "not-optimized",
+            "recommended": "All shared disks should be accessible by both nodes",
+            "severity": "critical",
+            "recommendation": "All shared disks (iSCSI LUNs) should be accessible by both nodes to allow failover.",
+            "tags": ["Reliability"],
+            "objectsInViolation": ["LUN-03", "LUN-07"],
+            "totalObjectsAssessed": 9,
+            "totalObjectsInViolation": 2,
+            "resourceType": "Lun"
+        },
+        {
+            "name": "drive-letter",
+            "status": "not-optimized",
+            "recommended": "Validate availability of same drive letters on standby node",
+            "severity": "critical",
+            "recommendation": "Validate availability of same drive letters on standby node.",
+            "tags": ["Reliability"],
+            "objectsInViolation": ["S:", "D:", "M:", "H:", "L:", "E:", "N:", "I:", "T:"],
+            "totalObjectsAssessed": 9,
+            "totalObjectsInViolation": 9,
+            "resourceType": "Lun"
+        },
+        {
+            "name": "cluster-quorum",
+            "status": "not-optimized",
+            "recommended": "Cluster quorum should be optimized",
+            "severity": "critical",
+            "recommendation": "The quorum configuration should be appropriate for the cluster size and environment.",
+            "tags": ["Reliability"],
+            "objectsInViolation": ["i-0a1f31a39bd2d9362", "i-0b2g42b40ce3e0473"],
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 2,
+            "resourceType": "EC2 instance"
+        },
+        {
+            "name": "heartbeat-settings",
+            "status": "not-optimized",
+            "recommended": "Heartbeat settings should be optimized",
+            "severity": "critical",
+            "recommendation": "Cluster heartbeat settings should be optimized to prevent unnecessary failovers.",
+            "tags": ["Reliability"],
+            "objectsInViolation": ["i-0a1f31a39bd2d9362", "i-0b2g42b40ce3e0473"],
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 2,
+            "resourceType": "EC2 instance"
+        },
+        {
+            "name": "sqlServer-service",
+            "status": "not-optimized",
+            "recommended": "SQL Server services should be set to start automatically",
+            "severity": "critical",
+            "recommendation": "SQL Server services should be set to start automatically and run on the primary node and stopped on the secondary node.",
+            "tags": ["Reliability"],
+            "objectsInViolation": ["i-0a1f31a39bd2d9362"],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "resourceType": "EC2 instance"
+        }
+    ],
     "clone": {
         "name": "clone-management",
         "status": "not-optimized",

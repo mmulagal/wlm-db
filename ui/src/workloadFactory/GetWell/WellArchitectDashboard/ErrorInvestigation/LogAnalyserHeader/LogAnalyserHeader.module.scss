@@ -45,7 +45,7 @@
                 .row {
                     display: flex;
                     gap: 4px;
-                    align-items: center;
+                    align-items: flex-start;
                 }
             }
         }
@@ -56,6 +56,10 @@
         min-width: 0;
         overflow: hidden;
         border-right: 1px solid var(--border);
+
+        .loadingClass {
+            height: 16px;
+        }
     }
 
     .columnWidth {

@@ -15,7 +15,7 @@ import {
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL, MSSQL_HIGH_AVAILABILITY_CONFIGS } from '../../../../utils/consts';
 import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
@@ -108,6 +108,16 @@ const DialogContent = ({
                 return 'Multipath I/O Sessions = 5';
             case 'Multipath I/O Timeout':
                 return 'Multipath I/O Timeout = 60 seconds';
+            case 'Shared storage':
+                return 'Driveletter mounted to nodename';
+            case 'Drive Letter':
+                return 'Driveletter changed to Driveletter';
+            case 'Heartbeat Settings':
+                return 'Heartbeat Settings enabled';
+            case 'Cluster Quorum':
+                return 'Cluster Quorum enabled';
+            case 'SQL Server Services':
+                return 'SQL Server Services = Running';
             default:
                 return '';
         }
@@ -990,6 +1000,332 @@ const DialogContent = ({
                                     </div>
                                     <DsTypography variant="Regular_14">
                                         {t('databases.well-architect.ntfs-allocation-optimization-steps5')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'Shared storage':
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.failover-cluster-action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.shared-storage-action-summary')}
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.what-will-happen')}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.shared-storage-what-will-happen')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.well-architected-configuration')}
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles.code}>
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note1')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note2')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'Drive Letter':
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.failover-cluster-action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.drive-letter-action-summary1')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.drive-letter-action-summary2')}
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.well-architected-configuration')}
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles.code}>
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.drive-letter-note1')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note2')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'Heartbeat Settings':
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.failover-cluster-action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.heartbeat-setting-action-summary')}
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.what-will-happen')}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.heartbeat-setting-what-will-happen')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.well-architected-configuration')}
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles.code}>
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note1')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note2')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'Cluster Quorum':
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.failover-cluster-action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.cluster-quorum-action-summary')}
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.what-will-happen')}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.cluster-quorum-what-will-happen')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.well-architected-configuration')}
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles.code}>
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note1')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note2')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'SQL Server Services':
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.failover-cluster-action-summary')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.sql-server-configuration-action-summary')}
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.what-will-happen')}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.sql-server-configuration-what-will-happen')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {t('databases.well-architect.well-architected-configuration')}
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles.code}>
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note1')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.failover-cluster-note2')}
                                     </DsTypography>
                                 </div>
                             </div>

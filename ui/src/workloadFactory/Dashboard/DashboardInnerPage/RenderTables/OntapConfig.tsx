@@ -63,10 +63,11 @@ const OntapConfig = () => {
                         (item: any) => item.status !== 'optimized' && !item?.errorMessage
                     );
                     const errorCase =
-                        instanceData?.assessments?.storage?.configuration?.luns?.[0]?.errorMessage &&
-                        instanceData?.assessments?.storage?.configuration?.volumes?.[0]?.errorMessage;
+                        (instanceData?.assessments?.storage?.configuration?.luns?.[0]?.errorMessage &&
+                            instanceData?.assessments?.storage?.configuration?.volumes?.[0]?.errorMessage) ||
+                        instanceData?.assessments?.storage?.errorMessage;
 
-                    if (notOptimized.length > 0 || errorCase) {
+                    if (notOptimized?.length > 0 || errorCase) {
                         ontapConfigAssessmentData.push({
                             credentialId: hostData?.credentialId,
                             regionId: hostData?.regionId,

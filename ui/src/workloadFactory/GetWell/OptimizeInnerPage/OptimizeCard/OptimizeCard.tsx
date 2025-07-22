@@ -1,17 +1,16 @@
-import { DsTypography, TooltipInfo } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './OptimizeCard.module.scss';
-import Tag from '../../../../common/Tag/Tag';
 import { GENERAL } from '../../../../utils/appConstants';
-import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
-import { WLF_TABS } from '../../../../utils/consts';
+import { WLF_TABS, ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 import RecommendationText from '../../RecommendationText/RecommendationText';
 
 const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { cloneDashboardData } = useAppSelector(state => state.getWellOptimize);
     const [setCardData, setSetCardData] = useState<any>({});
+
     useEffect(() => {
         if (selectedOptimizeConfig && !fromPage) {
             let dataObj = {};
@@ -190,6 +189,31 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText },
                     data: data?.recommendation
+                };
+            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+            case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
+            case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
+            case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
+                return {
+                    block_one: { type: 'Impacted EC2 instances', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
+                };
+            case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE:
+                return {
+                    block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
                 };
             case GENERAL.CRR:
                 return {

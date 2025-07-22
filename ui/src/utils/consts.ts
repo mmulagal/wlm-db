@@ -829,6 +829,12 @@ export const GETWELL_CONFIG: any = {
     'snapshot-policy': 'scheduled_local_snapshot',
     'aws-backup-policy': 'scheduled_FSx_for_ONTAP_backups',
     crr: 'crr',
+    mssqlhighavailability: 'mssql_high_availability',
+    'shared-storage': 'Shared storage',
+    'drive-letter': 'Drive Letter',
+    'heartbeat-settings': 'Heartbeat Settings',
+    'cluster-quorum': 'Cluster Quorum',
+    'sqlServer-service': 'SQL Server Services',
     clone: 'clone_management',
     'clone-management': 'clone_management'
 };
@@ -868,8 +874,14 @@ export const ASSESSMENT_CONFIG_NAMES = {
     OS: 'os',
     RSS_CONFIGURATION: 'Network adapter settings',
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
+    MSSQL_HIGH_AVAILABILITY: 'MSSQL High Availability',
     CLONE_MANAGEMENT: 'Clone cleanup',
-    LICENSE: 'License'
+    LICENSE: 'License',
+    SHARED_STORAGE: 'Shared storage',
+    DRIVE_LETTER: 'Drive Letter',
+    HEARTBEAT_SETTINGS: 'Heartbeat Settings',
+    CLUSTER_QUORUM: 'Cluster Quorum',
+    SQL_SERVER_SERVICE: 'SQL Server Services'
 };
 
 export const CONFIG_STATES = {
@@ -933,6 +945,7 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssqlPatch',
         [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'hostOsPatch',
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
+        [ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]: 'mssqlHighAvailability',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }
 };

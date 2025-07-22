@@ -681,7 +681,9 @@ const InstancesTable = () => {
             instanceTableRows?.map((row: any) => {
                 const { isDisabled, errorMessage } = disableManageCheck(row);
                 const optimizationData = getOptimizationStatusData(row, t);
-                let optimizationStatus; let optimizationDisableMsg; let optimizationIsDisabled;
+                let optimizationStatus;
+                let optimizationDisableMsg;
+                let optimizationIsDisabled;
                 if (
                     typeof optimizationData === 'object' &&
                     optimizationData !== null &&

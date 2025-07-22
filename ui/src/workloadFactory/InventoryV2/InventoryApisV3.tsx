@@ -43,7 +43,7 @@ import {
     setRemoveSecNodeDiscoveredList,
     setResetManagedData,
     setUnManagedPerfInstanceIdsList,
-    resetInventoryLoading
+    resetManagedInventoryData
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
     useCreateDemoResourcesMutation,
@@ -427,7 +427,7 @@ const InventoryApisV3 = () => {
             getAllSandboxListData(sandboxListData, null, credId, regionId);
             getAllSandboxSavingsData(sandboxSavingsData, credId, regionId);
         } else {
-            dispatch(resetInventoryLoading());
+            dispatch(resetManagedInventoryData());
         }
     };
 

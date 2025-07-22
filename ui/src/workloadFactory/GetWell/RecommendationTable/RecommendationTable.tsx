@@ -20,7 +20,7 @@ import {
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
-import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     setInProgressHostData,
@@ -179,11 +179,19 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             name === 'Multipath I/O Sessions' ||
             name === 'Multipath I/O Status' ||
             name === 'Multipath I/O Timeout' ||
+            name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
             from === WLF_TABS.DASHBOARD
         ) {
             return false;
         }
         return true;
+    };
+
+    const innerPageText = (name: string) => {
+        if (name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER) {
+            return 'View';
+        }
+        return 'View and fix';
     };
 
     const handleOntapDialog = (rowData: any) => {
@@ -408,7 +416,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                             >
                                 <div>
                                     <DsButton variant="secondary" isDisabled>
-                                        View and fix
+                                        {innerPageText(rowData?.name)}
                                     </DsButton>
                                 </div>
                             </TooltipComponent>
@@ -419,7 +427,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     onClick={() => handleDifferentNavigation(rowData)}
                                     isDisabled={rowData?.status !== 'Not optimized'}
                                 >
-                                    View and fix
+                                    {innerPageText(rowData?.name)}
                                 </DsButton>
                             </div>
                         ))}

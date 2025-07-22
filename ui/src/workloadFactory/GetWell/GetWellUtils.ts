@@ -13,6 +13,7 @@ import {
     setInProgressResourceOptimizeData,
     setIsInnerPageOptimize,
     setOntapConfigTableData,
+    setMssqlHighAvailabilityTableData,
     setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData,
@@ -716,6 +717,43 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'Scheduled FSx for ONTAP backups recommendation',
             description:
                 'Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. \nUse FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.'
+        },
+        tags: ['Reliability']
+    },
+    mssql_high_availability: {
+        id: 'mssql-high-availability',
+        mapName: ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
+        category: 'application',
+        block_one: {
+            type: GENERAL.RESILIENCY,
+            value: GENERAL.MSSQL_HIGH_AVAILABILITY
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'High availability',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Not optimized configurations',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'MSSQL High Availability recommendation',
+            description:
+                'To ensure high availability and disaster recovery for your SQL Server databases, we recommend implementing a high availability solution such as Always On Availability Groups or Failover Cluster Instances. This will help minimize downtime and data loss in the event of a failure.'
         },
         tags: ['Reliability']
     },
@@ -1721,8 +1759,80 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
     return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity };
 };
 
+// This function is used to format the MSSQL High Availability configuration data.
+export const formatMssqlHighAvailabilityConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string }
+) => {
+    let mssqlHATagsList: Array<string> = [];
+    let highestMssqlHASeverity = 'None';
+    const formatMssqlHighAvailabilityConfigList: PerConfigInterface[] = [];
+    let mssqlHACritical = 0;
+    let mssqlHAWarning = 0;
+
+    // Check for data in both possible structures
+    const mssqlHAData = data?.highAvailability || (data as any)?.['high-availability'];
+
+    if (mssqlHAData && !mssqlHAData?.[0]?.errorMessage) {
+        mssqlHAData.forEach((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+
+            formatMssqlHighAvailabilityConfigList.push({
+                ...item,
+                id: item?.name,
+                type: 'mssqlHighAvailability',
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[status] || status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+
+            if (item?.severity === 'critical') {
+                mssqlHACritical = 1;
+            } else if (item?.severity === 'warning') {
+                mssqlHAWarning = 1;
+            }
+            mssqlHATagsList = [...mssqlHATagsList, ...(item?.tags || [])];
+        });
+    }
+
+    if (mssqlHACritical === 1) {
+        highestMssqlHASeverity = 'Critical';
+    } else if (mssqlHAWarning === 1) {
+        highestMssqlHASeverity = 'Warning';
+    }
+
+    let mssqlHAOptimizedConfig = 0;
+    let mssqlHANotOptimizedConfig = 0;
+
+    // Count optimized vs not optimized configurations
+    if (mssqlHAData && !mssqlHAData?.[0]?.errorMessage) {
+        mssqlHAData.forEach((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            if (status === 'optimized') {
+                mssqlHAOptimizedConfig++;
+            } else {
+                mssqlHANotOptimizedConfig++;
+            }
+        });
+    }
+
+    return {
+        formatMssqlHighAvailabilityConfigList,
+        mssqlHATagsList,
+        mssqlHAOptimizedConfig,
+        mssqlHANotOptimizedConfig,
+        highestMssqlHASeverity
+    };
+};
+
 // This function is used to format the optimization breakdown data.
-export const formatOptimizationBreakDown = (cardsData: any) => {
+export const formatOptimizationBreakDown = (cardsData: any, selectedDatabaseStorageType?: string) => {
     let optimizedStorage = 0;
     let notOptimizedStorage = 0;
     let optimizedCompute = 0;
@@ -1803,6 +1913,12 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 notOptimizedApplication++;
             }
         } else if (nestedObject?.category === 'resiliency') {
+            // Skip MSSQL High Availability for non-FCI instances
+            const isMSSQLHighAvailability =
+                key === 'mssql_high_availability' || nestedObject?.id === 'mssql-high-availability';
+            if (isMSSQLHighAvailability && selectedDatabaseStorageType !== GENERAL.FCI) {
+                return; // Skip this card for non-FCI instances
+            }
             if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
@@ -2026,6 +2142,13 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
         formatOsConfig(data, optimizingData);
+    const {
+        formatMssqlHighAvailabilityConfigList,
+        mssqlHATagsList,
+        mssqlHAOptimizedConfig,
+        mssqlHANotOptimizedConfig,
+        highestMssqlHASeverity
+    } = formatMssqlHighAvailabilityConfig(data, optimizingData);
 
     cardsData = {
         ...cardsData,
@@ -2063,10 +2186,53 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             },
             tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
             category: 'storage'
+        },
+        mssql_high_availability: {
+            ...cardDataDefault?.mssql_high_availability,
+            block_two: {
+                ...cardDataDefault?.mssql_high_availability?.block_two,
+                value:
+                    (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0) !== 0
+                        ? mssqlHANotOptimizedConfig > 0
+                            ? 'Not optimized'
+                            : 'Optimized'
+                        : ''
+            },
+            block_three: {
+                ...cardDataDefault?.mssql_high_availability?.block_three,
+                value:
+                    mssqlHANotOptimizedConfig !== 0
+                        ? `${formatNumberWithCustomComma(
+                              (mssqlHANotOptimizedConfig / (mssqlHAOptimizedConfig + mssqlHANotOptimizedConfig)) * 100
+                          )}%`
+                        : '0%'
+            },
+            block_four: {
+                ...cardDataDefault?.mssql_high_availability?.block_four,
+                value: highestMssqlHASeverity
+            },
+            block_five: {
+                ...cardDataDefault?.mssql_high_availability?.block_five,
+                value: 'EC2 instance'
+            },
+            block_six: {
+                ...cardDataDefault?.mssql_high_availability?.block_five,
+                value: `${mssqlHANotOptimizedConfig || 0} out of ${
+                    (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0)
+                }`,
+                count: {
+                    totalObjectsAssessed: (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0),
+                    totalObjectsInViolation: mssqlHANotOptimizedConfig || 0
+                }
+            },
+            tags: mssqlHATagsList.filter(
+                (value: any, index: any, self: string | any[]) => self.indexOf(value) === index
+            ),
+            category: 'resiliency'
         }
     };
 
-    return { cardsData, formatOntapConfigList, formatOsConfigList };
+    return { cardsData, formatOntapConfigList, formatOsConfigList, formatMssqlHighAvailabilityConfigList };
 };
 
 // This function is used to format the get well data.
@@ -2076,12 +2242,10 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     if (!data) {
         data = state.getWellOptimize.driftAssessmentData || undefined;
     }
-    const { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(
-        data || ({} as AssessmentResponseInterface),
-        optimizingData
-    );
+    const { cardsData, formatOntapConfigList, formatOsConfigList, formatMssqlHighAvailabilityConfigList } =
+        getCardsData(data || ({} as AssessmentResponseInterface), optimizingData);
 
-    const optBreakDown = formatOptimizationBreakDown(cardsData);
+    const optBreakDown = formatOptimizationBreakDown(cardsData, state.getWellOptimize.selectedDatabaseStorageType);
 
     // For Reset Password data
     dispatch(
@@ -2100,6 +2264,9 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
 
     // Dispatch the formatted OS configuration data to the store
     dispatch(setOsConfigTableData(formatOsConfigList));
+
+    // Dispatch the formatted MSSQL High Availability configuration data to the store
+    dispatch(setMssqlHighAvailabilityTableData(formatMssqlHighAvailabilityConfigList));
 
     // Dispatch the formatted optimization breakdown data to the store
     dispatch(setOptimizationBreakDown(optBreakDown));
@@ -2176,7 +2343,7 @@ export const generateDate = () => {
 };
 
 // filters card data based on filter tags
-export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
+export const applyFilter = (cardData: any, optimizeFilterTags: any, selectedDatabaseStorageType?: string) => {
     const filteredCardData: any = {};
     let configCount = 0;
     const filters = groupByType(optimizeFilterTags, 'value');
@@ -2200,10 +2367,17 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
         scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
         crr: { category: 'Resiliency', subCategory: 'Protection' },
-        clone_management: { category: 'Cloning', subCategory: 'Cloning' }
+        clone_management: { category: 'Cloning', subCategory: 'Cloning' },
+        mssql_high_availability: { category: 'Resiliency', subCategory: 'Protection' }
     };
 
     Object.keys(cardData).map((key: any) => {
+        // Skip MSSQL High Availability for non-FCI instances (same logic as in formatOptimizationBreakDown)
+        const isMSSQLHighAvailability = key === 'mssql_high_availability';
+        if (isMSSQLHighAvailability && selectedDatabaseStorageType !== GENERAL.FCI) {
+            return; // Skip this card for non-FCI instances
+        }
+
         const checkCategory =
             !filters['all-catagories'] || filters['all-catagories']?.includes(categoryData[key]?.category);
         const checkSubCategory =
@@ -3721,6 +3895,10 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
             configKey = 'scheduledawsBackup';
+            break;
+
+        case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+            configKey = 'mssqlhighAvailability';
             break;
 
         case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:

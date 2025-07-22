@@ -211,7 +211,7 @@ const ErrorInvestigation = () => {
                                     </DsTypography>
                                 ) : (
                                     <DsTypography variant="Semibold_16">
-                                        {t('databases.log-analyzer.unique-errors')}
+                                        {t('databases.log-analyzer.unique-errors')} ({errorCardsData?.length})
                                     </DsTypography>
                                 )}
                             </div>
