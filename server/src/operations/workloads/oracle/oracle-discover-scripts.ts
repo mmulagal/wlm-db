@@ -1,4 +1,4 @@
-import { getOracleDefaultOrUserAuthCommand } from './oracle-ssm-script-utils';
+import { getMappedOntapDataVolume, getOracleDefaultOrUserAuthCommand } from './oracle-ssm-script-utils';
 
 const loadStorageDetectionModules = `
 
@@ -946,9 +946,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string) => `
                 PDB_DATABASE_DETAILS="null"
             fi
             
-            #isASMManaged=$(check_asm_managed $sid)
-            isASMManaged="FALSE"
-            
+            isASMManaged=$(check_asm_managed $sid)
             # Add comma if not first SID
             if [ "$firstSid" = true ]; then
                 firstSid=false
@@ -994,12 +992,150 @@ const getOracleDbMountDetails = (ec2InstanceId: string) => `
         }
     done <<< "$oratab_entries"
     finalResult+="}"
-    echo "$finalResult" | tr -d '\n' | tr -d ' '
+    mountPointData=$(echo "$finalResult" | tr -d '\n' | tr -d ' ')
 `;
+
+const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: string, region: string) => `
+    ${getOracleDbMountDetails(ec2InstanceId)}
+    filesystemid="${fsxnId}"
+    region="${region}"
+    volumeMappings="[]"
+    lunRecords="[]"
+    protocol=""
+    for sid in $(echo "$mountPointData" | jq -r 'keys[]'); do
+        sidData=$(echo "$mountPointData" | jq -r --arg sid "$sid" '.[$sid]')
+        isCDB=$(echo "$sidData" | jq -r '.isCDB')
+        isASMManaged=$(echo "$sidData" | jq -r '.isASMManaged')
+        if [ "$isASMManaged" == "true" ]; then
+            # TO-DO: add logic for ASM, Skip ASM managed instances for now
+            continue
+        fi
+        
+        if [ "$isCDB" == "false" ]; then
+            # Single tenant instance
+            ontapVolumes='{}'
+            for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+                fileTypeVolumes="[]"
+
+                mountDetails=$(echo "$sidData" | jq -c --arg ft "$fileType" '.mountDetails[$ft] // []')
+                
+                for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
+                    mountIP=$(echo "$mountDetail" | jq -r '.mountIP')
+                    mountPoint=$(echo "$mountDetail" | jq -r '.mountPoint')
+                    mountProtocol=$(echo "$mountDetail" | jq -r '.protocol')
+                    isAsm=$(echo "$mountDetail" | jq -r '.isAsmManaged')
+                    
+                    if [ -z "$protocol" ]; then
+                        protocol="$mountProtocol"
+                    fi
+                    
+                    if [ "$isAsm" == "true" ]; then
+                        isASMManaged="true"
+                    fi
+
+                    ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
+                    
+                    volumeName="$mountedVolume"
+                    
+                    if [ "$mountProtocol" == "iSCSI" ]; then
+                        # For iSCSI, extract LUN details
+                        lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
+                        volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\", \\"lunName\\": \\"$lunName\\"}"
+                        
+                        lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
+                        if [ -z "$lunExists" ]; then
+                            lunRecord="{\\"name\\": \\"$(echo "$response" | jq -r '.records[0].name')\\", \\"serial\\": \\"$mountPoint\\"}"
+                            lunRecords=$(echo "$lunRecords" | jq --argjson lr "$lunRecord" '. += [$lr]')
+                        fi
+                    else
+                        # For NFS
+                        volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\"}"
+                    fi
+                    
+                    fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
+                done
+                
+                ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+            done
+
+            sidMapping="{\\"$sid\\": {\\"isCDB\\": false, \\"ontapVolumes\\": $ontapVolumes}}"
+            volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+            
+        else
+            # CDB-PDB instance
+            pdbVolumes='{}'
+            
+            for pdb in $(echo "$sidData" | jq -r '.pdbMountDetails | keys[]'); do
+                pdbOntapVolumes='{}'
+                
+                for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+                    fileTypeVolumes="[]"
+                    mountDetails=$(echo "$sidData" | jq -c --arg pdb "$pdb" --arg ft "$fileType" '.pdbMountDetails[$pdb][$ft] // []')
+                    
+                    for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
+                        mountIP=$(echo "$mountDetail" | jq -r '.mountIP')
+                        mountPoint=$(echo "$mountDetail" | jq -r '.mountPoint')
+                        mountProtocol=$(echo "$mountDetail" | jq -r '.protocol')
+                        isAsm=$(echo "$mountDetail" | jq -r '.isAsmManaged')
+                        if [ -z "$protocol" ]; then
+                            protocol="$mountProtocol"
+                        fi
+                        
+                        if [ "$isAsm" == "true" ]; then
+                            isASMManaged="true"
+                        fi
+                        ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
+                        volumeName="$mountedVolume"
+                        
+                        if [ "$mountProtocol" == "iSCSI" ]; then
+                            # For iSCSI, extract LUN details
+                            lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
+                            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\", \\"lunName\\": \\"$lunName\\"}"
+                            
+                            # Add to LUN records if not already present
+                            lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
+                            if [ -z "$lunExists" ]; then
+                                lunRecord="{\\"name\\": \\"$(echo "$response" | jq -r '.records[0].name')\\", \\"serial\\": \\"$mountPoint\\"}"
+                                lunRecords=$(echo "$lunRecords" | jq --argjson lr "$lunRecord" '. += [$lr]')
+                            fi
+                        else
+                            # For NFS
+                            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\"}"
+                        fi
+                        
+                        fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
+                    done
+                    
+                    pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                done
+                
+                pdbVolumes=$(echo "$pdbVolumes" | jq --arg pdb "$pdb" --argjson pov "$pdbOntapVolumes" '.[$pdb] = $pov')
+            done
+            sidMapping="{\\"$sid\\": {\\"isCDB\\": true, \\"ontapVolumes\\": $pdbVolumes}}"
+            volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+        fi
+    done
+
+    result=$(jq -n \
+        --arg protocol "$protocol" \
+        --argjson lunRecords "$lunRecords" \
+        --arg isASMManaged "$isASMManaged" \
+        --argjson volumeMappings "$volumeMappings" \
+        '{
+            protocol: $protocol,
+            lunRecords: $lunRecords,
+            isASMManaged: ($isASMManaged == "true"),
+            VolumeMappings: $volumeMappings
+        }')
+    
+    echo "$result" | tr -d '\n' | tr -d ' '
+
+`;
+
 export {
     discoverOracleHosts,
     getStorageDetailsForRegisteredInstances,
     fetchOracleDatabasesCount,
     fetchOracleDatabasesDetails,
-    getOracleDbMountDetails
+    getMappedOntapDataVolumeForInstance
 };

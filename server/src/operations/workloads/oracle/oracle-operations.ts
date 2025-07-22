@@ -16,22 +16,16 @@ import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './co
 import { sqlResponseParsing } from '../../../utils/utils';
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
 import { DatabaseInstance, Metadata, OracleInstanceDetails, ResourceDetails } from '../../../utils/common-types';
-import {
-    getMappedOntapDataVolumeForInstance,
-    getOracleInstanceData,
-    getOracleProtectionData,
-    ORACLE_PERFORMANCE_METRICS
-} from './oracle-ssm-script-utils';
+import { getOracleInstanceData, getOracleProtectionData, ORACLE_PERFORMANCE_METRICS } from './oracle-ssm-script-utils';
 import getDatabaseInstanceTopology from '../../../utils/sql-utils';
 import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 import {
     fetchOracleDatabasesCount,
     fetchOracleDatabasesDetails,
-    getOracleDbMountDetails,
+    getMappedOntapDataVolumeForInstance,
     getStorageDetailsForRegisteredInstances
 } from './oracle-discover-scripts';
 import { listResources } from '../../../lib/database/db';
-import { GetOracleInstanceMountpointResponse } from './common-types';
 
 const logger = getLogger();
 
@@ -655,7 +649,7 @@ async function getOracleDatabaseMappedVolumes(
         if (!resourceDetail) {
             [resourceDetail] = await listResources(accountId, resourceId, credentialsId, region);
         }
-        if (isEmpty(resourceDetail)) {
+        if (!resourceDetail) {
             const errorMessage = `No database host by id ${resourceId} for ${accountId} is found.`;
             logger.error(errorMessage);
             throw Error(errorMessage);
@@ -667,13 +661,14 @@ async function getOracleDatabaseMappedVolumes(
             logger.error(errorMessage);
             throw Error(errorMessage);
         }
-        const commands = [getOracleDbMountDetails(node1InstanceId)];
-        const mountPointResponse = await callSsmExecution(
+
+        const mappedVolCommand = getMappedOntapDataVolumeForInstance(node1InstanceId, fsxid!, region);
+        const mappedVolRes = await callSsmExecution(
             credentialsId,
             region,
-            commands,
+            [mappedVolCommand],
             node1InstanceId,
-            'Get mount point details for Oracle db',
+            'Get mapped volume details for Oracle db',
             accountId,
             undefined,
             undefined,
@@ -681,38 +676,11 @@ async function getOracleDatabaseMappedVolumes(
             SSM_RUN_SHELL_SCRIPT_DOC,
             SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
-        const parsedMountPointResponse: Record<string, GetOracleInstanceMountpointResponse> =
-            sqlResponseParsing(mountPointResponse);
-        if (!parsedMountPointResponse) {
-            const errorMessage = `No active Oracle  database instances found on the host ${node1InstanceId}`;
-            logger.error(errorMessage);
-            throw Error(errorMessage);
-        }
-        const activeOracleInstances: string[] = Object.keys(parsedMountPointResponse);
-        const { isASMManaged } = parsedMountPointResponse[activeOracleInstances[0]];
-        if (!isASMManaged) {
-            const mappedVolCommand = getMappedOntapDataVolumeForInstance(parsedMountPointResponse, fsxid!, region);
-            const mappedVolRes = await callSsmExecution(
-                credentialsId,
-                region,
-                [mappedVolCommand],
-                node1InstanceId,
-                'Get mapped volume details for Oracle db',
-                accountId,
-                undefined,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            );
-            const paresedMappedVolRes = sqlResponseParsing(mappedVolRes);
-            return paresedMappedVolRes;
-        }
+        const parsedMappedVolRes = sqlResponseParsing(mappedVolRes);
+        return parsedMappedVolRes;
     } catch (err) {
-        const errorMessage = `Error fetching oracle instance info:,
-            ${err},
-            ${credentialsId},
-            ${region}`;
+        const errorMessage = `Error fetching oracle instance mapped volume information ${credentialsId},${region}, ${err}`;
+        logger.error(errorMessage);
         throw createError(errorMessage);
     }
 }

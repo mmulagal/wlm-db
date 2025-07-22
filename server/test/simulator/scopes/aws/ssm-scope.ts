@@ -908,6 +908,8 @@ ssmMock
     .resolves(getSampleCommandResponse('getPS7CheckDetails'))
     .on(SendCommandCommand, params => params.Comment === 'Validate Oracle Credentials')
     .resolves(getSampleCommandResponse('validateOracleCredentials'))
+    .on(SendCommandCommand, params => params.Comment === 'Get mapped volume details for Oracle db')
+    .resolves(getSampleCommandResponse('oracleMappedVolumeDetails'))
     .on(SendCommandCommand, params => {
         const commentString = /# Get the installed SQL Server version/;
         return commentString.test(params.Parameters.commands?.[0]);
@@ -1337,6 +1339,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'validateOracleCredentials',
             '{ "instances": [ { "oracleInstanceConnectivity": true, "oracleInstanceName": "ordbsdl", "oracleEdition": "19.0.0.0.0" } ], "fsxResults": [ { "ontapconnectivity": true, "fsxId": "fs-0d5efc3057c4f12cb" } ] }'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleMappedVolumeDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleMappedVolumeDetails',
+            '{"protocol":"NFS","lunRecords":[],"isASMManaged":false,"VolumeMappings":[{"oradbsan":{"isCDB":false,"ontapVolumes":{"REDO_LOGS":[{"volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}],"ARCHIVE_LOGS":[{"volumeName":"log_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}],"CONTROL_FILES":[{"volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"},{"volumeName":"oraredoctl_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}],"TEMP_FILES":[{"volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}],"DATA_FILES":[{"volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}]}}}]}'
         )
     )
     .on(GetCommandInvocationCommand, {
