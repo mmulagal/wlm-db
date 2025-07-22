@@ -311,7 +311,7 @@
             "scan-details": "Scan details",
             "display-activity": "Every scan analyzes the last 24 hours from the start time of the scan.",
             "include-errors": "Every scan includes upto 100 unique errors.",
-            "scan-now": "Scan now",
+            "scan-now": "Investigate now",
             "filters": "Filters",
             "severity": "Severity",
             "timeframe": "Timeframe",

@@ -1,12 +1,12 @@
 /* eslint-disable consistent-return */
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Chart, registerables } from 'chart.js';
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import styles from './UniqueErrorGraph.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { hexToRgb } from '../../../../../ui-components/Charts/chartCommon';
-import { ReactComponent as NoData } from '../../../../../assets/empty_table_message.svg';
 import { ReactComponent as LoadingEmptyGraph } from '../../../../../assets/loading_empty_graph.svg';
 import { getHourLabelsBetween, getMaxGraceValueLineGraph } from '../ErrorInvestigationUtility';
 import { formatTimeAMPM } from '../../../../../utils/utilityFunctions';
@@ -21,6 +21,7 @@ interface ErrorLineGraphProps {
 }
 
 const ErrorLineGraph = ({ startTime, endTime, color, data }: ErrorLineGraphProps) => {
+    const { t } = useTranslation();
     const chartRef = useRef<HTMLCanvasElement>(null);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { noData, investigationDatesLoading } = useAppSelector(state => state?.agenticAI);
@@ -302,14 +303,15 @@ const ErrorLineGraph = ({ startTime, endTime, color, data }: ErrorLineGraphProps
         <>
             {noData && (
                 <div className={styles.noData}>
-                    <NoData />
+                    <LoadingEmptyGraph />
+                    <DsTypography variant="Regular_14">{t('databases.log-analyzer.n/a')}</DsTypography>
                 </div>
             )}
             {loading && (
                 <div className={styles.noData}>
                     <LoadingEmptyGraph />
                     <div className={styles.loadingText}>
-                        <DsTypography variant="Regular_14">Loading data</DsTypography>
+                        <DsTypography variant="Regular_14">{t('databases.log-analyzer.loading-data')}</DsTypography>
                         <DsFlashingDotsLoader />
                     </div>
                 </div>

@@ -33,6 +33,12 @@
                     flex-direction: row;
                     gap: 8px;
                 }
+
+                svg {
+                    path {
+                        fill: var(--grey-30);
+                    }
+                }
             }
         }
 
