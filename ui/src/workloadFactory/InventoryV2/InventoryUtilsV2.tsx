@@ -3029,7 +3029,7 @@ export const getOptimizationStatus = (
     const instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
     if (instanceRow && instanceRow?.assessments && instanceRow?.assessments?.lastAssessmentTimestamp) {
-        const { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessments, {});
+        const { cardsData } = getCardsData(instanceRow?.assessments, {});
         const optBreakDown = formatOptimizationBreakDown(cardsData);
         optimizationStatus =
             optBreakDown?.total?.notOptimized !== 0
@@ -3489,7 +3489,7 @@ const callDeleteHost = async (
     const state: any = store.getState().snapCenter;
     const deleteHostRes = await deleteHostSc({
         accountID: store.getState().auth.accountId,
-        hostId: hostId,
+        hostId,
         agentID: state.selectedAgent[0]?.id,
         workspaceID: state?.workSpaceData?.id
     });
@@ -3587,7 +3587,7 @@ export const addHostJobPolling = async (
                         subJob?.status === JOB_MONITORING_STATUS.FAILED
                     ) {
                         hasCalledDeleteHost = true;
-                        //calling delete host api to remove the stale entry
+                        // calling delete host api to remove the stale entry
                         await callDeleteHost(addHostJobScApi, dispatch, translation, subJob?.data?.host, deleteHostSc);
 
                         errorMsg = translation('databases.inventory.package-installation-failed');
@@ -3622,8 +3622,8 @@ export const deleteHostJobPolling = (
     jobId: string,
     dispatch: any,
     translation: any
-): Promise<'SUCCESS' | 'FAILED'> => {
-    return new Promise(resolve => {
+): Promise<'SUCCESS' | 'FAILED'> =>
+    new Promise(resolve => {
         const jobInterval = setInterval(() => {
             addHostJobScApi({
                 accountID: store.getState().auth.accountId,
@@ -3653,7 +3653,6 @@ export const deleteHostJobPolling = (
                 });
         }, SC_JOB_INTERVAL);
     });
-};
 
 const errorMapping = (error: string, rowData: any) => {
     if (error.includes("Cannot read properties of undefined (reading 'includes')")) {

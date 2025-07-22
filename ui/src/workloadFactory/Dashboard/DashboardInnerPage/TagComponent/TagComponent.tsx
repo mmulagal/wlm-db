@@ -105,7 +105,14 @@ const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
             case 'Cross-Region Replication (CRR)':
                 setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                 break;
-
+            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+            case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE:
+            case ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER:
+            case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
+            case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
+            case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
+                setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
+                break;
             case 'ONTAP':
             case 'Operating system':
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:

@@ -2,6 +2,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import { useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './RenderTables.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -22,7 +23,8 @@ import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
 
-const OperatingSystemTable = () => {
+const MSSQLHighAvailabilityConfig = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
 
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
@@ -33,7 +35,7 @@ const OperatingSystemTable = () => {
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const tableData = useMemo(() => {
-        const OSAssessmentData: any = [];
+        const mssqlHAAssessmentData: any = [];
         const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
@@ -53,36 +55,41 @@ const OperatingSystemTable = () => {
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const notOptimized = instanceData?.assessments?.storage?.configuration?.os
-                        ?.filter((item: any) => item.status !== 'optimized' && !item?.errorMessage)
-                        .map((item: any) => ({ ...item, id: item?.name }));
-                    const errorCase =
-                        instanceData?.assessments?.storage?.configuration?.os?.[0]?.errorMessage ||
-                        instanceData?.assessments?.storage?.errorMessage;
+                    const mssqlHAData = instanceData?.assessments?.highAvailability || [];
 
-                    if (notOptimized?.length > 0 || errorCase) {
-                        OSAssessmentData.push({
-                            credentialId: hostData?.credentialId,
-                            regionId: hostData?.regionId,
-                            databaseHostId: hostData?.databaseHostId,
-                            instanceId: instanceData?.databaseInstanceId,
-                            serverInstanceName: instanceData?.databaseInstanceName,
-                            configuration: !errorCase
-                                ? `${notOptimized.length} out of ${instanceData?.assessments?.storage?.configuration?.os?.length}`
-                                : '0 out of 0',
-                            hostName: hostData?.databaseHostName,
-                            fullData: formatAssessmentTableData(notOptimized),
-                            credentialName: matchingCredEntry?.name,
-                            regionName: matchingRegionEntry?.regionName,
-                            accountId: matchingCredEntry?.providerAccountId
-                        });
+                    if (mssqlHAData && Array.isArray(mssqlHAData)) {
+                        // Filter for not-optimized configurations only
+                        const notOptimized = mssqlHAData
+                            .filter((item: any) => item.status !== 'optimized' && !item?.errorMessage)
+                            .map((item: any) => ({ ...item, id: item?.name }));
+
+                        const errorCase = mssqlHAData?.[0]?.errorMessage || mssqlHAData?.length === 0;
+
+                        if (notOptimized.length > 0 || errorCase) {
+                            mssqlHAAssessmentData.push({
+                                credentialId: hostData?.credentialId,
+                                regionId: hostData?.regionId,
+                                databaseHostId: hostData?.databaseHostId,
+                                instanceId: instanceData?.databaseInstanceId,
+                                serverInstanceName: instanceData?.databaseInstanceName,
+                                configuration: !errorCase
+                                    ? `${notOptimized.length} out of ${mssqlHAData.length}`
+                                    : '0 out of 0',
+                                hostName: hostData?.databaseHostName,
+                                fullData: formatAssessmentTableData(notOptimized),
+                                credentialName: matchingCredEntry?.name,
+                                regionName: matchingRegionEntry?.regionName,
+                                accountId: matchingCredEntry?.providerAccountId,
+                                sqlServerDeploymentType: instanceData?.sqlServerDeploymentType
+                            });
+                        }
                     }
                 }
             });
         });
         const tableRows = mapHostStatusToAssessmentData(
             inventoryTableData,
-            OSAssessmentData,
+            mssqlHAAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
         return disableOfflineRows(tableRows);
@@ -91,11 +98,13 @@ const OperatingSystemTable = () => {
         inventoryTableData,
         getDatabaseHosts,
         headerSelectedMultiCredIdsList,
-        headerSelectedMultiRegionIdsList
+        headerSelectedMultiRegionIdsList,
+        credentialData,
+        regionsData
     ]);
 
     const lastColDetails = () => ({
-        id: '4',
+        id: '7',
         Header: '',
         accessor: '',
         isSticky: true,
@@ -134,7 +143,7 @@ const OperatingSystemTable = () => {
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'SQL Server instance name ',
+            Header: t('databases.well-architect.dashboard-table-headers.sql-server-instance-name'),
             accessor: 'serverInstanceName',
             id: '1',
             isSortable: false,
@@ -144,14 +153,14 @@ const OperatingSystemTable = () => {
             renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
-            Header: 'Host name',
+            Header: t('databases.well-architect.dashboard-table-headers.host-name'),
             accessor: 'hostName',
             id: '2',
             width: '200px',
             filterOptions: 'auto'
         },
         {
-            Header: 'Not-optimized configuration',
+            Header: t('databases.well-architect.dashboard-table-headers.not-optimized-configuration'),
             accessor: 'configuration',
             id: '3',
             width: '250px',
@@ -160,21 +169,21 @@ const OperatingSystemTable = () => {
         },
         {
             id: '4',
-            Header: 'AWS credentials',
+            Header: t('databases.well-architect.dashboard-table-headers.aws-credentials'),
             accessor: 'credentialName',
             filterOptions: 'auto',
             width: '180px'
         },
         {
             id: '5',
-            Header: 'AWS account',
+            Header: t('databases.well-architect.dashboard-table-headers.aws-account'),
             accessor: 'accountId',
             filterOptions: 'auto',
             width: '180px'
         },
         {
             id: '6',
-            Header: 'Region',
+            Header: t('databases.well-architect.dashboard-table-headers.region'),
             accessor: 'regionName',
             filterOptions: 'auto',
             width: '180px'
@@ -242,4 +251,4 @@ const OperatingSystemTable = () => {
     );
 };
 
-export default OperatingSystemTable;
+export default MSSQLHighAvailabilityConfig;

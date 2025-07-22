@@ -38,7 +38,6 @@ import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
-import CloneManagementTable from './InnerTables/CloneManagementTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
@@ -154,6 +153,12 @@ const OptimizeInnerPage = () => {
                 setCardHeight({
                     recommendationSection: '120px',
                     tagSection: '216px'
+                });
+                break;
+            default:
+                setCardHeight({
+                    recommendationSection: '160px',
+                    tagSection: '256px'
                 });
                 break;
         }
@@ -615,6 +620,8 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
+            default:
+                return null;
         }
     };
 

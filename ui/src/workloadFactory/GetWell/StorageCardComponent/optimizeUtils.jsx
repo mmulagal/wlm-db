@@ -7,7 +7,8 @@ import DialogContent from './DialogContent/DialogContent';
 export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, cardData, operation, singleRowData) => {
     if (
         type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
-        type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH
+        type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH ||
+        type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER
     ) {
         setDialog(
             <DialogComponent

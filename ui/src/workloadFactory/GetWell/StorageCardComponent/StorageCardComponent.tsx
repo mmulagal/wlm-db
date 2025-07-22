@@ -10,6 +10,7 @@ import {
 } from '@netapp/design-system';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
@@ -69,6 +70,7 @@ import { backupStartTime, formatDateAssess } from '../../../utils/utilityFunctio
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const [dismissAction, setDismissAction] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -960,6 +962,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 {!optimizePrintState &&
                     cardData?.block_one?.value !== 'ONTAP' &&
                     cardData?.block_one?.value !== 'Operating system' &&
+                    cardData?.block_one?.value !== t('databases.general.mssql-high-availability') &&
                     (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
                     cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                         <div
@@ -1034,57 +1037,59 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     ))}
 
                 {/* Section 7 */}
-                {cardData?.block_one?.value !== 'ONTAP' && cardData?.block_one?.value !== 'Operating system' && (
-                    <ButtonWithDropdown
-                        variant="icon"
-                        isDisabled={loading || dismissAction}
-                        items={[
-                            {
-                                id: 'activate',
-                                children: GENERAL.REACTIVATE,
-                                isDisabled:
-                                    cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVE ||
-                                    cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING ||
-                                    !cardData?.dismissedObj?.configState,
-                                onClick: () => {
-                                    handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
+                {cardData?.block_one?.value !== 'ONTAP' &&
+                    cardData?.block_one?.value !== 'Operating system' &&
+                    cardData?.block_one?.value !== t('databases.general.mssql-high-availability') && (
+                        <ButtonWithDropdown
+                            variant="icon"
+                            isDisabled={loading || dismissAction}
+                            items={[
+                                {
+                                    id: 'activate',
+                                    children: GENERAL.REACTIVATE,
+                                    isDisabled:
+                                        cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVE ||
+                                        cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING ||
+                                        !cardData?.dismissedObj?.configState,
+                                    onClick: () => {
+                                        handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
+                                    },
+                                    title: GENERAL.REACTIVATE_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
+                                    }
                                 },
-                                title: GENERAL.REACTIVATE_TOOLTIP,
-                                titleProps: {
-                                    placement: 'left'
-                                }
-                            },
-                            {
-                                id: 'postponeFor30Days',
-                                children: GENERAL.POSTPONE_FOR_30_DAYS,
-                                isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED,
-                                onClick: () => {
-                                    handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
+                                {
+                                    id: 'postponeFor30Days',
+                                    children: GENERAL.POSTPONE_FOR_30_DAYS,
+                                    isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED,
+                                    onClick: () => {
+                                        handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
+                                    },
+                                    title: GENERAL.POSTPONED_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
+                                    }
                                 },
-                                title: GENERAL.POSTPONED_TOOLTIP,
-                                titleProps: {
-                                    placement: 'left'
+                                {
+                                    id: 'dismiss',
+                                    children: GENERAL.DISMISS,
+                                    isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED,
+                                    onClick: () => {
+                                        handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);
+                                    },
+                                    title: GENERAL.DISMISS_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
+                                    }
                                 }
-                            },
-                            {
-                                id: 'dismiss',
-                                children: GENERAL.DISMISS,
-                                isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED,
-                                onClick: () => {
-                                    handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);
-                                },
-                                title: GENERAL.DISMISS_TOOLTIP,
-                                titleProps: {
-                                    placement: 'left'
-                                }
-                            }
-                        ]}
-                    >
-                        <div className={loading || dismissAction ? styles.actionMenu : ''}>
-                            <ActionMenu />
-                        </div>
-                    </ButtonWithDropdown>
-                )}
+                            ]}
+                        >
+                            <div className={loading || dismissAction ? styles.actionMenu : ''}>
+                                <ActionMenu />
+                            </div>
+                        </ButtonWithDropdown>
+                    )}
             </div>
         </div>
     );

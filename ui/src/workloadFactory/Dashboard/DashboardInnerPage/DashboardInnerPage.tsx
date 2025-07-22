@@ -28,6 +28,7 @@ import LogFileTable from './RenderTables/LogFileTable';
 import TempDBPlacement from './RenderTables/TempDBPlacement';
 import ComputeRightSizingTable from './RenderTables/ComputeRightSizingTable';
 import OntapConfig from './RenderTables/OntapConfig';
+import MSSQLHighAvailabilityConfig from './RenderTables/MSSQLHighAvailabilityConfig';
 import OperatingSystemTable from './RenderTables/OperatingSystemTable';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
@@ -942,6 +943,21 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '112px',
+                    tagHeight: '209px',
+                    data: {
+                        title: 'Recommendations',
+                        description: 'Expand instances to view FCI configuration recommendations.'
+                    }
+                });
+                break;
 
             case 'Operating system':
                 setValueCardData({
@@ -1079,7 +1095,6 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
@@ -1194,7 +1209,8 @@ const DashboardInnerPage = () => {
                 );
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                 return <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-
+            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+                return <MSSQLHighAvailabilityConfig />;
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
                 return <CloneManagementTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
         }

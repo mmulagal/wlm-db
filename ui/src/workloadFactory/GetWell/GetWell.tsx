@@ -78,12 +78,13 @@ const GetWell = () => {
         cardData,
         ontapConfigTableData,
         osConfigTableData,
-
+        mssqlHighAvailabilityTableData,
         isAssessmentAvailable,
         selectedResourceId,
         selectedDatabaseInstance,
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId,
+        selectedDatabaseStorageType,
         isInnerPageOptimize,
         gwTimestamp
     } = useAppSelector(state => state.getWellOptimize);
@@ -256,10 +257,10 @@ const GetWell = () => {
 
     // To apply filters on change of filters or card data
     useEffect(() => {
-        const { data, configCount } = applyFilter(cardData, optimizeFilterTags);
+        const { data, configCount } = applyFilter(cardData, optimizeFilterTags, selectedDatabaseStorageType);
         setFilteredCardData(data);
         setConfigCount(configCount);
-    }, [cardData, optimizeFilterTags, ontapConfigTableData, osConfigTableData]);
+    }, [cardData, optimizeFilterTags, ontapConfigTableData, osConfigTableData, selectedDatabaseStorageType]);
 
     const refreshGetWellPage = () => {
         handleFilterClearAll();
@@ -2319,7 +2320,8 @@ const GetWell = () => {
                             {/* Section six */}
                             {(filteredCardData?.scheduled_local_snapshot ||
                                 filteredCardData?.crr ||
-                                filteredCardData?.scheduled_FSx_for_ONTAP_backups) && (
+                                (selectedDatabaseStorageType === GENERAL.FCI &&
+                                    filteredCardData?.mssql_high_availability)) && (
                                 <div className={styles.sectionClass}>
                                     <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                         <DsTypography
@@ -2404,7 +2406,6 @@ const GetWell = () => {
                                                 />
                                             </div>
                                         )}
-
                                         {filteredCardData?.crr && (
                                             <div className={styles.combineComponent}>
                                                 <StorageCardComponent
@@ -2540,10 +2541,83 @@ const GetWell = () => {
                                                 />
                                             </div>
                                         )}
+
+                                        {selectedDatabaseStorageType === GENERAL.FCI &&
+                                            filteredCardData?.mssql_high_availability && (
+                                                <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
+                                                    <StorageCardComponent
+                                                        cardData={filteredCardData?.mssql_high_availability}
+                                                        optimizePrintState={optimizePrintState}
+                                                        type={GENERAL.MSSQL_HIGH_AVAILABILITY}
+                                                    />
+                                                    <DsAccordion
+                                                        id="22"
+                                                        variant="Default"
+                                                        isDisabled={
+                                                            loading ||
+                                                            !cardData?.mssql_high_availability?.block_two?.value
+                                                        }
+                                                        isExpanded={isAccordionExpanded('22', optimizePrintState)}
+                                                        onExpandChange={isExpanded => {
+                                                            handleAccordionExpanded('22', isExpanded);
+                                                        }}
+                                                        onClick={() => setClickedAccordionId('22')}
+                                                        title={
+                                                            <div className={styles.tagPlacement}>
+                                                                {filteredCardData?.mssql_high_availability?.tags?.map(
+                                                                    (perTag: string, index: number) => (
+                                                                        <div key={index}>
+                                                                            <Tag text={perTag} />
+                                                                        </div>
+                                                                    )
+                                                                )}
+                                                            </div>
+                                                        }
+                                                        headerActions={[
+                                                            <div className={styles.headerAction}>
+                                                                <div
+                                                                    className={
+                                                                        isDarkTheme && !loading
+                                                                            ? styles['dark-theme-light']
+                                                                            : ''
+                                                                    }
+                                                                >
+                                                                    {loading ||
+                                                                    !cardData?.mssql_high_availability?.block_two
+                                                                        ?.value ? (
+                                                                        <LightDisabled />
+                                                                    ) : (
+                                                                        <Light />
+                                                                    )}
+                                                                </div>
+                                                                <div
+                                                                    style={{
+                                                                        color:
+                                                                            loading ||
+                                                                            !cardData?.mssql_high_availability
+                                                                                ?.block_two?.value
+                                                                                ? 'var(--text-disabled)'
+                                                                                : 'var(--text-button-primary)'
+                                                                    }}
+                                                                >
+                                                                    View recommendations & optimizations
+                                                                </div>
+                                                            </div>
+                                                        ]}
+                                                        children={
+                                                            <RecommendationTable
+                                                                tableData={mssqlHighAvailabilityTableData}
+                                                                isLoading={loading}
+                                                                optimizePrintState={optimizePrintState}
+                                                                from={WLF_TABS.INVENTORY}
+                                                            />
+                                                        }
+                                                    />
+                                                </div>
+                                            )}
                                     </div>
                                 </div>
                             )}
-
                             {/* Section seven */}
                             {filteredCardData?.clone_management && (
                                 <div className={styles.sectionClass}>

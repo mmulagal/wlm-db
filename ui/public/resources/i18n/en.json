@@ -35,7 +35,8 @@
             "protected": "Protected",
             "not_protected": "Not protected",
             "manage-analysis-state": "Manage Analysis State",
-            "not-available": "N/A"
+            "not-available": "N/A",
+            "mssql-high-availability": "MSSQL High Availability"
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "No instances are eligible for registration at this time.",
@@ -184,6 +185,20 @@
             "file-system-headroom-option2-content3": "Choose File systems.",
             "file-system-headroom-option2-content4": "Select the FSx for ONTAP file system that you want to update SSD storage capacity.",
             "file-system-headroom-option2-content5": "Update storage capacity to the desired capacity.",
+            "failover-cluster-action-summary": "Workload Factory recommends updating the failover configuration of SQL to ensure high availability and reduce downtime.",
+            "shared-storage-action-summary": "All shared disks (iSCSI LUNs) should be accessible by both nodes to allow failover.",
+            "shared-storage-what-will-happen": "The iSCSI LUN will be mounted to both nodes.",
+            "failover-cluster-note1": "This process will require a temporary downtime of your SQL Server services. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.",
+            "failover-cluster-note2": "Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.",
+            "drive-letter-action-summary1": "All drive letters of shared LUNs should be available on secondary host to avoid conflicts during takeover.",
+            "drive-letter-action-summary2": "Drives with conficting driver letters on secondary hosts should be manually re-connected with an available drive letter.",
+            "drive-letter-note1": "This process will require a temporary downtime of your SQL Server services. Addtioanly, this change might require cahnges in applications or scripts accessing this path.  Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.",
+            "heartbeat-setting-action-summary": "Cluster heartbeat settings should be optimized to prevent unnecessary failovers.",
+            "heartbeat-setting-what-will-happen": "Cluster heartbeat settings should be optimized to prevent unnecessary failovers.",
+            "cluster-quorum-action-summary": "The quorum configuration should be appropriate for the cluster size and environment.",
+            "cluster-quorum-what-will-happen": "Cluster quorum settings should be optimized to prevent unnecessary failovers.",
+            "sql-server-configuration-action-summary": "SQL Server services should be set to start automatically and run on the primary node and stopped on the secondary node.",
+            "sql-server-configuration-what-will-happen": "Server services will be set to start automatically and run on the primary node and stopped on the secondary node.",
             "tags": {
                 "title": "Tags",
                 "noTagsAvailable": "No tags available",
@@ -198,7 +213,15 @@
             "not-optimized-instances": "Not-optimized instances",
             "severity": "Severity",
             "analysis-state": "Analysis state",
-            "instances": "Instances"
+            "instances": "Instances",
+            "dashboard-table-headers": {
+                "sql-server-instance-name": "SQL Server instance name",
+                "host-name": "Host name",
+                "not-optimized-configuration": "Not-optimized configuration",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            }
         },
         "update-credentials": {
             "password-info-heading": "The password must be:",

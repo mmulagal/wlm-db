@@ -3,59 +3,6 @@ export interface ResetDetailsInterface {
     ec2InstanceId: string;
 }
 
-export interface GetWellSliceInterface {
-    resetDetails: ResetDetailsInterface;
-    visitedTabs: any;
-    selectedWellArchitectTab: string;
-    selectedCloneTab: string;
-    optimizePageLoading: boolean | null;
-    driftAssessmentData: AssessmentResponseInterface | null;
-    isAssessmentAvailable: boolean;
-    selectedHostname: string;
-    selectedResourceId: string;
-    selectedDatabaseInstance: string;
-    selectedDatabaseInstanceName: string;
-    selectedGwInstanceCredId: string;
-    selectedGwInstanceRegionId: string;
-    selectedDatabaseStorageType: string;
-    selectedRowFsxId: string;
-    cardData: any;
-    osConfigTableData: PerConfigInterface[] | null;
-    ontapConfigTableData: PerConfigInterface[] | null;
-    optimizationBreakDown: {
-        storage?: CountBreakDown;
-        compute?: CountBreakDown;
-        application?: CountBreakDown;
-        resiliency?: CountBreakDown;
-        cloning?: CountBreakDown;
-        total?: CountBreakDown;
-    } | null;
-    gwRefreshPage: boolean;
-    gwTimestamp: string;
-    gwRefreshTimestamp: string;
-    optimizingData: any;
-    optimizingInstanceData: boolean;
-    selectedRecommendedInstance: any;
-    selectedSnapshotPolicy: any;
-    selectedSnapshot: any;
-    selectedAWSBackup: any;
-    credIdFromJM: string;
-    regionFromJM: string;
-    landingFrom: string;
-    inProgressOptimizationData: any;
-    inProgressResourceOptimizeData: any;
-    inProgressHostData: any;
-    jobToInstanceMap: any;
-    jobToInstanceMapForBulk: any;
-    recommendedInstanceInBulk?: any;
-    landingFromInnerPage?: boolean;
-    isInnerPageOptimize?: boolean;
-    gwAdhocError?: string;
-    cloneDashboardData: any;
-    cloneIsOptimizedRows: any;
-    inProgressStateData: any;
-}
-
 interface CountBreakDown {
     total?: number;
     optimized?: number;
@@ -65,50 +12,21 @@ interface CountBreakDown {
     warning?: number;
 }
 
-export interface AssessmentResponseInterface {
-    dismissedConfigurations?: any;
-    fileSystemId: string;
-    ec2InstanceId: string;
-    databaseInstanceName: string;
-    lastAssessmentTimestamp?: string;
-    storage?: {
-        timestamp?: string;
-        optimisedCount?: {
-            total?: number;
-            optimised?: number;
-        };
-        configuration?: {
-            volumes?: PerConfigInterface[];
-            luns?: PerConfigInterface[];
-            os?: PerConfigInterface[];
-        };
-        sizing?: PerConfigInterface[];
-        layout?: PerConfigInterface[];
-    };
-    compute?: PerConfigInterface;
-    rssConfig?: PerConfigInterface;
-    license?: PerConfigInterface;
-    hostOsPatch?: PerConfigInterface;
-    mssqlPatch?: PerConfigInterface;
-    maxDOP?: PerConfigInterface;
-    snapshotPolicy?: PerConfigInterface;
-    awsBackup?: PerConfigInterface;
-    crr?: PerConfigInterface;
-    clone?: PerConfigInterface;
-}
-
-export interface HostAssessmentResponseInterface {
-    databaseInstanceId: string;
-    assessments?: AssessmentResponseInterface;
-    error?: string;
-}
-
 export interface RSSConfigAdapterInterface {
     adapterName?: string;
     rssProfile?: string;
     rssEnabled?: boolean;
     baseProcessorNumber?: string;
     numberOfReceiveQueues?: string;
+}
+
+export interface PerDriveObjInterface {
+    databaseName?: string;
+    logDriveLetter?: string;
+    dataDriveLetter?: string;
+    logDrivePercent?: number;
+    logDriveTotalSizeMB?: number;
+    dataDriveTotalSizeMB?: number;
 }
 
 export interface PerConfigInterface {
@@ -174,17 +92,43 @@ export interface PerConfigInterface {
     };
 }
 
-export interface PerDriveObjInterface {
-    databaseName?: string;
-    logDriveLetter?: string;
-    dataDriveLetter?: string;
-    logDrivePercent?: number;
-    logDriveTotalSizeMB?: number;
-    dataDriveTotalSizeMB?: number;
+export interface AssessmentResponseInterface {
+    dismissedConfigurations?: any;
+    fileSystemId: string;
+    ec2InstanceId: string;
+    databaseInstanceName: string;
+    lastAssessmentTimestamp?: string;
+    storage?: {
+        timestamp?: string;
+        optimisedCount?: {
+            total?: number;
+            optimised?: number;
+        };
+        configuration?: {
+            volumes?: PerConfigInterface[];
+            luns?: PerConfigInterface[];
+            os?: PerConfigInterface[];
+        };
+        sizing?: PerConfigInterface[];
+        layout?: PerConfigInterface[];
+    };
+    compute?: PerConfigInterface;
+    rssConfig?: PerConfigInterface;
+    license?: PerConfigInterface;
+    hostOsPatch?: PerConfigInterface;
+    mssqlPatch?: PerConfigInterface;
+    maxDOP?: PerConfigInterface;
+    snapshotPolicy?: PerConfigInterface;
+    awsBackup?: PerConfigInterface;
+    highAvailability?: Array<{ [Key: string]: PerConfigInterface }>;
+    crr?: PerConfigInterface;
+    clone?: PerConfigInterface;
 }
 
-export interface GwCardDataInterface {
-    [key: string]: GwPerConfigCardInterface;
+export interface HostAssessmentResponseInterface {
+    databaseInstanceId: string;
+    assessments?: AssessmentResponseInterface;
+    error?: string;
 }
 
 export interface GwPerConfigCardInterface {
@@ -237,6 +181,10 @@ export interface GwPerConfigCardInterface {
     };
 }
 
+export interface GwCardDataInterface {
+    [key: string]: GwPerConfigCardInterface;
+}
+
 export interface GwSqlServerInstanceInterface {
     sqlServerInstance: string;
     sqlServerState?: string;
@@ -245,4 +193,58 @@ export interface GwSqlServerInstanceInterface {
     sqlServerEdition: string;
     sqlServerEngineEdition?: number;
     sqlServerName?: string;
+}
+
+export interface GetWellSliceInterface {
+    resetDetails: ResetDetailsInterface;
+    visitedTabs: any;
+    selectedWellArchitectTab: string;
+    selectedCloneTab: string;
+    optimizePageLoading: boolean | null;
+    driftAssessmentData: AssessmentResponseInterface | null;
+    isAssessmentAvailable: boolean;
+    selectedHostname: string;
+    selectedResourceId: string;
+    selectedDatabaseInstance: string;
+    selectedDatabaseInstanceName: string;
+    selectedGwInstanceCredId: string;
+    selectedGwInstanceRegionId: string;
+    selectedDatabaseStorageType: string;
+    selectedRowFsxId: string;
+    cardData: any;
+    osConfigTableData: PerConfigInterface[] | null;
+    ontapConfigTableData: PerConfigInterface[] | null;
+    mssqlHighAvailabilityTableData: PerConfigInterface[] | null;
+    optimizationBreakDown: {
+        storage?: CountBreakDown;
+        compute?: CountBreakDown;
+        application?: CountBreakDown;
+        resiliency?: CountBreakDown;
+        cloning?: CountBreakDown;
+        total?: CountBreakDown;
+    } | null;
+    gwRefreshPage: boolean;
+    gwTimestamp: string;
+    gwRefreshTimestamp: string;
+    optimizingData: any;
+    optimizingInstanceData: boolean;
+    selectedRecommendedInstance: any;
+    selectedSnapshotPolicy: any;
+    selectedSnapshot: any;
+    selectedAWSBackup: any;
+    credIdFromJM: string;
+    regionFromJM: string;
+    landingFrom: string;
+    inProgressOptimizationData: any;
+    inProgressResourceOptimizeData: any;
+    inProgressHostData: any;
+    jobToInstanceMap: any;
+    jobToInstanceMapForBulk: any;
+    recommendedInstanceInBulk?: any;
+    landingFromInnerPage?: boolean;
+    isInnerPageOptimize?: boolean;
+    gwAdhocError?: string;
+    cloneDashboardData: any;
+    cloneIsOptimizedRows: any;
+    inProgressStateData: any;
 }

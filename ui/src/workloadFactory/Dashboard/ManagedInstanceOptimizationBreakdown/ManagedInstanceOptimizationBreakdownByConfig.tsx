@@ -989,6 +989,46 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         )}
                     </div>
                 </div>
+                <div className={styles.tile}>
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
+                        configData.mssqlhighAvailability || 0,
+                        t('databases.general.mssql-high-availability'),
+                        configData?.configState?.mssqlhighAvailability
+                    )}
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <DsButton
+                            variant="secondary"
+                            isThin
+                            data-testid="wlm-db-optimize-mssql-high-availability"
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
+                            }}
+                            isDisabled={
+                                hasDismissedOrPosponed(configData?.configState?.mssqlhighAvailability) !== '' ||
+                                loading ||
+                                configData?.total === 0 ||
+                                configData?.mssqlhighAvailability === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]?.length > 0
+                            }
+                        >
+                            {GENERAL.VIEW_AND_FIX}
+                        </DsButton>
+
+                        <Popover
+                            children={GENERAL.COMING_SOON}
+                            trigger="hover"
+                            container={
+                                <div className={styles.editDisableIcon}>
+                                    <Edit />
+                                </div>
+                            }
+                        />
+                    </div>
+                </div>
 
                 <div className={styles.tile}>
                     {hasDismissedOrPosponed(configData?.configState?.clone) || showNA ? (

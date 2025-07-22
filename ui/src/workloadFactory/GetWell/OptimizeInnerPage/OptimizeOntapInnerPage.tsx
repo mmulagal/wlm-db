@@ -5,7 +5,7 @@ import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
 import OptimizeCard from './OptimizeCard/OptimizeCard';
 import { useAppSelector } from '../../../store/storeHooks';
 
@@ -15,7 +15,6 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
-    setLandingFrom,
     setLandingFromInnerPage,
     setOptimizingData,
     setOptimizingInstanceData
@@ -34,6 +33,7 @@ import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
 import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
 import OntapTableWithData from './InnerTables/OntapTableWithData';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
+import MSSQLHighAvailabilityTableWithData from './InnerTables/MSSQLHighAvailabilityTableWithData';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
@@ -85,6 +85,17 @@ const OptimizeOntapInnerPage = () => {
                 });
                 break;
             case 'Multipath I/O Policy':
+                setCardHeight({
+                    recommendationSection: '180px',
+                    tagSection: '276px'
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+            case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE:
+            case ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER:
+            case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
+            case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
+            case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
                 setCardHeight({
                     recommendationSection: '180px',
                     tagSection: '276px'
@@ -345,6 +356,20 @@ const OptimizeOntapInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
+            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+            case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE:
+            case ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER:
+            case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
+            case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
+            case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
+                return (
+                    <MSSQLHighAvailabilityTableWithData
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
             default:
                 return (
                     <OntapTable
@@ -358,6 +383,15 @@ const OptimizeOntapInnerPage = () => {
     };
 
     const setHeading = () => {
+        if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE
+        ) {
+            return `MSSQL High Availability / ${selectedOptimizeConfig?.type}`;
+        }
         if (
             selectedOptimizeConfig?.type !== 'Multipath I/O Policy' &&
             selectedOptimizeConfig?.type !== 'NTFS allocation unit size'
