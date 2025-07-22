@@ -73,7 +73,7 @@
             },
             {
                 "label": "Explore savings",
-                "to": "/databases/explore-savings"
+                "to": "/databases/explore-savings-ebs"
             },
             {
                 "label": "Job monitoring",
