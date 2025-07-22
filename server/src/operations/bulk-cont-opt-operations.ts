@@ -561,55 +561,18 @@ async function handleBulkComputeOptimization(
     }
 }
 
-async function handleHASharedStorageOptimization(
+async function runHASharedStorageOptimization(
     accountId: string,
     optimizationCategory: string,
     hostsToOptimize: {
         configurationName: OptimizeHighAvailabilityParams;
         databaseHosts: OptimizeHASharedStorageRequestBodyType[];
-    }[]
+    }[],
+    parentJobId: string
 ) {
     logger.info(
-        `Handle High Availability shared storage optimization: ${accountId}, optimizationCategory: ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}`
+        `Starting runHASharedStorageOptimization for accountId: ${accountId}, optimizationCategory: ${optimizationCategory}, parentJobId: ${parentJobId}, hostsToOptimize count: ${hostsToOptimize?.length}`
     );
-    if (isEmpty(hostsToOptimize)) {
-        const errorMessage = 'databaseHosts cannot be empty.';
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
-    }
-
-    // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
-    // Control concurrency to 3 using throat
-    await Promise.all(
-        hostsToOptimize.map(
-            throat(3, async host => {
-                host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeHASharedStorageRequestBodyType>(
-                    accountId,
-                    host.databaseHosts
-                );
-            })
-        )
-    );
-    const jobMetadata: JobMetadata = {
-        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
-    };
-
-    const jobDescription = 'Fix shared storage for High Availability Cluster';
-    logger.info(
-        `Starting shared storage optimization for High Availability Cluster. Account: ${accountId}, Category: ${optimizationCategory}`
-    );
-    const parentJobId = await handleOptimizeJobCreation(
-        accountId,
-        '',
-        '',
-        accountId,
-        JOBTYPE.WELL_ARCHITECTED,
-        jobDescription,
-        jobDescription,
-        undefined,
-        jobMetadata
-    );
-
     try {
         // Collect all ONTAP LUN UUIDs from all SQL Server instances across all hosts
         const ontapLunUuids = hostsToOptimize
@@ -624,18 +587,18 @@ async function handleHASharedStorageOptimization(
 
         logger.info(`ONTAP LUN UUIDs extracted for optimization: ${JSON.stringify(ontapLunUuids)}`);
 
-        if (!ontapLunUuids) {
+        if (!ontapLunUuids || ontapLunUuids.length === 0) {
             logger.warn('No ONTAP LUN UUIDs found. Skipping shared storage optimization');
             return;
         }
 
         switch (optimizationCategory) {
             case OptimizeHighAvailabilityParams.SHARED_STORAGE:
-                logger.info('Initiating shared storage optimization');
+                logger.info('Initiating shared storage optimization for High Availability Cluster');
                 await handleSharedStorageOptimize(accountId, ontapLunUuids, hostsToOptimize, parentJobId);
                 break;
             default:
-                logger.warn(`Optimization category "${optimizationCategory}" is not supported`);
+                logger.warn(`Optimization category "${optimizationCategory}" is not supported for shared storage`);
                 break;
         }
     } catch (error: unknown) {
@@ -651,8 +614,67 @@ async function handleHASharedStorageOptimization(
             AuditStatus.FAILED,
             `Error occurred while optimizing shared storage for account ${accountId}`
         );
-        throw error;
     }
+}
+
+async function handleHASharedStorageOptimization(
+    accountId: string,
+    optimizationCategory: string,
+    hostsToOptimize: {
+        configurationName: OptimizeHighAvailabilityParams;
+        databaseHosts: OptimizeHASharedStorageRequestBodyType[];
+    }[]
+) {
+    logger.info(
+        `Starting handleHASharedStorageOptimization for accountId: ${accountId}, optimizationCategory: ${optimizationCategory}, hostsToOptimize count: ${hostsToOptimize?.length}`
+    );
+    if (isEmpty(hostsToOptimize)) {
+        const errorMessage =
+            'No database hosts provided for shared storage optimization. Please provide at least one host.';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+
+    // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
+    await Promise.all(
+        hostsToOptimize.map(
+            throat(3, async host => {
+                logger.info(
+                    `Validating and filtering databaseHosts for High Availability shared storage optimization. AccountId: ${accountId}, Host configuration: ${host.configurationName}`
+                );
+                host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeHASharedStorageRequestBodyType>(
+                    accountId,
+                    host.databaseHosts
+                );
+            })
+        )
+    );
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
+    };
+
+    const jobDescription = 'Fix shared storage for High Availability Cluster';
+    logger.info(
+        `Creating optimization job for shared storage in High Availability Cluster. Account: ${accountId}, Category: ${optimizationCategory}`
+    );
+    const parentJobId = await handleOptimizeJobCreation(
+        accountId,
+        '',
+        '',
+        accountId,
+        JOBTYPE.WELL_ARCHITECTED,
+        jobDescription,
+        jobDescription,
+        undefined,
+        jobMetadata
+    );
+
+    logger.info(
+        `Optimization job created for shared storage in High Availability Cluster. ParentJobId: ${parentJobId}`
+    );
+
+    runHASharedStorageOptimization(accountId, optimizationCategory, hostsToOptimize, parentJobId);
+
     return { jobId: parentJobId };
 }
 

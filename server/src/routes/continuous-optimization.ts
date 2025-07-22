@@ -356,7 +356,6 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        // add apis for high availability here..
         .post(
             `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/resiliency/aws-backup`,
             { schema: BulkOptimizeAwsBackupSchema },

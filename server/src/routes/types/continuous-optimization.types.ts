@@ -652,16 +652,12 @@ const FlattenedInstance = Type.Object({
 });
 type FlattenedInstanceType = Static<typeof FlattenedInstance>;
 
-const IgroupDetail = Type.Object({
+const LunDetail = Type.Object({
+    lunUuid: Type.String(),
+    lunName: Type.String(),
     igroupName: Type.String(),
     igroupUuid: Type.String(),
     initiatorNames: Type.Union([Type.Array(Type.String()), Type.String()])
-});
-type IgroupDetailType = Static<typeof IgroupDetail>;
-
-const LunDetail = Type.Object({
-    lunUuid: Type.String(),
-    igroupDetails: Type.Array(IgroupDetail)
 });
 type LunDetailType = Static<typeof LunDetail>;
 
@@ -746,6 +742,5 @@ export {
     OptimizeHASharedStorageRequestBody,
     FlattenedInstanceType,
     LunDetailType,
-    OptimizationPreparationType,
-    IgroupDetailType
+    OptimizationPreparationType
 };
