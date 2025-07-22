@@ -1,3 +1,4 @@
+import { IgroupMissingInitiators } from '../../../utils/common-types';
 import { ontapRestRequest, ontapRestRequestBootstrap } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 
@@ -93,7 +94,7 @@ $response | ConvertTo-Json -Depth 5 -Compress
 Stop-Transcript | Out-Null
 `;
 
-const ADD_INITIATOR_TO_IGROUP = (fsxId: string, region: string, initiator: string, igroupName: string) => `
+const ADD_INITIATOR_TO_IGROUP = (fsxId: string, region: string, igroupMissingIqnsList: IgroupMissingInitiators[]) => `
 # Add initiator to igroup Script
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 
@@ -102,25 +103,37 @@ ${ontapRestRequestBootstrap}
 
 $FSxID = '${fsxId}'
 $FSxRegion = '${region}'
-$IgroupName = '${igroupName}'
-$Initiator = '${initiator}'
+$IgroupMissingIqnsList = '${JSON.stringify(igroupMissingIqnsList)}' | ConvertFrom-Json
 
 $response = @{
-                result = 'success'
-                error = ''}
+        result = 'success'
+        error = ''}
 try {
-    $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
-    $FSxCredentials = $FSxNDetails.FSxCredentials
-    $FSxHostName = $FSxNDetails.FSxHostName
-                    
-    Connect-NcController -Name $FSxHostName -Credential $FSxCredentials 
-    Add-NcIgroupInitiator -Name $IgroupName -Initiator $Initiator
+        $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
+        $FSxCredentials = $FSxNDetails.FSxCredentials
+        $FSxHostName = $FSxNDetails.FSxHostName              
+        Connect-NcController -Name $FSxHostName -Credential $FSxCredentials 
+        
+        foreach ($IgroupMissingIqn in $IgroupMissingIqnsMap) {
+                $IgroupName = $IgroupMissingIqn.igroupName
+                $Initiators = $IgroupMissingIqn.missingIqns
+                foreach ($Initiator in $Initiators) {
+                        try {
+                                Add-NcIgroupInitiator -Name $IgroupName -Initiator $Initiator
+                        } catch {
+                                $response.result = 'partial'
+                                $response.error += $($_.Exception.Message)
+                                Write-Error "Failed to add initiator $Initiator to igroup $IgroupName: $($_.Exception.Message)"
+                        }
+                }
+        }
 } catch {
         $response.result = 'failed'
-        $response.error = $($_.Exception.Message)
+        $response.error += $($_.Exception.Message)
         Write-Error "Failed to add initiator to igroup: $($_.Exception.Message)"
 }
-        return $response
+$response | ConvertTo-Json -Compress
+Stop-Transcript | Out-Null
 `;
 
 export {

@@ -41,7 +41,7 @@ import {
     bulkCloneOptimization,
     bulkComputeOptimization,
     bulkOptimization,
-    handleHASharedStorageOptimization
+    bulkHASharedStorageOptimization
 } from '../operations/bulk-cont-opt-operations';
 import {
     getAvailableSnapshotPolicyList,
@@ -409,7 +409,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
-                const response = await handleHASharedStorageOptimization(
+                const response = await bulkHASharedStorageOptimization(
                     accountId,
                     OptimizeHighAvailabilityParams.SHARED_STORAGE,
                     hostsToOptimize

@@ -625,7 +625,7 @@ const OptimizeHASharedStorageRequestBody = Type.Object({
     sqlServerInstances: Type.Array(
         Type.Object({
             databaseInstanceId: Type.String({ minLength: 1 }),
-            ontapLunUuids: Type.Array(Type.String({ minLength: 1 }))
+            ontapLunPaths: Type.Array(Type.String({ minLength: 1 }))
         })
     ),
     credentialsId: Type.String({ minLength: 1 }),
@@ -637,6 +637,8 @@ const BulkOptimizeHASharedStorageRequestBody = Type.Object({
     configurationName: Type.Enum(OptimizeHighAvailabilityParams),
     databaseHosts: Type.Array(OptimizeHASharedStorageRequestBody)
 });
+
+type BulkOptimizeHASharedStorageRequestBodyType = Static<typeof BulkOptimizeHASharedStorageRequestBody>;
 
 const BulkOptimizeHASharedStorageBody = Type.Object({
     hostsToOptimize: Type.Array(BulkOptimizeHASharedStorageRequestBody)
@@ -742,5 +744,6 @@ export {
     OptimizeHASharedStorageRequestBody,
     FlattenedInstanceType,
     LunDetailType,
-    OptimizationPreparationType
+    OptimizationPreparationType,
+    BulkOptimizeHASharedStorageRequestBodyType
 };

@@ -11,7 +11,8 @@ import {
     CloneDetailType,
     OptimizeClonesPerHostRequestBodyType,
     OptimizePerHostRequestBodyType,
-    OptimizeHASharedStorageRequestBodyType
+    OptimizeHASharedStorageRequestBodyType,
+    BulkOptimizeHASharedStorageRequestBodyType
 } from '../routes/types/continuous-optimization.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import {
@@ -30,8 +31,7 @@ import {
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeComputeJobNames,
-    OptimizeComputeParams,
-    OptimizeHighAvailabilityParams
+    OptimizeComputeParams
 } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
@@ -561,73 +561,15 @@ async function handleBulkComputeOptimization(
     }
 }
 
-async function runHASharedStorageOptimization(
+async function bulkHASharedStorageOptimization(
     accountId: string,
     optimizationCategory: string,
-    hostsToOptimize: {
-        configurationName: OptimizeHighAvailabilityParams;
-        databaseHosts: OptimizeHASharedStorageRequestBodyType[];
-    }[],
-    parentJobId: string
+    hostsToOptimize: BulkOptimizeHASharedStorageRequestBodyType[]
 ) {
     logger.info(
-        `Starting runHASharedStorageOptimization for accountId: ${accountId}, optimizationCategory: ${optimizationCategory}, parentJobId: ${parentJobId}, hostsToOptimize count: ${hostsToOptimize?.length}`
+        `Starting bulkHASharedStorageOptimization for accountId: ${accountId}, optimizationCategory: ${optimizationCategory}, hostsToOptimize count: ${hostsToOptimize?.length}`
     );
-    try {
-        // Collect all ONTAP LUN UUIDs from all SQL Server instances across all hosts
-        const ontapLunUuids = hostsToOptimize
-            .flatMap(({ databaseHosts }) =>
-                databaseHosts.flatMap(({ sqlServerInstances }) =>
-                    sqlServerInstances.flatMap(
-                        ({ ontapLunUuids: instanceOntapLunUuids }) => instanceOntapLunUuids || []
-                    )
-                )
-            )
-            .filter(Boolean);
 
-        logger.info(`ONTAP LUN UUIDs extracted for optimization: ${JSON.stringify(ontapLunUuids)}`);
-
-        if (!ontapLunUuids || ontapLunUuids.length === 0) {
-            logger.warn('No ONTAP LUN UUIDs found. Skipping shared storage optimization');
-            return;
-        }
-
-        switch (optimizationCategory) {
-            case OptimizeHighAvailabilityParams.SHARED_STORAGE:
-                logger.info('Initiating shared storage optimization for High Availability Cluster');
-                await handleSharedStorageOptimize(accountId, ontapLunUuids, hostsToOptimize, parentJobId);
-                break;
-            default:
-                logger.warn(`Optimization category "${optimizationCategory}" is not supported for shared storage`);
-                break;
-        }
-    } catch (error: unknown) {
-        logger.error(`Failed to optimize shared storage. Reason: ${(error as Error)?.message || error}`, {
-            stack: (error as Error)?.stack
-        });
-        await updateJobDetails(accountId, parentJobId, {
-            status: JOBSTATUS.FAILED,
-            error: (error as Error)?.message || String(error),
-            endTime: Date.now()
-        });
-        updateLongRunningAuditGroup(
-            AuditStatus.FAILED,
-            `Error occurred while optimizing shared storage for account ${accountId}`
-        );
-    }
-}
-
-async function handleHASharedStorageOptimization(
-    accountId: string,
-    optimizationCategory: string,
-    hostsToOptimize: {
-        configurationName: OptimizeHighAvailabilityParams;
-        databaseHosts: OptimizeHASharedStorageRequestBodyType[];
-    }[]
-) {
-    logger.info(
-        `Starting handleHASharedStorageOptimization for accountId: ${accountId}, optimizationCategory: ${optimizationCategory}, hostsToOptimize count: ${hostsToOptimize?.length}`
-    );
     if (isEmpty(hostsToOptimize)) {
         const errorMessage =
             'No database hosts provided for shared storage optimization. Please provide at least one host.';
@@ -639,9 +581,6 @@ async function handleHASharedStorageOptimization(
     await Promise.all(
         hostsToOptimize.map(
             throat(3, async host => {
-                logger.info(
-                    `Validating and filtering databaseHosts for High Availability shared storage optimization. AccountId: ${accountId}, Host configuration: ${host.configurationName}`
-                );
                 host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeHASharedStorageRequestBodyType>(
                     accountId,
                     host.databaseHosts
@@ -649,14 +588,12 @@ async function handleHASharedStorageOptimization(
             })
         )
     );
+
     const jobMetadata: JobMetadata = {
         hostsToOptimize: await formatJobMetadata(hostsToOptimize)
     };
 
-    const jobDescription = 'Fix shared storage for High Availability Cluster';
-    logger.info(
-        `Creating optimization job for shared storage in High Availability Cluster. Account: ${accountId}, Category: ${optimizationCategory}`
-    );
+    const jobDescription = 'Fix shared storage for high availability cluster';
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         '',
@@ -669,11 +606,7 @@ async function handleHASharedStorageOptimization(
         jobMetadata
     );
 
-    logger.info(
-        `Optimization job created for shared storage in High Availability Cluster. ParentJobId: ${parentJobId}`
-    );
-
-    runHASharedStorageOptimization(accountId, optimizationCategory, hostsToOptimize, parentJobId);
+    handleSharedStorageOptimize(accountId, hostsToOptimize, parentJobId);
 
     return { jobId: parentJobId };
 }
@@ -801,4 +734,4 @@ async function validateRequestDetails(accountId: string, credentialsId: string, 
     return true;
 }
 
-export { bulkOptimization, bulkComputeOptimization, bulkCloneOptimization, handleHASharedStorageOptimization };
+export { bulkOptimization, bulkComputeOptimization, bulkCloneOptimization, bulkHASharedStorageOptimization };
