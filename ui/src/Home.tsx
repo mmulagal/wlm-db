@@ -21,7 +21,7 @@ import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
 import { useRunOnce } from './common/hooks/useRunOnce';
-import { setRoutePath, setTabInfoFOrBXP } from './utils/utilityFunctions';
+import { checkLeftNavRoute, setRoutePath, setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
 
@@ -67,7 +67,7 @@ const Home = () => {
     });
 
     useEffect(() => {
-        if (isWorkloadFactory && navigationPath && navigationPath !== '/databases/explore-savings-ebs') {
+        if (isWorkloadFactory && navigationPath && checkLeftNavRoute(navigationPath)) {
             navigate(navigationPath);
         }
     }, [navigationPath]);

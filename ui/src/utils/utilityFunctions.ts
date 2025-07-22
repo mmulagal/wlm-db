@@ -1962,6 +1962,19 @@ export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolea
     });
 };
 
+export const checkLeftNavRoute = (route: string) => {
+    if (
+        route === '/databases/dashboard' ||
+        route === '/databases/inventory' ||
+        route === '/databases/sandboxes' ||
+        route === '/databases/explore-savings' ||
+        route === '/databases/job-monitor'
+    ) {
+        return true;
+    }
+    return false;
+};
+
 export const handleURLFromDashboard = (value: string, isWorkloadFactory: boolean, navigate?: any) => {
     let path = '';
     if (isWorkloadFactory) {
