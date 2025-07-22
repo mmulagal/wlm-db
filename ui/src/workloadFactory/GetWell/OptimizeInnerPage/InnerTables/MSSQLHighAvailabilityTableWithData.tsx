@@ -19,18 +19,27 @@ const MSSQLHighAvailabilityTableWithData = ({ type, data, lastColDetails, handle
         colName: 'LUN name',
         tableHeader: 'LUN'
     });
-
     const tableData = useMemo(() => {
         let id = 0;
-        if (data?.resourceType === 'Lun') {
+        if (data?.name === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE) {
             setTableConfig({
-                colName: 'LUN name',
+                colName: 'LUN Name',
                 tableHeader: 'LUN'
             });
-        } else if (data?.resourceType === 'EC2 instance') {
+        } else if (data?.name === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM) {
             setTableConfig({
-                colName: 'Instance name',
-                tableHeader: 'EC2 instance'
+                colName: 'Quorum Type',
+                tableHeader: 'Cluster'
+            });
+        } else if (data?.name === ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS) {
+            setTableConfig({
+                colName: 'Settings',
+                tableHeader: 'heartbeat setting'
+            });
+        } else if (data?.name === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE) {
+            setTableConfig({
+                colName: 'SQL instance',
+                tableHeader: 'SQL instance'
             });
         }
         return (

@@ -192,10 +192,30 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                 };
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
             case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
+                return {
+                    block_one: { type: 'Impacted heartbeat settings', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
+                };
             case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
+                return {
+                    block_one: { type: 'Impacted clusters', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
+                };
             case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
                 return {
-                    block_one: { type: 'Impacted EC2 instances', value: data.totalObjectsInViolation || '0' },
+                    block_one: { type: 'Impacted SQL instances', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Critical' },
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendation },
