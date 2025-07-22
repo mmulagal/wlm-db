@@ -96,7 +96,6 @@ export const initialInstanceTableColState = {
     5: {
         isHidden: false
     },
-
     6: {
         isHidden: false
     },

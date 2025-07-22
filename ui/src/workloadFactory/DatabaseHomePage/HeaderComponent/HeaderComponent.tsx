@@ -708,7 +708,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             setQueue([]);
             setCurrentIndex(0);
             setPendingQueriesCounter(0);
-            dispatch(resetInventoryLoading(null));
+            dispatch(resetInventoryLoading());
             dispatch(
                 setSingleComboCredAndRegion({
                     cred: null,

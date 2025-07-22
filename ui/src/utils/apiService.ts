@@ -821,6 +821,30 @@ export const inventoryApiV2 = createApi({
                 return response;
             }
         }),
+        getOracleDatabaseHostsFullDataV2: builder.query({
+            query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
+                if (isDemoMode) {
+                    if (nextToken) {
+                        return `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&nextToken=${nextToken}`;
+                    }
+                    return `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection`;
+                }
+                if (nextToken) {
+                    return `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2&nextToken=${nextToken}`;
+                }
+                return `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2`;
+            },
+            transformResponse: (response: any, meta, args) => {
+                if (response) {
+                    response = {
+                        ...response,
+                        credentialId: args?.credentialId,
+                        regionId: args?.regionId
+                    };
+                }
+                return response;
+            }
+        }),
         getDatabaseHostsListV2: builder.query({
             query: ({ credentialId, regionId, nextToken = null }) => {
                 if (nextToken) {
@@ -845,6 +869,24 @@ export const inventoryApiV2 = createApi({
                     return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology&nextToken=${nextToken}`;
                 }
                 return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology`;
+            },
+            transformResponse: (response: any, meta, args) => {
+                if (response) {
+                    response = {
+                        ...response,
+                        credentialId: args?.credentialId,
+                        regionId: args?.regionId
+                    };
+                }
+                return response;
+            }
+        }),
+        getOracleDatabaseHostsList: builder.query({
+            query: ({ credentialId, regionId, nextToken = null }) => {
+                if (nextToken) {
+                    return `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology&nextToken=${nextToken}`;
+                }
+                return `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology`;
             },
             transformResponse: (response: any, meta, args) => {
                 if (response) {
@@ -884,6 +926,18 @@ export const inventoryApiV2 = createApi({
         unmanageMssqlInstance: builder.mutation({
             query: ({ credentialsId, resourceId, dbInstanceId }) => ({
                 url: `v1/mssql/credentials/${credentialsId}/resources/${resourceId}/instances?databaseInstanceIds=${dbInstanceId}`,
+                method: 'DELETE'
+            })
+        }),
+        unmanagePgsqlInstance: builder.mutation({
+            query: ({ credentialsId, resourceId, dbInstanceId }) => ({
+                url: `v1/pgsql/credentials/${credentialsId}/resources/${resourceId}/instances?databaseInstanceIds=${dbInstanceId}`,
+                method: 'DELETE'
+            })
+        }),
+        unmanageOracleInstance: builder.mutation({
+            query: ({ credentialsId, resourceId, dbInstanceId }) => ({
+                url: `v1/oracle/credentials/${credentialsId}/resources/${resourceId}/instances?databaseInstanceIds=${dbInstanceId}`,
                 method: 'DELETE'
             })
         }),
@@ -1359,12 +1413,16 @@ export const {
 export const {
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetPgsqlDatabaseHostsFullDataV2Query,
+    useLazyGetOracleDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
     useLazyGetPgSqlDatabaseHostsListQuery,
+    useLazyGetOracleDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useGetPgsqlInstanceDataMutation,
     useGetOracleInstanceDataMutation,
     useUnmanageMssqlInstanceMutation,
+    useUnmanagePgsqlInstanceMutation,
+    useUnmanageOracleInstanceMutation,
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,
     useLazyGetAllMssqlHostsAssessmentDataQuery,
