@@ -98,9 +98,11 @@ const AIInvestigation = ({
             <div className={styles.sectionThree}>
                 <DsTypography variant="Semibold_14">{t('databases.log-analyzer.remediation')}</DsTypography>
                 <div className={styles.contentSection}>
-                    {selectedErrorData?.remediation?.map(item => (
-                        <div className={styles.bulletSection}>
-                            <Bullet />
+                    {selectedErrorData?.remediation?.map((item: string, index: number) => (
+                        <div key={index} className={styles.bulletSection}>
+                            <div>
+                                <Bullet />
+                            </div>
                             <DsTypography variant="Regular_14" className={styles.bulletText}>
                                 {item}
                             </DsTypography>

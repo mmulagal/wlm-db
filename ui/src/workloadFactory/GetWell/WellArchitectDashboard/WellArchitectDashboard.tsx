@@ -308,32 +308,34 @@ const WellArchitectDashboard = () => {
                         }
                     />
 
-                    <div className={styles.buttonContainer}>
-                        <ButtonWithDropdown
-                            variant="icon"
-                            className={styles.buttonWithDropdownContainer}
-                            items={[
-                                {
-                                    id: 'resetSQLServerPassword',
-                                    children: GENERAL.UPDATE_SQL_SERVER_PASSWORD,
+                    {selectedWellArchitectTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && (
+                        <div className={styles.buttonContainer}>
+                            <ButtonWithDropdown
+                                variant="icon"
+                                className={styles.buttonWithDropdownContainer}
+                                items={[
+                                    {
+                                        id: 'resetSQLServerPassword',
+                                        children: GENERAL.UPDATE_SQL_SERVER_PASSWORD,
 
-                                    onClick: () => {
-                                        handleFsxPassword(RESET_PASSWORD_TYPE.SQLSERVER);
-                                    }
-                                },
-                                {
-                                    id: 'resetFSxAdminPassword',
-                                    children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
+                                        onClick: () => {
+                                            handleFsxPassword(RESET_PASSWORD_TYPE.SQLSERVER);
+                                        }
+                                    },
+                                    {
+                                        id: 'resetFSxAdminPassword',
+                                        children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
 
-                                    onClick: () => {
-                                        handleFsxPassword(RESET_PASSWORD_TYPE.FSXADMIN);
+                                        onClick: () => {
+                                            handleFsxPassword(RESET_PASSWORD_TYPE.FSXADMIN);
+                                        }
                                     }
-                                }
-                            ]}
-                        >
-                            <MenuIcon />
-                        </ButtonWithDropdown>
-                    </div>
+                                ]}
+                            >
+                                <MenuIcon />
+                            </ButtonWithDropdown>
+                        </div>
+                    )}
                 </div>
             </div>
 

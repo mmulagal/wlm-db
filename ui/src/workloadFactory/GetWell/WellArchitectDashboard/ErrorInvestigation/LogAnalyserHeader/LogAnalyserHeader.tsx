@@ -114,7 +114,9 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                 </div>
                 <div className={`${styles.column} `}>
                     {loading ? (
-                        <DsFlashingDotsLoader />
+                        <div className={styles.loadingClass}>
+                            <DsFlashingDotsLoader />
+                        </div>
                     ) : (
                         <DsTypography
                             variant={noData ? 'Regular_14' : 'Regular_32'}
@@ -134,7 +136,9 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                 {/* section 2 */}
                 <div className={`${styles.column} `}>
                     {loading ? (
-                        <DsFlashingDotsLoader />
+                        <div className={styles.loadingClass}>
+                            <DsFlashingDotsLoader />
+                        </div>
                     ) : (
                         <DsTypography
                             variant={noData ? 'Regular_14' : 'Regular_32'}
@@ -154,7 +158,9 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
 
                 <div className={`${styles.column} `}>
                     {loading ? (
-                        <DsFlashingDotsLoader />
+                        <div style={{ height: '12px' }}>
+                            <DsFlashingDotsLoader />
+                        </div>
                     ) : (
                         <DsTypography
                             variant="Regular_14"
@@ -195,13 +201,17 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                                             {t('databases.log-analyzer.scan-details')}
                                         </DsTypography>
                                         <div className={styles.row}>
-                                            <Bullet />
+                                            <div>
+                                                <Bullet />
+                                            </div>
                                             <DsTypography variant="Regular_13">
                                                 {t('databases.log-analyzer.display-activity')}
                                             </DsTypography>
                                         </div>
                                         <div className={styles.row}>
-                                            <Bullet />
+                                            <div>
+                                                <Bullet />
+                                            </div>
                                             <DsTypography variant="Regular_13">
                                                 {t('databases.log-analyzer.include-errors')}
                                             </DsTypography>
