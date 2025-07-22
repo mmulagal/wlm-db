@@ -80,6 +80,7 @@ if ($lunMapsResp.records) {
                 if (-not [string]::IsNullOrEmpty($igroup)) {
                         [PSCustomObject]@{
                                 lunUuid = $_.lun.uuid
+                                lunName = $_.lun.name
                                 igroupUuid = $igroup.uuid
                                 igroupName = $igroup.name
                                 initiatorNames = $igroup.initiators -split '[,\\s]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }

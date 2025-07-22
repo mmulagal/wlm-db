@@ -496,25 +496,30 @@ async function prepareHASharedStorageOptimizationData(
                 );
             }
 
+            // --- Single igroup per LUN version ---
             const igroupMissingIqnsMap = new Map<string, { igroupName: string; missingIqns: Set<string> }>();
+
             for (const lun of lunsToOptimize) {
-                for (const igroupDetail of lun.igroupDetails) {
-                    const initiatorNamesArr: string[] = Array.isArray(igroupDetail.initiatorNames)
-                        ? igroupDetail.initiatorNames
-                        : typeof igroupDetail.initiatorNames === 'string'
-                        ? igroupDetail.initiatorNames.split(' ').filter(Boolean)
-                        : [];
-                    const missingInitiators = allHostIqnsArr.filter(iqn => !initiatorNamesArr.includes(iqn));
-                    if (typeof igroupDetail.igroupUuid === 'string') {
-                        if (!igroupMissingIqnsMap.has(igroupDetail.igroupUuid)) {
-                            igroupMissingIqnsMap.set(igroupDetail.igroupUuid, {
-                                igroupName: igroupDetail.igroupName ?? '',
-                                missingIqns: new Set()
-                            });
-                        }
-                        const entry = igroupMissingIqnsMap.get(igroupDetail.igroupUuid)!;
-                        missingInitiators.forEach(iqn => entry.missingIqns.add(iqn));
+                // Get initiator names as array
+                const initiatorNamesArr: string[] = Array.isArray(lun.initiatorNames)
+                    ? lun.initiatorNames
+                    : typeof lun.initiatorNames === 'string'
+                    ? lun.initiatorNames.split(' ').filter(Boolean)
+                    : [];
+
+                // Find which IQNs are missing from this LUN's igroup
+                const missingInitiators = allHostIqnsArr.filter(iqn => !initiatorNamesArr.includes(iqn));
+
+                // Only process if igroupUuid is present
+                if (typeof lun.igroupUuid === 'string') {
+                    if (!igroupMissingIqnsMap.has(lun.igroupUuid)) {
+                        igroupMissingIqnsMap.set(lun.igroupUuid, {
+                            igroupName: lun.igroupName ?? '',
+                            missingIqns: new Set()
+                        });
                     }
+                    const entry = igroupMissingIqnsMap.get(lun.igroupUuid)!;
+                    missingInitiators.forEach(iqn => entry.missingIqns.add(iqn));
                 }
             }
 

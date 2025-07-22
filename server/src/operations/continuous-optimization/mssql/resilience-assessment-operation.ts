@@ -693,6 +693,7 @@ async function getCrrDriftData(
 
 interface LunMapping {
     lunUuid: string;
+    lunName: string;
     igroupUuid: string;
     igroupName: string;
     initiatorNames: string[];
@@ -788,6 +789,7 @@ async function getSharedStorageAssessment(
 
         const lunDetails = primaryNodeLunMappings.map(lunMapping => ({
             ...lunMapping,
+            lunName: lunMapping.lunName,
             status: allHostIqns.every(iqn => lunMapping.initiatorNames.includes(iqn))
                 ? AssessmentStatus.OPTIMIZED
                 : AssessmentStatus.NOT_OPTIMIZED
