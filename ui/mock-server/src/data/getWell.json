@@ -1230,13 +1230,13 @@
         {
             "name": "shared-storage",
             "status": "not-optimized",
-            "recommended": "All shared disks should be accessible by both nodes",
+            "recommended": "",
             "severity": "critical",
             "recommendation": "All shared disks (iSCSI LUNs) should be accessible by both nodes to allow failover.",
             "tags": ["Reliability"],
-            "objectsInViolation": ["LUN-03", "LUN-07"],
-            "totalObjectsAssessed": 9,
-            "totalObjectsInViolation": 2,
+            "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 1,
             "resourceType": "Lun"
         },
         {
