@@ -1,6 +1,6 @@
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
@@ -31,6 +31,7 @@ const Home = () => {
     const { statusData } = useAppSelector(state => state.headers.getStatus);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
 
     // This code is only for BlueXP
     useRunOnce(() => {
@@ -42,12 +43,6 @@ const Home = () => {
                     (msg?.data?.type === BXP_MESSAGES.SERVICE_LOCATION_CHANGE ||
                         msg?.data?.type === BXP_MESSAGES.SERVICE_ON_READY)
                 ) {
-                    // if (statusData && !statusData?.isActive) {
-                    //     postBlueXPMessage({
-                    //         type: BlueXPListeners.navigate,
-                    //         payload: { pathname: './fsxdb/marketing', replace: true }
-                    //     });
-                    // }
                     if (msg?.data?.payload?.pathname === '/fsxdb/mssql-deploy-wizard') {
                         navigate('../fsxdb/mssql-deploy-wizard');
                     } else if (msg?.data?.payload?.pathname === '/fsxdb/postgreSQL-deploy-wizard') {
@@ -61,7 +56,6 @@ const Home = () => {
                             console.log('Redirecting to fsxdb');
                             navigate('../fsxdb');
                         } else {
-                            console.log('Navigating to fsxdb with routePath:');
                             navigate(`../fsxdb/${routePath}`);
                         }
 
@@ -71,6 +65,12 @@ const Home = () => {
             };
         }
     });
+
+    useEffect(() => {
+        if (isWorkloadFactory) {
+            navigate(location.pathname);
+        }
+    }, [location.pathname]);
 
     // @ts-ignore
     const showNotifications = useMemo(
