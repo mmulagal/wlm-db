@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import { isEmpty, isNil } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import throat from 'throat';
 import getLogger from '../../../utils/logger';
 import {
     AvailableSnapshotPoliciesResponseType,
@@ -442,7 +443,7 @@ async function handleResiliecyOptimize(
     return { jobId };
 }
 async function getSharedStorage(accountId: string, instance: FlattenedInstanceType): Promise<any> {
-    const [persistedConfig] = await listInstanceConfigIncludingResourceAndInstance({
+    const [{ config_data: { sharedStorage } = {} } = {}] = await listInstanceConfigIncludingResourceAndInstance({
         accountId,
         region: instance.region,
         credentialsId: instance.credentialsId,
@@ -451,85 +452,80 @@ async function getSharedStorage(accountId: string, instance: FlattenedInstanceTy
         configDataType: AssessmentCategories.HIGH_AVAILABILITY,
         pageSize: 1
     });
-    return persistedConfig?.config_data?.sharedStorage;
+    return sharedStorage;
 }
 
+// --- Prepare optimization data for all hosts/instances ---
 async function prepareHASharedStorageOptimizationData(
+    accountId: string,
     hostsToOptimize: {
         configurationName: OptimizeHighAvailabilityParams;
         databaseHosts: OptimizeHASharedStorageRequestBodyType[];
     }[],
-    ontapLunUuids: string[] | undefined,
-    fetchSharedStorage: (instance: FlattenedInstanceType) => Promise<any>
+    ontapLunUuids: string[] | undefined
 ): Promise<OptimizationPreparationType[]> {
-    const flattenedInstances: FlattenedInstanceType[] = [];
-    for (const host of hostsToOptimize) {
-        if (host.databaseHosts && Array.isArray(host.databaseHosts)) {
-            for (const databaseHost of host.databaseHosts) {
-                if (databaseHost.sqlServerInstances && Array.isArray(databaseHost.sqlServerInstances)) {
-                    for (const instance of databaseHost.sqlServerInstances) {
-                        flattenedInstances.push({
-                            ...instance,
-                            region: databaseHost.region,
-                            credentialsId: databaseHost.credentialsId,
-                            databaseHostId: databaseHost.id,
-                            databaseInstanceId: instance.databaseInstanceId
-                        });
+    const flattenedInstances: FlattenedInstanceType[] = hostsToOptimize.flatMap(host =>
+        (host.databaseHosts || []).flatMap(databaseHost =>
+            (databaseHost.sqlServerInstances || []).map(instance => ({
+                ...instance,
+                region: databaseHost.region,
+                credentialsId: databaseHost.credentialsId,
+                databaseHostId: databaseHost.id,
+                databaseInstanceId: instance.databaseInstanceId
+            }))
+        )
+    );
+
+    const throttle = throat(3);
+
+    const preparationsPromises = flattenedInstances.map(flattenedInstance =>
+        throttle(async () => {
+            const sharedStorage = await getSharedStorage(accountId, flattenedInstance);
+
+            let allHostIqnsArr: string[] = [];
+            if (Array.isArray(sharedStorage?.allHostIqns)) {
+                allHostIqnsArr = sharedStorage.allHostIqns;
+            } else if (typeof sharedStorage?.allHostIqns === 'string') {
+                allHostIqnsArr = sharedStorage.allHostIqns.split(' ').filter(Boolean);
+            }
+
+            let lunsToOptimize: LunDetailType[] = [];
+            if (Array.isArray(ontapLunUuids) && Array.isArray(sharedStorage?.lunDetails)) {
+                lunsToOptimize = sharedStorage.lunDetails.filter((lun: LunDetailType) =>
+                    ontapLunUuids.includes(lun.lunUuid)
+                );
+            }
+
+            const igroupMissingIqnsMap = new Map<string, { igroupName: string; missingIqns: Set<string> }>();
+            for (const lun of lunsToOptimize) {
+                for (const igroupDetail of lun.igroupDetails) {
+                    const initiatorNamesArr: string[] = Array.isArray(igroupDetail.initiatorNames)
+                        ? igroupDetail.initiatorNames
+                        : typeof igroupDetail.initiatorNames === 'string'
+                        ? igroupDetail.initiatorNames.split(' ').filter(Boolean)
+                        : [];
+                    const missingInitiators = allHostIqnsArr.filter(iqn => !initiatorNamesArr.includes(iqn));
+                    if (typeof igroupDetail.igroupUuid === 'string') {
+                        if (!igroupMissingIqnsMap.has(igroupDetail.igroupUuid)) {
+                            igroupMissingIqnsMap.set(igroupDetail.igroupUuid, {
+                                igroupName: igroupDetail.igroupName ?? '',
+                                missingIqns: new Set()
+                            });
+                        }
+                        const entry = igroupMissingIqnsMap.get(igroupDetail.igroupUuid)!;
+                        missingInitiators.forEach(iqn => entry.missingIqns.add(iqn));
                     }
                 }
             }
-        }
-    }
 
-    const preparationsPromises = flattenedInstances.map(async flattenedInstance => {
-        const sharedStorage = await fetchSharedStorage(flattenedInstance);
-
-        let allHostIqnsArr: string[] = [];
-        if (Array.isArray(sharedStorage?.allHostIqns)) {
-            allHostIqnsArr = sharedStorage.allHostIqns;
-        } else if (typeof sharedStorage?.allHostIqns === 'string') {
-            allHostIqnsArr = sharedStorage.allHostIqns.split(' ').filter(Boolean);
-        }
-
-        let lunsToOptimize: LunDetailType[] = [];
-        if (Array.isArray(ontapLunUuids) && Array.isArray(sharedStorage?.lunDetails)) {
-            lunsToOptimize = sharedStorage.lunDetails.filter((lun: LunDetailType) =>
-                ontapLunUuids.includes(lun.lunUuid)
-            );
-        }
-
-        const igroupMissingIqnsMap = new Map<string, { igroupName: string; missingIqns: Set<string> }>();
-        for (const lun of lunsToOptimize) {
-            const igroupDetails = lun.igroupDetails || {
-                igroupName: lun.igroupName,
-                igroupUuid: lun.igroupUuid,
-                initiatorNames: lun.initiatorNames
-            };
-            const initiatorNamesArr: string[] = Array.isArray(igroupDetails.initiatorNames)
-                ? igroupDetails.initiatorNames
-                : typeof igroupDetails.initiatorNames === 'string'
-                ? igroupDetails.initiatorNames.split(' ').filter(Boolean)
-                : [];
-            const missingInitiators = allHostIqnsArr.filter(iqn => !initiatorNamesArr.includes(iqn));
-            if (typeof igroupDetails.igroupUuid === 'string') {
-                if (!igroupMissingIqnsMap.has(igroupDetails.igroupUuid)) {
-                    igroupMissingIqnsMap.set(igroupDetails.igroupUuid, {
-                        igroupName: igroupDetails.igroupName ?? '',
-                        missingIqns: new Set()
-                    });
-                }
-                const entry = igroupMissingIqnsMap.get(igroupDetails.igroupUuid)!;
-                missingInitiators.forEach(iqn => entry.missingIqns.add(iqn));
-            }
-        }
-
-        return {
-            instance: flattenedInstance,
-            lunsToOptimize,
-            allHostIqnsArr,
-            igroupMissingIqnsMap
-        } as OptimizationPreparationType;
-    });
+            return {
+                instance: flattenedInstance,
+                lunsToOptimize,
+                allHostIqnsArr,
+                igroupMissingIqnsMap
+            } as OptimizationPreparationType;
+        })
+    );
 
     return Promise.all(preparationsPromises);
 }
@@ -618,9 +614,7 @@ async function handleSharedStorageOptimize(
     }[],
     parentJobId: string
 ) {
-    const getStorage = (instance: FlattenedInstanceType) => getSharedStorage(accountId, instance);
-
-    const preparations = await prepareHASharedStorageOptimizationData(hostsToOptimize, ontapLunUuids, getStorage);
+    const preparations = await prepareHASharedStorageOptimizationData(accountId, hostsToOptimize, ontapLunUuids);
 
     if (preparations.length === 0) {
         logger.warn('No instances found to optimize shared storage.');

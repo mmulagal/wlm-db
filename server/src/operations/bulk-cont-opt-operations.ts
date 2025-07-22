@@ -569,6 +569,9 @@ async function handleHASharedStorageOptimization(
         databaseHosts: OptimizeHASharedStorageRequestBodyType[];
     }[]
 ) {
+    logger.info(
+        `Handle High Availability shared storage optimization: ${accountId}, optimizationCategory: ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}`
+    );
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
         logger.error(errorMessage);
@@ -576,13 +579,16 @@ async function handleHASharedStorageOptimization(
     }
 
     // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
+    // Control concurrency to 3 using throat
     await Promise.all(
-        hostsToOptimize.map(async host => {
-            host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeHASharedStorageRequestBodyType>(
-                accountId,
-                host.databaseHosts
-            );
-        })
+        hostsToOptimize.map(
+            throat(3, async host => {
+                host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeHASharedStorageRequestBodyType>(
+                    accountId,
+                    host.databaseHosts
+                );
+            })
+        )
     );
     const jobMetadata: JobMetadata = {
         hostsToOptimize: await formatJobMetadata(hostsToOptimize)
@@ -605,7 +611,16 @@ async function handleHASharedStorageOptimization(
     );
 
     try {
-        const ontapLunUuids = hostsToOptimize?.[0]?.databaseHosts?.[0]?.sqlServerInstances?.[0]?.ontapLunUuids;
+        // Collect all ONTAP LUN UUIDs from all SQL Server instances across all hosts
+        const ontapLunUuids = hostsToOptimize
+            .flatMap(({ databaseHosts }) =>
+                databaseHosts.flatMap(({ sqlServerInstances }) =>
+                    sqlServerInstances.flatMap(
+                        ({ ontapLunUuids: instanceOntapLunUuids }) => instanceOntapLunUuids || []
+                    )
+                )
+            )
+            .filter(Boolean);
 
         logger.info(`ONTAP LUN UUIDs extracted for optimization: ${JSON.stringify(ontapLunUuids)}`);
 
@@ -627,6 +642,16 @@ async function handleHASharedStorageOptimization(
         logger.error(`Failed to optimize shared storage. Reason: ${(error as Error)?.message || error}`, {
             stack: (error as Error)?.stack
         });
+        await updateJobDetails(accountId, parentJobId, {
+            status: JOBSTATUS.FAILED,
+            error: (error as Error)?.message || String(error),
+            endTime: Date.now()
+        });
+        updateLongRunningAuditGroup(
+            AuditStatus.FAILED,
+            `Error occurred while optimizing shared storage for account ${accountId}`
+        );
+        throw error;
     }
     return { jobId: parentJobId };
 }
