@@ -278,7 +278,7 @@ const GOLDEN_CONFIG = {
             driveLetter: {
                 parameter: 'drive-letter-consistency',
                 value: true,
-                severity: SEVERITY.WARNING,
+                severity: SEVERITY.CRITICAL,
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
                 resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
                 recommendation: 'Validate availability of same drive letters on standby node.',
@@ -296,7 +296,7 @@ const GOLDEN_CONFIG = {
             heartbeat: {
                 parameter: 'cluster-heartbeat-interval',
                 value: 1000,
-                severity: SEVERITY.WARNING,
+                severity: SEVERITY.CRITICAL,
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
                 resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
                 recommendation: 'Cluster heartbeat settings should be optimized to prevent unnecessary failovers.',

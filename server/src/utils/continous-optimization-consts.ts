@@ -84,6 +84,10 @@ enum OptimizeOperatingSystemParams {
     MPIO_TIMEOUT = 'mpio-timeout'
 }
 
+enum OptimizeHighAvailabilityParams {
+    SHARED_STORAGE = 'shared-storage'
+}
+
 enum OptimizeStorageTierParams {
     STORAGE_TIER = 'storage-tier'
 }
@@ -359,5 +363,6 @@ export {
     HOST_LEVEL_CONFIGURATIONS,
     STORAGE_CONFIGURATION_ASSESMENT_MAP,
     DISMISS_STATUS_ENUM,
-    DEFAULT_MPIO_TIMEOUT
+    DEFAULT_MPIO_TIMEOUT,
+    OptimizeHighAvailabilityParams
 };

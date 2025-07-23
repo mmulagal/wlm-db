@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import { isEmpty, isNil } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import throat from 'throat';
 import getLogger from '../../../utils/logger';
 import {
     AvailableSnapshotPoliciesResponseType,
@@ -10,13 +11,15 @@ import {
     SnapshotPolicyDetailsType,
     SnapshotPolicyType,
     SnapshotScheduleType,
-    BulkOptimizeSnapshotPolicyParamsType
+    BulkOptimizeSnapshotPolicyParamsType,
+    BulkOptimizeHASharedStorageRequestBodyType
 } from '../../../routes/types/continuous-optimization.types';
 import {
     DatabaseInstanceMetadata,
     Metadata,
     WorkloadInstance,
-    MappedOnTapVolumeResponse
+    MappedOnTapVolumeResponse,
+    IgroupMissingInitiators
 } from '../../../utils/common-types';
 import {
     AuditStatus,
@@ -30,11 +33,11 @@ import {
     SET_VOLUME_SNAPSHOT_POLICY
 } from '../../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
+import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
 import { getMappedOntapVolumes } from '../../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
-import { updateJobDetails } from '../../database/job-operations';
+import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { listDatabaseInstances } from '../../../lib/database/db';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
@@ -47,6 +50,8 @@ import {
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
+import { ADD_INITIATOR_TO_IGROUP } from '../../workloads/mssql/high-availability-scripts';
+import { listInstanceConfigIncludingResourceAndInstance } from '../../database/instance-config-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -435,4 +440,202 @@ async function handleResiliecyOptimize(
     return { jobId };
 }
 
-export { getAvailableSnapshotPolicyList, handleResiliecyOptimize };
+interface LunDetail {
+    lunUuid: string;
+    lunName: string;
+    igroupName: string;
+    igroupUuid: string;
+    initiatorNames: string[] | string;
+}
+
+async function optimizeHASharedStorageData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    igroupMissingIqnsMap: IgroupMissingInitiators[]
+) {
+    logger.info(`Optimizing shared storage for instance "${databaseInstanceId}" in account "${accountId}"`);
+
+    let errorMessage;
+
+    const { instanceRecord } = await getActiveNodeInfo(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    );
+
+    const { fsxFileSystem, activeNodeInstanceid } = instanceRecord;
+    if (!fsxFileSystem) {
+        errorMessage = 'FSx file system is not defined. Cannot add initiators to igroup.';
+        logger.error('Optimizing shared storage failed', {
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            errorMessage
+        });
+        throw createError(HttpErrorCodes.PRECONDITION_FAILED, errorMessage);
+    }
+
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        [ADD_INITIATOR_TO_IGROUP(fsxFileSystem, region, igroupMissingIqnsMap)],
+        activeNodeInstanceid,
+        `Add initiators to igroup on instance ${activeNodeInstanceid}`,
+        accountId
+    );
+
+    const parsedResponse = sqlResponseParsing(response);
+
+    return parsedResponse;
+}
+
+function extractInstancesToOptimize(hostsToOptimize: BulkOptimizeHASharedStorageRequestBodyType[]) {
+    return hostsToOptimize.flatMap(({ databaseHosts }) =>
+        databaseHosts.flatMap(({ sqlServerInstances, region, credentialsId, id: databaseHostId }) =>
+            sqlServerInstances.map(({ databaseInstanceId, ontapLunPaths }) => ({
+                databaseInstanceId,
+                ontapLunPaths,
+                region,
+                credentialsId,
+                databaseHostId
+            }))
+        )
+    );
+}
+async function handleSharedStorageOptimize(
+    accountId: string,
+    hostsToOptimize: BulkOptimizeHASharedStorageRequestBodyType[],
+    parentJobId: string
+) {
+    logger.info(`Starting shared storage optimization for account "${accountId}"`);
+
+    const flattenedInstances = extractInstancesToOptimize(hostsToOptimize);
+    await Promise.all(
+        flattenedInstances.map(
+            throat(3, async ({ databaseInstanceId, region, credentialsId, databaseHostId, ontapLunPaths }) => {
+                let errorMessage;
+                let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+                const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
+                    accountId,
+                    region,
+                    credentialsId,
+                    resourceId: databaseHostId,
+                    databaseInstanceId,
+                    configDataType: AssessmentCategories.HIGH_AVAILABILITY,
+                    pageSize: 1
+                });
+
+                const {
+                    config_data: configData,
+                    database_instances: { database_instance_name: instanceName = '' } = {},
+                    resource: { resource_name: sqlServerName = '' } = {}
+                } = persistedConfigurationData || {};
+
+                const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName);
+
+                const { id: instanceOptimizeJobId } = await registerJob(accountId, credentialsId, region, {
+                    type: JOBTYPE.WELL_ARCHITECTED,
+                    status: JOBSTATUS.IN_PROGRESS,
+                    resourceName: serverNameWithHostName as string,
+                    name: `Fix shared storage for ${serverNameWithHostName}`,
+                    startTime: Date.now(),
+                    description: `Fix shared storage for ${serverNameWithHostName}`,
+                    parentJobId
+                });
+
+                try {
+                    if (!configData) {
+                        errorMessage = 'Assessment record is missing';
+                        logger.error(errorMessage);
+                        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+                    }
+
+                    const { sharedStorage: { lunDetails, allHostIqns } = {} } = configData;
+
+                    if (isEmpty(lunDetails) || isEmpty(allHostIqns)) {
+                        errorMessage = 'Lun details and (or) host iqns are missing.';
+                        logger.error(errorMessage);
+                        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+                    }
+
+                    const igroupsMissingInitiators: IgroupMissingInitiators[] = [];
+                    lunDetails
+                        .filter(({ lunName }: LunDetail) => ontapLunPaths.includes(lunName))
+                        .forEach(({ igroupName, initiatorNames }: LunDetail) => {
+                            if (!allHostIqns.every((iqn: string) => initiatorNames.includes(iqn))) {
+                                igroupsMissingInitiators.push({
+                                    igroupName,
+                                    missingIqns: allHostIqns.filter((iqn: string) => !initiatorNames.includes(iqn))
+                                });
+                            }
+                        });
+
+                    if (isEmpty(igroupsMissingInitiators)) {
+                        errorMessage = 'All required initiators are part of igroups. No action required.';
+                        logger.error(errorMessage);
+                        jobStatus = JOBSTATUS.WARNING;
+                        throw createError(HttpErrorCodes.PRECONDITION_FAILED, errorMessage);
+                    }
+
+                    const parsedResponse = await optimizeHASharedStorageData(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        databaseInstanceId,
+                        igroupsMissingInitiators
+                    );
+
+                    jobStatus =
+                        parsedResponse.result === 'failed'
+                            ? JOBSTATUS.FAILED
+                            : parsedResponse.result === 'partial'
+                            ? JOBSTATUS.WARNING
+                            : JOBSTATUS.COMPLETED;
+
+                    if (jobStatus !== JOBSTATUS.FAILED) {
+                        await onDemandTriggerMssqlDriftAssessment(
+                            accountId,
+                            credentialsId,
+                            region,
+                            databaseHostId,
+                            databaseInstanceId,
+                            AssessmentTriggeredBy.SYSTEM,
+                            AssessmentCategories.HIGH_AVAILABILITY,
+                            parentJobId
+                        );
+                    }
+                } catch (error: any) {
+                    errorMessage = `${error.message}.`;
+                    logger.error(`Optimizing shared storage failed with error ${errorMessage}`);
+                    jobStatus = jobStatus !== JOBSTATUS.WARNING ? JOBSTATUS.FAILED : jobStatus;
+                } finally {
+                    await updateJobDetails(accountId, instanceOptimizeJobId, {
+                        status: jobStatus,
+                        endTime: Date.now(),
+                        error: errorMessage
+                    });
+                }
+            })
+        )
+    );
+
+    // Update parent job status and audit
+    const status = await updateParentJobStatus(accountId, parentJobId);
+    if (status === JOBSTATUS.COMPLETED) {
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    } else if (status === JOBSTATUS.FAILED) {
+        updateLongRunningAuditGroup(
+            AuditStatus.FAILED,
+            `An error occurred while optimizing High Availability for account "${accountId}".`
+        );
+    }
+}
+export { getAvailableSnapshotPolicyList, handleResiliecyOptimize, handleSharedStorageOptimize };

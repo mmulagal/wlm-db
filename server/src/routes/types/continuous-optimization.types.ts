@@ -8,6 +8,7 @@ import {
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeCloneParams,
     OptimizeComputeParams,
+    OptimizeHighAvailabilityParams,
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
@@ -460,6 +461,7 @@ const OptimizePerHostRequestBody = Type.Intersect([
         region: Type.String(),
         instanceType: Type.Optional(Type.String()),
         networkAdapters: Type.Optional(Type.Array(Type.String()))
+        // ontapLunUuids: Type.Optional(Type.Array(Type.String({ minLength: 1, description: 'Relevant for shared-storage opt HA' })))
     }),
     UpdateFSxNBackupRequestBody
 ]);
@@ -491,7 +493,8 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
         ...OptimizeStorageTierParams,
         ...OptimizeComputeParams,
         ...OptimizeMaxDopParams,
-        ...OPTIMIZE_RESILIENCY_CONFIGS
+        ...OPTIMIZE_RESILIENCY_CONFIGS,
+        ...OptimizeHighAvailabilityParams
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
@@ -618,6 +621,57 @@ const BulkOptimizeCloneBody = Type.Object({
 });
 type BulkOptimizeCloneBodyType = Static<typeof BulkOptimizeCloneBody>;
 
+const OptimizeHASharedStorageRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    sqlServerInstances: Type.Array(
+        Type.Object({
+            databaseInstanceId: Type.String({ minLength: 1 }),
+            ontapLunPaths: Type.Array(Type.String({ minLength: 1 }))
+        })
+    ),
+    credentialsId: Type.String({ minLength: 1 }),
+    region: Type.String({ minLength: 1 })
+});
+type OptimizeHASharedStorageRequestBodyType = Static<typeof OptimizeHASharedStorageRequestBody>;
+
+const BulkOptimizeHASharedStorageRequestBody = Type.Object({
+    configurationName: Type.Enum(OptimizeHighAvailabilityParams),
+    databaseHosts: Type.Array(OptimizeHASharedStorageRequestBody)
+});
+
+type BulkOptimizeHASharedStorageRequestBodyType = Static<typeof BulkOptimizeHASharedStorageRequestBody>;
+
+const BulkOptimizeHASharedStorageBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeHASharedStorageRequestBody)
+});
+type BulkOptimizeHASharedStorageBodyType = Static<typeof BulkOptimizeHASharedStorageBody>;
+
+const FlattenedInstance = Type.Object({
+    databaseInstanceId: Type.String(),
+    ontapLunUuids: Type.Array(Type.String()),
+    region: Type.String(),
+    credentialsId: Type.String(),
+    databaseHostId: Type.String()
+});
+type FlattenedInstanceType = Static<typeof FlattenedInstance>;
+
+const LunDetail = Type.Object({
+    lunUuid: Type.String(),
+    lunName: Type.String(),
+    igroupName: Type.String(),
+    igroupUuid: Type.String(),
+    initiatorNames: Type.Union([Type.Array(Type.String()), Type.String()])
+});
+type LunDetailType = Static<typeof LunDetail>;
+
+const OptimizationPreparation = Type.Object({
+    instance: FlattenedInstance,
+    lunsToOptimize: Type.Array(LunDetail),
+    allHostIqnsArr: Type.Array(Type.String()),
+    igroupMissingIqnsMap: Type.Any() // Map type cannot be represented in TypeBox, use Any
+});
+type OptimizationPreparationType = Static<typeof OptimizationPreparation>;
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -684,5 +738,13 @@ export {
     BulkDismissConfigurationBodyType,
     ContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
-    DriftAssessmentResponsePerHostType
+    DriftAssessmentResponsePerHostType,
+    BulkOptimizeHASharedStorageBody,
+    BulkOptimizeHASharedStorageBodyType,
+    OptimizeHASharedStorageRequestBodyType,
+    OptimizeHASharedStorageRequestBody,
+    FlattenedInstanceType,
+    LunDetailType,
+    OptimizationPreparationType,
+    BulkOptimizeHASharedStorageRequestBodyType
 };

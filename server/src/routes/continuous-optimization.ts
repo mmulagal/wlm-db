@@ -4,6 +4,7 @@ import {
     AssessmentTriggeredBy,
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
+    OptimizeHighAvailabilityParams,
     OptimizeStorageParams
 } from '../utils/continous-optimization-consts';
 import {
@@ -25,7 +26,8 @@ import {
     OptimizeResilienceSchema,
     BulkOptimizeAwsBackupSchema,
     BulkOptimizeCloneSchema,
-    BulkDismissConfigurationSchema
+    BulkDismissConfigurationSchema,
+    BulkOptimizeSharedStorageSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -38,7 +40,8 @@ import castRequest from './utils';
 import {
     bulkCloneOptimization,
     bulkComputeOptimization,
-    bulkOptimization
+    bulkOptimization,
+    bulkHASharedStorageOptimization
 } from '../operations/bulk-cont-opt-operations';
 import {
     getAvailableSnapshotPolicyList,
@@ -393,6 +396,23 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const response = await bulkCloneOptimization(
                     accountId,
                     hostsToOptimize as BulkOptimizeCloneInHostRequestBodyType[]
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/shared-storage`,
+            { schema: BulkOptimizeSharedStorageSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkHASharedStorageOptimization(
+                    accountId,
+                    OptimizeHighAvailabilityParams.SHARED_STORAGE,
+                    hostsToOptimize
                 );
                 return reply.send(response);
             }

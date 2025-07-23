@@ -696,6 +696,7 @@ async function getCrrDriftData(
 
 interface LunMapping {
     lunUuid: string;
+    lunName: string;
     igroupUuid: string;
     igroupName: string;
     initiatorNames: string[];
@@ -752,27 +753,58 @@ async function getSharedStorageAssessment(
             )
         ]);
 
-        const primaryNodeParsedResponse = JSON.parse(primaryNodeResponse) as LunIqnDetails;
-        const standbyNodeParsedResponse = JSON.parse(standbyNodeResponse) as LunIqnDetails;
+        let primaryNodeParsedResponse: LunIqnDetails | null = null;
+        let standbyNodeParsedResponse: LunIqnDetails | null = null;
+
+        try {
+            primaryNodeParsedResponse =
+                primaryNodeResponse &&
+                typeof primaryNodeResponse === 'string' &&
+                primaryNodeResponse.trim().startsWith('{')
+                    ? (JSON.parse(primaryNodeResponse) as LunIqnDetails)
+                    : null;
+        } catch (e) {
+            logger.error('Failed to parse primaryNodeResponse JSON:', e);
+            primaryNodeParsedResponse = null;
+        }
+
+        try {
+            standbyNodeParsedResponse =
+                standbyNodeResponse &&
+                typeof standbyNodeResponse === 'string' &&
+                standbyNodeResponse.trim().startsWith('{')
+                    ? (JSON.parse(standbyNodeResponse) as LunIqnDetails)
+                    : null;
+        } catch (e) {
+            logger.error('Failed to parse standbyNodeResponse JSON:', e);
+            standbyNodeParsedResponse = null;
+        }
+
+        if (!primaryNodeParsedResponse || !standbyNodeParsedResponse) {
+            throw new Error('Invalid or empty JSON response from SSM execution for shared storage assessment.');
+        }
 
         const primaryHostIqns = primaryNodeParsedResponse?.hostIqns?.split(',').map((iqn: string) => iqn.trim()) || [];
         const standbyHostIqns = standbyNodeParsedResponse?.hostIqns?.split(',').map((iqn: string) => iqn.trim()) || [];
         const allHostIqns = [...new Set([...primaryHostIqns, ...standbyHostIqns])];
 
-        const primaryNodeLunMappings = primaryNodeParsedResponse?.lunMappings;
+        const primaryNodeLunMappings = primaryNodeParsedResponse?.lunMappings || [];
 
         const lunDetails = primaryNodeLunMappings.map(lunMapping => ({
             ...lunMapping,
+            lunName: lunMapping.lunName,
             status: allHostIqns.every(iqn => lunMapping.initiatorNames.includes(iqn))
                 ? AssessmentStatus.OPTIMIZED
                 : AssessmentStatus.NOT_OPTIMIZED
         }));
 
         return {
-            status: lunDetails.every(lun => lun.status === AssessmentStatus.OPTIMIZED)
-                ? AssessmentStatus.OPTIMIZED
-                : AssessmentStatus.NOT_OPTIMIZED,
-            lunDetails
+            status:
+                lunDetails.length > 0 && lunDetails.every(lun => lun.status === AssessmentStatus.OPTIMIZED)
+                    ? AssessmentStatus.OPTIMIZED
+                    : AssessmentStatus.NOT_OPTIMIZED,
+            lunDetails,
+            allHostIqns
         };
     } catch (err) {
         logger.error('Exception running SSM for shared-storage:', err);
@@ -986,16 +1018,23 @@ async function initiateHostLevelHighAvailabilityAssessment(
                       status: parsedQuorumData.IsPhysicalDiskAndMajority
                           ? AssessmentStatus.OPTIMIZED
                           : AssessmentStatus.NOT_OPTIMIZED,
-                      details: parsedQuorumData
+                      details: {
+                          isMajority: parsedQuorumData.IsMajority,
+                          quorumType: parsedQuorumData.QuorumType,
+                          isPhysicalDisk: parsedQuorumData.IsPhysicalDisk,
+                          quorumResourceName: parsedQuorumData.QuorumResourceName,
+                          isPhysicalDiskAndMajority: parsedQuorumData.IsPhysicalDiskAndMajority
+                      }
                   };
 
         // --- Heartbeat Settings ---
         const recommendedHeartbeatSettings = storageGoldenConfigData.resiliency.heartbeatSettings as HeartbeatSettings;
         let heartbeatResult: {
             status: AssessmentStatus;
-            details: HeartbeatSettings;
+            details: Record<string, { current: number; recommended: number; status: AssessmentStatus }> | null;
             error?: string;
         };
+
         if (
             !parsedHeartSettingsData ||
             typeof parsedHeartSettingsData !== 'object' ||
@@ -1003,7 +1042,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
         ) {
             heartbeatResult = {
                 status: AssessmentStatus.NOT_OPTIMIZED,
-                details: parsedHeartSettingsData,
+                details: null,
                 error: 'Heartbeat settings are missing or invalid'
             };
         } else {
@@ -1029,7 +1068,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
 
             heartbeatResult = {
                 status: allOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-                details: parsedHeartSettingsData
+                details: heartbeatDetails
             };
         }
         return {
@@ -1194,7 +1233,7 @@ async function getHighAvailabilityDriftData(
                 objectsInViolation:
                     clusterQuorum?.status !== AssessmentStatus.OPTIMIZED && clusterQuorum?.details
                         ? [
-                              `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}, QuorumResourceName: ${clusterQuorum.details.quorumResourceName}`
+                              `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}`
                           ]
                         : [],
                 totalObjectsAssessed: 1,
@@ -1209,8 +1248,12 @@ async function getHighAvailabilityDriftData(
                     heartbeat?.status !== AssessmentStatus.OPTIMIZED && heartbeat?.details
                         ? Object.entries(heartbeat.details)
                               .filter(
-                                  ([, value]: [string, any]) =>
-                                      value && typeof value === 'object' && value.current !== value.recommended
+                                  ([, value]: [string, number | { current: number; recommended: number }]) =>
+                                      typeof value === 'object' &&
+                                      value !== null &&
+                                      'current' in value &&
+                                      'recommended' in value &&
+                                      value.current !== value.recommended
                               )
                               .map(([key]) => key)
                         : [],

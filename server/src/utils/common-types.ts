@@ -783,6 +783,11 @@ interface OracleInstanceRegistration {
     oracleEdition?: string;
 }
 
+interface IgroupMissingInitiators {
+    igroupName: string;
+    missingIqns: string[];
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -852,5 +857,6 @@ export {
     OracleCredential,
     SqlCredential,
     OracleInstanceRegistration,
-    HighAvailabilityAssessment
+    HighAvailabilityAssessment,
+    IgroupMissingInitiators
 };

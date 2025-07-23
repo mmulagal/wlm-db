@@ -10,7 +10,9 @@ import {
     BulkOptimizeGeneralPerHostRequestBodyType,
     CloneDetailType,
     OptimizeClonesPerHostRequestBodyType,
-    OptimizePerHostRequestBodyType
+    OptimizePerHostRequestBodyType,
+    OptimizeHASharedStorageRequestBodyType,
+    BulkOptimizeHASharedStorageRequestBodyType
 } from '../routes/types/continuous-optimization.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import {
@@ -48,6 +50,7 @@ import {
 import { getMappedVolumeDetailForInstance } from './continuous-optimization/mssql/clone-optimization-operations';
 import { getInstanceInfo } from './database/database-operations';
 import { updateOptimizedConfigMetaData } from './demo-operations';
+import { handleSharedStorageOptimize } from './continuous-optimization/mssql/resilience-optimize-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -558,6 +561,56 @@ async function handleBulkComputeOptimization(
     }
 }
 
+async function bulkHASharedStorageOptimization(
+    accountId: string,
+    optimizationCategory: string,
+    hostsToOptimize: BulkOptimizeHASharedStorageRequestBodyType[]
+) {
+    logger.info(
+        `Starting bulkHASharedStorageOptimization for accountId: ${accountId}, optimizationCategory: ${optimizationCategory}, hostsToOptimize count: ${hostsToOptimize?.length}`
+    );
+
+    if (isEmpty(hostsToOptimize)) {
+        const errorMessage =
+            'No database hosts provided for shared storage optimization. Please provide at least one host.';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+
+    // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
+    await Promise.all(
+        hostsToOptimize.map(
+            throat(3, async host => {
+                host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeHASharedStorageRequestBodyType>(
+                    accountId,
+                    host.databaseHosts
+                );
+            })
+        )
+    );
+
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
+    };
+
+    const jobDescription = 'Fix shared storage for high availability cluster';
+    const parentJobId = await handleOptimizeJobCreation(
+        accountId,
+        '',
+        '',
+        accountId,
+        JOBTYPE.WELL_ARCHITECTED,
+        jobDescription,
+        jobDescription,
+        undefined,
+        jobMetadata
+    );
+
+    handleSharedStorageOptimize(accountId, hostsToOptimize, parentJobId);
+
+    return { jobId: parentJobId };
+}
+
 async function fetchInstanceConfigurationAndVolumeMapping(
     accountId: string,
     credentialsId: string,
@@ -681,4 +734,4 @@ async function validateRequestDetails(accountId: string, credentialsId: string, 
     return true;
 }
 
-export { bulkOptimization, bulkComputeOptimization, bulkCloneOptimization };
+export { bulkOptimization, bulkComputeOptimization, bulkCloneOptimization, bulkHASharedStorageOptimization };

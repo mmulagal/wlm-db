@@ -1,4 +1,5 @@
-import { ontapRestRequest } from './common-templates';
+import { IgroupMissingInitiators } from '../../../utils/common-types';
+import { ontapRestRequest, ontapRestRequestBootstrap } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 
 const DRIVE_LETTER = `
@@ -80,6 +81,7 @@ if ($lunMapsResp.records) {
                 if (-not [string]::IsNullOrEmpty($igroup)) {
                         [PSCustomObject]@{
                                 lunUuid = $_.lun.uuid
+                                lunName = $_.lun.name
                                 igroupUuid = $igroup.uuid
                                 igroupName = $igroup.name
                                 initiatorNames = $igroup.initiators -split '[,\\s]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
@@ -92,10 +94,53 @@ $response | ConvertTo-Json -Depth 5 -Compress
 Stop-Transcript | Out-Null
 `;
 
+const ADD_INITIATOR_TO_IGROUP = (fsxId: string, region: string, igroupMissingIqnsList: IgroupMissingInitiators[]) => `
+# Add initiator to igroup Script
+Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
+
+$WarningPreference = 'SilentlyContinue';
+${ontapRestRequestBootstrap}
+
+$FSxID = '${fsxId}'
+$FSxRegion = '${region}'
+$IgroupMissingIqnsList = '${JSON.stringify(igroupMissingIqnsList)}' | ConvertFrom-Json
+
+$response = @{
+        result = 'success'
+        error = ''}
+try {
+        $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
+        $FSxCredentials = $FSxNDetails.FSxCredentials
+        $FSxHostName = $FSxNDetails.FSxHostName              
+        $null = Connect-NcController -Name $FSxHostName -Credential $FSxCredentials 
+        
+        foreach ($IgroupMissingIqn in $IgroupMissingIqnsMap) {
+                $IgroupName = $IgroupMissingIqn.igroupName
+                $Initiators = $IgroupMissingIqn.missingIqns
+                foreach ($Initiator in $Initiators) {
+                        try {
+                                Add-NcIgroupInitiator -Name $IgroupName -Initiator $Initiator 
+                        } catch {
+                                $response.result = 'partial'
+                                $response.error += $($_.Exception.Message)
+                                Write-Error "Failed to add initiator $Initiator to igroup $IgroupName : $($_.Exception.Message)"
+                        }
+                }
+        }
+} catch {
+        $response.result = 'failed'
+        $response.error += $($_.Exception.Message)
+        Write-Error "Failed to add initiator to igroup: $($_.Exception.Message)"
+}
+$response | ConvertTo-Json -Compress
+Stop-Transcript | Out-Null
+`;
+
 export {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
-    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
+    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN,
+    ADD_INITIATOR_TO_IGROUP
 };
