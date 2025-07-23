@@ -1,0 +1,23 @@
+.log-analyzer-onboarding {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    .sectionTwo {
+        margin-top: 60px;
+        display: flex;
+        gap: 24px;
+        width: 87.3%;
+
+        .accordionCardSection {
+            width: 66.35%;
+        }
+
+        .legalNoticeSection {
+            width: 32.33%;
+            height: 416px;
+            background: var(--content-background);
+            box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, var(--border));
+        }
+    }
+}

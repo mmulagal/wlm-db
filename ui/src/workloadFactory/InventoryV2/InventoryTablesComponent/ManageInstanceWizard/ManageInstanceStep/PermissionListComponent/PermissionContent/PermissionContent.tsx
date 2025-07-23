@@ -23,9 +23,10 @@ type AccordionContentProps = {
     title: string;
     blocks: PermissionBlock[];
     policies: any;
+    infoBlock?: string;
 };
 
-export const PermissionContent: React.FC<AccordionContentProps> = ({ title, blocks, policies }) => {
+export const PermissionContent: React.FC<AccordionContentProps> = ({ title, blocks, policies, infoBlock }) => {
     const { t } = useTranslation();
     const { setDialog } = useDialog();
     const openDialog = (type: string | undefined, label: string) => {
@@ -56,6 +57,16 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
     };
     return (
         <div className={styles['permission-content']}>
+            {infoBlock && (
+                <div className={styles.infoSection}>
+                    <DsTypography variant="Semibold_14" className={styles['info-heading']}>
+                        {t('databases.log-analyzer.information')}
+                    </DsTypography>
+                    <div className={styles['info-block']}>
+                        <DsTypography variant="Regular_14">{infoBlock}</DsTypography>
+                    </div>
+                </div>
+            )}
             <DsTypography className={styles['permission-title']} variant="Semibold_14">
                 {title}
             </DsTypography>

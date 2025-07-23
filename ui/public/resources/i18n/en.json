@@ -355,7 +355,8 @@
             "scan-trigger-error": "Error in triggering scan",
             "scan-failed": "Error investigation scan failed",
             "first-card-heading": "Effortless SQL Server Optimization",
-            "first-card-heading-text": " Transform your database management with Amazon Bedrock analysis of SQL error log investigation. Scan your SQL instance logs, get grouped insights by unique errors, severity, and categories, and unlock clear, human-readable explanations with actionable remediation steps.",
+            "first-card-heading-text": " Transform your database management with Amazon Bedrock analysis of SQL error log investigation.",
+            "first-card-point-1-heading": "Scan your SQL instance logs, get grouped insights by unique errors, severity, and categories, and unlock clear, human-readable explanations with actionable remediation steps.",
             "second-card-heading": "Agentic AI",
             "second-card-heading-text": "Error investigation benefits",
             "second-card-point-1-heading": "Smart Error Grouping",
@@ -367,7 +368,31 @@
             "second-card-point-4-heading": "Guided Remediation",
             "second-card-point-4-text": "Follow best-practice steps to resolve issues and boost performance",
             "second-card-point-5-heading": "Resolve errors faster",
-            "second-card-point-5-text": "Resolve errors faster and keep your databases running smoothly with ease."
+            "second-card-point-5-text": "Resolve errors faster and keep your databases running smoothly",
+            "information": "Information",
+            "amazon-bedrock": "Amazon Bedrock",
+            "prerequisites": "Prerequisites",
+            "readiness-status": "Ready",
+            "prerequisites-list": "Prerequisites list",
+            "accordion-1-info": "The Well-Architected feature continuously analyzes your Oracle databases on FSx for ONTAP to ensure database configurations are Well-Architected, aligning with industry and vendor best practices. It identifies misalignments, delivers comprehensive reports with insights, and provides actionable recommendations. Users can choose to apply our automation to fix issues like storage or security misconfigurations, or follow provided guidance to address them manually.",
+            "bedrock-model-activation": "Bedrock model activation",
+            "bedrock-model-activation-content": "Bedrock model anthropic.claude-sonnet-4-20250514 should be enabled in the AWS account and accessible from the region where SQL node is hosted.",
+
+            "onboarding-accordion-2-title": "Networking: Private endpoint for bedrock",
+            "onboarding-accordion-2-info": "A private endpoint for Bedrock allows you to securely connect to the Bedrock service from your virtual network without exposing your traffic to the public internet. This setup enhances security by ensuring that data transfer between your virtual network and Bedrock remains within the Azure backbone network.",
+            "onboarding-accordion-2-label": "Private endpoint for bedrock",
+            "onboarding-accordion-2-value-1": "Ensure s3 gateway VPC endpoint is present and associated with the SQL node subnet's route table (Eg: vpce-0d65fff7cd3372c46)",
+            "onboarding-accordion-2-value-2": "Ensure Bedrock VPC endpoint is associated with the SQL node's subnet (Eg: vpce-050cb2f33a1380ffd)",
+
+            "onboarding-accordion-3-title": "Ec2 instance profile role permissions",
+            "onboarding-accordion-3-info": "In AWS, an EC2 instance profile is a container for an IAM role that you can use to grant permissions to an EC2 instance. This allows the instance to interact with other AWS services securely without needing to store AWS credentials on the instance itself. In AWS, an EC2 instance profile is a container for an IAM role that you can use to grant permissions to an EC2 instance. This allows the instance to interact with other AWS services securely without needing to store AWS credentials on the instance itself.",
+            "onboarding-accordion-3-label": "Permissions",
+            "onboarding-accordion-3-value-1": "Ec2 instance profile role should have 'bedrock:InvokeModel' permission attached",
+
+            "onboarding-accordion-4-title": "Credentials associated with wlmdb",
+            "onboarding-accordion-4-info": "The Workload Management Database (WLMDB) is a specialized database used in various systems to manage and optimize workloads. It typically requires secure access to ensure that only authorized users and applications can interact with it. Understanding the credentials associated with WLMDB is crucial for maintaining the security and integrity of the database.",
+            "onboarding-accordion-4-label": "Permissions",
+            "onboarding-accordion-4-value-1": "Credentials associated with wlmdb should have 'bedrock:GetFoundationModelAvailability' and 'bedrock:ListInferenceProfiles' permissions"
         },
         "dashboard": {
             "no-credentials": "No credentials",

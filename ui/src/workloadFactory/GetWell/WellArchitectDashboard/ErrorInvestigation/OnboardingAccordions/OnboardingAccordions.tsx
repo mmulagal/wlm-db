@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { ReactComponent as ReviewDisabled } from '../../../../../assets/Review-disabled.svg';
+import { useTranslation } from 'react-i18next';
+import { ReactComponent as Bedrock } from '../../../../../assets/Bedrock.svg';
+import { ReactComponent as Networking } from '../../../../../assets/networking.svg';
+import { ReactComponent as EC2Instance } from '../../../../../assets/ec2-instance.svg';
+import { ReactComponent as CredentialAssociated } from '../../../../../assets/credential-associated.svg';
 import {
     AccordionItem,
     ManageInstanceAccordion
@@ -8,26 +12,113 @@ import { PermissionContent } from '../../../../InventoryV2/InventoryTablesCompon
 import styles from './OnboardingAccordions.module.scss';
 
 const OnboardingAccordions = () => {
+    const { t } = useTranslation();
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll] = useState(false);
 
     const items: AccordionItem[] = [
         {
             id: '1',
-            title: 'Amazon Bedrock',
-            subtitle: 'Capability',
-            readinessStatus: 'Ready',
+            title: t('databases.log-analyzer.amazon-bedrock'),
+            subtitle: t('databases.log-analyzer.prerequisites'),
+            readinessStatus: t('databases.log-analyzer.readiness-status'),
             missingPermission: false,
-            image: <ReviewDisabled />,
+            image: <Bedrock />,
             content: (
                 <PermissionContent
-                    title={'Prerequisites list'}
+                    title={t('databases.log-analyzer.prerequisites-list')}
+                    infoBlock={t('databases.log-analyzer.accordion-1-info')}
                     blocks={[
                         {
-                            label: 'Bedrock model activation',
-                            values: [
-                                'Bedrock model anthropic.claude-sonnet-4-20250514 should be enabled in the AWS account and accessible from the region where SQL node is hosted.'
-                            ],
+                            label: t('databases.log-analyzer.bedrock-model-activation'),
+                            values: [t('databases.log-analyzer.bedrock-model-activation-content')],
+                            showCopy: false,
+                            viewPolicy: {
+                                value: false,
+                                withTabs: false
+                            }
+                        }
+                    ]}
+                    policies={{}}
+                />
+            )
+        },
+        {
+            id: '2',
+            title: t('databases.log-analyzer.onboarding-accordion-2-title'),
+            subtitle: t('databases.log-analyzer.prerequisites'),
+            readinessStatus: t('databases.log-analyzer.readiness-status'),
+            missingPermission: false,
+            image: <Networking />,
+            content: (
+                <PermissionContent
+                    title={t('databases.log-analyzer.prerequisites-list')}
+                    infoBlock={t('databases.log-analyzer.onboarding-accordion-2-info')}
+                    blocks={[
+                        {
+                            label: t('databases.log-analyzer.onboarding-accordion-2-label'),
+                            values: [t('databases.log-analyzer.onboarding-accordion-2-value-1')],
+                            showCopy: false,
+                            viewPolicy: {
+                                value: false,
+                                withTabs: false
+                            }
+                        },
+                        {
+                            label: t('databases.log-analyzer.onboarding-accordion-2-label'),
+                            values: [t('databases.log-analyzer.onboarding-accordion-2-value-2')],
+                            showCopy: false,
+                            viewPolicy: {
+                                value: false,
+                                withTabs: false
+                            }
+                        }
+                    ]}
+                    policies={{}}
+                />
+            )
+        },
+        {
+            id: '3',
+            title: t('databases.log-analyzer.onboarding-accordion-3-title'),
+            subtitle: t('databases.log-analyzer.prerequisites'),
+            readinessStatus: t('databases.log-analyzer.readiness-status'),
+            missingPermission: false,
+            image: <EC2Instance />,
+            content: (
+                <PermissionContent
+                    title={t('databases.log-analyzer.prerequisites-list')}
+                    infoBlock={t('databases.log-analyzer.onboarding-accordion-3-info')}
+                    blocks={[
+                        {
+                            label: t('databases.log-analyzer.onboarding-accordion-3-label'),
+                            values: [t('databases.log-analyzer.onboarding-accordion-3-value-1')],
+                            showCopy: false,
+                            viewPolicy: {
+                                value: false,
+                                withTabs: false
+                            }
+                        }
+                    ]}
+                    policies={{}}
+                />
+            )
+        },
+        {
+            id: '4',
+            title: t('databases.log-analyzer.onboarding-accordion-4-title'),
+            subtitle: t('databases.log-analyzer.prerequisites'),
+            readinessStatus: t('databases.log-analyzer.readiness-status'),
+            missingPermission: false,
+            image: <CredentialAssociated />,
+            content: (
+                <PermissionContent
+                    title={t('databases.log-analyzer.prerequisites-list')}
+                    infoBlock={t('databases.log-analyzer.onboarding-accordion-4-info')}
+                    blocks={[
+                        {
+                            label: t('databases.log-analyzer.onboarding-accordion-4-label'),
+                            values: [t('databases.log-analyzer.onboarding-accordion-4-value-1')],
                             showCopy: false,
                             viewPolicy: {
                                 value: false,

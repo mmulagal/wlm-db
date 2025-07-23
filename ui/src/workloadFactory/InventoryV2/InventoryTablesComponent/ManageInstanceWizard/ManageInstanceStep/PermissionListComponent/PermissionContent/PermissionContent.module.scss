@@ -6,6 +6,19 @@
         margin-bottom: 8px;
     }
 
+    .infoSection {
+        margin-bottom: 40px;
+        margin-top: 8px;
+        .info-block {
+            margin-bottom: 8px;
+            padding: 12px 16px;
+            background: var(--background-main);
+        }
+        .info-heading {
+            margin-bottom: 8px;
+        }
+    }
+
     .inline-container {
         display: flex;
         flex-wrap: wrap;

@@ -1,2 +1,10 @@
 .onboardingAccordions {
+    margin-bottom: 40px;
+    [class*='accordion-container'] {
+        gap: 2px;
+        [class*='permission-row'] {
+            border-bottom: none;
+            margin-bottom: 6px;
+        }
+    }
 }
