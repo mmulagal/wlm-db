@@ -154,17 +154,9 @@ interface HighAvailabilityClusterDriveLetterDetails {
 }
 
 interface HighAvailabilityAssessment {
-    heartbeat?: {
-        status: string;
-        details: HighAvailabilityHeartbeatDetails;
-    };
     driveLetter?: {
         status: string;
         details: HighAvailabilityClusterDriveLetterDetails;
-    };
-    clusterQuorum?: {
-        status: string;
-        details: HighAvailabilityClusterQuorumDetails;
     };
     sharedStorage?: HighAvailabilitySharedStorage;
     sqlServerServices?: {
@@ -213,6 +205,16 @@ interface ResourceAssessmentData {
     maxDOP?: MaxDOPAssesment;
     clone?: CloneAssessment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
+    highAvailability?: {
+        heartbeat?: {
+            status: string;
+            details: HighAvailabilityHeartbeatDetails;
+        };
+        clusterQuorum?: {
+            status: string;
+            details: HighAvailabilityClusterQuorumDetails;
+        };
+    };
     lastAssessedDate?: string;
     errors?: {
         compute?: string;

@@ -30,7 +30,8 @@ import {
     CrrAssessment,
     CrrDetails,
     HighAvailabilityAssessment,
-    Metadata
+    Metadata,
+    ResourceAssessmentData
 } from '../../../utils/common-types';
 import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import { getInstanceInfo } from '../../database/database-operations';
@@ -178,6 +179,7 @@ async function getResilienceDriftAssessment(
     databaseInstanceId: string,
     databaseInstanceName: string,
     fieldsValues: string[] = [],
+    resourceAssessmentData: ResourceAssessmentData = {},
     databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
 ) {
     logger.info('Getting resilience drift assessment for:', {
@@ -252,6 +254,7 @@ async function getResilienceDriftAssessment(
                       databaseHostId,
                       databaseInstanceId,
                       databaseInstanceName,
+                      resourceAssessmentData,
                       highAvailabilityAssessmentData
                   )
                 : Promise.resolve(undefined)
@@ -268,7 +271,7 @@ async function getResilienceDriftAssessment(
             snapshotPolicy,
             crr: crrData,
             awsBackup: awsBackup as ParameterDriftResponseType,
-            highAvailability: haChecksArray
+            highAvailability: !isEmpty(haChecksArray) ? haChecksArray : undefined
         };
         return assessmentData;
     } catch (error) {
@@ -864,13 +867,14 @@ interface HeartbeatSettings {
     SameSubnetThreshold: number;
     CrossSubnetThreshold: number;
 }
-async function getCombinedHighAvailabilityAssessment(
+
+async function getSqlServiceStartupAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
     instanceRecord: WorkloadInstance
 ) {
-    logger.info('Fetch cluster quorum, heartbeat settings, sql service status for instance', {
+    logger.info('Fetch sql service status for instance', {
         accountId,
         credentialsId,
         region,
@@ -880,13 +884,13 @@ async function getCombinedHighAvailabilityAssessment(
     try {
         // Prepare all commands in a single SSM document execution
         const { name: instanceName, activeNodeInstanceid } = instanceRecord;
-        const commands = compact([CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS, SQL_SERVER_SERVICES(instanceName)]);
+        const commands = compact([SQL_SERVER_SERVICES(instanceName)]);
         const rawResponses = await callSsmExecution(
             credentialsId,
             region,
             commands,
             activeNodeInstanceid,
-            `Fetch cluster quorum, heartbeat settings, sql service status for instance ${instanceName} on node ${activeNodeInstanceid}`,
+            `Fetch sql service status for instance ${instanceName} on node ${activeNodeInstanceid}`,
             accountId,
             false,
             undefined,
@@ -895,7 +899,80 @@ async function getCombinedHighAvailabilityAssessment(
 
         // Parse SSM output into separate objects
         const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);
-        const [parsedQuorumData, parsedHeartSettingsData, parsedSqlServiceData] = rawResponsesParsed;
+        const [parsedSqlServiceData] = rawResponsesParsed;
+
+        // --- SQL Server Services ---
+        let sqlServerServicesResult;
+        if (!parsedSqlServiceData) {
+            // If missing, mark as not optimized
+            sqlServerServicesResult = {
+                status: AssessmentStatus.NOT_OPTIMIZED,
+                details: [],
+                error: 'SQL Server Services response missing'
+            };
+        } else {
+            let services: any[] = [];
+            services = Array.isArray(parsedSqlServiceData)
+                ? parsedSqlServiceData
+                : parsedSqlServiceData
+                ? [parsedSqlServiceData]
+                : [];
+            const allManualAndRunning =
+                services.length > 0 &&
+                services.every(
+                    (svc: any) =>
+                        svc.StartType?.toLowerCase() === 'manual' &&
+                        (typeof svc.Status === 'string' ? svc.Status.toLowerCase() === 'running' : svc.Status === 4)
+                );
+            sqlServerServicesResult = allManualAndRunning
+                ? { status: AssessmentStatus.OPTIMIZED, details: services }
+                : { status: AssessmentStatus.NOT_OPTIMIZED, details: services, error: null };
+        }
+
+        return {
+            sqlServerServices: sqlServerServicesResult
+        };
+    } catch (err) {
+        logger.error('Error running combined high availability assessment:', err);
+        return {
+            sqlServerServices: { status: AssessmentStatus.NOT_OPTIMIZED, details: [], error: err?.toString() }
+        };
+    }
+}
+async function initiateHostLevelHighAvailabilityAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('Fetch cluster quorum, heartbeat settings for instance', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        activeNodeInstanceId
+    });
+
+    try {
+        // Prepare all commands in a single SSM document execution
+
+        const commands = compact([CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS]);
+        const rawResponses = await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceId,
+            `Fetch cluster quorum, heartbeat settings on node ${activeNodeInstanceId}`,
+            accountId,
+            false,
+            undefined,
+            true
+        );
+
+        // Parse SSM output into separate objects
+        const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);
+        const [parsedQuorumData, parsedHeartSettingsData] = rawResponsesParsed;
 
         // --- Cluster Quorum ---
         const clusterQuorumResult =
@@ -955,51 +1032,20 @@ async function getCombinedHighAvailabilityAssessment(
                 details: parsedHeartSettingsData
             };
         }
-
-        // --- SQL Server Services ---
-        let sqlServerServicesResult;
-        if (!parsedSqlServiceData) {
-            // If missing, mark as not optimized
-            sqlServerServicesResult = {
-                status: AssessmentStatus.NOT_OPTIMIZED,
-                details: [],
-                error: 'SQL Server Services response missing'
-            };
-        } else {
-            let services: any[] = [];
-            services = Array.isArray(parsedSqlServiceData)
-                ? parsedSqlServiceData
-                : parsedSqlServiceData
-                ? [parsedSqlServiceData]
-                : [];
-            const allManualAndRunning =
-                services.length > 0 &&
-                services.every(
-                    (svc: any) =>
-                        svc.StartType?.toLowerCase() === 'manual' &&
-                        (typeof svc.Status === 'string' ? svc.Status.toLowerCase() === 'running' : svc.Status === 4)
-                );
-            sqlServerServicesResult = allManualAndRunning
-                ? { status: AssessmentStatus.OPTIMIZED, details: services }
-                : { status: AssessmentStatus.NOT_OPTIMIZED, details: services, error: null };
-        }
-
         return {
             clusterQuorum: clusterQuorumResult,
-            heartbeat: heartbeatResult,
-            sqlServerServices: sqlServerServicesResult
+            heartbeat: heartbeatResult
         };
     } catch (err) {
         logger.error('Error running combined high availability assessment:', err);
         return {
             clusterQuorum: { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() },
-            heartbeat: { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() },
-            sqlServerServices: { status: AssessmentStatus.NOT_OPTIMIZED, details: [], error: err?.toString() }
+            heartbeat: { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() }
         };
     }
 }
 
-async function initiateHighAvailabilityAssessment(
+async function initiateInstanceLevelHighAvailabilityAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -1018,7 +1064,7 @@ async function initiateHighAvailabilityAssessment(
     const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = instanceRecord;
 
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobName = 'High Availability Assessment';
+    const jobName = 'High availability assessment (shared storage, drive letter and sql service)';
     const jobDescription = jobName;
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
@@ -1035,25 +1081,18 @@ async function initiateHighAvailabilityAssessment(
 
     let sharedStorageResult: any;
     let driveLetterResult: any;
-    let clusterQuorumResult: any;
-    let heartbeatResult: any;
     let sqlServerServicesResult: any;
 
     try {
-        const [sharedStorage, driveLetter, combinedHighAvailability] = await Promise.all([
+        const [sharedStorage, driveLetter, sqlService] = await Promise.all([
             getSharedStorageAssessment(accountId, credentialsId, region, databaseHostId, instanceRecord),
             getDriveLetterAssessment(accountId, credentialsId, region, databaseHostId, instanceRecord),
-            getCombinedHighAvailabilityAssessment(accountId, credentialsId, region, instanceRecord)
+            getSqlServiceStartupAssessment(accountId, credentialsId, region, instanceRecord)
         ]);
 
         sharedStorageResult = sharedStorage;
         driveLetterResult = driveLetter;
-
-        ({
-            clusterQuorum: clusterQuorumResult,
-            heartbeat: heartbeatResult,
-            sqlServerServices: sqlServerServicesResult
-        } = combinedHighAvailability);
+        sqlServerServicesResult = sqlService;
     } catch (err) {
         logger.error('Error running high availability assessment:', err);
         errorMessage = err?.toString?.() || String(err);
@@ -1071,8 +1110,6 @@ async function initiateHighAvailabilityAssessment(
                 config_data: {
                     sharedStorage: sharedStorageResult,
                     driveLetter: driveLetterResult,
-                    clusterQuorum: clusterQuorumResult,
-                    heartbeat: heartbeatResult,
                     sqlServerServices: sqlServerServicesResult
                 }
             }
@@ -1092,6 +1129,7 @@ async function getHighAvailabilityDriftData(
     databaseHostId: string,
     databaseInstanceId: string,
     databaseInstanceName: string,
+    resourceAssessmentData: ResourceAssessmentData,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
 ): Promise<ParameterDriftResponseType[] | (ParameterDriftResponseType & { errorMessage: string })> {
     logger.info('Initiating High availability resiliency assessment for:', {
@@ -1109,8 +1147,9 @@ async function getHighAvailabilityDriftData(
     }
 
     try {
-        const { sharedStorage, driveLetter, clusterQuorum, heartbeat, sqlServerServices } =
-            highAvailabilityAssessmentData;
+        const { highAvailability: { clusterQuorum, heartbeat } = {} } = resourceAssessmentData;
+
+        const { sharedStorage, driveLetter, sqlServerServices } = highAvailabilityAssessmentData;
 
         logger.debug(
             `Assessment data found for: sharedStorage=${!!sharedStorage}, driveLetter=${!!driveLetter}, clusterQuorum=${!!clusterQuorum}, heartbeat=${!!heartbeat}, sqlServerServices=${!!sqlServerServices}`
@@ -1210,6 +1249,7 @@ export {
     collectVolumeSnapshotCopiesData,
     getVolumesWithoutSnapshotPolicy,
     initiateAWSBackupAssessment,
-    initiateHighAvailabilityAssessment,
-    getHighAvailabilityDriftData
+    initiateInstanceLevelHighAvailabilityAssessment,
+    getHighAvailabilityDriftData,
+    initiateHostLevelHighAvailabilityAssessment
 };

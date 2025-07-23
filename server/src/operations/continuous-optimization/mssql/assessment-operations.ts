@@ -58,7 +58,8 @@ import {
     initiateCrossRegionResiliencyAssessment,
     initiateAWSBackupAssessment,
     getResilienceDriftAssessment,
-    initiateHighAvailabilityAssessment
+    initiateInstanceLevelHighAvailabilityAssessment,
+    initiateHostLevelHighAvailabilityAssessment
 } from './resilience-assessment-operation';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
@@ -105,7 +106,8 @@ function hostLevelDriftData(
         license: fieldsValues?.includes(AssessmentCategories.LICENSE.toLowerCase()),
         hostOsPatch: fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase()),
         rssConfig: fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLowerCase()),
-        mssqlPatch: fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase())
+        mssqlPatch: fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase()),
+        highAvailability: fieldsValues?.includes(AssessmentCategories.HIGH_AVAILABILITY.toLowerCase())
     };
 
     const [
@@ -210,9 +212,16 @@ async function fetchMssqlDriftAssessment(
         ...(hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
     };
 
-    let fieldsValues = fields
-        ? fields.toLowerCase().replace(/\s+/g, '').split(',')
-        : Object.values(AssessmentCategories).map(category => category.toLowerCase());
+    let fieldsValues = (
+        fields?.toLowerCase().replace(/\s+/g, '').split(',') ||
+        Object.values(AssessmentCategories).map(category => category.toLowerCase())
+    ).filter(
+        field =>
+            !(
+                databaseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
+                field === AssessmentCategories.HIGH_AVAILABILITY.toLowerCase()
+            )
+    );
 
     if (!isEmpty(dismissedConfigurations)) {
         fieldsValues = updateFieldsBasedOnDismissedConfigurations(fieldsValues, dismissedConfigurations);
@@ -268,6 +277,7 @@ async function fetchMssqlDriftAssessment(
                   databaseInstanceId,
                   databaseInstanceName,
                   fieldsValues,
+                  hostLevelAssessmentData as ResourceAssessmentData,
                   databaseInstanceConfigData
               )
             : Promise.resolve({})
@@ -422,7 +432,8 @@ async function fetchMssqlDriftAssessmentPerHost(
                         AssessmentCategories.SNAPSHOT_POLICY,
                         AssessmentCategories.AWS_BACKUP,
                         AssessmentCategories.CRR,
-                        AssessmentCategories.CLONE
+                        AssessmentCategories.CLONE,
+                        AssessmentCategories.HIGH_AVAILABILITY
                     ];
                     const driftAssessment = await fetchMssqlDriftAssessment(
                         accountId,
@@ -572,6 +583,7 @@ async function initiateHostLevelAssessmentDataCollection(
     let rssConfigErrorMessage;
     let mssqlPatchAssessment;
     let mssqlPatchErrorMessage;
+    let highAvailiabilityAssessment;
 
     if (fields?.includes(AssessmentCategories.LICENSE)) {
         ({ licenseAssessment, errorMessage: licenseErrorMessage } =
@@ -672,6 +684,17 @@ async function initiateHostLevelAssessmentDataCollection(
                 jobId
             )) || {});
     }
+    if (fields?.includes(AssessmentCategories.HIGH_AVAILABILITY)) {
+        const { clusterQuorum, heartbeat } =
+            (await initiateHostLevelHighAvailabilityAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                activeNodeInstanceId
+            )) || {};
+        highAvailiabilityAssessment = { clusterQuorum, heartbeat };
+    }
     const hasAssessmentOrError = [
         licenseAssessment,
         licenseErrorMessage,
@@ -696,6 +719,7 @@ async function initiateHostLevelAssessmentDataCollection(
             rssConfig: rssConfigAssessment || (!rssConfigErrorMessage ? existingAssessmentData?.rssConfig : undefined),
             mssqlPatch:
                 mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
+            highAvailability: highAvailiabilityAssessment,
             errors: {
                 license:
                     licenseErrorMessage || (!licenseAssessment ? existingAssessmentData?.errors?.license : undefined),
@@ -731,7 +755,8 @@ async function initiateHostLevelAssessmentDataCollection(
             compute: assessmentResults.compute,
             hostOsPatch: assessmentResults.hostOsPatch,
             rssConfig: assessmentResults.rssConfig,
-            mssqlPatch: assessmentResults.mssqlPatch
+            mssqlPatch: assessmentResults.mssqlPatch,
+            highAvailability: assessmentResults.highAvailability
         });
     }
 }
@@ -912,7 +937,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 );
                 break;
             case AssessmentCategories.HIGH_AVAILABILITY:
-                await initiateHighAvailabilityAssessment(
+                await initiateInstanceLevelHighAvailabilityAssessment(
                     accountId,
                     credentialsId,
                     region,
@@ -1050,7 +1075,8 @@ async function triggerMssqlAssessment(
                 AssessmentCategories.LICENSE,
                 AssessmentCategories.HOST_OS_PATCH,
                 AssessmentCategories.RSS_CONFIG,
-                AssessmentCategories.MSSQL_PATCH
+                AssessmentCategories.MSSQL_PATCH,
+                AssessmentCategories.HIGH_AVAILABILITY
             ].includes(field.toLowerCase() as AssessmentCategories)
         );
 
