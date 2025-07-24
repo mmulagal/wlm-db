@@ -39,7 +39,7 @@ import { handleOptimizeRssOptimization } from './continuous-optimization/mssql/r
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { resetCache } from '../utils/cache';
 import { getServerNameWithHostname, isDemo } from '../utils/utils';
-import { listInstanceConfigIncludingResourceAndInstance } from './database/instance-config-operations';
+import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import {
     CloneAssessment,
     CloneDetail,
@@ -626,14 +626,17 @@ async function fetchInstanceConfigurationAndVolumeMapping(
     volumeMapping?: MappedVolumeResponseForClone;
 }> {
     // Fetch configuration data for the databaseHostId and databaseInstanceId
-    const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
+    const {
+        items: [persistedConfigurationData]
+    } = await paginateListInstanceConfigData({
         accountId,
         region,
         credentialsId,
         resourceId: databaseHostId,
         databaseInstanceId: instanceId,
         configDataType: AssessmentCategories.CLONE,
-        pageSize: 1
+        includeDatabaseInstance: true,
+        includeResource: true
     });
 
     const {

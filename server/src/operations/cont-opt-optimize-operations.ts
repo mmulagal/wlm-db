@@ -19,7 +19,8 @@ import {
     CloneAssessment,
     CloneDetail,
     MappedVolumeResponseForClone,
-    OptimizeMpioTimeoutParams
+    OptimizeMpioTimeoutParams,
+    ResourceDetails
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -66,7 +67,7 @@ import {
     STORAGE_OPTIMIZE_JOB_PARAM
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
-import { listInstanceConfigIncludingResourceAndInstance } from './database/instance-config-operations';
+import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import {
     CloneDetailType,
     OptimizePerHostRequestBodyType,
@@ -365,7 +366,7 @@ async function activeSqlNodeDetails(
         database_deployment_type: databaseDeploymentType
     } = instanceDetail as unknown as DatabaseInstance;
 
-    const { metadata, resource_name: sqlServerName } = resourceDetail;
+    const { metadata, resource_name: sqlServerName } = resourceDetail! as unknown as ResourceDetails;
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
     const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(credentialsId, region, {
@@ -400,7 +401,7 @@ async function activeSqlNodeDetails(
         sqlServerName,
         databaseType,
         svmDetails,
-        awsAccountId: resourceDetail.cloud_provider_account_id,
+        awsAccountId: resourceDetail!.cloud_provider_account_id,
         serverNameWithHostName,
         instanceMetadata,
         databaseDeploymentType
@@ -1127,14 +1128,18 @@ async function optimizeSizing(
         throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
     }
 
-    const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
+    const {
+        items: [persistedConfigurationData]
+    } = await paginateListInstanceConfigData({
         accountId,
         region,
         credentialsId,
         resourceId: databaseHostId,
         databaseInstanceId,
         configDataType: AssessmentCategories.STORAGE,
-        pageSize: 1
+        pageSize: 1,
+        includeResource: true,
+        includeDatabaseInstance: true
     });
     const {
         config_data: configData,
@@ -2808,14 +2813,18 @@ async function optimizeMaxDop(
 
     let parentJobId = '';
     try {
-        const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
+        const {
+            items: [persistedConfigurationData]
+        } = await paginateListInstanceConfigData({
             accountId,
             region,
             credentialsId,
             resourceId: databaseHostId,
             databaseInstanceId,
             configDataType: AssessmentCategories.MAXDOP,
-            pageSize: 1
+            pageSize: 1,
+            includeDatabaseInstance: true,
+            includeResource: true
         });
 
         const {

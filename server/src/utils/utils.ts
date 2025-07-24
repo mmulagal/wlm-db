@@ -1235,6 +1235,20 @@ function getNextToken<T extends { id: string }>(
     return totalResourcesCount > pageSize && items.length >= pageSize ? items[items.length - 1]?.id : undefined;
 }
 
+// Database query helper functions
+
+function buildSelectFields(fields: string[]): Record<string, boolean> {
+    return Object.fromEntries(fields.map(field => [field, true]));
+}
+
+function addIncludeSelect(key: string, fields: string[], extra?: Record<string, boolean>) {
+    return {
+        [key]: {
+            select: extra ? { ...buildSelectFields(fields), ...extra } : buildSelectFields(fields)
+        }
+    };
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1307,5 +1321,7 @@ export {
     getSqlInstanceMetricDataQueries,
     isCidrContained,
     sanitizeSnsSubject,
-    getNextToken
+    getNextToken,
+    addIncludeSelect,
+    buildSelectFields
 };

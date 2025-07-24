@@ -3,7 +3,7 @@ import {
     calculateComputeDrift,
     managedHostsComputeAssessment
 } from '../../../src/operations/continuous-optimization/compute-assessment-operations';
-import { DEMO_AWS_ACCOUNT_ID, RESOURCE_DEFAULT_SELECT_FIELDS } from '../../../src/utils/consts';
+import { DEMO_AWS_ACCOUNT_ID } from '../../../src/utils/consts';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/aws/fsx-scope';
@@ -15,6 +15,7 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/aws/compute-optimizer-scope';
 import { Metadata, ResourceAssessmentData } from '../../../src/utils/common-types';
+import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../../src/utils/database-consts';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 

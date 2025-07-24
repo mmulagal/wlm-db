@@ -25,7 +25,6 @@ import {
     MODEL_AVAILABILITY_STATUS,
     MSSQL_ERROR_PATTERN
 } from '../../utils/logs-analyzer/logs-analyzer-consts';
-import { listDatabaseInstances } from '../../lib/database/db';
 import { DatabaseInstance, DatabaseInstancesIncludingResource } from '../../utils/common-types';
 import getLogger from '../../utils/logger';
 import { registerJob, updateJobDetails } from '../database/job-operations';
@@ -49,6 +48,7 @@ import {
 } from './remote-script-functions';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../workloads/pgsql/const';
 import { createLogsAnalysisReports, listLogsAnalysisReports } from '../../lib/database/logs-analysis-reports';
+import { getPaginatedDatabaseInstances } from '../database/database-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -463,13 +463,14 @@ async function triggerLogsAnalysis(
         logLevel,
         logsWindowDuration
     });
-    const [managedInstance] = (await listDatabaseInstances(accountId, {
+    const paginatedResponse = await getPaginatedDatabaseInstances(accountId, {
         credentialsId,
         region,
         resourceId: databaseHostId,
         sqlInstanceId: databaseInstanceId,
         shouldIncludeResource: true
-    })) as DatabaseInstancesIncludingResource[];
+    });
+    const [managedInstance] = paginatedResponse.items as DatabaseInstancesIncludingResource[];
 
     if (isEmpty(managedInstance)) {
         const errorMessage = `No managed database instance by account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId} found.`;

@@ -4,7 +4,7 @@ import { compact, isEmpty, uniq, uniqBy } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
-import { listDatabaseInstances, listResources } from '../lib/database/db';
+import { listResources } from '../lib/database/db';
 import {
     ACCOUNTID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
@@ -46,7 +46,12 @@ import {
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/sandbox.types';
-import { getResources, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
+import {
+    getPaginatedDatabaseInstances,
+    getResources,
+    updateInstanceMetadata,
+    updateResourceMetaData
+} from './database/database-operations';
 import { updateParentJobStatus, registerJob, updateJobDetails } from './database/job-operations';
 import {
     updateSandboxDBIntoInstanceData,
@@ -109,11 +114,13 @@ async function getSandboxDetails(
     });
 
     if (isEmpty(managedInstances)) {
-        const managedResult = await listDatabaseInstances(accountId, {
+        const managedResult = await getPaginatedDatabaseInstances(accountId, {
             credentialsId,
             resourceId
         });
-        managedInstances = Array.isArray(managedResult) ? managedResult : managedResult.items;
+        managedInstances = Array.isArray(managedResult)
+            ? (managedResult as DatabaseInstance[])
+            : (managedResult.items as DatabaseInstance[]);
     }
 
     const instances =
@@ -336,7 +343,7 @@ async function getSandboxInfoByInstanceId(
 ) {
     logger.info('Get Sandboxes Info by Instance Id', accountId, credentialsId, region);
 
-    const managedResult = await listDatabaseInstances(accountId, {
+    const managedResult = await getPaginatedDatabaseInstances(accountId, {
         credentialsId,
         region,
         resourceId: databaseHostId,
@@ -3378,7 +3385,7 @@ async function runSandboxPreValidations(
 
     const [[srcResourceDetail], srcInstanceResult, [destResourceDetailTemp], destInstanceResult] = await Promise.all([
         listResources({ accountId, resourceId: source.host }),
-        listDatabaseInstances(accountId, {
+        getPaginatedDatabaseInstances(accountId, {
             credentialsId,
             resourceId: source.host,
             sqlInstanceId: source.instance
@@ -3386,7 +3393,7 @@ async function runSandboxPreValidations(
         source.host === dest.host ? Promise.resolve([]) : listResources({ accountId, resourceId: dest.host }),
         source.host === dest.host && source.instance === dest.instance
             ? Promise.resolve([])
-            : listDatabaseInstances(accountId, {
+            : getPaginatedDatabaseInstances(accountId, {
                   credentialsId,
                   resourceId: dest.host,
                   sqlInstanceId: dest.instance
@@ -3541,7 +3548,7 @@ async function runSandboxPreValidations(
             ),
             instanceMetadata: destInstanceMetadata,
             activeNodeDetails: destStatus,
-            databaseInstanceId: destInstanceDetail.database_instance_id,
+            databaseInstanceId: (destInstanceDetail as DatabaseInstance).database_instance_id,
             sqlAuthEnabled: Boolean(destInstance.sqlAuthEnabled)
         }
     };

@@ -1,5 +1,11 @@
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, Prisma, STORAGE_TYPE } from '@prisma/client';
-import { DatabaseInstanceConfigurations, DatabaseInstanceMetadata } from '../../utils/common-types';
+import { JsonValue } from '@prisma/client/runtime/binary';
+import {
+    CrrDetails,
+    DatabaseInstanceConfigurations,
+    DatabaseInstanceMetadata,
+    ResourceDetails
+} from '../../utils/common-types';
 
 interface Deployment {
     deploymentId: string;
@@ -86,7 +92,31 @@ interface ListDatabaseInstancesRecord {
     nextToken?: string;
 }
 
+interface DatabaseInstanceDetails {
+    database_instance_name: string;
+    instanceState?: string;
+    database_instance_id: string;
+    database_type: string;
+    is_default: boolean;
+    metadata: DatabaseInstanceMetadata | JsonValue;
+    created_time?: string | Date;
+    database_deployment_type?: string;
+    fsxn_ids: string;
+    credentials_id: string;
+    fsx_svm_id?: JSON | JsonValue;
+    fsxwId?: string;
+    ebsVolumeIds?: string[];
+    storage_protocol?: string | null;
+    region: string;
+    databaseType?: string;
+    storage_type?: string;
+    sqlAuthEnabled?: boolean;
+    isManaged?: boolean;
+    configurations?: DatabaseInstanceConfigurations | JsonValue;
+    crrConfigData?: { crrDetails: CrrDetails[] };
+}
 interface DatabaseInstanceConfigData {
+    id?: string;
     account_id: string;
     credentials_id: string;
     region: string;
@@ -94,10 +124,11 @@ interface DatabaseInstanceConfigData {
     database_instance_id: string;
     creation_time: Date;
     last_updated?: Date;
-    config_data: object;
+    config_data: any;
     config_data_type: string;
+    database_instances?: DatabaseInstanceDetails; // Required when includeDatabaseInstance is true
+    resource?: ResourceDetails; // Required when includeResource is true
 }
-
 interface ListDatabaseInstanceConfigDataParams {
     accountId?: string;
     region?: string;
@@ -107,7 +138,8 @@ interface ListDatabaseInstanceConfigDataParams {
     configDataType?: string;
     pageSize?: number;
     nextToken?: string;
-    include?: Prisma.database_instance_config_dataInclude;
+    includeDatabaseInstance?: boolean;
+    includeResource?: boolean;
     select?: Prisma.database_instance_config_dataSelect;
     filters?: Record<string, any>;
 }

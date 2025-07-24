@@ -1,7 +1,8 @@
 import { createResource, listResources } from '../../src/lib/database/db';
 import { ResourceAssessmentData } from '../../src/utils/common-types';
-import { ACCOUNT_ID, DEFAULT_AWS_REGION, RESOURCE_DEFAULT_SELECT_FIELDS } from '../../src/utils/consts';
+import { ACCOUNT_ID, DEFAULT_AWS_REGION } from '../../src/utils/consts';
 import { updateAssessmentErrorInResourceTable } from '../../src/utils/cont-opt-utils';
+import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../src/utils/database-consts';
 import { DEFAULT_AWS_CREDENTIALS_ID } from './consts';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';

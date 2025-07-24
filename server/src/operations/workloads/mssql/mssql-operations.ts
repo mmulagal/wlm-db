@@ -44,13 +44,7 @@ import {
     DEFAULT_INSTANCE_NAME
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import {
-    createResource,
-    deleteResource,
-    listDatabaseInstances,
-    listRelationshipsResources,
-    listResources
-} from '../../../lib/database/db';
+import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
 import {
     getDatabaseInstanceName,
     sqlResponseParsing,
@@ -60,7 +54,7 @@ import {
     parseMultipleCommandResponse
 } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
-import { getResources } from '../../database/database-operations';
+import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
 import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
 import {
     GET_FQDN,
@@ -1198,7 +1192,7 @@ async function getDatabaseEnvironmentDetails(
         );
     }
 
-    const databaseInstanceInfo = await listDatabaseInstances(accountId, {
+    const databaseInstanceInfo = await getPaginatedDatabaseInstances(accountId, {
         credentialsId,
         resourceId,
         sqlInstanceName: databaseInstanceName
@@ -1254,7 +1248,7 @@ async function checkDatabaseExists(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         if (sqlInstanceId) {
-            const dbInstancesResult = await listDatabaseInstances(accountId, { sqlInstanceId, credentialsId });
+            const dbInstancesResult = await getPaginatedDatabaseInstances(accountId, { sqlInstanceId, credentialsId });
             const dbInstance = Array.isArray(dbInstancesResult) ? dbInstancesResult[0] : dbInstancesResult?.items?.[0];
             const { userDatabase } = (dbInstance?.metadata || { userDatabase: undefined }) as { userDatabase: any[] };
             return userDatabase?.some(db => db.name === databaseName) ?? false;

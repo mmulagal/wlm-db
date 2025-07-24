@@ -42,10 +42,10 @@ import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-lo
 import { cronAssessmentCollection } from './cont-opt-assessment-operations';
 import { Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
-import { listAllManagedInstances } from './database/database-operations';
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
 import processWellArchitectedAssessmentNotifications from './continuous-optimization/notification';
 import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/database-instance-config';
+import { listAllManagedInstances } from './database/database-operations';
 
 const logger = getLogger();
 
@@ -192,7 +192,7 @@ async function updateManagedInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
         logger.info('Updating instance recommendation preferences for Continuous optimization feature');
 
-        const managedInstances = (await listAllManagedInstances()) as DatabaseInstancesIncludingResource[];
+        const { items: managedInstances } = await listAllManagedInstances();
         if (isEmpty(managedInstances)) {
             logger.error(
                 'No successfully managed database instances found during instance recommendation preference update.'
@@ -205,11 +205,12 @@ async function updateManagedInstRecPrefs() {
         // group managed instances by account_id, region, credentials_id, cloud_provider_account_id, and database_deployment_type so that we can manage a set of instances in bulk
         const grouped: { [key: string]: DatabaseInstancesIncludingResource[] } = managedInstances.reduce(
             (acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
-                const key = `${managedInstance.account_id}||${managedInstance.region}||${managedInstance.credentials_id}||${managedInstance.resource.cloud_provider_account_id}||${managedInstance.database_deployment_type}`;
+                const instance = managedInstance as DatabaseInstancesIncludingResource;
+                const key = `${instance.account_id}||${instance.region}||${instance.credentials_id}||${instance.resource.cloud_provider_account_id}||${instance.database_deployment_type}`;
                 if (!acc[key]) {
                     acc[key] = [];
                 }
-                acc[key].push(managedInstance);
+                acc[key].push(instance);
                 return acc;
             },
             {} as { [key: string]: DatabaseInstancesIncludingResource[] }

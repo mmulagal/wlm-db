@@ -14,7 +14,7 @@ import {
 } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus, SendCommandCommandInput } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { deleteDatabaseInstance, deleteResource, listDatabaseInstances } from '../lib/database/db';
+import { deleteDatabaseInstance, deleteResource } from '../lib/database/db';
 import {
     describeInstancesWithPagination,
     paginateDescribeEbsVolumes,
@@ -98,6 +98,7 @@ import { copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
 import { discoverOracleHosts } from './workloads/oracle/oracle-discover-scripts';
+import { getPaginatedDatabaseInstances } from './database/database-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -1125,7 +1126,7 @@ async function unmanageDatabaseInstance(
     if (databaseInstanceList.length > 0) {
         const databaseInstanceIds = databaseInstanceList.split(',');
 
-        const preDeleteResult = await listDatabaseInstances(accountId, {
+        const preDeleteResult = await getPaginatedDatabaseInstances(accountId, {
             credentialsId,
             resourceId,
             shouldIncludeResource: true
@@ -1133,7 +1134,7 @@ async function unmanageDatabaseInstance(
         const preDeleteDatabaseInstances = Array.isArray(preDeleteResult) ? preDeleteResult : preDeleteResult.items;
 
         const instanceDetails = preDeleteDatabaseInstances.find(
-            item => item.database_instance_id === databaseInstanceList
+            item => (item as { database_instance_id: string }).database_instance_id === databaseInstanceList
         );
         const resourceDetails = preDeleteDatabaseInstances[0]?.resource;
 
@@ -1148,7 +1149,7 @@ async function unmanageDatabaseInstance(
 
         await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
 
-        const postDeleteResult = await listDatabaseInstances(accountId, { credentialsId, resourceId });
+        const postDeleteResult = await getPaginatedDatabaseInstances(accountId, { credentialsId, resourceId });
         const postDeleteDatabaseInstances = Array.isArray(postDeleteResult) ? postDeleteResult : postDeleteResult.items;
 
         databaseInstanceIds.forEach(databaseInstanceId => {

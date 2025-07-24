@@ -48,15 +48,17 @@ async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?:
     });
 
     let volumes = items.flatMap(obj =>
-        Object.values(obj.config_data).flatMap(cfg =>
-            (cfg as MappedOnTapVolumeResponse)?.volumeRecords
-                ?.filter(({ fsxVolumeId }) => Boolean(fsxVolumeId))
-                ?.map(({ uuid, name, fsxVolumeId }) => ({
-                    id: fsxVolumeId ?? '',
-                    name,
-                    ontapUuid: uuid
-                }))
-        )
+        obj.config_data
+            ? Object.values(obj.config_data).flatMap(cfg =>
+                  (cfg as MappedOnTapVolumeResponse)?.volumeRecords
+                      ?.filter(({ fsxVolumeId }) => Boolean(fsxVolumeId))
+                      ?.map(({ uuid, name, fsxVolumeId }) => ({
+                          id: fsxVolumeId ?? '',
+                          name,
+                          ontapUuid: uuid
+                      }))
+              )
+            : []
     );
 
     volumes = uniqBy(volumes, 'id');

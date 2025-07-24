@@ -49,8 +49,8 @@ import {
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     UNAVAILABLE_PS_MODULES
 } from './workloads/mssql/discover-consts';
-import { getResources } from './database/database-operations';
-import { createResource, listDatabaseInstances, upsertDatabaseInstance } from '../lib/database/db';
+import { getPaginatedDatabaseInstances, getResources } from './database/database-operations';
+import { createResource, upsertDatabaseInstance } from '../lib/database/db';
 import { tagResources } from './aws/sqs-operations';
 import { createAssessmentData } from './demo-operations';
 import { preSignedUrl } from '../lib/aws/s3';
@@ -1027,7 +1027,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
 
                         isResourceTobeCreated = !resourceDetails;
                     }
-                    const alreadyManagedResult = await listDatabaseInstances(accountId, {
+                    const alreadyManagedResult = await getPaginatedDatabaseInstances(accountId, {
                         credentialsId,
                         resourceId,
                         region

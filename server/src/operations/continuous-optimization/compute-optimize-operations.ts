@@ -8,7 +8,7 @@ import {
     ResourceAssessmentData,
     SsmSqlServerRunningStatus
 } from '../../utils/common-types';
-import { AuditStatus, RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/consts';
+import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
@@ -49,6 +49,7 @@ import {
     updateResourceMetaData
 } from '../database/database-operations';
 import { AssessmentStatus } from '../../utils/continous-optimization-consts';
+import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 interface ModifiedInstancesNodeDetails {
     ec2InstanceId: string;

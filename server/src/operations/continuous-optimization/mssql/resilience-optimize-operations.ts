@@ -39,7 +39,6 @@ import { getMappedOntapVolumes } from '../../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
-import { listDatabaseInstances } from '../../../lib/database/db';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import {
     AssessmentCategories,
@@ -50,8 +49,9 @@ import {
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
+import { getPaginatedDatabaseInstances } from '../../database/database-operations';
+import { paginateListInstanceConfigData } from '../../database/instance-config-operations';
 import { ADD_INITIATOR_TO_IGROUP } from '../../workloads/mssql/high-availability-scripts';
-import { listInstanceConfigIncludingResourceAndInstance } from '../../database/instance-config-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -119,7 +119,7 @@ async function getAvailableSnapshotPolicyList(
         errorMessage: ''
     };
     try {
-        const dbInstancesResult = await listDatabaseInstances(accountId, {
+        const dbInstancesResult = await getPaginatedDatabaseInstances(accountId, {
             resourceId: databaseHostId,
             credentialsId,
             sqlInstanceId: databaseInstanceId,
@@ -522,14 +522,17 @@ async function handleSharedStorageOptimize(
             throat(3, async ({ databaseInstanceId, region, credentialsId, databaseHostId, ontapLunPaths }) => {
                 let errorMessage;
                 let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-                const [persistedConfigurationData] = await listInstanceConfigIncludingResourceAndInstance({
+                const {
+                    items: [persistedConfigurationData]
+                } = await paginateListInstanceConfigData({
                     accountId,
                     region,
                     credentialsId,
                     resourceId: databaseHostId,
                     databaseInstanceId,
                     configDataType: AssessmentCategories.HIGH_AVAILABILITY,
-                    pageSize: 1
+                    includeDatabaseInstance: true,
+                    includeResource: true
                 });
 
                 const {
@@ -538,7 +541,7 @@ async function handleSharedStorageOptimize(
                     resource: { resource_name: sqlServerName = '' } = {}
                 } = persistedConfigurationData || {};
 
-                const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName);
+                const serverNameWithHostName = getServerNameWithHostname(sqlServerName!, instanceName);
 
                 const { id: instanceOptimizeJobId } = await registerJob(accountId, credentialsId, region, {
                     type: JOBTYPE.WELL_ARCHITECTED,

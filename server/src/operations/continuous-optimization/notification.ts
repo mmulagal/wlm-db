@@ -1,18 +1,13 @@
 import throat from 'throat';
 import getLogger from '../../utils/logger';
 import { DatabaseInstancesIncludingResource } from '../../utils/common-types';
-import {
-    WF_NOTIFICATION_PRIORITY,
-    NOTIFICATION_TYPE,
-    DatabaseTypes,
-    WF_CONSOLE_ENDPOINT,
-    INSTANCE_DEFAULT_SELECT_FIELDS
-} from '../../utils/consts';
+import { WF_NOTIFICATION_PRIORITY, NOTIFICATION_TYPE, DatabaseTypes, WF_CONSOLE_ENDPOINT } from '../../utils/consts';
 
-import { listDatabaseInstances } from '../../lib/database/db';
 import prepareWFNotificationRequest from '../wf-notification-operations';
 import { hasNotOptimizedStatus } from './assessment-utils';
 import { sanitizeSnsSubject } from '../../utils/utils';
+import { getPaginatedDatabaseInstances } from '../database/database-operations';
+import { INSTANCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
 
@@ -78,7 +73,7 @@ export default async function processWellArchitectedAssessmentNotifications(init
             // This await is intentional: we process each page sequentially to avoid high memory usage and ensure order.
             // Using await in the loop is appropriate here because each page must be processed before fetching the next.
             // eslint-disable-next-line no-await-in-loop
-            const response = await listDatabaseInstances(undefined, {
+            const response = await getPaginatedDatabaseInstances(undefined, {
                 databaseType: DatabaseTypes.MS_SQL_SERVER,
                 shouldIncludeResource: true,
                 additionalResourceFields: ['assessment_results'],

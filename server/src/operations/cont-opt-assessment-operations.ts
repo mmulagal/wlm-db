@@ -60,10 +60,11 @@ async function updateAssesmentResultsInInstanceMetadata(managedInstance: Databas
 async function cronAssessmentCollection(initiatedBy: string) {
     logger.info('Cron assessment collection', { initiatedBy });
 
-    const allManagedInstances = (await listAllManagedInstances(undefined, {
+    const paginatedResponse = await listAllManagedInstances(undefined, {
         databaseType: DatabaseTypes.MS_SQL_SERVER,
         shouldIncludeResource: true
-    })) as DatabaseInstancesIncludingResource[];
+    });
+    const allManagedInstances = paginatedResponse.items as DatabaseInstancesIncludingResource[];
 
     if (isEmpty(allManagedInstances)) {
         logger.info('No successfully managed database instances found.');

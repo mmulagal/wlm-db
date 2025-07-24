@@ -12,7 +12,8 @@ import {
     countResources,
     listDatabaseInstances,
     updateDatabaseInstance,
-    updateResource
+    updateResource,
+    countDatabaseInstances
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -22,19 +23,41 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
-import {
-    CONFIG_NOT_FOUND,
-    HttpErrorCodes,
-    RESOURCE_DEFAULT_SELECT_FIELDS,
-    RESOURCESTYPE,
-    STACK_NOT_FOUND
-} from '../../utils/consts';
-import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
+import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND } from '../../utils/consts';
+import { ResourceDetails, DeploymentDetails, DatabaseInstance } from '../../utils/common-types';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { ListDatabaseInstancesRecord, GetResourcesParams } from '../../lib/database/db-types';
-import { getNextToken } from '../../utils/utils';
+import {
+    ListDatabaseInstancesRecord,
+    GetResourcesParams,
+    PaginatedDatabaseInstancesResponse
+} from '../../lib/database/db-types';
+import { getInstancesWithResourceForDemo, getNextToken, isDemo } from '../../utils/utils';
+import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
+
+async function handleDemoFlowMapping(
+    items: any[],
+    accountId?: string,
+    credentialsId?: string,
+    additionalResourceFields?: string[]
+) {
+    if (!isEmpty(items) && isDemoFlow) {
+        const resourceSelectKeys = [...RESOURCE_DEFAULT_SELECT_FIELDS];
+        if (additionalResourceFields?.length) {
+            resourceSelectKeys.push(...additionalResourceFields);
+        }
+
+        const filteredResource = await listResources({
+            accountId,
+            credentialIds: credentialsId,
+            selectKeys: resourceSelectKeys
+        });
+        return getInstancesWithResourceForDemo(items, filteredResource);
+    }
+    return items;
+}
 
 async function getSavedConfig(accountId: string, id: string): Promise<FormConfigObjectResponseType> {
     logger.info('Load individual saved config ', accountId);
@@ -330,7 +353,7 @@ async function getInstanceInfo(
     databaseInstanceId: string,
     region?: string
 ) {
-    const result = await listDatabaseInstances(accountId, {
+    const result = await getPaginatedDatabaseInstances(accountId, {
         credentialsId,
         resourceId: databaseHostId,
         sqlInstanceId: databaseInstanceId,
@@ -352,7 +375,7 @@ async function getInstanceInfo(
 }
 
 async function listAllManagedInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
-    return listDatabaseInstances(accountId, record);
+    return getPaginatedDatabaseInstances(accountId, record);
 }
 
 async function updateInstanceMetadata(accountId: string, instanceId: string, metaData: any) {
@@ -388,9 +411,69 @@ async function updateDatabaseHostConfigurations(
     return updateResource({ accountId, credentialsId, region, resourceId, updatedConfigs });
 }
 
-async function getPaginatedDatabaseInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
-    logger.info('Get paginated database instances', { accountId, record });
-    return listDatabaseInstances(accountId, record);
+async function getPaginatedDatabaseInstances(
+    accountId?: string,
+    record?: ListDatabaseInstancesRecord
+): Promise<PaginatedDatabaseInstancesResponse> {
+    const {
+        resourceId,
+        sqlInstanceId,
+        credentialsId,
+        region,
+        pageSize,
+        nextToken,
+        shouldIncludeResource,
+        additionalResourceFields
+    } = record || {};
+
+    logger.info('Get paginated database instances', {
+        accountId,
+        resourceId,
+        sqlInstanceId,
+        credentialsId,
+        region,
+        pageSize,
+        nextToken
+    });
+
+    try {
+        // Only perform count and pagination operations when pageSize is provided
+        let [records, instanceCountResult] = await Promise.all([
+            listDatabaseInstances(accountId, record),
+            pageSize ? countDatabaseInstances(accountId) : Promise.resolve({ _count: { id: 0 } })
+        ]);
+        if (shouldIncludeResource) {
+            records = await handleDemoFlowMapping(records, accountId, credentialsId, additionalResourceFields);
+        }
+        const items = trimAccountIdForDemo(records) as Array<DatabaseInstance>;
+        const filteredItems = items.filter((item): item is DatabaseInstance => item.database_instance_id !== null);
+
+        if (pageSize) {
+            const {
+                _count: { id: totalInstancesCount }
+            } = instanceCountResult;
+            const filteredItemsWithStringId = filteredItems as Array<DatabaseInstance & { id: string }>;
+
+            return {
+                totalCount: filteredItems.length,
+                items: filteredItems,
+                nextToken: getNextToken(
+                    filteredItemsWithStringId.filter(item => typeof item.id === 'string'),
+                    totalInstancesCount,
+                    pageSize
+                )
+            };
+        }
+
+        return {
+            totalCount: filteredItems.length,
+            items: filteredItems
+            // No nextToken when pageSize is not provided
+        };
+    } catch (error) {
+        logger.error('Failed to list database instances', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Failed to list the Database Instances. ${error}`);
+    }
 }
 
 async function updateDatabaseHostAssessmentData(
@@ -430,8 +513,10 @@ async function populateDbInstances(resourceDetails: ResourceDetails) {
     const { account_id: accountId, credentials_id: credentialsId, region, resource_id: resourceId } = resourceDetails;
     if (isEmpty(resourceDetails.database_instances)) {
         try {
-            const result = await listDatabaseInstances(accountId, { credentialsId, region, resourceId });
-            resourceDetails.database_instances = Array.isArray(result) ? result : result.items;
+            const result = await getPaginatedDatabaseInstances(accountId, { credentialsId, region, resourceId });
+            resourceDetails.database_instances = Array.isArray(result)
+                ? (result as DatabaseInstance[])
+                : (result.items as DatabaseInstance[]) ?? [];
         } catch (err) {
             logger.error('Failed to list database instances', err);
         }

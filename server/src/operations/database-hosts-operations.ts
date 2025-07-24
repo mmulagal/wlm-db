@@ -12,7 +12,7 @@ import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
 import throat from 'throat';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
-import { listDatabaseInstances, listResources } from '../lib/database/db';
+import { listResources } from '../lib/database/db';
 import {
     TopologyResponseType,
     ProtectionPerStorageTypeResponseType,
@@ -109,13 +109,13 @@ import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
 import getDatabaseInstanceTopology from '../utils/sql-utils';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
-import { listInstanceConfigIncludingResourceAndInstance } from './database/instance-config-operations';
+import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import {
     getOracleDatabaseInstancesDetails,
     getOracleDatabaseInstancesSummary
 } from './workloads/oracle/oracle-operations';
 import { trendGraphCreateScript } from './workloads/mssql/ssm-script-utils';
-import { getResources, populateDbInstances } from './database/database-operations';
+import { getPaginatedDatabaseInstances, getResources, populateDbInstances } from './database/database-operations';
 
 const logger = getLogger();
 
@@ -179,7 +179,7 @@ async function getUniqueCrrDetails(
         databaseInstanceId
     });
 
-    const crrConfigData = await listInstanceConfigIncludingResourceAndInstance({
+    const { items: crrConfigData } = await paginateListInstanceConfigData({
         accountId,
         region,
         credentialsId,
@@ -1095,12 +1095,14 @@ async function getDatabaseHostSummaryV2(
                 resource: resourceDetail
             }));
         } else {
-            const dbInstancesResult = await listDatabaseInstances(accountId, {
+            const dbInstancesResult = await getPaginatedDatabaseInstances(accountId, {
                 resourceId,
                 credentialsId,
                 region
             });
-            instancesManaged = Array.isArray(dbInstancesResult) ? dbInstancesResult : dbInstancesResult.items ?? [];
+            instancesManaged = Array.isArray(dbInstancesResult)
+                ? dbInstancesResult.filter((item: DatabaseInstance) => item && item.database_instance_id)
+                : (dbInstancesResult.items ?? []).filter((item: DatabaseInstance) => item && item.database_instance_id);
         }
     }
 
@@ -1712,7 +1714,7 @@ async function getInstanceDetails(
 
     // If either resource or databaseInstanceDetails is empty, make both DB calls
     if (isEmpty(resource) || isEmpty(dbInstanceDetails)) {
-        const instanceResult = await listDatabaseInstances(accountId, {
+        const instanceResult = await getPaginatedDatabaseInstances(accountId, {
             resourceId: databaseHostId,
             credentialsId,
             sqlInstanceId: databaseInstanceId,

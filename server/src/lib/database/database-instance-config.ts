@@ -7,6 +7,12 @@ import {
     DatabaseInstanceConfigData,
     ListDatabaseInstanceConfigDataParams
 } from './db-types';
+import { buildSelectFields, addIncludeSelect } from '../../utils/utils';
+import {
+    INSTANCE_CONFIG_DEFAULT_SELECT_FIELDS,
+    INSTANCE_DEFAULT_SELECT_FIELDS,
+    RESOURCE_DEFAULT_SELECT_FIELDS
+} from '../../utils/database-consts';
 
 const logger = getLogger();
 
@@ -29,10 +35,11 @@ async function listDatabaseInstanceConfigData({
     configDataType,
     pageSize,
     nextToken,
-    include,
+    includeDatabaseInstance,
+    includeResource,
     select,
     filters
-}: ListDatabaseInstanceConfigDataParams): Promise<any[]> {
+}: ListDatabaseInstanceConfigDataParams) {
     logger.info('Listing database instance config data', {
         accountId,
         region,
@@ -42,30 +49,54 @@ async function listDatabaseInstanceConfigData({
         configDataType,
         pageSize,
         nextToken,
-        include,
+        includeDatabaseInstance,
+        includeResource,
         select
     });
+
     accountId = checkAccount(accountId!);
 
-    const results = await prisma.client.database_instance_config_data.findMany({
-        where: {
-            ...(accountId && { account_id: accountId }),
-            ...(region && { region }),
-            ...(credentialsId && { credentials_id: credentialsId }),
-            ...(resourceId && { resource_id: resourceId }),
-            ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
-            ...(configDataType && { config_data_type: configDataType }),
-            ...filters
-        },
-        ...(include && !isEmpty(include) && { include }),
-        ...(select && !isEmpty(select) && { select }),
+    // Build the select object, including related tables if requested
+
+    // Use default fields converted to object format when select is undefined
+    const optimizedSelect = select || buildSelectFields(INSTANCE_CONFIG_DEFAULT_SELECT_FIELDS);
+
+    // Determine final select strategy
+    const finalSelect = {
+        ...(optimizedSelect && !isEmpty(optimizedSelect) && optimizedSelect),
+        ...(includeDatabaseInstance && addIncludeSelect('database_instances', INSTANCE_DEFAULT_SELECT_FIELDS)),
+        ...(includeResource &&
+            addIncludeSelect('resource', RESOURCE_DEFAULT_SELECT_FIELDS, {
+                assessment_data: true,
+                configurations: true
+            }))
+    };
+
+    // Build optimized where clause
+    const whereClause = {
+        ...(accountId && { account_id: accountId }),
+        ...(region && { region }),
+        ...(credentialsId && { credentials_id: credentialsId }),
+        ...(resourceId && { resource_id: resourceId }),
+        ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
+        ...(configDataType && { config_data_type: configDataType }),
+        ...filters
+    };
+
+    // Build optimized query options
+    const queryOptions = {
+        where: whereClause,
+        ...(finalSelect && { select: finalSelect }),
         ...(pageSize && pageSize > 0 && { take: pageSize }),
         ...(nextToken && {
             cursor: { id: nextToken },
             skip: 1
         })
-    });
+    };
 
+    const results = await prisma.client.database_instance_config_data.findMany(queryOptions);
+
+    // Optimized sorting using a comparison function
     return results.sort((a, b) => {
         const dateA = new Date(a.creation_time).getTime();
         const dateB = new Date(b.creation_time).getTime();

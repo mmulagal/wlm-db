@@ -29,7 +29,6 @@ import {
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
     AuditStatus,
     HttpErrorCodes,
-    RESOURCE_DEFAULT_SELECT_FIELDS,
     RESOURCESTYPE,
     SqlServerDeploymentModel,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
@@ -78,6 +77,7 @@ import {
 } from '../../../routes/types/continuous-optimization.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetAssessmentForDemo } from '../../demo-operations';
+import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../../utils/database-consts';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -252,10 +252,13 @@ async function fetchMssqlDriftAssessment(
         databaseInstanceId
     });
 
-    const assessmentDataMap = databaseInstanceConfigData.reduce((acc, config) => {
-        acc[config.config_data_type] = acc[config.config_data_type] || config.config_data;
-        return acc;
-    }, {} as Record<string, unknown>);
+    const assessmentDataMap = databaseInstanceConfigData.reduce(
+        (acc: Record<string, unknown>, config: { config_data_type: string; config_data: unknown }) => {
+            acc[config.config_data_type] = acc[config.config_data_type] || config.config_data;
+            return acc;
+        },
+        {} as Record<string, unknown>
+    );
 
     const [storageAssessmentResponse, resilienceAssessmentResponse] = await Promise.all([
         assessmentFlags.storage
@@ -839,6 +842,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 resource_id: databaseHostId,
                 database_instance_id: databaseInstanceId,
                 creation_time: new Date(),
+                last_updated: new Date(),
                 config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
                 config_data: instanceVolumeMapping
             }

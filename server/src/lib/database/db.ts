@@ -2,8 +2,7 @@ import { DEPLOYMENT_STATUS, SOURCE, DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } fr
 import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
-import { checkAccount, isDemo, getInstancesWithResourceForDemo } from '../../utils/utils';
-import { INSTANCE_DEFAULT_SELECT_FIELDS, RESOURCE_DEFAULT_SELECT_FIELDS, TCO_FEATURE } from '../../utils/consts';
+import { checkAccount, isDemo } from '../../utils/utils';
 import {
     Deployment,
     Event,
@@ -11,10 +10,11 @@ import {
     Config,
     DatabaseInstanceRecord,
     ListDatabaseInstancesRecord,
-    ListResourcesParams,
-    PaginatedDatabaseInstancesResponse
+    ListResourcesParams
 } from './db-types';
 import { ResourceDetails } from '../../utils/common-types';
+import { TCO_FEATURE } from '../../utils/consts';
+import { RESOURCE_DEFAULT_SELECT_FIELDS, INSTANCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -706,32 +706,7 @@ function buildDatabaseInstancesSelect(
     return select;
 }
 
-async function handleDemoFlowMapping(
-    items: any[],
-    accountId?: string,
-    credentialsId?: string,
-    additionalResourceFields?: string[]
-) {
-    if (!isEmpty(items) && isDemoFlow) {
-        const resourceSelectKeys = [...RESOURCE_DEFAULT_SELECT_FIELDS];
-        if (additionalResourceFields?.length) {
-            resourceSelectKeys.push(...additionalResourceFields);
-        }
-
-        const filteredResource = await listResources({
-            accountId,
-            credentialIds: credentialsId,
-            selectKeys: resourceSelectKeys
-        });
-        return getInstancesWithResourceForDemo(items, filteredResource);
-    }
-    return items;
-}
-
-async function listDatabaseInstances(
-    accountId?: string,
-    record?: ListDatabaseInstancesRecord
-): Promise<any[] | PaginatedDatabaseInstancesResponse> {
+async function listDatabaseInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
     logger.info('List database instances for given account and record', { accountId, record });
 
     const {
@@ -773,27 +748,7 @@ async function listDatabaseInstances(
         })
     };
 
-    let items = await prisma.client.database_instances.findMany(queryOptions);
-    let totalCount: number | undefined;
-
-    if (pageSize) {
-        totalCount = await prisma.client.database_instances.count({ where: whereClause });
-    }
-
-    if (shouldIncludeResource) {
-        items = await handleDemoFlowMapping(items, accountId, credentialsId, additionalResourceFields);
-    }
-
-    if (pageSize && totalCount !== undefined) {
-        const newNextToken = items.length === pageSize ? String(items[items.length - 1].id) : undefined;
-        return {
-            items,
-            nextToken: newNextToken,
-            totalCount
-        };
-    }
-
-    return items;
+    return prisma.client.database_instances.findMany(queryOptions);
 }
 
 async function deleteDatabaseInstance(
@@ -915,6 +870,31 @@ async function deleteOlderDeployments(olderDate: number) {
     });
 }
 
+async function countDatabaseInstances(
+    accountId?: string,
+    credentialsId?: string,
+    region?: string,
+    resourceType?: string
+) {
+    logger.info('Counting managed instances', { accountId, credentialsId, region, resourceType });
+
+    if (accountId) {
+        accountId = checkAccount(accountId);
+    }
+
+    return prisma.client.database_instances.aggregate({
+        _count: {
+            id: true
+        },
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region }),
+            ...(resourceType && { resource_type: resourceType })
+        }
+    });
+}
+
 export {
     listDeployments,
     createDeployment,
@@ -944,5 +924,6 @@ export {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    deleteOlderDeployments
+    deleteOlderDeployments,
+    countDatabaseInstances
 };

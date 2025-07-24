@@ -2,10 +2,7 @@ import {
     createDatabaseInstanceConfigData,
     deleteAllButLatestRecordPerConfigDataType
 } from '../../../src/lib/database/database-instance-config';
-import {
-    listInstanceConfigIncludingResourceAndInstance,
-    paginateListInstanceConfigData
-} from '../../../src/operations/database/instance-config-operations';
+import { paginateListInstanceConfigData } from '../../../src/operations/database/instance-config-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID } from '../../utils/consts';
 
 describe('database instance config operations', () => {
@@ -94,7 +91,7 @@ describe('database instance config operations', () => {
         ];
         await createDatabaseInstanceConfigData(DatabaseInstanceConfigDataRecords);
         await deleteAllButLatestRecordPerConfigDataType();
-        const resp = await listInstanceConfigIncludingResourceAndInstance({ accountId: ACCOUNT_ID });
+        const { items: resp } = await paginateListInstanceConfigData({ accountId: ACCOUNT_ID });
         expect(resp.length).toBeDefined(); // Need to check this
     });
 
