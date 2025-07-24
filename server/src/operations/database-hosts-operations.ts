@@ -2241,15 +2241,6 @@ async function getDatabaseInstancesSummary(
         if (getProtection && protectionData) {
             databaseInstanceDetails.protection = protectionData?.[index];
         }
-        const databases: Record<string, any[]> = {};
-        databasesList?.forEach(dbs => {
-            Object.keys(dbs).forEach(key => {
-                if (!databases[key]) {
-                    databases[key] = [];
-                }
-                databases[key] = unionWith(databases[key], dbs[key], isEqual);
-            });
-        });
 
         if (shouldQueryDatabasesWithProtection && getProtection && databases?.[instanceName]) {
             let isSqlNativeEnabled: string | boolean = 'N/A';
