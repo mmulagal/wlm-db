@@ -97,7 +97,8 @@ const { getPreSignedUrl } = preSignedUrl;
 
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const TEMP = '_temp';
-
+const WINDOWS_LOCAL_USER_ACCESS_ERROR =
+    'Authenticating with Windows local/domain credentials require enable CredSSP on the system for delegating credentials within domain computers. If this is blocked on the system with domain group policies, feature will not work.';
 async function installPowershell7(
     accountId: string,
     credentialsId: string,
@@ -2242,6 +2243,9 @@ async function validateWindowsCredentials(
         parsedResponse.instances.forEach((instance: DatabaseInstanceRegistration) => {
             if (instance.sqlInstanceConnectivity === false) {
                 instancesToBeDeleted.push(`${instance?.sqlInstanceName}${TEMP}`);
+                if (instance?.sqlerror?.includes('Access is denied')) {
+                    instance.sqlerror = WINDOWS_LOCAL_USER_ACCESS_ERROR;
+                }
                 response.push({ resourceId: instance.sqlInstanceName, databaseServerError: instance?.sqlerror });
             } else {
                 const {
