@@ -19,6 +19,7 @@ export interface ErrorInvestigationGetApiResponse {
 }
 
 export interface AgenticAIEntities {
+    isAgenticOnboardingActivating: boolean;
     selectedSeverity: [] | any;
     selectedTimeFrame: any;
     selectedErrorCodes: [] | any;

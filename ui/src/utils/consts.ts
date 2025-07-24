@@ -766,9 +766,11 @@ export const GETWELL_STATUS = {
 
 export const WELL_ARCHITECTED_TABS = {
     OVERVIEW: 'Overview',
+    ACTIVATING_LOG_ANALYZER: 'Activating Log Analyzer',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
     DATABASES: 'Databases',
     SANDBOXES: 'Sandboxes',
+    LOG_ANALYZER_ONBOARDING: 'Log Analyzer onboarding',
     ERROR_INVESTIGATION: 'Error investigation'
 };
 
