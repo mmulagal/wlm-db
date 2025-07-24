@@ -3525,7 +3525,9 @@ export const addHostJobPolling = async (
     dispatch: any,
     dialogKey: string,
     translation: any,
-    deleteHostSc: any
+    deleteHostSc: any,
+    listAllDirectories: any,
+    configureDirectory: any
 ) => {
     let step1Done = false;
     const firstStepName = 'Validate Host';
@@ -3609,8 +3611,33 @@ export const addHostJobPolling = async (
                         subJob?.status === JOB_MONITORING_STATUS.COMPLETED &&
                         step1Done
                     ) {
-                        dispatch(completeProtectionStep2(dialogKey));
-                        clearInterval(jobInterval);
+                        try {
+                            const state: any = store.getState().snapCenter;
+                            const dirRes = listAllDirectories({
+                                accountID: store.getState().auth.accountId,
+                                hostID: subJob?.data?.host,
+                                agentID: state.selectedAgent[0]?.id,
+                                workspaceID: state?.workSpaceData?.id
+                            });
+                            const diskList = dirRes?.diskInfos || dirRes?.data?.diskInfos || [];
+                            if (diskList && diskList?.length > 0) {
+                                const payload = {
+                                    logbackupFolder: diskList?.[0]?.path || ''
+                                };
+                                await configureDirectory({
+                                    accountID: store.getState().auth.accountId,
+                                    hostID: subJob?.data?.host,
+                                    payload,
+                                    agentID: state.selectedAgent[0]?.id,
+                                    workspaceID: state?.workSpaceData?.id
+                                });
+                            }
+                            dispatch(completeProtectionStep2(dialogKey));
+                        } catch {
+                            dispatch(completeProtectionStep2(dialogKey));
+                        } finally {
+                            clearInterval(jobInterval);
+                        }
                     }
                 }
             }
@@ -3674,7 +3701,9 @@ export const addHostHandlerSc = async (
     addHostScApi: any,
     addHostJobScApi: any,
     translation: any,
-    deleteHostSc: any
+    deleteHostSc: any,
+    listAllDirectories: any,
+    configureDirectory: any
 ) => {
     dispatch(setActionsDisabled(true));
     dispatch(
@@ -3720,7 +3749,16 @@ export const addHostHandlerSc = async (
             if (addHostResponse?.data?.jobId) {
                 // Getting job id
                 const { jobId } = addHostResponse.data;
-                addHostJobPolling(addHostJobScApi, jobId, dispatch, dialogKey, translation, deleteHostSc);
+                addHostJobPolling(
+                    addHostJobScApi,
+                    jobId,
+                    dispatch,
+                    dialogKey,
+                    translation,
+                    deleteHostSc,
+                    listAllDirectories,
+                    configureDirectory
+                );
             } else {
                 dispatch(resetProtectionProcess(dialogKey));
                 dispatch(setActionsDisabled(false));

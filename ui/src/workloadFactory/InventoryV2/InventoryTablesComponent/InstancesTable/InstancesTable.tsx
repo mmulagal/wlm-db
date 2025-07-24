@@ -20,6 +20,7 @@ import {
     useAddHostJobScMutation,
     useAddHostScMutation,
     useAssignRBACPrivilegesMutation,
+    useConfigureDirectoryMutation,
     useDeleteHostScMutation,
     useDiscoverExistingFsxNMutation,
     useGenerateCredentialIDMutation,
@@ -27,6 +28,7 @@ import {
     useGetFsxDetailsMutation,
     useGetRBACPrivilegesMutation,
     useGetWorkSpaceIDMutation,
+    useListAllDirectoriesMutation,
     useListExistingHostsMutation,
     useUnmanageMssqlInstanceMutation,
     useUnmanageOracleInstanceMutation,
@@ -101,8 +103,7 @@ import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import {
     cancelProtectionForRow,
     setDataForRow,
-    setWorkSpaceData,
-    startProtectionStep1
+    setWorkSpaceData
 } from '../../../../store/workloadFactory/snapcenterSlice';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
@@ -147,6 +148,8 @@ const InstancesTable = () => {
     const [addHostScApi] = useAddHostScMutation();
     const [addHostJobScApi] = useAddHostJobScMutation();
     const [deleteHostSc] = useDeleteHostScMutation();
+    const [configureDirectory] = useConfigureDirectoryMutation();
+    const [listAllDirectories] = useListAllDirectoriesMutation();
 
     useEffect(() => {
         setLoading(
@@ -514,7 +517,9 @@ const InstancesTable = () => {
                             addHostScApi,
                             addHostJobScApi,
                             t,
-                            deleteHostSc
+                            deleteHostSc,
+                            listAllDirectories,
+                            configureDirectory
                         );
                     }
                 }}

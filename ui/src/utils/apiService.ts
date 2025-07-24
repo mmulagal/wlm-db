@@ -86,7 +86,9 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
         api.endpoint === 'assignRBACPrivileges' ||
         api.endpoint === 'addHostSc' ||
         api.endpoint === 'addHostJobSc' ||
-        api.endpoint === 'deleteHostSc'
+        api.endpoint === 'deleteHostSc' ||
+        api.endpoint === 'configureDirectory' ||
+        api.endpoint === 'listAllDirectories'
     ) {
         if (api.endpoint === 'discoverExistingFsxN') {
             return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
@@ -609,6 +611,28 @@ export const snapcenterAPI = createApi({
         listExistingHosts: builder.mutation({
             query: ({ accountID }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts?limit=50&offset=0&order_by=name+asc&deploymentModel=`
+            })
+        }),
+        listAllDirectories: builder.mutation({
+            query: ({ accountID, hostID, agentID, workspaceID }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts/${hostID}/drives`,
+                headers: {
+                    'x-account-id': accountID,
+                    'x-agent-id': agentID,
+                    'x-netapp-workspace-id': workspaceID
+                }
+            })
+        }),
+        configureDirectory: builder.mutation({
+            query: ({ accountID, hostID, payload, agentID, workspaceID }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts/${hostID}/configurelogdirectory`,
+                method: 'POST',
+                body: payload,
+                headers: {
+                    'x-account-id': accountID,
+                    'x-agent-id': agentID,
+                    'x-netapp-workspace-id': workspaceID
+                }
             })
         }),
         generateCredentialID: builder.mutation({
@@ -1414,7 +1438,9 @@ export const {
     useGenerateCredentialIDMutation,
     useAddHostScMutation,
     useDeleteHostScMutation,
-    useAddHostJobScMutation
+    useAddHostJobScMutation,
+    useConfigureDirectoryMutation,
+    useListAllDirectoriesMutation
 } = snapcenterAPI;
 
 export const {

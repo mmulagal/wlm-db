@@ -45,6 +45,50 @@ router.get('/v1/management/organizations/:accountID/resources', async (req: {}, 
     }, 10);
 });
 
+router.get(
+    '/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts/:hostID/drives',
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, {
+                diskInfos: [
+                    {
+                        owner: 'stvym46.wlmqaauto.com',
+                        path: 'D:\\'
+                    },
+                    {
+                        owner: 'stvym46.wlmqaauto.com',
+                        path: 'E:\\'
+                    },
+                    {
+                        owner: 'stvym46.wlmqaauto.com',
+                        path: 'L:\\'
+                    },
+                    {
+                        owner: 'stvym46.wlmqaauto.com',
+                        path: 'S:\\'
+                    },
+                    {
+                        owner: 'stvym46.wlmqaauto.com',
+                        path: 'T:\\'
+                    }
+                ],
+                errorMessage: ''
+            });
+        }, 10);
+    }
+);
+
+router.post(
+    '/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts/:hostID/configurelogdirectory',
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, {
+                message: 'Configured log backup folder as D:\\MSSQL\\ for host: stvym46.wlmqaauto.com.'
+            });
+        }, 10);
+    }
+);
+
 router.post(
     '/accounts/:accountID/fsx/v2/credentials/:credentialID/regions/:regionID/bluexp/register-file-systems',
     async (req: {}, res: any) => {
