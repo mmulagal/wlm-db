@@ -4,7 +4,7 @@ import getLogger from '../utils/logger';
 import { getEc2SqlParameters } from './aws/ssm-operations';
 import { DEFAULT_INSTANCE_NAME, HttpErrorCodes } from '../utils/consts';
 import { SqlCredential } from '../utils/common-types';
-import registerUbrCredentials from '../lib/cloud-manager/ubr';
+import { registerUbrCredentials, listRegisteredUbrCredentials } from '../lib/cloud-manager/ubr';
 import { generateSqlResourceId } from '../utils/utils';
 import {
     GenerateUbrCredentialsBodyType,
@@ -52,6 +52,25 @@ async function generateUbrCredentials({
     }
 
     const { workspaceId, connectorId, resourceId } = rest;
+
+    try {
+        const {
+            credentials: [creds]
+        } = await listRegisteredUbrCredentials({
+            accountId,
+            workspaceId,
+            connectorId,
+            username,
+            resourceId: resourceId || generateSqlResourceId(ec2InstanceIds[0], ec2InstanceIds[1])
+        });
+
+        if (creds) {
+            return creds;
+        }
+    } catch (error: any) {
+        logger.warn('Error getting UBR credentials. Trying to register new credentials.', { error });
+    }
+
     try {
         const response = await registerUbrCredentials({
             accountId,

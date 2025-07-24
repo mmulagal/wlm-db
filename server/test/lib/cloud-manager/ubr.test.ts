@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import registerUbrCredentials from '../../../src/lib/cloud-manager/ubr';
+import { registerUbrCredentials, listRegisteredUbrCredentials } from '../../../src/lib/cloud-manager/ubr';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -20,5 +20,15 @@ describe('UBR - Unified Backup and Recovery', () => {
             connectorId: faker.string.alphanumeric(32)
         });
         expect(response?.credentialsId).toBeDefined();
+    });
+
+    it('List registered UBR credentials', async () => {
+        const response = await listRegisteredUbrCredentials({
+            accountId: ACCOUNT_ID,
+            workspaceId: faker.string.uuid()
+        });
+        expect(response?.credentials).toBeDefined();
+        expect(response?.credentials.length).toBeGreaterThan(0);
+        expect(response?.credentials[0].credentialsId).toBeDefined();
     });
 });
