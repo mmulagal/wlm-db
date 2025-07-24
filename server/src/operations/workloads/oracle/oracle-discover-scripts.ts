@@ -310,81 +310,7 @@ get_data_directories_without_creds() {
 EOF
 }
 
-    get_non_asm_nfs_or_iscsi_storage_details() {
-        
-        local ORACLE_SID="$1"
-        local isCDB="$2"
-        local pdbName="$3"
-        local credsAvailable="$4"
-        local ORACLE_HOME="$5"
-        
-        if [ "$credsAvailable" == "true" ]; then
-            dataDirectories=$(get_data_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
-        else
-            dataDirectories=$(get_data_directories_without_creds "$ORACLE_SID" "$ORACLE_HOME")
-            if [ $? -ne 0 ]; then
-                dataDirectories=""    
-            fi
-        fi
-
-        dataDirectoryMappings="["
-        
-        while IFS= read -r dataDirectory; do
-            {
-                # Skip empty lines
-                if [ -z "$dataDirectory" ]; then
-                    continue
-                fi
-
-                mount_info=$(findmnt -T "$dataDirectory" -n -o SOURCE,FSTYPE)
-                read source fstype <<< "$mount_info"
-
-                if [ -n "$source" ]; then
-                    if [[ "$fstype" != nfs* ]]; then
-                        udevInfo=$(udevadm info --query=all --name=$source)
-                        mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
-                        mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
-                        iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
-                        mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
-                        if echo "$mountPoint" | grep -q "iscsi"; then
-                            protocol="iSCSI"
-                        else
-                            protocol="others"
-                        fi
-
-                        mountPoint=$iscsiSerialNumber
-                        jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
-                    elif [[ "$fstype" == nfs* ]]; then
-                        dns_name=$(echo "$source" | cut -d':' -f1)
-                        mountPoint=$(echo "$source" | cut -d':' -f2-)
-                        protocol="NFS"
-                        # Check if dns_name already appears to be an IP address (simple check for digits and dots)
-                        if [[ $dns_name =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
-                            mountIp="$dns_name"
-                        else
-                            mountIp=$(dig +short "$dns_name")
-                        fi
-                        jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
-                    else
-                        continue
-                    fi
-
-                    if [ "$dataDirectoryMappings" == "[" ]; then
-                        dataDirectoryMappings+="$jsonObj"
-                    else
-                        dataDirectoryMappings+=", $jsonObj"
-                    fi
-
-                fi
-            } || {
-                continue
-            }
-        done <<< "$dataDirectories"
-        dataDirectoryMappings+="]"
-        echo "$dataDirectoryMappings"
-    }
-    
-    get_directory_mount_details() {
+        get_directory_mount_details() {
         dataDirectory="$1"
         dataDirectories=$(echo "$dataDirectory" | tr ',' '\n' | sort -u)
         if [ -z "$dataDirectories" ]; then
@@ -444,6 +370,25 @@ EOF
         done <<< "$dataDirectories"
         dataDirectoryMappings+="]"
         echo "$dataDirectoryMappings"
+    }
+
+    get_non_asm_nfs_or_iscsi_storage_details() {
+        
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        local credsAvailable="$4"
+        local ORACLE_HOME="$5"
+        
+        if [ "$credsAvailable" == "true" ]; then
+            dataDirectories=$(get_data_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
+        else
+            dataDirectories=$(get_data_directories_without_creds "$ORACLE_SID" "$ORACLE_HOME")
+            if [ $? -ne 0 ]; then
+                dataDirectories=""    
+            fi
+        fi
+        echo $(get_directory_mount_details "$dataDirectory")
     }
 
     get_oracle_db_mount_details() {
