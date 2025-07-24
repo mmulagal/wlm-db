@@ -3112,6 +3112,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                 if (instance?.databaseInstanceId === rowData?.instanceId) {
                     const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
                     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
+                    const haMssqlMap: any = CONFIG_NAME_TO_ID_MAPPING.HA_MSSQL;
                     if (storageSizingMap[rowData?.name]) {
                         return {
                             ...instance,
@@ -3204,6 +3205,23 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                             }
                         };
                     }
+                    if (haMssqlMap[rowData?.name]) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                highAvailability: instance?.assessments?.highAvailability?.map((item: any) => {
+                                    if (item?.name === haMssqlMap[rowData?.name]) {
+                                        return {
+                                            ...item,
+                                            status: 'optimized'
+                                        };
+                                    }
+                                    return item;
+                                })
+                            }
+                        };
+                    }
                     return instance;
                 }
                 return instance;
@@ -3241,6 +3259,65 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                         const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
                         const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
                         const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
+                        const haMssqlMap: any = CONFIG_NAME_TO_ID_MAPPING.HA_MSSQL;
+                        if (haMssqlMap[rowData?.name]) {
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        highAvailability: instance?.assessments?.dismissedConfigurations
+                                            ?.highAvailability
+                                            ? (() => {
+                                                  const existingHa =
+                                                      instance?.assessments?.dismissedConfigurations?.highAvailability;
+                                                  const itemIndex = existingHa.findIndex(
+                                                      (item: any) =>
+                                                          item?.configurationName === haMssqlMap[rowData?.name]
+                                                  );
+
+                                                  if (itemIndex !== -1) {
+                                                      // Update the existing item
+                                                      return existingHa.map((item: any, index: number) =>
+                                                          index === itemIndex
+                                                              ? {
+                                                                    ...item,
+                                                                    configState: setAction,
+                                                                    endTime: rowData?.endTime
+                                                                }
+                                                              : item
+                                                      );
+                                                  }
+                                                  // Add a new item to the list
+                                                  return [
+                                                      ...existingHa,
+                                                      {
+                                                          configurationName: haMssqlMap[rowData?.name],
+                                                          configState: setAction,
+                                                          endTime: rowData?.endTime
+                                                      }
+                                                  ];
+                                              })()
+                                            : [
+                                                  {
+                                                      configurationName: haMssqlMap[rowData?.name],
+                                                      configState: setAction,
+                                                      endTime: rowData?.endTime
+                                                  }
+                                              ]
+                                    } || {
+                                        highAvailability: [
+                                            {
+                                                configurationName: haMssqlMap[rowData?.name],
+                                                configState: setAction,
+                                                endTime: rowData?.endTime
+                                            }
+                                        ]
+                                    }
+                                }
+                            };
+                        }
                         if (storageSizingMap[rowData?.name]) {
                             return {
                                 ...instance,
@@ -3449,6 +3526,7 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
     const { driftAssessmentData } = state.getWellOptimize;
     const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size'];
     const storageLayoutMap: any = ['data-files-location', 'log-files-location', 'tempdb-files-location'];
+    const haMssqlMap: any = ['shared-storage', 'cluster-quorum', 'heartbeat-settings', 'sqlserver-service'];
     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
     const otherConfigMap: any = {
         'compute-rightsizing': 'compute',
@@ -3516,6 +3594,56 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                         }
                     ]
                 }
+            }
+        };
+    }
+    if (haMssqlMap.includes(name)) {
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: {
+                ...driftAssessmentData?.dismissedConfigurations,
+                highAvailability: driftAssessmentData?.dismissedConfigurations?.highAvailability
+                    ? (() => {
+                          const existingHa = driftAssessmentData?.dismissedConfigurations?.highAvailability;
+                          const itemIndex = existingHa.findIndex((item: any) => item?.configurationName === name);
+
+                          if (itemIndex !== -1) {
+                              // Update the existing item
+                              return existingHa.map((item: any, index: number) =>
+                                  index === itemIndex
+                                      ? {
+                                            ...item,
+                                            configState: setAction,
+                                            endTime
+                                        }
+                                      : item
+                              );
+                          }
+                          // Add a new item to the list
+                          return [
+                              ...existingHa,
+                              {
+                                  configurationName: name,
+                                  configState: setAction,
+                                  endTime
+                              }
+                          ];
+                      })()
+                    : [
+                          {
+                              configurationName: name,
+                              configState: setAction,
+                              endTime
+                          }
+                      ]
+            } || {
+                highAvailability: [
+                    {
+                        configurationName: name,
+                        configState: setAction,
+                        endTime
+                    }
+                ]
             }
         };
     }

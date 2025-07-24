@@ -1276,6 +1276,13 @@ export const getWellApi = createApi({
                 method: 'POST',
                 body: payload
             })
+        }),
+        optimizeHAMssql: builder.mutation({
+            query: ({ configName, payload }) => ({
+                url: `v1/mssql/database-hosts/optimize/${configName}`,
+                method: 'POST',
+                body: payload
+            })
         })
     })
 });
@@ -1476,7 +1483,8 @@ export const {
     useOptimizeResiliencyMutation,
     useOptimizeAwsBackupMutation,
     useOptimizeCloneCleanupMutation,
-    useDismissMssqlAssessmentMutation
+    useDismissMssqlAssessmentMutation,
+    useOptimizeHAMssqlMutation
 } = getWellApi;
 
 export const {

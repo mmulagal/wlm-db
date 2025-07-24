@@ -11,96 +11,92 @@ const ScrollableCard = () => {
     return (
         <div className={styles.scrollableCard2}>
             {activeSlide === 0 && (
-                <>
-                    <div className={styles.rightSection}>
-                        <div className={styles.topSection}>
-                            <OnboardingIllustration />
-                        </div>
-                        <div className={styles.middleSection}>
-                            <DsTypography variant="Semibold_16">
-                                {t('databases.log-analyzer.first-card-heading')}
+                <div className={styles.rightSection}>
+                    <div className={styles.topSection}>
+                        <OnboardingIllustration />
+                    </div>
+                    <div className={styles.middleSection}>
+                        <DsTypography variant="Semibold_16">
+                            {t('databases.log-analyzer.first-card-heading')}
+                        </DsTypography>
+                        <div className={styles.textSection}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.first-card-heading-text')}
                             </DsTypography>
-                            <div className={styles.textSection}>
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.log-analyzer.first-card-heading-text')}
-                                </DsTypography>
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.log-analyzer.first-card-point-1-heading')}
-                                </DsTypography>
-                            </div>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.first-card-point-1-heading')}
+                            </DsTypography>
                         </div>
                     </div>
-                </>
+                </div>
             )}
 
             {activeSlide === 1 && (
-                <>
-                    <div className={styles.rightSection}>
-                        <div className={styles.secondaryTopSection}>
-                            <OnboardingIllustration2 />
-                            <div className={styles.rightSection}>
-                                <DsTypography variant="Semibold_16">
-                                    {t('databases.log-analyzer.second-card-heading')}
-                                </DsTypography>
-                                <DsTypography variant="Semibold_16">
-                                    {' '}
-                                    {t('databases.log-analyzer.second-card-heading-text')}
-                                </DsTypography>
-                            </div>
+                <div className={styles.rightSection}>
+                    <div className={styles.secondaryTopSection}>
+                        <OnboardingIllustration2 />
+                        <div className={styles.rightSection}>
+                            <DsTypography variant="Semibold_16">
+                                {t('databases.log-analyzer.second-card-heading')}
+                            </DsTypography>
+                            <DsTypography variant="Semibold_16">
+                                {' '}
+                                {t('databases.log-analyzer.second-card-heading-text')}
+                            </DsTypography>
                         </div>
+                    </div>
 
-                        <div className={styles.rightSideContainer}>
-                            <div className={styles.secondaryMiddleSection}>
-                                <div className={styles.column}>
-                                    <div className={styles.contentArea}>
-                                        <DsTypography variant="Semibold_16">
-                                            {t('databases.log-analyzer.second-card-point-1-heading')}
-                                        </DsTypography>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.second-card-point-1-text')}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.contentArea}>
-                                        <DsTypography variant="Semibold_16">
-                                            {t('databases.log-analyzer.second-card-point-3-heading')}
-                                        </DsTypography>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.second-card-point-3-text')}
-                                        </DsTypography>
-                                    </div>
-                                    <div className={styles.contentArea}>
-                                        <DsTypography variant="Semibold_16">
-                                            {t('databases.log-analyzer.second-card-point-5-heading')}
-                                        </DsTypography>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.second-card-point-5-text')}
-                                        </DsTypography>
-                                    </div>
+                    <div className={styles.rightSideContainer}>
+                        <div className={styles.secondaryMiddleSection}>
+                            <div className={styles.column}>
+                                <div className={styles.contentArea}>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.log-analyzer.second-card-point-1-heading')}
+                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.log-analyzer.second-card-point-1-text')}
+                                    </DsTypography>
                                 </div>
 
-                                <div className={styles.column}>
-                                    <div className={styles.contentArea}>
-                                        <DsTypography variant="Semibold_16">
-                                            {t('databases.log-analyzer.second-card-point-2-heading')}
-                                        </DsTypography>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.second-card-point-2-text')}
-                                        </DsTypography>
-                                    </div>
-                                    <div className={styles.contentArea}>
-                                        <DsTypography variant="Semibold_16">
-                                            {t('databases.log-analyzer.second-card-point-4-heading')}
-                                        </DsTypography>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.second-card-point-4-text')}
-                                        </DsTypography>
-                                    </div>
+                                <div className={styles.contentArea}>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.log-analyzer.second-card-point-3-heading')}
+                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.log-analyzer.second-card-point-3-text')}
+                                    </DsTypography>
+                                </div>
+                                <div className={styles.contentArea}>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.log-analyzer.second-card-point-5-heading')}
+                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.log-analyzer.second-card-point-5-text')}
+                                    </DsTypography>
+                                </div>
+                            </div>
+
+                            <div className={styles.column}>
+                                <div className={styles.contentArea}>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.log-analyzer.second-card-point-2-heading')}
+                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.log-analyzer.second-card-point-2-text')}
+                                    </DsTypography>
+                                </div>
+                                <div className={styles.contentArea}>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.log-analyzer.second-card-point-4-heading')}
+                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.log-analyzer.second-card-point-4-text')}
+                                    </DsTypography>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </>
+                </div>
             )}
 
             <div className={styles.bottomSection}>

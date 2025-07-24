@@ -635,7 +635,7 @@
                                     {
                                         "name": "mpio-enabled",
                                         "recommended": "true",
-                                        "status": "optimized",
+                                        "status": "not-optimized",
                                         "severity": "critical",
                                         "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
                                         "tags": ["Performance efficiency", "Reliability"],
@@ -653,7 +653,7 @@
                                     {
                                         "name": "mpio-iscsi-count",
                                         "recommended": "5",
-                                        "status": "optimized",
+                                        "status": "not-optimized",
                                         "severity": "critical",
                                         "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
                                         "tags": ["Performance efficiency", "Reliability"],
@@ -671,7 +671,7 @@
 
                                     {
                                         "name": "mpio-timeout",
-                                        "status": "optimized",
+                                        "status": "not-optimized",
                                         "recommended": "60",
                                         "severity": "warning",
                                         "recommendation": "Configure the Microsoft Multipath I/O (MPIO) timeout setting on the host to 60 seconds to ensure connectivity and stability during FSx for ONTAP failovers. The 60-second setting prevents disk disconnections, application errors, and potential data loss caused by insufficient timeout settings.",
@@ -684,7 +684,7 @@
                                     {
                                         "name": "ntfs-allocation-unit-size",
                                         "recommended": "65536",
-                                        "status": "optimized",
+                                        "status": "not-optimized",
                                         "severity": "critical",
                                         "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
                                         "tags": ["Performance efficiency"],
@@ -702,7 +702,7 @@
                                     {
                                         "name": "mpio-load-balance-policy",
                                         "recommended": "RR",
-                                        "status": "optimized",
+                                        "status": "not-optimized",
                                         "severity": "critical",
                                         "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
                                         "tags": ["Performance efficiency", "Reliability"],
@@ -1137,7 +1137,7 @@
                             },
                             {
                                 "name": "drive-letter",
-                                "status": "optimized",
+                                "status": "not-optimized",
                                 "recommended": "Validate availability of same drive letters on standby node",
                                 "severity": "critical",
                                 "recommendation": "Validate availability of same drive letters on standby node.",
@@ -1149,7 +1149,7 @@
                             },
                             {
                                 "name": "cluster-quorum",
-                                "status": "optimized",
+                                "status": "not-optimized",
                                 "recommended": "Cluster quorum should be optimized",
                                 "severity": "critical",
                                 "recommendation": "The quorum configuration should be appropriate for the cluster size and environment.",
@@ -1161,7 +1161,7 @@
                             },
                             {
                                 "name": "heartbeat-settings",
-                                "status": "optimized",
+                                "status": "not-optimized",
                                 "recommended": "Heartbeat settings should be optimized",
                                 "severity": "critical",
                                 "recommendation": "Cluster heartbeat settings should be optimized to prevent unnecessary failovers.",
@@ -1173,7 +1173,7 @@
                             },
                             {
                                 "name": "sqlServer-service",
-                                "status": "optimized",
+                                "status": "not-optimized",
                                 "recommended": "SQL Server services should be set to start automatically",
                                 "severity": "critical",
                                 "recommendation": "SQL Server services should be set to start automatically and run on the primary node and stopped on the secondary node.",

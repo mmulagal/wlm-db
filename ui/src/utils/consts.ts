@@ -905,6 +905,12 @@ export const CONFIG_STATE_ACTIONS = {
 };
 
 export const CONFIG_NAME_TO_ID_MAPPING = {
+    HA_MSSQL: {
+        [ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE]: 'shared-storage',
+        [ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM]: 'cluster-quorum',
+        [ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS]: 'heartbeat-settings',
+        [ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE]: 'sqlserver-service'
+    },
     STORAGE_SIZING_MAP: {
         [ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]: 'log-drive-size',
         [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: 'performance-tier',

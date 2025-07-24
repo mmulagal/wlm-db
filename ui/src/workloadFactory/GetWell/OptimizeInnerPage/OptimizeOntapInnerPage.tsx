@@ -24,7 +24,8 @@ import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeStorageConfigMutation,
-    useOptimizeOperatingSystemMutation
+    useOptimizeOperatingSystemMutation,
+    useOptimizeHAMssqlMutation
 } from '../../../utils/apiService';
 import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 
@@ -60,6 +61,7 @@ const OptimizeOntapInnerPage = () => {
     } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
+    const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     useEffect(() => {
@@ -162,52 +164,89 @@ const OptimizeOntapInnerPage = () => {
         )
     });
 
+    const getSharedStoragePayload = (operation: string, singleRowData: any, selectedRows: any[]) => {
+        const ontapLunUuidsList =
+            operation === 'bulk' ? selectedRows.map((item: any) => item?.objectName) : [singleRowData?.objectName];
+        return {
+            hostsToOptimize: [
+                {
+                    configurationName: 'shared-storage',
+                    databaseHosts: [
+                        {
+                            id: selectedResourceId || selectedOptimizeConfig?.hostId,
+                            sqlServerInstances: [
+                                {
+                                    databaseInstanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
+                                    ontapLunPaths: ontapLunUuidsList
+                                }
+                            ],
+                            credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                            region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
+                        }
+                    ]
+                }
+            ]
+        };
+    };
+
+    const getVolumeOrLunPayload = (operation: string, singleRowData: any, selectedRows: any[], rowData: any) => {
+        const objectsToOptimize =
+            operation === 'bulk' ? selectedRows.map((item: any) => item?.objectName) : [singleRowData?.objectName];
+        return {
+            assessments: [
+                {
+                    configurationName: rowData?.id,
+                    objectsToOptimize
+                }
+            ]
+        };
+    };
+
+    const getOsPayload = (operation: string, singleRowData: any, selectedRows: any[], rowData: any) => {
+        const objectsToOptimize =
+            operation === 'bulk' ? selectedRows.map((item: any) => item?.objectName) : [singleRowData?.objectName];
+        return {
+            configurationName: rowData?.id,
+            objectsToOptimize
+        };
+    };
+
     // This is the function that will be called when the optimize button is clicked from main cards
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any, operation: string, singleRowData: any) => {
         // Only 1 config can be passed at a time
         const state = store.getState();
         let payload = {};
+        let apiInput = {};
         let apiCall = null;
         let statusType = '';
-        if (rowData?.type === 'volume' || rowData?.type === 'lun') {
+        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getSharedStoragePayload(operation, singleRowData, selectedRowsForOptimizeInnerPage);
+            apiInput = { configName: 'shared-storage', payload };
+        } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
             statusType = 'ontap';
             apiCall = optimizeStorageConfig;
-
-            if (operation === 'bulk') {
-                payload = {
-                    assessments: [
-                        {
-                            configurationName: rowData?.id,
-                            objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
-                        }
-                    ]
-                };
-            } else {
-                payload = {
-                    assessments: [
-                        {
-                            configurationName: rowData?.id,
-                            objectsToOptimize: [singleRowData?.objectName]
-                        }
-                    ]
-                };
-            }
+            payload = getVolumeOrLunPayload(operation, singleRowData, selectedRowsForOptimizeInnerPage, rowData);
+            apiInput = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId || selectedOptimizeConfig?.hostId,
+                instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
+                payload
+            };
         } else {
             statusType = 'os';
             apiCall = optimizeOs;
-
-            if (operation === 'bulk') {
-                payload = {
-                    configurationName: rowData?.id,
-                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
-                };
-            } else {
-                payload = {
-                    configurationName: rowData?.id,
-                    objectsToOptimize: [singleRowData?.objectName]
-                };
-            }
+            payload = getOsPayload(operation, singleRowData, selectedRowsForOptimizeInnerPage, rowData);
+            apiInput = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId || selectedOptimizeConfig?.hostId,
+                instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
+                payload
+            };
         }
 
         // call optimize api
@@ -257,13 +296,7 @@ const OptimizeOntapInnerPage = () => {
             })
         );
 
-        apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-            databaseHostId: selectedResourceId || selectedOptimizeConfig?.hostId,
-            instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
-            payload
-        }).then((res: any) => {
+        apiCall(apiInput).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {rowData?.name} failed to optimize.

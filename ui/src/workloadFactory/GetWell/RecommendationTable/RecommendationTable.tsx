@@ -14,6 +14,7 @@ import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
 import { GENERAL } from '../../../utils/appConstants';
 import {
     useLazyGetSubTaskListQuery,
+    useOptimizeHAMssqlMutation,
     useOptimizeOperatingSystemMutation,
     useOptimizeStorageConfigMutation
 } from '../../../utils/apiService';
@@ -26,7 +27,6 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
-    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -38,7 +38,6 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     const { setDialog, closeDialog } = useDialog();
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
-    const { isDemoMode } = useAppSelector(state => state.auth);
     const {
         selectedResourceId,
         selectedDatabaseInstance,
@@ -51,34 +50,123 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
+    const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const isDialogPrimaryBtnDisabled = (rowData: any) =>
-        rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
+        rowData?.name === 'OS type' ||
+        rowData?.name === 'NTFS allocation unit size' ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER;
+
+    const getHbOrCqPayload = (configurationName: string) => ({
+        hostsToOptimize: [
+            {
+                configurationName,
+                databaseHosts: [
+                    {
+                        id: selectedResourceId || hostId,
+                        credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                        region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
+                    }
+                ]
+            }
+        ]
+    });
+
+    const getSharedStoragePayload = (rowData: any) => ({
+        hostsToOptimize: [
+            {
+                configurationName: 'shared-storage',
+                databaseHosts: [
+                    {
+                        id: selectedResourceId || hostId,
+                        sqlServerInstances: [
+                            {
+                                databaseInstanceId: selectedDatabaseInstance || instanceId,
+                                ontapLunPaths: rowData?.objectsInViolation
+                            }
+                        ],
+                        credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                        region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
+                    }
+                ]
+            }
+        ]
+    });
+
+    const getSqlServicePayload = () => ({
+        hostsToOptimize: [
+            {
+                configurationName: 'sqlserver-service',
+                databaseHosts: [
+                    {
+                        id: selectedResourceId || hostId,
+                        sqlServerInstances: [selectedDatabaseInstance || instanceId],
+                        credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                        region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
+                    }
+                ]
+            }
+        ]
+    });
 
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
         // Only 1 config can be passed at a time
         const state = store.getState();
         let payload = {};
+        let apiInput = {};
         let apiCall = null;
         let statusType = '';
-        if (rowData?.type === 'volume' || rowData?.type === 'lun') {
+
+        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getSharedStoragePayload(rowData);
+            apiInput = { configName: 'shared-storage', payload };
+        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getHbOrCqPayload('cluster-quorum');
+            apiInput = { configName: 'cluster-quorum', payload };
+        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getHbOrCqPayload('heartbeat-settings');
+            apiInput = { configName: 'heartbeat', payload };
+        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getSqlServicePayload();
+            apiInput = { configName: 'sqlserver-service', payload };
+        } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
             statusType = 'ontap';
             apiCall = optimizeStorageConfig;
-            payload = {
-                assessments: [
-                    {
-                        configurationName: rowData?.id,
-                        objectsToOptimize: rowData?.objectsInViolation
-                    }
-                ]
+            apiInput = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId || hostId,
+                instanceId: selectedDatabaseInstance || instanceId,
+                payload: {
+                    assessments: [
+                        {
+                            configurationName: rowData?.id,
+                            objectsToOptimize: rowData?.objectsInViolation
+                        }
+                    ]
+                }
             };
         } else {
             statusType = 'os';
             apiCall = optimizeOs;
-            payload = {
-                configurationName: rowData?.id
+            apiInput = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId || hostId,
+                instanceId: selectedDatabaseInstance || instanceId,
+                payload: {
+                    configurationName: rowData?.id
+                }
             };
         }
 
@@ -127,13 +215,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             })
         );
 
-        apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-            databaseHostId: selectedResourceId || hostId,
-            instanceId: selectedDatabaseInstance || instanceId,
-            payload
-        }).then((res: any) => {
+        apiCall(apiInput).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {rowData?.name} failed to optimize.
@@ -180,6 +262,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             name === 'Multipath I/O Status' ||
             name === 'Multipath I/O Timeout' ||
             name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
+            name === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM ||
+            name === ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS ||
+            name === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE ||
             from === WLF_TABS.DASHBOARD
         ) {
             return false;
