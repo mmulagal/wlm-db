@@ -976,26 +976,45 @@ async function initiateHostLevelHighAvailabilityAssessment(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    activeNodeInstanceId: string
+    instanceRecord: WorkloadInstance,
+    parentJobId: string
 ) {
     logger.info('Fetch cluster quorum, heartbeat settings for instance', {
         accountId,
         credentialsId,
         region,
         databaseHostId,
-        activeNodeInstanceId
+        parentJobId
+    });
+
+    const { resourceName, name: databaseInstanceName, activeNodeInstanceid } = instanceRecord;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+
+    const jobName = 'Cluster resilience assessment for heartbeat and quorum settings';
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage;
+
+    let response;
+    const { id: highAvailabilityAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+        name: jobName,
+        description: jobName,
+        resourceName: resourceWithInstanceName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId
     });
 
     try {
         // Prepare all commands in a single SSM document execution
 
-        const commands = compact([CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS]);
+        const commands = [CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS];
         const rawResponses = await callSsmExecution(
             credentialsId,
             region,
             commands,
-            activeNodeInstanceId,
-            `Fetch cluster quorum, heartbeat settings on node ${activeNodeInstanceId}`,
+            activeNodeInstanceid,
+            `Fetch cluster quorum, heartbeat settings on node ${activeNodeInstanceid}`,
             accountId,
             false,
             undefined,
@@ -1071,17 +1090,27 @@ async function initiateHostLevelHighAvailabilityAssessment(
                 details: heartbeatDetails
             };
         }
-        return {
+
+        response = {
             clusterQuorum: clusterQuorumResult,
             heartbeat: heartbeatResult
         };
-    } catch (err) {
-        logger.error('Error running combined high availability assessment:', err);
-        return {
+    } catch (err: any) {
+        errorMessage = `Error while running heartbeat settings and cluster quorum type assessment. Error:${err.message}`;
+        logger.error(errorMessage);
+        jobStatus = JOBSTATUS.FAILED;
+        response = {
             clusterQuorum: { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() },
             heartbeat: { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() }
         };
+    } finally {
+        await updateJobDetails(accountId, highAvailabilityAssessmentJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
     }
+    return response;
 }
 
 async function initiateInstanceLevelHighAvailabilityAssessment(
@@ -1103,7 +1132,7 @@ async function initiateInstanceLevelHighAvailabilityAssessment(
     const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = instanceRecord;
 
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobName = 'High availability assessment (shared storage, drive letter and sql service)';
+    const jobName = 'Shared storage, drive mappings and SQL service configuration resilience assessment';
     const jobDescription = jobName;
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
