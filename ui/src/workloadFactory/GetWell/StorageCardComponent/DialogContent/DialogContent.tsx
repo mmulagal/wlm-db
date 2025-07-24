@@ -269,7 +269,7 @@ const DialogContent = ({
     // Helper function to create failover cluster dialog with multiple action summaries
     const createFailoverClusterDialog = (
         actionSummaries: string[],
-        whatWillHappen: string,
+        whatWillHappen: string | React.ReactNode,
         configSection?: React.ReactNode,
         notesSection?: React.ReactNode
     ) => (
@@ -286,7 +286,7 @@ const DialogContent = ({
                 ))}
             </div>
 
-            {createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
+            {whatWillHappen && createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
 
             {configSection}
 
@@ -615,7 +615,10 @@ const DialogContent = ({
                         t('databases.well-architect.heartbeat-setting-action-summary2'),
                         t('databases.well-architect.heartbeat-setting-action-summary3')
                     ],
-                    t('databases.well-architect.heartbeat-setting-what-will-happen'),
+                    createContentWithBullets([
+                        t('databases.well-architect.heartbeat-setting-what-will-happen-content1'),
+                        t('databases.well-architect.heartbeat-setting-what-will-happen-content2')
+                    ]),
                     undefined,
                     createFailoverClusterNotesSection()
                 );
@@ -633,7 +636,7 @@ const DialogContent = ({
                 return createFailoverClusterDialog(
                     [
                         t('databases.well-architect.failover-cluster-action-summary'),
-                        t('databases.well-architect.sql-server-configuration-action-summary')
+                        t('databases.well-architect.sql-server-configuration-action-summary1')
                     ],
                     t('databases.well-architect.sql-server-configuration-what-will-happen'),
                     createONTAPConfigSection(),
