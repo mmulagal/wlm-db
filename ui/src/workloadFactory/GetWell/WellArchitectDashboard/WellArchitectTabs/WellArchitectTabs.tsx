@@ -6,6 +6,7 @@ import styles from './WellArchitectTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { GENERAL } from '../../../../utils/appConstants';
+import { WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
 
 const WellArchitectTabs = () => {
     const { t } = useTranslation();
@@ -64,7 +65,8 @@ const WellArchitectTabs = () => {
 
             <div
                 className={
-                    selectedTab === 'Error investigation'
+                    selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION ||
+                    selectedTab === WELL_ARCHITECTED_TABS.ACTIVATING_LOG_ANALYZER
                         ? `${styles.headers} ${styles.headerWidthSecond} ${styles.active}`
                         : `${styles.headers} ${styles.headerWidthSecond}`
                 }
