@@ -1,4 +1,4 @@
-interface GetOracleInstanceMountpointResponse {
+interface OracleInstanceMountpointResponse {
     isCDB?: boolean;
     isASMManaged?: boolean;
     mountDetails?: Record<string, MountPointDetails[]>;
@@ -18,4 +18,4 @@ enum OracleSysFileTypes {
     CONTROL_FILES = 'CONTROL_FILES'
 }
 
-export { GetOracleInstanceMountpointResponse, MountPointDetails, OracleSysFileTypes };
+export { OracleInstanceMountpointResponse, MountPointDetails, OracleSysFileTypes };

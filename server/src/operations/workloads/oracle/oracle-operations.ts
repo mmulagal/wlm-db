@@ -648,12 +648,13 @@ async function getOracleDatabaseMappedVolumes(
     try {
         if (!resourceDetail) {
             [resourceDetail] = await listResources(accountId, resourceId, credentialsId, region);
+            if (!resourceDetail) {
+                const errorMessage = `No database host by id ${resourceId} for ${accountId} is found.`;
+                logger.error(errorMessage);
+                throw Error(errorMessage);
+            }
         }
-        if (!resourceDetail) {
-            const errorMessage = `No database host by id ${resourceId} for ${accountId} is found.`;
-            logger.error(errorMessage);
-            throw Error(errorMessage);
-        }
+
         const { co_relation_id: fsxid = '' } = resourceDetail || {};
         const { node1InstanceId = '' } = (resourceDetail?.metadata as Metadata) || {};
         if (!node1InstanceId) {
