@@ -1980,7 +1980,7 @@ async function getDatabaseInstancesSummary(
     let databasesCount: any;
     let nodeTopologyData: any;
     let ontapStorageSavings: any;
-    let databasesList: Record<string, any[]>[];
+    let databases: Record<string, any[]>;
     let resourceTrendsData: any;
     const errormessages: { [index: string]: string } = {};
 
@@ -2014,7 +2014,7 @@ async function getDatabaseInstancesSummary(
             databasesCount,
             nodeTopologyData,
             ontapStorageSavings,
-            databasesList,
+            databases,
             resourceTrendsData
         ] = await Promise.all(
             [
@@ -2097,20 +2097,16 @@ async function getDatabaseInstancesSummary(
                     : [Promise.resolve()]),
                 ...(shouldQueryDatabasesWithProtection || shouldQueryDatabasesWithoutProtection
                     ? [
-                          Promise.all(
-                              (fsxIds ?? []).map(fsxId =>
-                                  getDatabaseDetails(
-                                      accountId,
-                                      region,
-                                      credentialsId,
-                                      databaseHostId!,
-                                      fsxId!,
-                                      shouldQueryDatabasesWithProtection,
-                                      databaseInstances,
-                                      activeNodeInstanceId,
-                                      isSqlAuthEnabled
-                                  )
-                              )
+                          getDatabaseDetails(
+                              accountId,
+                              region,
+                              credentialsId,
+                              databaseHostId!,
+                              fsxIds ? fsxIds[0] : '',
+                              shouldQueryDatabasesWithProtection,
+                              databaseInstances,
+                              activeNodeInstanceId,
+                              isSqlAuthEnabled
                           )
                       ]
                     : [Promise.resolve()]),
@@ -2251,7 +2247,7 @@ async function getDatabaseInstancesSummary(
                 if (!databases[key]) {
                     databases[key] = [];
                 }
-                databases[key].push(...dbs[key]);
+                databases[key] = unionWith(databases[key], dbs[key], isEqual);
             });
         });
 
