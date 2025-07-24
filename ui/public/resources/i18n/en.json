@@ -392,7 +392,10 @@
             "onboarding-accordion-4-title": "Credentials associated with wlmdb",
             "onboarding-accordion-4-info": "The Workload Management Database (WLMDB) is a specialized database used in various systems to manage and optimize workloads. It typically requires secure access to ensure that only authorized users and applications can interact with it. Understanding the credentials associated with WLMDB is crucial for maintaining the security and integrity of the database.",
             "onboarding-accordion-4-label": "Permissions",
-            "onboarding-accordion-4-value-1": "Credentials associated with wlmdb should have 'bedrock:GetFoundationModelAvailability' and 'bedrock:ListInferenceProfiles' permissions"
+            "onboarding-accordion-4-value-1": "Credentials associated with wlmdb should have 'bedrock:GetFoundationModelAvailability' and 'bedrock:ListInferenceProfiles' permissions",
+            "scan-in-progress": "Scan in progress",
+            "investigation-in-progress": "Investigation activation prerequisites",
+            "activate": "Activate"
         },
         "dashboard": {
             "no-credentials": "No credentials",

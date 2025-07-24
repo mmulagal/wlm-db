@@ -31,13 +31,17 @@ export const initialSandboxState: AgenticAIEntities = {
     scanStatus: {
         scanInProgress: false,
         stopErrorInvestigationScan: false
-    }
+    },
+    isAgenticOnboardingActivating: false
 };
 
 const agenticAISlice = createSlice({
     name: 'agenticAI',
     initialState: initialSandboxState,
     reducers: {
+        setIsAgenticOnboardingActivating: (state, action: PayloadAction<boolean>) => {
+            state.isAgenticOnboardingActivating = action.payload;
+        },
         setSelectedInvestigationDate: (state, action: PayloadAction<any>) => {
             state.selectedInvestigationDate = action.payload;
         },
@@ -139,7 +143,8 @@ export const {
     setInvestigationDatesLoading,
     setScanInProgress,
     setStopErrorInvestigationScan,
-    setScanStatus
+    setScanStatus,
+    setIsAgenticOnboardingActivating
 } = agenticAISlice.actions;
 
 export default agenticAISlice;

@@ -1,0 +1,43 @@
+.activatingScreen {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+
+    .banner {
+        width: 87.3%;
+        height: 452px;
+        background-color: var(--content-background);
+        box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, var(--border));
+        padding-top: 80px;
+        padding-bottom: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+
+        .image {
+            svg {
+                width: 312px;
+            }
+        }
+
+        .scanSection {
+            .scanHeading {
+                width: 600px;
+                display: flex;
+                justify-content: center;
+            }
+            .textContent {
+                width: 600px;
+                display: flex;
+                justify-content: center;
+                margin-top: 8px;
+                margin-bottom: 20px;
+            }
+
+            [class*='barLoader'] {
+                height: 12px;
+            }
+        }
+    }
+}
