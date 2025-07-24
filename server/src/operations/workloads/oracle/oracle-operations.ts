@@ -644,7 +644,7 @@ async function getOracleDatabaseMappedVolumes(
     resourceId: string,
     resourceDetail?: ResourceDetails
 ) {
-    logger.info('Fetch mapped volume data for oracle DBs', accountId, credentialsId, region, resourceId);
+    logger.info('Fetch mapped volume data for oracle DBs', { accountId, credentialsId, region, resourceId });
     try {
         if (!resourceDetail) {
             [resourceDetail] = await listResources(accountId, resourceId, credentialsId, region);
