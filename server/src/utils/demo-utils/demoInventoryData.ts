@@ -2636,6 +2636,89 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
     filesystemId: 'fs-07a22f282fd4f5a20'
 };
 
+const MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
+    driveLetter: {
+        status: 'optimized',
+        details: {
+            missingDriveLetters: [],
+            primaryNodeDriveLetters: ['S:', 'S:', 'T:']
+        }
+    },
+    sharedStorage: {
+        status: 'optimized',
+        lunDetails: [
+            {
+                status: 'optimized',
+                lunUuid: '96bd5d5e-877e-4846-b37c-4d2782dc02d8',
+                igroupName: 'wlmdb_sqligroup_1753227808629',
+                igroupUuid: 'c9272d32-6761-11f0-980e-53fb760838dd',
+                initiatorNames: [
+                    'iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com',
+                    'iqn.1991-05.com.microsoft:sqlnode2-45242.wlmqaauto.com'
+                ]
+            },
+            {
+                status: 'optimized',
+                lunUuid: '956531bd-9468-407e-a4ac-41b29140831a',
+                igroupName: 'wlmdb_sqligroup_1753227808629',
+                igroupUuid: 'c9272d32-6761-11f0-980e-53fb760838dd',
+                initiatorNames: [
+                    'iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com',
+                    'iqn.1991-05.com.microsoft:sqlnode2-45242.wlmqaauto.com'
+                ]
+            }
+        ]
+    },
+    sqlServerServices: {
+        status: 'optimized',
+        details: [
+            {
+                Name: 'MSSQLSERVER',
+                Status: 'Running',
+                StartType: 'Manual',
+                DisplayName: 'SQL Server (MSSQLSERVER)'
+            }
+        ]
+    }
+};
+
+const ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
+    sharedStorage: {
+        status: 'not-optimized',
+        lunDetails: [
+            {
+                status: 'optimized',
+                lunUuid: '96bd5d5e-877e-4846-b37c-4d2782dc02d8',
+                lunName: '/vol/wlmdb_sqldata_1753227905582/sqldata',
+                igroupName: 'wlmdb_sqligroup_1753227808629',
+                igroupUuid: 'c9272d32-6761-11f0-980e-53fb760838dd',
+                initiatorNames: [
+                    'iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com',
+                    'iqn.1991-05.com.microsoft:sqlnode2-45242.wlmqaauto.com'
+                ]
+            },
+            {
+                status: 'not-optimized',
+                lunUuid: '956531bd-9468-407e-a4ac-41b29140831a',
+                lunName: '/vol/wlmdb_sqldata_1753227905523/sqldata',
+                igroupName: 'wlmdb_sqligroup_1753227808629',
+                igroupUuid: 'c9272d32-6761-11f0-980e-53fb760838dd',
+                initiatorNames: ['iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com']
+            }
+        ]
+    },
+    driveLetter: {
+        status: 'optimized',
+        details: { missingDriveLetters: [], primaryNodeDriveLetters: ['S:', 'S:', 'T:'] }
+    },
+    sqlServerServices: {
+        status: 'not-optimized',
+        details: [
+            { Name: 'MSSQLSERVER', Status: 'Running', StartType: 'Automatic', DisplayName: 'SQL Server (MSSQLSERVER)' }
+        ]
+    }
+};
+
 export {
     inventoryDemoData,
     ASSESMENT_CONFIG_DATA,
@@ -2646,5 +2729,7 @@ export {
     MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,
     MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
     MSSQL_ASSESMENT_CONFIG_DATA,
-    MAPPED_ONTAP_VOLUMES_DATA
+    MAPPED_ONTAP_VOLUMES_DATA,
+    MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
+    ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
 };

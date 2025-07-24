@@ -112,6 +112,13 @@ import {
 } from '../../../../src/operations/workloads/pgsql/queries';
 import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../../../../src/operations/workloads/mssql/resiliency-scripts';
+import {
+    CLUSTER_QUORUM_TYPE,
+    SQL_SERVER_SERVICES,
+    DRIVE_LETTER,
+    HEARTBEAT_SETTINGS,
+    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
+} from '../../../../src/operations/workloads/mssql/high-availability-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -593,6 +600,10 @@ const pgsqlDatabases = { commands: [LIST_DATABASES] };
 
 const pgsqlPerformanceMetrics = { commands: [PERFORMANCE_METRICS] };
 
+const clusterQuorumHeartBeat = {
+    commands: [CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS]
+};
+
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
@@ -914,7 +925,18 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('getInstalledSqlServerVersionCommand'))
     .on(SendCommandCommand, { Parameters: instanceDetailsWithFqdnAndIp })
-    .resolves(getSampleCommandResponse('instanceDetailsWithFqdnAndIp'));
+    .resolves(getSampleCommandResponse('instanceDetailsWithFqdnAndIp'))
+    .on(SendCommandCommand, params => {
+        return /# Get available drive letters/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getAvailableDriveLettersCommand'))
+    .on(SendCommandCommand, { Parameters: clusterQuorumHeartBeat })
+    .resolves(listSendCommandCommandResponse.clusterQuorumHeartBeat)
+
+    .on(SendCommandCommand, params => {
+        return /# Get LUN, igroup, initiator names and host IQN Script/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getLunIgroupInitiatorNamesCommand'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1359,6 +1381,51 @@ ssmMock
             })},${JSON.stringify({
                 ipAddress: '168.154.0.0'
             })}`
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getAvailableDriveLettersCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getAvailableDriveLettersCommand',
+            JSON.stringify(getCommandInvocationResponse.getAvailableDriveLetters)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getClusterHeartbeatSettingsCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getClusterHeartbeatSettingsCommand',
+            JSON.stringify(getCommandInvocationResponse.getAvailableDriveLetters)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-clusterQuorumHeartBeat'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'clusterQuorumHeartBeat',
+            '{"QuorumResourceName":"Quorum","QuorumType":1,"IsPhysicalDisk":true,"IsMajority":true,"IsPhysicalDiskAndMajority":true}{"CrossSubnetDelay":  1000,"SameSubnetThreshold":  20,"CrossSiteDelay":  1000,"SameSubnetDelay":  1000,"CrossSubnetThreshold":  20,"CrossSiteThreshold":  20}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSqlServerServicesCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getSqlServerServicesCommand',
+            JSON.stringify(getCommandInvocationResponse.getSqlServerServicesCommand)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunIgroupInitiatorNamesCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getLunIgroupInitiatorNamesCommand',
+            JSON.stringify(getCommandInvocationResponse.getLunIgroupInitiatorNamesCommand)
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

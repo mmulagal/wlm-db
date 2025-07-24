@@ -59,7 +59,9 @@ import {
     MSSQL_ASSESMENT_CONFIG_DATA,
     MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
     MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,
-    MAPPED_ONTAP_VOLUMES_DATA
+    MAPPED_ONTAP_VOLUMES_DATA,
+    ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
+    MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
 } from '../utils/demo-utils/demoInventoryData';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
@@ -199,8 +201,8 @@ async function createDeploymentMockDataInDB(
     };
 
     const assessmentData = optimizedResourceName.includes(resourceName)
-        ? (mockResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData)
-        : (mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData);
+        ? (mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData)
+        : (mockResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData);
 
     if (sqlDeploymentMode === 'FCI') {
         metadata.node2InstanceId = `i-${randomize('A0', 17)}`;
@@ -241,7 +243,15 @@ async function createDeploymentMockDataInDB(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    await createAssessmentData(accountId, credentialsId, region, resourceId, instanceId, DEFAULT_INSTANCE_NAME);
+    await createAssessmentData(
+        accountId,
+        credentialsId,
+        region,
+        resourceId,
+        instanceId,
+        DEFAULT_INSTANCE_NAME,
+        sqlDeploymentMode
+    );
 
     const jobData = await createJobMockData(
         accountId,
@@ -880,7 +890,8 @@ async function createAssessmentData(
     region: string,
     resourceId: string,
     databaseInstanceId: string,
-    databaseInstanceName: string = DEFAULT_INSTANCE_NAME
+    databaseInstanceName: string = DEFAULT_INSTANCE_NAME,
+    sqlDeploymentType: string = SqlServerDeploymentModel.SQL_STANDALONE_SHORT
 ) {
     const baseConfig = {
         account_id: accountId,
@@ -928,14 +939,29 @@ async function createAssessmentData(
                 ? MSSQL_ASSESSMENT_CLONE_CONFIG_DATA
                 : ASSESSMENT_CLONE_CONFIG_DATA
     };
-    await createDatabaseInstanceConfigData([
+    const instanceHighAvailabilityDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategories.HIGH_AVAILABILITY,
+        config_data:
+            databaseInstanceName === DEFAULT_INSTANCE_NAME
+                ? MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
+                : ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
+    };
+    const configDataRecords = [
         instanceConfigDataRecord,
         instanceCRRConfigDataRecord,
         instanceAWSBackupConfigDataRecord,
         instanceMaxdopConfigDataRecord,
         instanceCloneConfigDataRecord,
         instanceConfigMappedOntapDataRecord
-    ]);
+    ];
+
+    const newConfigDataRecords =
+        sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+            ? configDataRecords
+            : [...configDataRecords, instanceHighAvailabilityDataRecord];
+
+    await createDatabaseInstanceConfigData(newConfigDataRecords);
 }
 
 function prepareDemoSandboxMetadata(

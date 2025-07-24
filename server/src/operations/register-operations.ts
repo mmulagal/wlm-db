@@ -695,7 +695,15 @@ async function registerSqlInstance(
                             databaseType: DatabaseTypes.MS_SQL_SERVER
                         });
                         if (isDemoFlow) {
-                            await createAssessmentData(accountId, credentialsId, region, resourceId, serverGuid!);
+                            await createAssessmentData(
+                                accountId,
+                                credentialsId,
+                                region,
+                                resourceId,
+                                serverGuid!,
+                                dbInstanceName,
+                                sqlInstanceInfo.sqlServerDeploymentType
+                            );
                         }
                         const isWarning = [powershellInstallationResponse, partnerPowershellInstallationResponse].some(
                             status => status === JOBSTATUS.FAILED || status === JOBSTATUS.WARNING
@@ -1220,7 +1228,9 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                             credentialsId,
                                             region,
                                             resourceId,
-                                            serverGuid!
+                                            serverGuid!,
+                                            dbInstanceName,
+                                            sqlInstanceInfo.sqlServerDeploymentType
                                         );
                                     }
 

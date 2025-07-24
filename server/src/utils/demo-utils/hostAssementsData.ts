@@ -431,6 +431,53 @@ const mockResourceAssessmentData = {
                 securityNonCompliantCount: 2
             }
         ],
+        highAvailability: {
+            clusterQuorum: {
+                status: 'not-optimized',
+                details: {
+                    isMajority: true,
+                    quorumType: 1,
+                    isPhysicalDisk: false,
+                    quorumResourceName: 'Quorum',
+                    isPhysicalDiskAndMajority: true
+                }
+            },
+            heartbeat: {
+                status: 'not-optimized',
+                details: {
+                    CrossSiteDelay: {
+                        status: 'optimized',
+                        current: 1000,
+                        recommended: 1000
+                    },
+                    SameSubnetDelay: {
+                        status: 'not-optimized',
+                        current: 100,
+                        recommended: 1000
+                    },
+                    CrossSubnetDelay: {
+                        status: 'optimized',
+                        current: 1000,
+                        recommended: 1000
+                    },
+                    CrossSiteThreshold: {
+                        status: 'optimized',
+                        current: 20,
+                        recommended: 20
+                    },
+                    SameSubnetThreshold: {
+                        status: 'not-optimized',
+                        current: 20,
+                        recommended: 10
+                    },
+                    CrossSubnetThreshold: {
+                        status: 'optimized',
+                        current: 20,
+                        recommended: 20
+                    }
+                }
+            }
+        },
         lastAssessedDate: '1740495336926'
     }
 };

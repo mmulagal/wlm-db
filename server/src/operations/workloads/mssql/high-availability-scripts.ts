@@ -3,6 +3,7 @@ import { ontapRestRequest, ontapRestRequestBootstrap } from './common-templates'
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 
 const DRIVE_LETTER = `
+# Get available drive letters
 $used = (Get-PSDrive -PSProvider 'FileSystem').Name
 $all = 65..90 | ForEach-Object { [char]$_ }
 $available = $all | Where-Object { $_ -notin $used }
@@ -46,6 +47,7 @@ $result | ConvertTo-Json -Compress
 `;
 
 const SQL_SERVER_SERVICES = (instanceName: string) => `
+# Get SQL Server services
 $serviceName = if ([string]::IsNullOrEmpty("${instanceName}") -or "${instanceName}".ToUpper() -eq "MSSQLSERVER") {
         "MSSQLSERVER"
 } else {
@@ -60,6 +62,7 @@ Get-Service -Name $serviceName -ErrorAction SilentlyContinue |
 `;
 
 const GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN = (fsxId: string, fsxRegion: string, lunUuids: string[]) => `
+# Get LUN, igroup, initiator names and host IQN Script
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 $WarningPreference = 'SilentlyContinue'
 $FSxID = '${fsxId}'
