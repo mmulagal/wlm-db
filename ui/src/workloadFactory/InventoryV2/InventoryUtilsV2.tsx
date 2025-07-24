@@ -3613,7 +3613,7 @@ export const addHostJobPolling = async (
                     ) {
                         try {
                             const state: any = store.getState().snapCenter;
-                            const dirRes = listAllDirectories({
+                            const dirRes = await listAllDirectories({
                                 accountID: store.getState().auth.accountId,
                                 hostID: subJob?.data?.host,
                                 agentID: state.selectedAgent[0]?.id,
