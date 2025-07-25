@@ -7,7 +7,7 @@ import { t } from 'i18next';
 import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { handleAuthenticate, onClickESHost } from '../ExploreSavingsUtils';
+import { handleAuthenticate, onClickESHost, shouldAuthDialogOpen } from '../ExploreSavingsUtils';
 import { FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import {
     renderAllocatedCapacity,
@@ -151,32 +151,21 @@ const ExploreSavingsTableV2 = () => {
         accessor: '',
         isSticky: true,
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
-        renderCell: (cellData: any, rowData: any) =>
-            !rowData?.isDetected ? (
-                <div
-                    className={styles.detectManage}
-                    onClick={() => {
-                        handleDialog(rowData);
-                    }}
-                    id="explore-savings-table-button"
-                >
-                    <Typography variant="Regular_14" className={styles.textStyle}>
-                        {GENERAL.ES_SAVINGS}
-                    </Typography>
-                </div>
-            ) : (
-                <div
-                    className={styles.detectManage}
-                    onClick={() => {
-                        onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
-                    }}
-                    id="explore-savings-table-button"
-                >
-                    <Typography variant="Regular_14" className={styles.textStyle}>
-                        {GENERAL.ES_SAVINGS}
-                    </Typography>
-                </div>
-            )
+        renderCell: (cellData: any, rowData: any) => (
+            <div
+                className={styles.detectManage}
+                onClick={() => {
+                    shouldAuthDialogOpen(rowData)
+                        ? handleDialog(rowData)
+                        : onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                }}
+                id="explore-savings-table-button"
+            >
+                <Typography variant="Regular_14" className={styles.textStyle}>
+                    {GENERAL.ES_SAVINGS}
+                </Typography>
+            </div>
+        )
     });
 
     const ExploreSavingsColDefs: ColumnProps[] = [
