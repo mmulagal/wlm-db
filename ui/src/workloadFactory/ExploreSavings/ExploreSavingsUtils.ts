@@ -1130,7 +1130,8 @@ export const handleAuthenticate = async (
 
         const result = await registerResourceCredBulk({ payload });
         if (result && !result?.error && result?.data) {
-            if (result?.data?.items.length > 0 && isMissingSqlPermissions(result?.data?.items?.[0]?.registerDetails)) {
+            const registerItemExists = result?.data?.items?.length > 0;
+            if (registerItemExists && isMissingSqlPermissions(result?.data?.items?.[0]?.registerDetails)) {
                 dispatch(
                     setDialogErrorWithTooltip({
                         showDialogError: true,
@@ -1140,7 +1141,7 @@ export const handleAuthenticate = async (
                     })
                 );
             } else if (
-                result?.data?.items?.length > 0 &&
+                registerItemExists &&
                 !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
                 !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
             ) {
@@ -1232,9 +1233,9 @@ const updateInventoryTable = (rowData: any, selectedExploreSavingsTabFileSystemT
     dispatch(setInventoryTableData(updatedInventoryTableData));
 };
 
-export const isMissingSqlPermissions = (sqlServerInstances: any) => 
+export const isMissingSqlPermissions = (sqlServerInstances: any) =>
     // If any instance is missing any of the required permissions, open dialog
-     sqlServerInstances?.some((instance: any) => {
+    sqlServerInstances?.some((instance: any) => {
         const readiness = instance?.manageReadiness;
         if (!readiness) return false;
         // Check all readiness types
@@ -1243,8 +1244,7 @@ export const isMissingSqlPermissions = (sqlServerInstances: any) =>
             // If any required permission is missing, return true
             return REQUIRED_SQL_PERMISSIONS.some(perm => missing.includes(perm));
         });
-    })
-;
+    });
 
 export const shouldAuthDialogOpen = (rowData: any) => {
     if (rowData?.isDetected) {
