@@ -639,5 +639,6 @@ export {
     getOracleDefaultOrUserAuthCommand,
     checkOracleModuleAvailability,
     installOracleDependentModules,
-    checkAndInstallRequiredOracleDependentModules
+    checkAndInstallRequiredOracleDependentModules,
+    getMappedOntapDataVolume
 };

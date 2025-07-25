@@ -1,4 +1,4 @@
-import { getOracleDefaultOrUserAuthCommand } from './oracle-ssm-script-utils';
+import { getMappedOntapDataVolume, getOracleDefaultOrUserAuthCommand } from './oracle-ssm-script-utils';
 
 const loadStorageDetectionModules = `
 
@@ -30,6 +30,55 @@ const loadStorageDetectionModules = `
 
         echo "Mount point not found for $1."
         return 1
+    }
+    
+    get_oracle_db_file_paths() {
+        # Function to retrieve the db file path from the database.
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        local alter_cmd=""
+        if [ "$isCDB" == "YES" ]; then
+            alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
+        fi
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command <<'EOSQL'
+            SET HEADING OFF
+            SET LINESIZE 500
+            SET FEEDBACK OFF
+            SET TERMOUT OFF
+            SET PAGESIZE 0
+            SET TRIMSPOOL ON
+            $alter_cmd
+            SELECT 
+                '{' || CHR(10) ||
+                '    "REDO_LOGS": [' || 
+                    NVL((SELECT LISTAGG('"' || redo_dir || '"', ', ') WITHIN GROUP (ORDER BY redo_dir)
+                        FROM (SELECT DISTINCT substr(member,1,instr(member,'/',-1)-1) as redo_dir FROM v\\$logfile)), '') || 
+                '],' || CHR(10) ||
+                '    "ARCHIVE_LOGS": [' || 
+                    NVL((SELECT LISTAGG('"' || archive_dir || '"', ', ') WITHIN GROUP (ORDER BY archive_dir)
+                        FROM (SELECT DISTINCT substr(name,1,instr(name,'/',-1)-1) as archive_dir FROM v\\$archived_log)), '') || 
+                '],' || CHR(10) ||
+                '    "CONTROL_FILES": [' || 
+                    NVL((SELECT LISTAGG('"' || ctrlfile_dir || '"', ', ') WITHIN GROUP (ORDER BY ctrlfile_dir)
+                        FROM (SELECT DISTINCT substr(name,1,instr(name,'/',-1)-1) as ctrlfile_dir FROM v\\$controlfile)), '') || 
+                '],' || CHR(10) ||
+                '    "TEMP_FILES": [' || 
+                    NVL((SELECT LISTAGG('"' || tempfile_dir || '"', ', ') WITHIN GROUP (ORDER BY tempfile_dir)
+                        FROM (SELECT DISTINCT substr(file_name,1,instr(file_name,'/',-1)-1) as tempfile_dir FROM dba_temp_files)), '') || 
+                '],' || CHR(10) ||
+                '    "DATA_FILES": [' || 
+                    NVL((SELECT LISTAGG('"' || data_dir || '"', ', ') WITHIN GROUP (ORDER BY data_dir)
+                        FROM (SELECT DISTINCT SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1) AS data_dir 
+                            FROM dba_data_files WHERE file_name NOT LIKE '+%')), '') || 
+                ']' || CHR(10) ||
+                '}'
+            AS json_output
+            FROM dual;
+EOSQL
+EOF
     }
 
     get_data_file_paths() {
@@ -261,25 +310,13 @@ get_data_directories_without_creds() {
 EOF
 }
 
-    get_non_asm_nfs_or_iscsi_storage_details() {
-        
-        local ORACLE_SID="$1"
-        local isCDB="$2"
-        local pdbName="$3"
-        local credsAvailable="$4"
-        local ORACLE_HOME="$5"
-        
-        if [ "$credsAvailable" == "true" ]; then
-            dataDirectories=$(get_data_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
-        else
-            dataDirectories=$(get_data_directories_without_creds "$ORACLE_SID" "$ORACLE_HOME")
-            if [ $? -ne 0 ]; then
-                dataDirectories=""    
-            fi
+        get_directory_mount_details() {
+        dataDirectory="$1"
+        dataDirectories=$(echo "$dataDirectory" | tr ',' '\n' | sort -u)
+        if [ -z "$dataDirectories" ]; then
+            echo "[]"
         fi
-
         dataDirectoryMappings="["
-        
         while IFS= read -r dataDirectory; do
             {
                 # Skip empty lines
@@ -333,6 +370,53 @@ EOF
         done <<< "$dataDirectories"
         dataDirectoryMappings+="]"
         echo "$dataDirectoryMappings"
+    }
+
+    get_non_asm_nfs_or_iscsi_storage_details() {
+        
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        local credsAvailable="$4"
+        local ORACLE_HOME="$5"
+        
+        if [ "$credsAvailable" == "true" ]; then
+            dataDirectories=$(get_data_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
+        else
+            dataDirectories=$(get_data_directories_without_creds "$ORACLE_SID" "$ORACLE_HOME")
+            if [ $? -ne 0 ]; then
+                dataDirectories=""    
+            fi
+        fi
+        echo $(get_directory_mount_details "$dataDirectory")
+    }
+
+    get_oracle_db_mount_details() {
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        
+        # Get Oracle DB file paths
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
+        oracleMountDetails="{"
+        for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+            paths=$(echo "$db_paths_json" | jq -r ".$fileType[]" 2>/dev/null)
+            paths_csv=$(echo "$paths" | tr '\n' ',' | sed 's/,$//')
+            
+            # Get mount details for these paths
+            if [ -n "$paths_csv" ]; then
+                mountDetails=$(get_directory_mount_details "$paths_csv")
+            else
+                mountDetails="[]"
+            fi
+            if [ "$oracleMountDetails" != "{" ]; then
+                oracleMountDetails+=","
+            fi
+            oracleMountDetails+="\\"$fileType\\":$mountDetails"
+        done
+        
+        oracleMountDetails+="}"
+        echo "$oracleMountDetails"
     }`;
 
 const getInstanceStorageDetails = `
@@ -773,9 +857,213 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
     echo $results
 `;
 
+const getOracleDbMountDetails = (ec2InstanceId: string) => `
+    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
+    # Initialize final result JSON
+    finalResult="{"
+    firstSid=true
+    while IFS=: read -r sid oracle_home; do
+        # Check if the instance is running by checking for its PMON process.
+        # Skip if the instance process is not running.
+        if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
+            continue
+        fi
+        ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, '$sid')}
+        ${loadDatabaseDetectionModules}
+        ${loadStorageDetectionModules}
+
+        isDefaultAuth=$(is_default_auth "$sid")
+
+        {
+            INSTANCE_DETAILS=$(get_instance_details "$sid")
+            DATABASE_DETAILS=$(get_database_details "$sid")
+            if [ $? -ne 0 ]; then
+                DATABASE_DETAILS='{"error": "failed to retrieve database details for instance '$sid'"}'
+            fi
+            
+            is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
+
+            if [ "$is_cdb" == "YES" ]; then
+                PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
+                #pdb_names will be array of pdb names: pdb1 pdb2
+                pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
+            else
+                PDB_DATABASE_DETAILS="null"
+            fi
+            
+            isASMManaged=$(check_asm_managed $sid)
+            # Add comma if not first SID
+            if [ "$firstSid" = true ]; then
+                firstSid=false
+            else
+                finalResult+=","
+            fi
+            
+            if [ "$isASMManaged" == "TRUE" ]; then
+                # TODO: get PDB/instance level mount details for ASM managed databases, currently we are not asking for ASM creds
+                if [ "$is_cdb" == "YES" ]; then
+                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"pdbMountDetails\\": {}}"
+                else
+                    finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"mountDetails\\": {}}"
+                fi
+            else
+                if [ "$is_cdb" == "YES" ]; then
+                    # Handle CDB with PDBs
+                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"pdbMountDetails\\": {"
+                    firstPdb=true
+                    
+                    for pdb_name in $pdb_names; do
+                        if [ "$firstPdb" = true ]; then
+                            firstPdb=false
+                        else
+                            finalResult+=","
+                        fi
+                        
+                        # Get mount details for this PDB
+                        pdbMountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "$pdb_name")
+                        finalResult+="\\"$pdb_name\\": $pdbMountDetails"
+                    done
+                    
+                    finalResult+="}}"
+                else
+                    # Handle single instance DB
+                    mountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "")
+                    finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": false, \\"mountDetails\\": $mountDetails}"
+                fi
+            fi
+        } || {
+            echo "Failed to retrieve details for instance $sid. Skipping."
+            continue
+        }
+    done <<< "$oratab_entries"
+    finalResult+="}"
+    mountPointData=$(echo "$finalResult" | tr -d '\n' | tr -d ' ')
+`;
+
+const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: string, region: string) => `
+    ${getOracleDbMountDetails(ec2InstanceId)}
+    processMountDetail() {
+        local mountDetail="$1"
+        local fileTypeVolumes="[]"
+        local mountIP=$(echo "$mountDetail" | jq -r '.mountIP')
+        local mountPoint=$(echo "$mountDetail" | jq -r '.mountPoint')
+        local mountProtocol=$(echo "$mountDetail" | jq -r '.protocol')
+        local isAsm=$(echo "$mountDetail" | jq -r '.isAsmManaged')
+        local volumeName
+        local lunName
+        local volumeEntry
+        local lunExists
+        local lunRecord
+        
+        if [ -z "$protocol" ]; then
+            protocol="$mountProtocol"
+        fi
+        
+        if [ "$isAsm" == "true" ]; then
+            isASMManaged="true"
+        fi
+
+        ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
+        
+        volumeName="$mountedVolume"
+        
+        if [ "$mountProtocol" == "iSCSI" ]; then
+            # For iSCSI, extract LUN details
+            lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\", \\"lunName\\": \\"$lunName\\"}"
+            
+            lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
+            if [ -z "$lunExists" ]; then
+                lunRecord="{\\"name\\": \\"$(echo "$response" | jq -r '.records[0].name')\\", \\"serial\\": \\"$mountPoint\\"}"
+                lunRecords=$(echo "$lunRecords" | jq --argjson lr "$lunRecord" '. += [$lr]')
+            fi
+        else
+            # For NFS
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\"}"
+        fi
+        
+        fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
+        echo "$fileTypeVolumes"
+    }
+    filesystemid="${fsxnId}"
+    region="${region}"
+    volumeMappings="[]"
+    lunRecords="[]"
+    protocol=""
+    for sid in $(echo "$mountPointData" | jq -r 'keys[]'); do
+        sidData=$(echo "$mountPointData" | jq -r --arg sid "$sid" '.[$sid]')
+        isCDB=$(echo "$sidData" | jq -r '.isCDB')
+        isASMManaged=$(echo "$sidData" | jq -r '.isASMManaged')
+        if [ "$isASMManaged" == "true" ]; then
+            # TO-DO: add logic for ASM, Skip ASM managed instances for now
+            continue
+        fi
+        
+        if [ "$isCDB" == "false" ]; then
+            # Single tenant instance
+            ontapVolumes='{}'
+            for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+                fileTypeVolumes="[]"
+
+                mountDetails=$(echo "$sidData" | jq -c --arg ft "$fileType" '.mountDetails[$ft] // []')
+                
+                for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
+                    volMappings=$(processMountDetail "$mountDetail")
+                    fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
+                done
+                
+                ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+            done
+
+            sidMapping="{\\"$sid\\": {\\"isCDB\\": false, \\"ontapVolumes\\": $ontapVolumes}}"
+            volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+            
+        else
+            # CDB-PDB instance
+            pdbVolumes='{}'
+            
+            for pdb in $(echo "$sidData" | jq -r '.pdbMountDetails | keys[]'); do
+                pdbOntapVolumes='{}'
+                
+                for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+                    fileTypeVolumes="[]"
+                    mountDetails=$(echo "$sidData" | jq -c --arg pdb "$pdb" --arg ft "$fileType" '.pdbMountDetails[$pdb][$ft] // []')
+                    
+                    for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
+                        volMappings=$(processMountDetail "$mountDetail")
+                        fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
+                    done
+                    
+                    pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                done
+                
+                pdbVolumes=$(echo "$pdbVolumes" | jq --arg pdb "$pdb" --argjson pov "$pdbOntapVolumes" '.[$pdb] = $pov')
+            done
+            sidMapping="{\\"$sid\\": {\\"isCDB\\": true, \\"ontapVolumes\\": $pdbVolumes}}"
+            volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+        fi
+    done
+
+    result=$(jq -n \
+        --arg protocol "$protocol" \
+        --argjson lunRecords "$lunRecords" \
+        --arg isASMManaged "$isASMManaged" \
+        --argjson volumeMappings "$volumeMappings" \
+        '{
+            protocol: $protocol,
+            lunRecords: $lunRecords,
+            isASMManaged: ($isASMManaged == "true"),
+            VolumeMappings: $volumeMappings
+        }')
+    
+    echo "$result" | tr -d '\n' | tr -d ' '
+
+`;
+
 export {
     discoverOracleHosts,
     getStorageDetailsForRegisteredInstances,
     fetchOracleDatabasesCount,
-    fetchOracleDatabasesDetails
+    fetchOracleDatabasesDetails,
+    getMappedOntapDataVolumeForInstance
 };
