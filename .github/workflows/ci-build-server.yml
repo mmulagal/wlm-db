@@ -28,9 +28,12 @@ jobs:
         with:
           node-version: lts/*
 
+      - name: Install dependencies in root
+        run: npm ci
+
       - name: Install dependencies in server
         working-directory: ./server
-        run: npm install
+        run: npm ci
 
       - name: Build server
         working-directory: ./server
