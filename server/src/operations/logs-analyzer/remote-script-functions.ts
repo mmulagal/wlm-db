@@ -1,20 +1,24 @@
 import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
 import getLogger from '../../utils/logger';
-import { LOG_LEVEL } from '../../utils/logs-analyzer/logs-analyzer-consts';
+import { LOG_LEVEL, PRE_REQ_MESSAGES } from '../../utils/logs-analyzer/logs-analyzer-consts';
 
 const logger = getLogger();
 
 function getWindowsBedrockAvailabilityCheckScript(region: string, modelId: string) {
     return `
-
 # Bedrock Availability Check Script
 $moduleFound = Get-Module -ListAvailable -Name AWS.Tools.BedrockRuntime
 
+$result = @{
+        success = $true
+        response = $null
+        error = $null
+    }
 if (-not $moduleFound) {
     $result = @{
         success = $false
         response = $null
-        error = "AWS.Tools.BedrockRuntime not found."
+        error = "${PRE_REQ_MESSAGES.BEDROCK_TOOL_NOT_FOUND}"
     }
     $result | ConvertTo-Json -Depth 5
 } elseif ($moduleFound) {
@@ -37,10 +41,10 @@ if (-not $moduleFound) {
         }
     } catch {
         $result = @{
-                success = $false
-                response = $null
-                error = $_.Exception.Message
-            }
+            success = $false
+            response = $null
+            error = "${PRE_REQ_MESSAGES.BEDROCK_NW_CONFIGURATION} . $_.Exception.Message"
+        }
     }
     $result | ConvertTo-Json -Depth 5
     exit 0

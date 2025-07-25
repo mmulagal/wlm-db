@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify/types/instance';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import { DATABASE_TYPE } from '@prisma/client';
 import {
+    AnalyzePreRequisitesSchema,
     GetLogsAnalyzerSchema,
     ListLogsAnalyzerReportsSchema,
     LogsAnalyzerSchema
@@ -9,13 +11,36 @@ import castRequest from './utils';
 import {
     getLogsAnalysisReport,
     listLogsAnalysisReportsIdentifiers,
-    triggerLogsAnalysis
+    triggerLogsAnalysis,
+    analyzePreRequisites
 } from '../operations/logs-analyzer/logs-analyzer-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
 export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
+
+    server.get(
+        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/pre-requisite`,
+        { schema: AnalyzePreRequisitesSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                query: { databaseType }
+            } = castRequest(request);
+
+            const response = await analyzePreRequisites(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                databaseType || DATABASE_TYPE.mssql
+            );
+
+            return reply.send(response);
+        }
+    );
 
     server.post(
         `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`,

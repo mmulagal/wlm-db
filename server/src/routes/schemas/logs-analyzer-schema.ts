@@ -1,6 +1,7 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
 import {
+    LogsAnalysisPreRequisites,
     LogsAnalyzerBody,
     LogsAnalyzerParams,
     RemediationRecommendationObject,
@@ -11,7 +12,6 @@ const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
     description: 'Trigger logs analysis for a specific database instance in a remote database host machine',
     params: LogsAnalyzerParams,
-    hide: process.env.NODE_ENV === 'production',
     body: LogsAnalyzerBody,
     summary: 'Trigger logs analysis for a specific database instance in a remote database host machine',
     response: {
@@ -24,7 +24,6 @@ const LogsAnalyzerSchema = {
 const GetLogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
     description: 'Get logs analysis for a specific database instance in a remote database host machine',
-    hide: process.env.NODE_ENV === 'production',
     params: LogsAnalyzerParams,
     querystring: Type.Object({
         jobId: Type.Optional(Type.String()),
@@ -60,4 +59,17 @@ const ListLogsAnalyzerReportsSchema = {
     }
 };
 
-export { LogsAnalyzerSchema, GetLogsAnalyzerSchema, ListLogsAnalyzerReportsSchema };
+const AnalyzePreRequisitesSchema = {
+    tags: [RouteTags.LOGS_ANALYSIS],
+    description:
+        'Check pre-requisites for logs analysis for a specific database instance in a remote database host machine',
+    params: LogsAnalyzerParams,
+    queryString: Type.Object({
+        databaseType: Type.Optional(Type.String())
+    }),
+    response: {
+        200: LogsAnalysisPreRequisites
+    }
+};
+
+export { LogsAnalyzerSchema, GetLogsAnalyzerSchema, AnalyzePreRequisitesSchema, ListLogsAnalyzerReportsSchema };

@@ -59,6 +59,17 @@ const ReportIdentifier = Type.Object({
     id: Type.String(),
     creationTime: Type.Number()
 });
+const LAPRReadiness = Type.Object({
+    ready: Type.Optional(Type.Boolean()),
+    message: Type.Optional(Type.String())
+});
+
+const LogsAnalysisPreRequisites = Type.Object({
+    bedrockPreRequisites: Type.Optional(LAPRReadiness),
+    instanceProfilePreRequisites: Type.Optional(LAPRReadiness),
+    credentialsPreRequisites: Type.Optional(LAPRReadiness),
+    networkingPreRequisites: Type.Optional(LAPRReadiness)
+});
 
 export {
     LogsAnalyzerParams,
@@ -67,5 +78,6 @@ export {
     InferenceConfigType,
     RemediationRecommendationObject,
     ReportIdentifier,
-    RemediationRecommendationObjectType
+    RemediationRecommendationObjectType,
+    LogsAnalysisPreRequisites
 };
