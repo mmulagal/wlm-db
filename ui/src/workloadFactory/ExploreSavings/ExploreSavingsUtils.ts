@@ -22,6 +22,8 @@ import {
     DETECT_HOST_VAR,
     FSX_AZ_TYPE,
     GIB_IN_BYTE,
+    READINESS_TYPES,
+    REQUIRED_SQL_PERMISSIONS,
     SAVINGS_CALC_MODE,
     SQL_DEPLOYMENT_MODE,
     WLF_TABS
@@ -1128,7 +1130,16 @@ export const handleAuthenticate = async (
 
         const result = await registerResourceCredBulk({ payload });
         if (result && !result?.error && result?.data) {
-            if (
+            if (result?.data?.items.length > 0 && isMissingSqlPermissions(result?.data?.items?.[0]?.registerDetails)) {
+                dispatch(
+                    setDialogErrorWithTooltip({
+                        showDialogError: true,
+                        errorMessage: t('databases.explore-savings.authentication-failed'),
+                        showTooltipInfo: true,
+                        tooltipText: t('databases.explore-savings.missing-sql-permissions')
+                    })
+                );
+            } else if (
                 result?.data?.items?.length > 0 &&
                 !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
                 !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
@@ -1142,6 +1153,9 @@ export const handleAuthenticate = async (
                         message: `Authenticated database host ${rowData?.name}.\nYou can now explore potential savings.`
                     })
                 );
+                dispatch(resetDialogComponent());
+                dispatch(resetServerDetailsCredentials());
+                closeDialogCallback();
             } else {
                 dispatch(
                     setDialogErrorWithTooltip({
@@ -1178,9 +1192,7 @@ export const handleAuthenticate = async (
             })
         );
     } finally {
-        dispatch(resetDialogComponent());
-        dispatch(resetServerDetailsCredentials());
-        closeDialogCallback();
+        dispatch(setActionsDisabled(false));
     }
 };
 
@@ -1218,4 +1230,27 @@ const updateInventoryTable = (rowData: any, selectedExploreSavingsTabFileSystemT
 
     // Dispatch the updated inventory table data to the store
     dispatch(setInventoryTableData(updatedInventoryTableData));
+};
+
+export const isMissingSqlPermissions = (sqlServerInstances: any) => 
+    // If any instance is missing any of the required permissions, open dialog
+     sqlServerInstances?.some((instance: any) => {
+        const readiness = instance?.manageReadiness;
+        if (!readiness) return false;
+        // Check all readiness types
+        return READINESS_TYPES.some(type => {
+            const missing = readiness[type]?.missingSqlPermissions || [];
+            // If any required permission is missing, return true
+            return REQUIRED_SQL_PERMISSIONS.some(perm => missing.includes(perm));
+        });
+    })
+;
+
+export const shouldAuthDialogOpen = (rowData: any) => {
+    if (rowData?.isDetected) {
+        // Check all sqlServerInstances for missing permissions in manageReadiness
+        return isMissingSqlPermissions(rowData.sqlServerInstances || []);
+    }
+    // If not detected, open dialog
+    return true;
 };
