@@ -719,9 +719,9 @@ async function handleHeartbeatSettingsBulkOptimize(
         const parsedResponse = sqlResponseParsing(response);
 
         jobStatus =
-            parsedResponse.result === 'failed'
+            parsedResponse.remediated === 'failed'
                 ? JOBSTATUS.FAILED
-                : parsedResponse.result === 'partial'
+                : parsedResponse.remediated === 'partial'
                 ? JOBSTATUS.WARNING
                 : JOBSTATUS.COMPLETED;
 

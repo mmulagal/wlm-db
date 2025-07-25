@@ -141,13 +141,57 @@ Stop-Transcript | Out-Null
 
 const REMEDIATE_HEARTBEAT_SETTINGS = `
 # Set recommended heartbeat settings
-(Get-Cluster).SameSubnetDelay = 1000
-(Get-Cluster).SameSubnetThreshold = 10
-(Get-Cluster).CrossSubnetDelay = 1000
-(Get-Cluster).CrossSubnetThreshold = 40
-(Get-Cluster).CrossSiteDelay = 1000
-(Get-Cluster).CrossSiteThreshold = 40
-return @{"remediated" = $true; "message" = "Heartbeat settings remediated"} | ConvertTo-Json
+$status = "success"
+$errMsg = ""
+$expectedSettings = @{
+    SameSubnetDelay = 1000
+    SameSubnetThreshold = 40
+    CrossSubnetDelay = 1000
+    CrossSubnetThreshold = 40
+    CrossSiteDelay = 1000
+    CrossSiteThreshold = 40
+}
+
+try {
+    $cluster = Get-Cluster
+    
+    # Apply heartbeat settings
+    $cluster.SameSubnetDelay = $expectedSettings.SameSubnetDelay
+    $cluster.SameSubnetThreshold = $expectedSettings.SameSubnetThreshold
+    $cluster.CrossSubnetDelay = $expectedSettings.CrossSubnetDelay
+    $cluster.CrossSubnetThreshold = $expectedSettings.CrossSubnetThreshold
+    $cluster.CrossSiteDelay = $expectedSettings.CrossSiteDelay
+    $cluster.CrossSiteThreshold = $expectedSettings.CrossSiteThreshold
+    
+    # Verify the settings were applied correctly
+    $updatedCluster = Get-Cluster
+    $verificationFailed = @()
+    
+    foreach ($setting in $expectedSettings.GetEnumerator()) {
+        $actualValue = $updatedCluster.($setting.Key)
+        if ($actualValue -ne $setting.Value) {
+            $verificationFailed += "$($setting.Key): Expected $($setting.Value), but got $actualValue"
+        }
+    }
+    
+    if ($verificationFailed.Count -gt 0) {
+        $status = "partial"
+        $errMsg = "Some settings were not applied correctly: " + ($verificationFailed -join "; ")
+    }
+    
+} catch {
+    $status = "failed"
+    $errMsg = $_.Exception.Message
+}
+
+$result = @{
+    "remediated" = ($status -eq "success")
+    "status" = $status
+    "message" = if ($status -eq "success") { "Heartbeat settings remediated successfully" } else { "Heartbeat remediation failed: $errMsg" }
+    "error" = $errMsg
+}
+
+$result | ConvertTo-Json -Compress
 `;
 
 const REMEDIATE_CLUSTER_QUORUM_SETTINGS = `

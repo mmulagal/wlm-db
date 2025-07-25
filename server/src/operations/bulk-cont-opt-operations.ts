@@ -80,7 +80,7 @@ async function bulkOptimization(
     hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]
 ) {
     logger.info(
-        `Bulk optimization: ${accountId},  ${optimizationCategory}, hostsToOptimize: ${JSON.stringify(hostsToOptimize)}`
+        `Bulk optimization: ${accountId},  ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}`
     );
 
     if (isEmpty(hostsToOptimize)) {
@@ -96,7 +96,6 @@ async function bulkOptimization(
                 accountId,
                 host.databaseHosts
             );
-            logger.info('validated value', host.databaseHosts);
         })
     );
 
@@ -104,7 +103,7 @@ async function bulkOptimization(
     const allEmpty = hostsToOptimize.every(host => isEmpty(host.databaseHosts));
     if (allEmpty) {
         const errorMessage = 'No valid database hosts found after validation. Please provide at least one valid host.';
-        logger.error(errorMessage);
+        logger.warn(errorMessage);
         throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
     }
 
