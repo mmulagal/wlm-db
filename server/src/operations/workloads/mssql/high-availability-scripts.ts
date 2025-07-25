@@ -139,11 +139,78 @@ $response | ConvertTo-Json -Compress
 Stop-Transcript | Out-Null
 `;
 
+const REMEDIATE_HEARTBEAT_SETTINGS = `
+# Set recommended heartbeat settings
+(Get-Cluster).SameSubnetDelay = 1000
+(Get-Cluster).SameSubnetThreshold = 10
+(Get-Cluster).CrossSubnetDelay = 1000
+(Get-Cluster).CrossSubnetThreshold = 40
+(Get-Cluster).CrossSiteDelay = 1000
+(Get-Cluster).CrossSiteThreshold = 40
+return @{"remediated" = $true; "message" = "Heartbeat settings remediated"} | ConvertTo-Json
+`;
+
+const REMEDIATE_CLUSTER_QUORUM_SETTINGS = `
+$allClusterResources = Get-ClusterResource
+
+# Get all cluster resources of type 'Physical Disk'
+$physicalDisks = $allClusterResources | Where-Object { $_.ResourceType -eq "Physical Disk" }
+
+# Filter for available disks: in 'Available Storage' and 'Online'
+$availableDisks = $physicalDisks | Where-Object { $_.OwnerGroup -eq "Available Storage" -and $_.State -eq "Online" }
+
+$status = "failed"
+$errMsg = ""
+
+# Get current quorum info
+$quorumInfo = Get-ClusterQuorum
+$quorumResourceName = [string]$quorumInfo.QuorumResource
+$quorumType = $quorumInfo.QuorumType
+
+# Check if the quorum resource matches any physical disk resource
+$quorumResource = $physicalDisks | Where-Object { $_.Name -eq $quorumResourceName }
+
+# IsPhysicalDiskAndMajority means NodeAndDiskMajority
+$isPhysicalDiskAndMajority = ($null -ne $quorumResource) -and ($quorumType -eq "Majority")
+
+if ($isPhysicalDiskAndMajority) {
+    $status = "success"
+} elseif ($availableDisks.Count -eq 0) {
+    $errMsg = "No suitable online disk found in Available Storage to set as quorum."
+} else {
+    $preferredDisk = $availableDisks | Where-Object { $_.Name -match "Quorum" } | Select-Object -First 1
+    if ($null -eq $preferredDisk) {
+        $quorumDisk = $availableDisks | Select-Object -First 1
+    } else {
+        $quorumDisk = $preferredDisk
+    }
+    try {
+        Set-ClusterQuorum -DiskWitness $quorumDisk.Name -ErrorAction Stop | Out-Null
+        $status = "success"
+    } catch {
+        $errMsg = $_.Exception.Message
+    }
+}
+
+if ($status -eq "success") {
+    $errMsg = ""
+}
+
+$result = [PSCustomObject]@{
+    status = $status
+    error  = $errMsg
+}
+
+$result | ConvertTo-Json -Compress
+`;
+
 export {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
     GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN,
-    ADD_INITIATOR_TO_IGROUP
+    ADD_INITIATOR_TO_IGROUP,
+    REMEDIATE_HEARTBEAT_SETTINGS,
+    REMEDIATE_CLUSTER_QUORUM_SETTINGS
 };

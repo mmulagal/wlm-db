@@ -85,7 +85,9 @@ enum OptimizeOperatingSystemParams {
 }
 
 enum OptimizeHighAvailabilityParams {
-    SHARED_STORAGE = 'shared-storage'
+    SHARED_STORAGE = 'shared-storage',
+    HEARTBEAT_SETTINGS = 'heartbeat-settings',
+    CLUSTER_QUORUM = 'cluster-quorum'
 }
 
 enum OptimizeStorageTierParams {
@@ -110,7 +112,8 @@ enum OPTIMIZE_SIZING_CONFIGS {
 
 enum OPTIMIZE_RESILIENCY_CONFIGS {
     SNAPSHOT_POLICY = 'snapshot-policy',
-    AWS_BACKUP = 'aws-backup'
+    AWS_BACKUP = 'aws-backup',
+    HIGH_AVAILABILITY = 'high-availability'
 }
 
 enum OptimizeMaxDopParams {
@@ -128,7 +131,8 @@ enum OPTIMIZATION_CATEGORIES {
     COMPUTE = 'compute',
     MAXDOP = 'max-dop',
     RSS_CONFIG = 'rss-config',
-    CLONE = 'clone'
+    CLONE = 'clone',
+    HIGH_AVAILABILITY = 'high-availability'
 }
 
 enum DISMISS_STATUS_ENUM {

@@ -20,11 +20,14 @@ import {
     WorkloadInstance,
     MappedOnTapVolumeResponse,
     IgroupMissingInitiators
+    // DatabaseInstance
 } from '../../../utils/common-types';
 import {
     AuditStatus,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     HttpErrorCodes,
+    RESOURCESTYPE,
+    SqlServerDeploymentModel,
     SSM_COMMAND_CACHE_TYPE
 } from '../../../utils/consts';
 import { activeSqlNodeDetails } from '../../cont-opt-optimize-operations';
@@ -44,14 +47,20 @@ import {
     AssessmentCategories,
     AssessmentTriggeredBy,
     OPTIMIZE_RESILIENCY_CONFIGS,
+    OptimizeHighAvailabilityParams,
     OptimizeStorageConfigs
 } from '../../../utils/continous-optimization-consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
-import { getPaginatedDatabaseInstances } from '../../database/database-operations';
+
+import {
+    ADD_INITIATOR_TO_IGROUP,
+    REMEDIATE_CLUSTER_QUORUM_SETTINGS,
+    REMEDIATE_HEARTBEAT_SETTINGS
+} from '../../workloads/mssql/high-availability-scripts';
 import { paginateListInstanceConfigData } from '../../database/instance-config-operations';
-import { ADD_INITIATOR_TO_IGROUP } from '../../workloads/mssql/high-availability-scripts';
+import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -509,6 +518,7 @@ function extractInstancesToOptimize(hostsToOptimize: BulkOptimizeHASharedStorage
         )
     );
 }
+
 async function handleSharedStorageOptimize(
     accountId: string,
     hostsToOptimize: BulkOptimizeHASharedStorageRequestBodyType[],
@@ -641,4 +651,324 @@ async function handleSharedStorageOptimize(
         );
     }
 }
-export { getAvailableSnapshotPolicyList, handleResiliecyOptimize, handleSharedStorageOptimize };
+
+async function handleHeartbeatSettingsBulkOptimize(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    parentJobId: string,
+    databaseHostId: string
+) {
+    logger.info('Starting heartbeat settings optimization', {
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        parentJobId
+    });
+
+    let errorMessage;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    logger.info(`Initiating heartbeat settings remediation for host "${databaseHostId}" in region "${region}".`);
+
+    // Register a job for this host
+    const { id: instanceOptimizeJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.WELL_ARCHITECTED,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: databaseHostId,
+        name: `Fix heartbeat settings for ${databaseHostId}`,
+        startTime: Date.now(),
+        description: `Fix heartbeat settings for ${databaseHostId}`,
+        parentJobId
+    });
+
+    try {
+        logger.info(`Fetching instance configuration for host "${databaseHostId}" to remediate heartbeat settings.`);
+        const {
+            items: [instanceConfig]
+        } = await paginateListInstanceConfigData({
+            accountId,
+            region,
+            credentialsId,
+            resourceId: databaseHostId,
+            configDataType: AssessmentCategories.HIGH_AVAILABILITY,
+            pageSize: 1,
+            includeDatabaseInstance: true,
+            includeResource: true
+        });
+
+        const {
+            resource: { metadata = {} } = {},
+            database_instances: { database_instance_id: databaseInstanceId } = {}
+        } = instanceConfig || {};
+
+        const { node1InstanceId } = metadata as Metadata;
+        logger.info(
+            `Running heartbeat settings remediation script on host "${databaseHostId}" (node: "${node1InstanceId}").`
+        );
+        // Call the remediation script
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [REMEDIATE_HEARTBEAT_SETTINGS],
+            node1InstanceId,
+            `Remediate heartbeat settings on host ${databaseHostId}`,
+            accountId
+        );
+        const parsedResponse = sqlResponseParsing(response);
+
+        jobStatus =
+            parsedResponse.result === 'failed'
+                ? JOBSTATUS.FAILED
+                : parsedResponse.result === 'partial'
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.COMPLETED;
+
+        if (jobStatus === JOBSTATUS.COMPLETED) {
+            logger.info(`Heartbeat settings successfully remediated for host "${databaseHostId}".`);
+        } else if (jobStatus === JOBSTATUS.WARNING) {
+            logger.warn(`Heartbeat settings partially remediated for host "${databaseHostId}". Please check details.`);
+        } else {
+            logger.error(`Failed to remediate heartbeat settings for host "${databaseHostId}".`);
+        }
+
+        if (jobStatus !== JOBSTATUS.FAILED) {
+            logger.info(`Triggering drift assessment for heartbeat settings on host "${databaseHostId}".`);
+            await onDemandTriggerMssqlDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId!,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.HIGH_AVAILABILITY,
+                parentJobId
+            );
+        } else if (!databaseInstanceId) {
+            logger.warn(`databaseInstanceId not found for host ${databaseHostId}`);
+        }
+    } catch (error: any) {
+        errorMessage = `${error.message}.`;
+        logger.error(`Optimizing heartbeat settings failed for host "${databaseHostId}" with error: ${errorMessage}`);
+        jobStatus = JOBSTATUS.FAILED;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    } finally {
+        await updateJobDetails(accountId, instanceOptimizeJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        logger.info(
+            `Job for heartbeat settings remediation on host "${databaseHostId}" completed with status "${jobStatus}".`
+        );
+    }
+}
+
+async function handleClusterQuorumBulkOptimize(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    parentJobId: string,
+    databaseHostId: string
+) {
+    logger.info('Starting cluster quorum optimization', {
+        accountId,
+        region,
+        credentialsId,
+        parentJobId,
+        databaseHostId
+    });
+
+    let errorMessage;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    logger.info(`Initiating cluster quorum remediation for host "${databaseHostId}" in region "${region}".`);
+
+    // Register a job for this host
+    const { id: instanceOptimizeJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.WELL_ARCHITECTED,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: databaseHostId,
+        name: `Fix cluster quorum settings for ${databaseHostId}`,
+        startTime: Date.now(),
+        description: `Fix cluster quorum settings for ${databaseHostId}`,
+        parentJobId
+    });
+
+    try {
+        logger.info(`Fetching instance configuration for host "${databaseHostId}" to remediate cluster quorum.`);
+        const {
+            items: [instanceConfig]
+        } = await paginateListInstanceConfigData({
+            accountId,
+            region,
+            credentialsId,
+            resourceId: databaseHostId,
+            configDataType: AssessmentCategories.HIGH_AVAILABILITY,
+            pageSize: 1
+        });
+        const {
+            resource: { metadata = {} } = {},
+            database_instances: { database_instance_id: databaseInstanceId } = {}
+        } = instanceConfig || {};
+
+        const { node1InstanceId } = metadata as Metadata;
+
+        logger.info(
+            `Running cluster quorum remediation script on host "${databaseHostId}" (node: "${node1InstanceId}").`
+        );
+        // Call the remediation script
+        const { instanceRecord } = await getActiveNodeInfo(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId!
+        );
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [REMEDIATE_CLUSTER_QUORUM_SETTINGS],
+            instanceRecord.activeNodeInstanceid,
+            `Remediate cluster quorum settings on host ${instanceRecord.activeNodeInstanceid}`,
+            accountId
+        );
+        const parsedResponse = sqlResponseParsing(response);
+
+        jobStatus =
+            parsedResponse.status === 'failed'
+                ? JOBSTATUS.FAILED
+                : parsedResponse.status === 'partial'
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.COMPLETED;
+        if (jobStatus === JOBSTATUS.COMPLETED) {
+            logger.info(`Cluster quorum successfully remediated for host "${databaseHostId}".`);
+        } else if (jobStatus === JOBSTATUS.WARNING) {
+            logger.warn(`Cluster quorum partially remediated for host "${databaseHostId}". Please check details.`);
+        } else {
+            logger.error(`Failed to remediate cluster quorum for host "${databaseHostId}".`);
+        }
+
+        if (jobStatus !== JOBSTATUS.FAILED) {
+            logger.info(`Triggering drift assessment for cluster quorum on host "${databaseHostId}".`);
+            await onDemandTriggerMssqlDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId!,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.HIGH_AVAILABILITY,
+                parentJobId
+            );
+        } else if (!databaseInstanceId) {
+            logger.warn(`databaseInstanceId not found for host ${databaseHostId}`);
+        }
+    } catch (error: any) {
+        errorMessage = `${error.message}.`;
+        logger.error(`Optimizing cluster quorum failed for host "${databaseHostId}" with error: ${errorMessage}`);
+        jobStatus = JOBSTATUS.FAILED;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    } finally {
+        await updateJobDetails(accountId, instanceOptimizeJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        logger.info(
+            `Job for cluster quorum remediation on host "${databaseHostId}" completed with status "${jobStatus}".`
+        );
+    }
+}
+
+async function optimizeHighAvailabilityConfiguration(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    configurationName: string,
+    masterOptimizeParentId: string
+) {
+    logger.info(
+        `Optimizing high availability configurations for ${accountId}, ${credentialsId} ${databaseHostId} in ${region} for configuration ${configurationName}`
+    );
+
+    const {
+        items: [resourceDetail]
+    } = await getResources({
+        accountId,
+        resourceId: databaseHostId,
+        credentialsId,
+        region,
+        resourceType: RESOURCESTYPE.MSSQL
+    });
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
+    const { metadata } = resourceDetail;
+    const { sqlDeploymentType = '' } = metadata as unknown as Metadata;
+    if (sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+        const errorMessage = 'Standalone SQL Server deployment is not supported for high availability optimization.';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+
+    switch (configurationName) {
+        case OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS: {
+            try {
+                await handleHeartbeatSettingsBulkOptimize(
+                    accountId,
+                    region,
+                    credentialsId,
+                    masterOptimizeParentId,
+                    databaseHostId
+                );
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            } catch (error) {
+                const errorMessage = `Error while fixing heartbeat settings ${error}`;
+                logger.error(errorMessage);
+                updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
+            break;
+        }
+        case OptimizeHighAvailabilityParams.CLUSTER_QUORUM: {
+            try {
+                await handleClusterQuorumBulkOptimize(
+                    accountId,
+                    region,
+                    credentialsId,
+                    masterOptimizeParentId,
+                    databaseHostId
+                );
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            } catch (error) {
+                const errorMessage = `Error while fixing Cluster Quorum settings: ${error}`;
+                logger.error(errorMessage);
+                updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
+            break;
+        }
+        default: {
+            const errorMessage = `Invalid configuration name ${configurationName}`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+    }
+}
+
+export {
+    getAvailableSnapshotPolicyList,
+    handleResiliecyOptimize,
+    handleSharedStorageOptimize,
+    handleHeartbeatSettingsBulkOptimize,
+    handleClusterQuorumBulkOptimize,
+    optimizeHighAvailabilityConfiguration
+};

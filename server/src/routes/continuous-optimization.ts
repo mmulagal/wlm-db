@@ -27,7 +27,8 @@ import {
     BulkOptimizeAwsBackupSchema,
     BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema,
-    BulkOptimizeSharedStorageSchema
+    BulkOptimizeSharedStorageSchema,
+    BulkOptimizeHASchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -412,6 +413,40 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const response = await bulkHASharedStorageOptimization(
                     accountId,
                     OptimizeHighAvailabilityParams.SHARED_STORAGE,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/heartbeat`,
+            { schema: BulkOptimizeHASchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/cluster-quorum`,
+            { schema: BulkOptimizeHASchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY,
                     hostsToOptimize
                 );
                 return reply.send(response);

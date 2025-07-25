@@ -24,7 +24,8 @@ import {
     BulkDismissConfigurationResponse,
     ContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
-    BulkOptimizeHASharedStorageBody
+    BulkOptimizeHASharedStorageBody,
+    HeartbeatRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -275,6 +276,20 @@ const BulkOptimizeSharedStorageSchema = {
     }
 };
 
+const BulkOptimizeHASchema = {
+    ...BulkOptimizeGeneralSchema,
+    params: AccountIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: HeartbeatRequestBody,
+    summary: 'Fix High Availability Cluster configuration',
+    description: 'Fix High Availability Cluster configuration',
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -295,5 +310,6 @@ export {
     BulkOptimizeAwsBackupSchema,
     BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema,
-    BulkOptimizeSharedStorageSchema
+    BulkOptimizeSharedStorageSchema,
+    BulkOptimizeHASchema
 };

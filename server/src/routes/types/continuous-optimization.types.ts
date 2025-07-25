@@ -461,7 +461,6 @@ const OptimizePerHostRequestBody = Type.Intersect([
         region: Type.String(),
         instanceType: Type.Optional(Type.String()),
         networkAdapters: Type.Optional(Type.Array(Type.String()))
-        // ontapLunUuids: Type.Optional(Type.Array(Type.String({ minLength: 1, description: 'Relevant for shared-storage opt HA' })))
     }),
     UpdateFSxNBackupRequestBody
 ]);
@@ -646,6 +645,25 @@ const BulkOptimizeHASharedStorageBody = Type.Object({
 });
 type BulkOptimizeHASharedStorageBodyType = Static<typeof BulkOptimizeHASharedStorageBody>;
 
+const HeartbeatDatabaseHost = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    credentialsId: Type.String({ minLength: 1 }),
+    region: Type.String({ minLength: 1 })
+});
+type HeartbeatDatabaseHostType = Static<typeof HeartbeatDatabaseHost>;
+
+const HeartbeatPerHostRequestBody = Type.Object({
+    configurationName: Type.String({ enum: Object.values(OptimizeHighAvailabilityParams) }),
+    databaseHosts: Type.Array(HeartbeatDatabaseHost)
+});
+type HeartbeatPerHostRequestBodyType = Static<typeof HeartbeatPerHostRequestBody>;
+
+const HeartbeatRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(HeartbeatPerHostRequestBody)
+});
+
+type HeartbeatRequestBodyType = Static<typeof HeartbeatRequestBody>;
+
 const FlattenedInstance = Type.Object({
     databaseInstanceId: Type.String(),
     ontapLunUuids: Type.Array(Type.String()),
@@ -668,7 +686,7 @@ const OptimizationPreparation = Type.Object({
     instance: FlattenedInstance,
     lunsToOptimize: Type.Array(LunDetail),
     allHostIqnsArr: Type.Array(Type.String()),
-    igroupMissingIqnsMap: Type.Any() // Map type cannot be represented in TypeBox, use Any
+    igroupMissingIqnsMap: Type.Any()
 });
 type OptimizationPreparationType = Static<typeof OptimizationPreparation>;
 
@@ -746,5 +764,9 @@ export {
     FlattenedInstanceType,
     LunDetailType,
     OptimizationPreparationType,
-    BulkOptimizeHASharedStorageRequestBodyType
+    BulkOptimizeHASharedStorageRequestBodyType,
+    HeartbeatRequestBodyType,
+    HeartbeatDatabaseHostType,
+    HeartbeatPerHostRequestBodyType,
+    HeartbeatRequestBody
 };

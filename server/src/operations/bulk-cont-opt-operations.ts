@@ -50,7 +50,10 @@ import {
 import { getMappedVolumeDetailForInstance } from './continuous-optimization/mssql/clone-optimization-operations';
 import { getInstanceInfo } from './database/database-operations';
 import { updateOptimizedConfigMetaData } from './demo-operations';
-import { handleSharedStorageOptimize } from './continuous-optimization/mssql/resilience-optimize-operations';
+import {
+    handleSharedStorageOptimize,
+    optimizeHighAvailabilityConfiguration
+} from './continuous-optimization/mssql/resilience-optimize-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -77,7 +80,7 @@ async function bulkOptimization(
     hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]
 ) {
     logger.info(
-        `Bulk optimization: ${accountId},  ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}`
+        `Bulk optimization: ${accountId},  ${optimizationCategory}, hostsToOptimize: ${JSON.stringify(hostsToOptimize)}`
     );
 
     if (isEmpty(hostsToOptimize)) {
@@ -93,8 +96,17 @@ async function bulkOptimization(
                 accountId,
                 host.databaseHosts
             );
+            logger.info('validated value', host.databaseHosts);
         })
     );
+
+    // Check if all databaseHosts arrays are empty
+    const allEmpty = hostsToOptimize.every(host => isEmpty(host.databaseHosts));
+    if (allEmpty) {
+        const errorMessage = 'No valid database hosts found after validation. Please provide at least one valid host.';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
 
     const jobMetadata: JobMetadata = {
         hostsToOptimize: await formatJobMetadata(hostsToOptimize)
@@ -109,6 +121,8 @@ async function bulkOptimization(
             ? 'Fix maxdop configuration'
             : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP
             ? 'Fix AWS FSx for ONTAP automatic backup configuration'
+            : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY
+            ? 'Fix High availability configuration'
             : 'Fix storage sizing';
 
     const parentJobId = await handleOptimizeJobCreation(
@@ -386,6 +400,15 @@ async function handleBulkOptimization(
                                     databaseHosts,
                                     masterOptimizeParentId
                                 );
+                            } else if (optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY) {
+                                await optimizeHighAvailabilityConfiguration(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    databaseHostId,
+                                    optimizationSubcategory,
+                                    masterOptimizeParentId
+                                );
                             } else {
                                 if (isEmpty(sqlServerInstances)) {
                                     logger.error(`No instances given for resource ${databaseHostId}.`);
@@ -411,11 +434,10 @@ async function handleBulkOptimization(
             )
         );
     } catch (error: any) {
-        logger.error(
-            `Error occurred while optimizing operating system configuration for account ${accountId}. Error: ${error}`
-        );
+        logger.error(`Error occurred while optimizing  for account ${accountId}. Error: ${error}`);
         masterOptimizeParentStatus = JOBSTATUS.FAILED;
     } finally {
+        // Main Master job is updated here
         if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
             await updateParentJobStatus(accountId, masterOptimizeParentId);
         }
@@ -691,12 +713,12 @@ function extractInstancesToOptimize(hostsToOptimize: BulkOptimizeCloneInHostRequ
     );
 }
 
-async function validateAndFilterDatabaseHosts<T extends { credentialsId: string; region: string }>(
+async function validateAndFilterDatabaseHosts<T extends { credentialsId: string; region: string; id: string }>(
     accountId: string,
     databaseHosts: T[]
 ): Promise<T[]> {
     const validationResults = await Promise.all(
-        databaseHosts.map(async ({ credentialsId, region }) => {
+        databaseHosts.map(async ({ id: databaseHostId, credentialsId, region }) => {
             if (!credentialsId || !region) {
                 const errorMessage =
                     'Invalid input: credentialsId and region must be provided in all databaseHosts entries.';
@@ -704,7 +726,7 @@ async function validateAndFilterDatabaseHosts<T extends { credentialsId: string;
                 throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
             }
 
-            const isValid = await validateRequestDetails(accountId, credentialsId, region);
+            const isValid = await validateRequestDetails(accountId, credentialsId, region, databaseHostId);
 
             if (!isValid) {
                 logger.error(
@@ -720,14 +742,20 @@ async function validateAndFilterDatabaseHosts<T extends { credentialsId: string;
     return databaseHosts.filter((_, index) => validationResults[index]);
 }
 
-async function validateRequestDetails(accountId: string, credentialsId: string, region: string) {
+async function validateRequestDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string
+) {
     logger.info(`Validating request details: ${accountId}, ${credentialsId}, ${region}`);
 
     const [resourceDetail] = await listResources({
         accountId,
         credentialIds: credentialsId,
         region,
-        pageSize: 1
+        pageSize: 1,
+        resourceId: databaseHostId
     });
 
     if (isEmpty(resourceDetail)) {
