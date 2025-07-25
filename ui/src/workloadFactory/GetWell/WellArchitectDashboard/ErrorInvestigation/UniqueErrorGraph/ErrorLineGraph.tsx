@@ -210,7 +210,12 @@ const ErrorLineGraph = ({ startTime, endTime, color, data }: ErrorLineGraphProps
                                 tooltipModel.body.forEach(item => {
                                     const { dataIndex } = tooltipModel.dataPoints[0];
                                     // Use allLabels[dataIndex] for the correct time label
-                                    const timeLabel = allLabels[dataIndex] ? formatTimeAMPM(allLabels[dataIndex]) : '';
+
+                                    let timeLabel = '';
+                                    if (dataIndex !== 0) {
+                                        timeLabel += `${formatTimeAMPM(allLabels[dataIndex - 1], false)} - `; // Add previous label for context
+                                    }
+                                    timeLabel += allLabels[dataIndex] ? formatTimeAMPM(allLabels[dataIndex]) : '';
                                     const label = item.lines[0];
 
                                     // Row container

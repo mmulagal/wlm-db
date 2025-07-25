@@ -120,16 +120,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             return;
         }
 
-        if (
-            action?.meta?.arg?.endpointName === 'getInvestigationDates' &&
-            errorMsg?.includes('No logs analysis reports found')
-        ) {
-            api.dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.INFO,
-                    message: 'No logs analysis reports found. Try investigate now to get analysis reports.'
-                })
-            );
+        if (action?.meta?.arg?.endpointName === 'getInvestigationDates') {
             return;
         }
 

@@ -313,7 +313,7 @@
             "investigation-date": "Scan date",
             "total-errors": "Total errors",
             "last-scan": "Last scan",
-            "new-scan": "New scan in progress; previous details shown until ready.",
+            "new-scan": "New scan in progress. Previous details shown until scan completes.",
             "stop-scan": "Stop scan",
             "scan-details": "Scan details",
             "display-activity": "Every scan analyzes the last 24 hours from the start time of the scan.",

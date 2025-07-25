@@ -156,31 +156,6 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                     </DsTypography>
                 </div>
 
-                <div className={`${styles.column} `}>
-                    {loading ? (
-                        <div style={{ height: '12px' }}>
-                            <DsFlashingDotsLoader />
-                        </div>
-                    ) : (
-                        <DsTypography
-                            variant="Regular_14"
-                            className={noData ? styles.disabled : styles.titleText}
-                            style={{ paddingRight: '8px', lineHeight: 'unset' }}
-                        >
-                            {noData
-                                ? t('databases.log-analyzer.n/a')
-                                : headerData?.lastScan || t('databases.log-analyzer.n/a')}
-                        </DsTypography>
-                    )}
-                    <DsTypography
-                        variant="Regular_14"
-                        className={noData ? `${styles.label} ${styles.disabled}` : styles.label}
-                        style={{ position: 'relative', top: '6px' }}
-                    >
-                        {t('databases.log-analyzer.last-scan')}
-                    </DsTypography>
-                </div>
-
                 <div className={`${styles.column} `} style={{ borderRight: 'none', flex: '1 1 450px' }}>
                     <div className={styles.lastContainer}>
                         {scanInProgress && (

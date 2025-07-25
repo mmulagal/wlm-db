@@ -1,5 +1,5 @@
 import { TooltipInfo } from '@netapp/design-system';
-import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { DsFlashingDotsLoader, DsTypography, DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import styles from './ErrorBarComponent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
@@ -95,6 +95,14 @@ const ErrorBarComponent = ({
         return t('databases.log-analyzer.severity-description.0-9');
     };
 
+    const learnMore = () => {
+        window.open(
+            'https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-error-severities?view=sql-server-ver16',
+            '_blank',
+            'noopener,noreferrer'
+        );
+    };
+
     return (
         <div className={styles.barComponent}>
             <div className={styles.rightSection} style={{ width }}>
@@ -103,8 +111,14 @@ const ErrorBarComponent = ({
                         <TooltipInfo
                             trigger={loading || noData || noFilteredData ? 'click' : 'hover'}
                             className={loading || noData || noFilteredData ? styles.disabled : ''}
+                            delayHide={2000}
                         >
-                            {severityLabel()}
+                            <div className={styles.severityLabel}>
+                                {severityLabel()}
+                                <DsButton className={styles.buttonClass} onClick={learnMore} type="link">
+                                    {t('databases.dashboard.learn-more')}
+                                </DsButton>
+                            </div>
                         </TooltipInfo>
                         <DsTypography variant="Semibold_14" style={{ marginLeft: '2px' }}>
                             {t('databases.log-analyzer.severity')}
