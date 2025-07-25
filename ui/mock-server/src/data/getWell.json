@@ -3,6 +3,7 @@
     "fileSystemId": "fs-07a22f282fd4f5a20",
     "ec2InstanceId": "i-0a1f31a39bd2d9362",
     "databaseInstanceName": "MSSQLSERVER",
+    "deploymentType": "FCI",
     "storage": {
         "timestamp": 1730074791000,
         "optimisedCount": {

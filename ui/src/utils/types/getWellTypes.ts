@@ -98,6 +98,7 @@ export interface AssessmentResponseInterface {
     ec2InstanceId: string;
     databaseInstanceName: string;
     lastAssessmentTimestamp?: string;
+    deploymentType?: string;
     storage?: {
         timestamp?: string;
         optimisedCount?: {
@@ -183,7 +184,7 @@ export interface GwPerConfigCardInterface {
 }
 
 export interface GwCardDataInterface {
-    [key: string]: GwPerConfigCardInterface;
+    [key: string]: GwPerConfigCardInterface | string;
 }
 
 export interface GwSqlServerInstanceInterface {

@@ -8,9 +8,9 @@
                 {
                     "databaseInstanceId": "41",
                     "databaseInstanceName": "MSSQLSERVER",
-                    "deploymentType": "FCI",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -1360,9 +1360,9 @@
                 {
                     "databaseInstanceId": "42",
                     "databaseInstanceName": "MSSQLSERVER2",
-                    "deploymentType": "FCI",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "deploymentType": "FCI",
                         "storage": {
                             "error": "some error"
                         },
@@ -1833,9 +1833,9 @@
                 {
                     "databaseInstanceId": "43",
                     "databaseInstanceName": "MSSQLSERVER3",
-                    "deploymentType": "FCI",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -3223,9 +3223,9 @@
                 {
                     "databaseInstanceId": "31",
                     "databaseInstanceName": "MSSQLSERVER",
-                    "deploymentType": "FCI",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -4602,9 +4602,9 @@
                 {
                     "databaseInstanceId": "32",
                     "databaseInstanceName": "MSSQLSERVER2",
-                    "deploymentType": "FCI",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -5981,9 +5981,9 @@
                 {
                     "databaseInstanceId": "33",
                     "databaseInstanceName": "MSSQLSERVER3",
-                    "deploymentType": "FCI",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -7308,9 +7308,9 @@
                 {
                     "databaseInstanceId": "21",
                     "databaseInstanceName": "MSSQLSERVER",
-                    "deploymentType": "Standalone",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "deploymentType": "Standalone",
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -8625,9 +8625,9 @@
                 {
                     "databaseInstanceId": "22",
                     "databaseInstanceName": "MSSQLSERVER2",
-                    "deploymentType": "Standalone",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "deploymentType": "Standalone",
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {

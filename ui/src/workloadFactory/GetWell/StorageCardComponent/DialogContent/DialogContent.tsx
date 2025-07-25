@@ -286,7 +286,8 @@ const DialogContent = ({
                 ))}
             </div>
 
-            {whatWillHappen && createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
+            {whatWillHappen &&
+                createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
 
             {configSection}
 

@@ -91,6 +91,7 @@ const GetWell = () => {
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
+    const [instanceDeploymentType, setInstanceDeploymentType] = useState<string>('');
     const [configCount, setConfigCount] = useState(0);
     const [showChartArea, setShowChartArea] = useState(true);
     const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
@@ -261,6 +262,7 @@ const GetWell = () => {
     useEffect(() => {
         const { data, configCount } = applyFilter(cardData, optimizeFilterTags, selectedDatabaseStorageType);
         setFilteredCardData(data);
+        setInstanceDeploymentType(cardData?.deploymentType || '');
         setConfigCount(configCount);
     }, [cardData, optimizeFilterTags, ontapConfigTableData, osConfigTableData, selectedDatabaseStorageType]);
 
@@ -2322,7 +2324,7 @@ const GetWell = () => {
                             {/* Section six */}
                             {(filteredCardData?.scheduled_local_snapshot ||
                                 filteredCardData?.crr ||
-                                (selectedDatabaseStorageType === GENERAL.FCI &&
+                                (instanceDeploymentType === GENERAL.FCI &&
                                     filteredCardData?.mssql_high_availability)) && (
                                 <div className={styles.sectionClass}>
                                     <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
@@ -2544,7 +2546,7 @@ const GetWell = () => {
                                             </div>
                                         )}
 
-                                        {selectedDatabaseStorageType === GENERAL.FCI &&
+                                        {instanceDeploymentType === GENERAL.FCI &&
                                             filteredCardData?.mssql_high_availability && (
                                                 <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
                                                     <StorageCardComponent

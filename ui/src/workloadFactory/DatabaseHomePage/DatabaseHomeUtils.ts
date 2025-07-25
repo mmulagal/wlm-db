@@ -725,7 +725,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     isScheduledLoclaSnapshotOptimized &&
                     isCRROptimized &&
                     isScheduledAWSBackUpOptimized &&
-                    (instance?.deploymentType !== GENERAL.FCI ||
+                    (instance?.assessments?.deploymentType !== GENERAL.FCI ||
                         (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability))
                 ) {
                     assessmentGroupedByCategory.resiliency++;
@@ -1123,7 +1123,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     getAssessmentGroupedByConfigurations?.severityObj?.crr;
 
                 getAssessmentGroupedByConfigurations.mssqlhighAvailability +=
-                    instance?.deploymentType !== GENERAL.FCI ||
+                    instance?.assessments?.deploymentType !== GENERAL.FCI ||
                     (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability)
                         ? 1
                         : 0;
@@ -1159,10 +1159,7 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 const { cardsData } = getCardsData(instance?.assessments, {});
-                const optBreakDown = formatOptimizationBreakDown(
-                    cardsData,
-                    instance?.assessments?.databaseStorageType || ''
-                );
+                const optBreakDown = formatOptimizationBreakDown(cardsData);
                 let score = '';
                 score = `${optBreakDown?.total?.percent || '0'}%`;
                 const optimized = optBreakDown?.total?.optimized || 0;

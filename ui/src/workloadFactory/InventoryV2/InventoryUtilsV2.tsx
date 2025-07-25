@@ -3031,7 +3031,7 @@ export const getOptimizationStatus = (
     let optimizationStatus = '';
     if (instanceRow && instanceRow?.assessments && instanceRow?.assessments?.lastAssessmentTimestamp) {
         const { cardsData } = getCardsData(instanceRow?.assessments, {});
-        const optBreakDown = formatOptimizationBreakDown(cardsData, instanceRow?.deploymentType);
+        const optBreakDown = formatOptimizationBreakDown(cardsData);
         optimizationStatus =
             optBreakDown?.total?.notOptimized !== 0
                 ? optBreakDown?.total?.notOptimized === 1

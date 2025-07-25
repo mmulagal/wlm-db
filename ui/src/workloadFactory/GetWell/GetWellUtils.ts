@@ -54,6 +54,7 @@ import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
+    deploymentType: '',
     storage_tier: {
         id: 'performance-tier',
         mapName: ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
@@ -1832,7 +1833,7 @@ export const formatMssqlHighAvailabilityConfig = (
 };
 
 // This function is used to format the optimization breakdown data.
-export const formatOptimizationBreakDown = (cardsData: any, selectedDatabaseStorageType?: string) => {
+export const formatOptimizationBreakDown = (cardsData: any) => {
     let optimizedStorage = 0;
     let notOptimizedStorage = 0;
     let optimizedCompute = 0;
@@ -1916,7 +1917,7 @@ export const formatOptimizationBreakDown = (cardsData: any, selectedDatabaseStor
             // Skip MSSQL High Availability for non-FCI instances
             const isMSSQLHighAvailability =
                 key === 'mssql_high_availability' || nestedObject?.id === 'mssql-high-availability';
-            if (isMSSQLHighAvailability && selectedDatabaseStorageType !== GENERAL.FCI) {
+            if (isMSSQLHighAvailability && cardsData?.deploymentType !== GENERAL.FCI) {
                 return; // Skip this card for non-FCI instances
             }
             if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
@@ -2080,6 +2081,11 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
     } = formatOntapConfig(data, optimizingData);
 
     let cardsData = formatIndividualCardMainConfig(data, optimizingData);
+
+    cardsData = {
+        ...cardsData,
+        deploymentType: data?.deploymentType || ''
+    };
 
     cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
 
@@ -2245,7 +2251,7 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     const { cardsData, formatOntapConfigList, formatOsConfigList, formatMssqlHighAvailabilityConfigList } =
         getCardsData(data || ({} as AssessmentResponseInterface), optimizingData);
 
-    const optBreakDown = formatOptimizationBreakDown(cardsData, state.getWellOptimize.selectedDatabaseStorageType);
+    const optBreakDown = formatOptimizationBreakDown(cardsData);
 
     // For Reset Password data
     dispatch(
@@ -2372,9 +2378,12 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any, selectedData
     };
 
     Object.keys(cardData).map((key: any) => {
+        if (key === 'deploymentType') {
+            return; // Skip deploymentType as it is not a card
+        }
         // Skip MSSQL High Availability for non-FCI instances (same logic as in formatOptimizationBreakDown)
         const isMSSQLHighAvailability = key === 'mssql_high_availability';
-        if (isMSSQLHighAvailability && selectedDatabaseStorageType !== GENERAL.FCI) {
+        if (isMSSQLHighAvailability && cardData?.deploymentType !== GENERAL.FCI) {
             return; // Skip this card for non-FCI instances
         }
 
