@@ -1,7 +1,7 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { RESOURCESTYPE } from '../../utils/consts';
 import { API_DESCRIPTION } from '../../utils/schema-description-consts';
-import { CredentialsIdParams } from './generic.types';
+import { AccountIdCredentialsIdParams, CredentialsIdParams } from './generic.types';
 
 const RegisterInstanceParams = Type.Composite([
     CredentialsIdParams,
@@ -9,6 +9,30 @@ const RegisterInstanceParams = Type.Composite([
         instanceId: Type.String({ description: 'AWS EC2 instance ID' })
     })
 ]);
+
+const UnmanageInstanceParams = Type.Composite([
+    AccountIdCredentialsIdParams,
+    Type.Object({
+        resourceId: Type.String({ description: 'Workload Factory resource ID.', minLength: 1 })
+    })
+]);
+
+const MultiInstanceUnmanageResponseBody = Type.Object({
+    resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
+    items: Type.Array(
+        Type.Object({
+            databaseInstanceId: Type.String({ description: 'SQL Server database instance ID.' }),
+            status: Type.String({ description: 'Status of database instance unmanage operation.' }),
+            errorMessage: Type.Optional(Type.String({ description: 'Error details, if any, of a failed unmanage.' }))
+        })
+    )
+});
+
+const DatabaseInstanceQueryString = Type.Object({
+    databaseInstanceIds: Type.Optional(
+        Type.String({ description: 'Comma separated list of MS SQL Server instance IDs.' })
+    )
+});
 
 const ManageReadinessObject = Type.Object({
     missingSqlPermissions: Type.Array(Type.String({ description: 'Missing SQL permissions' })),
@@ -233,5 +257,8 @@ export {
     SingleInstanceRegisterCredentialsRequestBody,
     SingleRegisterCredentialsResponse,
     RegisterCredentialsRequestBody,
-    MultiInstanceRegisterOracleRequestBody
+    MultiInstanceRegisterOracleRequestBody,
+    UnmanageInstanceParams,
+    MultiInstanceUnmanageResponseBody,
+    DatabaseInstanceQueryString
 };

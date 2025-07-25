@@ -14,7 +14,6 @@ import {
 } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus, SendCommandCommandInput } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { deleteDatabaseInstance, deleteResource } from '../lib/database/db';
 import {
     describeInstancesWithPagination,
     paginateDescribeEbsVolumes,
@@ -28,7 +27,6 @@ import {
     isDemo,
     decompressSSMResponse,
     retryWithDelay,
-    getServerNameWithHostname,
     sqlResponseParsing,
     isValidProp,
     getEc2Hostname
@@ -95,10 +93,8 @@ import { preSignedUrl } from '../lib/aws/s3';
 import { getAmazonLinux2023AmiList, getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
 import { copyScriptsToHost } from './resource-operations';
-import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
 import { discoverOracleHosts } from './workloads/oracle/oracle-discover-scripts';
-import { getPaginatedDatabaseInstances } from './database/database-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -1108,80 +1104,6 @@ async function preparePsModulesForManage(
     return jobStatusRecord.status;
 }
 
-async function unmanageDatabaseInstance(
-    accountId: string,
-    credentialsId: string,
-    resourceId: string,
-    databaseInstanceList: string
-) {
-    logger.info('Unmanaging database instances', { accountId, credentialsId, resourceId, databaseInstanceList });
-
-    const databaseInstanceResponse: {
-        databaseInstanceId: string;
-        status: string;
-        errorMessage?: string;
-    }[] = [];
-
-    databaseInstanceList = databaseInstanceList.replace(/ /g, '');
-    if (databaseInstanceList.length > 0) {
-        const databaseInstanceIds = databaseInstanceList.split(',');
-
-        const preDeleteResult = await getPaginatedDatabaseInstances(accountId, {
-            credentialsId,
-            resourceId,
-            shouldIncludeResource: true
-        });
-        const preDeleteDatabaseInstances = Array.isArray(preDeleteResult) ? preDeleteResult : preDeleteResult.items;
-
-        const instanceDetails = preDeleteDatabaseInstances.find(
-            item => (item as { database_instance_id: string }).database_instance_id === databaseInstanceList
-        );
-        const resourceDetails = preDeleteDatabaseInstances[0]?.resource;
-
-        updateLongRunningAuditGroup(
-            undefined,
-            undefined,
-            getServerNameWithHostname(
-                resourceDetails?.resource_name ?? undefined,
-                instanceDetails?.database_instance_name
-            )
-        );
-
-        await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
-
-        const postDeleteResult = await getPaginatedDatabaseInstances(accountId, { credentialsId, resourceId });
-        const postDeleteDatabaseInstances = Array.isArray(postDeleteResult) ? postDeleteResult : postDeleteResult.items;
-
-        databaseInstanceIds.forEach(databaseInstanceId => {
-            if (preDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
-                if (postDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
-                    databaseInstanceResponse.push({ databaseInstanceId, status: 'failed' });
-                } else {
-                    databaseInstanceResponse.push({ databaseInstanceId, status: 'success' });
-                }
-            } else {
-                databaseInstanceResponse.push({
-                    databaseInstanceId,
-                    status: 'failed',
-                    errorMessage: 'Instance does not exist.'
-                });
-            }
-        });
-
-        // When all database instances are removed, the EC2 ceases to be a
-        // managed resource, since  we aren't managing any SQL Server instance.
-        // So we need to remove the EC2 resource from wlmdb.resource table.
-        if (postDeleteDatabaseInstances.length <= 0 && !isDemoFlow) {
-            deleteResource(accountId, resourceId, credentialsId);
-        }
-    }
-
-    return {
-        resourceId,
-        items: databaseInstanceResponse
-    };
-}
-
 async function discoverEc2Instances(
     accountId: string,
     credentialsId: string,
@@ -2113,7 +2035,6 @@ export {
     getHostAndSqlServerInfo,
     prepareForManage,
     fetchUnmanagedHostsInformationV2,
-    unmanageDatabaseInstance,
     discoverPgSqlResources,
     prepareDbScriptsForManage,
     getPgSqlResourceDetails,

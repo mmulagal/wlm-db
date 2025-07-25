@@ -6,7 +6,10 @@ import {
     JobBasedManageSchema,
     RegisterCredentialsSchema,
     SingleRegisterCredentialsSchema,
-    OracleRegisterInstancesSchema
+    OracleRegisterInstancesSchema,
+    UnmanageOracleSchema,
+    UnManagePgSqlSchema,
+    UnManageMsSqlSchema
 } from './schemas/register-schema';
 import { prepareForManage } from '../operations/discover-operations';
 
@@ -16,7 +19,8 @@ import {
     manageSqlServerV2,
     registerResourceCredentials,
     validateAndStoreDiscoveredParameters,
-    registerDatabaseServerInstances
+    registerDatabaseServerInstances,
+    unmanageDatabaseInstance
 } from '../operations/register-operations';
 import { SingleRegisterCredentialsResponseType } from './types/register.types';
 import { DatabaseTypes } from '../utils/consts';
@@ -25,6 +29,7 @@ const logger = getLogger();
 
 const MSSQL_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
+// MSSQL register APIs
 export default function registerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
@@ -75,6 +80,25 @@ export default function registerRoutes(fastify: FastifyInstance) {
         }
     );
 
+    server.delete(
+        '/v1/mssql/credentials/:credentialsId/resources/:resourceId/instances',
+        { schema: UnManageMsSqlSchema },
+        async request => {
+            const {
+                params: { accountId, credentialsId, resourceId },
+                query: { databaseInstanceIds }
+            } = castRequest(request);
+
+            const response = await unmanageDatabaseInstance(
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceIds || ''
+            );
+            return response;
+        }
+    );
+
     // Manage job based
     server.post('/v1/mssql/register', { schema: JobBasedManageSchema }, async request => {
         const {
@@ -95,6 +119,27 @@ export default function registerRoutes(fastify: FastifyInstance) {
         return response;
     });
 
+    // PGSQL register APIs
+    server.delete(
+        '/v1/pgsql/credentials/:credentialsId/resources/:resourceId/instances',
+        { schema: UnManagePgSqlSchema },
+        async request => {
+            const {
+                params: { accountId, credentialsId, resourceId },
+                query: { databaseInstanceIds }
+            } = castRequest(request);
+
+            const response = await unmanageDatabaseInstance(
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceIds ?? ''
+            );
+            return response;
+        }
+    );
+
+    // Oracle register APIs
     server.post('/v1/oracle/register', { schema: OracleRegisterInstancesSchema }, async request => {
         const {
             params: { accountId },
@@ -103,4 +148,23 @@ export default function registerRoutes(fastify: FastifyInstance) {
         const response = await registerDatabaseServerInstances(accountId, items, DatabaseTypes.ORACLE);
         return response;
     });
+
+    server.delete(
+        '/v1/oracle/credentials/:credentialsId/resources/:resourceId/instances',
+        { schema: UnmanageOracleSchema },
+        async request => {
+            const {
+                params: { accountId, credentialsId, resourceId },
+                query: { databaseInstanceIds }
+            } = castRequest(request);
+
+            const response = await unmanageDatabaseInstance(
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceIds ?? ''
+            );
+            return response;
+        }
+    );
 }

@@ -3,15 +3,18 @@ import { RouteTags } from '../../utils/consts';
 import { GenericHeaders, AccountIdParams } from '../types/generic.types';
 import {
     BulkRegisterCredentialsRequestBody,
+    DatabaseInstanceQueryString,
     JobBasedManageResponseBody,
     MultiHostManageResponseBody,
     MultiInstanceManageMsSqlRequestBody,
     MultiInstanceRegisterOracleRequestBody,
+    MultiInstanceUnmanageResponseBody,
     PrepareResourceResponseBody,
     RegisterCredentialsRequestBody,
     RegisterCredentialsResponse,
     RegisterInstanceParams,
-    SingleRegisterCredentialsResponse
+    SingleRegisterCredentialsResponse,
+    UnmanageInstanceParams
 } from '../types/register.types';
 
 const RegisterBaseRequest = {
@@ -87,11 +90,47 @@ const ManageMsSqlSchemaV2 = {
     }
 };
 
+const UnManageMsSqlSchema = {
+    ...RegisterBaseRequest,
+    params: UnmanageInstanceParams,
+    querystring: DatabaseInstanceQueryString,
+    summary: 'Deregister SQL Server database instances.',
+    description: 'Deregister SQL Server database instances managed by Workload Factory.',
+    response: {
+        200: MultiInstanceUnmanageResponseBody
+    }
+};
+
+const UnManagePgSqlSchema = {
+    ...RegisterBaseRequest,
+    params: UnmanageInstanceParams,
+    querystring: DatabaseInstanceQueryString,
+    summary: 'Deregister PostgreSQL database instances.',
+    description: 'Deregister PostgreSQL database instances managed by Workload Factory.',
+    response: {
+        200: MultiInstanceUnmanageResponseBody
+    }
+};
+
+const UnmanageOracleSchema = {
+    ...RegisterBaseRequest,
+    params: UnmanageInstanceParams,
+    querystring: DatabaseInstanceQueryString,
+    summary: 'Deregister Oracle database instances.',
+    description: 'Deregister Oracle database instances managed by Workload Factory.',
+    response: {
+        200: MultiInstanceUnmanageResponseBody
+    }
+};
+
 export {
     JobBasedManageSchema,
     RegisterCredentialsSchema,
     SingleRegisterCredentialsSchema,
     PrepareForManageSchema,
     ManageMsSqlSchemaV2,
-    OracleRegisterInstancesSchema
+    OracleRegisterInstancesSchema,
+    UnmanageOracleSchema,
+    UnManagePgSqlSchema,
+    UnManageMsSqlSchema
 };
