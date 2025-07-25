@@ -2222,7 +2222,7 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 value: 'EC2 instance'
             },
             block_six: {
-                ...cardDataDefault?.mssql_high_availability?.block_five,
+                ...cardDataDefault?.mssql_high_availability?.block_six,
                 value: `${mssqlHANotOptimizedConfig || 0} out of ${
                     (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0)
                 }`,
