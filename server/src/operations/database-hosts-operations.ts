@@ -59,7 +59,7 @@ import {
     PGSQL_DEFAULT_INSTANCE_NAME,
     ORACLE_INSTANCE_NAME,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
-    MSSQL
+    RESOURCESTYPE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -102,7 +102,7 @@ import {
     calculateFsxwStorageEfficiencyUsingCloudwatch,
     getSqlInstanceUtilizationAndPerformance
 } from './aws/cloud-watch-operations';
-import { assessMssqlServerPerformance, getEc2Hostname, isDemo } from '../utils/utils';
+import { assessMssqlServerPerformance, formatDuration, getEc2Hostname, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -2386,17 +2386,64 @@ async function getAllClusterNodeDetails(
 async function triggerInstancePerformanceAssessment(initiatedBy: string) {
     logger.info('Trigger instance performance assessment for all hosts', { initiatedBy });
 
-    const { items: allmanagedResources } = await getResources({
-        resourceType: MSSQL,
-        allRecords: true
-    });
-    if (isEmpty(allmanagedResources)) {
-        logger.info('No successfully managed MSSQL database hosts found.');
-        return;
-    }
+    let nextToken: string | undefined;
+    const PAGE_SIZE = 50;
+    let batchNumber = 1;
+    let totalProcessed = 0;
+    const startTime = Date.now();
+
+    do {
+        logger.info(`Processing batch ${batchNumber}`, {
+            nextToken,
+            memoryUsage: process?.memoryUsage()
+        });
+
+        try {
+            // This await is intentional: we process each page sequentially to avoid high memory usage and ensure order.
+            // Using await in the loop is appropriate here because each page must be processed before fetching the next.
+            // eslint-disable-next-line no-await-in-loop
+            const response = await getResources({
+                resourceType: [RESOURCESTYPE.MSSQL],
+                pageSize: PAGE_SIZE,
+                nextToken
+            });
+
+            const { items: batchManagedResources, nextToken: newNextToken } = response;
+
+            if (isEmpty(batchManagedResources)) {
+                logger.info('No more managed MSSQL database hosts found. Processing completed.');
+                break;
+            }
+
+            logger.info(`Processing ${batchManagedResources.length} resources in batch ${batchNumber}`);
+
+            // Process current batch following the old logic pattern
+            // eslint-disable-next-line no-await-in-loop
+            await processResourcesBatch(batchManagedResources, batchNumber);
+
+            totalProcessed += batchManagedResources.length;
+            nextToken = newNextToken;
+            batchNumber += 1;
+        } catch (error: any) {
+            logger.error(`Error processing batch ${batchNumber}:`, error);
+            // Continue with next batch instead of breaking completely
+            nextToken = undefined; // This will exit the loop
+        }
+    } while (nextToken);
+
+    const duration = Date.now() - startTime;
+    logger.info(
+        `Instance performance assessment completed successfully. Total resources processed: ${totalProcessed}, Total batches: ${
+            batchNumber - 1
+        }, Duration: ${formatDuration(duration)}`
+    );
+}
+
+async function processResourcesBatch(resources: ResourceDetails[], batchNumber: number) {
+    logger.info(`Processing ${resources.length} resources in batch ${batchNumber}`);
 
     await Promise.all(
-        allmanagedResources.map(
+        resources.map(
             throat(1, async (resource: ResourceDetails) => {
                 const {
                     metadata,
@@ -2405,70 +2452,127 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
                     credentials_id: credentialsId,
                     account_id: accountId
                 } = resource;
-                try {
-                    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-                    const nodeIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
 
-                    await Promise.all(
-                        nodeIds.map(async nodeId => {
-                            try {
-                                const connectionStatus = await getSSMConnectionStatus(
-                                    credentialsId,
-                                    region!,
-                                    nodeId,
-                                    accountId!
-                                );
-                                if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                                    logger.info('Triggering instance performance assessment for', {
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        databaseHostId,
-                                        nodeId
-                                    });
-                                    const command = trendGraphCreateScript(databaseHostId, nodeId);
-                                    const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
-                                    await callSsmExecution(
-                                        credentialsId,
-                                        region!,
-                                        [command],
-                                        nodeId,
-                                        ssmComment,
-                                        accountId!,
-                                        true,
-                                        CUSTOM_SSM_EXECUTION_TIMEOUT
-                                    );
-                                } else {
-                                    logger.error('SSM connection not established for node', {
-                                        accountId,
-                                        region,
-                                        nodeId
-                                    });
-                                }
-                            } catch (error: any) {
-                                logger.error('Error while triggering performance assessment for ', {
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    databaseHostId,
-                                    nodeId,
-                                    error: error.message
-                                });
-                            }
-                        })
+                try {
+                    await processResourceNodes(
+                        accountId!,
+                        credentialsId!,
+                        region!,
+                        databaseHostId!,
+                        metadata,
+                        batchNumber
                     );
                 } catch (error: any) {
-                    logger.error('Error while triggering performance assessment for ', {
+                    logger.error('Error while triggering performance assessment for resource', {
                         accountId,
                         credentialsId,
                         region,
                         databaseHostId,
+                        batchNumber,
                         error: error.message
                     });
+                    // Continue processing other resources even if one fails
                 }
             })
         )
     );
+
+    logger.info(`Completed processing ${resources.length} resources in batch ${batchNumber}`);
+}
+
+async function processResourceNodes(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    metadata: any,
+    batchNumber: number
+) {
+    logger.info('Processing resource metadata for performance assessment', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        batchNumber
+    });
+
+    try {
+        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+        const nodeIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
+
+        await Promise.all(
+            nodeIds.map(
+                throat(2, async nodeId => {
+                    try {
+                        const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId, accountId);
+
+                        if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+                            logger.info('Triggering instance performance assessment for', {
+                                accountId,
+                                credentialsId,
+                                region,
+                                databaseHostId,
+                                nodeId,
+                                batchNumber
+                            });
+
+                            const command = trendGraphCreateScript(databaseHostId, nodeId);
+                            const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
+
+                            await callSsmExecution(
+                                credentialsId,
+                                region,
+                                [command],
+                                nodeId,
+                                ssmComment,
+                                accountId,
+                                true,
+                                CUSTOM_SSM_EXECUTION_TIMEOUT
+                            );
+
+                            logger.info('Successfully triggered performance assessment for node', {
+                                accountId,
+                                credentialsId,
+                                region,
+                                databaseHostId,
+                                nodeId,
+                                batchNumber
+                            });
+                        } else {
+                            logger.warn('SSM connection not established for node', {
+                                accountId,
+                                region,
+                                nodeId,
+                                connectionStatus: connectionStatus.Status,
+                                batchNumber
+                            });
+                        }
+                    } catch (error: any) {
+                        logger.error('Error while triggering performance assessment for node', {
+                            accountId,
+                            credentialsId,
+                            region,
+                            databaseHostId,
+                            nodeId,
+                            batchNumber,
+                            error: error.message
+                        });
+                        // Continue processing other nodes even if one fails
+                    }
+                })
+            )
+        );
+    } catch (error: any) {
+        logger.error('Error processing resource metadata', {
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            batchNumber,
+            error: error.message
+        });
+        throw error;
+    }
 }
 
 export {

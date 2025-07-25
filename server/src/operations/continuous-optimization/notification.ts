@@ -5,7 +5,7 @@ import { WF_NOTIFICATION_PRIORITY, NOTIFICATION_TYPE, DatabaseTypes, WF_CONSOLE_
 
 import prepareWFNotificationRequest from '../wf-notification-operations';
 import { hasNotOptimizedStatus } from './assessment-utils';
-import { sanitizeSnsSubject } from '../../utils/utils';
+import { formatDuration, sanitizeSnsSubject } from '../../utils/utils';
 import { getPaginatedDatabaseInstances } from '../database/database-operations';
 import { INSTANCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
@@ -67,6 +67,7 @@ export default async function processWellArchitectedAssessmentNotifications(init
     const accountAssessmentMap: Record<string, AccountAssessmentSummary> = {};
     let nextToken: string | undefined;
     const PAGE_SIZE = 50;
+    const startTime = Date.now();
 
     try {
         do {
@@ -165,6 +166,13 @@ export default async function processWellArchitectedAssessmentNotifications(init
 
         // After all pages processed, send notifications using the accumulated summary
         await buildAndSendNotifications(accountAssessmentMap);
+        const duration = Date.now() - startTime;
+        const totalAccounts = Object.keys(accountAssessmentMap).length;
+        logger.info(
+            `Well-architected assessment notifications processed successfully. Total accounts: ${totalAccounts}, Duration: ${formatDuration(
+                duration
+            )}`
+        );
     } catch (error) {
         logger.error('Error processing well-architected assessment notifications:', error);
     }
