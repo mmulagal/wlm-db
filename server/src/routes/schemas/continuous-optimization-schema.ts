@@ -25,7 +25,8 @@ import {
     ContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
     BulkOptimizeHASharedStorageBody,
-    HeartbeatRequestBody
+    HeartbeatRequestBody,
+    SqlServerServiceRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -290,6 +291,20 @@ const BulkOptimizeHASchema = {
     }
 };
 
+const BulkOptimizeSQLServerServiceSchema = {
+    ...BulkOptimizeGeneralSchema,
+    params: AccountIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: SqlServerServiceRequestBody,
+    summary: 'Fix sql server service parameters as part of High Availability Cluster configuration',
+    description: 'Fix sql server service parameters as per the best practice for selected database instances.',
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -311,5 +326,6 @@ export {
     BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema,
     BulkOptimizeSharedStorageSchema,
-    BulkOptimizeHASchema
+    BulkOptimizeHASchema,
+    BulkOptimizeSQLServerServiceSchema
 };

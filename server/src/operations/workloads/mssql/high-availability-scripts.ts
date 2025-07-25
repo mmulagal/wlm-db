@@ -248,6 +248,36 @@ $result = [PSCustomObject]@{
 $result | ConvertTo-Json -Compress
 `;
 
+const REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE = `
+# Set this to 'Manual'
+# Pass the instance name and filter by that
+$desiredStartupType = 'Manual'
+
+$errMsg = ''
+$status = 'success'
+
+try {
+    $services = Get-Service | Where-Object { $_.Name -like 'MSSQL*' }
+    foreach ($service in $services) {
+        try {
+            Set-Service -Name $service.Name -StartupType $desiredStartupType
+        } catch {
+            $errMsg += "Failed to set $($service.Name): $($_.Exception.Message)"
+            $status = 'partial'
+        }
+    }
+} catch {
+    $errMsg += "General failure: $($_.Exception.Message)"
+    $status = 'failed'
+}
+
+$result = [PSCustomObject]@{
+    status = $status
+    error  = $errMsg
+}
+$result | ConvertTo-Json -Compress
+`;
+
 export {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
@@ -256,5 +286,6 @@ export {
     GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN,
     ADD_INITIATOR_TO_IGROUP,
     REMEDIATE_HEARTBEAT_SETTINGS,
-    REMEDIATE_CLUSTER_QUORUM_SETTINGS
+    REMEDIATE_CLUSTER_QUORUM_SETTINGS,
+    REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE
 };

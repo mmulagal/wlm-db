@@ -664,6 +664,25 @@ const HeartbeatRequestBody = Type.Object({
 
 type HeartbeatRequestBodyType = Static<typeof HeartbeatRequestBody>;
 
+const SqlServerServiceDatabaseHost = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+    credentialsId: Type.String({ minLength: 1 }),
+    region: Type.String({ minLength: 1 })
+});
+type SqlServerServiceDatabaseHostType = Static<typeof SqlServerServiceDatabaseHost>;
+
+const SqlServerServicePerHostRequestBody = Type.Object({
+    configurationName: Type.String({ enum: Object.values(OptimizeHighAvailabilityParams) }),
+    databaseHosts: Type.Array(SqlServerServiceDatabaseHost)
+});
+type SqlServerServicePerHostRequestBodyType = Static<typeof SqlServerServicePerHostRequestBody>;
+
+const SqlServerServiceRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(SqlServerServicePerHostRequestBody)
+});
+type SqlServerServiceRequestBodyType = Static<typeof SqlServerServiceRequestBody>;
+
 const FlattenedInstance = Type.Object({
     databaseInstanceId: Type.String(),
     ontapLunUuids: Type.Array(Type.String()),
@@ -768,5 +787,10 @@ export {
     HeartbeatRequestBodyType,
     HeartbeatDatabaseHostType,
     HeartbeatPerHostRequestBodyType,
-    HeartbeatRequestBody
+    HeartbeatRequestBody,
+    SqlServerServiceDatabaseHostType,
+    SqlServerServicePerHostRequestBodyType,
+    SqlServerServiceRequestBodyType,
+    SqlServerServicePerHostRequestBody,
+    SqlServerServiceRequestBody
 };

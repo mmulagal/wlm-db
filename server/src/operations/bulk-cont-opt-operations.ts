@@ -52,7 +52,8 @@ import { getInstanceInfo } from './database/database-operations';
 import { updateOptimizedConfigMetaData } from './demo-operations';
 import {
     handleSharedStorageOptimize,
-    optimizeHighAvailabilityConfiguration
+    optimizeHighAvailabilityConfiguration,
+    optimizeSqlServerService
 } from './continuous-optimization/mssql/resilience-optimize-operations';
 
 const logger = getLogger();
@@ -364,6 +365,17 @@ async function handleOptimization(
                 break;
             case OPTIMIZATION_CATEGORIES.MAXDOP:
                 await optimizeMaxDop(accountId, credentialsId, region, databaseHostId, databaseInstanceId, parentJobId);
+                break;
+            case OPTIMIZATION_CATEGORIES.HIGH_AVAILABILITY:
+                await optimizeSqlServerService(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    optimizationSubcategory,
+                    parentJobId
+                );
                 break;
             default:
                 break;
