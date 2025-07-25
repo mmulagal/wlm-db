@@ -93,7 +93,7 @@ export default function registerRoutes(fastify: FastifyInstance) {
                 accountId,
                 credentialsId,
                 resourceId,
-                databaseInstanceIds || ''
+                databaseInstanceIds ?? ''
             );
             return response;
         }

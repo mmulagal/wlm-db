@@ -2660,8 +2660,8 @@ async function unmanageDatabaseInstance(
         });
         const preDeleteDatabaseInstances = Array.isArray(preDeleteResult) ? preDeleteResult : preDeleteResult.items;
 
-        const instanceDetails = preDeleteDatabaseInstances.find(
-            item => (item as { database_instance_id: string }).database_instance_id === databaseInstanceList
+        const instanceDetails = preDeleteDatabaseInstances.find(item =>
+            databaseInstanceIds.includes((item as { database_instance_id: string }).database_instance_id)
         );
         const resourceDetails = preDeleteDatabaseInstances[0]?.resource;
 
