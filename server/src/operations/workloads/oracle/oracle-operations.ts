@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash-es';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import {
     DatabaseHostsQueryFields,
+    DatabaseTypes,
     HttpErrorCodes,
     OFFLINE,
     ONLINE,
@@ -647,7 +648,13 @@ async function getOracleDatabaseMappedVolumes(
     logger.info('Fetch mapped volume data for oracle DBs', { accountId, credentialsId, region, resourceId });
     try {
         if (!resourceDetail) {
-            [resourceDetail] = await listResources(accountId, resourceId, credentialsId, region);
+            [resourceDetail] = await listResources({
+                accountId,
+                resourceId,
+                credentialIds: credentialsId,
+                region,
+                resourceType: DatabaseTypes.ORACLE
+            });
             if (!resourceDetail) {
                 const errorMessage = `No database host by id ${resourceId} for ${accountId} is found.`;
                 logger.error(errorMessage);

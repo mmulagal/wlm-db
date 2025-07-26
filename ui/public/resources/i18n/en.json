@@ -119,6 +119,12 @@
             "sql-server-authentication": "SQL Server authentication",
             "windows-authentication": "Windows authentication"
         },
+        "deregister-flow": {
+            "content-part1": "Are you sure you want to deregister the ",
+            "content-part2": "This will exclude the instance from Workload Factory's best practices and lifecycle management. Do you wish to proceed?",
+            "mssql": "SQL Server instance",
+            "oracle": "Oracle instance"
+        },
         "well-architect": {
             "well-architect-state": "Well-architected",
             "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
@@ -427,7 +433,8 @@
             "view-server-state": "VIEW SERVER STATE",
             "connect-sql": "CONNECT SQL",
             "permissions-required-heading": "Another method of authentication is to add the missing SQL Server permissions.",
-            "permissions-required-content": "Ensure that the following SQL Server permissions are granted to the NT Authority\\SYSTEM user. After permissions are granted, select Explore savings again."
+            "permissions-required-content": "Ensure that the following SQL Server permissions are granted to the NT Authority\\SYSTEM user. After permissions are granted, select Explore savings again.",
+            "missing-sql-permissions": "Missing SQL Server permissions"
         },
         "instance-table": {
             "headers": {

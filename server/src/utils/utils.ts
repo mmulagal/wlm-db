@@ -1236,7 +1236,6 @@ function getNextToken<T extends { id: string }>(
 }
 
 // Database query helper functions
-
 function buildSelectFields(fields: string[]): Record<string, boolean> {
     return Object.fromEntries(fields.map(field => [field, true]));
 }
@@ -1247,6 +1246,41 @@ function addIncludeSelect(key: string, fields: string[], extra?: Record<string, 
             select: extra ? { ...buildSelectFields(fields), ...extra } : buildSelectFields(fields)
         }
     };
+}
+
+/**
+ * Converts milliseconds to human-readable duration
+ * Shows: seconds, minutes:seconds, or hours:minutes:seconds
+ */
+function formatDuration(ms: number): string {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    if (hours > 0) {
+        // Format: 2h 15m 30s
+        const remainingMinutes = minutes % 60;
+        const remainingSeconds = seconds % 60;
+
+        let result = `${hours}h`;
+        if (remainingMinutes > 0) {
+            result += ` ${remainingMinutes}m`;
+        }
+        if (remainingSeconds > 0) {
+            result += ` ${remainingSeconds}s`;
+        }
+
+        return result;
+    }
+
+    if (minutes > 0) {
+        // Format: 15m 30s
+        const remainingSeconds = seconds % 60;
+        return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+    }
+
+    // Format: 30s
+    return `${seconds}s`;
 }
 
 export {
@@ -1322,6 +1356,7 @@ export {
     isCidrContained,
     sanitizeSnsSubject,
     getNextToken,
+    formatDuration,
     addIncludeSelect,
     buildSelectFields
 };

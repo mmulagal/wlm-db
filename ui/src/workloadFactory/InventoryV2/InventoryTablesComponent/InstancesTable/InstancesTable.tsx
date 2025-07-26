@@ -37,6 +37,7 @@ import {
 import {
     addHostHandlerSc,
     deleteHostJobPolling,
+    getDeregisterContent,
     getOptimizationStatusData,
     manageActionCol,
     uniqueHostRow,
@@ -247,7 +248,6 @@ const InstancesTable = () => {
             rowData?.regionId
         );
         dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstancesL), inProgressId])));
-
         const unmanageApiFn = getUnmanageApiByHostType(rowData.hostType, {
             mssql: unmanageApi,
             pgsql: unmanageApiPgsql,
@@ -304,11 +304,10 @@ const InstancesTable = () => {
                 content={
                     <>
                         <DsTypography variant="Regular_14">
-                            Are you sure you want to deregister the SQL Server instance?{' '}
+                            {t('databases.deregister-flow.content-part1')} {getDeregisterContent(rowData, t)}?{' '}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginTop: '24px', width: '700px' }}>
-                            This will exclude the instance from Workload Factory's best practices and lifecycle
-                            management. Do you wish to proceed?{' '}
+                            {t('databases.deregister-flow.content-part2')}
                         </DsTypography>
                     </>
                 }
