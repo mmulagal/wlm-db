@@ -411,7 +411,10 @@ async function handleBulkOptimization(
                                     databaseHosts,
                                     masterOptimizeParentId
                                 );
-                            } else if (optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY) {
+                            } else if (
+                                optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY &&
+                                optimizationSubcategory !== 'sqlserver-service'
+                            ) {
                                 await optimizeHighAvailabilityConfiguration(
                                     accountId,
                                     credentialsId,

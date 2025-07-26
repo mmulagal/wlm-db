@@ -87,7 +87,8 @@ enum OptimizeOperatingSystemParams {
 enum OptimizeHighAvailabilityParams {
     SHARED_STORAGE = 'shared-storage',
     HEARTBEAT_SETTINGS = 'heartbeat-settings',
-    CLUSTER_QUORUM = 'cluster-quorum'
+    CLUSTER_QUORUM = 'cluster-quorum',
+    SQLSERVER_SERVICE = 'sqlserver-service'
 }
 
 enum OptimizeStorageTierParams {
