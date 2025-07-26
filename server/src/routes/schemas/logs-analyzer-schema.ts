@@ -63,6 +63,8 @@ const AnalyzePreRequisitesSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
     description:
         'Check pre-requisites for logs analysis for a specific database instance in a remote database host machine',
+    summary:
+        'Logs analysis pre-requisites include checking if Bedrock model is available, if the networking configuration is correct, and if the required IAM policies are in place.',
     params: LogsAnalyzerParams,
     queryString: Type.Object({
         databaseType: Type.Optional(Type.String())
