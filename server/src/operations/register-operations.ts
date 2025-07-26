@@ -163,7 +163,7 @@ async function installPowershell7(
         errorMessage = parsedResponse && FAILURE_INFO in parsedResponse ? parsedResponse[FAILURE_INFO] : '';
     } catch (error: any) {
         logger.error(`Failed to install PowerShell 7.5.0 on ${ec2InstanceId}: ${error.message}`);
-        jobStatus = error.message.includes('PowerShell 7 is already installed') ? JOBSTATUS.WARNING : JOBSTATUS.FAILED;
+        jobStatus = error.message?.includes('PowerShell 7 is already installed') ? JOBSTATUS.WARNING : JOBSTATUS.FAILED;
         errorMessage = error.message;
     } finally {
         await updateJobDetails(accountId, childJobId, {

@@ -11,9 +11,9 @@ import {
 import ms from 'ms';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
-import { AuditStatus, HttpErrorCodes } from '../../utils/consts';
+import { AuditStatus, DEFAULT_INSTANCE_NAME, HttpErrorCodes } from '../../utils/consts';
 
-import { generateHash, getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
+import { generateHash, getArtifactsRegionBucketName, isDemo, sqlResponseParsing } from '../../utils/utils';
 import {
     AVG_TOKEN_COUNT_PER_ERROR,
     BEDROCK_PRICE,
@@ -297,7 +297,9 @@ async function handleLogsAnalysis(
             'Fetch Logs Path for sql server instance'
         );
         const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
-        const [{ path: logsPath } = {}] = parsedResponse?.[databaseInstanceName] || [];
+        const [{ path: logsPath } = {}] = isDemo()
+            ? parsedResponse?.[DEFAULT_INSTANCE_NAME] || []
+            : parsedResponse?.[databaseInstanceName] || [];
         if (!logsPath) {
             throw createError(
                 HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -745,12 +747,16 @@ async function analyzePreRequisites(
         databaseType
     });
 
-    const [managedInstance] = (await listDatabaseInstances(accountId, {
-        credentialsId,
-        region,
+    const {
+        items: [managedInstance]
+    } = await getPaginatedDatabaseInstances(accountId, {
         resourceId: databaseHostId,
-        sqlInstanceId: databaseInstanceId
-    })) as DatabaseInstancesIncludingResource[];
+        credentialsId,
+        sqlInstanceId: databaseInstanceId,
+        region,
+        shouldIncludeResource: true,
+        pageSize: 1
+    });
 
     const databaseInstanceDetails = {
         ...managedInstance,
