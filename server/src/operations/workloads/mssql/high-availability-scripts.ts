@@ -257,23 +257,26 @@ $errMsg = ''
 $status = 'success'
 
 try {
-    $services = Get-Service | Where-Object { $_.Name -like 'MSSQL*' }
-    foreach ($service in $services) {
-        try {
-            Set-Service -Name $service.Name -StartupType $desiredStartupType
-        } catch {
-            $errMsg += "Failed to set $($service.Name): $($_.Exception.Message)"
-            $status = 'partial'
+        $service = Get-Service | Where-Object { $_.Name -like 'MSSQL*' } | Select-Object -First 1
+        if ($null -ne $service) {
+                try {
+                        Set-Service -Name $service.Name -StartupType $desiredStartupType
+                } catch {
+                        $errMsg += "Failed to set $($service.Name): $($_.Exception.Message)"
+                        $status = 'partial'
+                }
+        } else {
+                $errMsg += "No SQL Server service found."
+                $status = 'failed'
         }
-    }
 } catch {
-    $errMsg += "General failure: $($_.Exception.Message)"
-    $status = 'failed'
+        $errMsg += "General failure: $($_.Exception.Message)"
+        $status = 'failed'
 }
 
 $result = [PSCustomObject]@{
-    status = $status
-    error  = $errMsg
+        status = $status
+        error  = $errMsg
 }
 $result | ConvertTo-Json -Compress
 `;

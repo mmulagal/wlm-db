@@ -21,7 +21,6 @@ import {
     WorkloadInstance,
     MappedOnTapVolumeResponse,
     IgroupMissingInitiators
-    // DatabaseInstance
 } from '../../../utils/common-types';
 import {
     AuditStatus,
