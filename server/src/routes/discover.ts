@@ -3,18 +3,14 @@ import { FastifyInstance } from 'fastify/types/instance';
 import {
     DiscoverMsSqlSchema,
     MsSqlInstancesSchema,
-    UnManageMsSqlSchema,
     DiscoverPgSqlSchema,
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
-    UnManagePgSqlSchema,
-    OracleResourceDetailsSchema,
-    UnmanageOracleSchema
+    OracleResourceDetailsSchema
 } from './schemas/discover-schemas';
 import {
     getHostAndSqlServerInfo,
     fetchUnmanagedHostsInformationV2,
-    unmanageDatabaseInstance,
     discoverPgSqlResources,
     getPgSqlResourceDetails,
     discoverOracleResources,
@@ -55,25 +51,6 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         return fetchUnmanagedHostsInformationV2(accountId, credentialsId, region, instances.split(','), fields);
     });
 
-    server.delete(
-        '/v1/mssql/credentials/:credentialsId/resources/:resourceId/instances',
-        { schema: UnManageMsSqlSchema },
-        async request => {
-            const {
-                params: { accountId, credentialsId, resourceId },
-                query: { databaseInstanceIds }
-            } = castRequest(request);
-
-            const response = await unmanageDatabaseInstance(
-                accountId,
-                credentialsId,
-                resourceId,
-                databaseInstanceIds || ''
-            );
-            return response;
-        }
-    );
-
     // PostgreSQL
     server.get(`${DISCOVER_PGSQL_API_PATH}/discover`, { schema: DiscoverPgSqlSchema }, async request => {
         const {
@@ -99,25 +76,6 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.delete(
-        '/v1/pgsql/credentials/:credentialsId/resources/:resourceId/instances',
-        { schema: UnManagePgSqlSchema },
-        async request => {
-            const {
-                params: { accountId, credentialsId, resourceId },
-                query: { databaseInstanceIds }
-            } = castRequest(request);
-
-            const response = await unmanageDatabaseInstance(
-                accountId,
-                credentialsId,
-                resourceId,
-                databaseInstanceIds ?? ''
-            );
-            return response;
-        }
-    );
-
     // Oracle
     server.get(`${DISCOVER_ORACLE_API_PATH}/discover`, { schema: DiscoverOracleSchema }, async request => {
         const {
@@ -139,25 +97,6 @@ export default function discoverRoutes(fastify: FastifyInstance) {
 
             const apiInfo = await getOracleResourceDetails(accountId, credentialsId, region, instances, fields);
             return reply.send(apiInfo);
-        }
-    );
-
-    server.delete(
-        '/v1/oracle/credentials/:credentialsId/resources/:resourceId/instances',
-        { schema: UnmanageOracleSchema },
-        async request => {
-            const {
-                params: { accountId, credentialsId, resourceId },
-                query: { databaseInstanceIds }
-            } = castRequest(request);
-
-            const response = await unmanageDatabaseInstance(
-                accountId,
-                credentialsId,
-                resourceId,
-                databaseInstanceIds ?? ''
-            );
-            return response;
         }
     );
 }

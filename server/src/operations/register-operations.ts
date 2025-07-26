@@ -8,6 +8,7 @@ import {
     escapeBackslash,
     generateSqlResourceId,
     getArtifactsRegionBucketName,
+    getServerNameWithHostname,
     isDemo,
     retryWithDelay
 } from '../utils/utils';
@@ -50,7 +51,7 @@ import {
     UNAVAILABLE_PS_MODULES
 } from './workloads/mssql/discover-consts';
 import { getPaginatedDatabaseInstances, getResources } from './database/database-operations';
-import { createResource, upsertDatabaseInstance } from '../lib/database/db';
+import { createResource, deleteDatabaseInstance, deleteResource, upsertDatabaseInstance } from '../lib/database/db';
 import { tagResources } from './aws/sqs-operations';
 import { createAssessmentData } from './demo-operations';
 import { preSignedUrl } from '../lib/aws/s3';
@@ -2634,10 +2635,85 @@ async function verifyAndAddFSxOntapCredentials(
     }
 }
 
+async function unmanageDatabaseInstance(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    databaseInstanceList: string
+) {
+    logger.info('Unmanaging database instances', { accountId, credentialsId, resourceId, databaseInstanceList });
+
+    const databaseInstanceResponse: {
+        databaseInstanceId: string;
+        status: string;
+        errorMessage?: string;
+    }[] = [];
+
+    databaseInstanceList = databaseInstanceList.replace(/ /g, '');
+    if (databaseInstanceList.length > 0) {
+        const databaseInstanceIds = databaseInstanceList.split(',');
+
+        const preDeleteResult = await getPaginatedDatabaseInstances(accountId, {
+            credentialsId,
+            resourceId,
+            shouldIncludeResource: true
+        });
+        const preDeleteDatabaseInstances = Array.isArray(preDeleteResult) ? preDeleteResult : preDeleteResult.items;
+
+        const instanceDetails = preDeleteDatabaseInstances.find(item =>
+            databaseInstanceIds.includes((item as { database_instance_id: string }).database_instance_id)
+        );
+        const resourceDetails = preDeleteDatabaseInstances[0]?.resource;
+
+        updateLongRunningAuditGroup(
+            undefined,
+            undefined,
+            getServerNameWithHostname(
+                resourceDetails?.resource_name ?? undefined,
+                instanceDetails?.database_instance_name
+            )
+        );
+
+        await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
+
+        const postDeleteResult = await getPaginatedDatabaseInstances(accountId, { credentialsId, resourceId });
+        const postDeleteDatabaseInstances = Array.isArray(postDeleteResult) ? postDeleteResult : postDeleteResult.items;
+
+        databaseInstanceIds.forEach(databaseInstanceId => {
+            if (preDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
+                if (postDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'failed' });
+                } else {
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'success' });
+                }
+            } else {
+                databaseInstanceResponse.push({
+                    databaseInstanceId,
+                    status: 'failed',
+                    errorMessage: 'Instance does not exist.'
+                });
+            }
+        });
+
+        // When all database instances are removed, the EC2 ceases to be a
+        // managed resource, since  we aren't managing any SQL Server instance.
+        // So we need to remove the EC2 resource from wlmdb.resource table.
+        if (postDeleteDatabaseInstances.length <= 0 && !isDemoFlow) {
+            deleteResource(accountId, resourceId, credentialsId);
+        }
+    }
+
+    return {
+        resourceId,
+        items: databaseInstanceResponse
+    };
+}
+
 export {
     registerDatabaseServerInstances,
     registerResourceCredentials,
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
-    validateOracleCredentials
+    validateOracleCredentials,
+    unmanageDatabaseInstance
 };

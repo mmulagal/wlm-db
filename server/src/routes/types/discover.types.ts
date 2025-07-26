@@ -1,6 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { DatabaseHostsQueryFields, PGSQL_DEFAULT_INSTANCE_NAME, SqlServerDeploymentModel } from '../../utils/consts';
-import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
+import { CredentialsIdParams } from './generic.types';
 
 const allowedFields = Object.values(DatabaseHostsQueryFields);
 
@@ -173,17 +173,6 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
-const MultiInstanceUnmanageResponseBody = Type.Object({
-    resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
-    items: Type.Array(
-        Type.Object({
-            databaseInstanceId: Type.String({ description: 'SQL Server database instance ID.' }),
-            status: Type.String({ description: 'Status of database instance unmanage operation.' }),
-            errorMessage: Type.Optional(Type.String({ description: 'Error details, if any, of a failed unmanage.' }))
-        })
-    )
-});
-
 type DiscoverMsSqlResponseBodyType = Static<typeof DiscoverMsSqlResponseBody>;
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
@@ -194,19 +183,6 @@ const DiscoverInstanceParams = Type.Composite([
         instanceId: Type.String({ description: 'AWS EC2 instance ID' })
     })
 ]);
-
-const UnmanageInstanceParams = Type.Composite([
-    AccountIdCredentialsIdParams,
-    Type.Object({
-        resourceId: Type.String({ description: 'Workload Factory resource ID.', minLength: 1 })
-    })
-]);
-
-const DatabaseInstanceQueryString = Type.Object({
-    databaseInstanceIds: Type.Optional(
-        Type.String({ description: 'Comma separated list of MS SQL Server instance IDs.' })
-    )
-});
 
 const SqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
@@ -426,9 +402,6 @@ export {
     DiscoverResponseInfoType,
     DiscoverInstanceParams,
     SqlInstancesRequestQuery,
-    UnmanageInstanceParams,
-    MultiInstanceUnmanageResponseBody,
-    DatabaseInstanceQueryString,
     DiscoverPgSqlResponseBody,
     DiscoverPgSqlResponseBodyType,
     DiscoverPgSqlResponseType,

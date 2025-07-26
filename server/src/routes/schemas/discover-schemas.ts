@@ -8,9 +8,6 @@ import {
     DiscoverMsSqlResponseBody,
     DiscoverQuery,
     SqlInstancesRequestQuery,
-    MultiInstanceUnmanageResponseBody,
-    UnmanageInstanceParams,
-    DatabaseInstanceQueryString,
     DiscoverPgSqlResponseBody,
     DiscoverOracleResponseBody
 } from '../types/discover.types';
@@ -39,17 +36,6 @@ const DiscoverMsSqlSchema = {
         connectivity SQL Server edition constraint is not applicable.`,
     response: {
         200: DiscoverMsSqlResponseBody
-    }
-};
-
-const UnManageMsSqlSchema = {
-    ...DiscoveryBaseRequest,
-    params: UnmanageInstanceParams,
-    querystring: DatabaseInstanceQueryString,
-    summary: 'Deregister SQL Server database instances.',
-    description: 'Deregister SQL Server database instances managed by Workload Factory.',
-    response: {
-        200: MultiInstanceUnmanageResponseBody
     }
 };
 
@@ -94,17 +80,6 @@ const PgSqlResourceDetailsSchema = {
     }
 };
 
-const UnManagePgSqlSchema = {
-    ...DiscoveryBaseRequest,
-    params: UnmanageInstanceParams,
-    querystring: DatabaseInstanceQueryString,
-    summary: 'Deregister PostgreSQL database instances.',
-    description: 'Deregister PostgreSQL database instances managed by Workload Factory.',
-    response: {
-        200: MultiInstanceUnmanageResponseBody
-    }
-};
-
 const DiscoverOracleSchema = {
     ...DiscoveryBaseRequest,
     params: CredentialsIdParams,
@@ -134,25 +109,11 @@ const OracleResourceDetailsSchema = {
     }
 };
 
-const UnmanageOracleSchema = {
-    ...DiscoveryBaseRequest,
-    params: UnmanageInstanceParams,
-    querystring: DatabaseInstanceQueryString,
-    summary: 'Deregister Oracle database instances.',
-    description: 'Deregister Oracle database instances managed by Workload Factory.',
-    response: {
-        200: MultiInstanceUnmanageResponseBody
-    }
-};
-
 export {
     DiscoverMsSqlSchema,
     MsSqlInstancesSchema,
-    UnManageMsSqlSchema,
     DiscoverPgSqlSchema,
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
-    UnManagePgSqlSchema,
-    OracleResourceDetailsSchema,
-    UnmanageOracleSchema
+    OracleResourceDetailsSchema
 };
