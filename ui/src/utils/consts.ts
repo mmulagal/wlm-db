@@ -984,3 +984,7 @@ export const ACTION_TYPE = {
 };
 
 export const MS_PER_HOUR = 60 * 60 * 1000;
+
+export const REQUIRED_SQL_PERMISSIONS = ['VIEW ANY DEFINITION', 'VIEW SERVER STATE', 'CONNECT SQL'];
+
+export const READINESS_TYPES = ['assessment', 'dbcreation', 'sandbox', 'remediation'];

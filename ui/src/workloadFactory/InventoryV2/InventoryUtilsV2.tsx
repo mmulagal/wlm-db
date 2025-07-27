@@ -3857,3 +3857,13 @@ export const getOptimizationStatusData = (rowData: any, t: any) => {
     }
     return { displayValue: cellData || GENERAL.NOT_AVAILABLE, disableMsg: '', isDisabled: false };
 };
+
+export const getDeregisterContent = (rowData: any, t: TFunction) => {
+    if (rowData?.hostType === DBType.MSSQL) {
+        return t('databases.deregister-flow.mssql');
+    } else if (rowData?.hostType === DBType.ORACLE) {
+        return t('databases.deregister-flow.oracle');
+    } else {
+        return t('databases.deregister-flow.mssql');
+    }
+};
