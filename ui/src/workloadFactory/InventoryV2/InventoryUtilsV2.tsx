@@ -3863,5 +3863,7 @@ export const getDeregisterContent = (rowData: any, t: TFunction) => {
         return t('databases.deregister-flow.mssql');
     } else if (rowData?.hostType === DBType.ORACLE) {
         return t('databases.deregister-flow.oracle');
+    } else {
+        return t('databases.deregister-flow.mssql');
     }
 };
