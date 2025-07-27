@@ -25,6 +25,7 @@ import {
     useDiscoverExistingFsxNMutation,
     useGenerateCredentialIDMutation,
     useGetConnectorsMutation,
+    useGetDiscoverHostResultMutation,
     useGetFsxDetailsMutation,
     useGetRBACPrivilegesMutation,
     useGetWorkSpaceIDMutation,
@@ -36,7 +37,6 @@ import {
 } from '../../../../utils/apiService';
 import {
     addHostHandlerSc,
-    deleteHostJobPolling,
     getDeregisterContent,
     getOptimizationStatusData,
     manageActionCol,
@@ -151,6 +151,7 @@ const InstancesTable = () => {
     const [deleteHostSc] = useDeleteHostScMutation();
     const [configureDirectory] = useConfigureDirectoryMutation();
     const [listAllDirectories] = useListAllDirectoriesMutation();
+    const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
 
     useEffect(() => {
         setLoading(
@@ -518,7 +519,8 @@ const InstancesTable = () => {
                             t,
                             deleteHostSc,
                             listAllDirectories,
-                            configureDirectory
+                            configureDirectory,
+                            getDiscoverHostResult
                         );
                     }
                 }}

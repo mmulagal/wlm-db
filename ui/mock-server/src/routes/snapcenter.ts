@@ -78,6 +78,16 @@ router.get(
     }
 );
 
+router.get('/backup-recovery/organizations/:accountID/v1/workloads/sql/databases', async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            databases: [],
+            totalCount: 2,
+            errorMessage: ''
+        });
+    }, 10);
+});
+
 router.post(
     '/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts/:hostID/configurelogdirectory',
     async (req: {}, res: any) => {

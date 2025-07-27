@@ -88,7 +88,8 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
         api.endpoint === 'addHostJobSc' ||
         api.endpoint === 'deleteHostSc' ||
         api.endpoint === 'configureDirectory' ||
-        api.endpoint === 'listAllDirectories'
+        api.endpoint === 'listAllDirectories' ||
+        api.endpoint === 'getDiscoverHostResult'
     ) {
         if (api.endpoint === 'discoverExistingFsxN') {
             return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
@@ -616,6 +617,16 @@ export const snapcenterAPI = createApi({
         listAllDirectories: builder.mutation({
             query: ({ accountID, hostID, agentID, workspaceID }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts/${hostID}/drives`,
+                headers: {
+                    'x-account-id': accountID,
+                    'x-agent-id': agentID,
+                    'x-netapp-workspace-id': workspaceID
+                }
+            })
+        }),
+        getDiscoverHostResult: builder.mutation({
+            query: ({ accountID, hostName, agentID, workspaceID }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/databases?search=${hostName}`,
                 headers: {
                     'x-account-id': accountID,
                     'x-agent-id': agentID,
@@ -1440,7 +1451,8 @@ export const {
     useDeleteHostScMutation,
     useAddHostJobScMutation,
     useConfigureDirectoryMutation,
-    useListAllDirectoriesMutation
+    useListAllDirectoriesMutation,
+    useGetDiscoverHostResultMutation
 } = snapcenterAPI;
 
 export const {

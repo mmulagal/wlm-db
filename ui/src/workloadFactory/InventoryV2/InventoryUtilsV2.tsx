@@ -3519,6 +3519,59 @@ const errorMsgCall = (dispatch: any, errorMsg: string, errorMsgTooltip: string) 
     );
 };
 
+export const getDiscoverResult = (
+    accountID: string,
+    hostName: string,
+    agentID: string,
+    workspaceID: string,
+    getDiscoverHostResult: any
+): Promise<number> => {
+    return new Promise(resolve => {
+        let retries = 0;
+        const maxRetries = 12;
+        const interval = 5000;
+
+        const check = async () => {
+            try {
+                const result = await getDiscoverHostResult({
+                    accountID,
+                    hostName,
+                    agentID,
+                    workspaceID
+                });
+
+                if (result?.error) {
+                    clearInterval(intervalId);
+                    resolve(0);
+                    return;
+                }
+
+                const totalCount = result?.totalCount ?? result?.data?.totalCount ?? 0;
+
+                if (totalCount > 0) {
+                    clearInterval(intervalId);
+                    resolve(totalCount);
+                } else {
+                    retries++;
+                    if (retries >= maxRetries) {
+                        clearInterval(intervalId);
+                        resolve(0);
+                    }
+                }
+            } catch {
+                clearInterval(intervalId);
+                resolve(0);
+            }
+        };
+
+        // 👇 Call immediately
+        check();
+
+        // 👇 Then setup polling
+        const intervalId = setInterval(check, interval);
+    });
+};
+
 export const addHostJobPolling = async (
     addHostJobScApi: any,
     jobId: string,
@@ -3527,7 +3580,9 @@ export const addHostJobPolling = async (
     translation: any,
     deleteHostSc: any,
     listAllDirectories: any,
-    configureDirectory: any
+    configureDirectory: any,
+    getDiscoverHostResult: any,
+    fqdn: string
 ) => {
     let step1Done = false;
     const firstStepName = 'Validate Host';
@@ -3611,27 +3666,42 @@ export const addHostJobPolling = async (
                         subJob?.status === JOB_MONITORING_STATUS.COMPLETED &&
                         step1Done
                     ) {
+                        const state: any = store.getState().snapCenter;
+                        const accountID = store.getState().auth.accountId;
+                        const hostName = fqdn;
+                        const agentID = state.selectedAgent[0]?.id;
+                        const workspaceID = state?.workSpaceData?.id;
                         try {
-                            const state: any = store.getState().snapCenter;
-                            const dirRes = await listAllDirectories({
-                                accountID: store.getState().auth.accountId,
-                                hostID: subJob?.data?.host,
-                                agentID: state.selectedAgent[0]?.id,
-                                workspaceID: state?.workSpaceData?.id
-                            });
-                            const diskList = dirRes?.diskInfos || dirRes?.data?.diskInfos || [];
-                            if (diskList && diskList?.length > 0) {
-                                const payload = {
-                                    logbackupFolder: diskList?.[0]?.path || ''
-                                };
-                                await configureDirectory({
-                                    accountID: store.getState().auth.accountId,
+                            const discoverCount = await getDiscoverResult(
+                                accountID,
+                                hostName,
+                                agentID,
+                                workspaceID,
+                                getDiscoverHostResult
+                            );
+
+                            if (discoverCount > 0) {
+                                const dirRes = await listAllDirectories({
+                                    accountID,
                                     hostID: subJob?.data?.host,
-                                    payload,
-                                    agentID: state.selectedAgent[0]?.id,
-                                    workspaceID: state?.workSpaceData?.id
+                                    agentID,
+                                    workspaceID
                                 });
+                                const diskList = dirRes?.diskInfos || dirRes?.data?.diskInfos || [];
+                                if (diskList && diskList?.length > 0) {
+                                    const payload = {
+                                        logbackupFolder: diskList?.[0]?.path || ''
+                                    };
+                                    await configureDirectory({
+                                        accountID,
+                                        hostID: subJob?.data?.host,
+                                        payload,
+                                        agentID,
+                                        workspaceID
+                                    });
+                                }
                             }
+
                             dispatch(completeProtectionStep2(dialogKey));
                         } catch {
                             dispatch(completeProtectionStep2(dialogKey));
@@ -3703,7 +3773,8 @@ export const addHostHandlerSc = async (
     translation: any,
     deleteHostSc: any,
     listAllDirectories: any,
-    configureDirectory: any
+    configureDirectory: any,
+    getDiscoverHostResult: any
 ) => {
     dispatch(setActionsDisabled(true));
     dispatch(
@@ -3749,6 +3820,7 @@ export const addHostHandlerSc = async (
             if (addHostResponse?.data?.jobId) {
                 // Getting job id
                 const { jobId } = addHostResponse.data;
+                const fqdn = rowData?.hostRow?.fqdn;
                 addHostJobPolling(
                     addHostJobScApi,
                     jobId,
@@ -3757,7 +3829,9 @@ export const addHostHandlerSc = async (
                     translation,
                     deleteHostSc,
                     listAllDirectories,
-                    configureDirectory
+                    configureDirectory,
+                    getDiscoverHostResult,
+                    fqdn
                 );
             } else {
                 dispatch(resetProtectionProcess(dialogKey));
