@@ -461,7 +461,6 @@ const OptimizePerHostRequestBody = Type.Intersect([
         region: Type.String(),
         instanceType: Type.Optional(Type.String()),
         networkAdapters: Type.Optional(Type.Array(Type.String()))
-        // ontapLunUuids: Type.Optional(Type.Array(Type.String({ minLength: 1, description: 'Relevant for shared-storage opt HA' })))
     }),
     UpdateFSxNBackupRequestBody
 ]);
@@ -646,32 +645,6 @@ const BulkOptimizeHASharedStorageBody = Type.Object({
 });
 type BulkOptimizeHASharedStorageBodyType = Static<typeof BulkOptimizeHASharedStorageBody>;
 
-const FlattenedInstance = Type.Object({
-    databaseInstanceId: Type.String(),
-    ontapLunUuids: Type.Array(Type.String()),
-    region: Type.String(),
-    credentialsId: Type.String(),
-    databaseHostId: Type.String()
-});
-type FlattenedInstanceType = Static<typeof FlattenedInstance>;
-
-const LunDetail = Type.Object({
-    lunUuid: Type.String(),
-    lunName: Type.String(),
-    igroupName: Type.String(),
-    igroupUuid: Type.String(),
-    initiatorNames: Type.Union([Type.Array(Type.String()), Type.String()])
-});
-type LunDetailType = Static<typeof LunDetail>;
-
-const OptimizationPreparation = Type.Object({
-    instance: FlattenedInstance,
-    lunsToOptimize: Type.Array(LunDetail),
-    allHostIqnsArr: Type.Array(Type.String()),
-    igroupMissingIqnsMap: Type.Any() // Map type cannot be represented in TypeBox, use Any
-});
-type OptimizationPreparationType = Static<typeof OptimizationPreparation>;
-
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -743,8 +716,5 @@ export {
     BulkOptimizeHASharedStorageBodyType,
     OptimizeHASharedStorageRequestBodyType,
     OptimizeHASharedStorageRequestBody,
-    FlattenedInstanceType,
-    LunDetailType,
-    OptimizationPreparationType,
     BulkOptimizeHASharedStorageRequestBodyType
 };

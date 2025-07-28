@@ -19,12 +19,15 @@ import {
     Metadata,
     WorkloadInstance,
     MappedOnTapVolumeResponse,
-    IgroupMissingInitiators
+    IgroupMissingInitiators,
+    DatabaseInstance
 } from '../../../utils/common-types';
 import {
     AuditStatus,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     HttpErrorCodes,
+    RESOURCESTYPE,
+    SqlServerDeploymentModel,
     SSM_COMMAND_CACHE_TYPE
 } from '../../../utils/consts';
 import { activeSqlNodeDetails } from '../../cont-opt-optimize-operations';
@@ -35,7 +38,7 @@ import {
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
-import { getMappedOntapVolumes } from '../../aws/fsx-operations';
+import { getFSXPreferredSubnetAndAZ, getMappedOntapVolumes } from '../../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
@@ -44,14 +47,24 @@ import {
     AssessmentCategories,
     AssessmentTriggeredBy,
     OPTIMIZE_RESILIENCY_CONFIGS,
+    OptimizeHighAvailabilityParams,
     OptimizeStorageConfigs
 } from '../../../utils/continous-optimization-consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
-import { getPaginatedDatabaseInstances } from '../../database/database-operations';
+
+import {
+    ADD_INITIATOR_TO_IGROUP,
+    REMEDIATE_CLUSTER_QUORUM_SETTINGS,
+    REMEDIATE_HEARTBEAT_SETTINGS,
+    REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE
+} from '../../workloads/mssql/high-availability-scripts';
 import { paginateListInstanceConfigData } from '../../database/instance-config-operations';
-import { ADD_INITIATOR_TO_IGROUP } from '../../workloads/mssql/high-availability-scripts';
+import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
+import { moveClusterGroupOwnership } from '../compute-optimize-operations';
+import { listDatabaseInstances } from '../../../lib/database/db';
+import { getInstanceSubnetAndAZ } from '../../aws/ec2-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -509,6 +522,7 @@ function extractInstancesToOptimize(hostsToOptimize: BulkOptimizeHASharedStorage
         )
     );
 }
+
 async function handleSharedStorageOptimize(
     accountId: string,
     hostsToOptimize: BulkOptimizeHASharedStorageRequestBodyType[],
@@ -641,4 +655,618 @@ async function handleSharedStorageOptimize(
         );
     }
 }
-export { getAvailableSnapshotPolicyList, handleResiliecyOptimize, handleSharedStorageOptimize };
+
+async function handleHeartbeatSettings(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseHostName: string,
+    activeNodeInstanceId: string,
+    databaseInstanceId: string,
+    parentJobId: string
+) {
+    logger.info('Starting heartbeat settings optimization', {
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        activeNodeInstanceId,
+        databaseInstanceId,
+        databaseHostName,
+        parentJobId
+    });
+
+    let errorMessage;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    // Register a job for this host
+    const { id: instanceOptimizeJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.WELL_ARCHITECTED,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: databaseHostName,
+        name: `Fix heartbeat settings for ${databaseHostName}`,
+        startTime: Date.now(),
+        description: `Fix heartbeat settings for ${databaseHostName}`,
+        parentJobId
+    });
+
+    try {
+        // Call the remediation script
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [REMEDIATE_HEARTBEAT_SETTINGS],
+            activeNodeInstanceId,
+            `Remediate heartbeat settings on host ${databaseHostId}`,
+            accountId
+        );
+        const parsedResponse = sqlResponseParsing(response);
+
+        jobStatus =
+            parsedResponse.remediated === 'failed'
+                ? JOBSTATUS.FAILED
+                : parsedResponse.remediated === 'partial'
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.COMPLETED;
+
+        if (jobStatus === JOBSTATUS.COMPLETED) {
+            logger.info(`Heartbeat settings successfully remediated for host "${databaseHostId}".`);
+        } else if (jobStatus === JOBSTATUS.WARNING) {
+            logger.warn(`Heartbeat settings partially remediated for host "${databaseHostId}". Please check details.`);
+        } else {
+            logger.error(`Failed to remediate heartbeat settings for host "${databaseHostId}".`);
+        }
+
+        if (jobStatus !== JOBSTATUS.FAILED) {
+            await onDemandTriggerMssqlDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.HIGH_AVAILABILITY,
+                parentJobId
+            );
+        }
+    } catch (error: any) {
+        errorMessage = `${error.message}.`;
+        logger.error(`Optimizing heartbeat settings failed for host "${databaseHostId}" with error: ${errorMessage}`);
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, instanceOptimizeJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+    }
+}
+
+async function handleClusterQuorum(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseHostName: string,
+    activeNodeInstanceId: string,
+    databaseInstanceId: string,
+    parentJobId: string
+) {
+    logger.info('Starting cluster quorum optimization', {
+        accountId,
+        region,
+        credentialsId,
+        parentJobId,
+        databaseHostName,
+        activeNodeInstanceId,
+        databaseInstanceId,
+        databaseHostId
+    });
+
+    let errorMessage;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    // Register a job for this host
+    const { id: instanceOptimizeJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.WELL_ARCHITECTED,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: databaseHostName,
+        name: `Fix cluster quorum settings for ${databaseHostName}`,
+        startTime: Date.now(),
+        description: `Fix cluster quorum settings for ${databaseHostName}`,
+        parentJobId
+    });
+
+    try {
+        // Call the remediation script
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [REMEDIATE_CLUSTER_QUORUM_SETTINGS],
+            activeNodeInstanceId,
+            `Remediate cluster quorum settings on host ${activeNodeInstanceId}`,
+            accountId
+        );
+        const parsedResponse = sqlResponseParsing(response);
+
+        jobStatus =
+            parsedResponse.status === 'failed'
+                ? JOBSTATUS.FAILED
+                : parsedResponse.status === 'partial'
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.COMPLETED;
+        if (jobStatus === JOBSTATUS.COMPLETED) {
+            logger.info(`Cluster quorum successfully remediated for host "${databaseHostId}".`);
+        } else if (jobStatus === JOBSTATUS.WARNING) {
+            logger.warn(`Cluster quorum partially remediated for host "${databaseHostId}". Please check details.`);
+        } else {
+            logger.error(`Failed to remediate cluster quorum for host "${databaseHostId}".`);
+        }
+
+        if (jobStatus !== JOBSTATUS.FAILED) {
+            await onDemandTriggerMssqlDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.HIGH_AVAILABILITY,
+                parentJobId
+            );
+        }
+    } catch (error: any) {
+        errorMessage = `${error.message}.`;
+        logger.error(`Optimizing cluster quorum failed for host "${databaseHostId}" with error: ${errorMessage}`);
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, instanceOptimizeJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+    }
+}
+
+async function optimizeHighAvailabilityConfiguration(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstances: string[],
+    configurationName: string,
+    masterOptimizeParentId: string
+) {
+    logger.info(
+        `Optimizing high availability configurations for ${accountId}, ${credentialsId} ${databaseHostId} in ${region} for configuration ${configurationName}`
+    );
+    let errorMessage = '';
+    const {
+        items: [resourceDetail]
+    } = await getResources({
+        accountId,
+        resourceId: databaseHostId,
+        credentialsId,
+        region,
+        resourceType: RESOURCESTYPE.MSSQL,
+        includeDatabaseInstances: true
+    });
+
+    if (isEmpty(resourceDetail)) {
+        errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
+    const { metadata, resource_name: sqlServerName } = resourceDetail;
+    const { sqlDeploymentType = '', node1InstanceId, node2InstanceId } = metadata as Metadata;
+    if (sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+        errorMessage = 'Standalone SQL Server deployment is not supported for high availability optimization.';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+
+    const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(credentialsId, region, {
+        node1InstanceId,
+        node2InstanceId
+    });
+
+    if (!isSSMConnected && activeNodeInstanceId === undefined) {
+        errorMessage = `Unable to fix host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    switch (configurationName) {
+        case OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS: {
+            try {
+                await handleHeartbeatSettings(
+                    accountId,
+                    region,
+                    credentialsId,
+                    databaseHostId,
+                    sqlServerName || '',
+                    activeNodeInstanceId!,
+                    databaseInstances[0],
+                    masterOptimizeParentId
+                );
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            } catch (error) {
+                errorMessage = `Error while fixing heartbeat settings ${error}`;
+                logger.error(errorMessage);
+                updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
+            break;
+        }
+        case OptimizeHighAvailabilityParams.CLUSTER_QUORUM: {
+            try {
+                await handleClusterQuorum(
+                    accountId,
+                    region,
+                    credentialsId,
+                    databaseHostId,
+                    sqlServerName || '',
+                    activeNodeInstanceId!,
+                    databaseInstances[0],
+                    masterOptimizeParentId
+                );
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            } catch (error) {
+                errorMessage = `Error while fixing Cluster Quorum settings: ${error}`;
+                logger.error(errorMessage);
+                updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
+            break;
+        }
+        default: {
+            errorMessage = `Invalid configuration name ${configurationName}`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+    }
+}
+
+async function optimizeSqlServerService(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    masterOptimizeParentId: string
+) {
+    logger.info(
+        `Starting SQL Server Service optimization for account "${accountId}" (credentialsId: "${credentialsId}", region: "${region}", databaseHostId: "${databaseHostId}", databaseInstanceId: "${databaseInstanceId}", parentJobId: "${masterOptimizeParentId}")`
+    );
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+
+    const {
+        items: [resourceDetail]
+    } = await getResources({
+        accountId,
+        resourceId: databaseHostId,
+        credentialsId,
+        region,
+        resourceType: RESOURCESTYPE.MSSQL,
+        includeDatabaseInstances: true
+    });
+
+    if (isEmpty(resourceDetail)) {
+        errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
+    try {
+        const { metadata: resourceMetadata, database_instances: databaseInstances } = resourceDetail;
+        const { node1InstanceId, node2InstanceId } = resourceMetadata as Metadata;
+        const instanceDetail = databaseInstances?.find(
+            (instance: DatabaseInstance) => instance.database_instance_id === databaseInstanceId
+        );
+        if (!instanceDetail) {
+            errorMessage = `No database instance by id ${databaseInstanceId} for ${accountId} is found.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        }
+        let fsxId: string | undefined;
+        if (Array.isArray(instanceDetail.fsxn_ids)) {
+            [fsxId] = instanceDetail.fsxn_ids;
+        } else if (typeof instanceDetail.fsxn_ids === 'string') {
+            [fsxId] = instanceDetail.fsxn_ids.split(',');
+        }
+
+        const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId, region, {
+            node1InstanceId,
+            node2InstanceId,
+            resourceId: databaseHostId,
+            accountId
+        });
+        if (!activeNodeInstanceId) {
+            errorMessage = `Unable to fix host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+        if (!fsxId) {
+            errorMessage = `FSx ID is undefined for host ${databaseHostId} and instance ${databaseInstanceId}.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+
+        await handleSqlServerServiceBulkOptimizeStartUpType(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            activeNodeInstanceId,
+            masterOptimizeParentId
+        );
+
+        await givebackClusterOwnership(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            masterOptimizeParentId,
+            fsxId,
+            activeNodeInstanceId
+        );
+    } catch (error) {
+        errorMessage = `An error occurred while optimizing SQL Server Service for high availability: ${error}`;
+        logger.error(errorMessage);
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        // Update parent job status and audit
+        await updateJobDetails(accountId, masterOptimizeParentId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
+            errorMessage
+        );
+    }
+}
+
+async function handleSqlServerServiceBulkOptimizeStartUpType(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    activeNodeInstanceId: string,
+    parentJobId: string
+) {
+    logger.info('Starting SQL Server Service optimization', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        parentJobId
+    });
+
+    let errorMessage;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    // Register a job for this host/instance
+    let instanceOptimizeJobId: string | undefined;
+    try {
+        const { id } = await registerJob(accountId, credentialsId, region, {
+            type: JOBTYPE.WELL_ARCHITECTED,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: `${databaseHostId}:${databaseInstanceId}`,
+            name: `Optimize SQL Server Service Start Type for ${databaseHostId} (instance: ${databaseInstanceId})`,
+            startTime: Date.now(),
+            description: `Optimize SQL Server Service Start Type for ${databaseHostId} (instance: ${databaseInstanceId})`,
+            parentJobId
+        });
+        instanceOptimizeJobId = id;
+    } catch (err) {
+        logger.error(
+            `Failed to register job for SQL Server Service optimization on host "${databaseHostId}", instance "${databaseInstanceId}": ${err}`
+        );
+        throw err;
+    }
+
+    try {
+        logger.info(
+            `Running SQL Server Service remediation script on host "${databaseHostId}" (instance: "${databaseInstanceId}", node: "${activeNodeInstanceId}").`
+        );
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE],
+            activeNodeInstanceId,
+            `Remediate SQL Server Service settings on host ${activeNodeInstanceId} (instance: ${databaseInstanceId})`,
+            accountId
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+
+        jobStatus =
+            parsedResponse.status === 'failed'
+                ? JOBSTATUS.FAILED
+                : parsedResponse.status === 'partial'
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.COMPLETED;
+        if (jobStatus === JOBSTATUS.COMPLETED) {
+            logger.info(
+                `SQL Server Service successfully remediated for host "${databaseHostId}", instance "${databaseInstanceId}".`
+            );
+        } else if (jobStatus === JOBSTATUS.WARNING) {
+            logger.warn(
+                `SQL Server Service partially remediated for host "${databaseHostId}", instance "${databaseInstanceId}". Please check details.`
+            );
+        } else {
+            logger.error(
+                `Failed to remediate SQL Server Service for host "${databaseHostId}", instance "${databaseInstanceId}".`
+            );
+        }
+
+        if (jobStatus !== JOBSTATUS.FAILED) {
+            logger.info(
+                `Triggering drift assessment for SQL Server Service on host "${databaseHostId}", instance "${databaseInstanceId}".`
+            );
+            await onDemandTriggerMssqlDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.HIGH_AVAILABILITY,
+                parentJobId
+            );
+        } else if (!databaseInstanceId) {
+            logger.warn(`databaseInstanceId not found for host ${databaseHostId}, instance ${databaseInstanceId}`);
+        }
+    } catch (error: any) {
+        errorMessage = `${error.message}.`;
+        logger.error(
+            `Optimizing SQL Server Service failed for host "${databaseHostId}", instance "${databaseInstanceId}" with error: ${errorMessage}`
+        );
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, instanceOptimizeJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        logger.info(
+            `Job for SQL Server Service remediation on host "${databaseHostId}", instance "${databaseInstanceId}" completed with status "${jobStatus}".`
+        );
+    }
+}
+
+async function givebackClusterOwnership(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    parentJobId: string,
+    fsxFileSystemId: string,
+    activeNodeInstanceId: string
+): Promise<void> {
+    logger.info(`Starting cluster ownership giveback for account "${accountId}"`);
+
+    let errorMessage: string | undefined;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    // Register a job for the giveback operation
+    const { id: givebackJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.WELL_ARCHITECTED,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: `${databaseHostId}:${databaseInstanceId}`,
+        name: `Giveback Cluster Ownership for ${databaseHostId} (instance: ${databaseInstanceId})`,
+        startTime: Date.now(),
+        description: `Giveback cluster group ownership to original primary node for ${databaseHostId} (instance: ${databaseInstanceId})`,
+        parentJobId
+    });
+
+    try {
+        const dbInstancesResult: any = await listDatabaseInstances(accountId, {
+            resourceId: databaseHostId,
+            credentialsId,
+            sqlInstanceId: databaseInstanceId,
+            region,
+            shouldIncludeResource: true
+        });
+        const dbInstances = Array.isArray(dbInstancesResult) ? dbInstancesResult : dbInstancesResult?.items || [];
+        const [
+            {
+                resource: { metadata }
+            }
+        ] = dbInstances;
+        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+        const [{ subnetId: fsxPreferredSubnetId, availabilityZone: fsxPreferredAZ }, node1Net, node2Net] =
+            await Promise.all([
+                getFSXPreferredSubnetAndAZ(credentialsId, region, fsxFileSystemId, accountId),
+                getInstanceSubnetAndAZ(credentialsId, region, node1InstanceId),
+                (() => {
+                    if (!node2InstanceId) {
+                        throw new Error('node2InstanceId is undefined.');
+                    }
+                    return getInstanceSubnetAndAZ(credentialsId, region, node2InstanceId);
+                })()
+            ]);
+
+        // Determine preferred node
+        let preferredNodeId: string | undefined;
+        let nonPreferredNodeId: string | undefined;
+        if (node1Net.subnetId === fsxPreferredSubnetId && node1Net.availabilityZone === fsxPreferredAZ) {
+            preferredNodeId = node1InstanceId;
+            nonPreferredNodeId = node2InstanceId;
+        } else if (node2Net.subnetId === fsxPreferredSubnetId && node2Net.availabilityZone === fsxPreferredAZ) {
+            preferredNodeId = node2InstanceId;
+            nonPreferredNodeId = node1InstanceId;
+        } else {
+            throw new Error('Neither node is in the FSx preferred subnet and AZ.');
+        }
+
+        if (!preferredNodeId || !nonPreferredNodeId) {
+            throw new Error('Preferred or non-preferred node ID is not available.');
+        }
+
+        if (!activeNodeInstanceId) {
+            throw new Error('activeNodeInstanceId is not available in metadata.');
+        }
+
+        logger.info(
+            `Preferred node: ${preferredNodeId}, Non-preferred node: ${nonPreferredNodeId}, Active node: ${activeNodeInstanceId}`
+        );
+
+        if (activeNodeInstanceId === preferredNodeId) {
+            logger.info(`Cluster ownership is already on the preferred node (${preferredNodeId}). No action needed.`);
+            jobStatus = JOBSTATUS.WARNING;
+        } else if (activeNodeInstanceId === nonPreferredNodeId) {
+            logger.info(
+                `SQL Server running on non-preferred node (${nonPreferredNodeId}). Moving ownership to preferred node (${preferredNodeId}).`
+            );
+            logger.info(
+                `Initiating giveback Cluster Ownership for host "${databaseHostId}", instance "${databaseInstanceId}".`
+            );
+            const result = await moveClusterGroupOwnership(credentialsId, region, preferredNodeId, nonPreferredNodeId);
+            logger.info('Cluster ownership moved to preferred node.', {
+                from: nonPreferredNodeId,
+                to: preferredNodeId,
+                result
+            });
+        } else {
+            throw new Error(
+                `Active node (${activeNodeInstanceId}) does not match either preferred (${preferredNodeId}) or non-preferred (${nonPreferredNodeId}) node.`
+            );
+        }
+    } catch (err: any) {
+        errorMessage = `${err.message}.`;
+        logger.error(
+            `Failed to give back cluster ownership for host "${databaseHostId}", instance "${databaseInstanceId}": ${errorMessage}`
+        );
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, givebackJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        logger.info(
+            `Job for cluster ownership giveback on host "${databaseHostId}", instance "${databaseInstanceId}" completed with status "${jobStatus}".`
+        );
+    }
+}
+
+export {
+    getAvailableSnapshotPolicyList,
+    handleResiliecyOptimize,
+    handleSharedStorageOptimize,
+    optimizeHighAvailabilityConfiguration,
+    optimizeSqlServerService
+};

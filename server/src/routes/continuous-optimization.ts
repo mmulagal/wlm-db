@@ -27,7 +27,10 @@ import {
     BulkOptimizeAwsBackupSchema,
     BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema,
-    BulkOptimizeSharedStorageSchema
+    BulkOptimizeSharedStorageSchema,
+    BulkOptimizeSQLServerServiceSchema,
+    BulkOptimizeClusterQuorumSchema,
+    BulkOptimizeHeartbeatSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -412,6 +415,57 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const response = await bulkHASharedStorageOptimization(
                     accountId,
                     OptimizeHighAvailabilityParams.SHARED_STORAGE,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/heartbeat`,
+            { schema: BulkOptimizeHeartbeatSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/cluster-quorum`,
+            { schema: BulkOptimizeClusterQuorumSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    OptimizeHighAvailabilityParams.CLUSTER_QUORUM,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/sqlserver-service`,
+            { schema: BulkOptimizeSQLServerServiceSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    OptimizeHighAvailabilityParams.SQLSERVER_SERVICE,
                     hostsToOptimize
                 );
                 return reply.send(response);
