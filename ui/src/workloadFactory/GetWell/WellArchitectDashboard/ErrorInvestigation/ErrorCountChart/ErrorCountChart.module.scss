@@ -25,6 +25,13 @@
         cursor: pointer;
     }
 
+    .intervalBoundary {
+        border: 1.5px solid var(--chart-6);
+        position: absolute;
+        top: 0;
+        height: 16px;
+    }
+
     .labels {
         position: absolute;
         top: 20px;
