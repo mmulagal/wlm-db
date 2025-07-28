@@ -2391,6 +2391,7 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
     let batchNumber = 1;
     let totalProcessed = 0;
     const startTime = Date.now();
+    const processedResourceIds = new Set<string>();
 
     do {
         logger.info(`Processing batch ${batchNumber}`, {
@@ -2416,12 +2417,27 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
             }
 
             logger.info(`Processing ${batchManagedResources.length} resources in batch ${batchNumber}`);
+            const uniqueResources = batchManagedResources.filter(
+                (resource: ResourceDetails) => !processedResourceIds.has(resource.resource_id)
+            );
 
-            // Process current batch following the old logic pattern
-            // eslint-disable-next-line no-await-in-loop
-            await processResourcesBatch(batchManagedResources, batchNumber);
+            if (uniqueResources.length > 0) {
+                try {
+                    // Process current batch following the old logic pattern
+                    // eslint-disable-next-line no-await-in-loop
+                    await processResourcesBatch(uniqueResources, batchNumber);
+                } catch (batchError) {
+                    logger.error(
+                        `Error processing resources batch ${batchNumber} for resources ${uniqueResources
+                            .map(r => r.resource_id)
+                            .join(', ')}:`,
+                        batchError
+                    );
+                }
+                uniqueResources.forEach(resource => processedResourceIds.add(resource.resource_id));
+                totalProcessed += uniqueResources.length;
+            }
 
-            totalProcessed += batchManagedResources.length;
             nextToken = newNextToken;
             batchNumber += 1;
         } catch (error: any) {

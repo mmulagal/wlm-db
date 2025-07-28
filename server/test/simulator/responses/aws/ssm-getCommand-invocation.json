@@ -2164,12 +2164,8 @@
                         "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
                         "name": "daily",
                         "cron": {
-                            "minutes": [
-                                10
-                            ],
-                            "hours": [
-                                0
-                            ]
+                            "minutes": [10],
+                            "hours": [0]
                         },
                         "_links": {
                             "self": {
@@ -3436,7 +3432,33 @@
             "instanceState": "Running"
         }
     ],
-    "getAvailableDriveLetters": ["A", "B", "D", "E", "F", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"],
+    "getAvailableDriveLetters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z"
+    ],
     "getSqlServerServicesCommand": {
         "Name": "MSSQLSERVER",
         "Status": "Running",
@@ -3515,6 +3537,53 @@
                     "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com",
                     "iqn.1991-05.com.microsoft:sqlnode2-56270.wlmdb-private.com"
                 ]
+            }
+        ]
+    },
+    "getMssqlInstanceVolumeLunDriveDetailsCommand": {
+        "data": [
+            {
+                "ontapVolumeName": "wlmdb_sqldata_1753061371059",
+                "lunUuid": "c0fff17e-a2fe-456b-963b-36c5eba6e88f",
+                "svmName": "wlmdb_sqlsvm_1753061371059",
+                "lunSerialNumber": "lWB0d$Xmdb83",
+                "driveLetter": "S:",
+                "name": "msdb",
+                "lunPath": "/vol/wlmdb_sqldata_1753061371059/sqldata",
+                "accessPaths": "S:\\ \\\\?\\Volume{b6c90d54-7447-4696-a112-e3751ea23c45}\\",
+                "diskNumber": 1,
+                "ontapVolumeUuid": "68a385ed-65d5-11f0-bb42-83fc639f5501",
+                "sizeInMb": 17.9375
+            }
+        ],
+        "log": [
+            {
+                "ontapVolumeName": "wlmdb_sqldata_1753061371059",
+                "lunUuid": "c0fff17e-a2fe-456b-963b-36c5eba6e88f",
+                "svmName": "wlmdb_sqlsvm_1753061371059",
+                "lunSerialNumber": "lWB0d$Xmdb83",
+                "driveLetter": "S:",
+                "name": "msdb",
+                "lunPath": "/vol/wlmdb_sqldata_1753061371059/sqldata",
+                "accessPaths": "S:\\ \\\\?\\Volume{b6c90d54-7447-4696-a112-e3751ea23c45}\\",
+                "diskNumber": 1,
+                "ontapVolumeUuid": "68a385ed-65d5-11f0-bb42-83fc639f5501",
+                "sizeInMb": 28.8125
+            }
+        ],
+        "tempDb": [
+            {
+                "ontapVolumeName": "wlmdb_sqltemp_1753061371059",
+                "lunUuid": "421c9f2e-ef4a-4094-8c67-8f7e7bf52088",
+                "svmName": "wlmdb_sqlsvm_1753061371059",
+                "lunSerialNumber": "lWB0d$Xmdb85",
+                "driveLetter": "T:",
+                "name": "tempdev",
+                "lunPath": "/vol/wlmdb_sqltemp_1753061371059/tempdb",
+                "accessPaths": "T:\\ \\\\?\\Volume{b54d971a-141f-48cb-a688-60f536340085}\\",
+                "diskNumber": 3,
+                "ontapVolumeUuid": "6896ae77-65d5-11f0-bb42-83fc639f5501",
+                "sizeInMb": 8
             }
         ]
     }

@@ -934,11 +934,14 @@ ssmMock
     .resolves(getSampleCommandResponse('getAvailableDriveLettersCommand'))
     .on(SendCommandCommand, { Parameters: clusterQuorumHeartBeat })
     .resolves(listSendCommandCommandResponse.clusterQuorumHeartBeat)
-
     .on(SendCommandCommand, params => {
         return /# Get LUN, igroup, initiator names and host IQN Script/.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getLunIgroupInitiatorNamesCommand'));
+    .resolves(getSampleCommandResponse('getLunIgroupInitiatorNamesCommand'))
+    .on(SendCommandCommand, params => {
+        return /# Get MSSQL Instance Volume LUN Drive Details/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getMssqlInstanceVolumeLunDriveDetailsCommand'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1437,6 +1440,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'getLunIgroupInitiatorNamesCommand',
             JSON.stringify(getCommandInvocationResponse.getLunIgroupInitiatorNamesCommand)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getMssqlInstanceVolumeLunDriveDetailsCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getMssqlInstanceVolumeLunDriveDetailsCommand',
+            JSON.stringify(getCommandInvocationResponse.getMssqlInstanceVolumeLunDriveDetailsCommand)
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
