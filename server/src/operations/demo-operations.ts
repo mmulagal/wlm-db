@@ -777,6 +777,89 @@ async function createDeploymentMockDataInDBForPgSql(
     await createJobs(accountId, data);
 }
 
+async function createDeploymentMockDataInDBForOracle(
+    accountId: string,
+    stackId: string,
+    stackName: string,
+    region: string,
+    credentialsId: string,
+    sqlDeploymentMode: string,
+    FSXFileSystemId: string | undefined,
+    awsAccountId: string,
+    serverName: string,
+    storageProtocol: string = STORAGE_PROTOCOLS.NFS,
+    resourceId?: string
+) {
+    logger.info('create resource mock data in database', {
+        accountId,
+        stackId,
+        stackName,
+        region,
+        credentialsId,
+        sqlDeploymentMode,
+        FSXFileSystemId,
+        serverName,
+        awsAccountId,
+        storageProtocol,
+        resourceId
+    });
+    serverName = serverName || `oracledatabase${randomize('a0', 4)}`;
+
+    const cloudProviderId = awsAccountId;
+    const resourceName = serverName;
+    if (sqlDeploymentMode.toLowerCase() === 'standalone') {
+        sqlDeploymentMode = 'Standalone';
+    } else {
+        sqlDeploymentMode = 'ha';
+    }
+
+    const instanceId = '7450008296037943419';
+
+    resourceId = resourceId || randomUUID();
+    const fsxId = `fs-${randomize('0', 8)}`;
+
+    const metadata = {
+        sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
+        node1InstanceId: `i-${randomize('A0', 17)}`,
+        creationDate: new Date().getTime().toString(),
+        fsxSvmId: 'svm-0491dd89a76b7ca3d',
+        storageProtocol,
+        fsxDataVolumeName: 'wlmdb-data-12345'
+    };
+
+    await createResource(accountId, {
+        resourceId,
+        credentialsId,
+        storageType: STORAGE_TYPE.FSXN,
+        resourceName,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        resourceType: RESOURCESTYPE.ORACLE,
+        coRelationId: fsxId,
+        region,
+        metadata
+    });
+
+    const instanceRecord = {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId: instanceId,
+        databaseInstanceName: 'oracle-inst',
+        fsxnIds: fsxId,
+        isDefault: true,
+        instanceState: 'OPEN',
+        source: RESOURCE_SOURCE.DISCOVER,
+        sqlDeploymentType: sqlDeploymentMode,
+        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
+        storageProtocol,
+        databaseType: DatabaseTypes.ORACLE,
+        storageType: STORAGE_TYPE.FSXN
+    };
+
+    await upsertDatabaseInstance(accountId, instanceRecord);
+}
+
 async function demoGetFsxnVolIdsFromOntapVolIds(
     credentialsId: string,
     region: string,
@@ -1143,5 +1226,6 @@ export {
     createAssessmentData,
     prepareDemoSandboxMetadata,
     updateOptimizedConfigMetaData,
-    handleGetAssessmentForDemo
+    handleGetAssessmentForDemo,
+    createDeploymentMockDataInDBForOracle
 };

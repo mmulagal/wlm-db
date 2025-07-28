@@ -1060,11 +1060,12 @@ async function getDatabaseHostSummaryV2(
             region: awsRegion,
             includeDatabaseInstances: true
         });
-    }
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+
+        if (isEmpty(resourceDetail)) {
+            const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+        }
     }
 
     const {
