@@ -160,7 +160,8 @@ export const SQL_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_VALUE: 'fci',
     SINGLE_INSTANCE_VALUE: 'standalone',
     AOAG: 'aoag',
-    HA: 'ha'
+    HA: 'ha',
+    FAILOVER_CLUSTER_VALUE_CAPS: 'FCI'
 };
 
 export const API_ERRORS = {

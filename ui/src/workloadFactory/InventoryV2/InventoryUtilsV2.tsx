@@ -3810,7 +3810,8 @@ export const addHostHandlerSc = async (
                     installPath: 'C:\\Program Files\\NetApp\\SnapCenter',
                     usegMSA: false,
                     useManualInstall: false,
-                    addHostsInCluster: false,
+                    addHostsInCluster:
+                        rowData?.sqlServerDeploymentType === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS,
                     skipPreInstallChecks: false,
                     hostOSType: 'Windows'
                 },
