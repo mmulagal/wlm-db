@@ -880,9 +880,21 @@ async function initiateInstanceLevelAssessmentDataCollection(
         parentJobId: jobId
     });
 
-    fields.forEach(async field => {
-        switch (field) {
-            case AssessmentCategories.STORAGE || AssessmentCategories.SNAPSHOT_POLICY:
+    const assessmentHandlers = {
+        [AssessmentCategories.STORAGE]: async () =>
+            initiateStorageAssessmentCollection(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord,
+                fields.includes(AssessmentCategories.SNAPSHOT_POLICY)
+                    ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
+                    : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE
+            ),
+        [AssessmentCategories.SNAPSHOT_POLICY]: async () => {
+            if (!fields.includes(AssessmentCategories.STORAGE)) {
                 await initiateStorageAssessmentCollection(
                     accountId,
                     credentialsId,
@@ -890,72 +902,71 @@ async function initiateInstanceLevelAssessmentDataCollection(
                     databaseHostId,
                     instanceLevelAssessmentJobId,
                     databaseInstanceRecord,
-                    field === AssessmentCategories.STORAGE
-                        ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
-                        : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
+                    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
                 );
-                break;
-            case AssessmentCategories.CRR:
-                await initiateCrossRegionResiliencyAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    instanceLevelAssessmentJobId,
-                    databaseInstanceRecord,
-                    instanceVolumeMapping
-                );
-                break;
-            case AssessmentCategories.AWS_BACKUP:
-                await initiateAWSBackupAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    instanceLevelAssessmentJobId,
-                    databaseInstanceRecord,
-                    instanceVolumeMapping
-                );
-                break;
-            case AssessmentCategories.CLONE:
-                await managedHostsCloneAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    activeNodeInstanceid,
-                    resourceName,
-                    databaseHostId,
-                    databaseInstanceId,
-                    instanceLevelAssessmentJobId
-                );
-                break;
-            case AssessmentCategories.MAXDOP:
-                await managedHostsMaxDOPAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    activeNodeInstanceid,
-                    resourceName,
-                    databaseHostId,
-                    databaseInstanceId,
-                    instanceLevelAssessmentJobId
-                );
-                break;
-            case AssessmentCategories.HIGH_AVAILABILITY:
-                await initiateInstanceLevelHighAvailabilityAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceRecord,
-                    instanceLevelAssessmentJobId
-                );
-                break;
-            default:
-                logger.warn(`No assessment initiated for field: ${field}`);
-                break;
-        }
-    });
+            }
+        },
+        [AssessmentCategories.CRR]: async () =>
+            initiateCrossRegionResiliencyAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord,
+                instanceVolumeMapping
+            ),
+        [AssessmentCategories.AWS_BACKUP]: async () =>
+            initiateAWSBackupAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord,
+                instanceVolumeMapping
+            ),
+        [AssessmentCategories.CLONE]: async () =>
+            managedHostsCloneAssessment(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceid,
+                resourceName,
+                databaseHostId,
+                databaseInstanceId,
+                instanceLevelAssessmentJobId
+            ),
+        [AssessmentCategories.MAXDOP]: async () =>
+            managedHostsMaxDOPAssessment(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceid,
+                resourceName,
+                databaseHostId,
+                databaseInstanceId,
+                instanceLevelAssessmentJobId
+            ),
+        [AssessmentCategories.HIGH_AVAILABILITY]: async () =>
+            initiateInstanceLevelHighAvailabilityAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceRecord,
+                instanceLevelAssessmentJobId
+            )
+    };
+
+    await Promise.allSettled(
+        fields.map(async field => {
+            const handler = assessmentHandlers[field as keyof typeof assessmentHandlers];
+            if (handler) {
+                await handler();
+            }
+        })
+    );
 
     await updateParentJobStatus(accountId, instanceLevelAssessmentJobId);
 }
