@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { DsButton, DsTypography } from '@netapp/design-system';
+import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import OnboardingAccordions from '../OnboardingAccordions/OnboardingAccordions';
 import ScrollableCard from '../ScrollableCard/ScrollableCard';
 import styles from './LogAnalyzerOnboarding.module.scss';
@@ -26,6 +27,9 @@ const LogAnalyzerOnboarding = () => {
                             {t('databases.log-analyzer.investigation-in-progress')}
                         </DsTypography>
                         <div className={styles.rightPart}>
+                            <div className={styles.refreshIcon} onClick={() => {}}>
+                                <RefreshIcon />
+                            </div>
                             <DsButton onClick={activateHandler} isThin variant="primary">
                                 {t('databases.log-analyzer.activate')}
                             </DsButton>
