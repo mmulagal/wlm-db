@@ -3528,8 +3528,8 @@ export const getDiscoverResult = (
 ): Promise<number> => {
     return new Promise(resolve => {
         let retries = 0;
-        const maxRetries = 12;
-        const interval = 5000;
+        const maxRetries = 15;
+        const interval = 10000;
 
         const check = async () => {
             try {
