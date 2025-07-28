@@ -17,7 +17,12 @@ import {
     unmanageDatabaseInstance
 } from '../../src/operations/register-operations';
 import { DatabaseTypes } from '../../src/utils/consts';
-import { createResource, deleteDatabaseInstance, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
+import {
+    createResource,
+    deleteDatabaseInstance,
+    deleteResource,
+    upsertDatabaseInstance
+} from '../../src/lib/database/db';
 
 const TEST_EC2_INSTANCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
@@ -280,8 +285,10 @@ describe('Unmanage operations', async () => {
     });
 
     afterAll(async () => {
-        await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, '6cbdabbfe3fb147e',
-             [databaseInstanceId2, databaseInstanceId1]);
+        await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, '6cbdabbfe3fb147e', [
+            databaseInstanceId2,
+            databaseInstanceId1
+        ]);
         await deleteResource(ACCOUNT_ID, '6cbdabbfe3fb147e');
     });
 

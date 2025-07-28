@@ -990,7 +990,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
     const { resourceName, name: databaseInstanceName, activeNodeInstanceid } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
-    const jobName = 'Cluster resilience assessment for heartbeat and quorum settings';
+    const jobName = `Microsoft SQL server high availability assessment for heartbeat and quorum settings for ${resourceName}`;
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage;
 
@@ -1132,7 +1132,7 @@ async function initiateInstanceLevelHighAvailabilityAssessment(
     const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = instanceRecord;
 
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobName = 'Shared storage, drive mappings and SQL service configuration resilience assessment';
+    const jobName = 'Shared storage, drive mappings and SQL service configuration high availability assessment';
     const jobDescription = jobName;
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
