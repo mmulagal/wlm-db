@@ -315,7 +315,7 @@ EOF
         dataDirectories=$(echo "$dataDirectory" | tr ',' '\n' | sort -u)
         if [ -z "$dataDirectories" ]; then
             echo "[]"
-            exit 0
+            return 0
         fi
         dataDirectoryMappings="["
         while IFS= read -r dataDirectory; do
