@@ -15,7 +15,8 @@ import {
     PlatformValues,
     CpuManufacturer,
     DescribeNetworkInterfacesRequest,
-    DescribeRouteTablesCommandInput
+    DescribeRouteTablesCommandInput,
+    DescribeInstancesCommandOutput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import ms from 'ms';
@@ -1184,6 +1185,29 @@ async function getAmazonLinux2023AmiList(credentialsId: string, region: string):
     const { Images: amisList } = amis || {};
     return (amisList || []).map(image => image.ImageId);
 }
+
+async function getInstanceSubnetAndAZ(
+    credentialsId: string,
+    region: string,
+    instanceId: string
+): Promise<{ subnetId: string; availabilityZone: string }> {
+    const ec2Info: DescribeInstancesCommandOutput = await describeInstance(
+        credentialsId,
+        region,
+        { InstanceIds: [instanceId] },
+        { useCache: true }
+    );
+    const reservation = ec2Info.Reservations?.[0];
+    const instance = reservation?.Instances?.[0];
+    if (!instance || !instance.SubnetId || !instance.Placement?.AvailabilityZone) {
+        throw new Error(`Could not find subnet or AZ for instance ${instanceId}`);
+    }
+    return {
+        subnetId: instance.SubnetId,
+        availabilityZone: instance.Placement.AvailabilityZone
+    };
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -1206,5 +1230,6 @@ export {
     determineSmallerInstance,
     waitForInstanceToBeStopped,
     instanceTypeChangePreReqs,
-    getAmazonLinux2023AmiList
+    getAmazonLinux2023AmiList,
+    getInstanceSubnetAndAZ
 };

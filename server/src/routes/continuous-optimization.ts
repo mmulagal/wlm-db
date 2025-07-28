@@ -28,8 +28,9 @@ import {
     BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema,
     BulkOptimizeSharedStorageSchema,
-    BulkOptimizeHASchema,
-    BulkOptimizeSQLServerServiceSchema
+    BulkOptimizeSQLServerServiceSchema,
+    BulkOptimizeClusterQuorumSchema,
+    BulkOptimizeHeartbeatSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -421,7 +422,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/heartbeat`,
-            { schema: BulkOptimizeHASchema },
+            { schema: BulkOptimizeHeartbeatSchema },
             async (request, reply) => {
                 const {
                     params: { accountId },
@@ -430,7 +431,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
 
                 const response = await bulkOptimization(
                     accountId,
-                    OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY,
+                    OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS,
                     hostsToOptimize
                 );
                 return reply.send(response);
@@ -438,7 +439,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/cluster-quorum`,
-            { schema: BulkOptimizeHASchema },
+            { schema: BulkOptimizeClusterQuorumSchema },
             async (request, reply) => {
                 const {
                     params: { accountId },
@@ -447,7 +448,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
 
                 const response = await bulkOptimization(
                     accountId,
-                    OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY,
+                    OptimizeHighAvailabilityParams.CLUSTER_QUORUM,
                     hostsToOptimize
                 );
                 return reply.send(response);
@@ -464,7 +465,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
 
                 const response = await bulkOptimization(
                     accountId,
-                    OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY,
+                    OptimizeHighAvailabilityParams.SQLSERVER_SERVICE,
                     hostsToOptimize
                 );
                 return reply.send(response);

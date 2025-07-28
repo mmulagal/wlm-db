@@ -24,9 +24,7 @@ import {
     BulkDismissConfigurationResponse,
     ContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
-    BulkOptimizeHASharedStorageBody,
-    HeartbeatRequestBody,
-    SqlServerServiceRequestBody
+    BulkOptimizeHASharedStorageBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -277,32 +275,22 @@ const BulkOptimizeSharedStorageSchema = {
     }
 };
 
-const BulkOptimizeHASchema = {
+const BulkOptimizeHeartbeatSchema = {
     ...BulkOptimizeGeneralSchema,
-    params: AccountIdParams,
-    tags: [RouteTags.ASSESSMENT],
-    body: HeartbeatRequestBody,
-    summary: 'Fix High Availability Cluster configuration',
-    description: 'Fix High Availability Cluster configuration',
-    response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
-    }
+    summary: 'Fix heartbeat settings in cluster configuration',
+    description: 'Fix heartbeat settings in cluster configuration'
+};
+
+const BulkOptimizeClusterQuorumSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Fix cluster quorum type in cluster configuration',
+    description: 'Fix cluster quorum type in cluster configuration'
 };
 
 const BulkOptimizeSQLServerServiceSchema = {
     ...BulkOptimizeGeneralSchema,
-    params: AccountIdParams,
-    tags: [RouteTags.ASSESSMENT],
-    body: SqlServerServiceRequestBody,
     summary: 'Fix sql server service parameters as part of High Availability Cluster configuration',
-    description: 'Fix sql server service parameters as per the best practice for selected database instances.',
-    response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
-    }
+    description: 'Fix sql server service parameters as per the best practice for selected database instances.'
 };
 
 export {
@@ -326,6 +314,7 @@ export {
     BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema,
     BulkOptimizeSharedStorageSchema,
-    BulkOptimizeHASchema,
+    BulkOptimizeHeartbeatSchema,
+    BulkOptimizeClusterQuorumSchema,
     BulkOptimizeSQLServerServiceSchema
 };

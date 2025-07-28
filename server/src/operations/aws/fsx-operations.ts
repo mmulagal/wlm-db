@@ -51,6 +51,7 @@ import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 import { GET_SNAPSHOT_DETAILS, OntapRestRequestParams } from '../workloads/mssql/continuous-optimization-scripts';
 import { populateDbInstances } from '../database/database-operations';
+import { describeSubnets } from '../../lib/aws/ec2';
 
 const logger = getLogger();
 
@@ -983,6 +984,39 @@ async function isInstanceAppConsistentBackupEnabled(
     }
 }
 
+async function getFSXPreferredSubnetAndAZ(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    accountId: string
+) {
+    // 1. Fetch FSx info
+    const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId, {
+        useCache: true
+    });
+    logger.info(`FSx info for file system ${fileSystemId}:`, fsxnInfo);
+
+    // 2. Extract the preferred subnet ID
+    const fsx = fsxnInfo?.FileSystems?.[0];
+    const preferredSubnetId = fsx?.OntapConfiguration?.PreferredSubnetId;
+    if (!preferredSubnetId) {
+        throw new Error('PreferredSubnetId not found in FSx OntapConfiguration.');
+    }
+
+    // 3. Fetch subnet info using your helper
+    const { Subnets } = await describeSubnets(credentialsId, region, { SubnetIds: [preferredSubnetId] });
+    const subnet = Subnets?.[0];
+    if (!subnet || !subnet.AvailabilityZone) {
+        throw new Error('Subnet or Availability Zone not found.');
+    }
+
+    // 4. Return the result
+    return {
+        subnetId: preferredSubnetId,
+        availabilityZone: subnet.AvailabilityZone
+    };
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -1003,5 +1037,6 @@ export {
     getIscsiTargetAddresses,
     updateFsxBackup,
     validateSvmCountCapacity,
-    isInstanceAppConsistentBackupEnabled
+    isInstanceAppConsistentBackupEnabled,
+    getFSXPreferredSubnetAndAZ
 };

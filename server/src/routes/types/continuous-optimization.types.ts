@@ -645,70 +645,6 @@ const BulkOptimizeHASharedStorageBody = Type.Object({
 });
 type BulkOptimizeHASharedStorageBodyType = Static<typeof BulkOptimizeHASharedStorageBody>;
 
-const HeartbeatDatabaseHost = Type.Object({
-    id: Type.String({ minLength: 1 }),
-    credentialsId: Type.String({ minLength: 1 }),
-    region: Type.String({ minLength: 1 })
-});
-type HeartbeatDatabaseHostType = Static<typeof HeartbeatDatabaseHost>;
-
-const HeartbeatPerHostRequestBody = Type.Object({
-    configurationName: Type.String({ enum: Object.values(OptimizeHighAvailabilityParams) }),
-    databaseHosts: Type.Array(HeartbeatDatabaseHost)
-});
-type HeartbeatPerHostRequestBodyType = Static<typeof HeartbeatPerHostRequestBody>;
-
-const HeartbeatRequestBody = Type.Object({
-    hostsToOptimize: Type.Array(HeartbeatPerHostRequestBody)
-});
-
-type HeartbeatRequestBodyType = Static<typeof HeartbeatRequestBody>;
-
-const SqlServerServiceDatabaseHost = Type.Object({
-    id: Type.String({ minLength: 1 }),
-    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-    credentialsId: Type.String({ minLength: 1 }),
-    region: Type.String({ minLength: 1 })
-});
-type SqlServerServiceDatabaseHostType = Static<typeof SqlServerServiceDatabaseHost>;
-
-const SqlServerServicePerHostRequestBody = Type.Object({
-    configurationName: Type.String({ enum: Object.values(OptimizeHighAvailabilityParams) }),
-    databaseHosts: Type.Array(SqlServerServiceDatabaseHost)
-});
-type SqlServerServicePerHostRequestBodyType = Static<typeof SqlServerServicePerHostRequestBody>;
-
-const SqlServerServiceRequestBody = Type.Object({
-    hostsToOptimize: Type.Array(SqlServerServicePerHostRequestBody)
-});
-type SqlServerServiceRequestBodyType = Static<typeof SqlServerServiceRequestBody>;
-
-const FlattenedInstance = Type.Object({
-    databaseInstanceId: Type.String(),
-    ontapLunUuids: Type.Array(Type.String()),
-    region: Type.String(),
-    credentialsId: Type.String(),
-    databaseHostId: Type.String()
-});
-type FlattenedInstanceType = Static<typeof FlattenedInstance>;
-
-const LunDetail = Type.Object({
-    lunUuid: Type.String(),
-    lunName: Type.String(),
-    igroupName: Type.String(),
-    igroupUuid: Type.String(),
-    initiatorNames: Type.Union([Type.Array(Type.String()), Type.String()])
-});
-type LunDetailType = Static<typeof LunDetail>;
-
-const OptimizationPreparation = Type.Object({
-    instance: FlattenedInstance,
-    lunsToOptimize: Type.Array(LunDetail),
-    allHostIqnsArr: Type.Array(Type.String()),
-    igroupMissingIqnsMap: Type.Any()
-});
-type OptimizationPreparationType = Static<typeof OptimizationPreparation>;
-
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -780,17 +716,5 @@ export {
     BulkOptimizeHASharedStorageBodyType,
     OptimizeHASharedStorageRequestBodyType,
     OptimizeHASharedStorageRequestBody,
-    FlattenedInstanceType,
-    LunDetailType,
-    OptimizationPreparationType,
-    BulkOptimizeHASharedStorageRequestBodyType,
-    HeartbeatRequestBodyType,
-    HeartbeatDatabaseHostType,
-    HeartbeatPerHostRequestBodyType,
-    HeartbeatRequestBody,
-    SqlServerServiceDatabaseHostType,
-    SqlServerServicePerHostRequestBodyType,
-    SqlServerServiceRequestBodyType,
-    SqlServerServicePerHostRequestBody,
-    SqlServerServiceRequestBody
+    BulkOptimizeHASharedStorageRequestBodyType
 };

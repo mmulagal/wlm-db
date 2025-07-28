@@ -31,7 +31,8 @@ import {
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeComputeJobNames,
-    OptimizeComputeParams
+    OptimizeComputeParams,
+    OptimizeHighAvailabilityParams
 } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
@@ -121,8 +122,12 @@ async function bulkOptimization(
             ? 'Fix maxdop configuration'
             : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP
             ? 'Fix AWS FSx for ONTAP automatic backup configuration'
-            : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY
-            ? 'Fix High availability configuration'
+            : optimizationCategory === OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS
+            ? 'Fix heartbeat settings in cluster configuration'
+            : optimizationCategory === OptimizeHighAvailabilityParams.CLUSTER_QUORUM
+            ? 'Fix cluster quorum type in cluster configuration'
+            : optimizationCategory === OptimizeHighAvailabilityParams.SQLSERVER_SERVICE
+            ? 'Fix SQL server service status in cluster configuration'
             : 'Fix storage sizing';
 
     const parentJobId = await handleOptimizeJobCreation(
@@ -366,14 +371,13 @@ async function handleOptimization(
             case OPTIMIZATION_CATEGORIES.MAXDOP:
                 await optimizeMaxDop(accountId, credentialsId, region, databaseHostId, databaseInstanceId, parentJobId);
                 break;
-            case OPTIMIZATION_CATEGORIES.HIGH_AVAILABILITY:
+            case OptimizeHighAvailabilityParams.SQLSERVER_SERVICE:
                 await optimizeSqlServerService(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    optimizationSubcategory,
                     parentJobId
                 );
                 break;
@@ -412,14 +416,15 @@ async function handleBulkOptimization(
                                     masterOptimizeParentId
                                 );
                             } else if (
-                                optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.HIGH_AVAILABILITY &&
-                                optimizationSubcategory !== 'sqlserver-service'
+                                optimizationCategory === OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS ||
+                                optimizationCategory === OptimizeHighAvailabilityParams.CLUSTER_QUORUM
                             ) {
                                 await optimizeHighAvailabilityConfiguration(
                                     accountId,
                                     credentialsId,
                                     region,
                                     databaseHostId,
+                                    sqlServerInstances,
                                     optimizationSubcategory,
                                     masterOptimizeParentId
                                 );
