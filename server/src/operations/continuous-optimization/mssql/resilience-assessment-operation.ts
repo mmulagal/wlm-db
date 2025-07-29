@@ -43,8 +43,7 @@ import {
     GET_SNAPSHOT_DETAILS
 } from '../../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { isFsxnAwsBackupEnabled, getFSXPreferredSubnetAndAZ } from '../../aws/fsx-operations';
-import { getInstanceSubnetAndAZ } from '../../aws/ec2-operations';
+import { isFsxnAwsBackupEnabled, getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import {
     CLUSTER_QUORUM_TYPE,
@@ -903,40 +902,6 @@ interface HeartbeatSettings {
     CrossSubnetThreshold: number;
 }
 
-// Determines the preferred node based on FSx preferred subnet and AZ
-async function determinePreferredNode(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    node1InstanceId: string,
-    node2InstanceId: string,
-    fsxFileSystem: string
-): Promise<{ preferredNodeId: string; nonPreferredNodeId: string }> {
-    const fsxFileSystemId = fsxFileSystem.split(',')[0];
-    const [{ subnetId: fsxPreferredSubnetId, availabilityZone: fsxPreferredAZ }, node1Net, node2Net] =
-        await Promise.all([
-            getFSXPreferredSubnetAndAZ(credentialsId, region, fsxFileSystemId, accountId),
-            getInstanceSubnetAndAZ(credentialsId, region, node1InstanceId),
-            getInstanceSubnetAndAZ(credentialsId, region, node2InstanceId)
-        ]);
-
-    // Determine preferred node based on FSx preferred subnet and AZ
-    let preferredNodeId: string;
-    let nonPreferredNodeId: string;
-
-    if (node1Net.subnetId === fsxPreferredSubnetId && node1Net.availabilityZone === fsxPreferredAZ) {
-        preferredNodeId = node1InstanceId;
-        nonPreferredNodeId = node2InstanceId;
-    } else if (node2Net.subnetId === fsxPreferredSubnetId && node2Net.availabilityZone === fsxPreferredAZ) {
-        preferredNodeId = node2InstanceId;
-        nonPreferredNodeId = node1InstanceId;
-    } else {
-        throw new Error('Neither node is in the FSx preferred subnet and AZ.');
-    }
-
-    return { preferredNodeId, nonPreferredNodeId };
-}
-
 async function getSqlServiceStartupAssessment(
     accountId: string,
     credentialsId: string,
@@ -951,7 +916,12 @@ async function getSqlServiceStartupAssessment(
     });
 
     try {
-        const { databaseInstanceObject, fsxFileSystem, activeNodeInstanceid } = instanceRecord;
+        const {
+            databaseInstanceObject,
+            fsxFileSystem,
+            activeNodeInstanceid,
+            name: databaseInstanceName
+        } = instanceRecord;
         const { metadata: resourceMetadata } = (databaseInstanceObject as DatabaseInstance).resource;
         const { node1InstanceId, node2InstanceId } = resourceMetadata as Metadata;
 
@@ -961,7 +931,7 @@ async function getSqlServiceStartupAssessment(
         }
 
         // 1. Determine preferred and non-preferred nodes
-        const { preferredNodeId, nonPreferredNodeId } = await determinePreferredNode(
+        const { preferredNodeId, nonPreferredNodeId } = await getMZFsxnNodePreference(
             accountId,
             credentialsId,
             region,
@@ -975,25 +945,21 @@ async function getSqlServiceStartupAssessment(
         }
 
         if (!activeNodeInstanceid) {
-            throw new Error('activeNodeInstanceid is not available in metadata.');
+            throw new Error('Unable to determine active node instance ID for SQL Server service assessment.');
         }
 
         logger.info(
             `Preferred node: ${preferredNodeId}, Non-preferred node: ${nonPreferredNodeId}, Active node: ${activeNodeInstanceid}`
         );
 
-        // 2. Prepare SSM commands for both nodes
-        const { name: instanceName } = instanceRecord;
-        const commands = compact([SQL_SERVER_SERVICES(instanceName)]);
-
         // 3. Run SSM command on both nodes in parallel
         const [preferredNodeRaw, nonPreferredNodeRaw] = await Promise.all([
             callSsmExecution(
                 credentialsId,
                 region,
-                commands,
+                [SQL_SERVER_SERVICES(databaseInstanceName)],
                 preferredNodeId,
-                `Fetch sql service status for instance ${instanceName} on preferred node ${preferredNodeId}`,
+                `Fetch sql service status for instance ${databaseInstanceName} on preferred node ${preferredNodeId}`,
                 accountId,
                 false,
                 undefined,
@@ -1002,9 +968,9 @@ async function getSqlServiceStartupAssessment(
             callSsmExecution(
                 credentialsId,
                 region,
-                commands,
+                [SQL_SERVER_SERVICES(databaseInstanceName)],
                 nonPreferredNodeId,
-                `Fetch sql service status for instance ${instanceName} on non-preferred node ${nonPreferredNodeId}`,
+                `Fetch sql service status for instance ${databaseInstanceName} on non-preferred node ${nonPreferredNodeId}`,
                 accountId,
                 false,
                 undefined,
@@ -1024,26 +990,14 @@ async function getSqlServiceStartupAssessment(
             Array.isArray(parsedNonPreferred) ? parsedNonPreferred : parsedNonPreferred ? [parsedNonPreferred] : []
         ).map(svc => ({ ...svc, nonPreferredInstanceId: nonPreferredNodeId }));
 
-        // 6. Check StartType on both nodes
-        const allManualPreferred =
-            servicesPreferred.length > 0 &&
-            servicesPreferred.every((svc: any) => svc.StartType?.toLowerCase() === 'manual');
-        const allManualNonPreferred =
-            servicesNonPreferred.length > 0 &&
-            servicesNonPreferred.every((svc: any) => svc.StartType?.toLowerCase() === 'manual');
+        // Check StartType on both nodes and finalize assessment
+        const isOptimized =
+            servicesPreferred.every((svc: any) => svc.StartType?.toLowerCase() === 'manual') &&
+            servicesNonPreferred.every((svc: any) => svc.StartType?.toLowerCase() === 'manual') &&
+            activeNodeInstanceid === preferredNodeId;
 
-        // 7. Final assessment
-        if (allManualPreferred && allManualNonPreferred && activeNodeInstanceid === preferredNodeId) {
-            return {
-                status: AssessmentStatus.OPTIMIZED,
-                details: [...servicesPreferred, ...servicesNonPreferred]
-            };
-        }
-        logger.info(
-            'SQL Server services are NOT set to Manual on both nodes or active node is not preferred. Not Optimized.'
-        );
         return {
-            status: AssessmentStatus.NOT_OPTIMIZED,
+            status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
             details: [...servicesPreferred, ...servicesNonPreferred]
         };
     } catch (err) {
@@ -1395,6 +1349,5 @@ export {
     initiateInstanceLevelHighAvailabilityAssessment,
     getHighAvailabilityDriftData,
     initiateHostLevelHighAvailabilityAssessment,
-    getSqlServiceStartupAssessment,
-    determinePreferredNode
+    getSqlServiceStartupAssessment
 };

@@ -51,7 +51,7 @@ import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 import { GET_SNAPSHOT_DETAILS, OntapRestRequestParams } from '../workloads/mssql/continuous-optimization-scripts';
 import { populateDbInstances } from '../database/database-operations';
-import { describeSubnets } from '../../lib/aws/ec2';
+import { describeInstance, describeSubnets } from '../../lib/aws/ec2';
 
 const logger = getLogger();
 
@@ -990,31 +990,101 @@ async function getFSXPreferredSubnetAndAZ(
     fileSystemId: string,
     accountId: string
 ) {
-    // 1. Fetch FSx info
-    const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId, {
-        useCache: true
+    logger.info('Get FSX preferred subnet and availability zone', {
+        accountId,
+        credentialsId,
+        region,
+        fileSystemId
     });
-    logger.info(`FSx info for file system ${fileSystemId}:`, fsxnInfo);
 
-    // 2. Extract the preferred subnet ID
-    const fsx = fsxnInfo?.FileSystems?.[0];
-    const preferredSubnetId = fsx?.OntapConfiguration?.PreferredSubnetId;
-    if (!preferredSubnetId) {
-        throw new Error('PreferredSubnetId not found in FSx OntapConfiguration.');
+    try {
+        const { FileSystems: filesystems } = await describeFSx(
+            credentialsId,
+            region,
+            { FileSystemIds: [fileSystemId] },
+            accountId,
+            {
+                useCache: true
+            }
+        );
+
+        const preferredSubnetId = filesystems?.[0]?.OntapConfiguration?.PreferredSubnetId;
+        if (!preferredSubnetId) {
+            throw new Error(`PreferredSubnetId not found for fsx ${fileSystemId}.`);
+        }
+
+        const { Subnets: subnets } = await describeSubnets(credentialsId, region, { SubnetIds: [preferredSubnetId] });
+        const availabilityZone = subnets?.[0]?.AvailabilityZone;
+        if (!availabilityZone) {
+            throw new Error(`Availability Zone not found for fsx ${fileSystemId} in subnet ${preferredSubnetId}.`);
+        }
+
+        return { subnetId: preferredSubnetId, availabilityZone };
+    } catch (error: any) {
+        logger.error('Error fetching FSX preferred subnet and AZ:', error);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Failed to get FSX preferred subnet and AZ: ${error.message}`
+        );
     }
+}
 
-    // 3. Fetch subnet info using your helper
-    const { Subnets } = await describeSubnets(credentialsId, region, { SubnetIds: [preferredSubnetId] });
-    const subnet = Subnets?.[0];
-    if (!subnet || !subnet.AvailabilityZone) {
-        throw new Error('Subnet or Availability Zone not found.');
+async function getMZFsxnNodePreference(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    node1InstanceId: string,
+    node2InstanceId: string,
+    fsxFileSystemId: string
+) {
+    logger.info('Get FSx node preference', {
+        accountId,
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        fsxFileSystemId
+    });
+    try {
+        const [{ subnetId: fsxPreferredSubnetId, availabilityZone: fsxPreferredAZ }, nodeInstanceDetails] =
+            await Promise.all([
+                getFSXPreferredSubnetAndAZ(credentialsId, region, fsxFileSystemId, accountId),
+                describeInstance(credentialsId, region, {
+                    Filters: [{ Name: 'instance-id', Values: [node1InstanceId, node2InstanceId] }]
+                })
+            ]);
+
+        // Determine preferred node based on FSx preferred subnet and AZ
+        let preferredNodeId: string;
+        let nonPreferredNodeId: string;
+
+        const node1InstanceDetails = nodeInstanceDetails?.Reservations?.[0]?.Instances?.[0];
+        const node2InstanceDetails = nodeInstanceDetails?.Reservations?.[1]?.Instances?.[0];
+
+        const isNode1Preferred =
+            node1InstanceDetails?.SubnetId === fsxPreferredSubnetId &&
+            ((instance: { SubnetId?: string; Placement?: { AvailabilityZone?: string } }) =>
+                instance.SubnetId === fsxPreferredSubnetId && instance.Placement?.AvailabilityZone === fsxPreferredAZ);
+        const isNode2Preferred =
+            node2InstanceDetails?.SubnetId === fsxPreferredSubnetId &&
+            ((instance: { SubnetId?: string; Placement?: { AvailabilityZone?: string } }) =>
+                instance.SubnetId === fsxPreferredSubnetId && instance.Placement?.AvailabilityZone === fsxPreferredAZ);
+
+        if (isNode1Preferred) {
+            preferredNodeId = node1InstanceId;
+            nonPreferredNodeId = node2InstanceId;
+        } else if (isNode2Preferred) {
+            preferredNodeId = node2InstanceId;
+            nonPreferredNodeId = node1InstanceId;
+        } else {
+            throw new Error('Neither node is in the FSx preferred subnet and AZ.');
+        }
+
+        return { preferredNodeId, nonPreferredNodeId };
+    } catch (error: any) {
+        logger.error('Error fetching FSx node preference:', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Failed to get FSX node preference: ${error.message}`);
     }
-
-    // 4. Return the result
-    return {
-        subnetId: preferredSubnetId,
-        availabilityZone: subnet.AvailabilityZone
-    };
 }
 
 export {
@@ -1038,5 +1108,6 @@ export {
     updateFsxBackup,
     validateSvmCountCapacity,
     isInstanceAppConsistentBackupEnabled,
-    getFSXPreferredSubnetAndAZ
+    getFSXPreferredSubnetAndAZ,
+    getMZFsxnNodePreference
 };
