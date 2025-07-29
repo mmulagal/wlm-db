@@ -28,14 +28,19 @@ const UniqueErrorsSeverity = ({
                     ? Array.from({ length: 5 }, (_, index) => (
                           <ErrorBarComponent key={index} percentage={0} noFilteredData />
                       ))
-                    : uniqueErrBySeverity.map(error => (
-                          <ErrorBarComponent
-                              key={error.severity}
-                              percentage={(error.count / totalCount) * 100}
-                              errorCount={error.count}
-                              severity={error.severity}
-                          />
-                      ))}
+                    : uniqueErrBySeverity.map(error => {
+                          if (error?.severity && error?.severity !== 'undefined') {
+                              return (
+                                  <ErrorBarComponent
+                                      key={error.severity}
+                                      percentage={(error.count / totalCount) * 100}
+                                      errorCount={error.count}
+                                      severity={error.severity}
+                                  />
+                              );
+                          }
+                          return null;
+                      })}
             </div>
         </div>
     );

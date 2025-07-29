@@ -36,24 +36,24 @@ const ErrorCards = ({
             }}
         >
             <DsTypography variant="Semibold_13" className={styles.tag}>
-                {t('databases.log-analyzer.error-code')}: {errorCode}
+                {t('databases.log-analyzer.error-code')}: {errorCode || t('databases.log-analyzer.n/a')}
             </DsTypography>
 
             <div className={styles.errorMessage}>
                 <DsTypography variant="Semibold_14" title={errorMessage}>
-                    {errorMessage}
+                    {errorMessage || t('databases.log-analyzer.n/a')}
                 </DsTypography>
             </div>
 
             <div className={styles.severitySection}>
                 <DsTypography variant="Regular_14" className={styles.severity}>
-                    {t('databases.log-analyzer.severity')}: {severity}
+                    {t('databases.log-analyzer.severity')}: {severity || t('databases.log-analyzer.n/a')}
                 </DsTypography>
                 <DsTypography variant="Regular_14" className={styles.severity}>
                     {t('databases.log-analyzer.error-count')}:{' '}
-                    {filteredCount && errorCount && errorCount > filteredCount
+                    {(filteredCount && errorCount && errorCount > filteredCount
                         ? `${filteredCount}/${errorCount}`
-                        : errorCount}
+                        : errorCount) || t('databases.log-analyzer.n/a')}
                 </DsTypography>
             </div>
         </div>

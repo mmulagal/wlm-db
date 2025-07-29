@@ -162,10 +162,6 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                             <div className={styles.inProgressContainer}>
                                 <DsFlashingDotsLoader />
                                 <DsTypography variant="Regular_14">{t('databases.log-analyzer.new-scan')}</DsTypography>
-                                {/* Will discuss in UX review to exclude this */}
-                                {/* <DsButton type="text" onClick={() => dispatch(setStopErrorInvestigationScan(true))}>
-                                    {t('databases.log-analyzer.stop-scan')}
-                                </DsButton> */}
                             </div>
                         )}
                         {!scanInProgress && (
