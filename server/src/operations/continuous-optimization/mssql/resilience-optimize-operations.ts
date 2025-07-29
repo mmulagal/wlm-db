@@ -38,7 +38,7 @@ import {
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
-import { getFSXPreferredSubnetAndAZ, getMappedOntapVolumes } from '../../aws/fsx-operations';
+import { getMappedOntapVolumes } from '../../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
@@ -64,7 +64,7 @@ import { paginateListInstanceConfigData } from '../../database/instance-config-o
 import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
 import { moveClusterGroupOwnership } from '../compute-optimize-operations';
 import { listDatabaseInstances } from '../../../lib/database/db';
-import { getInstanceSubnetAndAZ } from '../../aws/ec2-operations';
+import { determinePreferredNode } from './resilience-assessment-operation';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -1187,30 +1187,21 @@ async function givebackClusterOwnership(
             }
         ] = dbInstances;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-        const [{ subnetId: fsxPreferredSubnetId, availabilityZone: fsxPreferredAZ }, node1Net, node2Net] =
-            await Promise.all([
-                getFSXPreferredSubnetAndAZ(credentialsId, region, fsxFileSystemId, accountId),
-                getInstanceSubnetAndAZ(credentialsId, region, node1InstanceId),
-                (() => {
-                    if (!node2InstanceId) {
-                        throw new Error('node2InstanceId is undefined.');
-                    }
-                    return getInstanceSubnetAndAZ(credentialsId, region, node2InstanceId);
-                })()
-            ]);
 
-        // Determine preferred node
-        let preferredNodeId: string | undefined;
-        let nonPreferredNodeId: string | undefined;
-        if (node1Net.subnetId === fsxPreferredSubnetId && node1Net.availabilityZone === fsxPreferredAZ) {
-            preferredNodeId = node1InstanceId;
-            nonPreferredNodeId = node2InstanceId;
-        } else if (node2Net.subnetId === fsxPreferredSubnetId && node2Net.availabilityZone === fsxPreferredAZ) {
-            preferredNodeId = node2InstanceId;
-            nonPreferredNodeId = node1InstanceId;
-        } else {
-            throw new Error('Neither node is in the FSx preferred subnet and AZ.');
+        // Ensure both node1InstanceId and node2InstanceId are defined
+        if (!node1InstanceId || !node2InstanceId) {
+            throw new Error('Both node1InstanceId and node2InstanceId must be available for FCI instances.');
         }
+
+        // Use determinePreferredNode to get preferred/non-preferred node IDs
+        const { preferredNodeId, nonPreferredNodeId } = await determinePreferredNode(
+            accountId,
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId,
+            fsxFileSystemId
+        );
 
         if (!preferredNodeId || !nonPreferredNodeId) {
             throw new Error('Preferred or non-preferred node ID is not available.');
