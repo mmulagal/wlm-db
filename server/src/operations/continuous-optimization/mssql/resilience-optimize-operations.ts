@@ -38,7 +38,7 @@ import {
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
-import { getFSXPreferredSubnetAndAZ, getMappedOntapVolumes } from '../../aws/fsx-operations';
+import { getMappedOntapVolumes, getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
@@ -63,8 +63,6 @@ import {
 import { paginateListInstanceConfigData } from '../../database/instance-config-operations';
 import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
 import { moveClusterGroupOwnership } from '../compute-optimize-operations';
-import { listDatabaseInstances } from '../../../lib/database/db';
-import { getInstanceSubnetAndAZ } from '../../aws/ec2-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -1173,44 +1171,35 @@ async function givebackClusterOwnership(
     });
 
     try {
-        const dbInstancesResult: any = await listDatabaseInstances(accountId, {
+        const dbInstancesResult = await getPaginatedDatabaseInstances(accountId, {
             resourceId: databaseHostId,
             credentialsId,
             sqlInstanceId: databaseInstanceId,
             region,
             shouldIncludeResource: true
         });
-        const dbInstances = Array.isArray(dbInstancesResult) ? dbInstancesResult : dbInstancesResult?.items || [];
+        const dbInstances = dbInstancesResult?.items || [];
         const [
             {
                 resource: { metadata }
             }
         ] = dbInstances;
-        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-        const [{ subnetId: fsxPreferredSubnetId, availabilityZone: fsxPreferredAZ }, node1Net, node2Net] =
-            await Promise.all([
-                getFSXPreferredSubnetAndAZ(credentialsId, region, fsxFileSystemId, accountId),
-                getInstanceSubnetAndAZ(credentialsId, region, node1InstanceId),
-                (() => {
-                    if (!node2InstanceId) {
-                        throw new Error('node2InstanceId is undefined.');
-                    }
-                    return getInstanceSubnetAndAZ(credentialsId, region, node2InstanceId);
-                })()
-            ]);
+        const { node1InstanceId, node2InstanceId } = metadata as Metadata;
 
-        // Determine preferred node
-        let preferredNodeId: string | undefined;
-        let nonPreferredNodeId: string | undefined;
-        if (node1Net.subnetId === fsxPreferredSubnetId && node1Net.availabilityZone === fsxPreferredAZ) {
-            preferredNodeId = node1InstanceId;
-            nonPreferredNodeId = node2InstanceId;
-        } else if (node2Net.subnetId === fsxPreferredSubnetId && node2Net.availabilityZone === fsxPreferredAZ) {
-            preferredNodeId = node2InstanceId;
-            nonPreferredNodeId = node1InstanceId;
-        } else {
-            throw new Error('Neither node is in the FSx preferred subnet and AZ.');
+        // Ensure both node1InstanceId and node2InstanceId are defined
+        if (!node1InstanceId || !node2InstanceId) {
+            throw new Error('Both node1InstanceId and node2InstanceId must be available for FCI instances.');
         }
+
+        // Use determinePreferredNode to get preferred/non-preferred node IDs
+        const { preferredNodeId, nonPreferredNodeId } = await getMZFsxnNodePreference(
+            accountId,
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId,
+            fsxFileSystemId
+        );
 
         if (!preferredNodeId || !nonPreferredNodeId) {
             throw new Error('Preferred or non-preferred node ID is not available.');
@@ -1225,24 +1214,13 @@ async function givebackClusterOwnership(
         );
 
         if (activeNodeInstanceId === preferredNodeId) {
-            logger.info(`Cluster ownership is already on the preferred node (${preferredNodeId}). No action needed.`);
             jobStatus = JOBSTATUS.WARNING;
+            errorMessage = `Cluster ownership is already on the preferred node (${preferredNodeId}).`;
         } else if (activeNodeInstanceId === nonPreferredNodeId) {
-            logger.info(
-                `SQL Server running on non-preferred node (${nonPreferredNodeId}). Moving ownership to preferred node (${preferredNodeId}).`
-            );
-            logger.info(
-                `Initiating giveback Cluster Ownership for host "${databaseHostId}", instance "${databaseInstanceId}".`
-            );
-            const result = await moveClusterGroupOwnership(credentialsId, region, preferredNodeId, nonPreferredNodeId);
-            logger.info('Cluster ownership moved to preferred node.', {
-                from: nonPreferredNodeId,
-                to: preferredNodeId,
-                result
-            });
+            await moveClusterGroupOwnership(credentialsId, region, preferredNodeId, nonPreferredNodeId);
         } else {
             throw new Error(
-                `Active node (${activeNodeInstanceId}) does not match either preferred (${preferredNodeId}) or non-preferred (${nonPreferredNodeId}) node.`
+                `Active node (${activeNodeInstanceId}) is not recognized as preferred (${preferredNodeId}) or non-preferred (${nonPreferredNodeId}).`
             );
         }
     } catch (err: any) {

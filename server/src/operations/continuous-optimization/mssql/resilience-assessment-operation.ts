@@ -43,7 +43,7 @@ import {
     GET_SNAPSHOT_DETAILS
 } from '../../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
+import { isFsxnAwsBackupEnabled, getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import {
     CLUSTER_QUORUM_TYPE,
@@ -179,7 +179,6 @@ async function getResilienceDriftAssessment(
     databaseHostId: string,
     resourceName: string,
     databaseInstanceId: string,
-    databaseInstanceName: string,
     fieldsValues: string[] = [],
     resourceAssessmentData: ResourceAssessmentData = {},
     databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
@@ -189,7 +188,6 @@ async function getResilienceDriftAssessment(
         databaseInstanceId,
         databaseHostId,
         resourceName,
-        databaseInstanceName,
         fieldsValues
     });
     const shouldTriggerSnapshotPolicyAssessment =
@@ -255,7 +253,6 @@ async function getResilienceDriftAssessment(
                       databaseHostId,
                       resourceName,
                       databaseInstanceId,
-                      databaseInstanceName,
                       resourceAssessmentData,
                       highAvailabilityAssessmentData
                   )
@@ -916,57 +913,100 @@ async function getSqlServiceStartupAssessment(
     });
 
     try {
-        // Prepare all commands in a single SSM document execution
-        const { name: instanceName, activeNodeInstanceid } = instanceRecord;
-        const commands = compact([SQL_SERVER_SERVICES(instanceName)]);
-        const rawResponses = await callSsmExecution(
-            credentialsId,
-            region,
-            commands,
+        const {
+            databaseInstanceObject,
+            fsxFileSystem,
             activeNodeInstanceid,
-            `Fetch sql service status for instance ${instanceName} on node ${activeNodeInstanceid}`,
-            accountId,
-            false,
-            undefined,
-            true
-        );
+            name: databaseInstanceName
+        } = instanceRecord;
+        const { metadata: resourceMetadata } = (databaseInstanceObject as DatabaseInstance).resource;
+        const { node1InstanceId, node2InstanceId } = resourceMetadata as Metadata;
 
-        // Parse SSM output into separate objects
-        const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);
-        const [parsedSqlServiceData] = rawResponsesParsed;
-
-        // --- SQL Server Services ---
-        let sqlServerServicesResult;
-        if (!parsedSqlServiceData) {
-            // If missing, mark as not optimized
-            sqlServerServicesResult = {
-                status: AssessmentStatus.NOT_OPTIMIZED,
-                details: [],
-                error: 'SQL Server Services response missing'
-            };
-        } else {
-            let services: any[] = [];
-            services = Array.isArray(parsedSqlServiceData)
-                ? parsedSqlServiceData
-                : parsedSqlServiceData
-                ? [parsedSqlServiceData]
-                : [];
-            const allManualAndRunning =
-                services.length > 0 &&
-                services.every(
-                    (svc: any) =>
-                        svc.StartType?.toLowerCase() === 'manual' &&
-                        (typeof svc.Status === 'string' ? svc.Status.toLowerCase() === 'running' : svc.Status === 4)
-                );
-            sqlServerServicesResult = allManualAndRunning
-                ? { status: AssessmentStatus.OPTIMIZED, details: services }
-                : { status: AssessmentStatus.NOT_OPTIMIZED, details: services, error: null };
+        // Ensure both node1InstanceId and node2InstanceId are defined
+        if (!node1InstanceId || !node2InstanceId) {
+            throw new Error('Both node1InstanceId and node2InstanceId must be available for FCI instances.');
         }
 
-        return sqlServerServicesResult;
+        // 1. Determine preferred and non-preferred nodes
+        const { preferredNodeId, nonPreferredNodeId } = await getMZFsxnNodePreference(
+            accountId,
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId,
+            fsxFileSystem
+        );
+
+        if (!preferredNodeId || !nonPreferredNodeId) {
+            throw new Error('Preferred or non-preferred node ID is not available.');
+        }
+
+        if (!activeNodeInstanceid) {
+            throw new Error('Unable to determine active node instance ID for SQL Server service assessment.');
+        }
+
+        logger.info(
+            `Preferred node: ${preferredNodeId}, Non-preferred node: ${nonPreferredNodeId}, Active node: ${activeNodeInstanceid}`
+        );
+
+        // 3. Run SSM command on both nodes in parallel
+        const [preferredNodeRaw, nonPreferredNodeRaw] = await Promise.all([
+            callSsmExecution(
+                credentialsId,
+                region,
+                [SQL_SERVER_SERVICES(databaseInstanceName)],
+                preferredNodeId,
+                `Fetch sql service status for instance ${databaseInstanceName} on preferred node ${preferredNodeId}`,
+                accountId,
+                false,
+                undefined,
+                true
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                [SQL_SERVER_SERVICES(databaseInstanceName)],
+                nonPreferredNodeId,
+                `Fetch sql service status for instance ${databaseInstanceName} on non-preferred node ${nonPreferredNodeId}`,
+                accountId,
+                false,
+                undefined,
+                true
+            )
+        ]);
+
+        // 4. Parse SSM outputs
+        const [parsedPreferred] = parseMultipleCommandResponse(preferredNodeRaw);
+        const [parsedNonPreferred] = parseMultipleCommandResponse(nonPreferredNodeRaw);
+
+        const servicesPreferred = (
+            Array.isArray(parsedPreferred) ? parsedPreferred : parsedPreferred ? [parsedPreferred] : []
+        ).map(svc => ({ ...svc, instanceId: preferredNodeId }));
+
+        const servicesNonPreferred = (
+            Array.isArray(parsedNonPreferred) ? parsedNonPreferred : parsedNonPreferred ? [parsedNonPreferred] : []
+        ).map(svc => ({ ...svc, instanceId: nonPreferredNodeId }));
+
+        const nodesInViolation = [
+            ...(servicesPreferred.some((svc: any) => svc.StartType?.toLowerCase() !== 'manual')
+                ? [preferredNodeId]
+                : []),
+            ...(servicesNonPreferred.some((svc: any) => svc.StartType?.toLowerCase() !== 'manual')
+                ? [nonPreferredNodeId]
+                : []),
+            ...(activeNodeInstanceid !== preferredNodeId ? [activeNodeInstanceid] : [])
+        ].filter(Boolean);
+
+        return {
+            status: isEmpty(nodesInViolation) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            preferredNodeId,
+            nonPreferredNodeId,
+            nodesInViolation,
+            details: [...servicesPreferred, ...servicesNonPreferred]
+        };
     } catch (err) {
-        logger.error('Error running combined high availability assessment:', err);
-        return { status: AssessmentStatus.NOT_OPTIMIZED, details: [], error: err?.toString() };
+        logger.error('Error high availability SQL server service assessment:', err);
+        return { error: err?.toString() };
     }
 }
 
@@ -1196,7 +1236,6 @@ async function getHighAvailabilityDriftData(
     databaseHostId: string,
     resourceName: string,
     databaseInstanceId: string,
-    databaseInstanceName: string,
     resourceAssessmentData: ResourceAssessmentData,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
 ) {
@@ -1239,7 +1278,6 @@ async function getHighAvailabilityDriftData(
                           sharedStorage.lunDetails
                               ?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED)
                               .map(lun => lun.lunName) || [],
-                      totalObjectsAssessed: sharedStorage.lunDetails?.length || 0,
                       totalObjectsInViolation:
                           sharedStorage.lunDetails?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED).length || 0
                   },
@@ -1252,7 +1290,6 @@ async function getHighAvailabilityDriftData(
                       name: 'drive-letter',
                       status: driveLetter.status as AssessmentStatus,
                       objectsInViolation: driveLetter.details.missingDriveLetters || [],
-                      totalObjectsAssessed: driveLetter.details.primaryNodeDriveLetters?.length || 0,
                       totalObjectsInViolation: driveLetter.details.missingDriveLetters?.length || 0
                   },
             isEmpty(clusterQuorum)
@@ -1293,8 +1330,10 @@ async function getHighAvailabilityDriftData(
                       name: 'sqlServer-service',
                       status: sqlServerServices.status as AssessmentStatus,
                       objectsInViolation:
-                          sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? [databaseInstanceName] : [],
-                      totalObjectsAssessed: 1,
+                          sqlServerServices.status !== AssessmentStatus.OPTIMIZED
+                              ? sqlServerServices.nodesInViolation
+                              : [],
+                      totalObjectsAssessed: 2,
                       totalObjectsInViolation: sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
                   }
         ];
@@ -1314,5 +1353,6 @@ export {
     initiateAWSBackupAssessment,
     initiateInstanceLevelHighAvailabilityAssessment,
     getHighAvailabilityDriftData,
-    initiateHostLevelHighAvailabilityAssessment
+    initiateHostLevelHighAvailabilityAssessment,
+    getSqlServiceStartupAssessment
 };

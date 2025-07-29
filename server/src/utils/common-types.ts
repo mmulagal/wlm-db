@@ -145,6 +145,7 @@ interface HighAvailabilitySqlServerServiceDetail {
     name: string;
     status: string;
     startType: string;
+    instanceId?: string;
 }
 
 interface HighAvailabilityClusterDriveLetterDetails {
@@ -164,6 +165,9 @@ interface HighAvailabilityAssessment {
     sharedStorage?: HighAvailabilitySharedStorage;
     sqlServerServices?: {
         status: string;
+        preferredNodeId?: string;
+        nonPreferredNodeId?: string;
+        nodesInViolation?: string[];
         details: HighAvailabilitySqlServerServiceDetail[];
         error?: string;
     };
