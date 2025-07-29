@@ -4,6 +4,7 @@ import { compact, isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
     DriftAssessmentResponseType,
+    ErrorResponseType,
     GenericAssessmentResponseType,
     OntapVolumeType,
     ParameterDriftResponseType
@@ -176,6 +177,7 @@ async function getResilienceDriftAssessment(
     credentialsId: string,
     region: string,
     databaseHostId: string,
+    resourceName: string,
     databaseInstanceId: string,
     databaseInstanceName: string,
     fieldsValues: string[] = [],
@@ -186,6 +188,7 @@ async function getResilienceDriftAssessment(
         credentialsId,
         databaseInstanceId,
         databaseHostId,
+        resourceName,
         databaseInstanceName,
         fieldsValues
     });
@@ -210,8 +213,6 @@ async function getResilienceDriftAssessment(
     const awsbackupAssessmentData = configDataMap[AssessmentCategories.AWS_BACKUP];
     const crrAssessmentData = configDataMap[AssessmentCategories.CRR];
     const highAvailabilityAssessmentData = configDataMap[AssessmentCategories.HIGH_AVAILABILITY];
-
-    logger.info('config data map', { configDataMap });
 
     try {
         const [snapshotPolicy, crrData, awsBackup, haChecks] = await Promise.all([
@@ -252,6 +253,7 @@ async function getResilienceDriftAssessment(
                       credentialsId,
                       region,
                       databaseHostId,
+                      resourceName,
                       databaseInstanceId,
                       databaseInstanceName,
                       resourceAssessmentData,
@@ -781,7 +783,7 @@ async function getSharedStorageAssessment(
         }
 
         if (!primaryNodeParsedResponse || !standbyNodeParsedResponse) {
-            throw new Error('Invalid or empty JSON response from SSM execution for shared storage assessment.');
+            throw new Error('Unable to fetch LUN IQN details for shared storage assessment.');
         }
 
         const primaryHostIqns = primaryNodeParsedResponse?.hostIqns?.split(',').map((iqn: string) => iqn.trim()) || [];
@@ -961,16 +963,13 @@ async function getSqlServiceStartupAssessment(
                 : { status: AssessmentStatus.NOT_OPTIMIZED, details: services, error: null };
         }
 
-        return {
-            sqlServerServices: sqlServerServicesResult
-        };
+        return sqlServerServicesResult;
     } catch (err) {
         logger.error('Error running combined high availability assessment:', err);
-        return {
-            sqlServerServices: { status: AssessmentStatus.NOT_OPTIMIZED, details: [], error: err?.toString() }
-        };
+        return { status: AssessmentStatus.NOT_OPTIMIZED, details: [], error: err?.toString() };
     }
 }
+
 async function initiateHostLevelHighAvailabilityAssessment(
     accountId: string,
     credentialsId: string,
@@ -1195,23 +1194,25 @@ async function getHighAvailabilityDriftData(
     credentialsId: string,
     region: string,
     databaseHostId: string,
+    resourceName: string,
     databaseInstanceId: string,
     databaseInstanceName: string,
     resourceAssessmentData: ResourceAssessmentData,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
-): Promise<ParameterDriftResponseType[] | (ParameterDriftResponseType & { errorMessage: string })> {
+) {
     logger.info('Initiating High availability resiliency assessment for:', {
         accountId,
         credentialsId,
         region,
         databaseHostId,
+        resourceName,
         databaseInstanceId
     });
 
     if (isEmpty(highAvailabilityAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HIGH_AVAILABILITY);
         logger.error('No high availability assessment data found.');
-        return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
+        return { errorMessage } as ErrorResponseType;
     }
 
     try {
@@ -1225,87 +1226,77 @@ async function getHighAvailabilityDriftData(
 
         const resiliencyConfig = storageGoldenConfigData.resiliency;
 
-        const haChecks: ParameterDriftResponseType[] = [
-            {
-                ...resiliencyConfig.highAvailability.sharedStorage,
-                name: 'shared-storage',
-                status: (sharedStorage?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-
-                objectsInViolation: Array.isArray(sharedStorage?.lunDetails)
-                    ? sharedStorage.lunDetails
-                          .filter((lun: any) => lun.status !== AssessmentStatus.OPTIMIZED)
-                          .map((lun: any) => lun.lunName)
-                    : [],
-                totalObjectsAssessed: Array.isArray(sharedStorage?.lunDetails) ? sharedStorage.lunDetails.length : 0,
-                totalObjectsInViolation: Array.isArray(sharedStorage?.lunDetails)
-                    ? sharedStorage.lunDetails.filter((lun: any) => lun.status !== AssessmentStatus.OPTIMIZED).length
-                    : 0
-            },
-            {
-                ...resiliencyConfig.highAvailability.driveLetter,
-                name: 'drive-letter',
-                status: (driveLetter?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                objectsInViolation: Array.isArray(driveLetter?.details?.missingDriveLetters)
-                    ? driveLetter.details.missingDriveLetters
-                    : [],
-                totalObjectsAssessed: Array.isArray(driveLetter?.details?.primaryNodeDriveLetters)
-                    ? driveLetter.details.primaryNodeDriveLetters.length
-                    : 0,
-                totalObjectsInViolation: Array.isArray(driveLetter?.details?.missingDriveLetters)
-                    ? driveLetter.details.missingDriveLetters.length
-                    : 0
-            },
-            {
-                ...resiliencyConfig.highAvailability.clusterQuorum,
-                name: 'cluster-quorum',
-                status: (clusterQuorum?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                objectsInViolation:
-                    clusterQuorum?.status !== AssessmentStatus.OPTIMIZED && clusterQuorum?.details
-                        ? [
-                              `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}`
-                          ]
-                        : [],
-                totalObjectsAssessed: 1,
-                totalObjectsInViolation: clusterQuorum?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
-            },
-            {
-                ...resiliencyConfig.highAvailability.heartbeat,
-                name: 'heartbeat-settings',
-                status: (heartbeat?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-
-                objectsInViolation:
-                    heartbeat?.status !== AssessmentStatus.OPTIMIZED && heartbeat?.details
-                        ? Object.entries(heartbeat.details)
-                              .filter(
-                                  ([, value]: [string, number | { current: number; recommended: number }]) =>
-                                      typeof value === 'object' &&
-                                      value !== null &&
-                                      'current' in value &&
-                                      'recommended' in value &&
-                                      value.current !== value.recommended
-                              )
-                              .map(([key]) => key)
-                        : [],
-
-                totalObjectsAssessed: heartbeat?.details ? Object.keys(heartbeat.details).length : 0,
-                totalObjectsInViolation:
-                    heartbeat?.details && typeof heartbeat.details === 'object'
-                        ? Object.values(heartbeat.details).filter(
-                              (value: any) => value && typeof value === 'object' && value.current !== value.recommended
-                          ).length
-                        : 0
-            },
-            {
-                ...resiliencyConfig.highAvailability.sqlServerService,
-                name: 'sqlServer-service',
-                status: (sqlServerServices?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-
-                objectsInViolation:
-                    sqlServerServices?.status !== AssessmentStatus.OPTIMIZED ? [databaseInstanceName] : [],
-
-                totalObjectsAssessed: 1,
-                totalObjectsInViolation: sqlServerServices?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
-            }
+        const haChecks: GenericAssessmentResponseType[] = [
+            isEmpty(sharedStorage)
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('shared-storage') }
+                : sharedStorage.error
+                ? { errorMessage: sharedStorage.error }
+                : {
+                      ...resiliencyConfig.highAvailability.sharedStorage,
+                      name: 'shared-storage',
+                      status: sharedStorage.status as AssessmentStatus,
+                      objectsInViolation:
+                          sharedStorage.lunDetails
+                              ?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED)
+                              .map(lun => lun.lunName) || [],
+                      totalObjectsAssessed: sharedStorage.lunDetails?.length || 0,
+                      totalObjectsInViolation:
+                          sharedStorage.lunDetails?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED).length || 0
+                  },
+            isEmpty(driveLetter)
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('drive-letter') }
+                : driveLetter.error
+                ? { errorMessage: driveLetter.error }
+                : {
+                      ...resiliencyConfig.highAvailability.driveLetter,
+                      name: 'drive-letter',
+                      status: driveLetter.status as AssessmentStatus,
+                      objectsInViolation: driveLetter.details.missingDriveLetters || [],
+                      totalObjectsAssessed: driveLetter.details.primaryNodeDriveLetters?.length || 0,
+                      totalObjectsInViolation: driveLetter.details.missingDriveLetters?.length || 0
+                  },
+            isEmpty(clusterQuorum)
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('cluster-quorum') }
+                : clusterQuorum.error
+                ? { errorMessage: clusterQuorum.error }
+                : {
+                      ...resiliencyConfig.highAvailability.clusterQuorum,
+                      name: 'cluster-quorum',
+                      status: clusterQuorum.status as AssessmentStatus,
+                      objectsInViolation:
+                          clusterQuorum.status !== AssessmentStatus.OPTIMIZED && clusterQuorum.details
+                              ? [
+                                    `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}`
+                                ]
+                              : [],
+                      totalObjectsAssessed: 1,
+                      totalObjectsInViolation: clusterQuorum.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
+                  },
+            isEmpty(heartbeat)
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('heartbeat') }
+                : heartbeat.error
+                ? { errorMessage: heartbeat.error }
+                : {
+                      ...resiliencyConfig.highAvailability.heartbeat,
+                      name: 'heartbeat-settings',
+                      status: heartbeat.status as AssessmentStatus,
+                      objectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
+                      totalObjectsAssessed: 1,
+                      totalObjectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? 0 : 1
+                  },
+            isEmpty(sqlServerServices) || !sqlServerServices.status
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('sql-server-service') }
+                : sqlServerServices.error
+                ? { errorMessage: sqlServerServices.error }
+                : {
+                      ...resiliencyConfig.highAvailability.sqlServerService,
+                      name: 'sqlServer-service',
+                      status: sqlServerServices.status as AssessmentStatus,
+                      objectsInViolation:
+                          sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? [databaseInstanceName] : [],
+                      totalObjectsAssessed: 1,
+                      totalObjectsInViolation: sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
+                  }
         ];
         return haChecks;
     } catch (error) {

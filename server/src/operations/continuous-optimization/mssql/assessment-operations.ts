@@ -204,7 +204,8 @@ async function fetchMssqlDriftAssessment(
         resource: {
             configurations: hostConfigurations,
             metadata: resourceMetadata,
-            assessment_data: hostLevelAssessmentData
+            assessment_data: hostLevelAssessmentData,
+            resource_name: resourceName
         }
     } = instanceDetail as DatabaseInstance;
 
@@ -278,6 +279,7 @@ async function fetchMssqlDriftAssessment(
                   credentialsId,
                   region,
                   databaseHostId,
+                  resourceName!,
                   databaseInstanceId,
                   databaseInstanceName,
                   fieldsValues,

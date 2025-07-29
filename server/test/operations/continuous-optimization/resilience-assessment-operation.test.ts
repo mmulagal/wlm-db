@@ -157,6 +157,7 @@ describe('Resilience drift assessment', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
+            RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
             'MSSQLSERVER',
             [
