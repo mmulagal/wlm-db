@@ -583,10 +583,11 @@ async function handleSharedStorageOptimize(
                     const igroupsMissingInitiators: IgroupMissingInitiators[] = [];
                     lunDetails
                         .filter(({ lunName }: LunDetail) => ontapLunPaths.includes(lunName))
-                        .forEach(({ igroupName, initiatorNames }: LunDetail) => {
+                        .forEach(({ igroupName, igroupUuid, initiatorNames }: LunDetail) => {
                             if (!allHostIqns.every((iqn: string) => initiatorNames.includes(iqn))) {
                                 igroupsMissingInitiators.push({
                                     igroupName,
+                                    igroupUuid,
                                     missingIqns: allHostIqns.filter((iqn: string) => !initiatorNames.includes(iqn))
                                 });
                             }

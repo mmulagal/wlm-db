@@ -104,7 +104,7 @@ const ADD_INITIATOR_TO_IGROUP = (fsxId: string, region: string, igroupMissingIqn
 # Add initiator to igroup Script
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 
-$WarningPreference = 'SilentlyContinue';
+$WarningPreference = 'SilentlyContinue'
 ${ontapRestRequestBootstrap}
 
 $FSxID = '${fsxId}'
@@ -112,32 +112,46 @@ $FSxRegion = '${region}'
 $IgroupMissingIqnsList = '${JSON.stringify(igroupMissingIqnsList)}' | ConvertFrom-Json
 
 $response = @{
-        result = 'success'
-        error = ''}
-try {
-        $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
-        $FSxCredentials = $FSxNDetails.FSxCredentials
-        $FSxHostName = $FSxNDetails.FSxHostName              
-        $null = Connect-NcController -Name $FSxHostName -Credential $FSxCredentials 
-        
-        foreach ($IgroupMissingIqn in $IgroupMissingIqnsMap) {
-                $IgroupName = $IgroupMissingIqn.igroupName
-                $Initiators = $IgroupMissingIqn.missingIqns
-                foreach ($Initiator in $Initiators) {
-                        try {
-                                Add-NcIgroupInitiator -Name $IgroupName -Initiator $Initiator 
-                        } catch {
-                                $response.result = 'partial'
-                                $response.error += $($_.Exception.Message)
-                                Write-Error "Failed to add initiator $Initiator to igroup $IgroupName : $($_.Exception.Message)"
-                        }
-                }
-        }
-} catch {
-        $response.result = 'failed'
-        $response.error += $($_.Exception.Message)
-        Write-Error "Failed to add initiator to igroup: $($_.Exception.Message)"
+    error = ''
+    result = 'success'
 }
+
+try {
+    $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
+    $FSxCredentials = $FSxNDetails.FSxCredentials
+    $FSxHostName = $FSxNDetails.FSxHostName
+
+    # Prepare REST API authentication
+    $bytes = [System.Text.Encoding]::ASCII.GetBytes("$($FSxCredentials.UserName):$($FSxCredentials.GetNetworkCredential().Password)")
+    $auth = [Convert]::ToBase64String($bytes)
+    $headers = @{
+        "Authorization" = "Basic $auth"
+        "Content-Type"  = "application/json"
+    }
+
+    foreach ($IgroupMissingIqn in $IgroupMissingIqnsList) {
+        $IgroupName = $IgroupMissingIqn.igroupName
+        $IgroupUuid = $IgroupMissingIqn.igroupUuid
+        $Initiators = $IgroupMissingIqn.missingIqns
+
+        foreach ($Initiator in $Initiators) {
+            $body = @{ name = $Initiator } | ConvertTo-Json
+            $addUri = "https://$FSxHostName/api/protocols/san/igroups/$IgroupUuid/initiators"
+            try {
+                Invoke-RestMethod -Uri $addUri -Headers $headers -Method POST -Body $body
+            } catch {
+                $response.result = 'partial'
+                $response.error += $($_.Exception.Message)
+                Write-Output ("Failed to add initiator {0} to igroup {1} : {2}" -f $Initiator, $IgroupName, $_.Exception.Message)
+            }
+        }
+    }
+} catch {
+    $response.result = 'failed'
+    $response.error += $($_.Exception.Message)
+    Write-Output ("Failed to add initiator to igroup: {0}" -f $_.Exception.Message)
+}
+
 $response | ConvertTo-Json -Compress
 Stop-Transcript | Out-Null
 `;
