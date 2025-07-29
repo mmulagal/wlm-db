@@ -33,12 +33,28 @@ const NotificationRequestBody = Type.Object({
         resourceType: Type.Optional(Type.String()),
         workload: Type.Optional(Type.String()),
         priority: Type.Optional(Type.String()),
-        actionRequired: Type.Optional(Type.Boolean()),
+        actionRequired: Type.Optional(
+            Type.Union([
+                Type.Boolean(),
+                Type.Object({
+                    to: Type.String({ minLength: 1 }),
+                    state: Type.Record(Type.String(), Type.String()),
+                    label: Type.String({ minLength: 1 })
+                })
+            ])
+        ),
+        link: Type.Optional(
+            Type.Object({
+                url: Type.String({ minLength: 5 }),
+                label: Type.String({ minLength: 1 })
+            })
+        ),
         persist: Type.Optional(Type.Boolean()),
         ttl: Type.Optional(Type.Number()),
         action: Type.Optional(Type.String()),
         userId: Type.Optional(Type.String()),
-        service: Type.Optional(Type.String())
+        service: Type.Optional(Type.String()),
+        timestamp: Type.Optional(Type.Number())
     })
 });
 
