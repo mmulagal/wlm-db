@@ -154,14 +154,18 @@ export const getTruncatedItems = (items: any) => {
 };
 
 export const bxpRedirect = (isWorkloadFactory: boolean) => {
+    const stageURL = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
+    const prodURL = 'https://console.bluexp.netapp.com/unified-backup-restore';
+    let url = '';
+    if (import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION) {
+        url = prodURL;
+    } else {
+        url = stageURL;
+    }
     if (isWorkloadFactory) {
-        window.open(
-            'https://staging.console.bluexp.netapp.com/unified-backup-restore',
-            '_blank',
-            'noopener,noreferrer'
-        );
+        window.open(url, '_blank', 'noopener,noreferrer');
     } else if (window.top) {
-        window.top.location.href = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
+        window.top.location.href = url;
     }
 };
 
