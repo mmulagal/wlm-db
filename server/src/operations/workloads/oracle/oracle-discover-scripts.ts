@@ -389,7 +389,7 @@ EOF
                 dataDirectories=""    
             fi
         fi
-        echo $(get_directory_mount_details "$dataDirectory")
+        echo $(get_directory_mount_details "$dataDirectories")
     }
 
     get_oracle_db_mount_details() {
