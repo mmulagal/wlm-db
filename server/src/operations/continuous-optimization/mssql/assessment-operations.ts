@@ -281,7 +281,6 @@ async function fetchMssqlDriftAssessment(
                   databaseHostId,
                   resourceName!,
                   databaseInstanceId,
-                  databaseInstanceName,
                   fieldsValues,
                   hostLevelAssessmentData as ResourceAssessmentData,
                   databaseInstanceConfigData

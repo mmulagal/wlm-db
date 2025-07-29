@@ -179,7 +179,6 @@ async function getResilienceDriftAssessment(
     databaseHostId: string,
     resourceName: string,
     databaseInstanceId: string,
-    databaseInstanceName: string,
     fieldsValues: string[] = [],
     resourceAssessmentData: ResourceAssessmentData = {},
     databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
@@ -189,7 +188,6 @@ async function getResilienceDriftAssessment(
         databaseInstanceId,
         databaseHostId,
         resourceName,
-        databaseInstanceName,
         fieldsValues
     });
     const shouldTriggerSnapshotPolicyAssessment =
@@ -255,7 +253,6 @@ async function getResilienceDriftAssessment(
                       databaseHostId,
                       resourceName,
                       databaseInstanceId,
-                      databaseInstanceName,
                       resourceAssessmentData,
                       highAvailabilityAssessmentData
                   )
@@ -984,20 +981,27 @@ async function getSqlServiceStartupAssessment(
 
         const servicesPreferred = (
             Array.isArray(parsedPreferred) ? parsedPreferred : parsedPreferred ? [parsedPreferred] : []
-        ).map(svc => ({ ...svc, preferredInstanceId: preferredNodeId }));
+        ).map(svc => ({ ...svc, instanceId: preferredNodeId }));
 
         const servicesNonPreferred = (
             Array.isArray(parsedNonPreferred) ? parsedNonPreferred : parsedNonPreferred ? [parsedNonPreferred] : []
-        ).map(svc => ({ ...svc, nonPreferredInstanceId: nonPreferredNodeId }));
+        ).map(svc => ({ ...svc, instanceId: nonPreferredNodeId }));
 
-        // Check StartType on both nodes and finalize assessment
-        const isOptimized =
-            servicesPreferred.every((svc: any) => svc.StartType?.toLowerCase() === 'manual') &&
-            servicesNonPreferred.every((svc: any) => svc.StartType?.toLowerCase() === 'manual') &&
-            activeNodeInstanceid === preferredNodeId;
+        const nodesInViolation = [
+            ...(servicesPreferred.some((svc: any) => svc.StartType?.toLowerCase() !== 'manual')
+                ? [preferredNodeId]
+                : []),
+            ...(servicesNonPreferred.some((svc: any) => svc.StartType?.toLowerCase() !== 'manual')
+                ? [nonPreferredNodeId]
+                : []),
+            ...(activeNodeInstanceid !== preferredNodeId ? [activeNodeInstanceid] : [])
+        ].filter(Boolean);
 
         return {
-            status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            status: isEmpty(nodesInViolation) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            preferredNodeId,
+            nonPreferredNodeId,
+            nodesInViolation,
             details: [...servicesPreferred, ...servicesNonPreferred]
         };
     } catch (err) {
@@ -1232,7 +1236,6 @@ async function getHighAvailabilityDriftData(
     databaseHostId: string,
     resourceName: string,
     databaseInstanceId: string,
-    databaseInstanceName: string,
     resourceAssessmentData: ResourceAssessmentData,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
 ) {
@@ -1327,8 +1330,10 @@ async function getHighAvailabilityDriftData(
                       name: 'sqlServer-service',
                       status: sqlServerServices.status as AssessmentStatus,
                       objectsInViolation:
-                          sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? [databaseInstanceName] : [],
-                      totalObjectsAssessed: 1,
+                          sqlServerServices.status !== AssessmentStatus.OPTIMIZED
+                              ? sqlServerServices.nodesInViolation
+                              : [],
+                      totalObjectsAssessed: 2,
                       totalObjectsInViolation: sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
                   }
         ];
