@@ -1275,7 +1275,11 @@ const DashboardInnerPage = () => {
                             configurationState={valueCardData.configurationState}
                             type={selectedConfig}
                             handleEdit={handleEditAnanlysis}
-                            isAnalysisDisabled={['ONTAP', 'Operating system', ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY].includes(selectedConfig)}
+                            isAnalysisDisabled={[
+                                'ONTAP',
+                                'Operating system',
+                                ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
+                            ].includes(selectedConfig)}
                         />
 
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>

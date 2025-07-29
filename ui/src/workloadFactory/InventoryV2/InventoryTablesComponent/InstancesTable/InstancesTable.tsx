@@ -900,7 +900,41 @@ const InstancesTable = () => {
             }
         },
         {
+            Header: t('databases.instance-table.headers.well-architected-status'),
+            accessor: 'optimizationStatus',
             id: '6',
+            width: '240px',
+            filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
+            renderCell: (cellData: string, rowData: any) => {
+                // If the computed display value is "Not analyzed", show with tooltip
+                if (cellData === 'Not analyzed') {
+                    return (
+                        <div className={styles.naContainer}>
+                            <Popover
+                                popoverClass=""
+                                trigger="hover"
+                                isAppendedToBody
+                                placement="auto"
+                                container={<TooltipIcon />}
+                            >
+                                <DsTypography variant="Regular_14">{rowData.optimizationDisableMsg}</DsTypography>
+                            </Popover>
+                            <DsTypography variant="Regular_14">Not analyzed</DsTypography>
+                        </div>
+                    );
+                }
+                if (rowData?.optimizationStatusLoading) {
+                    return <DsFlashingDotsLoader />;
+                }
+                return (
+                    <div className={styles.statusCol}>
+                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                    </div>
+                );
+            }
+        },
+        {
+            id: '7',
             Header: t('databases.instance-table.headers.fsx-for-ontap'),
             accessor: 'fileSystemName',
             isSortable: false,
@@ -942,40 +976,6 @@ const InstancesTable = () => {
                     )}
                 </>
             )
-        },
-        {
-            Header: t('databases.instance-table.headers.well-architected-status'),
-            accessor: 'optimizationStatus',
-            id: '7',
-            width: '240px',
-            filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
-            renderCell: (cellData: string, rowData: any) => {
-                // If the computed display value is "Not analyzed", show with tooltip
-                if (cellData === 'Not analyzed') {
-                    return (
-                        <div className={styles.naContainer}>
-                            <Popover
-                                popoverClass=""
-                                trigger="hover"
-                                isAppendedToBody
-                                placement="auto"
-                                container={<TooltipIcon />}
-                            >
-                                <DsTypography variant="Regular_14">{rowData.optimizationDisableMsg}</DsTypography>
-                            </Popover>
-                            <DsTypography variant="Regular_14">Not analyzed</DsTypography>
-                        </div>
-                    );
-                }
-                if (rowData?.optimizationStatusLoading) {
-                    return <DsFlashingDotsLoader />;
-                }
-                return (
-                    <div className={styles.statusCol}>
-                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                    </div>
-                );
-            }
         },
         {
             Header: t('databases.instance-table.headers.protection-status'),
