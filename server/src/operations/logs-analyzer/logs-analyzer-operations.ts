@@ -735,7 +735,6 @@ async function analyzePreRequisites(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string,
     databaseType: string
 ) {
     logger.info('Analyzing prerequisites for logs analysis:', {
@@ -743,7 +742,6 @@ async function analyzePreRequisites(
         credentialsId,
         region,
         databaseHostId,
-        databaseInstanceId,
         databaseType
     });
 
@@ -752,7 +750,6 @@ async function analyzePreRequisites(
     } = await getPaginatedDatabaseInstances(accountId, {
         resourceId: databaseHostId,
         credentialsId,
-        sqlInstanceId: databaseInstanceId,
         region,
         shouldIncludeResource: true,
         pageSize: 1
@@ -827,7 +824,7 @@ async function analyzePreRequisites(
             const bedrockAvailabilityCheckResponse = await callSsmExecution(
                 credentialsId,
                 region,
-                [bedrockCheckScript!],
+                [bedrockCheckScript],
                 activeNodeInstanceId,
                 'Check Bedrock Availability',
                 accountId,

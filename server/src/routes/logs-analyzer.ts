@@ -21,11 +21,11 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server.get(
-        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/pre-requisite`,
+        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/logs-analysis/pre-requisite`,
         { schema: AnalyzePreRequisitesSchema },
         async (request, reply) => {
             const {
-                params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                params: { accountId, credentialsId, region, databaseHostId },
                 query: { databaseType }
             } = castRequest(request);
 
@@ -34,7 +34,6 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
                 credentialsId,
                 region,
                 databaseHostId,
-                databaseInstanceId,
                 databaseType || DATABASE_TYPE.mssql
             );
 
