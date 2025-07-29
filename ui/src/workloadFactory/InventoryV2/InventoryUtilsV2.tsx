@@ -66,6 +66,7 @@ import {
     startProtectionStep1
 } from '../../store/workloadFactory/snapcenterSlice';
 import { setActionsDisabled, setDialogErrorWithTooltip } from '../../store/workloadFactory/dialogComponentSlice';
+import { add } from 'lodash';
 
 export const uniqueHostRow = (id: string, cred: string, region: string) => `${id}_${cred}_${region}`;
 
@@ -3686,18 +3687,27 @@ export const addHostJobPolling = async (
                                     agentID,
                                     workspaceID
                                 });
-                                const diskList = dirRes?.diskInfos || dirRes?.data?.diskInfos || [];
-                                if (diskList && diskList?.length > 0) {
-                                    const payload = {
-                                        logbackupFolder: diskList?.[0]?.path || ''
-                                    };
-                                    await configureDirectory({
-                                        accountID,
-                                        hostID: subJob?.data?.host,
-                                        payload,
-                                        agentID,
-                                        workspaceID
-                                    });
+                                if (dirRes?.error) {
+                                    dispatch(
+                                        addNotification({
+                                            notificationType: NOTIFICATION_TYPES.ERROR,
+                                            message: dirRes?.error?.data || 'Failed to fetch directories'
+                                        })
+                                    );
+                                } else {
+                                    const diskList = dirRes?.diskInfos || dirRes?.data?.diskInfos || [];
+                                    if (diskList && diskList?.length > 0) {
+                                        const payload = {
+                                            logbackupFolder: diskList?.[0]?.path || ''
+                                        };
+                                        await configureDirectory({
+                                            accountID,
+                                            hostID: subJob?.data?.host,
+                                            payload,
+                                            agentID,
+                                            workspaceID
+                                        });
+                                    }
                                 }
                             }
 
