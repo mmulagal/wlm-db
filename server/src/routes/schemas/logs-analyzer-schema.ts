@@ -7,6 +7,7 @@ import {
     RemediationRecommendationObject,
     ReportIdentifier
 } from '../types/logs-analyzer.types';
+import { DatabaseHostSummaryParams } from '../types/database-hosts.types';
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
@@ -43,7 +44,6 @@ const GetLogsAnalyzerSchema = {
 const ListLogsAnalyzerReportsSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
     description: 'List logs analysis reports for a specific database instance',
-    hide: process.env.NODE_ENV === 'production',
     params: LogsAnalyzerParams,
     querystring: Type.Object({
         pageSize: Type.Optional(Type.Number())
@@ -65,7 +65,7 @@ const AnalyzePreRequisitesSchema = {
         'Check pre-requisites for logs analysis for a specific database instance in a remote database host machine',
     summary:
         'Logs analysis pre-requisites include checking if Bedrock model is available, if the networking configuration is correct, and if the required IAM policies are in place.',
-    params: LogsAnalyzerParams,
+    params: DatabaseHostSummaryParams,
     queryString: Type.Object({
         databaseType: Type.Optional(Type.String())
     }),
