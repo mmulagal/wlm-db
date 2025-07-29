@@ -587,7 +587,7 @@ async function initiateHostLevelAssessmentDataCollection(
     let rssConfigErrorMessage;
     let mssqlPatchAssessment;
     let mssqlPatchErrorMessage;
-    let highAvailiabilityAssessment;
+    let highAvailabilityAssessment;
 
     if (fields?.includes(AssessmentCategories.LICENSE)) {
         ({ licenseAssessment, errorMessage: licenseErrorMessage } =
@@ -698,7 +698,7 @@ async function initiateHostLevelAssessmentDataCollection(
                 databaseInstanceRecord,
                 jobId
             )) || {};
-        highAvailiabilityAssessment = { clusterQuorum, heartbeat };
+        highAvailabilityAssessment = { clusterQuorum, heartbeat };
     }
     const hasAssessmentOrError = [
         licenseAssessment,
@@ -710,7 +710,8 @@ async function initiateHostLevelAssessmentDataCollection(
         rssConfigAssessment,
         rssConfigErrorMessage,
         mssqlPatchAssessment,
-        mssqlPatchErrorMessage
+        mssqlPatchErrorMessage,
+        highAvailabilityAssessment
     ].some(item => !isEmpty(item));
 
     if (hasAssessmentOrError) {
@@ -724,7 +725,7 @@ async function initiateHostLevelAssessmentDataCollection(
             rssConfig: rssConfigAssessment || (!rssConfigErrorMessage ? existingAssessmentData?.rssConfig : undefined),
             mssqlPatch:
                 mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
-            highAvailability: highAvailiabilityAssessment,
+            highAvailability: highAvailabilityAssessment,
             errors: {
                 license:
                     licenseErrorMessage || (!licenseAssessment ? existingAssessmentData?.errors?.license : undefined),
@@ -751,7 +752,7 @@ async function initiateHostLevelAssessmentDataCollection(
             region,
             databaseHostId,
             databaseInstanceId,
-            'license,compute,host-os-patch,rss-config,mssql-patch',
+            'license,compute,host-os-patch,rss-config,mssql-patch,high-availability',
             { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
 
