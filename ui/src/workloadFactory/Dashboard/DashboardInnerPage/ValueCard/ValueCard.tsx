@@ -67,9 +67,13 @@ const ValueCard = ({
                                 container={
                                     <div
                                         onClick={isAnalysisDisabled ? undefined : () => handleEdit(type)}
-                                        onKeyDown={isAnalysisDisabled ? undefined : (e => {
-                                            if (e.key === 'Enter' || e.key === ' ') handleEdit(type);
-                                        })}
+                                        onKeyDown={
+                                            isAnalysisDisabled
+                                                ? undefined
+                                                : e => {
+                                                      if (e.key === 'Enter' || e.key === ' ') handleEdit(type);
+                                                  }
+                                        }
                                         role="button"
                                         tabIndex={isAnalysisDisabled ? -1 : 0}
                                         className={`${styles.editButton} ${isAnalysisDisabled ? styles.disabled : ''}`}
@@ -78,7 +82,9 @@ const ValueCard = ({
                                     </div>
                                 }
                             >
-                                {isAnalysisDisabled ? GENERAL.COMING_SOON : t('databases.general.manage-analysis-state')}
+                                {isAnalysisDisabled
+                                    ? GENERAL.COMING_SOON
+                                    : t('databases.general.manage-analysis-state')}
                             </Popover>
                         </div>
                         <DsTypography variant="Regular_14">{t('databases.well-architect.analysis-state')}</DsTypography>
