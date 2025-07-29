@@ -594,8 +594,8 @@ const HOST_AND_SQL_INFO_PS1 = [
             $responseObject['windowsAuthentication'] = $?
             $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
             $deploymentTypeCheck = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q $deploymentTypeCheckQuery 2> $null
-            $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
             $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
+            $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
           } catch {
             $responseObject['windowsAuthentication'] = $False
             try {           
