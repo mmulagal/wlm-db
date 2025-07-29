@@ -95,6 +95,8 @@ const OntapVolume = Type.Object({
 type OntapVolumeType = Static<typeof OntapVolume>;
 
 const ErrorResponse = Type.Object({ errorMessage: Type.String() });
+type ErrorResponseType = Static<typeof ErrorResponse>;
+
 const ParameterDriftResponse = Type.Object({
     name: Type.String(),
     status: Type.Enum(AssessmentStatus),
@@ -327,7 +329,7 @@ const DriftAssessmentResponse = Type.Object({
     snapshotPolicy: Type.Optional(GenericAssessmentResponse),
     crr: Type.Optional(GenericAssessmentResponse),
     awsBackup: Type.Optional(GenericAssessmentResponse),
-    highAvailability: Type.Optional(Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))),
+    highAvailability: Type.Optional(Type.Array(Type.Union([GenericAssessmentResponse, ErrorResponse]))),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     dismissedConfigurations: Type.Optional(dismissedConfigurationsResponse),
     fileSystemId: Type.Optional(Type.String()),
@@ -716,5 +718,6 @@ export {
     BulkOptimizeHASharedStorageBodyType,
     OptimizeHASharedStorageRequestBodyType,
     OptimizeHASharedStorageRequestBody,
-    BulkOptimizeHASharedStorageRequestBodyType
+    BulkOptimizeHASharedStorageRequestBodyType,
+    ErrorResponseType
 };

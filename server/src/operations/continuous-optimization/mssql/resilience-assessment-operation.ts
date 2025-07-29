@@ -4,6 +4,7 @@ import { compact, isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
     DriftAssessmentResponseType,
+    ErrorResponseType,
     GenericAssessmentResponseType,
     OntapVolumeType,
     ParameterDriftResponseType
@@ -176,6 +177,7 @@ async function getResilienceDriftAssessment(
     credentialsId: string,
     region: string,
     databaseHostId: string,
+    resourceName: string,
     databaseInstanceId: string,
     databaseInstanceName: string,
     fieldsValues: string[] = [],
@@ -186,6 +188,7 @@ async function getResilienceDriftAssessment(
         credentialsId,
         databaseInstanceId,
         databaseHostId,
+        resourceName,
         databaseInstanceName,
         fieldsValues
     });
@@ -210,8 +213,6 @@ async function getResilienceDriftAssessment(
     const awsbackupAssessmentData = configDataMap[AssessmentCategories.AWS_BACKUP];
     const crrAssessmentData = configDataMap[AssessmentCategories.CRR];
     const highAvailabilityAssessmentData = configDataMap[AssessmentCategories.HIGH_AVAILABILITY];
-
-    logger.info('config data map', { configDataMap });
 
     try {
         const [snapshotPolicy, crrData, awsBackup, haChecks] = await Promise.all([
@@ -252,6 +253,7 @@ async function getResilienceDriftAssessment(
                       credentialsId,
                       region,
                       databaseHostId,
+                      resourceName,
                       databaseInstanceId,
                       databaseInstanceName,
                       resourceAssessmentData,
@@ -781,7 +783,7 @@ async function getSharedStorageAssessment(
         }
 
         if (!primaryNodeParsedResponse || !standbyNodeParsedResponse) {
-            throw new Error('Invalid or empty JSON response from SSM execution for shared storage assessment.');
+            throw new Error('Unable to fetch LUN IQN details for shared storage assessment.');
         }
 
         const primaryHostIqns = primaryNodeParsedResponse?.hostIqns?.split(',').map((iqn: string) => iqn.trim()) || [];
@@ -1192,23 +1194,25 @@ async function getHighAvailabilityDriftData(
     credentialsId: string,
     region: string,
     databaseHostId: string,
+    resourceName: string,
     databaseInstanceId: string,
     databaseInstanceName: string,
     resourceAssessmentData: ResourceAssessmentData,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
-): Promise<GenericAssessmentResponseType[] | (ParameterDriftResponseType & { errorMessage: string })> {
+) {
     logger.info('Initiating High availability resiliency assessment for:', {
         accountId,
         credentialsId,
         region,
         databaseHostId,
+        resourceName,
         databaseInstanceId
     });
 
     if (isEmpty(highAvailabilityAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HIGH_AVAILABILITY);
         logger.error('No high availability assessment data found.');
-        return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
+        return { errorMessage } as ErrorResponseType;
     }
 
     try {
@@ -1223,157 +1227,75 @@ async function getHighAvailabilityDriftData(
         const resiliencyConfig = storageGoldenConfigData.resiliency;
 
         const haChecks: GenericAssessmentResponseType[] = [
-            (sharedStorage as unknown as { error?: string })?.error
-                ? { errorMessage: (sharedStorage as unknown as { error: string }).error }
+            isEmpty(sharedStorage)
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('shared-storage') }
+                : sharedStorage.error
+                ? { errorMessage: sharedStorage.error }
                 : {
                       ...resiliencyConfig.highAvailability.sharedStorage,
                       name: 'shared-storage',
-                      status: ((sharedStorage as unknown as { status?: string })?.status ??
-                          AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                      objectsInViolation: Array.isArray(
-                          (sharedStorage as unknown as { lunDetails?: unknown[] })?.lunDetails
-                      )
-                          ? (
-                                sharedStorage as unknown as { lunDetails: { status: string; lunName: string }[] }
-                            ).lunDetails
-                                .filter(lun => lun.status !== AssessmentStatus.OPTIMIZED)
-                                .map(lun => lun.lunName)
-                          : [],
-                      totalObjectsAssessed: Array.isArray(
-                          (sharedStorage as unknown as { lunDetails?: unknown[] })?.lunDetails
-                      )
-                          ? (sharedStorage as unknown as { lunDetails: unknown[] }).lunDetails.length
-                          : 0,
-                      totalObjectsInViolation: Array.isArray(
-                          (sharedStorage as unknown as { lunDetails?: unknown[] })?.lunDetails
-                      )
-                          ? (sharedStorage as unknown as { lunDetails: { status: string }[] }).lunDetails.filter(
-                                lun => lun.status !== AssessmentStatus.OPTIMIZED
-                            ).length
-                          : 0
+                      status: sharedStorage.status as AssessmentStatus,
+                      objectsInViolation:
+                          sharedStorage.lunDetails
+                              ?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED)
+                              .map(lun => lun.lunName) || [],
+                      totalObjectsAssessed: sharedStorage.lunDetails?.length || 0,
+                      totalObjectsInViolation:
+                          sharedStorage.lunDetails?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED).length || 0
                   },
-            (driveLetter as unknown as { error?: string })?.error
-                ? { errorMessage: (driveLetter as unknown as { error: string }).error }
+            isEmpty(driveLetter)
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('drive-letter') }
+                : driveLetter.error
+                ? { errorMessage: driveLetter.error }
                 : {
                       ...resiliencyConfig.highAvailability.driveLetter,
                       name: 'drive-letter',
-                      status: ((driveLetter as unknown as { status?: string })?.status ??
-                          AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                      objectsInViolation: Array.isArray(
-                          (driveLetter as unknown as { details?: { missingDriveLetters?: string[] } })?.details
-                              ?.missingDriveLetters
-                      )
-                          ? (driveLetter as unknown as { details: { missingDriveLetters: string[] } }).details
-                                .missingDriveLetters
-                          : [],
-                      totalObjectsAssessed: Array.isArray(
-                          (driveLetter as unknown as { details?: { primaryNodeDriveLetters?: string[] } })?.details
-                              ?.primaryNodeDriveLetters
-                      )
-                          ? (driveLetter as unknown as { details: { primaryNodeDriveLetters: string[] } }).details
-                                .primaryNodeDriveLetters.length
-                          : 0,
-                      totalObjectsInViolation: Array.isArray(
-                          (driveLetter as unknown as { details?: { missingDriveLetters?: string[] } })?.details
-                              ?.missingDriveLetters
-                      )
-                          ? (driveLetter as unknown as { details: { missingDriveLetters: string[] } }).details
-                                .missingDriveLetters.length
-                          : 0
+                      status: driveLetter.status as AssessmentStatus,
+                      objectsInViolation: driveLetter.details.missingDriveLetters || [],
+                      totalObjectsAssessed: driveLetter.details.primaryNodeDriveLetters?.length || 0,
+                      totalObjectsInViolation: driveLetter.details.missingDriveLetters?.length || 0
                   },
-            (clusterQuorum as unknown as { error?: string })?.error
-                ? { errorMessage: (clusterQuorum as unknown as { error: string }).error }
+            isEmpty(clusterQuorum)
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('cluster-quorum') }
+                : clusterQuorum.error
+                ? { errorMessage: clusterQuorum.error }
                 : {
                       ...resiliencyConfig.highAvailability.clusterQuorum,
                       name: 'cluster-quorum',
-                      status: ((clusterQuorum as unknown as { status?: string })?.status ??
-                          AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
+                      status: clusterQuorum.status as AssessmentStatus,
                       objectsInViolation:
-                          (clusterQuorum as unknown as { status?: string })?.status !== AssessmentStatus.OPTIMIZED &&
-                          (clusterQuorum as unknown as { details?: { isMajority: boolean; isPhysicalDisk: boolean } })
-                              ?.details
+                          clusterQuorum.status !== AssessmentStatus.OPTIMIZED && clusterQuorum.details
                               ? [
-                                    `IsMajority: ${
-                                        (
-                                            clusterQuorum as unknown as {
-                                                details: { isMajority: boolean; isPhysicalDisk: boolean };
-                                            }
-                                        ).details.isMajority
-                                    }, IsPhysicalDisk: ${
-                                        (
-                                            clusterQuorum as unknown as {
-                                                details: { isMajority: boolean; isPhysicalDisk: boolean };
-                                            }
-                                        ).details.isPhysicalDisk
-                                    }`
+                                    `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}`
                                 ]
                               : [],
                       totalObjectsAssessed: 1,
-                      totalObjectsInViolation:
-                          (clusterQuorum as unknown as { status?: string })?.status !== AssessmentStatus.OPTIMIZED
-                              ? 1
-                              : 0
+                      totalObjectsInViolation: clusterQuorum.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
                   },
-            (heartbeat as unknown as { error?: string })?.error
-                ? { errorMessage: (heartbeat as unknown as { error: string }).error }
+            isEmpty(heartbeat)
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('heartbeat') }
+                : heartbeat.error
+                ? { errorMessage: heartbeat.error }
                 : {
                       ...resiliencyConfig.highAvailability.heartbeat,
                       name: 'heartbeat-settings',
-                      status: ((heartbeat as unknown as { status?: string })?.status ??
-                          AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                      objectsInViolation:
-                          (heartbeat as unknown as { status?: string })?.status !== AssessmentStatus.OPTIMIZED &&
-                          (heartbeat as unknown as { details?: Record<string, unknown> })?.details
-                              ? Object.entries(
-                                    (
-                                        heartbeat as unknown as {
-                                            details: Record<string, { current: number; recommended: number }>;
-                                        }
-                                    ).details
-                                )
-                                    .filter(
-                                        ([, value]) =>
-                                            typeof value === 'object' &&
-                                            value !== null &&
-                                            'current' in value &&
-                                            'recommended' in value &&
-                                            value.current !== value.recommended
-                                    )
-                                    .map(([key]) => key)
-                              : [],
-                      totalObjectsAssessed: (heartbeat as unknown as { details?: Record<string, unknown> })?.details
-                          ? Object.keys((heartbeat as unknown as { details: Record<string, unknown> }).details).length
-                          : 0,
-                      totalObjectsInViolation:
-                          (heartbeat as unknown as { details?: Record<string, unknown> })?.details &&
-                          typeof (heartbeat as unknown as { details: Record<string, unknown> }).details === 'object'
-                              ? Object.values(
-                                    (
-                                        heartbeat as unknown as {
-                                            details: Record<string, { current: number; recommended: number }>;
-                                        }
-                                    ).details
-                                ).filter(
-                                    value => value && typeof value === 'object' && value.current !== value.recommended
-                                ).length
-                              : 0
+                      status: heartbeat.status as AssessmentStatus,
+                      objectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
+                      totalObjectsAssessed: 1,
+                      totalObjectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? 0 : 1
                   },
-            (sqlServerServices as unknown as { error?: string })?.error
-                ? { errorMessage: (sqlServerServices as unknown as { error: string }).error }
+            isEmpty(sqlServerServices) || !sqlServerServices.status
+                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('sql-server-service') }
+                : sqlServerServices.error
+                ? { errorMessage: sqlServerServices.error }
                 : {
                       ...resiliencyConfig.highAvailability.sqlServerService,
                       name: 'sqlServer-service',
-                      status: ((sqlServerServices as unknown as { status?: string })?.status ??
-                          AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
+                      status: sqlServerServices.status as AssessmentStatus,
                       objectsInViolation:
-                          (sqlServerServices as unknown as { status?: string })?.status !== AssessmentStatus.OPTIMIZED
-                              ? [databaseInstanceName]
-                              : [],
+                          sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? [databaseInstanceName] : [],
                       totalObjectsAssessed: 1,
-                      totalObjectsInViolation:
-                          (sqlServerServices as unknown as { status?: string })?.status !== AssessmentStatus.OPTIMIZED
-                              ? 1
-                              : 0
+                      totalObjectsInViolation: sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
                   }
         ];
         return haChecks;

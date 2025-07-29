@@ -482,7 +482,7 @@ async function updateDatabaseHostAssessmentData(
     resourceId: string,
     updatedAssessmentData: any
 ) {
-    logger.info('Update host configurations', { accountId, resourceId });
+    logger.info('Update host assessment data', { accountId, resourceId });
     return updateResource({ accountId, credentialsId, resourceId, updatedAssessmentData });
 }
 
@@ -493,7 +493,7 @@ async function updateDatabaseHostAssessmentResults(
     resourceId: string,
     updatedAssessmentResults: any
 ) {
-    logger.info('Update host configurations', { accountId, resourceId });
+    logger.info('Update host assessment results', { accountId, resourceId });
     return updateResource({ accountId, credentialsId, region, resourceId, updatedAssessmentResults });
 }
 
