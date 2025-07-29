@@ -961,16 +961,13 @@ async function getSqlServiceStartupAssessment(
                 : { status: AssessmentStatus.NOT_OPTIMIZED, details: services, error: null };
         }
 
-        return {
-            sqlServerServices: sqlServerServicesResult
-        };
+        return sqlServerServicesResult;
     } catch (err) {
         logger.error('Error running combined high availability assessment:', err);
-        return {
-            sqlServerServices: { status: AssessmentStatus.NOT_OPTIMIZED, details: [], error: err?.toString() }
-        };
+        return { status: AssessmentStatus.NOT_OPTIMIZED, details: [], error: err?.toString() };
     }
 }
+
 async function initiateHostLevelHighAvailabilityAssessment(
     accountId: string,
     credentialsId: string,
@@ -1225,87 +1222,135 @@ async function getHighAvailabilityDriftData(
 
         const resiliencyConfig = storageGoldenConfigData.resiliency;
 
+        const sharedStorageWithError = sharedStorage as {
+            error?: string;
+            status?: string;
+            lunDetails?: Array<{ status: string; lunName: string }>;
+        };
+        const driveLetterWithError = driveLetter as {
+            error?: string;
+            status?: string;
+            details?: { missingDriveLetters?: string[]; primaryNodeDriveLetters?: string[] };
+        };
+        const clusterQuorumWithError = clusterQuorum as {
+            error?: string;
+            status?: string;
+            details?: { isMajority: boolean; isPhysicalDisk: boolean };
+        };
+        const heartbeatWithError = heartbeat as unknown as {
+            error?: string;
+            status?: string;
+            details?: Record<string, { current: number; recommended: number }>;
+        };
+        const sqlServerServicesWithError = sqlServerServices as {
+            error?: string;
+            status?: string;
+            details?: any[];
+        };
+
         const haChecks: ParameterDriftResponseType[] = [
-            {
-                ...resiliencyConfig.highAvailability.sharedStorage,
-                name: 'shared-storage',
-                status: (sharedStorage?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-
-                objectsInViolation: Array.isArray(sharedStorage?.lunDetails)
-                    ? sharedStorage.lunDetails
-                          .filter((lun: any) => lun.status !== AssessmentStatus.OPTIMIZED)
-                          .map((lun: any) => lun.lunName)
-                    : [],
-                totalObjectsAssessed: Array.isArray(sharedStorage?.lunDetails) ? sharedStorage.lunDetails.length : 0,
-                totalObjectsInViolation: Array.isArray(sharedStorage?.lunDetails)
-                    ? sharedStorage.lunDetails.filter((lun: any) => lun.status !== AssessmentStatus.OPTIMIZED).length
-                    : 0
-            },
-            {
-                ...resiliencyConfig.highAvailability.driveLetter,
-                name: 'drive-letter',
-                status: (driveLetter?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                objectsInViolation: Array.isArray(driveLetter?.details?.missingDriveLetters)
-                    ? driveLetter.details.missingDriveLetters
-                    : [],
-                totalObjectsAssessed: Array.isArray(driveLetter?.details?.primaryNodeDriveLetters)
-                    ? driveLetter.details.primaryNodeDriveLetters.length
-                    : 0,
-                totalObjectsInViolation: Array.isArray(driveLetter?.details?.missingDriveLetters)
-                    ? driveLetter.details.missingDriveLetters.length
-                    : 0
-            },
-            {
-                ...resiliencyConfig.highAvailability.clusterQuorum,
-                name: 'cluster-quorum',
-                status: (clusterQuorum?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-                objectsInViolation:
-                    clusterQuorum?.status !== AssessmentStatus.OPTIMIZED && clusterQuorum?.details
-                        ? [
-                              `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}`
-                          ]
-                        : [],
-                totalObjectsAssessed: 1,
-                totalObjectsInViolation: clusterQuorum?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
-            },
-            {
-                ...resiliencyConfig.highAvailability.heartbeat,
-                name: 'heartbeat-settings',
-                status: (heartbeat?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-
-                objectsInViolation:
-                    heartbeat?.status !== AssessmentStatus.OPTIMIZED && heartbeat?.details
-                        ? Object.entries(heartbeat.details)
-                              .filter(
-                                  ([, value]: [string, number | { current: number; recommended: number }]) =>
-                                      typeof value === 'object' &&
-                                      value !== null &&
-                                      'current' in value &&
-                                      'recommended' in value &&
-                                      value.current !== value.recommended
-                              )
-                              .map(([key]) => key)
-                        : [],
-
-                totalObjectsAssessed: heartbeat?.details ? Object.keys(heartbeat.details).length : 0,
-                totalObjectsInViolation:
-                    heartbeat?.details && typeof heartbeat.details === 'object'
-                        ? Object.values(heartbeat.details).filter(
-                              (value: any) => value && typeof value === 'object' && value.current !== value.recommended
-                          ).length
-                        : 0
-            },
-            {
-                ...resiliencyConfig.highAvailability.sqlServerService,
-                name: 'sqlServer-service',
-                status: (sqlServerServices?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
-
-                objectsInViolation:
-                    sqlServerServices?.status !== AssessmentStatus.OPTIMIZED ? [databaseInstanceName] : [],
-
-                totalObjectsAssessed: 1,
-                totalObjectsInViolation: sqlServerServices?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
-            }
+            sharedStorageWithError?.error
+                ? ({ errorMessage: sharedStorageWithError.error } as ParameterDriftResponseType & {
+                      errorMessage: string;
+                  })
+                : {
+                      ...resiliencyConfig.highAvailability.sharedStorage,
+                      name: 'shared-storage',
+                      status: (sharedStorageWithError?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
+                      objectsInViolation: Array.isArray(sharedStorageWithError?.lunDetails)
+                          ? sharedStorageWithError.lunDetails
+                                .filter(lun => lun.status !== AssessmentStatus.OPTIMIZED)
+                                .map(lun => lun.lunName)
+                          : [],
+                      totalObjectsAssessed: Array.isArray(sharedStorageWithError?.lunDetails)
+                          ? sharedStorageWithError.lunDetails.length
+                          : 0,
+                      totalObjectsInViolation: Array.isArray(sharedStorageWithError?.lunDetails)
+                          ? sharedStorageWithError.lunDetails.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED)
+                                .length
+                          : 0
+                  },
+            driveLetterWithError?.error
+                ? ({ errorMessage: driveLetterWithError.error } as ParameterDriftResponseType & {
+                      errorMessage: string;
+                  })
+                : {
+                      ...resiliencyConfig.highAvailability.driveLetter,
+                      name: 'drive-letter',
+                      status: (driveLetterWithError?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
+                      objectsInViolation: Array.isArray(driveLetterWithError?.details?.missingDriveLetters)
+                          ? driveLetterWithError.details.missingDriveLetters
+                          : [],
+                      totalObjectsAssessed: Array.isArray(driveLetterWithError?.details?.primaryNodeDriveLetters)
+                          ? driveLetterWithError.details.primaryNodeDriveLetters.length
+                          : 0,
+                      totalObjectsInViolation: Array.isArray(driveLetterWithError?.details?.missingDriveLetters)
+                          ? driveLetterWithError.details.missingDriveLetters.length
+                          : 0
+                  },
+            clusterQuorumWithError?.error
+                ? ({ errorMessage: clusterQuorumWithError.error } as ParameterDriftResponseType & {
+                      errorMessage: string;
+                  })
+                : {
+                      ...resiliencyConfig.highAvailability.clusterQuorum,
+                      name: 'cluster-quorum',
+                      status: (clusterQuorumWithError?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
+                      objectsInViolation:
+                          clusterQuorumWithError?.status !== AssessmentStatus.OPTIMIZED &&
+                          clusterQuorumWithError?.details
+                              ? [
+                                    `IsMajority: ${clusterQuorumWithError.details.isMajority}, IsPhysicalDisk: ${clusterQuorumWithError.details.isPhysicalDisk}`
+                                ]
+                              : [],
+                      totalObjectsAssessed: 1,
+                      totalObjectsInViolation: clusterQuorumWithError?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
+                  },
+            heartbeatWithError?.error
+                ? ({ errorMessage: heartbeatWithError.error } as ParameterDriftResponseType & { errorMessage: string })
+                : {
+                      ...resiliencyConfig.highAvailability.heartbeat,
+                      name: 'heartbeat-settings',
+                      status: (heartbeatWithError?.status ?? AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
+                      objectsInViolation:
+                          heartbeatWithError?.status !== AssessmentStatus.OPTIMIZED && heartbeatWithError?.details
+                              ? Object.entries(heartbeatWithError.details)
+                                    .filter(
+                                        ([, value]: [string, { current: number; recommended: number }]) =>
+                                            typeof value === 'object' &&
+                                            value !== null &&
+                                            'current' in value &&
+                                            'recommended' in value &&
+                                            value.current !== value.recommended
+                                    )
+                                    .map(([key]) => key)
+                              : [],
+                      totalObjectsAssessed: heartbeatWithError?.details
+                          ? Object.keys(heartbeatWithError.details).length
+                          : 0,
+                      totalObjectsInViolation:
+                          heartbeatWithError?.details && typeof heartbeatWithError.details === 'object'
+                              ? Object.values(heartbeatWithError.details).filter(
+                                    value => value && typeof value === 'object' && value.current !== value.recommended
+                                ).length
+                              : 0
+                  },
+            sqlServerServicesWithError?.error
+                ? ({
+                      errorMessage: sqlServerServicesWithError.error
+                  } as ParameterDriftResponseType & { errorMessage: string })
+                : {
+                      ...resiliencyConfig.highAvailability.sqlServerService,
+                      name: 'sqlServer-service',
+                      status: (sqlServerServicesWithError?.status ??
+                          AssessmentStatus.NOT_OPTIMIZED) as AssessmentStatus,
+                      objectsInViolation:
+                          sqlServerServicesWithError?.status !== AssessmentStatus.OPTIMIZED
+                              ? [databaseInstanceName]
+                              : [],
+                      totalObjectsAssessed: 1,
+                      totalObjectsInViolation: sqlServerServicesWithError?.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
+                  }
         ];
         return haChecks;
     } catch (error) {
