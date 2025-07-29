@@ -80,13 +80,18 @@ try {
 }
 catch {
     write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
-    Write-Information "FSxN Management domain $MgmtDNS is not resolved. Switching to management IP."
-    $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.IpAddresses
-    if ($MgmtDNS -is [array]) {
-        $MgmtDNS = $MgmtDNS[0]
+    if ($_.Exception.Message -like "*remote server returned an error*") {
+        Write-Information "Server connection works, returned error for 0 arguments"       
     }
-    $isprivatesubnet = $True
-    $restcert = ''
+    else {
+        Write-Information "FSxN Management domain $MgmtDNS is not resolved. Switching to management IP."
+        $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.IpAddresses
+        if ($MgmtDNS -is [array]) {
+            $MgmtDNS = $MgmtDNS[0]
+        }
+        $isprivatesubnet = $True
+        $restcert = ''
+    }
 }
 
 
