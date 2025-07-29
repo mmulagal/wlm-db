@@ -710,7 +710,8 @@ async function initiateHostLevelAssessmentDataCollection(
         rssConfigAssessment,
         rssConfigErrorMessage,
         mssqlPatchAssessment,
-        mssqlPatchErrorMessage
+        mssqlPatchErrorMessage,
+        highAvailiabilityAssessment
     ].some(item => !isEmpty(item));
 
     if (hasAssessmentOrError) {
@@ -751,7 +752,7 @@ async function initiateHostLevelAssessmentDataCollection(
             region,
             databaseHostId,
             databaseInstanceId,
-            'license,compute,host-os-patch,rss-config,mssql-patch',
+            'license,compute,host-os-patch,rss-config,mssql-patch,high-availability',
             { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
 
