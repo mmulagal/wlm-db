@@ -587,7 +587,7 @@ async function initiateHostLevelAssessmentDataCollection(
     let rssConfigErrorMessage;
     let mssqlPatchAssessment;
     let mssqlPatchErrorMessage;
-    let highAvailiabilityAssessment;
+    let highAvailabilityAssessment;
 
     if (fields?.includes(AssessmentCategories.LICENSE)) {
         ({ licenseAssessment, errorMessage: licenseErrorMessage } =
@@ -698,7 +698,7 @@ async function initiateHostLevelAssessmentDataCollection(
                 databaseInstanceRecord,
                 jobId
             )) || {};
-        highAvailiabilityAssessment = { clusterQuorum, heartbeat };
+        highAvailabilityAssessment = { clusterQuorum, heartbeat };
     }
     const hasAssessmentOrError = [
         licenseAssessment,
@@ -711,7 +711,7 @@ async function initiateHostLevelAssessmentDataCollection(
         rssConfigErrorMessage,
         mssqlPatchAssessment,
         mssqlPatchErrorMessage,
-        highAvailiabilityAssessment
+        highAvailabilityAssessment
     ].some(item => !isEmpty(item));
 
     if (hasAssessmentOrError) {
@@ -725,7 +725,7 @@ async function initiateHostLevelAssessmentDataCollection(
             rssConfig: rssConfigAssessment || (!rssConfigErrorMessage ? existingAssessmentData?.rssConfig : undefined),
             mssqlPatch:
                 mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
-            highAvailability: highAvailiabilityAssessment,
+            highAvailability: highAvailabilityAssessment,
             errors: {
                 license:
                     licenseErrorMessage || (!licenseAssessment ? existingAssessmentData?.errors?.license : undefined),
