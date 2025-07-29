@@ -11,9 +11,9 @@ import {
 import ms from 'ms';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
-import { AuditStatus, HttpErrorCodes } from '../../utils/consts';
+import { AuditStatus, DEFAULT_INSTANCE_NAME, HttpErrorCodes } from '../../utils/consts';
 
-import { generateHash, getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
+import { generateHash, getArtifactsRegionBucketName, isDemo, sqlResponseParsing } from '../../utils/utils';
 import {
     AVG_TOKEN_COUNT_PER_ERROR,
     BEDROCK_PRICE,
@@ -23,7 +23,8 @@ import {
     LOGS_ANALYZER_PACKAGE_VERSION,
     LOGS_COUNT_TO_CONSIDER,
     MODEL_AVAILABILITY_STATUS,
-    MSSQL_ERROR_PATTERN
+    MSSQL_ERROR_PATTERN,
+    PRE_REQ_MESSAGES
 } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { DatabaseInstance, DatabaseInstancesIncludingResource } from '../../utils/common-types';
 import getLogger from '../../utils/logger';
@@ -296,7 +297,9 @@ async function handleLogsAnalysis(
             'Fetch Logs Path for sql server instance'
         );
         const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
-        const [{ path: logsPath } = {}] = parsedResponse?.[databaseInstanceName] || [];
+        const [{ path: logsPath } = {}] = isDemo()
+            ? parsedResponse?.[DEFAULT_INSTANCE_NAME] || []
+            : parsedResponse?.[databaseInstanceName] || [];
         if (!logsPath) {
             throw createError(
                 HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -726,10 +729,153 @@ async function calculateLogsAnalysisPrice(region: string) {
         costPerError
     };
 }
+
+async function analyzePreRequisites(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseType: string
+) {
+    logger.info('Analyzing prerequisites for logs analysis:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseType
+    });
+
+    const {
+        items: [managedInstance]
+    } = await getPaginatedDatabaseInstances(accountId, {
+        resourceId: databaseHostId,
+        credentialsId,
+        region,
+        shouldIncludeResource: true,
+        pageSize: 1
+    });
+
+    const databaseInstanceDetails = {
+        ...managedInstance,
+        storage_type: STORAGE_TYPE.FSXN,
+        isManaged: true
+    };
+
+    const { nodeId: activeNodeInstanceId } = await getActiveNodeAndInstanceDetails(
+        accountId,
+        credentialsId,
+        region,
+        managedInstance.resource,
+        databaseInstanceDetails as unknown as DatabaseInstance
+    );
+
+    let bedrockPreRequisites;
+    let instanceProfilePreRequisites;
+    let credentialsPreRequisites;
+    let networkingPreRequisites;
+
+    let inferenceProfileArn: string | undefined;
+    try {
+        const {
+            modelId,
+            response,
+            response: { agreementAvailability, entitlementAvailability } = {}
+        } = (await findFirstAvailableModel(accountId, credentialsId, region, LOGS_ANALYZER_MODEL_IDS)) || {};
+
+        if (!modelId || (response && isEmpty(response))) {
+            bedrockPreRequisites = {
+                ready: false,
+                message: PRE_REQ_MESSAGES.MODEL_NOT_AVAILABLE.replace(
+                    '%smodelId%s',
+                    LOGS_ANALYZER_MODEL_IDS[0]
+                ).replace('%sregion%s', region)
+            };
+        } else {
+            inferenceProfileArn = await getInferenceProfileFromModelId(accountId, credentialsId, region, modelId);
+        }
+
+        const isSupported =
+            agreementAvailability?.status === MODEL_AVAILABILITY_STATUS.AVAILABLE &&
+            entitlementAvailability === MODEL_AVAILABILITY_STATUS.AVAILABLE;
+        if (!isSupported) {
+            bedrockPreRequisites = {
+                ready: false,
+                message: PRE_REQ_MESSAGES.MODEL_NOT_AVAILABLE.replace(
+                    '%smodelId%s',
+                    LOGS_ANALYZER_MODEL_IDS[0]
+                ).replace('%sregion%s', region)
+            };
+        }
+    } catch (error) {
+        if (error instanceof Error && error.message.includes('not authorized to perform')) {
+            credentialsPreRequisites = {
+                ready: false,
+                message: PRE_REQ_MESSAGES.WLMDB_CREDENTIALS
+            };
+        }
+    }
+
+    try {
+        if (inferenceProfileArn) {
+            const bedrockCheckScript =
+                databaseType === DATABASE_TYPE.mssql
+                    ? getWindowsBedrockAvailabilityCheckScript(region, inferenceProfileArn)
+                    : getLinuxBedrockAvailabilityCheckScript(region, inferenceProfileArn);
+            const bedrockAvailabilityCheckResponse = await callSsmExecution(
+                credentialsId,
+                region,
+                [bedrockCheckScript],
+                activeNodeInstanceId,
+                'Check Bedrock Availability',
+                accountId,
+                false,
+                '600',
+                false, // Cloud watch logs disabled
+                databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC : undefined,
+                databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC_VERSION : undefined
+            );
+
+            const [jsonResponse] = parseConcatenatedJSON(bedrockAvailabilityCheckResponse) as {
+                success?: boolean;
+                response?: object;
+                error?: string;
+            }[];
+            if (jsonResponse?.success === false) {
+                if (jsonResponse?.error?.includes(PRE_REQ_MESSAGES.BEDROCK_TOOL_NOT_FOUND)) {
+                    bedrockPreRequisites = {
+                        ready: false,
+                        message: PRE_REQ_MESSAGES.BEDROCK_TOOL_NOT_FOUND
+                    };
+                } else if (jsonResponse?.error?.includes('not authorized to perform')) {
+                    instanceProfilePreRequisites = {
+                        ready: false,
+                        message: PRE_REQ_MESSAGES.IAM_INSTANCE_PROFILE
+                    };
+                } else {
+                    networkingPreRequisites = {
+                        ready: false,
+                        message: PRE_REQ_MESSAGES.BEDROCK_NW_CONFIGURATION
+                    };
+                }
+            }
+        }
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to continue with logs analysis ${error}`);
+    }
+
+    return {
+        bedrockPreRequisites,
+        instanceProfilePreRequisites,
+        credentialsPreRequisites,
+        networkingPreRequisites
+    };
+}
+
 export {
     triggerLogsAnalysis,
     handleLogsAnalysis,
     getLogsAnalysisReport,
-    listLogsAnalysisReportsIdentifiers,
-    calculateLogsAnalysisPrice
+    calculateLogsAnalysisPrice,
+    analyzePreRequisites,
+    listLogsAnalysisReportsIdentifiers
 };

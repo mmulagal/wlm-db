@@ -7,6 +7,7 @@ const LOG_LEVEL = 'info';
 const LOGS_COUNT_TO_CONSIDER = 100;
 
 const LOGS_ANALYZER_MODEL_IDS = [
+    'anthropic.claude-sonnet-4-20250514-v1:0',
     'anthropic.claude-3-7-sonnet-20250219-v1:0',
     'anthropic.claude-3-5-sonnet-20240620-v1:0'
 ];
@@ -27,6 +28,19 @@ const AVG_TOKEN_COUNT_PER_ERROR = {
 
 const MSSQL_ERROR_PATTERN =
     /(?:Error: (?<errorCode>\d+), Severity: (?<severity>\d+), State: (?<state>\d+)|.*?\b(?:(?<keyword>deadlock|error|failed|bottleneck))\b(?<message>.*))/;
+const PRE_REQ_MESSAGES = {
+    MODEL_NOT_AVAILABLE:
+        'Bedrock model %smodelId%s should be enabled in the AWS account and accessible from the region %sregion%s.',
+    BEDROCK_TOOL_NOT_FOUND:
+        'Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment.',
+    BEDROCK_NW_CONFIGURATION:
+        'Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet route table.',
+    IAM_INSTANCE_PROFILE:
+        'Ensure that IAM instance profile attached to the SQL node has bedrock:InvokeModel permission attached.',
+    WLMDB_CREDENTIALS:
+        'Ensure that the credentials selected is valid and have the permission bedrock:GetFoundationModelAvailability and bedrock:ListInferenceProfiles permissions attached.'
+};
+
 export {
     MODEL_AVAILABILITY_STATUS,
     LOGS_ANALYZER_BUNDLE_PATH,
@@ -37,5 +51,6 @@ export {
     LOGS_ANALYZER_MODEL_IDS,
     BEDROCK_PRICE,
     AVG_TOKEN_COUNT_PER_ERROR,
-    MSSQL_ERROR_PATTERN
+    MSSQL_ERROR_PATTERN,
+    PRE_REQ_MESSAGES
 };
