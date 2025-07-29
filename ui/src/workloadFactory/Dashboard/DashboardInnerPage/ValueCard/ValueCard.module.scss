@@ -31,6 +31,15 @@
                     fill: var(--grey-50);
                 }
             }
+
+            .editButton {
+                cursor: pointer;
+
+                &.disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+            }
         }
     }
 }

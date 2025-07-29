@@ -934,7 +934,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                         const configStateVal = instanceAssessmentData?.dismissedConfigurations?.highAvailability?.find(
                             (config: any) => config?.configurationName === item.name
                         )?.configState;
-                        setConfigState(configState, 'highAvailability', configStateVal);
+                        setConfigState(configState, 'mssqlhighAvailability', configStateVal);
                         return isOptimized(item?.status, configStateVal);
                     });
                 const isAllMssqlHighAvailability =
