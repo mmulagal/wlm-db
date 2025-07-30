@@ -1171,7 +1171,8 @@ async function discoverEc2Instances(
                 ...(vpcNames.has(ec2Instance?.VpcId) && { name: vpcNames.get(ec2Instance?.VpcId) }),
                 ...(vpcCidrs.has(ec2Instance?.VpcId) && { cidrBlock: vpcCidrs.get(ec2Instance?.VpcId) })
             },
-            error: undefined
+            error: undefined,
+            platform: ec2Instance?.PlatformDetails || ''
         };
     });
 
@@ -1732,8 +1733,11 @@ async function discoverOracleResources(
                             },
                             database_details: databaseDetails,
                             storage_details: instanceStorageDetails,
-                            is_default_auth: isDefaultAuthentication
+                            is_default_auth: isDefaultAuthentication,
+                            modules_availability: modulesAvailability
                         } = dbInstance;
+
+                        const { isAwsCliInstalled, isJqInstalled } = modulesAvailability || {};
 
                         const isOracleAuth = ec2OracleParameters.some(
                             (obj: { oracleinstancename: string; username: string; password: string }) =>
@@ -1796,7 +1800,13 @@ async function discoverOracleResources(
                             storage: storageDetails,
                             isInstanceStorageAsmManaged,
                             isDefaultAuthentication,
-                            oracleServerAuthentication: isOracleAuth
+                            oracleServerAuthentication: isOracleAuth,
+                            manageReadiness: {
+                                missingModules: [
+                                    !isAwsCliInstalled ? 'awsCli' : null,
+                                    !isJqInstalled ? 'jq' : null
+                                ].filter(Boolean) as string[]
+                            }
                         });
                     }
 

@@ -1338,7 +1338,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'oracleInstanceInfo',
-            '[{"sid":"ordbsdl","instance_details":{"instance_id":1,"instance_name":"ordbsdl","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"}},{"sid":"oraclesan1","instance_details":{"instance_id":1,"instance_name":"oraclesan1","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"STARTED"}},{"sid":"oracle","instance_details":{"instance_id":1,"instance_name":"oracle","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"}}]'
+            '[{"sid":"ordbsdl","instance_details":{"instance_id":1,"instance_name":"ordbsdl","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"},"modules_availability":{"isAwsCliInstalled":true,"isJqInstalled":true}},{"sid":"oraclesan1","instance_details":{"instance_id":1,"instance_name":"oraclesan1","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"STARTED"},"modules_availability":{"isAwsCliInstalled":true,"isJqInstalled":false}},{"sid":"oracle","instance_details":{"instance_id":1,"instance_name":"oracle","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"},"modules_availability":{"isAwsCliInstalled":false,"isJqInstalled":true}}]'
         )
     )
     .on(GetCommandInvocationCommand, {
