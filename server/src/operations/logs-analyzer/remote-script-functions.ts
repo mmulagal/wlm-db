@@ -250,7 +250,7 @@ function getLinuxPrepareScript(scriptParams: {
         inferenceConfig = {},
         logLevel = LOG_LEVEL
     } = scriptParams;
-    const { temperature = 0.5, maxTokens = 1000, topP = 0.9 } = inferenceConfig;
+    const { temperature = 0.5, maxTokens = 5000, topP = 0.9 } = inferenceConfig;
 
     return `
     
