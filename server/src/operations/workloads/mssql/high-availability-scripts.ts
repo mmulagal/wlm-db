@@ -130,22 +130,10 @@ $response = @{
     result = 'success'
 }
 
-    error = ''
-    result = 'success'
-}
-
 try {
     $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
     $FSxCredentials = $FSxNDetails.FSxCredentials
     $FSxHostName = $FSxNDetails.FSxHostName
-
-    # Prepare REST API authentication
-    $bytes = [System.Text.Encoding]::ASCII.GetBytes("$($FSxCredentials.UserName):$($FSxCredentials.GetNetworkCredential().Password)")
-    $auth = [Convert]::ToBase64String($bytes)
-    $headers = @{
-        "Authorization" = "Basic $auth"
-        "Content-Type"  = "application/json"
-    }
 
     foreach ($IgroupMissingIqn in $IgroupMissingIqnsList) {
         $IgroupName = $IgroupMissingIqn.igroupName
