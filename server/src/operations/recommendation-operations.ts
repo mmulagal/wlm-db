@@ -52,11 +52,17 @@ async function isUsingEnterpriseConfiguration(
         sqlServerInstanceInfo
     });
 
-    const { isDefaultInstance, sqlServerInstance, sqlServerAuthentication } = sqlServerInstanceInfo;
+    const { isDefaultInstance, sqlServerInstance, sqlServerAuthentication, windowsDomainUserAuthentication } =
+        sqlServerInstanceInfo;
     const sqlServerName = getDatabaseInstanceName(sqlServerInstance, isDefaultInstance);
 
     const command = [
-        sqlQueryExecution(sqlServerInstance, sqlServerName, ENTERPRISE_CHECK_QUERY, sqlServerAuthentication || false)
+        sqlQueryExecution(
+            sqlServerInstance,
+            sqlServerName,
+            ENTERPRISE_CHECK_QUERY,
+            sqlServerAuthentication || windowsDomainUserAuthentication || false
+        )
     ];
 
     const checkEnterpriseConfigurationList = await callSsmExecution(
