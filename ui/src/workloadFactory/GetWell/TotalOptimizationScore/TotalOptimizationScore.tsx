@@ -1,4 +1,5 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as WellArchitect } from '../../../assets/well-architect.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import styles from './TotalOptimizationScore.module.scss';
@@ -8,6 +9,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
 const TotalOptimizationScore = () => {
+    const { t } = useTranslation();
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const optimizationBreakDown = useAppSelector(state => state.getWellOptimize.optimizationBreakDown);
     const isAssessmentAvailable = useAppSelector(state => state.getWellOptimize.isAssessmentAvailable);
@@ -16,7 +18,7 @@ const TotalOptimizationScore = () => {
         <div className={styles.totalOptimizationScore}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Well-architected score
+                    {t('databases.well-architect.well-architected-score')}
                 </DsTypography>
                 {loading && <DsFlashingDotsLoader />}
             </div>
@@ -29,12 +31,14 @@ const TotalOptimizationScore = () => {
                     <div className={styles.text}>
                         <div className={styles.firstBlock}>
                             <Success />
-                            <DsTypography variant="Semibold_16">This instance is well-architected!</DsTypography>
+                            <DsTypography variant="Semibold_16">
+                                {t('databases.well-architect.well-architected-instance')}
+                            </DsTypography>
                         </div>
 
                         <div className={styles.secondBlock}>
                             <DsTypography variant="Regular_14" style={{ textAlign: 'center' }}>
-                                There are no issues. Your instance is analyzed every 24 hours for configuration issues.
+                                {t('databases.well-architect.well-architected-issue')}
                             </DsTypography>
                         </div>
                     </div>
@@ -51,31 +55,7 @@ const TotalOptimizationScore = () => {
                         <div className={styles.smallTile}>
                             <div className={styles.bottomRow}>
                                 <DsTypography variant="Regular_14" isDisabled={!!(!loading && !isAssessmentAvailable)}>
-                                    Well-architected configurations
-                                </DsTypography>
-                            </div>
-
-                            <div className={styles.separator} style={{ visibility: 'hidden' }} />
-
-                            {loading && <DsFlashingDotsLoader />}
-                            {!loading &&
-                                (isAssessmentAvailable ? (
-                                    <DsTypography variant="Semibold_14">
-                                        {optimizationBreakDown?.total?.optimized}
-                                    </DsTypography>
-                                ) : (
-                                    <DsTypography variant="Semibold_14" isDisabled>
-                                        {GENERAL.NOT_AVAILABLE}
-                                    </DsTypography>
-                                ))}
-                        </div>
-
-                        <div className={styles.horizontalSeparator} />
-
-                        <div className={styles.smallTile}>
-                            <div className={styles.bottomRow}>
-                                <DsTypography variant="Regular_14" isDisabled={!!(!loading && !isAssessmentAvailable)}>
-                                    Critical issues
+                                    {t('databases.well-architect.non-optimal-critical')}
                                 </DsTypography>
                             </div>
 
@@ -99,7 +79,7 @@ const TotalOptimizationScore = () => {
                         <div className={styles.smallTile}>
                             <div className={styles.bottomRow}>
                                 <DsTypography variant="Regular_14" isDisabled={!!(!loading && !isAssessmentAvailable)}>
-                                    Warnings
+                                    {t('databases.well-architect.non-optimal-warning')}
                                 </DsTypography>
                             </div>
 
@@ -121,12 +101,36 @@ const TotalOptimizationScore = () => {
                         <div className={styles.horizontalSeparator} />
 
                         <div className={styles.smallTile}>
+                            <div className={styles.bottomRow}>
+                                <DsTypography variant="Regular_14" isDisabled={!!(!loading && !isAssessmentAvailable)}>
+                                    {t('databases.well-architect.well-architected-configs')}
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.separator} style={{ visibility: 'hidden' }} />
+
+                            {loading && <DsFlashingDotsLoader />}
+                            {!loading &&
+                                (isAssessmentAvailable ? (
+                                    <DsTypography variant="Semibold_14">
+                                        {optimizationBreakDown?.total?.optimized}
+                                    </DsTypography>
+                                ) : (
+                                    <DsTypography variant="Semibold_14" isDisabled>
+                                        {GENERAL.NOT_AVAILABLE}
+                                    </DsTypography>
+                                ))}
+                        </div>
+
+                        <div className={styles.horizontalSeparator} />
+
+                        <div className={styles.smallTile}>
                             <DsTypography
                                 style={{ width: '140px' }}
                                 variant="Semibold_14"
                                 isDisabled={!!(!loading && !isAssessmentAvailable)}
                             >
-                                Total
+                                {t('databases.well-architect.total')}
                             </DsTypography>
 
                             <div className={styles.separator} style={{ visibility: 'hidden' }} />

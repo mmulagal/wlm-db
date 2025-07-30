@@ -126,7 +126,14 @@
             "oracle": "Oracle instance"
         },
         "well-architect": {
+            "non-optimal-critical": "Non-optimal configuration (Critical)",
+            "non-optimal-warning": "Non-optimal configuration (Warning)",
+            "well-architected-configs": "Well-architected configurations",
             "well-architect-state": "Well-architected",
+            "total": "Total",
+            "well-architected-score": "Well-architected score",
+            "well-architected-issue": "There are no issues. Your instance is analyzed every 24 hours for configuration issues.",
+            "well-architected-instance": "This instance is well-architected!",
             "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
             "view-and-fix": "View and fix",
             "no-configurations-available": "No configuration available.",
