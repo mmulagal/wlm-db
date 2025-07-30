@@ -1,5 +1,5 @@
 import { IgroupMissingInitiators } from '../../../utils/common-types';
-import { ontapRestRequest } from './common-templates';
+import { ontapRestRequest, ontapRestRequestBootstrap } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 import GOLDEN_CONFIG from '../../continuous-optimization/golden-configs/storage';
 
@@ -119,11 +119,12 @@ const ADD_INITIATOR_TO_IGROUP = (fsxId: string, region: string, igroupMissingIqn
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 
 $WarningPreference = 'SilentlyContinue'
-${ontapRestRequest}
-
 $FSxID = '${fsxId}'
 $FSxRegion = '${region}'
 $IgroupMissingIqnsList = '${JSON.stringify(igroupMissingIqnsList)}' | ConvertFrom-Json
+
+${ontapRestRequest}
+${ontapRestRequestBootstrap}
 
 $response = @{
     error = ''
@@ -150,20 +151,18 @@ try {
 
         foreach ($Initiator in $Initiators) {
             $body = @{ name = $Initiator } | ConvertTo-Json
-            $addUri = "https://$FSxHostName/api/protocols/san/igroups/$IgroupUuid/initiators"
+            $addUri = "/protocols/san/igroups/$IgroupUuid/initiators"
             try {
-                Invoke-RestMethod -Uri $addUri -Headers $headers -Method POST -Body $body
+                Invoke-ONTAPRequest -ApiEndpoint $addUri -Method POST -Body $body
             } catch {
-                $response.result = 'partial'
+                $response.result = 'failed'
                 $response.error += $($_.Exception.Message)
-                Write-Output ("Failed to add initiator {0} to igroup {1} : {2}" -f $Initiator, $IgroupName, $_.Exception.Message)
             }
         }
     }
 } catch {
     $response.result = 'failed'
     $response.error += $($_.Exception.Message)
-    Write-Output ("Failed to add initiator to igroup: {0}" -f $_.Exception.Message)
 }
 
 $response | ConvertTo-Json -Compress
