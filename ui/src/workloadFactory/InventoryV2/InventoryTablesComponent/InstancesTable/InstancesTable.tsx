@@ -50,6 +50,9 @@ import {
     DETECT_HOST_VAR,
     FROM_DIALOG,
     INVENTORY_STATUS,
+    PRODUCTION,
+    RBAC_PROD_ROLE_ID,
+    RBAC_STAGE_ROLE_ID,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
@@ -575,7 +578,11 @@ const InstancesTable = () => {
                 const matchingUser = rbacRes.data.items.find((item: any) => item.email === emailID);
                 if (matchingUser) {
                     if (matchingUser?.roles) {
-                        const hasRequiredRole = matchingUser?.roles.includes('381a2b6e-693b-4829-95a5-fbd753db30c7');
+                        const roleCheck =
+                            import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION
+                                ? RBAC_PROD_ROLE_ID
+                                : RBAC_STAGE_ROLE_ID;
+                        const hasRequiredRole = matchingUser?.roles.includes(roleCheck);
                         if (!hasRequiredRole) {
                             await assignRBACPrivileges({
                                 accountID: store.getState().auth.accountId,
