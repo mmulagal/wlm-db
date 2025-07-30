@@ -1,5 +1,5 @@
 import { IgroupMissingInitiators } from '../../../utils/common-types';
-import { ontapRestRequest, ontapRestRequestBootstrap } from './common-templates';
+import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 import GOLDEN_CONFIG from '../../continuous-optimization/golden-configs/storage';
 
@@ -78,23 +78,37 @@ $response = [PSCustomObject]@{
         lunMappings = @()
 }
 
-$lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "/protocols/san/lun-maps" -ApiQueryFilter 'fields=igroup' -method "GET"
 $filterLuns = @(${lunUuids.map(uuid => `'${uuid}'`).join(',')})
+$nextToken = $null
 
-if ($lunMapsResp.records) {
-        $response.lunMappings = $lunMapsResp.records | Where-Object { $filterLuns -contains $_.lun.uuid } | ForEach-Object {
-                $igroup = $_.igroup
-                if (-not [string]::IsNullOrEmpty($igroup)) {
-                        [PSCustomObject]@{
-                                lunUuid = $_.lun.uuid
-                                lunName = $_.lun.name
-                                igroupUuid = $igroup.uuid
-                                igroupName = $igroup.name
-                                initiatorNames = $igroup.initiators -split '[,\\s]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+Do {
+        if ($null -eq $nextToken) {
+                $lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "/protocols/san/lun-maps" -ApiQueryFilter 'fields=igroup' -method "GET"
+        } else {
+                $nextToken = $nextToken -replace '/api', ''
+                Write-Information "Next Token: $nextToken"
+                $lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint $nextToken
+        }
+
+        if ($lunMapsResp.records) {
+                $filteredMappings = $lunMapsResp.records | Where-Object { $filterLuns -contains $_.lun.uuid } | ForEach-Object {
+                        $igroup = $_.igroup
+                        if (-not [string]::IsNullOrEmpty($igroup)) {
+                                [PSCustomObject]@{
+                                        lunUuid = $_.lun.uuid
+                                        lunName = $_.lun.name
+                                        igroupUuid = $igroup.uuid
+                                        igroupName = $igroup.name
+                                        initiatorNames = $igroup.initiators -split '[,\\s]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+                                }
                         }
                 }
+                $response.lunMappings += $filteredMappings
         }
-}
+
+        $nextToken = $lunMapsResp._links.next.href
+
+} While ($null -ne $nextToken)
 
 $response | ConvertTo-Json -Depth 5 -Compress
 Stop-Transcript | Out-Null
@@ -105,7 +119,7 @@ const ADD_INITIATOR_TO_IGROUP = (fsxId: string, region: string, igroupMissingIqn
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 
 $WarningPreference = 'SilentlyContinue'
-${ontapRestRequestBootstrap}
+${ontapRestRequest}
 
 $FSxID = '${fsxId}'
 $FSxRegion = '${region}'
