@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DsPopover, DsTypography } from '@tlveng/wlm-ds';
 import styles from './ErrorCountChart.module.scss';
 import { formatTimeAMPM } from '../../../../../utils/utilityFunctions';
@@ -17,6 +17,10 @@ const MAX_RIGHT_PERCENT = 97; // Maximum left percent to avoid markers being too
 const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCountChartProps) => {
     // Generate x-axis labels based on startTime and endTime
     const xAxisNumbers = useMemo(() => getHourLabelsBetween(startTime, endTime), [startTime, endTime]);
+
+    // State to track hovered marker
+    const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
+
     // Map hour to count for quick lookup
     const hourToCount: Record<string, number> = {};
     hourlyErrorCounts.forEach(h => {
@@ -53,28 +57,59 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
         return `${first} - ${second}`;
     };
 
+    // Get chart width in px for accurate marker width calculation
+    const chartRef = useRef<HTMLDivElement>(null);
+    const [chartWidthPx, setChartWidthPx] = useState(0);
+    useEffect(() => {
+        if (chartRef && chartRef.current) {
+            setChartWidthPx(chartRef.current.offsetWidth);
+        }
+    }, [startTime, endTime]);
+
     // Prepare marker data
     const markerData = markedNumbers.map(num => {
         const idx = xAxisNumbers.indexOf(num);
         const offset = getOffset(num, idx);
         let leftPercent = (offset / denominator) * 100;
-
-        // To prevent markers from being too close to the edges
         leftPercent = Math.max(MIN_LEFT_PERCENT, Math.min(leftPercent, MAX_RIGHT_PERCENT));
-
         const count = hourToCount[num] || 0;
         const [hourStr, minuteStr] = num.split(':');
         const hour = Number(hourStr);
         let prevHour = hour - 1;
         if (prevHour < 0) prevHour = 23;
+        // Show marker at the start of the interval (prevHour:minuteStr)
+        const prevLabel = `${prevHour.toString().padStart(2, '0')}:${minuteStr}`;
+        const prevIdx = xAxisNumbers.indexOf(prevLabel);
+        let markerLeftPercent = leftPercent;
+        if (prevIdx !== -1) {
+            const prevOffset = getOffset(prevLabel, prevIdx);
+            markerLeftPercent = (prevOffset / denominator) * 100;
+            markerLeftPercent = Math.max(MIN_LEFT_PERCENT, Math.min(markerLeftPercent, MAX_RIGHT_PERCENT));
+        }
         const timeRange = formatRange(prevHour, hour, minuteStr);
         return {
             num,
+            markerLeftPercent,
             leftPercent,
             count,
             timeRange
         };
     });
+
+    // Calculate intervalPx for 2 data point (index 1 to 2)
+    let intervalPx = 0;
+    if (xAxisNumbers.length > 2 && chartWidthPx > 0) {
+        const getLeftPercent = (idx: number) => {
+            const offset = getOffset(xAxisNumbers[idx], idx);
+            return (offset / denominator) * 100;
+        };
+        const leftPercent2 = Math.max(MIN_LEFT_PERCENT, Math.min(getLeftPercent(1), MAX_RIGHT_PERCENT));
+        const leftPercent3 = Math.max(MIN_LEFT_PERCENT, Math.min(getLeftPercent(2), MAX_RIGHT_PERCENT));
+        intervalPx = (Math.abs(leftPercent3 - leftPercent2) / 100) * chartWidthPx - 1;
+    } else if (xAxisNumbers.length === 2 && chartWidthPx > 0) {
+        // For last 1 hour (2 datapoints), interval is 40% of chart width
+        intervalPx = 0.4 * chartWidthPx;
+    }
 
     // Prepare label data
     const labelData = xAxisNumbers.map((num, idx) => {
@@ -100,13 +135,33 @@ const ErrorCountChart = ({ startTime, endTime, hourlyErrorCounts = [] }: ErrorCo
     });
 
     return (
-        <div className={styles.errorCountChart}>
+        <div className={styles.errorCountChart} ref={chartRef}>
             <div className={styles.bar} />
-            {markerData.map(({ num, leftPercent, count, timeRange }) => (
-                <div key={`marker-${num}`} className={styles.markerWrapper} style={{ left: `calc(${leftPercent}%)` }}>
-                    <DsPopover title={`Time: ${timeRange} \nErrors: ${count}`} trigger="hover" placement="top">
-                        <div className={styles.marker} style={{ width: `${Math.max(2, count * 4)}px` }} />
-                    </DsPopover>
+            {markerData.map(({ num, markerLeftPercent, count, timeRange }) => (
+                <div key={`marker-${num}`}>
+                    {/* Interval boundary on hover */}
+                    {hoveredMarker === num && (
+                        <div
+                            className={styles.intervalBoundary}
+                            style={{
+                                left: `calc(${markerLeftPercent}%)`,
+                                width: `${intervalPx}px`
+                            }}
+                        />
+                    )}
+                    <div
+                        className={styles.markerWrapper}
+                        style={{ left: `calc(${markerLeftPercent}%)` }}
+                        onMouseEnter={() => setHoveredMarker(num)}
+                        onMouseLeave={() => setHoveredMarker(null)}
+                    >
+                        <DsPopover title={`Time: ${timeRange} \nErrors: ${count}`} trigger="hover" placement="top">
+                            <div
+                                className={styles.marker}
+                                style={{ width: `${Math.min(Math.max(2, count * 4), intervalPx)}px` }}
+                            />
+                        </DsPopover>
+                    </div>
                 </div>
             ))}
             <div className={styles.labels}>

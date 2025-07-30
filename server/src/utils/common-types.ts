@@ -138,12 +138,14 @@ interface HighAvailabilityLunDetails {
 interface HighAvailabilitySharedStorage {
     status: string;
     lunDetails: HighAvailabilityLunDetails[];
+    error?: string;
 }
 
 interface HighAvailabilitySqlServerServiceDetail {
     name: string;
     status: string;
     startType: string;
+    instanceId?: string;
 }
 
 interface HighAvailabilityClusterDriveLetterDetails {
@@ -151,17 +153,23 @@ interface HighAvailabilityClusterDriveLetterDetails {
     status: string;
     missingDriveLetters: string[];
     primaryNodeDriveLetters: string[];
+    error?: string;
 }
 
 interface HighAvailabilityAssessment {
     driveLetter?: {
         status: string;
         details: HighAvailabilityClusterDriveLetterDetails;
+        error?: string;
     };
     sharedStorage?: HighAvailabilitySharedStorage;
     sqlServerServices?: {
         status: string;
+        preferredNodeId?: string;
+        nonPreferredNodeId?: string;
+        nodesInViolation?: string[];
         details: HighAvailabilitySqlServerServiceDetail[];
+        error?: string;
     };
 }
 
@@ -209,10 +217,12 @@ interface ResourceAssessmentData {
         heartbeat?: {
             status: string;
             details: HighAvailabilityHeartbeatDetails;
+            error?: string;
         };
         clusterQuorum?: {
             status: string;
             details: HighAvailabilityClusterQuorumDetails;
+            error?: string;
         };
     };
     lastAssessedDate?: string;

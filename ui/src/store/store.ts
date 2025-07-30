@@ -103,7 +103,9 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             action?.meta?.arg?.endpointName === 'getMssqlInstanceData' ||
             action?.meta?.arg?.endpointName === 'prepareHost' ||
             action?.meta?.arg?.endpointName === 'manageMssqlInstance' ||
-            (action?.meta?.arg?.endpointName === 'listExistingHosts' && errorMsg?.includes('Unauthorized'))
+            (action?.meta?.arg?.endpointName === 'listExistingHosts' && errorMsg?.includes('Unauthorized')) ||
+            (action?.meta?.arg?.endpointName === 'listAllDirectories' &&
+                errorMsg?.includes("SyntaxError: Unexpected token 'U'"))
         ) {
             return;
         }

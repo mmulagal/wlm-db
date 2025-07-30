@@ -2,7 +2,8 @@ import {
     calculateLogsAnalysisPrice,
     getLogsAnalysisReport,
     listLogsAnalysisReportsIdentifiers,
-    triggerLogsAnalysis
+    triggerLogsAnalysis,
+    analyzePreRequisites
 } from '../../src/operations/logs-analyzer/logs-analyzer-operations';
 
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
@@ -132,5 +133,33 @@ describe('Logs Analyzer Operations', () => {
                 'non-existent-database-instance-id'
             )
         ).rejects.toThrow(/No logs analysis reports found/);
+    });
+
+    it('Should analyze prerequisites for logs analysis', async () => {
+        const response = await analyzePreRequisites(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            TEST_RESOURCE_ID,
+            'mssql'
+        );
+
+        expect(response).toBeDefined();
+        expect(response).toHaveProperty('bedrockPreRequisites');
+        expect(response).toHaveProperty('instanceProfilePreRequisites');
+        expect(response).toHaveProperty('credentialsPreRequisites');
+        expect(response).toHaveProperty('networkingPreRequisites');
+    });
+
+    it('Should handle prerequisites analysis with invalid database instance', async () => {
+        await expect(
+            analyzePreRequisites(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                'invalid-resource-id',
+                'mssql'
+            )
+        ).rejects.toThrow();
     });
 });

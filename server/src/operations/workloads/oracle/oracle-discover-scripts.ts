@@ -315,6 +315,7 @@ EOF
         dataDirectories=$(echo "$dataDirectory" | tr ',' '\n' | sort -u)
         if [ -z "$dataDirectories" ]; then
             echo "[]"
+            return 0
         fi
         dataDirectoryMappings="["
         while IFS= read -r dataDirectory; do
@@ -388,7 +389,7 @@ EOF
                 dataDirectories=""    
             fi
         fi
-        echo $(get_directory_mount_details "$dataDirectory")
+        echo $(get_directory_mount_details "$dataDirectories")
     }
 
     get_oracle_db_mount_details() {

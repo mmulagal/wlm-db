@@ -275,6 +275,24 @@ const BulkOptimizeSharedStorageSchema = {
     }
 };
 
+const BulkOptimizeHeartbeatSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Fix heartbeat settings in cluster configuration',
+    description: 'Fix heartbeat settings in cluster configuration'
+};
+
+const BulkOptimizeClusterQuorumSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Fix cluster quorum type in cluster configuration',
+    description: 'Fix cluster quorum type in cluster configuration'
+};
+
+const BulkOptimizeSQLServerServiceSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Fix sql server service parameters as part of High Availability Cluster configuration',
+    description: 'Fix sql server service parameters as per the best practice for selected database instances.'
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -295,5 +313,8 @@ export {
     BulkOptimizeAwsBackupSchema,
     BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema,
-    BulkOptimizeSharedStorageSchema
+    BulkOptimizeSharedStorageSchema,
+    BulkOptimizeHeartbeatSchema,
+    BulkOptimizeClusterQuorumSchema,
+    BulkOptimizeSQLServerServiceSchema
 };

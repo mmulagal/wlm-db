@@ -3525,8 +3525,8 @@ export const getDiscoverResult = (
     agentID: string,
     workspaceID: string,
     getDiscoverHostResult: any
-): Promise<number> => {
-    return new Promise(resolve => {
+): Promise<number> =>
+    new Promise(resolve => {
         let retries = 0;
         const maxRetries = 15;
         const interval = 10000;
@@ -3570,7 +3570,6 @@ export const getDiscoverResult = (
         // 👇 Then setup polling
         const intervalId = setInterval(check, interval);
     });
-};
 
 export const addHostJobPolling = async (
     addHostJobScApi: any,
@@ -3687,18 +3686,27 @@ export const addHostJobPolling = async (
                                     agentID,
                                     workspaceID
                                 });
-                                const diskList = dirRes?.diskInfos || dirRes?.data?.diskInfos || [];
-                                if (diskList && diskList?.length > 0) {
-                                    const payload = {
-                                        logbackupFolder: diskList?.[0]?.path || ''
-                                    };
-                                    await configureDirectory({
-                                        accountID,
-                                        hostID: subJob?.data?.host,
-                                        payload,
-                                        agentID,
-                                        workspaceID
-                                    });
+                                if (dirRes?.error) {
+                                    dispatch(
+                                        addNotification({
+                                            notificationType: NOTIFICATION_TYPES.ERROR,
+                                            message: dirRes?.error?.data || 'Failed to fetch directories'
+                                        })
+                                    );
+                                } else {
+                                    const diskList = dirRes?.diskInfos || dirRes?.data?.diskInfos || [];
+                                    if (diskList && diskList?.length > 0) {
+                                        const payload = {
+                                            logbackupFolder: diskList?.[0]?.path || ''
+                                        };
+                                        await configureDirectory({
+                                            accountID,
+                                            hostID: subJob?.data?.host,
+                                            payload,
+                                            agentID,
+                                            workspaceID
+                                        });
+                                    }
                                 }
                             }
 
@@ -3936,9 +3944,9 @@ export const getOptimizationStatusData = (rowData: any, t: any) => {
 export const getDeregisterContent = (rowData: any, t: TFunction) => {
     if (rowData?.hostType === DBType.MSSQL) {
         return t('databases.deregister-flow.mssql');
-    } else if (rowData?.hostType === DBType.ORACLE) {
-        return t('databases.deregister-flow.oracle');
-    } else {
-        return t('databases.deregister-flow.mssql');
     }
+    if (rowData?.hostType === DBType.ORACLE) {
+        return t('databases.deregister-flow.oracle');
+    }
+    return t('databases.deregister-flow.mssql');
 };

@@ -9,7 +9,8 @@ import {
     getInstanceInfo,
     getResources,
     updateDatabaseHostAssessmentData,
-    updateDatabaseHostAssessmentResults
+    updateDatabaseHostAssessmentResults,
+    updateDatabaseInstanceAssessmentResults
 } from '../../database/database-operations';
 import {
     CloneAssessment,
@@ -203,7 +204,8 @@ async function fetchMssqlDriftAssessment(
         resource: {
             configurations: hostConfigurations,
             metadata: resourceMetadata,
-            assessment_data: hostLevelAssessmentData
+            assessment_data: hostLevelAssessmentData,
+            resource_name: resourceName
         }
     } = instanceDetail as DatabaseInstance;
 
@@ -277,8 +279,8 @@ async function fetchMssqlDriftAssessment(
                   credentialsId,
                   region,
                   databaseHostId,
+                  resourceName!,
                   databaseInstanceId,
-                  databaseInstanceName,
                   fieldsValues,
                   hostLevelAssessmentData as ResourceAssessmentData,
                   databaseInstanceConfigData
@@ -586,7 +588,7 @@ async function initiateHostLevelAssessmentDataCollection(
     let rssConfigErrorMessage;
     let mssqlPatchAssessment;
     let mssqlPatchErrorMessage;
-    let highAvailiabilityAssessment;
+    let highAvailabilityAssessment;
 
     if (fields?.includes(AssessmentCategories.LICENSE)) {
         ({ licenseAssessment, errorMessage: licenseErrorMessage } =
@@ -697,7 +699,7 @@ async function initiateHostLevelAssessmentDataCollection(
                 databaseInstanceRecord,
                 jobId
             )) || {};
-        highAvailiabilityAssessment = { clusterQuorum, heartbeat };
+        highAvailabilityAssessment = { clusterQuorum, heartbeat };
     }
     const hasAssessmentOrError = [
         licenseAssessment,
@@ -709,7 +711,8 @@ async function initiateHostLevelAssessmentDataCollection(
         rssConfigAssessment,
         rssConfigErrorMessage,
         mssqlPatchAssessment,
-        mssqlPatchErrorMessage
+        mssqlPatchErrorMessage,
+        highAvailabilityAssessment
     ].some(item => !isEmpty(item));
 
     if (hasAssessmentOrError) {
@@ -723,7 +726,7 @@ async function initiateHostLevelAssessmentDataCollection(
             rssConfig: rssConfigAssessment || (!rssConfigErrorMessage ? existingAssessmentData?.rssConfig : undefined),
             mssqlPatch:
                 mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
-            highAvailability: highAvailiabilityAssessment,
+            highAvailability: highAvailabilityAssessment,
             errors: {
                 license:
                     licenseErrorMessage || (!licenseAssessment ? existingAssessmentData?.errors?.license : undefined),
@@ -750,7 +753,7 @@ async function initiateHostLevelAssessmentDataCollection(
             region,
             databaseHostId,
             databaseInstanceId,
-            'license,compute,host-os-patch,rss-config,mssql-patch',
+            'license,compute,host-os-patch,rss-config,mssql-patch,high-availability',
             { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
 
@@ -1137,6 +1140,7 @@ async function triggerMssqlAssessment(
                 );
             }
         }
+        await updateAssessmentResultsInInstanceMetadata(managedInstance);
     }
 }
 
@@ -1201,10 +1205,54 @@ async function onDemandTriggerMssqlDriftAssessment(
     }
 }
 
+async function updateAssessmentResultsInInstanceMetadata(managedInstance: DatabaseInstancesIncludingResource) {
+    const {
+        account_id: accountId,
+        region,
+        credentials_id: credentialsId,
+        resource_id: databaseHostId,
+        database_instance_id: databaseInstanceId
+    } = managedInstance;
+    logger.info('Update assessment results in instance metadata', {
+        accountId,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId
+    });
+    const driftAssessmentData = await fetchMssqlDriftAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        undefined,
+        managedInstance as unknown as DatabaseInstance
+    );
+
+    try {
+        await updateDatabaseInstanceAssessmentResults(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            driftAssessmentData
+        );
+    } catch (error) {
+        logger.error('Error while updating assessment results in instance table', {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            error
+        });
+    }
+}
+
 export {
     triggerMssqlAssessment,
     onDemandTriggerMssqlDriftAssessment,
     fetchMssqlDriftAssessment,
     fetchMssqlDriftAssessmentPerHost,
-    fetchMssqlDriftAssessmentPerAccount
+    fetchMssqlDriftAssessmentPerAccount,
+    updateAssessmentResultsInInstanceMetadata
 };

@@ -7,6 +7,7 @@ import ScrollableCard from '../ScrollableCard/ScrollableCard';
 import styles from './LogAnalyzerOnboarding.module.scss';
 import { setIsAgenticOnboardingActivating } from '../../../../../store/workloadFactory/agenticAISlice';
 import { setSelectedWellArchitectTab } from '../../../../../store/workloadFactory/getWellOptimizeSlice';
+import { ReactComponent as InfoIcon } from '../../../../../assets/ic_info.svg';
 import { WELL_ARCHITECTED_TABS } from '../../../../../utils/consts';
 
 const LogAnalyzerOnboarding = () => {
@@ -35,9 +36,42 @@ const LogAnalyzerOnboarding = () => {
                             </DsButton>
                         </div>
                     </div>
+                    <div className={styles.infoSection}>
+                        <div>
+                            <InfoIcon />
+                        </div>
+                        <DsTypography variant="Semibold_14">{t('databases.log-analyzer.info-text')}</DsTypography>
+                    </div>
                     <OnboardingAccordions />
                 </div>
-                <div className={styles.legalNoticeSection} />
+                <div className={styles.legalNoticeSection}>
+                    <DsTypography variant="Semibold_16" className={styles.legalNoticeHeading}>
+                        {t('databases.log-analyzer.cost-legal-overview')}
+                    </DsTypography>
+                    <div className={styles.legalNotice}>
+                        <div style={{ height: '24px' }} />
+                        <div className={styles.legalContentSection}>
+                            <div className={styles.sections}>
+                                <DsTypography variant="Semibold_14">{t('databases.log-analyzer.cost')}</DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.log-analyzer.cost-content')}
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.sections}>
+                                <DsTypography variant="Semibold_14">
+                                    {t('databases.log-analyzer.legal-notice')}
+                                </DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.log-analyzer.legal-notice-content-1')}
+                                </DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.log-analyzer.legal-notice-content-2')}
+                                </DsTypography>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

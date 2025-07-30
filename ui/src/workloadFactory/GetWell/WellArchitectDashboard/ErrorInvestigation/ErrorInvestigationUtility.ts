@@ -2,11 +2,11 @@ import { MS_PER_HOUR } from '../../../../utils/consts';
 import { ErrorInvestigationGetApiResponse } from '../../../../utils/types/agenticAITypes';
 
 export const eiSeverityOptionList = {
-    top5: 'Top 5 highest severity levels',
     all: 'All severity levels',
-    '1-8': '1-8',
-    '9-16': '9-16',
-    '16-24': '16-24'
+    top5: 'Top 5 highest severity levels',
+    '16-24': '16-24',
+    '9-15': '9-15',
+    '1-8': '1-8'
 };
 
 export const eiErrorCodesOptions = { all: 'All error codes', top10: 'Top 10 error codes', top5: 'Top 5 error codes' };
@@ -35,10 +35,19 @@ export const filterBySeverity = (
         });
     }
     if (selectedSeverity === eiSeverityOptionList?.top5) {
-        const allSeverities = Array.from(new Set(data.map(obj => Number(obj.severity))));
+        const allSeverities = Array.from(
+            new Set(
+                data
+                    .filter(
+                        obj =>
+                            obj.severity !== undefined && obj.severity !== null && !Number.isNaN(Number(obj.severity))
+                    )
+                    .map(obj => Number(obj.severity))
+            )
+        );
         allSeverities.sort((a, b) => b - a);
         const top5 = allSeverities.slice(0, 5);
-        return data.filter(obj => top5.includes(Number(obj.severity)));
+        return data.filter(obj => obj?.severity && top5.includes(Number(obj.severity)));
     }
     return data;
 };

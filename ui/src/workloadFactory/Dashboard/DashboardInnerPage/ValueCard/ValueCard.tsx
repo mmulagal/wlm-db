@@ -2,8 +2,10 @@ import { DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import styles from './ValueCard.module.scss';
 import { ReactComponent as Edit } from '../../../../assets/ic_edit.svg';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type ValueCardProps = {
+    optimizationScore?: string;
     optimizedInstances?: string;
     notOptimizedInstances?: string;
     severity?: string;
@@ -13,9 +15,11 @@ type ValueCardProps = {
     tooltipText?: string;
     type?: string;
     handleEdit?: any;
+    isAnalysisDisabled?: boolean;
 };
 
 const ValueCard = ({
+    optimizationScore,
     optimizedInstances,
     notOptimizedInstances,
     severity,
@@ -24,7 +28,8 @@ const ValueCard = ({
     from = 'innerPage',
     tooltipText,
     type,
-    handleEdit
+    handleEdit,
+    isAnalysisDisabled = false
 }: ValueCardProps) => {
     const { t } = useTranslation();
     return (
@@ -61,18 +66,25 @@ const ValueCard = ({
                                 trigger="hover"
                                 container={
                                     <div
-                                        onClick={() => handleEdit(type)}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter' || e.key === ' ') handleEdit(type);
-                                        }}
+                                        onClick={isAnalysisDisabled ? undefined : () => handleEdit(type)}
+                                        onKeyDown={
+                                            isAnalysisDisabled
+                                                ? undefined
+                                                : e => {
+                                                      if (e.key === 'Enter' || e.key === ' ') handleEdit(type);
+                                                  }
+                                        }
                                         role="button"
-                                        tabIndex={0}
+                                        tabIndex={isAnalysisDisabled ? -1 : 0}
+                                        className={`${styles.editButton} ${isAnalysisDisabled ? styles.disabled : ''}`}
                                     >
                                         <Edit />
                                     </div>
                                 }
                             >
-                                {t('databases.general.manage-analysis-state')}
+                                {isAnalysisDisabled
+                                    ? GENERAL.COMING_SOON
+                                    : t('databases.general.manage-analysis-state')}
                             </Popover>
                         </div>
                         <DsTypography variant="Regular_14">{t('databases.well-architect.analysis-state')}</DsTypography>

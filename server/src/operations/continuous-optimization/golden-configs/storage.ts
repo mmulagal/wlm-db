@@ -259,11 +259,11 @@ const GOLDEN_CONFIG = {
         },
         heartbeatSettings: {
             SameSubnetDelay: 1000,
-            SameSubnetThreshold: 10,
+            SameSubnetThreshold: 40,
             CrossSubnetDelay: 1000,
-            CrossSubnetThreshold: 20,
+            CrossSubnetThreshold: 40,
             CrossSiteDelay: 1000,
-            CrossSiteThreshold: 20
+            CrossSiteThreshold: 40
         },
         highAvailability: {
             sharedStorage: {

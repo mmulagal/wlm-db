@@ -40,7 +40,7 @@ const prepareHeaders = (
     if (isDemoMode) {
         headers.set('x-simulator', 'true');
     }
-    if (!isWorkloadFactory) {
+    if (!isWorkloadFactory && endpoint !== 'getWorkSpaceID' && endpoint !== 'getRBACPrivileges') {
         headers.set('x-netapp-referer', 'BlueXP');
     }
     if (

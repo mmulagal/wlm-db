@@ -58,13 +58,14 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         rowData?.name === 'NTFS allocation unit size' ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER;
 
-    const getHbOrCqPayload = (configurationName: string) => ({
+    const getHaPayload = (configurationName: string) => ({
         hostsToOptimize: [
             {
                 configurationName,
                 databaseHosts: [
                     {
                         id: selectedResourceId || hostId,
+                        sqlServerInstances: [selectedDatabaseInstance || instanceId],
                         credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                         region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
                     }
@@ -94,22 +95,6 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         ]
     });
 
-    const getSqlServicePayload = () => ({
-        hostsToOptimize: [
-            {
-                configurationName: 'sqlserver-service',
-                databaseHosts: [
-                    {
-                        id: selectedResourceId || hostId,
-                        sqlServerInstances: [selectedDatabaseInstance || instanceId],
-                        credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                        region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
-                    }
-                ]
-            }
-        ]
-    });
-
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
         // Only 1 config can be passed at a time
@@ -127,17 +112,17 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM) {
             statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
             apiCall = optimizeHAMssql;
-            payload = getHbOrCqPayload('cluster-quorum');
+            payload = getHaPayload('cluster-quorum');
             apiInput = { configName: 'cluster-quorum', payload };
         } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS) {
             statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
             apiCall = optimizeHAMssql;
-            payload = getHbOrCqPayload('heartbeat-settings');
+            payload = getHaPayload('heartbeat-settings');
             apiInput = { configName: 'heartbeat', payload };
         } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE) {
             statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
             apiCall = optimizeHAMssql;
-            payload = getSqlServicePayload();
+            payload = getHaPayload('sqlserver-service');
             apiInput = { configName: 'sqlserver-service', payload };
         } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
             statusType = 'ontap';

@@ -7,10 +7,7 @@ permissions:
 
 on:
   pull_request:
-    branches:
-      - master
-      - production
-  push:
+    types: [opened, synchronize, reopened]
     branches:
       - master
       - production

@@ -2705,6 +2705,10 @@ const ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
                 igroupUuid: 'c9272d32-6761-11f0-980e-53fb760838dd',
                 initiatorNames: ['iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com']
             }
+        ],
+        allHostIqns: [
+            'iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com',
+            'iqn.1991-05.com.microsoft:sqlnode2-45242.wlmqaauto.com'
         ]
     },
     driveLetter: {

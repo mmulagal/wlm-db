@@ -52,7 +52,7 @@ const JSON_CHECK = `
 
 // This function is used to get the MSSQL instance volume and lun details for data,log and tempdb drives
 const FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS = (instanceRecord: WorkloadInstance) => `
-    #Get MSSQL Instance Volume LUN Drive Details
+    # Get MSSQL Instance Volume LUN Drive Details
     ${slqcmdExecutionTemplate}
 
     $sqlInstance = "${instanceRecord.name}"

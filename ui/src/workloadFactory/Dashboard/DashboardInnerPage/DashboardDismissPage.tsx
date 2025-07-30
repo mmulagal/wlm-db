@@ -394,6 +394,20 @@ const DashboardDismissPage = () => {
                     tooltipText: selectedConfigSummary?.tooltipText
                 });
                 break;
+            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+                setValueCardData({
+                    instances: selectedConfigSummary.totalInstances,
+                    configurationState: selectedConfigSummary.configState,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '112px',
+                    tagHeight: '209px',
+                    data: {
+                        title: 'Recommendations',
+                        description: 'Expand instances to view recommendations.'
+                    },
+                    tooltipText: selectedConfigSummary?.tooltipText
+                });
+                break;
             case GENERAL.COMPUTE_RIGHTSIZING:
                 setValueCardData({
                     instances: selectedConfigSummary.totalInstances,

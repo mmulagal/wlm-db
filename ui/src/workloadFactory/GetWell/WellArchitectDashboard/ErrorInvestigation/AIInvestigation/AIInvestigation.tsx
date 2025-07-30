@@ -27,7 +27,8 @@ const AIInvestigation = ({
                 <div className={styles.rightHeaderSection}>
                     <DsTypography variant="Semibold_14">{t('databases.log-analyzer.ai-investigation')}</DsTypography>
                     <DsTypography variant="Semibold_13" className={styles.tag}>
-                        {t('databases.log-analyzer.error-code')}: {selectedErrorData?.errorCode}
+                        {t('databases.log-analyzer.error-code')}:{' '}
+                        {selectedErrorData?.errorCode || t('databases.log-analyzer.n/a')}
                     </DsTypography>
                 </div>
             </div>

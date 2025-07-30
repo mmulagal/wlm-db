@@ -2390,6 +2390,7 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
     let batchNumber = 1;
     let totalProcessed = 0;
     const startTime = Date.now();
+    const processedResourceIds = new Set<string>();
 
     do {
         logger.info(`Processing batch ${batchNumber}`, {
@@ -2416,11 +2417,21 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
 
             logger.info(`Processing ${batchManagedResources.length} resources in batch ${batchNumber}`);
 
-            // Process current batch following the old logic pattern
-            // eslint-disable-next-line no-await-in-loop
-            await processResourcesBatch(batchManagedResources, batchNumber);
+            if (batchManagedResources.length > 0) {
+                try {
+                    // Process current batch following the old logic pattern
+                    // eslint-disable-next-line no-await-in-loop
+                    const processedCount = await processResourcesBatch(
+                        batchManagedResources,
+                        batchNumber,
+                        processedResourceIds
+                    );
+                    totalProcessed += processedCount;
+                } catch (batchError) {
+                    logger.error(`Error processing resources batch ${batchNumber}:`, batchError);
+                }
+            }
 
-            totalProcessed += batchManagedResources.length;
             nextToken = newNextToken;
             batchNumber += 1;
         } catch (error: any) {
@@ -2438,11 +2449,27 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
     );
 }
 
-async function processResourcesBatch(resources: ResourceDetails[], batchNumber: number) {
+async function processResourcesBatch(
+    resources: ResourceDetails[],
+    batchNumber: number,
+    processedResourceIds: Set<string>
+): Promise<number> {
     logger.info(`Processing ${resources.length} resources in batch ${batchNumber}`);
 
+    // Filter out already processed resources
+    const uniqueResources = resources.filter(
+        (resource: ResourceDetails) => !processedResourceIds.has(resource.resource_id)
+    );
+
+    if (uniqueResources.length === 0) {
+        logger.info(`No new resources to process in batch ${batchNumber}`);
+        return 0;
+    }
+
+    logger.info(`Processing ${uniqueResources.length} unique resources in batch ${batchNumber}`);
+
     await Promise.all(
-        resources.map(
+        uniqueResources.map(
             throat(1, async (resource: ResourceDetails) => {
                 const {
                     metadata,
@@ -2461,6 +2488,9 @@ async function processResourcesBatch(resources: ResourceDetails[], batchNumber: 
                         metadata,
                         batchNumber
                     );
+
+                    // Mark as processed after successful processing
+                    processedResourceIds.add(resource.resource_id);
                 } catch (error: any) {
                     logger.error('Error while triggering performance assessment for resource', {
                         accountId,
@@ -2476,7 +2506,8 @@ async function processResourcesBatch(resources: ResourceDetails[], batchNumber: 
         )
     );
 
-    logger.info(`Completed processing ${resources.length} resources in batch ${batchNumber}`);
+    logger.info(`Completed processing ${uniqueResources.length} resources in batch ${batchNumber}`);
+    return uniqueResources.length;
 }
 
 async function processResourceNodes(

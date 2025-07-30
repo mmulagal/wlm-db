@@ -2,14 +2,14 @@ import { groupBy, isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import throat from 'throat';
 import getLogger from '../utils/logger';
-import { DatabaseInstance, DatabaseInstancesIncludingResource } from '../utils/common-types';
+import { DatabaseInstancesIncludingResource } from '../utils/common-types';
 import { DatabaseTypes } from '../utils/consts';
 import { registerJob, updateParentJobStatus } from './database/job-operations';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
-import { getPaginatedDatabaseInstances, updateDatabaseInstanceAssessmentResults } from './database/database-operations';
+import { getPaginatedDatabaseInstances } from './database/database-operations';
 import {
-    fetchMssqlDriftAssessment,
-    triggerMssqlAssessment
+    triggerMssqlAssessment,
+    updateAssessmentResultsInInstanceMetadata
 } from './continuous-optimization/mssql/assessment-operations';
 import { formatDuration, sleep } from '../utils/utils';
 import { INSTANCE_DEFAULT_SELECT_FIELDS } from '../utils/database-consts';
@@ -20,49 +20,6 @@ interface AccountJobInfo {
     parentJobId: string;
     totalInstances: number;
     processedInstances: number;
-}
-
-async function updateAssesmentResultsInInstanceMetadata(managedInstance: DatabaseInstancesIncludingResource) {
-    const {
-        account_id: accountId,
-        region,
-        credentials_id: credentialsId,
-        resource_id: databaseHostId,
-        database_instance_id: databaseInstanceId
-    } = managedInstance;
-    logger.info('Update assessment results in instance metadata', {
-        accountId,
-        credentialsId,
-        databaseHostId,
-        databaseInstanceId
-    });
-    const driftAssessmentData = await fetchMssqlDriftAssessment(
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceId,
-        undefined,
-        managedInstance as unknown as DatabaseInstance
-    );
-
-    try {
-        await updateDatabaseInstanceAssessmentResults(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId,
-            driftAssessmentData
-        );
-    } catch (error) {
-        logger.error('Error while updating assessment results in instance table', {
-            accountId,
-            databaseHostId,
-            databaseInstanceId,
-            error
-        });
-    }
 }
 
 async function createParentJobForAccount(accountId: string, initiatedBy: string): Promise<string | null> {
@@ -231,7 +188,7 @@ async function processAccountInstancesBatch(
         logger.info(
             `Updating metadata for ${instances.length} instances in account ${accountId}, batch ${batchNumber}`
         );
-        await Promise.all(instances.map(throat(3, instance => updateAssesmentResultsInInstanceMetadata(instance))));
+        await Promise.all(instances.map(throat(3, instance => updateAssessmentResultsInInstanceMetadata(instance))));
 
         logger.info(
             `Completed processing and metadata update for ${instances.length} instances in account ${accountId}, batch ${batchNumber}`

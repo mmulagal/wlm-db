@@ -26,11 +26,11 @@ const FilterComponent = () => {
     const loading = investigationDatesLoading || errorInvestigationLoading;
 
     const severityOptionList = [
-        eiSeverityOptionList?.top5,
         eiSeverityOptionList?.all,
-        eiSeverityOptionList?.['1-8'],
-        eiSeverityOptionList?.['9-16'],
-        eiSeverityOptionList?.['16-24']
+        eiSeverityOptionList?.top5,
+        eiSeverityOptionList?.['16-24'],
+        eiSeverityOptionList?.['9-15'],
+        eiSeverityOptionList?.['1-8']
     ];
 
     const errorCodesOptions = [eiErrorCodesOptions?.all, eiErrorCodesOptions?.top10, eiErrorCodesOptions?.top5];
@@ -47,7 +47,7 @@ const FilterComponent = () => {
         dispatch(
             resetEiFilters({
                 selectedTimeFrame: timeOptions[0],
-                selectedSeverity: severityOptionList[0],
+                selectedSeverity: severityOptionList[1],
                 selectedErrorCodes: errorCodesOptions[0]
             })
         );
@@ -115,7 +115,7 @@ const FilterComponent = () => {
                         dispatch(
                             resetEiFilters({
                                 selectedTimeFrame: timeOptions[0],
-                                selectedSeverity: severityOptionList[0],
+                                selectedSeverity: severityOptionList[1],
                                 selectedErrorCodes: errorCodesOptions[0]
                             })
                         );

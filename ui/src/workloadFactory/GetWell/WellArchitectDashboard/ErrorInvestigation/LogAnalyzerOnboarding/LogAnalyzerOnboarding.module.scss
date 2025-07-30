@@ -18,6 +18,18 @@
                 margin-bottom: 16px;
             }
 
+            .infoSection {
+                background: var(--background-content, #fff);
+                /* Light/Drop shadow/level 1 */
+                box-shadow: 2px 2px 6px 0 var(--border-drop-shadow, var(--border));
+                height: 56px;
+                margin-bottom: 2px;
+                padding: 16px 40px;
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
             .rightPart {
                 display: flex;
                 align-items: center;
@@ -37,8 +49,36 @@
         .legalNoticeSection {
             width: 32.33%;
             height: 416px;
-            background: var(--content-background);
-            box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, var(--border));
+
+            .legalNoticeHeading {
+                margin-bottom: 18px;
+            }
+
+            .legalNotice {
+                height: 420px;
+                background: var(--content-background);
+                box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, var(--border));
+
+                .legalContentSection {
+                    width: calc(100% - 20px);
+                    padding: 24px 20px 24px 40px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 24px;
+                    max-height: 396px;
+                    overflow-y: scroll;
+
+                    .sections {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+                }
+
+                ::-webkit-scrollbar {
+                    width: 4px;
+                }
+            }
         }
     }
 }
