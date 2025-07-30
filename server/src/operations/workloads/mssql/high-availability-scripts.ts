@@ -149,14 +149,27 @@ try {
         $IgroupUuid = $IgroupMissingIqn.igroupUuid
         $Initiators = $IgroupMissingIqn.missingIqns
 
+        # Create array of initiator objects for batch addition
+        $initiatorsArray = @()
         foreach ($Initiator in $Initiators) {
-            $body = @{ name = $Initiator } | ConvertTo-Json
-            $addUri = "/protocols/san/igroups/$IgroupUuid/initiators"
-            try {
-                Invoke-ONTAPRequest -ApiEndpoint $addUri -Method POST -Body $body
-            } catch {
+            $initiatorsArray += @{ name = $Initiator }
+        }
+        
+        $body = @{ records = $initiatorsArray } | ConvertTo-Json -Depth 3
+        $addUri = "/protocols/san/igroups/$IgroupUuid/initiators"
+        try {
+            Invoke-ONTAPRequest -ApiEndpoint $addUri -Method POST -Body $body
+        } catch {
+            $errorMessage = $_.Exception.Message
+            # Check if it's a 409 Conflict (initiator already exists)
+            if ($errorMessage -match "409|Conflict") {
+                if ($response.result -eq 'success') {
+                    $response.result = 'partial'
+                }
+                $response.error += "Initiator already exists in igroup $IgroupName (409 Conflict); "
+            } else {
                 $response.result = 'failed'
-                $response.error += $($_.Exception.Message)
+                $response.error += $errorMessage; 
             }
         }
     }
