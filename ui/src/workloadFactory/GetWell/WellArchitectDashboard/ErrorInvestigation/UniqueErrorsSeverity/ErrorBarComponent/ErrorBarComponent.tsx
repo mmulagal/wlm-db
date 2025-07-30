@@ -111,7 +111,8 @@ const ErrorBarComponent = ({
                         <TooltipInfo
                             trigger={loading || noData || noFilteredData ? 'click' : 'hover'}
                             className={loading || noData || noFilteredData ? styles.disabled : ''}
-                            delayHide={2000}
+                            delayHide={200}
+                            interactive
                         >
                             <div className={styles.severityLabel}>
                                 {severityLabel()}
