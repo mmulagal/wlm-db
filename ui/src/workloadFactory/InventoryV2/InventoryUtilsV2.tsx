@@ -2967,6 +2967,9 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
     return protectionText;
 };
 
+export const getFileSystemName = (data: any) =>
+    data?.fileSystemName && data.fileSystemName !== GENERAL.NOT_AVAILABLE ? data.fileSystemName : '';
+
 export const getProtectionText = (data: any) => {
     let protectionText = '';
     let fsxType = '';
