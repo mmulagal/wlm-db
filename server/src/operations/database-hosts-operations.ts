@@ -57,7 +57,6 @@ import {
     DEFAULT_INSTANCE_NAME,
     MSSQL_SYSTEM_DATABASES,
     PGSQL_DEFAULT_INSTANCE_NAME,
-    ORACLE_INSTANCE_NAME,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     RESOURCESTYPE
 } from '../utils/consts';
@@ -1060,11 +1059,12 @@ async function getDatabaseHostSummaryV2(
             region: awsRegion,
             includeDatabaseInstances: true
         });
-    }
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+
+        if (isEmpty(resourceDetail)) {
+            const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+        }
     }
 
     const {
@@ -1176,8 +1176,7 @@ async function getDatabaseHostSummaryV2(
                         return (
                             instance.instanceName.includes(hostResourceName) ||
                             instance.instanceName === DEFAULT_INSTANCE_NAME ||
-                            instance.instanceName === PGSQL_DEFAULT_INSTANCE_NAME ||
-                            instance.instanceName === ORACLE_INSTANCE_NAME
+                            instance.instanceName === PGSQL_DEFAULT_INSTANCE_NAME
                         );
                     })
                     .map((instance: { instanceName: { replace: (arg0: string | null, arg1: string) => any } }) => ({

@@ -28,7 +28,8 @@ import {
     createEnableMpioJobMockData,
     createDeploymentMockDataInDBForPgSql,
     createAssessmentData,
-    prepareDemoSandboxMetadata
+    prepareDemoSandboxMetadata,
+    createDeploymentMockDataInDBForOracle
 } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig, listResources, updateResource, upsertDatabaseInstance } from '../../lib/database/db';
@@ -73,7 +74,7 @@ async function createDemoResources(
             storageProtocol,
             resourceId
         );
-    } else {
+    } else if (databaseType === DatabaseTypes.PG_SQL) {
         await createDeploymentMockDataInDBForPgSql(
             accountId,
             stackId,
@@ -85,6 +86,19 @@ async function createDemoResources(
             awsAccountId,
             serverName || `pgsqldatabase${randomize('a', 4)}`,
             DatabaseTypes.PG_SQL
+        );
+    } else {
+        await createDeploymentMockDataInDBForOracle(
+            accountId,
+            stackId,
+            stackName,
+            region,
+            credentialsId,
+            deploymentType,
+            fsxFilSystemId,
+            awsAccountId,
+            serverName || `oracledatabase${randomize('a', 4)}`,
+            DatabaseTypes.ORACLE
         );
     }
 }
@@ -207,6 +221,14 @@ async function createDemoResourcesPerRegion(
                 sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
                 databaseType: DatabaseTypes.PG_SQL,
                 deploymentType: 'HA'
+            },
+            {
+                resourceId: randomUUID(),
+                hostName: 'oracle-managed-host-1',
+                protocol: STORAGE_PROTOCOLS.NFS,
+                sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'oracle-orahost' }],
+                databaseType: DatabaseTypes.ORACLE,
+                deploymentType: 'Standalone'
             }
         ];
         const resourceSandboxMetadata: any = { sandboxes: [], userDatabase: [] };

@@ -14,7 +14,7 @@ import {
 import getLogger from '../../../utils/logger';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './consts';
-import { sqlResponseParsing } from '../../../utils/utils';
+import { isDemo, sqlResponseParsing } from '../../../utils/utils';
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
 import { DatabaseInstance, Metadata, OracleInstanceDetails, ResourceDetails } from '../../../utils/common-types';
 import { getOracleInstanceData, getOracleProtectionData, ORACLE_PERFORMANCE_METRICS } from './oracle-ssm-script-utils';
@@ -114,7 +114,7 @@ async function getOracleDatabaseInstancesDetails(
     const managedInstancesName = instancesManaged.map((item: DatabaseInstance) => ({
         instanceName: item.database_instance_name,
         isDefault: item.is_default,
-        instanceState: ServerState.DOWN,
+        instanceState: isDemo() ? ServerState.UP : ServerState.DOWN,
         isManaged: true,
         databaseInstanceId: item.database_instance_id
     }));
@@ -497,7 +497,13 @@ async function getOracleDatabaseInstancesSummary(
             const metadata = databaseInstance?.metadata as
                 | { mountPointDetails?: { mountIp?: string; mountPoint?: string; protocol?: string } }
                 | undefined;
-            let mountPointDetails = metadata?.mountPointDetails;
+
+            const demoMountPointDetails = {
+                mountIp: '10.0.0.0',
+                mountPoint: '/oradata',
+                protocol: 'iSCSI'
+            };
+            let mountPointDetails = isDemo() ? demoMountPointDetails : metadata?.mountPointDetails;
 
             // Get the storage & mount point details for registered Oracle database instances
             if (!mountPointDetails && (getProtectionStatus || getDatabasesWithProtection)) {

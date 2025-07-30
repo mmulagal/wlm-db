@@ -941,7 +941,9 @@ ssmMock
     .on(SendCommandCommand, params => {
         return /# Get MSSQL Instance Volume LUN Drive Details/.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getMssqlInstanceVolumeLunDriveDetailsCommand'));
+    .resolves(getSampleCommandResponse('getMssqlInstanceVolumeLunDriveDetailsCommand'))
+    .on(SendCommandCommand, params => params.Comment === 'oracle database list')
+    .resolves(getSampleCommandResponse('oracleDatabaseList'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1449,6 +1451,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'getMssqlInstanceVolumeLunDriveDetailsCommand',
             JSON.stringify(getCommandInvocationResponse.getMssqlInstanceVolumeLunDriveDetailsCommand)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleDatabaseList'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleDatabaseList',
+            '{"database_details":{"name": "ordbsdl","status": "online"}, "is_cdb": "no", "root_db_size": 2.51}'
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
