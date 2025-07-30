@@ -36,7 +36,13 @@ import {
     SET_VOLUME_SNAPSHOT_POLICY
 } from '../../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
+import {
+    getResourceNameFromTags,
+    getServerNameWithHostname,
+    isDemo,
+    retryWithDelay,
+    sqlResponseParsing
+} from '../../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
 import { getMappedOntapVolumes, getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
@@ -67,6 +73,7 @@ import {
     updateResourceMetaData
 } from '../../database/database-operations';
 import { moveClusterGroupOwnership } from '../compute-optimize-operations';
+import { describeInstance } from '../../../lib/aws/ec2';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -1000,14 +1007,14 @@ async function optimizeSqlServerService(
             [fsxId] = instanceDetail.fsxn_ids.split(',');
         }
 
-        const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId, region, {
+        const { activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(credentialsId, region, {
             node1InstanceId,
             node2InstanceId,
             resourceId: databaseHostId,
             accountId
         });
-        if (!activeNodeInstanceId) {
-            errorMessage = `Unable to fix host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
+        if (!activeNodeInstanceId || !standbyNodeInstanceId) {
+            errorMessage = `Unable to fix host ${databaseHostId} in account ${accountId} due to SSM connection issues (activeNodeInstanceId or standbyNodeInstanceId missing).`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
@@ -1035,7 +1042,8 @@ async function optimizeSqlServerService(
             databaseInstanceId,
             masterOptimizeParentId,
             fsxId,
-            activeNodeInstanceId
+            activeNodeInstanceId,
+            standbyNodeInstanceId
         );
     } catch (error) {
         errorMessage = `An error occurred while optimizing SQL Server Service for high availability: ${error}`;
@@ -1177,7 +1185,8 @@ async function givebackClusterOwnership(
     databaseInstanceId: string,
     parentJobId: string,
     fsxFileSystemId: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId: string
 ): Promise<void> {
     logger.info(`Starting cluster ownership giveback for account "${accountId}"`);
 
@@ -1242,14 +1251,31 @@ async function givebackClusterOwnership(
             jobStatus = JOBSTATUS.WARNING;
             errorMessage = `Cluster ownership is already on the preferred node (${preferredNodeId}).`;
         } else if (activeNodeInstanceId === nonPreferredNodeId) {
-            await moveClusterGroupOwnership(credentialsId, region, preferredNodeId, nonPreferredNodeId);
+            try {
+                const { Reservations = [] } = await describeInstance(credentialsId, region, {
+                    InstanceIds: [activeNodeInstanceId!, standbyNodeInstanceId!]
+                });
+                const preferredNodeName = getResourceNameFromTags(Reservations?.[0]?.Instances?.[0].Tags);
+
+                if (!preferredNodeName) {
+                    throw new Error(
+                        'preferredNodeName is undefined and cannot be used to move cluster group ownership.'
+                    );
+                }
+                await moveClusterGroupOwnership(credentialsId, region, preferredNodeName, nonPreferredNodeId);
+                logger.info(`Successfully moved cluster ownership from ${nonPreferredNodeId} to ${preferredNodeId}`);
+            } catch (moveError: any) {
+                const moveErrorMessage =
+                    moveError?.message || moveError?.toString() || 'Error occurred during cluster ownership move';
+                throw new Error(`Failed to move cluster ownership: ${moveErrorMessage}`);
+            }
         } else {
             throw new Error(
                 `Active node (${activeNodeInstanceId}) is not recognized as preferred (${preferredNodeId}) or non-preferred (${nonPreferredNodeId}).`
             );
         }
     } catch (err: any) {
-        errorMessage = `${err.message}.`;
+        errorMessage = err?.message || err?.toString() || 'Error occurred during cluster ownership giveback';
         logger.error(
             `Failed to give back cluster ownership for host "${databaseHostId}", instance "${databaseInstanceId}": ${errorMessage}`
         );
