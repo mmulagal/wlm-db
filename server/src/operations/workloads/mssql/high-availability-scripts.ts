@@ -130,6 +130,10 @@ $response = @{
     result = 'success'
 }
 
+    error = ''
+    result = 'success'
+}
+
 try {
     $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
     $FSxCredentials = $FSxNDetails.FSxCredentials
