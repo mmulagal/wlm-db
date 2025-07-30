@@ -1,5 +1,5 @@
 import { IgroupMissingInitiators } from '../../../utils/common-types';
-import { ontapRestRequest, ontapRestRequestBootstrap } from './common-templates';
+import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 import GOLDEN_CONFIG from '../../continuous-optimization/golden-configs/storage';
 
@@ -124,7 +124,6 @@ $FSxRegion = '${region}'
 $IgroupMissingIqnsList = '${JSON.stringify(igroupMissingIqnsList)}' | ConvertFrom-Json
 
 ${ontapRestRequest}
-${ontapRestRequestBootstrap}
 
 $response = @{
     error = ''
