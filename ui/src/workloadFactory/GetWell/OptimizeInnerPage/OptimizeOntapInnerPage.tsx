@@ -1,6 +1,7 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
@@ -39,6 +40,7 @@ import MSSQLHighAvailabilityTableWithData from './InnerTables/MSSQLHighAvailabil
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
+    const { t } = useTranslation();
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const [cardHeight, setCardHeight] = useState({
         recommendationSection: '',
@@ -423,7 +425,7 @@ const OptimizeOntapInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE
         ) {
-            return `Microsoft SQL Server High Availability / ${selectedOptimizeConfig?.type}`;
+            return `${t('databases.general.mssql-high-availability')} / ${selectedOptimizeConfig?.type}`;
         }
         if (
             selectedOptimizeConfig?.type !== 'Multipath I/O Policy' &&
