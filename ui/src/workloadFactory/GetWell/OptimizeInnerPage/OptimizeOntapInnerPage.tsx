@@ -423,7 +423,7 @@ const OptimizeOntapInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE
         ) {
-            return `MSSQL High Availability / ${selectedOptimizeConfig?.type}`;
+            return `Microsoft SQL Server High Availability / ${selectedOptimizeConfig?.type}`;
         }
         if (
             selectedOptimizeConfig?.type !== 'Multipath I/O Policy' &&

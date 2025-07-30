@@ -36,7 +36,7 @@
             "not_protected": "Not protected",
             "manage-analysis-state": "Manage Analysis State",
             "not-available": "N/A",
-            "mssql-high-availability": "MSSQL High Availability"
+            "mssql-high-availability": "Microsoft SQL Server High Availability"
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "No instances are eligible for registration at this time.",

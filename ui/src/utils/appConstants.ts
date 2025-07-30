@@ -1312,7 +1312,7 @@ export const GENERAL = {
     SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     CRR: 'Cross-Region Replication (CRR)',
-    MSSQL_HIGH_AVAILABILITY: 'MSSQL High Availability',
+    MSSQL_HIGH_AVAILABILITY: 'Microsoft SQL Server High Availability',
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
