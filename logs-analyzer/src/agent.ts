@@ -603,15 +603,18 @@ function formatAdditionalInfo(additionalInfo: string) {
         return [];
     }
     const additionalData = safeParseJson(additionalInfo);
-    return additionalData.map((Result: any) => {
-        const { Query: query, Result: result, Error: error } = Result;
+    if (Array.isArray(additionalData)) {
+        return additionalData.map((Result: any) => {
+            const { Query: query, Result: result, Error: error } = Result;
 
-        return {
-            query,
-            error,
-            result: Array.isArray(result) ? result.join(',') : result
-        };
-    });
+            return {
+                query,
+                error,
+                result: Array.isArray(result) ? result.join(',') : result
+            };
+        });
+    }
+    return [];
 }
 
 async function getDatabaseDetails(logsFolderPath: string) {

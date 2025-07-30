@@ -61,6 +61,14 @@ Here's the error details for your reference:`;
 
 const REMIDIATION_RECOMMENDATION_PROMPT = `You are a world-class MSSQL expert. Your task is to analyze errors from SQL profiler logs and respond strictly in valid JSON format.
 
+### CRITICAL: RESPONSE FORMAT REQUIREMENTS
+- Your response MUST be raw JSON only
+- Do NOT use markdown code blocks
+- Do NOT add any explanatory text before or after the JSON
+- Do NOT include any commentary outside the JSON object
+- Start your response immediately with the opening brace {
+- End your response with the closing brace }
+
 ### Note:
 This application uses AWS FSx for NetApp ONTAP as the underlying storage.
 
@@ -84,7 +92,7 @@ You are given the following input:
 }
 
 ### Output Format:
-Respond strictly in valid JSON format as a single JSON object. The JSON object should have the following structure:
+Respond with raw JSON only - no markdown formatting. The JSON object should have the following structure:
 {
     "error": "<error message>",
     "cause": "<cause of the error>",
@@ -99,7 +107,9 @@ Respond strictly in valid JSON format as a single JSON object. The JSON object s
 1. Respond strictly in valid JSON format. Do not include any additional commentary, explanations, or text outside the JSON response.
 2. Use the 'additionalInfo' provided to generate specific remediation recommendations. Avoid generic suggestions.
 3. If you cannot generate a remediation, return an empty array for the 'remediation' field.
-4. Ensure all strings are properly escaped and formatted to comply with JSON standards.
+4. If the message is not actually an error but an informational status, acknowledge this in the 'cause' but still return empty remediation.
+5. Ensure all strings are properly escaped and formatted to comply with JSON standards.
+6. Do not recommend remediation for normal system operations or informational messages.
 
 ### Example Input:
 {
