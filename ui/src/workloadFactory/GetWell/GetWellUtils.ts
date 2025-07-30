@@ -752,7 +752,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'MSSQL High Availability recommendation',
+            title: 'Microsoft SQL Server High Availability recommendation',
             description:
                 'To ensure high availability and disaster recovery for your SQL Server databases, we recommend implementing a high availability solution such as Always On Availability Groups or Failover Cluster Instances. This will help minimize downtime and data loss in the event of a failure.'
         },
