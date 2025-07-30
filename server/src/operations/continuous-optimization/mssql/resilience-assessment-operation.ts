@@ -876,9 +876,12 @@ async function getDriveLetterAssessment(
         const standbyNodeDriveLetters = Array.isArray(standbyNodeParsedResponse)
             ? standbyNodeParsedResponse.map(letter => (typeof letter === 'string' ? letter.trim().toUpperCase() : ''))
             : [];
-
         const missingDriveLetters = [
-            ...new Set(primaryNodeDriveLetters.filter(letter => !standbyNodeDriveLetters.includes(letter)))
+            ...new Set(
+                primaryNodeDriveLetters
+                    .map(letter => letter.replace(':', '').trim()) // remove colon and extra space
+                    .filter(letter => !standbyNodeDriveLetters.map(l => l.trim()).includes(letter))
+            )
         ];
         return {
             status: isEmpty(missingDriveLetters) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,

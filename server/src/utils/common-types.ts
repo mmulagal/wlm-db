@@ -795,6 +795,7 @@ interface OracleInstanceRegistration {
 
 interface IgroupMissingInitiators {
     igroupName: string;
+    igroupUuid: string;
     missingIqns: string[];
 }
 
