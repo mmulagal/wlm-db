@@ -845,7 +845,7 @@ async function createDeploymentMockDataInDBForOracle(
         credentialsId,
         region,
         databaseInstanceId: instanceId,
-        databaseInstanceName: 'oracle-inst',
+        databaseInstanceName: 'oracle-dev',
         fsxnIds: fsxId,
         isDefault: true,
         instanceState: 'OPEN',
