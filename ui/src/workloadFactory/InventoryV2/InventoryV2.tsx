@@ -10,7 +10,6 @@ import { GENERAL } from '../../utils/appConstants';
 import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
 import {
     getDiscoveredHostDeploymentV2,
-    getFileSystemName,
     getOptimizationStatus,
     getProtectionText,
     sortDatabaseTableData,
@@ -119,7 +118,7 @@ const InventoryV2 = () => {
                             perRow?.databaseInstanceId,
                             optimizationStatusList
                         );
-                        const fileSystemName = getFileSystemName(perRow);
+                        const fileSystemName = perRow?.fileSystemName || GENERAL.NOT_AVAILABLE;
                         if (perRow?.statusColText === INVENTORY_STATUS.MANAGED) {
                             optimizationStatusLoading = allmssqlHostAssessmentLoading;
                         }
