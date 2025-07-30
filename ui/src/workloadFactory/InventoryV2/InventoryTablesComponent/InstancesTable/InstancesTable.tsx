@@ -1271,7 +1271,7 @@ const InstancesTable = () => {
                             {
                                 id: 'protect',
                                 displayName: 'Protect',
-                                disabled: disableOption || !rowData?.fsxId,
+                                disabled: disableOption || !rowData?.fsxId || !rowData?.hostRow?.nodeIpAddress,
                                 infoText: disableMessage
                             },
 
