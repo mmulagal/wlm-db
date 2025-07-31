@@ -231,8 +231,16 @@ const convertToBytes = (sizeStr: string): number => {
         TiB: 1024 ** 4
     };
 
-    const match = sizeStr.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB)$/);
+    // First try to match with unit
+    let match = sizeStr.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB)$/);
+
+    // If no unit found, try to match just the number and default to bytes
     if (!match) {
+        const numberMatch = sizeStr.trim().match(/^([\d.]+)\s*$/);
+        if (numberMatch) {
+            const value = parseFloat(numberMatch[1]);
+            return value * units.B; // Default to bytes
+        }
         throw new Error(`Invalid size format: ${sizeStr}`);
     }
 
