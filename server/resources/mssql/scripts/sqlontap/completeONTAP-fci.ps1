@@ -20,6 +20,9 @@ param(
     [string]$DomainAdminUser,
 
     [Parameter(Mandatory = $true)]
+    [string]$ServiceAccount,
+    
+    [Parameter(Mandatory = $true)]
     [string]$ResourceID,   
 
     [Parameter(Mandatory = $true)]
@@ -99,6 +102,7 @@ try {
     $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
     $AdminPassword = $SsmParameter.domain.password
     $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
+    $ServiceAccountUser = $DomainNetBIOSName + '\' + $ServiceAccount
     $Credentials = (New-Object PSCredential($ClusterAdminUser, (ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 
     #https://docs.microsoft.com/en-us/sql/database-engine/install-windows/install-sql-server-from-the-command-prompt?view=sql-server-ver15
@@ -191,7 +195,52 @@ try {
             Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:skipclusterarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt
         } -Credential $Credentials -ComputerName $HostName -Authentication credssp
     }
+
+    try{
+    # Add Cluster Admin and Service Account to sysadmin role
+
+    Invoke-Command -scriptblock {
+        $DomainAdminQuery = "CREATE LOGIN ["+$Using:ClusterAdminUser+"] FROM WINDOWS; EXEC sp_addsrvrolemember '"+$Using:ClusterAdminUser+"', 'sysadmin';"
+        $ServiceAccountQuery = "CREATE LOGIN ["+$Using:ServiceAccountUser+"] FROM WINDOWS; EXEC sp_addsrvrolemember '"+$Using:ServiceAccountUser+"', 'sysadmin';"
+        Invoke-Sqlcmd -ConnectionString "Data Source=$Using:FCIName; Integrated Security=True; TrustServerCertificate=True"  -Query $DomainAdminQuery -ErrorAction SilentlyContinue
+        Invoke-Sqlcmd -ConnectionString "Data Source=$Using:FCIName; Integrated Security=True; TrustServerCertificate=True"  -Query $ServiceAccountQuery -ErrorAction SilentlyContinue
+        $LoginCheckQuery =  "select r.name as Role, m.name as Principal from sys.server_role_members rm 
+                                inner join sys.server_principals r on r.principal_id = rm.role_principal_id and r.type = 'R' 
+                                inner join  sys.server_principals m on m.principal_id = rm.member_principal_id 
+                                where m.name in ('$Using:ClusterAdminUser', '$Using:ServiceAccountUser')" 
+
+        $LoginCheckQueryResponse = Invoke-sqlcmd -ConnectionString "Data Source=$Using:FCIName; Integrated Security=True; TrustServerCertificate=True" -Query $LoginCheckQuery | Select-Object Principal, Role |  ConvertTo-Json | ConvertFrom-Json 
+        Foreach ($i in @($LoginCheckQueryResponse)) {
+            Write-Output $i
+            If($i.Principal -eq $Using:ClusterAdminUser) {
+                Write-Output "User $Using:ClusterAdminUser has login to SQL Server"
+                If($i.Role -eq 'sysadmin') {
+                    Write-Output "Successfully added $Using:ClusterAdminUser to sysadmin role"
+                }
+                Else {
+                    Write-Output "Failed to add $Using:ClusterAdminUser to sysadmin role"
+                }
+            }
+            If($i.Principal -eq $Using:ServiceAccountUser) {
+                Write-Output "User $Using:ServiceAccountUser has login to SQL Server"
+                If($i.Role -eq 'sysadmin') {
+                    Write-Output "Successfully added $Using:ServiceAccountUser to sysadmin role"
+                }
+                Else {
+                    Write-Output "Failed to add $Using:ServiceAccountUser to sysadmin role"
+                }
+            }
+        } 
+    } -Credential $Credentials -ComputerName $HostName -Authentication credssp 
 }
+catch {
+    Write-Output "Failed to add $ClusterAdminUser and $ServiceAccountUser to sysadmin role. Error: $_"
+}
+
+    Write-Output "Complete Failover Cluster Instance action completed successfully."
+    Send-CFNResourceSignal -StackName $Stackname -Status SUCCESS -LogicalResourceId $ResourceID -UniqueId $instanceID
+  }
+
 catch {
     $FailureReason = "Failed to run complete Failover cluster action for SQL installation: " + $_.Exception.Message
     Write-Output $FailureReason

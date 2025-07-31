@@ -47,6 +47,13 @@ variable "domain_admin_user" {
   description = "The domain admin user"
   type        = string
 }
+
+variable "preferred_domain_controller" {
+  description = "(optional) Preferred domain controller to use for domain join."
+  type        = string
+  default     = ""
+}
+
 variable "perform_fsx_check" {
   description = "Flag to indicate whether to perform FSx check"
   type        = string
