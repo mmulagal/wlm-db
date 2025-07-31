@@ -1208,7 +1208,7 @@ async function givebackClusterOwnership(
     });
 
     try {
-        const { preferredNodeId, nonPreferredNodeId } = await getMZFsxnNodePreference(
+        const { preferredNodeId, standbyNodeId } = await getMZFsxnNodePreference(
             accountId,
             credentialsId,
             region,
@@ -1217,7 +1217,7 @@ async function givebackClusterOwnership(
             fsxFileSystemId
         );
 
-        if (!preferredNodeId || !nonPreferredNodeId) {
+        if (!preferredNodeId || !standbyNodeId) {
             throw new Error('Preferred or non-preferred node ID is not available.');
         }
 
@@ -1226,13 +1226,13 @@ async function givebackClusterOwnership(
         }
 
         logger.info(
-            `Preferred node: ${preferredNodeId}, Non-preferred node: ${nonPreferredNodeId}, Active node: ${activeNodeInstanceId}`
+            `Preferred node: ${preferredNodeId}, Non-preferred node: ${standbyNodeId}, Active node: ${activeNodeInstanceId}`
         );
 
         if (activeNodeInstanceId === preferredNodeId) {
             jobStatus = JOBSTATUS.WARNING;
             errorMessage = `Cluster ownership is already on the preferred node (${preferredNodeId}).`;
-        } else if (activeNodeInstanceId === nonPreferredNodeId) {
+        } else if (activeNodeInstanceId === standbyNodeId) {
             try {
                 const { Reservations = [] } = await describeInstance(credentialsId, region, {
                     InstanceIds: [activeNodeInstanceId!, standbyNodeInstanceId!]
@@ -1244,8 +1244,8 @@ async function givebackClusterOwnership(
                         'Unable to determine the preferred node name from EC2 instance. Please ensure the instance has the correct tags and try again.'
                     );
                 }
-                await moveClusterGroupOwnership(credentialsId, region, preferredNodeName, nonPreferredNodeId);
-                logger.info(`Successfully moved cluster ownership from ${nonPreferredNodeId} to ${preferredNodeId}`);
+                await moveClusterGroupOwnership(credentialsId, region, preferredNodeName, standbyNodeId);
+                logger.info(`Successfully moved cluster ownership from ${standbyNodeId} to ${preferredNodeId}`);
             } catch (moveError: any) {
                 const moveErrorMessage =
                     moveError?.message || moveError?.toString() || 'Error occurred during cluster ownership move';
@@ -1253,7 +1253,7 @@ async function givebackClusterOwnership(
             }
         } else {
             throw new Error(
-                `Active node (${activeNodeInstanceId}) is not recognized as preferred (${preferredNodeId}) or non-preferred (${nonPreferredNodeId}).`
+                `Active node (${activeNodeInstanceId}) is not recognized as preferred (${preferredNodeId}) or non-preferred (${standbyNodeId}).`
             );
         }
     } catch (err: any) {

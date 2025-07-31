@@ -1055,31 +1055,33 @@ async function getMZFsxnNodePreference(
             ]);
 
         // Determine preferred node based on FSx preferred subnet and AZ
-        let preferredNodeId: string;
-        let nonPreferredNodeId: string;
+        let preferredNodeId: string = '';
+        let standbyNodeId: string = '';
 
         const node1InstanceDetails = nodeInstanceDetails?.Reservations?.[0]?.Instances?.[0];
         const node2InstanceDetails = nodeInstanceDetails?.Reservations?.[1]?.Instances?.[0];
 
-        const isNode1Preferred =
+        if (
             node1InstanceDetails?.SubnetId === fsxPreferredSubnetId &&
-            node1InstanceDetails.Placement?.AvailabilityZone === fsxPreferredAZ;
-
-        const isNode2Preferred =
+            node1InstanceDetails.Placement?.AvailabilityZone === fsxPreferredAZ
+        ) {
+            preferredNodeId = node1InstanceDetails.InstanceId!;
+            standbyNodeId = node2InstanceDetails!.InstanceId!;
+        }
+        if (
             node2InstanceDetails?.SubnetId === fsxPreferredSubnetId &&
-            node2InstanceDetails.Placement?.AvailabilityZone === fsxPreferredAZ;
-
-        if (isNode1Preferred) {
-            preferredNodeId = node1InstanceId;
-            nonPreferredNodeId = node2InstanceId;
-        } else if (isNode2Preferred) {
-            preferredNodeId = node2InstanceId;
-            nonPreferredNodeId = node1InstanceId;
-        } else {
-            throw new Error('Neither node is in the FSx preferred subnet and AZ.');
+            node2InstanceDetails.Placement?.AvailabilityZone === fsxPreferredAZ
+        ) {
+            preferredNodeId = node2InstanceDetails.InstanceId!;
+            standbyNodeId = node1InstanceDetails!.InstanceId!;
         }
 
-        return { preferredNodeId, nonPreferredNodeId };
+        if (!preferredNodeId || !standbyNodeId) {
+            throw new Error(`Could not determine preferred and standby nodes for FSx file system ${fsxFileSystemId}.
+            Ensure both nodes are in the preferred subnet and AZ.`);
+        }
+
+        return { preferredNodeId, standbyNodeId };
     } catch (error: any) {
         logger.error('Error fetching FSx node preference:', error);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Failed to get FSX node preference: ${error.message}`);

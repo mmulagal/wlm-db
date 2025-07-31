@@ -931,7 +931,7 @@ async function getSqlServiceStartupAssessment(
         }
 
         // 1. Determine preferred and non-preferred nodes
-        const { preferredNodeId, nonPreferredNodeId } = await getMZFsxnNodePreference(
+        const { preferredNodeId, standbyNodeId } = await getMZFsxnNodePreference(
             accountId,
             credentialsId,
             region,
@@ -940,7 +940,7 @@ async function getSqlServiceStartupAssessment(
             fsxFileSystem
         );
 
-        if (!preferredNodeId || !nonPreferredNodeId) {
+        if (!preferredNodeId || !standbyNodeId) {
             throw new Error('Preferred or non-preferred node ID is not available.');
         }
 
@@ -949,7 +949,7 @@ async function getSqlServiceStartupAssessment(
         }
 
         logger.info(
-            `Preferred node: ${preferredNodeId}, Non-preferred node: ${nonPreferredNodeId}, Active node: ${activeNodeInstanceid}`
+            `Preferred node: ${preferredNodeId}, Non-preferred node: ${standbyNodeId}, Active node: ${activeNodeInstanceid}`
         );
 
         // 3. Run SSM command on both nodes in parallel
@@ -969,8 +969,8 @@ async function getSqlServiceStartupAssessment(
                 credentialsId,
                 region,
                 [SQL_SERVER_SERVICES(databaseInstanceName)],
-                nonPreferredNodeId,
-                `Fetch sql service status for instance ${databaseInstanceName} on non-preferred node ${nonPreferredNodeId}`,
+                standbyNodeId,
+                `Fetch sql service status for instance ${databaseInstanceName} on non-preferred node ${standbyNodeId}`,
                 accountId,
                 false,
                 undefined,
@@ -988,14 +988,14 @@ async function getSqlServiceStartupAssessment(
 
         const servicesNonPreferred = (
             Array.isArray(parsedNonPreferred) ? parsedNonPreferred : parsedNonPreferred ? [parsedNonPreferred] : []
-        ).map(svc => ({ ...svc, instanceId: nonPreferredNodeId }));
+        ).map(svc => ({ ...svc, instanceId: standbyNodeId }));
 
         const nodesInViolation = [
             ...(servicesPreferred.some((svc: any) => svc.StartType?.toLowerCase() !== 'manual')
                 ? [preferredNodeId]
                 : []),
             ...(servicesNonPreferred.some((svc: any) => svc.StartType?.toLowerCase() !== 'manual')
-                ? [nonPreferredNodeId]
+                ? [standbyNodeId]
                 : []),
             ...(activeNodeInstanceid !== preferredNodeId ? [activeNodeInstanceid] : [])
         ].filter(Boolean);
@@ -1003,7 +1003,7 @@ async function getSqlServiceStartupAssessment(
         return {
             status: isEmpty(nodesInViolation) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
             preferredNodeId,
-            nonPreferredNodeId,
+            standbyNodeId,
             nodesInViolation,
             details: [...servicesPreferred, ...servicesNonPreferred]
         };
