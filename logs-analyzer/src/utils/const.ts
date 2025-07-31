@@ -304,7 +304,7 @@ enum DATABASE_TYPE {
     MSSQL = 'mssql'
 }
 
-const MSSQL_SEVERITY_THRESHOLD = 14; // Severity threshold for MSSQL errors
+const MSSQL_SEVERITY_THRESHOLD = 16; // Severity threshold for MSSQL errors
 
 const BEDROCK_RETRY = {
     MODE: 'adaptive',

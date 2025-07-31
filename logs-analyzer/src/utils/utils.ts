@@ -400,7 +400,27 @@ function safeParseJson(jsonString: string) {
 function hoursAgoTimestamp(hours: number = 24): number {
     return Date.now() - 1000 * 60 * 60 * Number(hours);
 }
+// Function to introduce a delay in steps, useful for throttling or pacing operations.
+// The delay increases with each step based on the index and maxSteps.
+// For example, if delay is 2000, and maxSteps is 5:
+// - indexes 0-4: no delay (0ms)
+// - indexes 5-9: delay will be 2000ms (2 seconds)
+// - indexes 10-14: delay will be 4000ms (4 seconds)
+// - indexes 15-19: delay will be 6000ms (6 seconds), and so on.
+async function stepDelay(delay: number, index: number, maxSteps: number) {
+    if (index < maxSteps) {
+        return; // No delay for the first maxSteps items
+    }
 
+    const delayMultiplier = Math.floor(index / maxSteps);
+    const delayMs = delayMultiplier * delay;
+
+    await new Promise<void>(resolve => {
+        setTimeout(() => {
+            resolve();
+        }, delayMs);
+    });
+}
 export {
     getPowershellScript,
     getBashScript,
@@ -410,5 +430,6 @@ export {
     deleteOlderFilesInDirectory,
     generateHash,
     safeParseJson,
-    hoursAgoTimestamp
+    hoursAgoTimestamp,
+    stepDelay
 };
