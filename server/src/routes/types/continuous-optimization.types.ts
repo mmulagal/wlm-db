@@ -201,7 +201,7 @@ const AdditionalMSSQLPatchParameterDriftResponse = Type.Optional(
                     criticalMissingPatchesCount: Type.Number(),
                     importantMissingPatchesCount: Type.Number(),
                     ec2InstanceId: Type.String(),
-                    ec2InstanceName: Type.String(),
+                    ec2InstanceName: Type.Optional(Type.String()),
                     missingPatchesCount: Type.Number(),
                     missingPatchDetails: Type.Array(
                         Type.Object({
