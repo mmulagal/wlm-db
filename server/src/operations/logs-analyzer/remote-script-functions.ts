@@ -163,7 +163,7 @@ function getWindowsPrepareScript(scriptParams: {
             }
         }
 
-        $downloadDir = "C:/netapp-logs-analyzer"
+        $downloadDir = "C:/Program Files/NetApp/netapp-logs-analyzer"
         if (-not (Test-Path $downloadDir)) {
             New-Item -ItemType Directory -Path $downloadDir | Out-Null
         }
