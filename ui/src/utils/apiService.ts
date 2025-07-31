@@ -64,6 +64,26 @@ export const getBaseUrl = () => {
     return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
 };
 
+const isBluexpExternalApiCall = (endpoint: string): boolean => {
+    const bluexpEndpoints = [
+        'getConnectors',
+        'getFsxDetails',
+        'discoverExistingFsxN',
+        'getWorkSpaceID',
+        'getRBACPrivileges',
+        'listExistingHosts',
+        'assignRBACPrivileges',
+        'addHostSc',
+        'addHostJobSc',
+        'deleteHostSc',
+        'configureDirectory',
+        'listAllDirectories',
+        'getDiscoverHostResult'
+    ];
+
+    return bluexpEndpoints.includes(endpoint);
+};
+
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: '',
     prepareHeaders
@@ -76,21 +96,7 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const apiHost = isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
 
     // Specifically case for bluexp external api calls
-    if (
-        api.endpoint === 'getConnectors' ||
-        api.endpoint === 'getFsxDetails' ||
-        api.endpoint === 'discoverExistingFsxN' ||
-        api.endpoint === 'getWorkSpaceID' ||
-        api.endpoint === 'getRBACPrivileges' ||
-        api.endpoint === 'listExistingHosts' ||
-        api.endpoint === 'assignRBACPrivileges' ||
-        api.endpoint === 'addHostSc' ||
-        api.endpoint === 'addHostJobSc' ||
-        api.endpoint === 'deleteHostSc' ||
-        api.endpoint === 'configureDirectory' ||
-        api.endpoint === 'listAllDirectories' ||
-        api.endpoint === 'getDiscoverHostResult'
-    ) {
+    if (isBluexpExternalApiCall(api.endpoint)) {
         if (api.endpoint === 'discoverExistingFsxN') {
             return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
         }
