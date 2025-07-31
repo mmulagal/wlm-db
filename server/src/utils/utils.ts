@@ -16,6 +16,7 @@ import randomize from 'randomatic';
 import { StringValue } from 'ms';
 import IORedis from 'ioredis';
 import { StandardUnit } from '@aws-sdk/client-cloudwatch';
+import { STORAGE_TYPE } from '@prisma/client';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { RegionDetailsType } from '../routes/types/generic.types';
 
@@ -48,7 +49,8 @@ import {
     HA,
     FCI,
     CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES,
-    CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE
+    CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE,
+    NOT_AVAILABLE
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -56,7 +58,7 @@ import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
 import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 import { readFromCacheByKey, writeToCache } from './cache';
-import { DatabaseInstances, DatabaseInstancesIncludingResource, Resource } from './common-types';
+import { DatabaseInstance, DatabaseInstances, DatabaseInstancesIncludingResource, Resource } from './common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -1283,6 +1285,19 @@ function formatDuration(ms: number): string {
     return `${seconds}s`;
 }
 
+function determineStorageType(instance: DatabaseInstance) {
+    return (
+        instance.storage_type ||
+        (instance.fsxn_ids
+            ? STORAGE_TYPE.FSXN
+            : instance.ebsVolumeIds
+            ? STORAGE_TYPE.EBS
+            : instance.fsxwId
+            ? STORAGE_TYPE.FSXW
+            : NOT_AVAILABLE)
+    );
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1358,5 +1373,6 @@ export {
     getNextToken,
     formatDuration,
     addIncludeSelect,
-    buildSelectFields
+    buildSelectFields,
+    determineStorageType
 };

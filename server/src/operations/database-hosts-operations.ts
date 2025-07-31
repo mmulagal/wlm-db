@@ -101,7 +101,13 @@ import {
     calculateFsxwStorageEfficiencyUsingCloudwatch,
     getSqlInstanceUtilizationAndPerformance
 } from './aws/cloud-watch-operations';
-import { assessMssqlServerPerformance, formatDuration, getEc2Hostname, isDemo } from '../utils/utils';
+import {
+    assessMssqlServerPerformance,
+    determineStorageType,
+    formatDuration,
+    getEc2Hostname,
+    isDemo
+} from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -1129,9 +1135,8 @@ async function getDatabaseHostSummaryV2(
 
         return {
             ...instance,
-            storage_type: STORAGE_TYPE.FSXN,
-            crrConfigData: crrConfig?.config_data ? crrConfig.config_data : undefined,
-            isManaged: true
+            storage_type: determineStorageType(instance),
+            crrConfigData: crrConfig?.config_data ? crrConfig.config_data : undefined
         };
     });
     const errormessages: { [index: string]: string } = {};
