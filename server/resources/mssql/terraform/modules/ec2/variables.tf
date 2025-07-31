@@ -82,11 +82,6 @@ variable "ad_dns_ip_addresses" {
   type        = string
 }
 
-variable "ad_dns_ip_addresses" {
-  description = "A comma separated list of DNS IP addresses."
-  type        = string
-}
-
 variable "preferred_domain_controller" {
   description = "(optional) Preferred domain controller to use for domain join."
   type        = string
