@@ -1024,27 +1024,47 @@ async function optimizeSqlServerService(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
 
-        await handleSqlServerServiceBulkOptimizeStartUpType(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId,
-            activeNodeInstanceId,
-            masterOptimizeParentId
-        );
+        const [startupTypeJobstatus, givebackJobstatus] = await Promise.all([
+            handleSqlServerServiceBulkOptimizeStartUpType(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                activeNodeInstanceId,
+                masterOptimizeParentId
+            ),
 
-        await givebackClusterOwnership(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId,
-            masterOptimizeParentId,
-            fsxId,
-            activeNodeInstanceId,
-            standbyNodeInstanceId
-        );
+            givebackClusterOwnership(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                masterOptimizeParentId,
+                fsxId,
+                activeNodeInstanceId,
+                standbyNodeInstanceId
+            )
+        ]);
+
+        if (startupTypeJobstatus !== JOBSTATUS.FAILED && givebackJobstatus !== JOBSTATUS.FAILED) {
+            logger.info(
+                `Triggering drift assessment for SQL Server Service on host "${databaseHostId}", instance "${databaseInstanceId}".`
+            );
+            await onDemandTriggerMssqlDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.HIGH_AVAILABILITY,
+                masterOptimizeParentId
+            );
+        } else if (!databaseInstanceId) {
+            logger.warn(`databaseInstanceId not found for host ${databaseHostId}, instance ${databaseInstanceId}`);
+        }
     } catch (error) {
         errorMessage = `An error occurred while optimizing SQL Server Service for high availability: ${error}`;
         logger.error(errorMessage);
@@ -1141,24 +1161,6 @@ async function handleSqlServerServiceBulkOptimizeStartUpType(
                 `Failed to remediate SQL Server Service for host "${databaseHostId}", instance "${databaseInstanceId}".`
             );
         }
-
-        if (jobStatus !== JOBSTATUS.FAILED) {
-            logger.info(
-                `Triggering drift assessment for SQL Server Service on host "${databaseHostId}", instance "${databaseInstanceId}".`
-            );
-            await onDemandTriggerMssqlDriftAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId,
-                AssessmentTriggeredBy.SYSTEM,
-                AssessmentCategories.HIGH_AVAILABILITY,
-                parentJobId
-            );
-        } else if (!databaseInstanceId) {
-            logger.warn(`databaseInstanceId not found for host ${databaseHostId}, instance ${databaseInstanceId}`);
-        }
     } catch (error: any) {
         errorMessage = `${error.message}.`;
         logger.error(
@@ -1175,6 +1177,7 @@ async function handleSqlServerServiceBulkOptimizeStartUpType(
             `Job for SQL Server Service remediation on host "${databaseHostId}", instance "${databaseInstanceId}" completed with status "${jobStatus}".`
         );
     }
+    return jobStatus;
 }
 
 async function givebackClusterOwnership(
@@ -1187,7 +1190,7 @@ async function givebackClusterOwnership(
     fsxFileSystemId: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string
-): Promise<void> {
+) {
     logger.info(`Starting cluster ownership giveback for account "${accountId}"`);
 
     let errorMessage: string | undefined;
@@ -1205,33 +1208,12 @@ async function givebackClusterOwnership(
     });
 
     try {
-        const dbInstancesResult = await getPaginatedDatabaseInstances(accountId, {
-            resourceId: databaseHostId,
-            credentialsId,
-            sqlInstanceId: databaseInstanceId,
-            region,
-            shouldIncludeResource: true
-        });
-        const dbInstances = dbInstancesResult?.items || [];
-        const [
-            {
-                resource: { metadata }
-            }
-        ] = dbInstances;
-        const { node1InstanceId, node2InstanceId } = metadata as Metadata;
-
-        // Ensure both node1InstanceId and node2InstanceId are defined
-        if (!node1InstanceId || !node2InstanceId) {
-            throw new Error('Both node1InstanceId and node2InstanceId must be available for FCI instances.');
-        }
-
-        // Use determinePreferredNode to get preferred/non-preferred node IDs
         const { preferredNodeId, nonPreferredNodeId } = await getMZFsxnNodePreference(
             accountId,
             credentialsId,
             region,
-            node1InstanceId,
-            node2InstanceId,
+            activeNodeInstanceId,
+            standbyNodeInstanceId,
             fsxFileSystemId
         );
 
@@ -1259,7 +1241,7 @@ async function givebackClusterOwnership(
 
                 if (!preferredNodeName) {
                     throw new Error(
-                        'preferredNodeName is undefined and cannot be used to move cluster group ownership.'
+                        'Unable to determine the preferred node name from EC2 instance. Please ensure the instance has the correct tags and try again.'
                     );
                 }
                 await moveClusterGroupOwnership(credentialsId, region, preferredNodeName, nonPreferredNodeId);
@@ -1290,6 +1272,7 @@ async function givebackClusterOwnership(
             `Job for cluster ownership giveback on host "${databaseHostId}", instance "${databaseInstanceId}" completed with status "${jobStatus}".`
         );
     }
+    return jobStatus;
 }
 
 export {
