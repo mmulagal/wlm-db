@@ -67,7 +67,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS,
@@ -108,7 +108,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS,
@@ -164,7 +164,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'SINGLE_AZ_1',
-                                zones: ['availability-zone-3']
+                                zones: ['availability-zone-1']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -208,7 +208,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-2', 'availability-zone-3']
+                                zones: ['availability-zone-2', 'availability-zone-1']
                             }
                         ],
                         databaseCount: 4,
@@ -270,7 +270,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -301,7 +301,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -347,7 +347,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -396,7 +396,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'SINGLE_AZ_1',
-                                zones: ['availability-zone-3']
+                                zones: ['availability-zone-1']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -432,7 +432,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         deploymentTypes: [
                             {
                                 type: 'SINGLE_AZ_1',
-                                zones: ['availability-zone-3']
+                                zones: ['availability-zone-1']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS

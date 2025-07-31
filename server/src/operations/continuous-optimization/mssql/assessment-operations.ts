@@ -697,7 +697,8 @@ async function initiateHostLevelAssessmentDataCollection(
                 region,
                 databaseHostId,
                 databaseInstanceRecord,
-                jobId
+                jobId,
+                metadata as Metadata
             )) || {};
         highAvailabilityAssessment = { clusterQuorum, heartbeat };
     }

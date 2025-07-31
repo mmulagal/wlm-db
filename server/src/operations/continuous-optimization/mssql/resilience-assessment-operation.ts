@@ -1019,7 +1019,8 @@ async function initiateHostLevelHighAvailabilityAssessment(
     region: string,
     databaseHostId: string,
     instanceRecord: WorkloadInstance,
-    parentJobId: string
+    parentJobId: string,
+    metadata: Metadata
 ) {
     logger.info('Fetch cluster quorum, heartbeat settings for instance', {
         accountId,
@@ -1029,6 +1030,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
         parentJobId
     });
 
+    const { isHeartBeatOptimized } = metadata;
     const { resourceName, name: databaseInstanceName, activeNodeInstanceid } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
@@ -1096,7 +1098,12 @@ async function initiateHostLevelHighAvailabilityAssessment(
             error?: string;
         };
 
-        if (
+        if (isDemoFlow && isHeartBeatOptimized) {
+            heartbeatResult = {
+                status: AssessmentStatus.OPTIMIZED,
+                details: null
+            };
+        } else if (
             !parsedHeartSettingsData ||
             typeof parsedHeartSettingsData !== 'object' ||
             Array.isArray(parsedHeartSettingsData)

@@ -14,7 +14,7 @@
                         "State": "disabled"
                     },
                     "Placement": {
-                        "AvailabilityZone": "availability-zone-3",
+                        "AvailabilityZone": "availability-zone-1",
                         "GroupName": "",
                         "Tenancy": "default"
                     },
@@ -29,7 +29,7 @@
                         "Name": "running"
                     },
                     "StateTransitionReason": "",
-                    "SubnetId": "subnet-adda86eb",
+                    "SubnetId": "subnet-f4484e80",
                     "VpcId": "vpc-84b3afe6",
                     "Architecture": "x86_64",
                     "BlockDeviceMappings": [
@@ -115,7 +115,7 @@
                             ],
                             "SourceDestCheck": true,
                             "Status": "in-use",
-                            "SubnetId": "subnet-adda86eb",
+                            "SubnetId": "subnet-f4484e80",
                             "VpcId": "vpc-84b3afe6",
                             "InterfaceType": "interface"
                         }
@@ -306,7 +306,7 @@
                             ],
                             "SourceDestCheck": true,
                             "Status": "in-use",
-                            "SubnetId": "subnet-adda86eb",
+                            "SubnetId": "subnet-f4484e80",
                             "VpcId": "vpc-84b3ade6",
                             "InterfaceType": "interface"
                         }

@@ -265,6 +265,7 @@ interface Metadata {
     isLicenseOptimized?: boolean;
     isHostOsPatchOptimized?: boolean;
     isRssConfigOptimized?: string[];
+    isHeartBeatOptimized?: boolean;
 }
 
 interface DatabaseInstanceMetadata {

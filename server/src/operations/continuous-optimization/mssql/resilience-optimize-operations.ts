@@ -61,7 +61,11 @@ import {
     REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE
 } from '../../workloads/mssql/high-availability-scripts';
 import { paginateListInstanceConfigData } from '../../database/instance-config-operations';
-import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
+import {
+    getPaginatedDatabaseInstances,
+    getResources,
+    updateResourceMetaData
+} from '../../database/database-operations';
 import { moveClusterGroupOwnership } from '../compute-optimize-operations';
 
 const logger = getLogger();
@@ -608,6 +612,8 @@ async function handleSharedStorageOptimize(
                         databaseInstanceId,
                         igroupsMissingInitiators
                     );
+                    errorMessage =
+                        parsedResponse.error && parsedResponse.error.trim() !== '' ? parsedResponse.error : undefined;
 
                     jobStatus =
                         parsedResponse.result === 'failed'
@@ -663,7 +669,8 @@ async function handleHeartbeatSettings(
     databaseHostName: string,
     activeNodeInstanceId: string,
     databaseInstanceId: string,
-    parentJobId: string
+    parentJobId: string,
+    metadata: Metadata
 ) {
     logger.info('Starting heartbeat settings optimization', {
         accountId,
@@ -703,11 +710,16 @@ async function handleHeartbeatSettings(
         const parsedResponse = sqlResponseParsing(response);
 
         jobStatus =
-            parsedResponse.remediated === 'failed'
+            parsedResponse.status === 'failed'
                 ? JOBSTATUS.FAILED
-                : parsedResponse.remediated === 'partial'
+                : parsedResponse.status === 'partial'
                 ? JOBSTATUS.WARNING
                 : JOBSTATUS.COMPLETED;
+
+        errorMessage =
+            parsedResponse.errorMessage && parsedResponse.errorMessage.trim() !== ''
+                ? parsedResponse.errorMessage
+                : undefined;
 
         if (jobStatus === JOBSTATUS.COMPLETED) {
             logger.info(`Heartbeat settings successfully remediated for host "${databaseHostId}".`);
@@ -715,6 +727,11 @@ async function handleHeartbeatSettings(
             logger.warn(`Heartbeat settings partially remediated for host "${databaseHostId}". Please check details.`);
         } else {
             logger.error(`Failed to remediate heartbeat settings for host "${databaseHostId}".`);
+        }
+
+        if (isDemoFlow) {
+            metadata.isHeartBeatOptimized = true;
+            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
         if (jobStatus !== JOBSTATUS.FAILED) {
@@ -796,6 +813,9 @@ async function handleClusterQuorum(
                 : parsedResponse.status === 'partial'
                 ? JOBSTATUS.WARNING
                 : JOBSTATUS.COMPLETED;
+
+        errorMessage = parsedResponse.error && parsedResponse.error.trim() !== '' ? parsedResponse.error : undefined;
+
         if (jobStatus === JOBSTATUS.COMPLETED) {
             logger.info(`Cluster quorum successfully remediated for host "${databaseHostId}".`);
         } else if (jobStatus === JOBSTATUS.WARNING) {
@@ -889,7 +909,8 @@ async function optimizeHighAvailabilityConfiguration(
                     sqlServerName || '',
                     activeNodeInstanceId!,
                     databaseInstances[0],
-                    masterOptimizeParentId
+                    masterOptimizeParentId,
+                    metadata as Metadata
                 );
                 await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
@@ -1096,6 +1117,9 @@ async function handleSqlServerServiceBulkOptimizeStartUpType(
                 : parsedResponse.status === 'partial'
                 ? JOBSTATUS.WARNING
                 : JOBSTATUS.COMPLETED;
+
+        errorMessage = parsedResponse.errMsg && parsedResponse.errMsg.trim() !== '' ? parsedResponse.errMsg : undefined;
+
         if (jobStatus === JOBSTATUS.COMPLETED) {
             logger.info(
                 `SQL Server Service successfully remediated for host "${databaseHostId}", instance "${databaseInstanceId}".`

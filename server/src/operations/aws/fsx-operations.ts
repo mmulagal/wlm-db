@@ -1063,12 +1063,11 @@ async function getMZFsxnNodePreference(
 
         const isNode1Preferred =
             node1InstanceDetails?.SubnetId === fsxPreferredSubnetId &&
-            ((instance: { SubnetId?: string; Placement?: { AvailabilityZone?: string } }) =>
-                instance.SubnetId === fsxPreferredSubnetId && instance.Placement?.AvailabilityZone === fsxPreferredAZ);
+            node1InstanceDetails.Placement?.AvailabilityZone === fsxPreferredAZ;
+
         const isNode2Preferred =
             node2InstanceDetails?.SubnetId === fsxPreferredSubnetId &&
-            ((instance: { SubnetId?: string; Placement?: { AvailabilityZone?: string } }) =>
-                instance.SubnetId === fsxPreferredSubnetId && instance.Placement?.AvailabilityZone === fsxPreferredAZ);
+            node2InstanceDetails.Placement?.AvailabilityZone === fsxPreferredAZ;
 
         if (isNode1Preferred) {
             preferredNodeId = node1InstanceId;

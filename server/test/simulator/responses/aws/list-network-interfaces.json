@@ -120,7 +120,7 @@
                 "InstanceOwnerId": "amazon-rds",
                 "Status": "attached"
             },
-            "AvailabilityZone": "availability-zone-3",
+            "AvailabilityZone": "availability-zone-1",
             "Description": "RDSNetworkInterface",
             "Groups": [
                 {
@@ -146,7 +146,7 @@
             "RequesterManaged": true,
             "SourceDestCheck": true,
             "Status": "in-use",
-            "SubnetId": "subnet-adda86eb",
+            "SubnetId": "subnet-f4484e80",
             "TagSet": [],
             "VpcId": "vpc-84b3afe6",
             "DenyAllIgwTraffic": true

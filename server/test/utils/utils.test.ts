@@ -31,7 +31,7 @@ const CREDENTIALS_ID = `${faker.string.alpha(20)}`;
 const networkConfiguration = {
     vpcId: `vpc-${faker.string.alpha(6)}`,
     vpcCidr: '172.31.0.0/16',
-    availabilityZone1: 'availability-zone-3',
+    availabilityZone1: 'availability-zone-1',
     privateSubnet1Id: `subnet-${faker.string.alpha(6)}`,
     routeTable1Id: `rtb-${faker.string.alpha(6)}`,
     availabilityZone2: 'availability-zone-1',

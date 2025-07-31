@@ -58,7 +58,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -87,7 +87,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -116,7 +116,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -145,7 +145,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -174,7 +174,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -243,7 +243,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -272,7 +272,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -301,7 +301,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -330,7 +330,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS

@@ -114,7 +114,6 @@ import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '..
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../../../../src/operations/workloads/mssql/resiliency-scripts';
 import {
     CLUSTER_QUORUM_TYPE,
-    SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
     GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
@@ -943,7 +942,11 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('getMssqlInstanceVolumeLunDriveDetailsCommand'))
     .on(SendCommandCommand, params => params.Comment === 'oracle database list')
-    .resolves(getSampleCommandResponse('oracleDatabaseList'));
+    .resolves(getSampleCommandResponse('oracleDatabaseList'))
+    .on(SendCommandCommand, params => {
+        return /# Get SQL Server services/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getSqlServerServicesCommand'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
