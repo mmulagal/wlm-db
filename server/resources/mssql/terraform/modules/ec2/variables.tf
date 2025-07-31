@@ -82,6 +82,11 @@ variable "ad_dns_ip_addresses" {
   type        = string
 }
 
+variable "domain_member_sg_id" {
+  description = "ID of the domain member security group (for example, sg-9cb7d0e5)."
+   type        = string
+}
+ 
 variable "preferred_domain_controller" {
   description = "(optional) Preferred domain controller to use for domain join."
   type        = string
