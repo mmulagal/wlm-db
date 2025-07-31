@@ -50,9 +50,6 @@ import {
     DETECT_HOST_VAR,
     FROM_DIALOG,
     INVENTORY_STATUS,
-    PRODUCTION,
-    RBAC_PROD_ROLE_ID,
-    RBAC_STAGE_ROLE_ID,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
@@ -104,11 +101,7 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
-import {
-    cancelProtectionForRow,
-    setDataForRow,
-    setWorkSpaceData
-} from '../../../../store/workloadFactory/snapcenterSlice';
+import { cancelProtectionForRow } from '../../../../store/workloadFactory/snapcenterSlice';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';

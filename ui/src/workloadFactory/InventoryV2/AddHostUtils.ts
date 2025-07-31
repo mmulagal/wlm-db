@@ -153,7 +153,9 @@ export const handleFsxFlow = async (
         const fsxRes = await getFsxDetails({ accountID: store.getState().auth.accountId });
         if (isCancelled(key)) return;
 
-        const fsxExists = fsxRes?.data?.some((item: any) => item.id === rowData.fsxId);
+        const fsxExists = fsxRes?.data?.some(
+            (item: any) => item.id === (rowData?.fsxId ?? rowData?.instanceRow?.fsxId)
+        );
         const workSpaceIdExists = store.getState().snapCenter.workSpaceData?.id;
 
         let workSpaceRes = '';
@@ -175,7 +177,7 @@ export const handleFsxFlow = async (
                 credentialID: rowData.credentialId,
                 workSpaceID: workSpaceRes,
                 regionID: rowData.regionId,
-                payload: [rowData.fsxId]
+                payload: [rowData?.fsxId ?? rowData?.instanceRow?.fsxId]
             });
 
             if (isCancelled(key)) return;

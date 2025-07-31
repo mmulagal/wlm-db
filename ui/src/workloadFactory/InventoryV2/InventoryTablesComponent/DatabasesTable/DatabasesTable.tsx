@@ -1,10 +1,10 @@
-import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography, Popover } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { FROM_DIALOG, INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -12,28 +12,71 @@ import { setSelectedFilterValue, setTableManageColumnState } from '../../../../s
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
-import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
+import { bxpRedirect, formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { handleProtectionUtil } from '../../AddHostUtils';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
+import store from '../../../../store/store';
+import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
+import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
+import {
+    useAddHostJobScMutation,
+    useAddHostScMutation,
+    useAssignRBACPrivilegesMutation,
+    useConfigureDirectoryMutation,
+    useDeleteHostScMutation,
+    useDiscoverExistingFsxNMutation,
+    useGenerateCredentialIDMutation,
+    useGetConnectorsMutation,
+    useGetDiscoverHostResultMutation,
+    useGetFsxDetailsMutation,
+    useGetRBACPrivilegesMutation,
+    useGetWorkSpaceIDMutation,
+    useListAllDirectoriesMutation,
+    useListExistingHostsMutation
+} from '../../../../utils/apiService';
+import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
+import { cancelProtectionForRow } from '../../../../store/workloadFactory/snapcenterSlice';
+import { addHostHandlerSc } from '../../InventoryUtilsV2';
 
 const DatabasesTable = () => {
     const { t } = useTranslation();
     const { selectedInventoryTab, selectedFilterValue, databaseTableRows, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
+    const { setDialog, closeDialog } = useDialog();
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqldatabaseHostsLoading, fullHostDataLoading: pgsqlfullHostDataLoading } =
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const { multiDataLoading } = useAppSelector(state => state.headers);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
     const navigate = useNavigate();
+
+    //Protection api's
+    const [getConnector] = useGetConnectorsMutation();
+    const [getFsxDetails] = useGetFsxDetailsMutation();
+    const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
+    const [getWorkSpaceID] = useGetWorkSpaceIDMutation();
+    const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
+    const [listExistingHosts] = useListExistingHostsMutation();
+    const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
+    const [generateCredentialID] = useGenerateCredentialIDMutation();
+    const [addHostScApi] = useAddHostScMutation();
+    const [addHostJobScApi] = useAddHostJobScMutation();
+    const [deleteHostSc] = useDeleteHostScMutation();
+    const [configureDirectory] = useConfigureDirectoryMutation();
+    const [listAllDirectories] = useListAllDirectoriesMutation();
+    const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
 
     useEffect(() => {
         setLoading(
@@ -138,6 +181,113 @@ const DatabasesTable = () => {
             };
         }
         return undefined;
+    };
+
+    //handle protection logic
+
+    const fetchDialog = (key: string) => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.inventory.protect-header')}
+                content={<FetchingDialog />}
+                primaryButton={t('databases.inventory.redirect')}
+                secondaryButton={GENERAL.CANCEL}
+                closeCallback={() => {
+                    dispatch(cancelProtectionForRow(key));
+                    closeDialog();
+                }}
+                callback={() => {}}
+                customClass={styles.protectionDialog}
+                dialogFrom={FROM_DIALOG.LOADER}
+            />
+        );
+    };
+
+    const handleProtection = async (rowData: any) => {
+        await handleProtectionUtil(rowData, {
+            dispatch,
+            fetchDialog,
+            showSingleAgentDialog,
+            showNoAgentDialog,
+            closeDialog,
+            listExistingHosts,
+            getWorkSpaceID,
+            getConnector,
+            getFsxDetails,
+            discoverExistingFsxN,
+            assignRBACPrivileges,
+            getRBACPrivileges
+        });
+    };
+
+    const showNoAgentDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.inventory.protect-header')}
+                content={<NoAgentDialog />}
+                primaryButton={t('databases.inventory.redirect')}
+                secondaryButton={GENERAL.CANCEL}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                callback={() => {
+                    bxpRedirect(isWorkloadFactory);
+                }}
+                customClass={styles.protectionDialog}
+            />
+        );
+    };
+
+    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any) => {
+        const state = store.getState();
+        const dialogKeyValue = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
+        const protectionState = state.snapCenter.protectionProcessState[dialogKeyValue];
+        if (protectionState?.step1Status === 'running' || protectionState?.step2Status === 'running') {
+            dispatch(setActionsDisabled(true));
+        } else {
+            dispatch(setActionsDisabled(false));
+        }
+
+        setDialog(
+            <DialogComponent
+                header={
+                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+                        {!hostExists && (
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-1-out-of')}
+                            </DsTypography>
+                        )}
+                    </div>
+                }
+                content={<SingleAgentDialog agents={connectors} hostExists={hostExists} dialogKey={dialogKeyValue} />}
+                primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
+                secondaryButton={t('databases.inventory.cancel')}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                callback={() => {
+                    if (hostExists) {
+                        bxpRedirect(isWorkloadFactory);
+                    } else {
+                        addHostHandlerSc(
+                            rowData,
+                            dispatch,
+                            generateCredentialID,
+                            addHostScApi,
+                            addHostJobScApi,
+                            t,
+                            deleteHostSc,
+                            listAllDirectories,
+                            configureDirectory,
+                            getDiscoverHostResult
+                        );
+                    }
+                }}
+                customClass={styles.protectionDialog}
+                dialogFrom={FROM_DIALOG.SINGLE_AGENT}
+            />
+        );
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -351,6 +501,11 @@ const DatabasesTable = () => {
                         displayName: 'Create sandbox',
                         disabled: disableOption,
                         infoText: disableMessage
+                    },
+                    {
+                        id: 'protect',
+                        displayName: 'Protect',
+                        disabled: disableOption || !rowData?.instanceRow?.fsxId || !rowData?.hostRow?.nodeIpAddress
                     }
                 ];
                 return (
@@ -385,6 +540,11 @@ const DatabasesTable = () => {
                                             })
                                         );
                                         navigate('../create-new-sandbox');
+                                    }
+
+                                    // Protect POC code
+                                    if (menuId === 'protect') {
+                                        handleProtection(rowData);
                                     }
                                 }
                             }}
