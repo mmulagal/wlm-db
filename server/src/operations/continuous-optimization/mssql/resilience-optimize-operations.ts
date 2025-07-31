@@ -803,7 +803,6 @@ async function handleClusterQuorum(
 
     try {
         // Call the remediation script
-
         const response = await callSsmExecution(
             credentialsId,
             region,
@@ -1023,8 +1022,29 @@ async function optimizeSqlServerService(
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
+        const {
+            items: [persistedConfigurationData]
+        } = await paginateListInstanceConfigData({
+            accountId,
+            region,
+            credentialsId,
+            resourceId: databaseHostId,
+            databaseInstanceId,
+            configDataType: AssessmentCategories.HIGH_AVAILABILITY,
+            includeDatabaseInstance: true,
+            includeResource: true
+        });
 
-        const [startupTypeJobstatus, givebackJobstatus] = await Promise.all([
+        const {
+            database_instances: { database_instance_name: instanceName = '' } = {},
+            resource: { resource_name: sqlServerName = '' } = {}
+        } = persistedConfigurationData || {};
+
+        const serverNameWithHostName = getServerNameWithHostname(sqlServerName!, instanceName);
+        logger.info(
+            `Optimizing SQL Server Service for sqlServerName "${sqlServerName}", instancename "${instanceName}" (server: "${serverNameWithHostName}")`
+        );
+        const [node1StartupTypeJobstatus, node2StartupTypeJobstatus, givebackJobstatus] = await Promise.all([
             handleSqlServerServiceBulkOptimizeStartUpType(
                 accountId,
                 credentialsId,
@@ -1032,9 +1052,21 @@ async function optimizeSqlServerService(
                 databaseHostId,
                 databaseInstanceId,
                 activeNodeInstanceId,
+                instanceName,
+                serverNameWithHostName,
                 masterOptimizeParentId
             ),
-
+            handleSqlServerServiceBulkOptimizeStartUpType(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                standbyNodeInstanceId,
+                instanceName,
+                serverNameWithHostName,
+                masterOptimizeParentId
+            ),
             givebackClusterOwnership(
                 accountId,
                 credentialsId,
@@ -1044,11 +1076,16 @@ async function optimizeSqlServerService(
                 masterOptimizeParentId,
                 fsxId,
                 activeNodeInstanceId,
-                standbyNodeInstanceId
+                standbyNodeInstanceId,
+                serverNameWithHostName
             )
         ]);
 
-        if (startupTypeJobstatus !== JOBSTATUS.FAILED && givebackJobstatus !== JOBSTATUS.FAILED) {
+        if (
+            node1StartupTypeJobstatus !== JOBSTATUS.FAILED ||
+            node2StartupTypeJobstatus !== JOBSTATUS.FAILED ||
+            givebackJobstatus !== JOBSTATUS.FAILED
+        ) {
             logger.info(
                 `Triggering drift assessment for SQL Server Service on host "${databaseHostId}", instance "${databaseInstanceId}".`
             );
@@ -1089,7 +1126,9 @@ async function handleSqlServerServiceBulkOptimizeStartUpType(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    activeNodeInstanceId: string,
+    nodeInstanceId: string,
+    instanceName: string,
+    serverNameWithHostName: string,
     parentJobId: string
 ) {
     logger.info('Starting SQL Server Service optimization', {
@@ -1110,30 +1149,26 @@ async function handleSqlServerServiceBulkOptimizeStartUpType(
         const { id } = await registerJob(accountId, credentialsId, region, {
             type: JOBTYPE.WELL_ARCHITECTED,
             status: JOBSTATUS.IN_PROGRESS,
-            resourceName: `${databaseHostId}:${databaseInstanceId}`,
-            name: `Optimize SQL Server Service Start Type for ${databaseHostId} (instance: ${databaseInstanceId})`,
+            resourceName: `${serverNameWithHostName}`,
+            name: `Fix SQL Server Service startup type for node "${nodeInstanceId}"`,
             startTime: Date.now(),
-            description: `Optimize SQL Server Service Start Type for ${databaseHostId} (instance: ${databaseInstanceId})`,
+            description: `Fix SQL Server Service startup type for node "${nodeInstanceId}".`,
             parentJobId
         });
         instanceOptimizeJobId = id;
     } catch (err) {
-        logger.error(
-            `Failed to register job for SQL Server Service optimization on host "${databaseHostId}", instance "${databaseInstanceId}": ${err}`
-        );
+        logger.error(`Failed to register job for SQL Server Service optimization on host "${nodeInstanceId}": ${err}`);
         throw err;
     }
 
     try {
-        logger.info(
-            `Running SQL Server Service remediation script on host "${databaseHostId}" (instance: "${databaseInstanceId}", node: "${activeNodeInstanceId}").`
-        );
+        logger.info(`Running SQL Server Service remediation script on host "${nodeInstanceId}".`);
         const response = await callSsmExecution(
             credentialsId,
             region,
             [REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE],
-            activeNodeInstanceId,
-            `Remediate SQL Server Service settings on host ${activeNodeInstanceId} (instance: ${databaseInstanceId})`,
+            nodeInstanceId,
+            `Fix SQL Server Service settings on host ${nodeInstanceId} and instance: ${instanceName})`,
             accountId
         );
 
@@ -1150,21 +1185,21 @@ async function handleSqlServerServiceBulkOptimizeStartUpType(
 
         if (jobStatus === JOBSTATUS.COMPLETED) {
             logger.info(
-                `SQL Server Service successfully remediated for host "${databaseHostId}", instance "${databaseInstanceId}".`
+                `SQL Server Service successfully fixed for host "${nodeInstanceId}", instance "${databaseInstanceId}".`
             );
         } else if (jobStatus === JOBSTATUS.WARNING) {
             logger.warn(
-                `SQL Server Service partially remediated for host "${databaseHostId}", instance "${databaseInstanceId}". Please check details.`
+                `SQL Server Service partially fixed for host "${nodeInstanceId}", instance "${databaseInstanceId}". Please check details.`
             );
         } else {
             logger.error(
-                `Failed to remediate SQL Server Service for host "${databaseHostId}", instance "${databaseInstanceId}".`
+                `Failed to remediate SQL Server Service for host "${nodeInstanceId}", instance "${databaseInstanceId}".`
             );
         }
     } catch (error: any) {
         errorMessage = `${error.message}.`;
         logger.error(
-            `Optimizing SQL Server Service failed for host "${databaseHostId}", instance "${databaseInstanceId}" with error: ${errorMessage}`
+            `Optimizing SQL Server Service failed for host "${nodeInstanceId}", instance "${databaseInstanceId}" with error: ${errorMessage}`
         );
         jobStatus = JOBSTATUS.FAILED;
     } finally {
@@ -1174,7 +1209,7 @@ async function handleSqlServerServiceBulkOptimizeStartUpType(
             error: errorMessage
         });
         logger.info(
-            `Job for SQL Server Service remediation on host "${databaseHostId}", instance "${databaseInstanceId}" completed with status "${jobStatus}".`
+            `Job for SQL Server Service remediation on host "${nodeInstanceId}", instance "${databaseInstanceId}" completed with status "${jobStatus}".`
         );
     }
     return jobStatus;
@@ -1189,7 +1224,8 @@ async function givebackClusterOwnership(
     parentJobId: string,
     fsxFileSystemId: string,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId: string
+    standbyNodeInstanceId: string,
+    serverNameWithHostName: string
 ) {
     logger.info(`Starting cluster ownership giveback for account "${accountId}"`);
 
@@ -1200,10 +1236,10 @@ async function givebackClusterOwnership(
     const { id: givebackJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.WELL_ARCHITECTED,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: `${databaseHostId}:${databaseInstanceId}`,
-        name: `Giveback Cluster Ownership for ${databaseHostId} (instance: ${databaseInstanceId})`,
+        resourceName: `${serverNameWithHostName}`,
+        name: 'Giveback Cluster Ownership',
         startTime: Date.now(),
-        description: `Giveback cluster group ownership to original primary node for ${databaseHostId} (instance: ${databaseInstanceId})`,
+        description: 'Giveback Cluster Ownership',
         parentJobId
     });
 

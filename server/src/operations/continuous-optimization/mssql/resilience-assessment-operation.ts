@@ -1310,12 +1310,7 @@ async function getHighAvailabilityDriftData(
                       ...resiliencyConfig.highAvailability.clusterQuorum,
                       name: 'cluster-quorum',
                       status: clusterQuorum.status as AssessmentStatus,
-                      objectsInViolation:
-                          clusterQuorum.status !== AssessmentStatus.OPTIMIZED && clusterQuorum.details
-                              ? [
-                                    `IsMajority: ${clusterQuorum.details.isMajority}, IsPhysicalDisk: ${clusterQuorum.details.isPhysicalDisk}`
-                                ]
-                              : [],
+                      objectsInViolation: clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
                       totalObjectsAssessed: 1,
                       totalObjectsInViolation: clusterQuorum.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
                   },
