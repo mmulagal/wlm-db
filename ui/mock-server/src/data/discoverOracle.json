@@ -34,13 +34,14 @@
                             "protocol": "NFS",
                             "fileSystemStorageType": "SSD",
                             "deploymentType": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1c",
-                                "ap-southeast-1b"
-                            ],
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
                             "nfsMountPoint": "/oracledata2"
                         }
-                    ]
+                    ],
+                    "modulesAvailability": {
+                        "isAwsCliInstalled": true,
+                        "isJqInstalled": true
+                    }
                 }
             ]
         },
@@ -89,13 +90,14 @@
                             "protocol": "NFS",
                             "fileSystemStorageType": "SSD",
                             "deploymentType": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1c",
-                                "ap-southeast-1b"
-                            ],
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
                             "nfsMountPoint": "/ORADATA1"
                         }
-                    ]
+                    ],
+                    "modulesAvailability": {
+                        "isAwsCliInstalled": false,
+                        "isJqInstalled": true
+                    }
                 }
             ]
         }

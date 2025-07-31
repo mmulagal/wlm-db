@@ -160,6 +160,7 @@ const DiscoverResponseInfo = Type.Object({
             cidrBlock: Type.Optional(Type.String({ description: 'VPC CIDR block' }))
         })
     ),
+    platform: Type.Optional(Type.String()),
     sqlServerInstances: Type.Optional(Type.Array(SqlServerInstanceInfo))
 });
 
@@ -359,6 +360,13 @@ const oracleDatabaseInstance = Type.Object({
                 )
             })
         )
+    ),
+    manageReadiness: Type.Optional(
+        Type.Object({
+            missingModules: Type.Optional(
+                Type.Array(Type.String({ description: 'List of missing modules on the instance' }))
+            )
+        })
     )
 });
 

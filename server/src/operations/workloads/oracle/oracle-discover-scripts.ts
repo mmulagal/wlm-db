@@ -1,4 +1,8 @@
-import { getMappedOntapDataVolume, getOracleDefaultOrUserAuthCommand } from './oracle-ssm-script-utils';
+import {
+    checkOracleModuleAvailability,
+    getMappedOntapDataVolume,
+    getOracleDefaultOrUserAuthCommand
+} from './oracle-ssm-script-utils';
 
 const loadStorageDetectionModules = `
 
@@ -641,6 +645,7 @@ EOF
 }
     ${loadDatabaseDetectionModules}
     ${loadStorageDetectionModules}
+    ${checkOracleModuleAvailability}
 
     while IFS=: read -r sid oracle_home; do
         # Check if the instance is running by checking for its PMON process.
@@ -650,6 +655,7 @@ EOF
         fi
 
         isDefaultAuth=$(is_default_auth "$sid")
+        modulesAvailability=$(check_oracle_module_availability)
 
         {
             INSTANCE_DETAILS=$(get_instance_details "$sid")
@@ -678,7 +684,7 @@ EOF
             continue
         }
 
-        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth}"
+        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability}"
 
         # If not the first object, prepend a comma in the JSON array.
         if [ $FIRST -eq 1 ]; then
