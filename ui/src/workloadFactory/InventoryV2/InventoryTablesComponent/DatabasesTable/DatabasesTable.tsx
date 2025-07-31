@@ -505,7 +505,10 @@ const DatabasesTable = () => {
                     {
                         id: 'protect',
                         displayName: 'Protect',
-                        disabled: disableOption || !rowData?.instanceRow?.fsxId || !rowData?.hostRow?.nodeIpAddress
+                        disabled:
+                            rowData?.hostType !== GENERAL.MICROSOFT_SQL_SERVER_TYPE ||
+                            !rowData?.instanceRow?.fsxId ||
+                            !rowData?.hostRow?.nodeIpAddress
                     }
                 ];
                 return (
