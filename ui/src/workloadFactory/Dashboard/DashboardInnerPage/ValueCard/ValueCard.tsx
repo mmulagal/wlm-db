@@ -5,7 +5,6 @@ import { ReactComponent as Edit } from '../../../../assets/ic_edit.svg';
 import { GENERAL } from '../../../../utils/appConstants';
 
 type ValueCardProps = {
-    optimizationScore?: string;
     optimizedInstances?: string;
     notOptimizedInstances?: string;
     severity?: string;
@@ -19,7 +18,6 @@ type ValueCardProps = {
 };
 
 const ValueCard = ({
-    optimizationScore,
     optimizedInstances,
     notOptimizedInstances,
     severity,

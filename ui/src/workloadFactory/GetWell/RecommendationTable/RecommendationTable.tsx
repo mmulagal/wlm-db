@@ -268,7 +268,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         setDialog(
             <DialogComponent
                 header={`${rowData?.name}`}
-                content={<DialogContent type={rowData?.name} />}
+                content={<DialogContent type={rowData?.name} objectsInViolation={rowData?.objectsInViolation} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {

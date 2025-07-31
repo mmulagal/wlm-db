@@ -57,6 +57,7 @@ type DialogType = {
     bulkRecommendationOptions?: BulkRecommendationOption[];
     missingPatchList?: MissingPatch[];
     operation?: string;
+    objectsInViolation?: string[];
 };
 
 const DialogContent = ({
@@ -66,7 +67,8 @@ const DialogContent = ({
     recommendedSizeInGib,
     bulkRecommendationOptions = [],
     missingPatchList = [],
-    operation = 'single'
+    operation = 'single',
+    objectsInViolation = []
 }: DialogType) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
@@ -137,13 +139,20 @@ const DialogContent = ({
             case 'Multipath I/O Timeout':
                 return 'Multipath I/O Timeout = 60 seconds';
             case 'Shared storage':
-                return 'Driveletter mounted to nodename';
+                return 'Mapping on impacted LUNs will be updated to include initiator names of both EC2 nodes';
             case 'Drive Letter':
-                return 'Driveletter changed to Driveletter';
+                return objectsInViolation && objectsInViolation.length > 0 
+                    ? `Drives ${objectsInViolation.map(drive => drive.replace(':', '')).join(', ')} ${t('databases.well-architect.drive-letter-conflicting-drives')}`
+                    : t('databases.well-architect.drive-letter-no-violation');
             case 'Cluster Quorum':
-                return 'Cluster Quorum Type = Node and Disk Majority';
+                return 'Quorum will be set to disk witness with node majority';
             case 'SQL Server Services':
-                return 'Servicename start automatically on primarynode  / Servicename stop on seconderynode';
+                return objectsInViolation && objectsInViolation.length > 0
+                    ? [
+                        `${t('databases.well-architect.sql-service-startup-type-config')}${objectsInViolation.join(', node-')}`,
+                        t('databases.well-architect.sql-service-role-ownership-config')
+                    ]
+                    : [];
             default:
                 return '';
         }
@@ -193,11 +202,19 @@ const DialogContent = ({
     );
 
     // Helper function to create a code box
-    const createCodeBox = (content: string) => (
+    const createCodeBox = (content: string | string[]) => (
         <div className={styles['dialog-body']}>
             <div className={styles['code-box']}>
                 <div className={styles.code}>
-                    <DsTypography variant="Regular_14">{content}</DsTypography>
+                    {Array.isArray(content) ? (
+                        content.map((line, index) => (
+                            <DsTypography key={index} variant="Regular_14" style={{ display: 'block' }}>
+                                {line}
+                            </DsTypography>
+                        ))
+                    ) : (
+                        <DsTypography variant="Regular_14">{content}</DsTypography>
+                    )}
                 </div>
             </div>
         </div>
@@ -228,9 +245,11 @@ const DialogContent = ({
 
     // Helper function to create drive letter notes section
     const createDriveLetterNotesSection = () =>
-        createSection(GENERAL.NOTE, createContentWithBullets([t('databases.well-architect.drive-letter-note1')]), {
-            width: '712px'
-        });
+        createSection(
+            GENERAL.NOTE,
+            createContentWithBullets([t('databases.well-architect.drive-letter-note1')]),
+            { width: '712px' }
+        );
 
     // Helper function to create cluster quorum and SQL server notes section
     const createClusterQuorumSQLNotesSection = () =>
@@ -605,7 +624,11 @@ const DialogContent = ({
                         t('databases.well-architect.drive-letter-action-summary2')
                     ],
                     '',
-                    createONTAPConfigSection(),
+                    createSection(
+                        t('databases.well-architect.well-architected-configuration'),
+                        createCodeBox(ontapConfigTextSet()),
+                        { width: '712px' }
+                    ),
                     createDriveLetterNotesSection()
                 );
             case 'Heartbeat Settings':
@@ -618,9 +641,13 @@ const DialogContent = ({
                     ],
                     createContentWithBullets([
                         t('databases.well-architect.heartbeat-setting-what-will-happen-content1'),
-                        t('databases.well-architect.heartbeat-setting-what-will-happen-content2')
+                        t('databases.well-architect.heartbeat-setting-what-will-happen-content2'),
+                        t('databases.well-architect.heartbeat-setting-what-will-happen-content3'),
+                        t('databases.well-architect.heartbeat-setting-what-will-happen-content4'),
+                        t('databases.well-architect.heartbeat-setting-what-will-happen-content5'),
+                        t('databases.well-architect.heartbeat-setting-what-will-happen-content6')
                     ]),
-                    undefined,
+                    <></>,    // Placeholder to maintain parameter order when skipping optional sections
                     createFailoverClusterNotesSection()
                 );
             case 'Cluster Quorum':

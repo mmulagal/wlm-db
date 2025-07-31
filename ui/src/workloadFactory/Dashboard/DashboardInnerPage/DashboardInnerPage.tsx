@@ -781,6 +781,7 @@ const DashboardInnerPage = () => {
                             recommendedSizeInGib={rowData?.recommendedSizeInGib}
                             bulkRecommendationOptions={rowData}
                             operation={operation}
+                            objectsInViolation={rowData?.objectsInViolation}
                         />
                     }
                     dialogFrom={FROM_DIALOG.OPTIMIZE}
@@ -1268,7 +1269,6 @@ const DashboardInnerPage = () => {
                 <div className={styles.mainSection}>
                     <div className={styles.leftSection}>
                         <ValueCard
-                            optimizationScore={valueCardData.optimizationScore}
                             optimizedInstances={valueCardData.optimizedInstances}
                             notOptimizedInstances={valueCardData.notOptimizedInstances}
                             severity={valueCardData.severity}
