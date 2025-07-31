@@ -1,4 +1,4 @@
-import { addNotification } from '../../store/notificationSlice';
+import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { setDataForRow, setWorkSpaceData } from '../../store/workloadFactory/snapcenterSlice';
 import { PRODUCTION, RBAC_PROD_ROLE_ID, RBAC_STAGE_ROLE_ID } from '../../utils/consts';
@@ -216,7 +216,7 @@ export const handleFsxFlow = async (
         if (hostsRes?.error?.data === 'Unauthorized') {
             dispatch(
                 addNotification({
-                    notificationType: 'ERROR',
+                    notificationType: NOTIFICATION_TYPES.ERROR,
                     message: 'Unauthorized'
                 })
             );
