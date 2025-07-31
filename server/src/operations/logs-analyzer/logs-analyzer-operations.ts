@@ -354,7 +354,7 @@ async function handleLogsAnalysis(
             'Trigger Logs Analysis',
             accountId,
             false,
-            '600',
+            '1200',
             true // Cloud watch logs enabled
         );
 

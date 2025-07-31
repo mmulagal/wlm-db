@@ -29,7 +29,8 @@ import {
     runPowerShellScript,
     deleteOlderFilesInDirectory,
     safeParseJson,
-    hoursAgoTimestamp
+    hoursAgoTimestamp,
+    stepDelay
 } from './utils/utils';
 import logger from './utils/logging';
 import { ToolUse, ToolSpec, MessageObj, AgentArgs, ErrorLogWithScriptAndDetails, ErrorLog } from './utils/interfaces';
@@ -109,7 +110,7 @@ interface RemediationRecommendation {
     uniqueErrorKey?: string;
     sql?: string[];
     context?: string;
-    additionalInfo?: string;
+    additionalInfo?: string | Array<{ query: any; error: any; result: any }>;
     hourlyErrorCounts?: Array<{
         hour: number;
         count: number;
@@ -340,8 +341,14 @@ async function analyzeErrorLogs(
         databaseType === DATABASE_TYPE.MSSQL ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
 
     await Promise.all(
-        errorLogs.map(logChunk =>
+        errorLogs.map((logChunk, index) =>
             pLimit(5)(async () => {
+                if (index > 0) { // As of July,2025 .. Sonnet 4 models resulting in throttling of requests
+                    // Adding a delay to avoid hitting rate limits
+                    // Increase delay every 5 errors: 0s, 0s, 0s, 0s, 3s, 3s, 3s, 3s, etc. ...capped at 40s
+                    await stepDelay(3000, index, 5);
+                }
+
                 const {
                     firstOccurrence,
                     lastOccurrence,
@@ -523,8 +530,14 @@ async function recommendRemediation(
             : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
 
     await Promise.all(
-        result.map(errorWithInfo =>
+        result.map((errorWithInfo,index) =>
             LIMIT_3(async () => {
+                                    
+                    if (index > 0) { // As of July,2025 .. Sonnet 4 models resulting in throttling of requests
+                        // Adding a delay to avoid hitting rate limits
+                        // Increase delay every 5 errors: 0s, 0s, 0s, 0s, 0s, 3s, 3s, 3s, 3s, etc. .. capped at 40s
+                        await stepDelay(3000, index, 5);
+                    }
                 const {
                     firstOccurrence,
                     lastOccurrence,
@@ -578,7 +591,7 @@ async function recommendRemediation(
                         context,
                         sql,
                         additionalInfo:
-                            additionalInfo && !isEmpty(additionalInfo) ? formatAdditionalInfo(additionalInfo) : [],
+                            additionalInfo && !isEmpty(additionalInfo) && typeof additionalInfo !== 'string' ? formatAdditionalInfo(additionalInfo) : [],
                         tokenUsage: {
                             causeIdentification,
                             remediationRecommendation: {

@@ -121,7 +121,7 @@ function getWindowsPrepareScript(scriptParams: {
         logsWindowDuration = 24
     } = scriptParams;
 
-    const { temperature = 0.5, maxTokens = 1000, topP = 0.9 } = inferenceConfig;
+    const { temperature = 0.5, maxTokens = 5000, topP = 0.9 } = inferenceConfig;
 
     return `
     # Logs Analysis Windows Prepare Script
@@ -163,7 +163,7 @@ function getWindowsPrepareScript(scriptParams: {
             }
         }
 
-        $downloadDir = "C:/netapp-logs-analyzer"
+        $downloadDir = "C:/Program Files/NetApp/netapp-logs-analyzer"
         if (-not (Test-Path $downloadDir)) {
             New-Item -ItemType Directory -Path $downloadDir | Out-Null
         }
