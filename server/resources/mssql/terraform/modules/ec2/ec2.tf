@@ -23,6 +23,8 @@ locals {
     fsx_volume_snapshot_policy     = var.fsx_volume_snapshot_policy
     ad_dns_ip_addresses            = var.ad_dns_ip_addresses
     domain_dns_name                = var.domain_dns_name
+    preferred_domain_controller    = var.preferred_domain_controller
+    ou_path                        = var.ou_path
     domain_admin_user              = var.domain_admin_user
     sql_admin_accounts             = var.sql_admin_accounts
     sql_collation                  = var.sql_collation

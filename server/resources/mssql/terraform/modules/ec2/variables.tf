@@ -82,9 +82,21 @@ variable "ad_dns_ip_addresses" {
   type        = string
 }
 
-variable "domain_member_sg_id" {
-  description = "ID of the domain member security group (for example, sg-9cb7d0e5)."
+variable "ad_dns_ip_addresses" {
+  description = "A comma separated list of DNS IP addresses."
   type        = string
+}
+
+variable "preferred_domain_controller" {
+  description = "(optional) Preferred domain controller to use for domain join."
+  type        = string
+  default     = ""
+}
+
+variable "ou_path" {
+  description = "(optional) Preferred organizational unit in the AD to join."
+  type        = string
+  default     = ""
 }
 
 variable "workload_instance_type" {

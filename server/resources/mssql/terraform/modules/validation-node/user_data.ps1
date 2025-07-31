@@ -9,6 +9,7 @@ $DeploymentName = "${deployment_name}"
 $ValidationNodeInitializationS3Url = "${validation_node_initialization_s3_url}"
 $DnsIpAddresses = "${dns_ip_addresses}"
 $DomainDnsName = "${domain_dns_name}"
+$DCName = "${preferred_domain_controller}"
 $SubnetId = "${subnet_id}"
 $DomainAdminUser = "${domain_admin_user}"
 $ValidationNode1WaitHandler = "${validation_node1_wait_handler}"
@@ -58,7 +59,7 @@ try {
 
     Invoke-WebRequest -Uri $ValidationNodeInitializationS3Url -OutFile "$ScriptDir\Validation-Instance-Initializer.ps1"  -ErrorAction Stop
     
-    $Command = "$ScriptDir\Validation-Instance-Initializer.ps1 -Region '$Region' -DeploymentName '$DeploymentName' -DnsIpAddresses '$DnsIpAddresses' -DomainDnsName '$DomainDnsName' -SubnetId '$SubnetId' -DomainAdminUser '$DomainAdminUser' -ValidationNode1WaitHandler '$ValidationNode1WaitHandler' -IsCustomAmi '$IsCustomAmi' -PerformFsxCheck '$PerformFsxCheck' -LogGroup '$LogGroup' -SqlDeploymentMode '$SqlDeploymentMode' -ValidationNodeName '$ValidationNodeName'" 
+    $Command = "$ScriptDir\Validation-Instance-Initializer.ps1 -Region '$Region' -DeploymentName '$DeploymentName' -DnsIpAddresses '$DnsIpAddresses' -DomainDnsName '$DomainDnsName' -DCName '$DCName' -SubnetId '$SubnetId' -DomainAdminUser '$DomainAdminUser' -ValidationNode1WaitHandler '$ValidationNode1WaitHandler' -IsCustomAmi '$IsCustomAmi' -PerformFsxCheck '$PerformFsxCheck' -LogGroup '$LogGroup' -SqlDeploymentMode '$SqlDeploymentMode' -ValidationNodeName '$ValidationNodeName'" 
     if ($FsxFileSystemId -ne "") {
         $Command += " -FsxFileSystemId $FsxFileSystemId"
     }

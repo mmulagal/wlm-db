@@ -7,6 +7,7 @@ locals {
     domain_dns_name                       = var.domain_dns_name
     subnet_id                             = var.subnet_id
     domain_admin_user                     = var.domain_admin_user
+    preferred_domain_controller           = var.preferred_domain_controller
     validation_node1_wait_handler         = var.validation_node1_wait_handler
     is_custom_ami                         = var.is_custom_ami
     perform_fsx_check                     = var.perform_fsx_check

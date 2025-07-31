@@ -9,6 +9,8 @@ param(
     [string]$DnsIpAddresses,
     [Parameter(Mandatory = $true)]
     [string]$DomainDnsName,
+    [Parameter(Mandatory = $false)]
+    [string]$DCName,    
     [Parameter(Mandatory = $true)]
     [string]$SubnetId,
     [Parameter(Mandatory = $true)]
@@ -249,7 +251,7 @@ try {
 
     Invoke-CommandExecution "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${DnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}'"
     Invoke-CommandExecution "C:\\cfn\\scripts\\validation\\Validate-VPCConnectivity.ps1 -subnet '${SubnetId}' -region '$Region' -Stackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
-    Invoke-CommandExecution "C:\\cfn\\scripts\\validation\\Validate-Credentials.ps1 -DomainName '${DomainDnsName}' -UserName '${DomainAdminUser}' -isSecretManagerSupported 0 -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
+    Invoke-CommandExecution "C:\\cfn\\scripts\\validation\\Validate-Credentials.ps1 -DomainName '${DomainDnsName}' -DCName '${DCName}' -UserName '${DomainAdminUser}' -isSecretManagerSupported 0 -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
     # run this validate-fsxconnecitivity.ps1 script only for existing fsx file system
     if (![string]::IsNullOrEmpty($FsxFileSystemId)) {
         Invoke-CommandExecution "C:\\cfn\\scripts\\validation\\Validate-FsxConnectivity.ps1 -PerformFSxCheck '${PerformFsxCheck}' -FSxFileSystemId '$FsxFileSystemId' -FSxRegion '$Region' -Stackname '$DeploymentName' -Parentstackname '$DeploymentName' -ResourceID '$ValidationNodeName' -WaitHandler '${ValidationNode1WaitHandler}' -IsTerraform 1"
