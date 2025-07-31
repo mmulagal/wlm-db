@@ -413,7 +413,7 @@ async function stepDelay(delay: number, index: number, maxSteps: number) {
     }
 
     const delayMultiplier = Math.floor(index / maxSteps);
-    const delayMs = delayMultiplier * delay;
+    const delayMs = Math.min(delayMultiplier * delay, 40000);
 
     await new Promise<void>(resolve => {
         setTimeout(() => {

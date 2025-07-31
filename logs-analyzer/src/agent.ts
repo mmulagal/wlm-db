@@ -345,8 +345,8 @@ async function analyzeErrorLogs(
             pLimit(5)(async () => {
                 if (index > 0) { // As of July,2025 .. Sonnet 4 models resulting in throttling of requests
                     // Adding a delay to avoid hitting rate limits
-                    // Increase delay every 5 errors: 1s, 1s, 1s, 1s, 2s, 2s, 2s, 2s, etc.
-                    await stepDelay(2000, index, 5);
+                    // Increase delay every 5 errors: 0s, 0s, 0s, 0s, 3s, 3s, 3s, 3s, etc. ...capped at 40s
+                    await stepDelay(3000, index, 5);
                 }
 
                 const {
@@ -535,8 +535,8 @@ async function recommendRemediation(
                                     
                     if (index > 0) { // As of July,2025 .. Sonnet 4 models resulting in throttling of requests
                         // Adding a delay to avoid hitting rate limits
-                        // Increase delay every 5 errors: 1s, 1s, 1s, 1s, 2s, 2s, 2s, 2s, etc.
-                        await stepDelay(2000, index, 5);
+                        // Increase delay every 5 errors: 0s, 0s, 0s, 0s, 0s, 3s, 3s, 3s, 3s, etc. .. capped at 40s
+                        await stepDelay(3000, index, 5);
                     }
                 const {
                     firstOccurrence,
@@ -591,7 +591,7 @@ async function recommendRemediation(
                         context,
                         sql,
                         additionalInfo:
-                            additionalInfo && !isEmpty(additionalInfo) ? formatAdditionalInfo(additionalInfo) : [],
+                            additionalInfo && !isEmpty(additionalInfo) && typeof additionalInfo !== 'string' ? formatAdditionalInfo(additionalInfo) : [],
                         tokenUsage: {
                             causeIdentification,
                             remediationRecommendation: {
