@@ -141,17 +141,21 @@ const DialogContent = ({
             case 'Shared storage':
                 return 'Mapping on impacted LUNs will be updated to include initiator names of both EC2 nodes';
             case 'Drive Letter':
-                return objectsInViolation && objectsInViolation.length > 0 
-                    ? `Drives ${objectsInViolation.map(drive => drive.replace(':', '')).join(', ')} ${t('databases.well-architect.drive-letter-conflicting-drives')}`
+                return objectsInViolation && objectsInViolation.length > 0
+                    ? `Drives ${objectsInViolation.map(drive => drive.replace(':', '')).join(', ')} ${t(
+                          'databases.well-architect.drive-letter-conflicting-drives'
+                      )}`
                     : t('databases.well-architect.drive-letter-no-violation');
             case 'Cluster Quorum':
                 return 'Quorum will be set to disk witness with node majority';
             case 'SQL Server Services':
                 return objectsInViolation && objectsInViolation.length > 0
                     ? [
-                        `${t('databases.well-architect.sql-service-startup-type-config')}${objectsInViolation.join(', node-')}`,
-                        t('databases.well-architect.sql-service-role-ownership-config')
-                    ]
+                          `${t('databases.well-architect.sql-service-startup-type-config')}${objectsInViolation.join(
+                              ', node-'
+                          )}`,
+                          t('databases.well-architect.sql-service-role-ownership-config')
+                      ]
                     : [];
             default:
                 return '';
@@ -245,11 +249,9 @@ const DialogContent = ({
 
     // Helper function to create drive letter notes section
     const createDriveLetterNotesSection = () =>
-        createSection(
-            GENERAL.NOTE,
-            createContentWithBullets([t('databases.well-architect.drive-letter-note1')]),
-            { width: '712px' }
-        );
+        createSection(GENERAL.NOTE, createContentWithBullets([t('databases.well-architect.drive-letter-note1')]), {
+            width: '712px'
+        });
 
     // Helper function to create cluster quorum and SQL server notes section
     const createClusterQuorumSQLNotesSection = () =>
@@ -648,7 +650,7 @@ const DialogContent = ({
                         t('databases.well-architect.heartbeat-setting-what-will-happen-content5'),
                         t('databases.well-architect.heartbeat-setting-what-will-happen-content6')
                     ]),
-                    <></>,    // Placeholder to maintain parameter order when skipping optional sections
+                    <></>, // Placeholder to maintain parameter order when skipping optional sections
                     createFailoverClusterNotesSection()
                 );
             case 'Cluster Quorum':

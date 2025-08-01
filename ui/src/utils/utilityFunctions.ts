@@ -232,7 +232,7 @@ const convertToBytes = (sizeStr: string): number => {
     };
 
     // First try to match with unit
-    let match = sizeStr.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB)$/);
+    const match = sizeStr.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB)$/);
 
     // If no unit found, try to match just the number and default to bytes
     if (!match) {

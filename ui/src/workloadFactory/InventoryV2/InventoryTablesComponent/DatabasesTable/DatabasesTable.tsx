@@ -62,7 +62,7 @@ const DatabasesTable = () => {
     const menuOpenedRowDetail: any = useRef(null);
     const navigate = useNavigate();
 
-    //Protection api's
+    // Protection api's
     const [getConnector] = useGetConnectorsMutation();
     const [getFsxDetails] = useGetFsxDetailsMutation();
     const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
@@ -193,7 +193,7 @@ const DatabasesTable = () => {
         return undefined;
     };
 
-    //handle protection logic
+    // handle protection logic
 
     const fetchDialog = (key: string) => {
         setDialog(

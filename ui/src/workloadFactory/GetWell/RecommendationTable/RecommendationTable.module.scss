@@ -35,6 +35,14 @@
             position: relative;
             top: 2px;
         }
+
+        .tooltip {
+            .errorMessage {
+                [class*='Popover-module_base'] {
+                    padding: 8px 16px !important;
+                }
+            }
+        }
     }
 
     .tooltip:hover {
