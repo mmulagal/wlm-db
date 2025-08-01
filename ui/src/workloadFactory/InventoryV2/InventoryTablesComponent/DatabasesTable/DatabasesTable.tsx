@@ -79,14 +79,12 @@ const DatabasesTable = () => {
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
 
     // Function to check if protect option should be disabled
-    const isProtectDisabled = (rowData: any): boolean => {
-        return (
+    const isProtectDisabled = (rowData: any): boolean => (
             rowData?.hostType !== GENERAL.MICROSOFT_SQL_SERVER_TYPE ||
             !rowData?.instanceRow?.fsxId ||
             !rowData?.hostRow?.nodeIpAddress ||
             rowData?.status !== 'ONLINE'
         );
-    };
 
     useEffect(() => {
         setLoading(
@@ -234,7 +232,7 @@ const DatabasesTable = () => {
         setDialog(
             <DialogComponent
                 header={t('databases.inventory.protect-header-database')}
-                content={<NoAgentDialog dialogType={'database'} />}
+                content={<NoAgentDialog dialogType="database" />}
                 primaryButton={t('databases.inventory.redirect')}
                 secondaryButton={GENERAL.CANCEL}
                 closeCallback={() => {
@@ -277,7 +275,7 @@ const DatabasesTable = () => {
                         agents={connectors}
                         hostExists={hostExists}
                         dialogKey={dialogKeyValue}
-                        dialogType={'database'}
+                        dialogType="database"
                     />
                 }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}

@@ -56,7 +56,7 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const rssConfigObj = instanceData?.assessments?.rssConfig;
                     const rssConfigStateObj = instanceData?.assessments?.dismissedConfigurations?.rssConfig;
                     const isStorageTierOptimized = isOptimized(rssConfigObj?.status, rssConfigStateObj?.configState);

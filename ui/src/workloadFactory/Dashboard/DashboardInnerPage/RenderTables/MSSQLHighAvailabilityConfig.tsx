@@ -54,7 +54,7 @@ const MSSQLHighAvailabilityConfig = () => {
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const mssqlHAData = instanceData?.assessments?.highAvailability || [];
 
                     if (
@@ -67,7 +67,11 @@ const MSSQLHighAvailabilityConfig = () => {
                             .filter((item: any) => item.status !== 'optimized' && !item?.errorMessage)
                             .map((item: any) => ({ ...item, id: item?.name }));
 
-                        const errorCase = mssqlHAData?.[0]?.errorMessage || mssqlHAData?.length === 0;
+                        const errorCase =
+                            (Array.isArray(mssqlHAData) &&
+                                mssqlHAData.length > 0 &&
+                                mssqlHAData.every((item: any) => !!item?.errorMessage)) ||
+                            mssqlHAData?.length === 0;
 
                         if (notOptimized.length > 0 || errorCase) {
                             mssqlHAAssessmentData.push({

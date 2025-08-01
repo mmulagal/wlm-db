@@ -56,7 +56,7 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const tempdbDriveSizeObj = instanceData?.assessments?.storage?.sizing?.find(
                         (item: any) => item.name === 'tempdb-drive-size'
                     );

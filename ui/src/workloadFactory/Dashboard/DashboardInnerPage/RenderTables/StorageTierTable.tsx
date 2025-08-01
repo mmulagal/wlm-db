@@ -49,7 +49,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
             uniqueResourceList.push(hostData?.databaseHostId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
                         (item: any) => item.name === 'performance-tier'
                     );

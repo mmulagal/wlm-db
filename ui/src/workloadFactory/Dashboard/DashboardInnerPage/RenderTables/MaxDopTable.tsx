@@ -55,7 +55,7 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const maxdopObj = instanceData?.assessments?.maxDOP;
                     const maxdopStateObj = instanceData?.assessments?.dismissedConfigurations?.maxDOP;
                     const isMaxdopOptimized = isOptimized(maxdopObj?.status, maxdopStateObj?.configState);

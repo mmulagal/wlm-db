@@ -55,7 +55,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const cloneObj = instanceData?.assessments?.clone;
                     const cloneStateObj = instanceData?.assessments?.dismissedConfigurations?.clone;
                     const isCloneOptimized = isOptimized(cloneObj?.status, cloneStateObj?.configState);

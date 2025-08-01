@@ -56,7 +56,7 @@ const OSPatchTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const hostOsPatchObj = instanceData?.assessments?.hostOsPatch;
                     const hostOsPatchStateObj = instanceData?.assessments?.dismissedConfigurations?.hostOsPatch;
                     const isRowOptimized = isOptimized(hostOsPatchObj?.status, hostOsPatchStateObj?.configState);

@@ -54,7 +54,7 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const snapshotObj = instanceData?.assessments?.snapshotPolicy;
                     const snapshotStateObj = instanceData?.assessments?.dismissedConfigurations?.snapshotPolicy;
                     const isStorageTierOptimized = isOptimized(snapshotObj?.status, snapshotStateObj?.configState);
