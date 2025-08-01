@@ -3,7 +3,11 @@ import { DsTypography } from '@tlveng/wlm-ds';
 import { Button } from '@netapp/design-system';
 import styles from './ProtectionDialogs.module.scss';
 
-const NoAgentDialog = () => {
+type NoAgentDialogProps = {
+    dialogType?: string; // 'instance' or 'database'
+};
+
+const NoAgentDialog = ({ dialogType }: NoAgentDialogProps) => {
     const { t } = useTranslation();
 
     const learnMore = () => {
@@ -16,8 +20,16 @@ const NoAgentDialog = () => {
     return (
         <div className={styles.protectionDialogs}>
             <div className={styles.topSection}>
-                <DsTypography variant="Semibold_14">{t('databases.inventory.redirect-to-netapp')}</DsTypography>
-                <DsTypography variant="Regular_14">{t('databases.inventory.top-section-text')}</DsTypography>
+                <DsTypography variant="Semibold_14">
+                    {dialogType === 'database'
+                        ? t('databases.inventory.redirect-to-netapp-database')
+                        : t('databases.inventory.redirect-to-netapp')}
+                </DsTypography>
+                <DsTypography variant="Regular_14">
+                    {dialogType === 'database'
+                        ? t('databases.inventory.top-section-text-database')
+                        : t('databases.inventory.top-section-text')}
+                </DsTypography>
             </div>
 
             <div className={styles.midSection}>

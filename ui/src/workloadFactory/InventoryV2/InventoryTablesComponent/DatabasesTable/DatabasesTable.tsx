@@ -78,6 +78,16 @@ const DatabasesTable = () => {
     const [listAllDirectories] = useListAllDirectoriesMutation();
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
 
+    // Function to check if protect option should be disabled
+    const isProtectDisabled = (rowData: any): boolean => {
+        return (
+            rowData?.hostType !== GENERAL.MICROSOFT_SQL_SERVER_TYPE ||
+            !rowData?.instanceRow?.fsxId ||
+            !rowData?.hostRow?.nodeIpAddress ||
+            rowData?.status !== 'ONLINE'
+        );
+    };
+
     useEffect(() => {
         setLoading(
             databaseHostsLoading ||
@@ -188,7 +198,7 @@ const DatabasesTable = () => {
     const fetchDialog = (key: string) => {
         setDialog(
             <DialogComponent
-                header={t('databases.inventory.protect-header')}
+                header={t('databases.inventory.protect-header-database')}
                 content={<FetchingDialog />}
                 primaryButton={t('databases.inventory.redirect')}
                 secondaryButton={GENERAL.CANCEL}
@@ -223,8 +233,8 @@ const DatabasesTable = () => {
     const showNoAgentDialog = () => {
         setDialog(
             <DialogComponent
-                header={t('databases.inventory.protect-header')}
-                content={<NoAgentDialog />}
+                header={t('databases.inventory.protect-header-database')}
+                content={<NoAgentDialog dialogType={'database'} />}
                 primaryButton={t('databases.inventory.redirect')}
                 secondaryButton={GENERAL.CANCEL}
                 closeCallback={() => {
@@ -252,7 +262,9 @@ const DatabasesTable = () => {
             <DialogComponent
                 header={
                     <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.inventory.protect-header-database')}
+                        </DsTypography>
                         {!hostExists && (
                             <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
                                 {t('databases.inventory.step-1-out-of')}
@@ -260,7 +272,14 @@ const DatabasesTable = () => {
                         )}
                     </div>
                 }
-                content={<SingleAgentDialog agents={connectors} hostExists={hostExists} dialogKey={dialogKeyValue} />}
+                content={
+                    <SingleAgentDialog
+                        agents={connectors}
+                        hostExists={hostExists}
+                        dialogKey={dialogKeyValue}
+                        dialogType={'database'}
+                    />
+                }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
                 secondaryButton={t('databases.inventory.cancel')}
                 closeCallback={() => {
@@ -505,10 +524,7 @@ const DatabasesTable = () => {
                     {
                         id: 'protect',
                         displayName: 'Protect',
-                        disabled:
-                            rowData?.hostType !== GENERAL.MICROSOFT_SQL_SERVER_TYPE ||
-                            !rowData?.instanceRow?.fsxId ||
-                            !rowData?.hostRow?.nodeIpAddress
+                        disabled: isProtectDisabled(rowData)
                     }
                 ];
                 return (

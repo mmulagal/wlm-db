@@ -20,7 +20,7 @@ import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorC
 import { resetProtectionProcess, setSelectedAgent } from '../../../../store/workloadFactory/snapcenterSlice';
 import { SNAPCENTER_STATUS } from '../../../../utils/consts';
 
-const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
+const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType }: any) => {
     const { t } = useTranslation();
 
     const { setDialog, closeDialog } = useDialog();
@@ -50,7 +50,9 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
                                 style={{ display: 'flex', justifyContent: 'space-between' }}
                             >
                                 <DsTypography variant="Regular_14">
-                                    {t('databases.inventory.protect-header')}
+                                    {dialogType === 'database'
+                                        ? t('databases.inventory.protect-header-database')
+                                        : t('databases.inventory.protect-header')}
                                 </DsTypography>
                                 <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
                                     {t('databases.inventory.step-2-out-of')}
@@ -175,7 +177,11 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey }: any) => {
                 </div>
             )}
             <div className={styles.topSection}>
-                <DsTypography variant="Semibold_14">{t('databases.inventory.protection-steps-text')}</DsTypography>
+                <DsTypography variant="Semibold_14">
+                    {dialogType === 'database'
+                        ? t('databases.inventory.protection-steps-text-database')
+                        : t('databases.inventory.protection-steps-text')}
+                </DsTypography>
                 <div className={styles.item}>
                     <div className={styles.row}>
                         <Bullet />
