@@ -1,7 +1,7 @@
 import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
-import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import styles from './RecommendationTable.module.scss';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Active } from '../../../assets/success.svg';
@@ -35,6 +35,7 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import store from '../../../store/store';
 
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, hostId, instanceId }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
