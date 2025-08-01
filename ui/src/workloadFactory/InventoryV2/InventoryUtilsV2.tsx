@@ -3822,7 +3822,8 @@ export const addHostHandlerSc = async (
                     usegMSA: false,
                     useManualInstall: false,
                     addHostsInCluster:
-                        rowData?.sqlServerDeploymentType === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS,
+                        (rowData?.sqlServerDeploymentType ?? rowData?.instanceRow?.sqlServerDeploymentType) ===
+                        SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS,
                     skipPreInstallChecks: false,
                     hostOSType: 'Windows'
                 },
