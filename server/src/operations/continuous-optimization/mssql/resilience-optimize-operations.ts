@@ -1108,11 +1108,7 @@ async function optimizeSqlServerService(
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         // Update parent job status and audit
-        await updateJobDetails(accountId, masterOptimizeParentId, {
-            status: jobStatus,
-            endTime: Date.now(),
-            error: errorMessage
-        });
+        await updateParentJobStatus(accountId, masterOptimizeParentId, false, errorMessage);
         updateLongRunningAuditGroup(
             jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
             errorMessage

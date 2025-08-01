@@ -177,7 +177,8 @@ async function processAccountInstancesBatch(
                             AssessmentCategories.COMPUTE,
                             AssessmentCategories.HOST_OS_PATCH,
                             AssessmentCategories.RSS_CONFIG,
-                            AssessmentCategories.MSSQL_PATCH
+                            AssessmentCategories.MSSQL_PATCH,
+                            AssessmentCategories.HIGH_AVAILABILITY // Cluster-quorum and heartbeat-settings
                         ]
                     )
                 )
