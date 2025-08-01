@@ -29,8 +29,7 @@ import {
     runPowerShellScript,
     deleteOlderFilesInDirectory,
     safeParseJson,
-    hoursAgoTimestamp,
-    stepDelay
+    hoursAgoTimestamp
 } from './utils/utils';
 import logger from './utils/logging';
 import { ToolUse, ToolSpec, MessageObj, AgentArgs, ErrorLogWithScriptAndDetails, ErrorLog } from './utils/interfaces';
@@ -248,7 +247,8 @@ async function initiateLogsAnalysis(inputText: string) {
 }
 
 function getStartTimestampForAnalysis(timeWindowHours: number = 24) {
-    if (timeWindowHours > 24) { // 24 is default value
+    if (timeWindowHours > 24) {
+        // 24 is default value
         // If the time window is greater than 24 hours, value specifically passed to the agent will be used.
         logger.info(`Using time window of ${timeWindowHours} hours for logs analysis.`);
         return hoursAgoTimestamp(timeWindowHours);
@@ -340,72 +340,66 @@ async function analyzeErrorLogs(
     const prompt =
         databaseType === DATABASE_TYPE.MSSQL ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
 
-    await Promise.all(
-        errorLogs.map((logChunk, index) =>
-            pLimit(5)(async () => {
-                if (index > 0) { // As of July,2025 .. Sonnet 4 models resulting in throttling of requests
-                    // Adding a delay to avoid hitting rate limits
-                    // Increase delay every 5 errors: 0s, 0s, 0s, 0s, 3s, 3s, 3s, 3s, etc. ...capped at 40s
-                    await stepDelay(3000, index, 5);
-                }
+    // Sequential processing is intentional to avoid AWS Bedrock throttling
+    /* eslint-disable no-await-in-loop */
+    for (let index = 0; index < errorLogs.length; index++) {
+        const logChunk = errorLogs[index];
+        if (!isEmpty(logChunk)) {
+            const {
+                firstOccurrence,
+                lastOccurrence,
+                errorCode,
+                severity,
+                context,
+                error,
+                count,
+                uniqueErrorKey,
+                hourlyErrorCounts
+            } = logChunk;
 
-                const {
-                    firstOccurrence,
-                    lastOccurrence,
-                    errorCode,
-                    severity,
-                    context,
-                    error,
-                    count,
-                    uniqueErrorKey,
-                    hourlyErrorCounts
-                } = logChunk;
+            const minimalErrorObject = {
+                errorContext: context,
+                errorMessage: error
+            };
 
-                const minimalErrorObject = {
-                    errorContext: context,
-                    errorMessage: error
-                };
-
-                const response = await streamMessages(
-                    client,
-                    MODEL_ID,
-                    [
-                        {
-                            role: ConversationRole.USER,
-                            content: [{ text: prompt + JSON.stringify(minimalErrorObject) }]
-                        }
-                    ],
-                    undefined,
-                    inferenceConfig
-                );
-
-                const { message, usage: { totalTokens: total = 0, outputTokens: output, inputTokens: input } = {} } =
-                    response;
-                if (message.role === ConversationRole.ASSISTANT) {
-                    const { content: [{ text }] = [] } = message;
-                    if (text) {
-                        const data = parseSuggestedScriptsWithTimestamp([text], {
-                            firstOccurrence,
-                            lastOccurrence,
-                            errorCode,
-                            severity,
-                            count,
-                            uniqueErrorKey,
-                            hourlyErrorCounts,
-                            tokenUsageForCauseIdentification: {
-                                input,
-                                output,
-                                total
-                            },
-                            context
-                        });
-                        errorLogsWithScripts.push(...data);
+            const response = await streamMessages(
+                client,
+                MODEL_ID,
+                [
+                    {
+                        role: ConversationRole.USER,
+                        content: [{ text: prompt + JSON.stringify(minimalErrorObject) }]
                     }
-                }
-            })
-        )
-    );
+                ],
+                undefined,
+                inferenceConfig
+            );
 
+            const { message, usage: { totalTokens: total = 0, outputTokens: output, inputTokens: input } = {} } = response;
+            if (message.role === ConversationRole.ASSISTANT) {
+                const { content: [{ text }] = [] } = message;
+                if (text) {
+                    const data = parseSuggestedScriptsWithTimestamp([text], {
+                        firstOccurrence,
+                        lastOccurrence,
+                        errorCode,
+                        severity,
+                        count,
+                        uniqueErrorKey,
+                        hourlyErrorCounts,
+                        tokenUsageForCauseIdentification: {
+                            input,
+                            output,
+                            total
+                        },
+                        context
+                    });
+                    errorLogsWithScripts.push(...data);
+                }
+            }
+        }
+    }
+    /* eslint-enable no-await-in-loop */
     return { errorLogsWithScripts, databaseType };
 }
 
@@ -529,84 +523,79 @@ async function recommendRemediation(
             ? REMIDIATION_RECOMMENDATION_PROMPT
             : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
 
-    await Promise.all(
-        result.map((errorWithInfo,index) =>
-            LIMIT_3(async () => {
-                                    
-                    if (index > 0) { // As of July,2025 .. Sonnet 4 models resulting in throttling of requests
-                        // Adding a delay to avoid hitting rate limits
-                        // Increase delay every 5 errors: 0s, 0s, 0s, 0s, 0s, 3s, 3s, 3s, 3s, etc. .. capped at 40s
-                        await stepDelay(3000, index, 5);
+    /* eslint-disable no-await-in-loop */
+    for (let index = 0; index < result.length; index++) {
+        const errorWithInfo = result[index];
+        if (!isEmpty(errorWithInfo)) {
+            const {
+                firstOccurrence,
+                lastOccurrence,
+                errorCode,
+                error,
+                cause,
+                additionalInfo,
+                severity,
+                count,
+                tokenUsageForCauseIdentification: causeIdentification,
+                uniqueErrorKey,
+                hourlyErrorCounts,
+                context,
+                sql
+            } = errorWithInfo;
+            const minimalErrorObject = {
+                error,
+                cause,
+                additionalInfo
+            }; // Minimal error object to send to the model to save tokens
+            const response = await streamMessages(
+                client,
+                MODEL_ID,
+                [
+                    {
+                        role: ConversationRole.USER,
+                        content: [{ text: prompt + JSON.stringify(minimalErrorObject) }]
                     }
-                const {
+                ],
+                undefined,
+                inferenceConfig
+            );
+            const { message, usage: { totalTokens: total = 0, inputTokens: input = 0, outputTokens: output = 0 } = {} } =
+                response;
+            const { content: [{ text }] = [] } = message;
+            if (text) {
+                const { remediation } = JSON.parse(text);
+                remediationRecommendation.push({
+                    error,
+                    cause,
+                    count,
+                    severity,
+                    remediation,
                     firstOccurrence,
                     lastOccurrence,
                     errorCode,
-                    error,
-                    cause,
-                    additionalInfo,
-                    severity,
-                    count,
-                    tokenUsageForCauseIdentification: causeIdentification,
                     uniqueErrorKey,
                     hourlyErrorCounts,
                     context,
-                    sql
-                } = errorWithInfo;
-                const minimalErrorObject = {
-                    error,
-                    cause,
-                    additionalInfo
-                }; // Minimal error object to send to the model to save tokens
-                const response = await streamMessages(
-                    client,
-                    MODEL_ID,
-                    [
-                        {
-                            role: ConversationRole.USER,
-                            content: [{ text: prompt + JSON.stringify(minimalErrorObject) }]
+                    sql,
+                    additionalInfo:
+                        additionalInfo && !isEmpty(additionalInfo) && typeof additionalInfo !== 'string'
+                            ? formatAdditionalInfo(additionalInfo)
+                            : [],
+                    tokenUsage: {
+                        causeIdentification,
+                        remediationRecommendation: {
+                            input,
+                            output, // Assuming no output tokens for remediation recommendation
+                            total
                         }
-                    ],
-                    undefined,
-                    inferenceConfig
-                );
-                const {
-                    message,
-                    usage: { totalTokens: total = 0, inputTokens: input = 0, outputTokens: output = 0 } = {}
-                } = response;
-                const { content: [{ text }] = [] } = message;
-                if (text) {
-                    const { remediation } = JSON.parse(text);
-                    remediationRecommendation.push({
-                        error,
-                        cause,
-                        count,
-                        severity,
-                        remediation,
-                        firstOccurrence,
-                        lastOccurrence,
-                        errorCode,
-                        uniqueErrorKey,
-                        hourlyErrorCounts,
-                        context,
-                        sql,
-                        additionalInfo:
-                            additionalInfo && !isEmpty(additionalInfo) && typeof additionalInfo !== 'string' ? formatAdditionalInfo(additionalInfo) : [],
-                        tokenUsage: {
-                            causeIdentification,
-                            remediationRecommendation: {
-                                input,
-                                output, // Assuming no output tokens for remediation recommendation
-                                total
-                            }
-                        }
-                    });
-                } else {
-                    logger.error('No text found in the response.');
-                }
-            })
-        )
-    );
+                    }
+                });
+            } else {
+                logger.error('No text found in the response.');
+            }
+        }
+    }
+    /* eslint-enable no-await-in-loop */
     return remediationRecommendation;
 }
 
