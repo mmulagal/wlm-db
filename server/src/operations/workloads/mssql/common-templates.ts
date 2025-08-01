@@ -113,20 +113,29 @@ const ontapRestRequestBootstrap = `
                 $FSxNHTTP_Request = [System.Net.WebRequest]::Create("https://$FSxHostName")
                 $FSxNHTTP_Response = $FSxNHTTP_Request.GetResponse()
                 $FSxNHTTP_Response.Close()
+                $FSxIPUsed = $False
             }
             catch {
                 write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
-                Write-Information "FSxN Management domain $FSxHostName is not resolved. Switching to management IP."
-                $FileSystemDetails = Get-FSXFileSystem -FileSystemId $fsxId
-                $FSxHostName = $FileSystemDetails.ontapconfiguration.Endpoints.Management.IpAddresses
-                if ($FSxHostName -is [array]) {
-                    $FSxHostName = $FSxHostName[0]
+                if ($_.Exception.Message -like "*remote server returned an error*") {
+                    Write-Information "Server connection works, returned error for 0 arguments"
+                    $FSxIPUsed = $False
+                }
+                else {
+                    Write-Information "FSxN Management domain $FSxHostName is not resolved. Switching to management IP."
+                    $FileSystemDetails = Get-FSXFileSystem -FileSystemId $fsxId
+                    $FSxHostName = $FileSystemDetails.ontapconfiguration.Endpoints.Management.IpAddresses
+                    if ($FSxHostName -is [array]) {
+                        $FSxHostName = $FSxHostName[0]
+                        }
+                $FSxIPUsed = $True
                 }
             }
             return @{
                 FSxCredentialsInBase64 = $FSxCredentialsInBase64
                 FSxHostName = $FSxHostName
                 FSxCredentials= $FSxCredentials
+                FSxIPUsed = $FSxIPUsed
             }
         }
 `;
@@ -138,6 +147,11 @@ const ontapRestRequest = `
         $FSxCredentialsInBase64 = $FSxNDetails.FSxCredentialsInBase64
         $FSxHostName = $FSxNDetails.FSxHostName
         $FSxCredentials= $FSxNDetails.FSxCredentials
+        $FsxIPUsed = $FSxNDetails.FSxIPUsed
+        if ($FSxIPUsed -eq $True) {
+            $isprivatesubnet = $True
+            $regionCertificate = ''
+        }
 `;
 
 const ontapJobStatusTemplate = `
