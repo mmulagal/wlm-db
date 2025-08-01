@@ -1277,9 +1277,9 @@ async function getHighAvailabilityDriftData(
 
         const haChecks: GenericAssessmentResponseType[] = [
             isEmpty(sharedStorage)
-                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('shared-storage') }
+                ? { name: 'shared-storage', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('shared-storage') }
                 : sharedStorage.error
-                ? { errorMessage: sharedStorage.error }
+                ? { name: 'shared-storage', errorMessage: sharedStorage.error }
                 : {
                       ...resiliencyConfig.highAvailability.sharedStorage,
                       name: 'shared-storage',
@@ -1292,9 +1292,9 @@ async function getHighAvailabilityDriftData(
                           sharedStorage.lunDetails?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED).length || 0
                   },
             isEmpty(driveLetter)
-                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('drive-letter') }
+                ? { name: 'drive-letter', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('drive-letter') }
                 : driveLetter.error
-                ? { errorMessage: driveLetter.error }
+                ? { name: 'drive-letter', errorMessage: driveLetter.error }
                 : {
                       ...resiliencyConfig.highAvailability.driveLetter,
                       name: 'drive-letter',
@@ -1303,9 +1303,9 @@ async function getHighAvailabilityDriftData(
                       totalObjectsInViolation: driveLetter.details.missingDriveLetters?.length || 0
                   },
             isEmpty(clusterQuorum)
-                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('cluster-quorum') }
+                ? { name: 'cluster-quorum', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('cluster-quorum') }
                 : clusterQuorum.error
-                ? { errorMessage: clusterQuorum.error }
+                ? { name: 'cluster-quorum', errorMessage: clusterQuorum.error }
                 : {
                       ...resiliencyConfig.highAvailability.clusterQuorum,
                       name: 'cluster-quorum',
@@ -1315,9 +1315,9 @@ async function getHighAvailabilityDriftData(
                       totalObjectsInViolation: clusterQuorum.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
                   },
             isEmpty(heartbeat)
-                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('heartbeat') }
+                ? { name: 'heartbeat-settings', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('heartbeat') }
                 : heartbeat.error
-                ? { errorMessage: heartbeat.error }
+                ? { name: 'heartbeat-settings', errorMessage: heartbeat.error }
                 : {
                       ...resiliencyConfig.highAvailability.heartbeat,
                       name: 'heartbeat-settings',
@@ -1327,9 +1327,9 @@ async function getHighAvailabilityDriftData(
                       totalObjectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? 0 : 1
                   },
             isEmpty(sqlServerServices) || !sqlServerServices.status
-                ? { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('sql-server-service') }
+                ? { name: 'sqlServer-service', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('sql-server-service') }
                 : sqlServerServices.error
-                ? { errorMessage: sqlServerServices.error }
+                ? { name: 'sqlServer-service', errorMessage: sqlServerServices.error }
                 : {
                       ...resiliencyConfig.highAvailability.sqlServerService,
                       name: 'sqlServer-service',
@@ -1339,7 +1339,7 @@ async function getHighAvailabilityDriftData(
                               ? sqlServerServices.nodesInViolation
                               : [],
                       totalObjectsAssessed: 2,
-                      totalObjectsInViolation: sqlServerServices.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
+                      totalObjectsInViolation: sqlServerServices.nodesInViolation?.length
                   }
         ];
         return haChecks;

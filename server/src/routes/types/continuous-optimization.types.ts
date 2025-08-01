@@ -94,7 +94,7 @@ const OntapVolume = Type.Object({
 });
 type OntapVolumeType = Static<typeof OntapVolume>;
 
-const ErrorResponse = Type.Object({ errorMessage: Type.String() });
+const ErrorResponse = Type.Object({ name: Type.Optional(Type.String()), errorMessage: Type.String() });
 type ErrorResponseType = Static<typeof ErrorResponse>;
 
 const ParameterDriftResponse = Type.Object({

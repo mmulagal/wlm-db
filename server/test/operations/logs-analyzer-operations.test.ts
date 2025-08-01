@@ -153,13 +153,7 @@ describe('Logs Analyzer Operations', () => {
 
     it('Should handle prerequisites analysis with invalid database instance', async () => {
         await expect(
-            analyzePreRequisites(
-                ACCOUNT_ID,
-                TEST_CREDENTIALS_ID,
-                TEST_REGION,
-                'invalid-resource-id',
-                'mssql'
-            )
+            analyzePreRequisites(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, 'invalid-resource-id', 'mssql')
         ).rejects.toThrow();
     });
 });

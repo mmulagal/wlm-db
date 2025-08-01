@@ -280,7 +280,7 @@ const GOLDEN_CONFIG = {
                 value: true,
                 severity: SEVERITY.CRITICAL,
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
                 recommendation: 'Validate availability of same drive letters on standby node.',
                 recommended: ''
             },
@@ -290,7 +290,8 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
                 resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                recommendation: 'The quorum configuration should be appropriate for the cluster size and environment.',
+                recommendation:
+                    'The quorum configuration should be tailored to a 2-node Windows Failover Cluster, using Node and Disk Majority with a Disk Witness to ensure high availability.',
                 recommended: ''
             },
             heartbeat: {
@@ -299,7 +300,8 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
                 resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                recommendation: 'Cluster heartbeat settings should be optimized to prevent unnecessary failovers.',
+                recommendation:
+                    'Set heartbeat thresholds to 40 heartbeats, specifically optimized for cloud deployments, to ensure high availability and prevent unnecessary failovers.',
                 recommended: ''
             },
             sqlServerService: {
@@ -309,7 +311,7 @@ const GOLDEN_CONFIG = {
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
                 resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
                 recommendation:
-                    'SQL Server services should be set to start automatically and run on the primary node and stopped on the secondary node.',
+                    'SQL Server services must be set to start automatically and run on the primary node and stop on the secondary node.',
                 recommended: ''
             }
         }

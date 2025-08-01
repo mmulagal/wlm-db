@@ -354,7 +354,7 @@ async function getAmiList(
             throw createError(404, `The requested ${osType} ${databaseType} AMI could not be found`);
         }
     }
-    const excludedVersions = ['2023.11.15', '2025.07.09'];
+    const excludedVersions = ['2023.11.15'];
     // https://jira.ngage.netapp.com/browse/DBS-1403 - Temp fix to exclude 2023.11.15 since FCI installations are failing
     const response = amis.Images.filter(image => !excludedVersions.some(version => image.Name?.includes(version))).map(
         ({
