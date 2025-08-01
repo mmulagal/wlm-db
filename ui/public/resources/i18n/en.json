@@ -249,7 +249,8 @@
                 "aws-credentials": "AWS credentials",
                 "aws-account": "AWS account",
                 "region": "Region"
-            }
+            },
+            "unavailable": "Unavailable"
         },
         "update-credentials": {
             "password-info-heading": "The password must be:",
