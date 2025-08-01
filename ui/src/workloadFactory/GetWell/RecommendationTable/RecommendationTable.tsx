@@ -311,23 +311,23 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
     // In case of error message coming from API we would display the Unavailable with tooltip
     const showUnavailableWithTooltip = (rowData: any) => (
-            <div className={styles.tooltipContainer}>
-                <div className={styles.tooltip}>
-                    <div className={styles.errorMessage}>
-                        <Popover
-                            popoverClass=""
-                            children={rowData?.errorMessage}
-                            trigger="hover"
-                            isAppendedToBody={false}
-                            container={<TooltipIcon />}
-                            placement="bottom"
-                        />
-                    </div>
+        <div className={styles.tooltipContainer}>
+            <div className={styles.tooltip}>
+                <div className={styles.errorMessage}>
+                    <Popover
+                        popoverClass=""
+                        children={rowData?.errorMessage}
+                        trigger="hover"
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                        placement="bottom"
+                    />
                 </div>
-
-                {t('databases.well-architect.unavailable')}
             </div>
-        );
+
+            {t('databases.well-architect.unavailable')}
+        </div>
+    );
 
     const ColDefs: ColumnProps[] = [
         {
@@ -345,26 +345,25 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             width: '220px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
-                    <>
-                        {rowData?.errorMessage && showUnavailableWithTooltip(rowData)}
+                <>
+                    {rowData?.errorMessage && showUnavailableWithTooltip(rowData)}
 
-                        {cellData && !rowData?.errorMessage && (
-                            <div className={styles.statusCol}>
-                                <div>
-                                    {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
-                                    {cellData === GETWELL_STATUS.NOT_OPTIMIZED && (
-                                        <NotActive className={styles.statusIcon} />
-                                    )}
-                                    {(cellData === GETWELL_STATUS.OPTIMIZING ||
-                                        cellData === GETWELL_STATUS.ANALYZING) && (
-                                        <InProgress className={styles.statusIcon} />
-                                    )}
-                                </div>
-                                <div>{statusValue(cellData)}</div>
+                    {cellData && !rowData?.errorMessage && (
+                        <div className={styles.statusCol}>
+                            <div>
+                                {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
+                                {cellData === GETWELL_STATUS.NOT_OPTIMIZED && (
+                                    <NotActive className={styles.statusIcon} />
+                                )}
+                                {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
+                                    <InProgress className={styles.statusIcon} />
+                                )}
                             </div>
-                        )}
-                    </>
-                )
+                            <div>{statusValue(cellData)}</div>
+                        </div>
+                    )}
+                </>
+            )
         },
         {
             id: '3',
