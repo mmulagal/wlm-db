@@ -3432,38 +3432,12 @@
             "instanceState": "Running"
         }
     ],
-    "getAvailableDriveLetters": [
-        "A",
-        "B",
-        "D",
-        "E",
-        "F",
-        "G",
-        "H",
-        "I",
-        "J",
-        "K",
-        "L",
-        "M",
-        "N",
-        "O",
-        "P",
-        "Q",
-        "R",
-        "S",
-        "T",
-        "U",
-        "V",
-        "W",
-        "X",
-        "Y",
-        "Z"
-    ],
+    "getAvailableDriveLetters": ["A", "B", "D", "E", "F", "G", "N", "O", "P", "Q", "R", "W", "X", "Y", "Z"],
     "getSqlServerServicesCommand": {
         "Name": "MSSQLSERVER",
         "Status": "Running",
         "DisplayName": "SQL Server (MSSQLSERVER)",
-        "StartType": "Manual"
+        "StartType": "Automatic"
     },
     "getLunIgroupInitiatorNamesCommand": {
         "hostIqns": "iqn.1991-05.com.microsoft:sqlnode2-56270.wlmdb-private.com",
@@ -3483,20 +3457,14 @@
                 "lunName": "/vol/wlmdb_sqllog_1753314349998/sqllog",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": [
-                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com",
-                    "iqn.1991-05.com.microsoft:sqlnode2-56270.wlmdb-private.com"
-                ]
+                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
             },
             {
                 "lunUuid": "74f32fa7-a69a-46ad-ac43-96446696235b",
                 "lunName": "/vol/wlmdb_sqldata_1753314349998/sqldata",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": [
-                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com",
-                    "iqn.1991-05.com.microsoft:sqlnode2-56270.wlmdb-private.com"
-                ]
+                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
             },
             {
                 "lunUuid": "5267b549-d42c-41dd-a54e-31a8beb96cb5",
@@ -3513,10 +3481,7 @@
                 "lunName": "/vol/wlmdb_sqllog_1753333408/sqllog",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": [
-                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com",
-                    "iqn.1991-05.com.microsoft:sqlnode2-56270.wlmdb-private.com"
-                ]
+                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
             },
             {
                 "lunUuid": "1e9b1d45-4c81-4bd1-bfe8-7d0ab4c8899c",

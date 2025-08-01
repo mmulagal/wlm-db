@@ -115,8 +115,7 @@ import { CROSS_REGION_REPLICATION_SCRIPT } from '../../../../src/operations/work
 import {
     CLUSTER_QUORUM_TYPE,
     DRIVE_LETTER,
-    HEARTBEAT_SETTINGS,
-    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
+    HEARTBEAT_SETTINGS
 } from '../../../../src/operations/workloads/mssql/high-availability-scripts';
 
 const ssmMock = mockClient(SSMClient);
@@ -1412,21 +1411,12 @@ ssmMock
         )
     )
     .on(GetCommandInvocationCommand, {
-        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getClusterHeartbeatSettingsCommand'
-    })
-    .resolves(
-        getSampleCommandResponseWithOutput(
-            'getClusterHeartbeatSettingsCommand',
-            JSON.stringify(getCommandInvocationResponse.getAvailableDriveLetters)
-        )
-    )
-    .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-clusterQuorumHeartBeat'
     })
     .resolves(
         getSampleCommandResponseWithOutput(
             'clusterQuorumHeartBeat',
-            '{"QuorumResourceName":"Quorum","QuorumType":1,"IsPhysicalDisk":true,"IsMajority":true,"IsPhysicalDiskAndMajority":true}{"CrossSubnetDelay":  1000,"SameSubnetThreshold":  20,"CrossSiteDelay":  1000,"SameSubnetDelay":  1000,"CrossSubnetThreshold":  20,"CrossSiteThreshold":  20}'
+            '{"QuorumResourceName":"Quorum","QuorumType":2,"IsPhysicalDisk":false,"IsMajority":false,"IsPhysicalDiskAndMajority":false}{"CrossSubnetDelay":  1000,"SameSubnetThreshold":  10,"CrossSiteDelay":  8000,"SameSubnetDelay":  1000,"CrossSubnetThreshold":  20,"CrossSiteThreshold":  20}'
         )
     )
     .on(GetCommandInvocationCommand, {

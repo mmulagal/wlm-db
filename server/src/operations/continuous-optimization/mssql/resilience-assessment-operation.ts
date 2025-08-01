@@ -32,7 +32,8 @@ import {
     CrrDetails,
     HighAvailabilityAssessment,
     Metadata,
-    ResourceAssessmentData
+    ResourceAssessmentData,
+    HighAvailabilitySharedStorage
 } from '../../../utils/common-types';
 import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import { getInstanceInfo } from '../../database/database-operations';
@@ -1030,7 +1031,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
         parentJobId
     });
 
-    const { isHeartBeatOptimized } = metadata;
+    const { isHeartBeatOptimized, isClusterQuorumOptimized } = metadata;
     const { resourceName, name: databaseInstanceName, activeNodeInstanceid } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
@@ -1069,26 +1070,39 @@ async function initiateHostLevelHighAvailabilityAssessment(
         const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);
         const [parsedQuorumData, parsedHeartSettingsData] = rawResponsesParsed;
 
-        // --- Cluster Quorum ---
-        const clusterQuorumResult =
-            !parsedQuorumData || typeof parsedQuorumData !== 'object'
-                ? {
-                      status: AssessmentStatus.NOT_OPTIMIZED,
-                      details: null,
-                      error: 'Unable to parse quorum data from ssm response'
-                  }
-                : {
-                      status: parsedQuorumData.IsPhysicalDiskAndMajority
-                          ? AssessmentStatus.OPTIMIZED
-                          : AssessmentStatus.NOT_OPTIMIZED,
-                      details: {
-                          isMajority: parsedQuorumData.IsMajority,
-                          quorumType: parsedQuorumData.QuorumType,
-                          isPhysicalDisk: parsedQuorumData.IsPhysicalDisk,
-                          quorumResourceName: parsedQuorumData.QuorumResourceName,
-                          isPhysicalDiskAndMajority: parsedQuorumData.IsPhysicalDiskAndMajority
+        let clusterQuorumResult: {
+            status: AssessmentStatus;
+            details: Record<string, { current: number; recommended: number; status: AssessmentStatus }> | null;
+            error?: string;
+        };
+
+        if (isDemoFlow && isClusterQuorumOptimized) {
+            clusterQuorumResult = {
+                status: AssessmentStatus.OPTIMIZED,
+                details: null
+            };
+        } else {
+            // --- Cluster Quorum ---
+            clusterQuorumResult =
+                !parsedQuorumData || typeof parsedQuorumData !== 'object'
+                    ? {
+                          status: AssessmentStatus.NOT_OPTIMIZED,
+                          details: null,
+                          error: 'Unable to parse quorum data from ssm response'
                       }
-                  };
+                    : {
+                          status: parsedQuorumData.IsPhysicalDiskAndMajority
+                              ? AssessmentStatus.OPTIMIZED
+                              : AssessmentStatus.NOT_OPTIMIZED,
+                          details: {
+                              isMajority: parsedQuorumData.IsMajority,
+                              quorumType: parsedQuorumData.QuorumType,
+                              isPhysicalDisk: parsedQuorumData.IsPhysicalDisk,
+                              quorumResourceName: parsedQuorumData.QuorumResourceName,
+                              isPhysicalDiskAndMajority: parsedQuorumData.IsPhysicalDiskAndMajority
+                          }
+                      };
+        }
 
         // --- Heartbeat Settings ---
         const recommendedHeartbeatSettings = storageGoldenConfigData.resiliency.heartbeatSettings as HeartbeatSettings;
@@ -1273,6 +1287,17 @@ async function getHighAvailabilityDriftData(
             `Assessment data found for: sharedStorage=${!!sharedStorage}, driveLetter=${!!driveLetter}, clusterQuorum=${!!clusterQuorum}, heartbeat=${!!heartbeat}, sqlServerServices=${!!sqlServerServices}`
         );
 
+        if (isDemoFlow) {
+            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            const { configsOptimized } =
+                ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
+            if (configsOptimized?.HIGH_AVAILABILITY?.includes('shared-storage') && sharedStorage) {
+                (sharedStorage as HighAvailabilitySharedStorage).status = AssessmentStatus.OPTIMIZED;
+            }
+            if (configsOptimized?.HIGH_AVAILABILITY?.includes('sql-server-services') && sqlServerServices) {
+                sqlServerServices.status = AssessmentStatus.OPTIMIZED;
+            }
+        }
         const resiliencyConfig = storageGoldenConfigData.resiliency;
 
         const haChecks: GenericAssessmentResponseType[] = [

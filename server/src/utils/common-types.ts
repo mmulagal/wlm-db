@@ -266,6 +266,7 @@ interface Metadata {
     isHostOsPatchOptimized?: boolean;
     isRssConfigOptimized?: string[];
     isHeartBeatOptimized?: boolean;
+    isClusterQuorumOptimized?: boolean;
 }
 
 interface DatabaseInstanceMetadata {
@@ -870,5 +871,6 @@ export {
     SqlCredential,
     OracleInstanceRegistration,
     HighAvailabilityAssessment,
-    IgroupMissingInitiators
+    IgroupMissingInitiators,
+    HighAvailabilitySharedStorage
 };

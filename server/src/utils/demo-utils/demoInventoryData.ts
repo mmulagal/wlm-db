@@ -2704,6 +2704,22 @@ const ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
                 igroupName: 'wlmdb_sqligroup_1753227808629',
                 igroupUuid: 'c9272d32-6761-11f0-980e-53fb760838dd',
                 initiatorNames: ['iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com']
+            },
+            {
+                status: 'not-optimized',
+                lunUuid: '956531bd-9468-407e-a4ac-41b29140831b',
+                lunName: '/vol/wlmdb_sqldata_1753227905523/sqllog',
+                igroupName: 'wlmdb_sqligroup_1753227808629',
+                igroupUuid: 'c9272d32-6761-11f0-980e-53fb760838dd',
+                initiatorNames: ['iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com']
+            },
+            {
+                status: 'not-optimized',
+                lunUuid: '956531bd-9468-407e-a4ac-41b29140831c',
+                lunName: '/vol/wlmdb_sqldata_1753227905567/sqldata',
+                igroupName: 'wlmdb_sqligroup_1753227808629',
+                igroupUuid: 'c9272d32-6761-11f0-980e-53fb760838dd',
+                initiatorNames: ['iqn.1991-05.com.microsoft:sqlnode1-45242.wlmqaauto.com']
             }
         ],
         allHostIqns: [

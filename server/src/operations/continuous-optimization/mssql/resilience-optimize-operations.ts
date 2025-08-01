@@ -560,7 +560,7 @@ async function handleSharedStorageOptimize(
 
                 const {
                     config_data: configData,
-                    database_instances: { database_instance_name: instanceName = '' } = {},
+                    database_instances: { database_instance_name: instanceName = '', metadata: instanceMetaData } = {},
                     resource: { resource_name: sqlServerName = '' } = {}
                 } = persistedConfigurationData || {};
 
@@ -628,6 +628,17 @@ async function handleSharedStorageOptimize(
                             : parsedResponse.result === 'partial'
                             ? JOBSTATUS.WARNING
                             : JOBSTATUS.COMPLETED;
+
+                    if (isDemoFlow) {
+                        // update metadata in instances table to mark optimized configuration
+                        await updateOptimizedConfigNameInInstanceTable(
+                            accountId,
+                            databaseInstanceId,
+                            ['shared-storage'],
+                            'HIGH_AVAILABILITY',
+                            instanceMetaData as DatabaseInstanceMetadata
+                        );
+                    }
 
                     if (jobStatus !== JOBSTATUS.FAILED) {
                         await onDemandTriggerMssqlDriftAssessment(
@@ -774,7 +785,8 @@ async function handleClusterQuorum(
     databaseHostName: string,
     activeNodeInstanceId: string,
     databaseInstanceId: string,
-    parentJobId: string
+    parentJobId: string,
+    metadata: Metadata
 ) {
     logger.info('Starting cluster quorum optimization', {
         accountId,
@@ -828,6 +840,11 @@ async function handleClusterQuorum(
             logger.warn(`Cluster quorum partially remediated for host "${databaseHostId}". Please check details.`);
         } else {
             logger.error(`Failed to remediate cluster quorum for host "${databaseHostId}".`);
+        }
+
+        if (isDemoFlow) {
+            metadata.isClusterQuorumOptimized = true;
+            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
         if (jobStatus !== JOBSTATUS.FAILED) {
@@ -938,7 +955,8 @@ async function optimizeHighAvailabilityConfiguration(
                     sqlServerName || '',
                     activeNodeInstanceId!,
                     databaseInstances[0],
-                    masterOptimizeParentId
+                    masterOptimizeParentId,
+                    metadata as Metadata
                 );
                 await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
@@ -1036,7 +1054,7 @@ async function optimizeSqlServerService(
         });
 
         const {
-            database_instances: { database_instance_name: instanceName = '' } = {},
+            database_instances: { database_instance_name: instanceName = '', metadata: instanceMetadata } = {},
             resource: { resource_name: sqlServerName = '' } = {}
         } = persistedConfigurationData || {};
 
@@ -1080,6 +1098,17 @@ async function optimizeSqlServerService(
                 serverNameWithHostName
             )
         ]);
+
+        if (isDemoFlow) {
+            // update metadata in instances table to mark optimized configuration
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['sql-server-services'],
+                'HIGH_AVAILABILITY',
+                instanceMetadata as DatabaseInstanceMetadata
+            );
+        }
 
         if (
             node1StartupTypeJobstatus !== JOBSTATUS.FAILED ||
