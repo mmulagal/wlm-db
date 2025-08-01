@@ -24,7 +24,7 @@ const NoAgentDialog = () => {
                 <DsTypography variant="Semibold_14">{t('databases.inventory.agent-req')}</DsTypography>
                 <DsTypography variant="Regular_14">{t('databases.inventory.agent-req-text')}</DsTypography>
                 <Button variant="link" onClick={learnMore}>
-                    Learn about BlueXP Agents
+                    {t('databases.inventory.learn-about-bxp-connectors')}
                 </Button>
             </div>
 
