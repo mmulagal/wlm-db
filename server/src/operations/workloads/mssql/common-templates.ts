@@ -147,7 +147,7 @@ const ontapRestRequest = `
         $FSxCredentialsInBase64 = $FSxNDetails.FSxCredentialsInBase64
         $FSxHostName = $FSxNDetails.FSxHostName
         $FSxCredentials= $FSxNDetails.FSxCredentials
-        $FsxIPUsed = $FSxNDetails.FSxIPUsed
+        $FSxIPUsed = $FSxNDetails.FSxIPUsed
         if ($FSxIPUsed -eq $True) {
             $isprivatesubnet = $True
             $regionCertificate = ''
