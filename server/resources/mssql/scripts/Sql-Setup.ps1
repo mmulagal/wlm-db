@@ -27,6 +27,10 @@ param(
     [string]$AdDnsIpAddresses,
     [Parameter(Mandatory = $true)]
     [string]$DomainDnsName,
+    [Parameter(Mandatory = $false)]
+    [string]$DCName,
+    [Parameter(Mandatory = $false)]
+    [string]$OUPath,
     [Parameter(Mandatory = $true)]
     [string]$DomainAdminUser,
     [Parameter(Mandatory = $true)]
