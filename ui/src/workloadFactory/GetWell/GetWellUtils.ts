@@ -1774,8 +1774,13 @@ export const formatMssqlHighAvailabilityConfig = (
     // Check for data in both possible structures
     const mssqlHAData = data?.highAvailability || (data as any)?.['high-availability'];
 
-    if (mssqlHAData && !mssqlHAData?.[0]?.errorMessage) {
-        mssqlHAData.forEach((item: PerConfigInterface) => {
+    // Filter out entries with errorMessage
+    const validEntries = Array.isArray(mssqlHAData)
+        ? mssqlHAData.filter((item: PerConfigInterface) => !item?.errorMessage)
+        : [];
+
+    if (validEntries.length > 0) {
+        validEntries.forEach((item: PerConfigInterface) => {
             let status = item?.status || '';
             if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
                 status = optimizingData?.[item?.name || ''];
@@ -1809,8 +1814,8 @@ export const formatMssqlHighAvailabilityConfig = (
     let mssqlHANotOptimizedConfig = 0;
 
     // Count optimized vs not optimized configurations
-    if (mssqlHAData && !mssqlHAData?.[0]?.errorMessage) {
-        mssqlHAData.forEach((item: PerConfigInterface) => {
+    if (validEntries.length > 0) {
+        validEntries.forEach((item: PerConfigInterface) => {
             let status = item?.status || '';
             if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
                 status = optimizingData?.[item?.name || ''];

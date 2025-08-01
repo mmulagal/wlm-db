@@ -1,6 +1,7 @@
 import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
+import { t } from 'i18next';
 import styles from './RecommendationTable.module.scss';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Active } from '../../../assets/success.svg';
@@ -308,6 +309,26 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         return cellData || GENERAL.NOT_AVAILABLE;
     };
 
+    // In case of error message coming from API we would display the Unavailable with tooltip
+    const showUnavailableWithTooltip = (rowData: any) => (
+            <div className={styles.tooltipContainer}>
+                <div className={styles.tooltip}>
+                    <div className={styles.errorMessage}>
+                        <Popover
+                            popoverClass=""
+                            children={rowData?.errorMessage}
+                            trigger="hover"
+                            isAppendedToBody={false}
+                            container={<TooltipIcon />}
+                            placement="bottom"
+                        />
+                    </div>
+                </div>
+
+                {t('databases.well-architect.unavailable')}
+            </div>
+        );
+
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
@@ -324,17 +345,26 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             width: '220px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
-                <div className={styles.statusCol}>
-                    <div>
-                        {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
-                        {cellData === GETWELL_STATUS.NOT_OPTIMIZED && <NotActive className={styles.statusIcon} />}
-                        {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
-                            <InProgress className={styles.statusIcon} />
+                    <>
+                        {rowData?.errorMessage && showUnavailableWithTooltip(rowData)}
+
+                        {cellData && !rowData?.errorMessage && (
+                            <div className={styles.statusCol}>
+                                <div>
+                                    {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
+                                    {cellData === GETWELL_STATUS.NOT_OPTIMIZED && (
+                                        <NotActive className={styles.statusIcon} />
+                                    )}
+                                    {(cellData === GETWELL_STATUS.OPTIMIZING ||
+                                        cellData === GETWELL_STATUS.ANALYZING) && (
+                                        <InProgress className={styles.statusIcon} />
+                                    )}
+                                </div>
+                                <div>{statusValue(cellData)}</div>
+                            </div>
                         )}
-                    </div>
-                    <div>{statusValue(cellData)}</div>
-                </div>
-            )
+                    </>
+                )
         },
         {
             id: '3',
@@ -342,7 +372,32 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             accessor: 'severity',
             width: from === WLF_TABS.INVENTORY ? '173px' : '200px',
             isSortable: true,
-            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: any, rowData: any) => {
+                if (rowData?.errorMessage) {
+                    return showUnavailableWithTooltip(rowData);
+                }
+
+                if (!cellData || cellData === GENERAL.NOT_AVAILABLE) {
+                    return (
+                        <DsTypography variant="Regular_13" className={styles.colText}>
+                            {t('databases.well-architect.unavailable')}
+                        </DsTypography>
+                    );
+                }
+
+                return (
+                    <div className={styles.statusCol}>
+                        <div>
+                            {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
+                            {cellData === GETWELL_STATUS.NOT_OPTIMIZED && <NotActive className={styles.statusIcon} />}
+                            {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
+                                <InProgress className={styles.statusIcon} />
+                            )}
+                        </div>
+                        <div>{statusValue(cellData)}</div>
+                    </div>
+                );
+            }
         },
         {
             id: '4',
