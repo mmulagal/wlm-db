@@ -278,7 +278,7 @@ async function cronAssessmentCollection(initiatedBy: string) {
     let nextToken: string | undefined;
     let batchNumber = 1;
     let totalProcessed = 0;
-    const PAGE_SIZE = 25;
+    const PAGE_SIZE = 100;
     const startTime = Date.now();
 
     try {
