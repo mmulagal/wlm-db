@@ -1005,7 +1005,7 @@ async function getSqlServiceStartupAssessment(
             status: isEmpty(nodesInViolation) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
             preferredNodeId,
             standbyNodeId,
-            nodesInViolation,
+            nodesInViolation: [...new Set(nodesInViolation)],
             details: [...servicesPreferred, ...servicesNonPreferred]
         };
     } catch (err) {
@@ -1314,7 +1314,9 @@ async function getHighAvailabilityDriftData(
                               ?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED)
                               .map(lun => lun.lunName) || [],
                       totalObjectsInViolation:
-                          sharedStorage.lunDetails?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED).length || 0
+                          sharedStorage.lunDetails?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED).length ||
+                          0,
+                      totalObjectsAssessed: sharedStorage.lunDetails?.length || 0
                   },
             isEmpty(driveLetter)
                 ? { name: 'drive-letter', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('drive-letter') }
@@ -1324,8 +1326,9 @@ async function getHighAvailabilityDriftData(
                       ...resiliencyConfig.highAvailability.driveLetter,
                       name: 'drive-letter',
                       status: driveLetter.status as AssessmentStatus,
-                      objectsInViolation: driveLetter.details.missingDriveLetters || [],
-                      totalObjectsInViolation: driveLetter.details.missingDriveLetters?.length || 0
+                      objectsInViolation: [...new Set(driveLetter.details.missingDriveLetters || [])],
+                      totalObjectsInViolation: [...new Set(driveLetter.details.missingDriveLetters || [])].length || 0,
+                      totalObjectsAssessed: [...new Set(driveLetter.details.primaryNodeDriveLetters || [])].length || 0
                   },
             isEmpty(clusterQuorum)
                 ? { name: 'cluster-quorum', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('cluster-quorum') }

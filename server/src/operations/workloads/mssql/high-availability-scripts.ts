@@ -51,11 +51,9 @@ $result | ConvertTo-Json -Compress
 
 const SQL_SERVER_SERVICES = (instanceName: string) => `
 # Get SQL Server services
-$serviceName = if ([string]::IsNullOrEmpty("${instanceName}") -or "${instanceName}".ToUpper() -eq "MSSQLSERVER") {
-        "MSSQLSERVER"
-} else {
-        "MSSQL$${instanceName}"
-}
+$instanceName = '${instanceName}'
+$serviceName = if ($instanceName -and $instanceName.ToUpper() -ne "MSSQLSERVER") { "MSSQL\`$$instanceName" } else { "MSSQLSERVER" }
+
 Get-Service -Name $serviceName -ErrorAction SilentlyContinue |
         Select-Object Name,
                                   @{Name="Status";Expression={ $_.Status.ToString() }},
