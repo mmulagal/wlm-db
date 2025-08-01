@@ -52,7 +52,7 @@ const OntapConfig = () => {
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const lunsData = instanceData?.assessments?.storage?.configuration?.luns;
                     const volData = instanceData?.assessments?.storage?.configuration?.volumes;
                     const mergedData = [

@@ -52,7 +52,7 @@ const OperatingSystemTable = () => {
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const notOptimized = instanceData?.assessments?.storage?.configuration?.os
                         ?.filter((item: any) => item.status !== 'optimized' && !item?.errorMessage)
                         .map((item: any) => ({ ...item, id: item?.name }));

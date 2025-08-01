@@ -1774,35 +1774,28 @@ export const formatMssqlHighAvailabilityConfig = (
     // Check for data in both possible structures
     const mssqlHAData = data?.highAvailability || (data as any)?.['high-availability'];
 
-    // Filter out entries with errorMessage
-    const validEntries = Array.isArray(mssqlHAData)
-        ? mssqlHAData.filter((item: PerConfigInterface) => !item?.errorMessage)
-        : [];
+    mssqlHAData?.forEach((item: PerConfigInterface) => {
+        let status = item?.status || '';
+        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+            status = optimizingData?.[item?.name || ''];
+        }
 
-    if (validEntries.length > 0) {
-        validEntries.forEach((item: PerConfigInterface) => {
-            let status = item?.status || '';
-            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-                status = optimizingData?.[item?.name || ''];
-            }
-
-            formatMssqlHighAvailabilityConfigList.push({
-                ...item,
-                id: item?.name,
-                type: 'mssqlHighAvailability',
-                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-                status: GETWELL_VALUES?.[status] || status,
-                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
-            });
-
-            if (item?.severity === 'critical') {
-                mssqlHACritical = 1;
-            } else if (item?.severity === 'warning') {
-                mssqlHAWarning = 1;
-            }
-            mssqlHATagsList = [...mssqlHATagsList, ...(item?.tags || [])];
+        formatMssqlHighAvailabilityConfigList.push({
+            ...item,
+            id: item?.name,
+            type: 'mssqlHighAvailability',
+            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+            status: GETWELL_VALUES?.[status] || status,
+            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
         });
-    }
+
+        if (item?.severity === 'critical') {
+            mssqlHACritical = 1;
+        } else if (item?.severity === 'warning') {
+            mssqlHAWarning = 1;
+        }
+        mssqlHATagsList = [...mssqlHATagsList, ...(item?.tags || [])];
+    });
 
     if (mssqlHACritical === 1) {
         highestMssqlHASeverity = 'Critical';
@@ -1814,19 +1807,17 @@ export const formatMssqlHighAvailabilityConfig = (
     let mssqlHANotOptimizedConfig = 0;
 
     // Count optimized vs not optimized configurations
-    if (validEntries.length > 0) {
-        validEntries.forEach((item: PerConfigInterface) => {
-            let status = item?.status || '';
-            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-                status = optimizingData?.[item?.name || ''];
-            }
-            if (status === 'optimized') {
-                mssqlHAOptimizedConfig++;
-            } else {
-                mssqlHANotOptimizedConfig++;
-            }
-        });
-    }
+    mssqlHAData?.forEach((item: PerConfigInterface) => {
+        let status = item?.status || '';
+        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+            status = optimizingData?.[item?.name || ''];
+        }
+        if (status === 'optimized') {
+            mssqlHAOptimizedConfig++;
+        } else {
+            mssqlHANotOptimizedConfig++;
+        }
+    });
 
     return {
         formatMssqlHighAvailabilityConfigList,

@@ -1253,7 +1253,7 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
 
 export const formatAssessmentTableData = (data: any) => {
     const result: any = [];
-    data.map((item: any) => {
+    data?.map((item: any) => {
         if (!item?.error && !item?.errorMessage) {
             result.push({
                 ...item,

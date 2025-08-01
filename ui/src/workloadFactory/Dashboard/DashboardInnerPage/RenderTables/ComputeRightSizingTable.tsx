@@ -54,7 +54,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const computeRightSizingObj = instanceData?.assessments?.compute;
                     const computeRightSizingStateObj = instanceData?.assessments?.dismissedConfigurations?.compute;
                     const isStorageTierOptimized = isOptimized(

@@ -51,7 +51,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const userDataFilesObj = instanceData?.assessments?.storage?.layout?.find(
                         (item: any) => item.name === 'data-files-location'
                     );

@@ -56,7 +56,7 @@ const MicrosoftSQLPatchTable = ({ lastColDetails, handleBulkAction }: StorageTie
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error) {
+                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
                     const mssqlPatchObj = instanceData?.assessments?.mssqlPatch;
                     const mssqlPatchStateObj = instanceData?.assessments?.dismissedConfigurations?.mssqlPatch;
                     const isStorageTierOptimized = isOptimized(mssqlPatchObj?.status, mssqlPatchStateObj?.configState);
