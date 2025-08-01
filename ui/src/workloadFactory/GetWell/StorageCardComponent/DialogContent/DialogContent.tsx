@@ -613,7 +613,8 @@ const DialogContent = ({
                         t('databases.well-architect.shared-storage-action-summary')
                     ],
                     t('databases.well-architect.shared-storage-what-will-happen'),
-                    createONTAPConfigSection(),
+                    // createONTAPConfigSection(),     will be added again after the dynamic values are populated
+                    <></>,
                     createFailoverClusterNotesSection()
                 );
             case 'Drive Letter':
