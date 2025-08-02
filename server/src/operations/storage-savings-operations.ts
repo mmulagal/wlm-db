@@ -31,11 +31,25 @@ import { getManualModeStorageSavings } from '../lib/cloud-manager/marketing';
 import {
     ManualModeEbsComparisonResponse,
     ManualModeFsxwComparisonResponse,
-    ManualModeMarketingRequestBody
+    ManualModeMarketingRequestBody,
+    StorageSummary
 } from '../utils/marketing-types';
 
 const logger = getLogger();
 
+interface CalculationResponse {
+    ebsCalculation?: EBSCostCalculationRespType;
+    ebsCloneCalculation?: EBSCloneCostCalculationRespType;
+    ebsSnapshotCalculation?: EBSSnapshotCalculationRespType;
+    single: FsxCalculationRespType;
+    multi: FsxCalculationRespType;
+    fsxwCalculation?: FsxwCalculationRespType;
+    fsxwSnapshotCalculation?: FsxwSnapshotCalculationRespType;
+    fsxwCloneCalculation?: FsxwCloneCalculationRespType;
+    ebs?: StorageSummary;
+    fsx?: StorageSummary;
+    fsxw?: StorageSummary;
+}
 function fetchSqlVolumeIdsByType(type: string, sqlServerInstances: SqlServerInstanceInfoType[]) {
     logger.debug('Retrieving specific volume type volume ids from sql server instances', { type, sqlServerInstances });
 
@@ -307,7 +321,11 @@ async function aoagStorageSavingsMetrics(
         );
 
         // Consider all EBS volumes for storage, iops and throughput calculation
-        const { ebsCalculation: allVolumesEbsCalculation } = await formatStorageSavingsCalculationMetrics(
+        const {
+            ebs,
+            fsx,
+            ebsCalculation: allVolumesEbsCalculation
+        } = await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
             region,
@@ -331,6 +349,8 @@ async function aoagStorageSavingsMetrics(
             SqlServerDeploymentModel.SQL_AOAG_SHORT,
             instanceId
         );
+        const existingComputeLicensePrice = Number(existingComputeCalculation?.instanceMonthlyPrice || 0);
+        const recommendedComputeLicensePrice = Number(recommendedComputeCalculation?.instanceMonthlyPrice || 0);
 
         return {
             recommendedComputeCalculation,
@@ -341,7 +361,11 @@ async function aoagStorageSavingsMetrics(
             single,
             multi,
             ebsCloneCalculation: uniqueVolumesEbsCloneCalculation,
-            ebsSnapshotCalculation: uniqueVolumesEbsSnapshotCalculation
+            ebsSnapshotCalculation: uniqueVolumesEbsSnapshotCalculation,
+            totalSummary: {
+                existing: ebs ? ebs.total + existingComputeLicensePrice : existingComputeLicensePrice,
+                recommended: fsx ? fsx.total + recommendedComputeLicensePrice : recommendedComputeLicensePrice
+            }
         };
     }
     throw createError(
@@ -678,7 +702,7 @@ async function getStorageSavingsCalculationMetrics(
                 `No FSXW instances found for the provided instance: ${instanceId}`
             );
         }
-        const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation } =
+        const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation, fsx, fsxw } =
             await formatStorageSavingsCalculationMetrics(
                 accountId,
                 credentialsId,
@@ -702,6 +726,10 @@ async function getStorageSavingsCalculationMetrics(
             undefined,
             true
         );
+
+        const existingComputeLicensePrice = Number(existingComputeCalculation?.instanceMonthlyPrice || 0);
+        const recommendedComputeLicensePrice = Number(recommendedComputeCalculation?.instanceMonthlyPrice || 0);
+
         return {
             recommendedComputeCalculation,
             recommendedLicenseCalculation,
@@ -711,7 +739,11 @@ async function getStorageSavingsCalculationMetrics(
             multi,
             fsxwCalculation,
             fsxwCloneCalculation,
-            fsxwSnapshotCalculation
+            fsxwSnapshotCalculation,
+            totalSummary: {
+                existing: fsxw ? fsxw.total + existingComputeLicensePrice : existingComputeLicensePrice,
+                recommended: fsx ? fsx.total + recommendedComputeLicensePrice : recommendedComputeLicensePrice
+            }
         };
     }
 
@@ -763,7 +795,7 @@ async function getStorageSavingsCalculationMetrics(
         compute: { existing: existingComputeCalculation, recommended: recommendedComputeCalculation },
         license: { existing: existingLicenseCalculation, recommended: recommendedLicenseCalculation }
     } = currentNodeComputeLicenseDetails;
-    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi } =
+    const { ebs, ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi, fsx } =
         await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
@@ -774,6 +806,9 @@ async function getStorageSavingsCalculationMetrics(
             instanceId
         );
 
+    const existingComputeLicensePrice = Number(existingComputeCalculation?.instanceMonthlyPrice || 0);
+    const recommendedComputeLicensePrice = Number(recommendedComputeCalculation?.instanceMonthlyPrice || 0);
+
     return {
         recommendedComputeCalculation,
         recommendedLicenseCalculation,
@@ -783,7 +818,11 @@ async function getStorageSavingsCalculationMetrics(
         ebsCloneCalculation,
         ebsSnapshotCalculation,
         single,
-        multi
+        multi,
+        totalSummary: {
+            existing: ebs ? ebs.total + existingComputeLicensePrice : existingComputeLicensePrice,
+            recommended: fsx ? fsx.total + recommendedComputeLicensePrice : recommendedComputeLicensePrice
+        }
     };
 }
 
@@ -912,13 +951,8 @@ async function getManualModeStorageSavingsCalculationMetrics(
     const resp = await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
 
     if (params.ec2Instances[0].fsxw) {
-        const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation } = resp as {
-            single: FsxCalculationRespType;
-            multi: FsxCalculationRespType;
-            fsxwCalculation?: FsxwCalculationRespType;
-            fsxwSnapshotCalculation?: FsxwSnapshotCalculationRespType;
-            fsxwCloneCalculation?: FsxwCloneCalculationRespType;
-        };
+        const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation, fsx, fsxw } =
+            resp as CalculationResponse;
         return {
             recommendedComputeCalculation: compute.recommended,
             recommendedLicenseCalculation: license.recommended,
@@ -928,18 +962,22 @@ async function getManualModeStorageSavingsCalculationMetrics(
             ...(multi && { multi }),
             fsxwCalculation,
             fsxwCloneCalculation,
-            fsxwSnapshotCalculation
+            fsxwSnapshotCalculation,
+            totalSummary: {
+                existing:
+                    Number(fsxw?.total || 0) +
+                    Number(compute?.existing?.computeMonthlyPrice || 0) +
+                    Number(license?.existing?.licenseMonthlyPrice || 0),
+                recommended:
+                    Number(fsx?.total || 0) +
+                    Number(compute?.recommended?.computeMonthlyPrice || 0) +
+                    Number(license?.recommended?.licenseMonthlyPrice || 0)
+            }
         };
     }
 
-    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi } = resp as {
-        single?: FsxCalculationRespType;
-        multi?: FsxCalculationRespType;
-        ebsCalculation?: EBSCostCalculationRespType;
-        ebsSnapshotCalculation?: EBSSnapshotCalculationRespType;
-        ebsCloneCalculation?: EBSCloneCostCalculationRespType;
-    };
-
+    const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi, ebs, fsx } =
+        resp as CalculationResponse;
     return {
         recommendedComputeCalculation: compute.recommended,
         recommendedLicenseCalculation: license.recommended,
@@ -949,7 +987,17 @@ async function getManualModeStorageSavingsCalculationMetrics(
         ebsCloneCalculation,
         ebsSnapshotCalculation,
         ...(single && { single }),
-        ...(multi && { multi })
+        ...(multi && { multi }),
+        totalSummary: {
+            existing:
+                Number(ebs?.total || 0) +
+                Number(compute?.existing?.computeMonthlyPrice || 0) +
+                Number(license?.existing?.licenseMonthlyPrice || 0),
+            recommended:
+                Number(fsx?.total || 0) +
+                Number(compute?.recommended?.computeMonthlyPrice || 0) +
+                Number(license?.recommended?.licenseMonthlyPrice || 0)
+        }
     };
 }
 

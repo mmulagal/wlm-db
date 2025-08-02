@@ -742,6 +742,7 @@ async function formatStorageSavingsCalculationMetrics(
         ebs,
         single,
         multi,
+        fsx,
         fsxw
     } = await invokeMarketingApi(
         accountId,
@@ -772,7 +773,9 @@ async function formatStorageSavingsCalculationMetrics(
             ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, params) }),
             fsxwCalculation,
             fsxwCloneCalculation,
-            fsxwSnapshotCalculation
+            fsxwSnapshotCalculation,
+            fsx,
+            fsxw
         };
     }
 
@@ -840,7 +843,8 @@ async function formatStorageSavingsCalculationMetrics(
         ebs,
         ebsCalculation,
         ebsCloneCalculation,
-        ebsSnapshotCalculation
+        ebsSnapshotCalculation,
+        fsx
     };
 }
 

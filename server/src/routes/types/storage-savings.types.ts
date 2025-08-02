@@ -420,7 +420,11 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     multi: Type.Optional(FsxCalculationResp),
     fsxwCalculation: Type.Optional(FsxwCalculationResp),
     fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
-    fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp)
+    fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp),
+    totalSummary: Type.Object({
+        existing: Type.Number(),
+        recommended: Type.Number()
+    })
 });
 
 const StorageSavingsCalculationsMetrics = Type.Object({
@@ -432,7 +436,9 @@ const StorageSavingsCalculationsMetrics = Type.Object({
     multi: Type.Optional(FsxCalculationResp),
     fsxwCalculation: Type.Optional(FsxwCalculationResp),
     fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
-    fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp)
+    fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp),
+    fsxw: Type.Optional(StorageMetrics),
+    fsx: Type.Optional(StorageMetrics)
 });
 
 type EbsCloneCalculationType = Static<typeof EbsCloneCalculation>;
