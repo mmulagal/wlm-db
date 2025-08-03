@@ -159,17 +159,20 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
 };
 
 export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
-    postBlueXPMessage({
-        type: BlueXPListeners.navigate,
-        payload: {
-            pathname: `${
-                isWorkloadFactory
-                    ? './storage-saving-calculator?type=ebs&mode=manual'
-                    : '../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
-            }`,
-            replace: true
-        }
-    });
+    if (isWorkloadFactory) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: `${
+                    isWorkloadFactory
+                        ? './storage-saving-calculator?type=ebs&mode=manual'
+                        : '../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
+                }`,
+                replace: true
+            }
+        });
+    }
+
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
