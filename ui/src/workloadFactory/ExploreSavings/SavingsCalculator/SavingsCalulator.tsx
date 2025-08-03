@@ -254,8 +254,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                                 payload: {
                                                     pathname: `${
                                                         isWorkloadFactory
-                                                            ? './exploreSaving'
-                                                            : '../../fsxdb/explore-savings'
+                                                            ? './explore-savings'
+                                                            : '../../fsxdb/exploreSaving'
                                                     }`,
                                                     replace: true
                                                 }
