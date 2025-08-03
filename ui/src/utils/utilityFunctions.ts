@@ -1965,13 +1965,15 @@ export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolea
                 break;
         }
     }
-    postBlueXPMessage({
-        type: BlueXPListeners.navigate,
-        payload: {
-            pathname: `${path}`,
-            replace: true
-        }
-    });
+    if (isWorkloadFactory) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: `${path}`,
+                replace: true
+            }
+        });
+    }
 };
 
 export const checkLeftNavRoute = (route: string) => {
