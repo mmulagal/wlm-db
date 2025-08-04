@@ -660,14 +660,15 @@ const DialogContent = ({
                         t('databases.well-architect.cluster-quorum-action-summary')
                     ],
                     t('databases.well-architect.cluster-quorum-what-will-happen'),
-                    createONTAPConfigSection(),
+                    // createONTAPConfigSection(),  will be added again after the dynamic values are populated
+                    <></>,
                     createClusterQuorumSQLNotesSection()
                 );
             case 'SQL Server Services':
                 return createFailoverClusterDialog(
                     [
-                        t('databases.well-architect.failover-cluster-action-summary'),
-                        t('databases.well-architect.sql-server-configuration-action-summary1')
+                        t('databases.well-architect.sql-server-configuration-action-summary1'),
+                        t('databases.well-architect.sql-server-configuration-action-summary2')
                     ],
                     t('databases.well-architect.sql-server-configuration-what-will-happen'),
                     createONTAPConfigSection(),

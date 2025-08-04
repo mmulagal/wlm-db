@@ -225,8 +225,8 @@
             "sql-server-configuration-action-summary1": "Workload Factory recommends updating the failover configuration of SQL to ensure high availability and reduce downtime.",
             "sql-server-configuration-action-summary2": "SQL Server services should be set to start automatically and run on the primary node and stopped on the secondary node.",
             "sql-server-configuration-what-will-happen": "Server services will be set to start automatically and run on the primary node and stopped on the secondary node.",
-            "sql-service-startup-type-config": "SQL service startup type will be set to manual on node-",
-            "sql-service-role-ownership-config": "SQL service role ownership will be transferred to primary node",
+            "sql-service-startup-type-config": "SQL Server (MSSQLSERVER) service startup type will be set to manual on node-",
+            "sql-service-role-ownership-config": "SQL Server (MSSQLSERVER) service role ownership will be transferred to primary node",
             "tags": {
                 "title": "Tags",
                 "noTagsAvailable": "No tags available",
