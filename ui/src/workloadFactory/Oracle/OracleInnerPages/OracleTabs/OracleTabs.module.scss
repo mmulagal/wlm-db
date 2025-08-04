@@ -1,0 +1,44 @@
+.oracle-tabs {
+    margin: 0 auto;
+    margin-bottom: 40px;
+    margin-top: 48px;
+
+    border-bottom: 1px solid var(--grey-30);
+    display: flex;
+    gap: 4px;
+    width: 100%;
+    padding: 0 120px 0 120px;
+
+    .headers {
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: 600;
+        padding-bottom: 12px;
+        gap: 8px;
+    }
+
+    .headerWidthFirst {
+        width: 170px;
+    }
+
+    .headerWidthSecond {
+        width: 252px;
+    }
+
+    .headerPart1 {
+        color: var(--text-primary);
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .active {
+        border-bottom: 2px solid var(--text-button-primary);
+    }
+
+    .activeText {
+        color: var(--text-button-primary);
+    }
+}

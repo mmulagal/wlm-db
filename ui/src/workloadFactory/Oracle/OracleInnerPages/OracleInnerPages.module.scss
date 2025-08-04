@@ -1,0 +1,18 @@
+.oracle-inner-pages {
+    height: inherit;
+    overflow: auto;
+    background-color: var(--main-background);
+    width: 100%;
+    padding: 0 120px 0 120px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .breadCrumb {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        margin-left: -80px;
+    }
+}
