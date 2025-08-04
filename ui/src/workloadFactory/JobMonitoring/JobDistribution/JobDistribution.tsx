@@ -12,7 +12,7 @@ const JobDistribution = () => {
     return (
         <div
             className={
-                window.innerWidth <= 1500
+                window.innerWidth < 1500
                     ? `${styles.jobDistribution} ${styles.minWidthClass}`
                     : `${styles.jobDistribution} ${styles.maxWidthClass}`
             }
@@ -26,7 +26,7 @@ const JobDistribution = () => {
 
             <div className={styles.mainSection}>
                 <JobDoughnutChart jobsSummaryData={jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading} />
-                {windowSize.width <= 1500 && (
+                {windowSize.width < 1500 && (
                     <div className={styles.rightSection}>
                         <div className={styles.jobSeparator} />
                         <div className={styles.rowData}>
