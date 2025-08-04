@@ -272,7 +272,8 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
                 resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
-                recommendation: 'All shared disks (iSCSI LUNs) should be accessible by both nodes to allow failover.',
+                recommendation:
+                    'All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.',
                 recommended: ''
             },
             driveLetter: {
@@ -281,7 +282,7 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
                 resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
-                recommendation: 'Validate availability of same drive letters on standby node.',
+                recommendation: 'Validate availability of the same drive letters on the secondary node.',
                 recommended: ''
             },
             clusterQuorum: {
