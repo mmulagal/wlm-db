@@ -90,7 +90,8 @@ const GetWell = () => {
         selectedGwInstanceRegionId,
         selectedDatabaseStorageType,
         isInnerPageOptimize,
-        gwTimestamp
+        gwTimestamp,
+        optimizationBreakDown
     } = useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -494,7 +495,11 @@ const GetWell = () => {
                 {showChartArea && (
                     <>
                         <div className={styles.getWellSecondLevel}>
-                            <TotalOptimizationScore />
+                            <TotalOptimizationScore
+                                loading={loading}
+                                optimizationBreakDown={optimizationBreakDown}
+                                isAssessmentAvailable={isAssessmentAvailable}
+                            />
                             <OptimizationBreakdown />
                         </div>
 

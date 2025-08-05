@@ -1,0 +1,46 @@
+.oracle-configure-category {
+    box-shadow: 2px 2px 6px var(--grey-15);
+    height: 470px;
+    width: 66.12%;
+    background-color: var(--content-background);
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .mainSection {
+        padding: 36px 40px;
+        display: flex;
+        gap: 56px;
+
+        .leftSide {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            width: 46.4%;
+        }
+
+        .rightSide {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            width: 46.4%;
+        }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .optimizationBreakdown {
+        max-width: unset;
+        [class*='optimizeComponent'] {
+            [class*='rightSection'] {
+                width: 82.59%;
+            }
+        }
+    }
+}

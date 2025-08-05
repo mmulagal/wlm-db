@@ -1,0 +1,52 @@
+.oracle-card {
+    box-shadow: 2px 2px 6px 0 var(--drop-shadow);
+    background-color: var(--content-background);
+    height: 96px;
+    width: 100%;
+    border-bottom: 1px solid var(--border);
+
+    .cardContainer {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 24px;
+        padding: 18px 40px;
+
+        > div:not(:last-child) {
+            border-right: 1px solid var(--border);
+        }
+
+        .itemContainer {
+            display: grid;
+            grid-template-columns: 1fr;
+            flex: 1 1 0;
+            white-space: nowrap;
+
+            .item {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow: hidden;
+                gap: 8px;
+
+                .summaryValue {
+                    display: flex;
+                    align-items: center;
+                    padding-right: 10px;
+                }
+
+                .labelText {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            }
+        }
+
+        .lastButton {
+            display: flex;
+            align-items: center;
+            justify-content: end;
+            gap: 32px;
+        }
+    }
+}

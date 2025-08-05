@@ -125,6 +125,11 @@
             "mssql": "SQL Server instance",
             "oracle": "Oracle instance"
         },
+        "oracle-inner-page": {
+            "storage-layout": "Storage layout",
+            "view-recommendation": "View recommendation",
+            "view-and-fix": " View and fix"
+        },
         "well-architect": {
             "non-optimal-critical": "Non-optimal configuration (Critical)",
             "non-optimal-warning": "Non-optimal configuration (Warning)",

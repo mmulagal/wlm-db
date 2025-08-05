@@ -3,13 +3,15 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import styles from './OracleInnerPages.module.scss';
-import { WLF_TABS } from '../../../utils/consts';
+import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import OracleTabs from './OracleTabs/OracleTabs';
+import OracleWellArchitectDashboard from '../OracleWellArchitectDashboard/OracleWellArchitectDashboard';
 
 const OracleInnerPages = () => {
     const dispatch = useDispatch();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
+    const { selectedOracleInnerPageTab } = useAppSelector(state => state.oracleSlice);
     return (
         <div className={styles['oracle-inner-pages']}>
             <div className={`${commonStyles.commonBreadCrumb} ${styles.breadCrumb}`} style={{ left: '0%' }}>
@@ -33,6 +35,10 @@ const OracleInnerPages = () => {
             </div>
 
             <OracleTabs />
+
+            {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS && (
+                <OracleWellArchitectDashboard />
+            )}
         </div>
     );
 };

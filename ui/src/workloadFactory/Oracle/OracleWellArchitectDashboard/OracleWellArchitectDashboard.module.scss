@@ -1,0 +1,40 @@
+.well-architected {
+    width: 100%;
+    .cards {
+        width: 100%;
+        margin-top: 24px;
+        justify-content: center;
+
+        display: flex;
+        gap: 24px;
+    }
+
+    .sectionTwo {
+        margin-top: 24px;
+
+        .accordionGroups {
+            display: flex;
+            gap: 24px;
+            flex-direction: column;
+
+            .headerAction {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+
+                .dark-theme-light {
+                    svg {
+                        path {
+                            fill: var(--cyan-60);
+                        }
+                    }
+                }
+            }
+
+            .tagPlacement {
+                display: flex;
+                gap: 16px;
+            }
+        }
+    }
+}

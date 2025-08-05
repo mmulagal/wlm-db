@@ -5,14 +5,10 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import styles from './TotalOptimizationScore.module.scss';
 import OptimizationChart from './OptimizationChart/OptimizationChart';
 
-import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
-const TotalOptimizationScore = () => {
+const TotalOptimizationScore = ({ loading, optimizationBreakDown, isAssessmentAvailable }: any) => {
     const { t } = useTranslation();
-    const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
-    const optimizationBreakDown = useAppSelector(state => state.getWellOptimize.optimizationBreakDown);
-    const isAssessmentAvailable = useAppSelector(state => state.getWellOptimize.isAssessmentAvailable);
 
     return (
         <div className={styles.totalOptimizationScore}>
