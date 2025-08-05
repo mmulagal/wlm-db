@@ -2,6 +2,7 @@ import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } f
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import styles from './RecommendationTable.module.scss';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Active } from '../../../assets/success.svg';
@@ -22,7 +23,14 @@ import {
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
-import { ASSESSMENT_CONFIG_NAMES, GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    GETWELL_STATUS,
+    GW_CONFIG_OPTIMIZE_NA,
+    WLF_TABS
+} from '../../../utils/consts';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     setInProgressHostData,
@@ -40,6 +48,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     const { setDialog, closeDialog } = useDialog();
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const {
         selectedResourceId,
         selectedDatabaseInstance,
@@ -192,6 +201,14 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                             variant="text"
                             onClick={() => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                const path = isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
                                 dispatch(clearNotifications());
                             }}
                         >
@@ -211,6 +228,14 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                         variant="text"
                         onClick={() => {
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            const path = isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
                             dispatch(clearNotifications());
                         }}
                     >

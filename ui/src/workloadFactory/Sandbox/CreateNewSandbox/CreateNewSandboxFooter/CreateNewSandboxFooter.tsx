@@ -1,13 +1,16 @@
 import { Button } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { handleCreateNewSandbox } from './CreateNewSandboxPayload';
 import styles from './CreateNewSandboxFooter.module.scss';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
 import {
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FORM_TO_WLF_NAVIGATE_SANDBOXES,
     WLF_TABS
 } from '../../../../utils/consts';
@@ -64,11 +67,14 @@ const CreateNewSandboxFooter = () => {
                                 onClick={() => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     dispatch(updateRefreshBlocked(true));
-                                    if (isWorkloadFactoryStatus) {
-                                        navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
-                                    } else {
-                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES);
-                                    }
+                                    const path = isWorkloadFactoryStatus
+                                        ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                        : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                                    postBlueXPMessage({
+                                        type: BlueXPListeners.navigate,
+                                        payload: { pathname: path, replace: true }
+                                    });
                                     dispatch(clearNotifications());
                                 }}
                             >

@@ -5,7 +5,12 @@ import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    WLF_TABS
+} from '../../../utils/consts';
 import OptimizeCard from './OptimizeCard/OptimizeCard';
 import { useAppSelector } from '../../../store/storeHooks';
 import StorageTierOptimizeTable from './InnerTables/StorageTierOptimizeTable';
@@ -41,6 +46,7 @@ import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSna
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -52,6 +58,7 @@ const OptimizeInnerPage = () => {
     });
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
@@ -464,6 +471,14 @@ const OptimizeInnerPage = () => {
                                 if (notificationTimeout) clearTimeout(notificationTimeout);
                                 userNavigated.current = true;
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                const path = isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
                                 dispatch(clearNotifications());
                             }}
                         >
@@ -491,6 +506,14 @@ const OptimizeInnerPage = () => {
                             if (notificationTimeout) clearTimeout(notificationTimeout);
                             userNavigated.current = true;
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            const path = isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
                             dispatch(clearNotifications());
                         }}
                     >

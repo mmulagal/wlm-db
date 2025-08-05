@@ -3,6 +3,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useDispatch } from 'react-redux';
 import styles from './SandboxInstanceTable.module.scss';
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
@@ -24,6 +25,8 @@ import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inven
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
 import {
     CRED_PLACEHOLDERS,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FROM_DIALOG,
     JOB_MONITORING_STATUS,
     SANDBOX_ACTIONS_POLLING_INTERVAL,
@@ -58,6 +61,7 @@ const SandboxInstanceTable = () => {
 
     const { aggregatedSandboxInstanceList, sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
     const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
     const [data, setData] = useState<any>();
@@ -155,6 +159,14 @@ const SandboxInstanceTable = () => {
                     variant="text"
                     onClick={() => {
                         dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                        const path = isWorkloadFactory
+                            ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                            : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: { pathname: path, replace: true }
+                        });
                         dispatch(clearNotifications());
                     }}
                 >

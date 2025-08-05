@@ -2,7 +2,12 @@ import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-syste
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import { WLF_TABS, FORM_TO_WLF_NAVIGATE_BLUEXP, FORM_TO_WLF_NAVIGATE_JOB_MONITORING } from '../../../../utils/consts';
+import {
+    WLF_TABS,
+    FORM_TO_WLF_NAVIGATE_BLUEXP,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM
+} from '../../../../utils/consts';
 import {
     setDeployRedirectToCfLink,
     setIsLoading,
@@ -87,11 +92,14 @@ const MSSqlFooter = () => {
                     onClick={() => {
                         clearTimeout(notificationMsg);
                         dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                        if (isWorkloadFactoryStatus) {
-                            navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
-                        } else {
-                            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
-                        }
+                        const path = isWorkloadFactoryStatus
+                            ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                            : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: { pathname: path, replace: true }
+                        });
 
                         dispatch(clearNotifications());
                     }}

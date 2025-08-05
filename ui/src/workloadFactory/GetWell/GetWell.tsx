@@ -10,6 +10,7 @@ import {
 } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useState, useEffect, useMemo } from 'react';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -28,6 +29,8 @@ import { clearNotifications } from '../../store/notificationSlice';
 import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
     WLF_TABS
@@ -72,6 +75,7 @@ const GetWell = () => {
     const { optimizeFilterTags, defaultFilterOptions, breadCrumbSelectedFrom } = useAppSelector(
         state => state.inventoryV2
     );
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
@@ -169,6 +173,14 @@ const GetWell = () => {
                                     variant="text"
                                     onClick={() => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                        const path = isWorkloadFactory
+                                            ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                            : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: { pathname: path, replace: true }
+                                        });
                                         dispatch(clearNotifications());
                                     }}
                                 >

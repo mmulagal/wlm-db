@@ -1,12 +1,18 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useTranslation } from 'react-i18next';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    WLF_TABS
+} from '../../../utils/consts';
 import OptimizeCard from './OptimizeCard/OptimizeCard';
 import { useAppSelector } from '../../../store/storeHooks';
 
@@ -48,6 +54,7 @@ const OptimizeOntapInnerPage = () => {
     });
     const userNavigated = useRef(false);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
@@ -288,6 +295,14 @@ const OptimizeOntapInnerPage = () => {
                                 if (notificationTimeout) clearTimeout(notificationTimeout);
                                 userNavigated.current = true;
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                const path = isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
                                 dispatch(clearNotifications());
                             }}
                         >
@@ -308,7 +323,15 @@ const OptimizeOntapInnerPage = () => {
                         onClick={() => {
                             if (notificationTimeout) clearTimeout(notificationTimeout);
                             userNavigated.current = true;
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+
+                            const path = isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
                             dispatch(clearNotifications());
                         }}
                     >

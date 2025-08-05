@@ -1,6 +1,6 @@
 import { Table, useTable, useDialog, TableTopBar, Button, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -34,6 +34,8 @@ import {
 } from '../../../utils/apiService';
 import {
     CRED_PLACEHOLDERS,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FROM_DIALOG,
     JOB_MONITORING_STATUS,
     SANDBOX_ACTIONS_POLLING_INTERVAL,
@@ -44,7 +46,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
 import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
-import { formatDateWithTime, getFilterOptions, getTimeDifferenceInDays } from '../../../utils/utilityFunctions';
+import { formatDateWithTime } from '../../../utils/utilityFunctions';
 import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedSandboxHeaderValue } from '../../../store/workloadFactory/createSandboxSlice';
@@ -57,6 +59,7 @@ const SandboxTable = () => {
     const { aggregatedSandboxList, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
         state => state.sandbox
     );
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
     const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
@@ -151,6 +154,14 @@ const SandboxTable = () => {
                     variant="text"
                     onClick={() => {
                         dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                        const path = isWorkloadFactory
+                            ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                            : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: { pathname: path, replace: true }
+                        });
                         dispatch(clearNotifications());
                     }}
                 >

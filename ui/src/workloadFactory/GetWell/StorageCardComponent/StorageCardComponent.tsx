@@ -8,6 +8,7 @@ import {
     TooltipInfo,
     useDialog
 } from '@netapp/design-system';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,8 @@ import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
@@ -73,6 +76,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const { t } = useTranslation();
     const [dismissAction, setDismissAction] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
@@ -662,6 +666,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             variant="text"
                             onClick={() => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                const path = isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
                                 dispatch(clearNotifications());
                             }}
                         >
@@ -698,6 +710,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         variant="text"
                         onClick={() => {
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            const path = isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
                             dispatch(clearNotifications());
                         }}
                     >

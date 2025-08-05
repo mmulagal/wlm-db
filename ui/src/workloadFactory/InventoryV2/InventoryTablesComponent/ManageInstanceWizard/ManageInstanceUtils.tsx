@@ -12,7 +12,9 @@ import {
     AUTHENTICATION_TYPE,
     DETECT_HOST_VAR,
     FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_INVENTORY,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     JOB_MONITORING_STATUS,
     MANAGE_POLLING_INTERVAL,
     MANAGE_STATES,
@@ -163,6 +165,14 @@ export const callManageSingleInstanceApi = async (
                         variant="text"
                         onClick={() => {
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            const path = store.getState().auth.isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
                             dispatch(clearNotifications());
                         }}
                     >
@@ -453,6 +463,14 @@ export const callManageMultiInstanceApi = async (
                         variant="text"
                         onClick={() => {
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            const path = store.getState().auth.isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
                             dispatch(clearNotifications());
                         }}
                     >

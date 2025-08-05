@@ -1,6 +1,7 @@
 import { Button } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { handleCreateUserDb } from './createUserDBPayload';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useCreateUserDBMutation } from '../../../utils/apiService';
@@ -9,6 +10,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import {
     FORM_TO_WLF_NAVIGATE_BLUEXP,
     FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_INVENTORY,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     WLF_TABS
@@ -64,11 +66,14 @@ const CreateNewUserFooter = () => {
                                 onClick={() => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     dispatch(updateRefreshBlocked(true));
-                                    if (isWorkloadFactoryStatus) {
-                                        navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
-                                    } else {
-                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
-                                    }
+                                    const path = isWorkloadFactoryStatus
+                                        ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                        : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                                    postBlueXPMessage({
+                                        type: BlueXPListeners.navigate,
+                                        payload: { pathname: path, replace: true }
+                                    });
 
                                     dispatch(clearNotifications());
                                 }}

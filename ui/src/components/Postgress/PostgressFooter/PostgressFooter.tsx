@@ -14,7 +14,12 @@ import {
 import { handleCreatePgsql } from '../PostgreUtils';
 import { GENERAL } from '../../../utils/appConstants';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { FORM_TO_WLF_NAVIGATE_BLUEXP, FORM_TO_WLF_NAVIGATE_JOB_MONITORING, WLF_TABS } from '../../../utils/consts';
+import {
+    FORM_TO_WLF_NAVIGATE_BLUEXP,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    WLF_TABS
+} from '../../../utils/consts';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { handleURL } from '../../../utils/utilityFunctions';
 import { setMultiDataStatus } from '../../../store/workloadFactory/headersSlice';
@@ -87,11 +92,14 @@ function PostgressFooter() {
                     onClick={() => {
                         clearTimeout(notificationMsg);
                         dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                        if (isWorkloadFactoryStatus) {
-                            navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
-                        } else {
-                            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
-                        }
+                        const path = isWorkloadFactoryStatus
+                            ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                            : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: { pathname: path, replace: true }
+                        });
 
                         dispatch(clearNotifications());
                     }}

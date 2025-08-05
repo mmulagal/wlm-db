@@ -624,6 +624,14 @@ const DashboardInnerPage = () => {
                         variant="text"
                         onClick={() => {
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            const path = isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
                             dispatch(clearNotifications());
                         }}
                     >

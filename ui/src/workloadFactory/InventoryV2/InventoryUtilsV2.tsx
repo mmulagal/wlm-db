@@ -1,5 +1,6 @@
 import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
 import { TFunction } from 'i18next';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import store from '../../store/store';
 import {
@@ -14,6 +15,8 @@ import {
     AUTHENTICATION_TYPE,
     DBType,
     DETECT_HOST_VAR,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
@@ -3242,6 +3245,14 @@ export const installModuleNotification = (styles: any, dispatch: any, initialMsg
                 variant="text"
                 onClick={() => {
                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                    const path = store.getState().auth.isWorkloadFactory
+                        ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                        : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: { pathname: path, replace: true }
+                    });
                     dispatch(clearNotifications());
                 }}
             >

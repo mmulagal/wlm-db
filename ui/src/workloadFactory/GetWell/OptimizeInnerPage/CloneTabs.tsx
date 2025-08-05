@@ -19,12 +19,18 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { useLazyGetSubTaskListQuery, useOptimizeCloneCleanupMutation } from '../../../utils/apiService';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    WLF_TABS
+} from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { handleOptimizeResourceJob, nameToIdConfigMapping } from '../GetWellUtils';
 import store from '../../../store/store';
 import { cloneAgeRange } from '../../../utils/utilityFunctions';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const CloneTabs = ({ fromPage = '' }: any) => {
     const dispatch = useDispatch();
@@ -36,6 +42,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
     );
     const [wfDatabase, setWfDatabase] = useState<any>(null);
     const [otherDatabase, setOtherDatabase] = useState<any>(null);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const [cloneCleanupOptimizeApi] = useOptimizeCloneCleanupMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -200,6 +207,15 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                             variant="text"
                             onClick={() => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+
+                                const path = isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
                                 dispatch(clearNotifications());
                             }}
                         >
@@ -220,6 +236,14 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                         variant="text"
                         onClick={() => {
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            const path = isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
                             dispatch(clearNotifications());
                         }}
                     >
