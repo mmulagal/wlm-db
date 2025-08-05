@@ -1,12 +1,19 @@
 import { useDispatch } from 'react-redux';
 import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useEffect, useState, useMemo } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    FROM_DIALOG,
+    WLF_TABS
+} from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
@@ -72,7 +79,6 @@ import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { backupStartTime } from '../../../utils/utilityFunctions';
 import CloneManagementTable from './RenderTables/CloneManagementTable';
 import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -569,7 +575,9 @@ const DashboardInnerPage = () => {
                             variant="text"
                             onClick={() => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                const path = isWorkloadFactory ? '../job-monitoring' : '../jobMonitoring';
+                                const path = isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
 
                                 postBlueXPMessage({
                                     type: BlueXPListeners.navigate,

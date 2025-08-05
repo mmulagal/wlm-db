@@ -222,6 +222,7 @@ export const FORM_TO_WLF_NAVIGATE_JOB_MONITORING = '../databases/job-monitoring'
 export const FORM_TO_WLF_NAVIGATE_INVENTORY = '../databases/inventory';
 export const FORM_TO_WLF_NAVIGATE_SANDBOXES = '../databases/sandboxes';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP = '../fsxdb/job-monitoring';
+export const FORM_TO_WLF_NAVIGATE_BLUEXP_JM = '../fsxdb/jobMonitoring';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES = '../fsxdb/sandboxes';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY = '../fsxdb/inventory';
 
