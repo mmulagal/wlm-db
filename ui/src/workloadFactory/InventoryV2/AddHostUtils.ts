@@ -201,7 +201,8 @@ export const handleFsxFlow = async (
                             type: 'application/vnd.netapp.bxp.userbulk',
                             users: [{ userId: matchingUser?.id }],
                             version: '1.0'
-                        }
+                        },
+                        role: roleCheck
                     });
                 }
             }

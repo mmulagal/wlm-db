@@ -609,8 +609,8 @@ export const snapcenterAPI = createApi({
             })
         }),
         assignRBACPrivileges: builder.mutation({
-            query: ({ accountID, payload }) => ({
-                url: `v1/management/organizations/${accountID}/roles/381a2b6e-693b-4829-95a5-fbd753db30c7/users`,
+            query: ({ accountID, payload, role }) => ({
+                url: `v1/management/organizations/${accountID}/roles/${role}/users`,
                 method: 'POST',
                 body: payload
             })
