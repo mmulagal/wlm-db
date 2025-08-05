@@ -72,10 +72,12 @@ import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { backupStartTime } from '../../../utils/utilityFunctions';
 import CloneManagementTable from './RenderTables/CloneManagementTable';
 import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { inProgressOptimizationData, inProgressHostData, cloneIsOptimizedRows } = useAppSelector(
         state => state.getWellOptimize
     );
@@ -567,6 +569,13 @@ const DashboardInnerPage = () => {
                             variant="text"
                             onClick={() => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                const path = isWorkloadFactory ? '../job-monitoring' : '../jobMonitoring';
+
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
+
                                 dispatch(clearNotifications());
                             }}
                         >
