@@ -79,12 +79,11 @@ const DatabasesTable = () => {
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
 
     // Function to check if protect option should be disabled
-    const isProtectDisabled = (rowData: any): boolean => (
-            rowData?.hostType !== GENERAL.MICROSOFT_SQL_SERVER_TYPE ||
-            !rowData?.instanceRow?.fsxId ||
-            !rowData?.hostRow?.nodeIpAddress ||
-            rowData?.status !== 'ONLINE'
-        );
+    const isProtectDisabled = (rowData: any): boolean =>
+        rowData?.hostType !== GENERAL.MICROSOFT_SQL_SERVER_TYPE ||
+        !rowData?.instanceRow?.fsxId ||
+        !rowData?.hostRow?.nodeIpAddress ||
+        rowData?.status !== 'ONLINE';
 
     useEffect(() => {
         setLoading(

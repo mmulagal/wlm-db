@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { Button, DsTypography, useDialog } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import styles from './OptimizeInnerPage.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
@@ -30,7 +31,6 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { handleOptimizeResourceJob, nameToIdConfigMapping } from '../GetWellUtils';
 import store from '../../../store/store';
 import { cloneAgeRange } from '../../../utils/utilityFunctions';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const CloneTabs = ({ fromPage = '' }: any) => {
     const dispatch = useDispatch();

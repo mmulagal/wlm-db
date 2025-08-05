@@ -781,7 +781,7 @@ const InstancesTable = () => {
                 }
                 return (
                     <>
-                        {cellData && rowData?.fsxId && (
+                        {!loading && rowData?.fsxId && (
                             <div className={styles.fsxNameContainer}>
                                 <DsTooltipInfo
                                     className={`${styles.fsxName} ${styles['tooltip-icon']}`}
@@ -812,8 +812,8 @@ const InstancesTable = () => {
                                 </div>
                             </div>
                         )}
-                        {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && (
+                        {loading && <DsFlashingDotsLoader />}
+                        {!cellData && !loading && !rowData?.fsxId && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {GENERAL.NOT_AVAILABLE}
                             </DsTypography>

@@ -1,6 +1,7 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
@@ -46,7 +47,6 @@ import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSna
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();

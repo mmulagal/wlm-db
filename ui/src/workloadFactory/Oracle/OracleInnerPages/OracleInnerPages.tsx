@@ -1,9 +1,9 @@
+import { useDispatch } from 'react-redux';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import styles from './OracleInnerPages.module.scss';
 import { WLF_TABS } from '../../../utils/consts';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import OracleTabs from './OracleTabs/OracleTabs';
 
