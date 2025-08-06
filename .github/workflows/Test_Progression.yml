@@ -1,0 +1,24 @@
+name: Progression-Test-Report.yml
+permissions:
+    contents: read
+    issues: read
+on:
+    schedule:
+        - cron: '0 0 * * *' # Every Day at 01:00AM (Cron is UTC)
+    workflow_dispatch:
+jobs:
+    test_progression_report:
+        runs-on: wlmdb-runner
+        steps:
+            - uses: actions/checkout@v4.2.2
+              with:
+                  fetch-depth: 0
+                  ref: master
+            - name: Send Report Progression
+              uses: TLVeng/actions/.github/actions/report_progression@main
+              with:
+                  github_token: ${{ secrets.SHMULIK_HAMELECH }}
+                  rp_endpoint: https://reportsng.tlveng.netapp.com/api/v2
+                  rp_project: wlmdb
+                  repository: wlm-db
+                  rp_api_key: ${{ secrets.WLMDB_RP_API_KEY }}
