@@ -198,5 +198,6 @@ export function MssqlPgsqlDatabaseTableColDefs({
 export const mssqlPgsqlDatabaseColumnFilterMap = {
     hostName: '3', // id of host name column
     credentialName: '8', // id of credential name column
-    regionName: '10' // id of region column
+    regionName: '10', // id of region column
+    instanceName: '2' // id of instance name column
 };

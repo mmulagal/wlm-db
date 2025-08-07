@@ -113,6 +113,7 @@ const DatabasesTable = () => {
     };
 
     const getInitialFilter = () => {
+        const filterMap = getColumnFilterMap();
         if (
             selectedInventoryTab === 'Databases' &&
             selectedFilterValue?.flag === true &&
@@ -124,7 +125,6 @@ const DatabasesTable = () => {
                     value: ''
                 })
             );
-            const filterMap = getColumnFilterMap();
             return {
                 textFilter: '',
                 count: 3,
@@ -168,28 +168,28 @@ const DatabasesTable = () => {
                 textFilter: '',
                 count: 4,
                 columns: {
-                    '2': {
+                    [filterMap.hostName]: {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.hostName]: true
                         },
                         valuesArray: [true]
                     },
-                    '4': {
+                    [filterMap.instanceName]: {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.instanceName]: true
                         },
                         valuesArray: [true]
                     },
-                    '9': {
+                    [filterMap.credentialName]: {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.credentialName]: true
                         },
                         valuesArray: [true]
                     },
-                    '11': {
+                    [filterMap.regionName]: {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.regionName]: true

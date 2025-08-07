@@ -190,5 +190,6 @@ export function OraclePDBTableColDefs({
 export const oraclePDBColumnFilterMap = {
     hostName: '3', // id of host name column
     credentialName: '7', // id of credential name column
-    regionName: '9' // id of region column
+    regionName: '9', // id of region column
+    instanceName: '2' // id of instance name column
 };
