@@ -1,5 +1,5 @@
 .sandboxTable {
-    width: 87.3%;
+    width: 100%;
     margin: 0 auto;
 
     .jobMenuPopover {
@@ -48,8 +48,6 @@
 
 @media screen and (max-width: 1428px) {
     .sandboxTable {
-        width: 1107px;
-
         [class*='Table-module_row'] {
             [class*='Table-module_cell']:first-child {
                 box-shadow: 2px 2px 6px 0px var(--border);

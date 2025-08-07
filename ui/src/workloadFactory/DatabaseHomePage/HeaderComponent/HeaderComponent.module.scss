@@ -370,8 +370,9 @@
             .contentArea {
                 display: flex;
                 justify-content: space-between;
-                width: 83.75%;
-                max-width: 1607px;
+                width: 100%;
+                padding: 0 40px;
+
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
@@ -402,8 +403,8 @@
             .contentArea {
                 display: flex;
                 justify-content: space-between;
-                width: 87%;
-                max-width: 1607px;
+                width: 100%;
+                padding: 0 40px;
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
@@ -434,7 +435,8 @@
             .contentArea {
                 display: flex;
                 justify-content: space-between;
-                width: calc(87.33% - 4px);
+                width: 100%;
+                padding: 0 40px;
 
                 align-items: center;
                 [class*='Select-module_base'] {
@@ -586,12 +588,6 @@
         }
         .sandboxSection {
             .contentArea {
-                max-width: unset !important;
-            }
-        }
-        .exploreSavingSection {
-            .contentArea {
-                width: 87.3% !important;
                 max-width: unset !important;
             }
         }

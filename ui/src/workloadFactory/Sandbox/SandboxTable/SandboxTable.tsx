@@ -34,10 +34,10 @@ import {
 } from '../../../utils/apiService';
 import {
     CRED_PLACEHOLDERS,
-    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
-    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FROM_DIALOG,
     JOB_MONITORING_STATUS,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     SANDBOX_ACTIONS_POLLING_INTERVAL,
     UPDATE_SANDBOX_CURL_REQ_TEMPLATE,
     WLF_TABS
@@ -56,10 +56,10 @@ const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const windowSize = useResize();
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { aggregatedSandboxList, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
         state => state.sandbox
     );
-    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
     const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
@@ -666,7 +666,7 @@ const SandboxTable = () => {
             Header: GENERAL.SANDBOX_DB_INSTANCE_NAME,
             accessor: 'instanceName',
             id: '2',
-            width: windowSize.width >= 1920 ? '13.69%' : '220px',
+            width: windowSize.width >= 1600 ? 'auto' : '220px',
             filterOptions: 'auto'
         },
         {

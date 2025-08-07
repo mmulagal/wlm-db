@@ -4,7 +4,7 @@
     justify-content: center;
     .table {
         width: 100%;
-        max-width: 1612px;
+
         margin-bottom: 40px;
 
         .jobMenuPopover {
@@ -143,9 +143,6 @@
 
 @media screen and (max-width: 1520px) {
     .jobMonitoringTable {
-        .table {
-            width: 1127px;
-        }
         .firstCol {
             box-shadow: 4px 0px 2px var(--grey-15);
         }

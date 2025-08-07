@@ -6,6 +6,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 0 40px;
 
     .jobMenuPopover {
         width: fit-content;
@@ -65,18 +66,16 @@
     .chartContainer {
         display: flex;
         gap: 27px;
-        width: 87%;
-        max-width: 1612px;
+        width: 100%;
     }
 
     .chartSection {
         width: 49.8%;
-        max-width: 790px;
     }
 
     .overtimeJobs {
         width: 49.8%;
-        max-width: 790px;
+
         height: 344px;
         background-color: var(--content-background);
         box-shadow: 2px 2px 6px var(--grey-15);
@@ -105,7 +104,7 @@
     .tableSection {
         margin-top: 40px;
         margin-bottom: 96px;
-        width: 87%;
+        width: 100%;
         display: flex;
         justify-content: center;
         // width: 1063px;
@@ -116,16 +115,6 @@
     .jobMonitoring {
         .headingContainer {
             width: 1124px;
-        }
-        .chartContainer {
-            width: 1127px;
-        }
-        .overtimeJobs {
-            width: 550px;
-
-            [class*='lineChart'] {
-                width: 470px;
-            }
         }
     }
 }

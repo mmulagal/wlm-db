@@ -5,6 +5,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 0 40px;
 
     .loaderOverlay {
         position: absolute;
@@ -25,7 +26,7 @@
     }
 
     .sandboxSecondLevel {
-        width: 87.3%;
+        width: 100%;
 
         justify-content: center;
 

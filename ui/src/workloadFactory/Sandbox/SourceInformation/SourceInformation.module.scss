@@ -2,7 +2,7 @@
     box-shadow: 2px 2px 6px var(--grey-15);
     height: 116px;
     width: 32.31%;
-    max-width: 520px;
+
     background-color: var(--content-background);
     padding: 28px 40px 24px 40px;
     display: flex;
@@ -32,7 +32,7 @@
 
 @media screen and (max-width: 1428px) {
     .sourceInformation {
-        width: 456px;
+        width: 44%;
         gap: 25px;
     }
 }

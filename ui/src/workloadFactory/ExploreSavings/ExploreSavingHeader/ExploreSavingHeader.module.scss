@@ -3,8 +3,8 @@
 
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px var(--border);
-    width: 83.75%;
-    max-width: 1607px;
+    width: 100%;
+
     margin-bottom: 40px;
 
     .topPart {
@@ -170,8 +170,6 @@
 
 @media screen and (max-width: 1470px) {
     .exploreSavingsHeader {
-        width: 1128px;
-
         .topPart {
             height: 436px;
             .contentSection {
@@ -252,7 +250,6 @@
 
 @media screen and (min-width: 1920px) {
     .exploreSavingsHeader {
-        width: 87.3%;
         max-width: unset;
 
         [class*='on-premise-table'] {

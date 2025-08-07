@@ -1,8 +1,8 @@
 .sandboxHeader {
     background-color: var(--content-background);
     height: 223px;
-    width: 87.3%;
-    max-width: 1607px;
+    width: 100%;
+
     margin-bottom: 24px;
     box-shadow: 2px 2px 6px 0px #e0e0e0;
     padding: 32px 40px 32px 56px;
@@ -34,7 +34,7 @@
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px #e0e0e0;
     padding: 32px 40px 32px 56px;
-    width: 1127px;
+    width: 100%;
     height: 260px;
     margin-bottom: 24px;
     // margin-top: 40px;
@@ -68,7 +68,7 @@
 
 @media screen and (min-width: 1429px) and (max-width: 1658px) {
     .sandboxHeaderLowerResolution {
-        width: 87.3%;
+        width: 100%;
         gap: 90px;
         .secondLevel {
             gap: 0;
