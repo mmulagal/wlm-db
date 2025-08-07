@@ -994,3 +994,19 @@ export const READINESS_TYPES = ['assessment', 'dbcreation', 'sandbox', 'remediat
 // RBAC Roles for Add host
 export const RBAC_STAGE_ROLE_ID = '381a2b6e-693b-4829-95a5-fbd753db30c7';
 export const RBAC_PROD_ROLE_ID = '518a7bb4-6f1f-4516-9ab1-ec5e040b051e';
+
+export const PROTECTION_COLUMN_TEXT_STATUS = {
+    PROTECTED: 'Protected',
+    NOT_PROTECTED: 'Not protected',
+    UNKNOWN: 'Unknown'
+};
+
+export const INVENTORY_TABLE_STATUS = {
+    NOT_ANALYZED: 'Not analyzed'
+};
+
+export const INVENTORY_TAB_COMPONENTS = {
+    INSTANCES: 'Instances',
+    DATABASES: 'Databases',
+    PDB: 'PDB'
+};

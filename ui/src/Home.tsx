@@ -47,20 +47,18 @@ const Home = () => {
                         navigate('../fsxdb/postgreSQL-deploy-wizard');
                     } else if (msg?.data?.payload?.pathname === '/fsxdb/marketing') {
                         navigate('../fsxdb/marketing');
-                    } else {
-                        if (msg?.data?.payload?.pathname !== '/fsxdb/storage-saving-calculator') {
-                            //To stop redirecting back to explore savings
-                            const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
-                            const routePath = setRoutePath(tabInfo, msg?.data?.payload?.search);
-                            if (routePath === 'redirect') {
-                                console.log('Redirecting to fsxdb');
-                                navigate('../fsxdb');
-                            } else {
-                                navigate(`../fsxdb/${routePath}`);
-                            }
-
-                            dispatch(setSelectedHeaderTab(tabInfo));
+                    } else if (msg?.data?.payload?.pathname !== '/fsxdb/storage-saving-calculator') {
+                        // To stop redirecting back to explore savings
+                        const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
+                        const routePath = setRoutePath(tabInfo, msg?.data?.payload?.search);
+                        if (routePath === 'redirect') {
+                            console.log('Redirecting to fsxdb');
+                            navigate('../fsxdb');
+                        } else {
+                            navigate(`../fsxdb/${routePath}`);
                         }
+
+                        dispatch(setSelectedHeaderTab(tabInfo));
                     }
                 }
             };

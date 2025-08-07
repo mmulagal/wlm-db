@@ -77,9 +77,13 @@ export interface InventorySliceData {
     potentialSavingsHostData: {
         [key: string]: any;
     };
+    selectedHostType: string;
     hostTableRows: Array<any>;
     instanceTableRows: Array<any>;
     databaseTableRows: Array<any>;
+    fullHostTableRows: Array<any>;
+    fullInstanceTableRows: Array<any>;
+    fullDatabaseTableRows: Array<any>;
     dashSandboxList: {
         data: Array<any>;
         loading: boolean;

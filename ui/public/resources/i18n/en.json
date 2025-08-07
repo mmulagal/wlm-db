@@ -36,6 +36,7 @@
             "not_protected": "Not protected",
             "manage-analysis-state": "Manage Analysis State",
             "not-available": "N/A",
+            "not-available-table-columns": "n/a",
             "mssql-high-availability": "Microsoft SQL Server High Availability"
         },
         "register-flow": {
@@ -333,7 +334,11 @@
             "agent": "Connector",
             "validate-host-failed": "Automatic host registration failed.",
             "package-installation-failed": "Failed Plug-in installation.",
-            "delete-host-failed": "Failed to delete existing host"
+            "delete-host-failed": "Failed to delete existing host",
+            "select-engine-type": "Select engine type",
+            "mssql": "Microsoft SQL Server",
+            "oracle": "Oracle",
+            "pgsql": "PostgreSQL"
         },
         "log-analyzer": {
             "error-investigation": "Error investigation",
@@ -473,7 +478,6 @@
             "headers": {
                 "instance-name": "Instance name",
                 "host-name": "Host name",
-                "engine-type": "Engine type",
                 "deployment-model": "Deployment model",
                 "registration-status": "Registration status",
                 "fsx-for-ontap": "FSx for ONTAP",
@@ -483,18 +487,70 @@
                 "aws-credentials": "AWS credentials",
                 "aws-account": "AWS account",
                 "region": "Region"
-            }
+            },
+            "not-analyzed": "Not analyzed"
         },
         "databases-table": {
             "headers": {
                 "database-name": "Database name",
                 "host-name": "Host name",
-                "engine-type": "Engine type",
                 "instance-name": "Instance name",
                 "protection-status": "Protection status",
                 "fsx-for-ontap": "FSx for ONTAP",
                 "database-type": "Database Type",
                 "database-size": "Database size",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            },
+            "oracle": {
+                "headers": {
+                    "database-name": "Database name",
+                    "sid": "SID",
+                    "host-name": "Host name",
+                    "registration-status": "Registration status",
+                    "well-architected-status": "Well-architected status",
+                    "protection-status": "Protection status",
+                    "tenancy": "Tenancy",
+                    "deployment-model": "Deployment model",
+                    "performance": "Performance",
+                    "protocol": "Protocol",
+                    "database-size": "Database size",
+                    "fsx-for-ontap": "FSx for ONTAP",
+                    "aws-credentials": "AWS credentials",
+                    "aws-account": "AWS account",
+                    "region": "Region"
+                }
+            }
+        },
+        "host-table": {
+            "headers": {
+                "host-name": "Host name",
+                "registered-instances": "Registered Instances",
+                "deployment-model": "Deployment model",
+                "attached-ec2-nodes": "Attached EC2 nodes",
+                "vpc": "VPC",
+                "ssm-connectivity": "SSM connectivity",
+                "estimated-cost": "Estimated cost",
+                "aws-credentials": "AWS credentials",
+                "aws-account": "AWS account",
+                "region": "Region"
+            },
+            "oracle": {
+                "headers": {
+                    "operating-system": "Operating system",
+                    "fsx-for-ontap": "FSx for ONTAP"
+                }
+            }
+        },
+        "pdb-table": {
+            "headers": {
+                "pdb-name": "PDB name",
+                "cdb-name": "CDB name",
+                "host-name": "Host name",
+                "protection-status": "Protection status",
+                "database-size": "Database size",
+                "fsx-for-ontap": "FSx for ONTAP",
                 "aws-credentials": "AWS credentials",
                 "aws-account": "AWS account",
                 "region": "Region"

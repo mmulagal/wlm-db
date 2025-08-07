@@ -1,20 +1,8 @@
-import {
-    BlueXPListeners,
-    DsButton,
-    DsFlashingDotsLoader,
-    DsTypography,
-    DsTooltipInfo,
-    Popover,
-    postBlueXPMessage,
-    TooltipInfo,
-    useDialog
-} from '@netapp/design-system';
+import { DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useAddHostJobScMutation,
@@ -59,7 +47,6 @@ import {
     setBreadCrumbSelectedFrom,
     setInProgressInstances,
     setInventoryTableData,
-    setManageSingleInstanceData,
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
@@ -89,24 +76,23 @@ import {
     setCdbPageData
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
-
-import DotComponent from '../../../../common/DotComponent/DotComponent';
 import styles from '../InventoryTable.module.scss';
-import commonStyles from '../../../../utils/CommonStyles.module.scss';
-import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
-import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
+import { Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import { cancelProtectionForRow } from '../../../../store/workloadFactory/snapcenterSlice';
-import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
-import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
 import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
+import { getInstanceTableColumns } from './InstanceTableColumns';
+import { mssqlInstanceColumnFilterMap } from './MssqlInstanceColumnList';
+import { oracleDatabaseColumnFilterMap } from './OracleDatabaseColumnsList';
+import { pgsqlInstanceColumnFilterMap } from './PgsqlInstanceColumnList';
+import { getInitialInstanceTableColState } from '../../../../utils/manageColumnUtils';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -118,8 +104,13 @@ const InstancesTable = () => {
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
-    const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
-        useAppSelector(state => state.inventoryV2);
+    const {
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading,
+        selectedHostType,
+        selectedInventoryTab,
+        selectedFilterValue
+    } = useAppSelector(state => state.inventoryV2);
     const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -172,6 +163,18 @@ const InstancesTable = () => {
         multiDataLoading
     ]);
 
+    const getColumnFilterMap = () => {
+        switch (selectedHostType) {
+            case DBType.MSSQL:
+                return mssqlInstanceColumnFilterMap;
+            case DBType.POSTGRESQL:
+                return pgsqlInstanceColumnFilterMap;
+            case DBType.ORACLE:
+                return oracleDatabaseColumnFilterMap;
+            default:
+                return mssqlInstanceColumnFilterMap;
+        }
+    };
     const getInitialFilter = () => {
         if (selectedInventoryTab === 'Instances' && selectedFilterValue?.flag === true) {
             dispatch(
@@ -180,25 +183,26 @@ const InstancesTable = () => {
                     value: ''
                 })
             );
+            const filterMap = getColumnFilterMap();
             return {
                 textFilter: '',
                 count: 3,
                 columns: {
-                    '2': {
+                    [filterMap.hostName]: {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.hostName]: true
                         },
                         valuesArray: [true]
                     },
-                    '10': {
+                    [filterMap.credentialName]: {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.credentialName]: true
                         },
                         valuesArray: [true]
                     },
-                    '12': {
+                    [filterMap.regionName]: {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.regionName]: true
@@ -566,475 +570,22 @@ const InstancesTable = () => {
         [instanceTableRows]
     );
 
-    const protectionTooltipText = (data: any) => (
-        <div className={styles.protectionTooltipMessage}>
-            {data.map((val: any, index: number) => (
-                <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
-                    {val}
-                </DsTypography>
-            ))}
-        </div>
-    );
-
-    const resourceScreenNavigation = (rowData: any) => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
-        dispatch(
-            setFSXId({
-                fsxId: rowData?.fsxId,
-                ec2InstanceId: rowData?.ec2InstanceId
-            })
-        );
-        optimizeAction(rowData);
-    };
-
-    const instanceNameHyperLink = (rowData: any, name: string) => {
-        if (
-            name &&
-            rowData?.hostType === DBType.MSSQL &&
-            rowData?.managementStatus === INVENTORY_STATUS.REGISTERED &&
-            (rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP)
-        ) {
-            return (
-                <DsButton onClick={() => resourceScreenNavigation(rowData)} type="text">
-                    {name}
-                </DsButton>
-            );
-        }
-        return name;
-    };
-
-    const managedHostSubTableColDefs: ColumnProps[] = [
-        {
-            Header: t('databases.instance-table.headers.instance-name'),
-            accessor: 'databaseInstanceName',
-            customAccessor: 'statusAccessor',
-            id: '1',
-            isSortable: true,
-            filterOptions: [
-                { label: 'Online', value: 'Online' },
-                { label: 'Offline', value: 'Offline' }
-            ],
-            width: '256px',
-            isSticky: true,
-            renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.databaseInstanceName;
-                return (
-                    <div className={styles.firstColumnClass}>
-                        <DsTypography
-                            title={name || GENERAL.NOT_AVAILABLE}
-                            className={styles.textClass}
-                            variant="Semibold_14"
-                        >
-                            {name && instanceNameHyperLink(rowData, name)}
-                            {!name && GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                        <div className={styles.firstColText}>
-                            {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
-                            )}
-                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
-                            )}
-                            <DsTypography variant="Regular_13">
-                                {(() => {
-                                    if (
-                                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                    ) {
-                                        return INVENTORY_STATUS.ONLINE;
-                                    }
-                                    if (
-                                        rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                    ) {
-                                        return INVENTORY_STATUS.OFFLINE;
-                                    }
-                                    return rowData?.status;
-                                })()}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && INVENTORY_STATUS.UNKNOWN}
-                            </DsTypography>
-                        </div>
-                    </div>
-                );
-            }
-        },
-        {
-            Header: t('databases.instance-table.headers.host-name'),
-            accessor: 'name',
-            id: '2',
-            width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'name'),
-            renderCell: (cellData: string) => (
-                <DsTypography
-                    title={cellData || GENERAL.NOT_AVAILABLE}
-                    variant="Regular_13"
-                    className={`${styles.colText} ${styles.textClass}`}
-                >
-                    {cellData || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            )
-        },
-        {
-            Header: t('databases.instance-table.headers.engine-type'),
-            accessor: 'hostType',
-            id: '3',
-            width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'hostType'),
-            renderCell: (cellData: string) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            )
-        },
-        {
-            Header: t('databases.instance-table.headers.deployment-model'),
-            accessor: 'serverInstallationMode',
-            id: '4',
-            width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
-            renderCell: (cellData: string) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            )
-        },
-        {
-            Header: t('databases.instance-table.headers.registration-status'),
-            accessor: 'managementStatus',
-            id: '5',
-            isSortable: false,
-            width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
-            renderCell: (cellData: string) => {
-                if (cellData === INVENTORY_STATUS.NOT_REGISTERED) {
-                    return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
-                }
-                if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
-                    return (
-                        <div className={styles.inProgress}>
-                            <DsFlashingDotsLoader />
-                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
-                        </div>
-                    );
-                }
-                if (cellData === INVENTORY_STATUS.REGISTERED) {
-                    return <DotComponent color="var(--success)" value={t('databases.general.registered')} />;
-                }
-                return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
-            }
-        },
-        {
-            Header: t('databases.instance-table.headers.well-architected-status'),
-            accessor: 'optimizationStatus',
-            id: '6',
-            width: '240px',
-            filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
-            renderCell: (cellData: string, rowData: any) => {
-                // If the computed display value is "Not analyzed", show with tooltip
-                if (cellData === 'Not analyzed') {
-                    return (
-                        <div className={styles.naContainer}>
-                            <Popover
-                                popoverClass=""
-                                trigger="hover"
-                                isAppendedToBody
-                                placement="auto"
-                                container={<TooltipIcon />}
-                            >
-                                <DsTypography variant="Regular_14">{rowData.optimizationDisableMsg}</DsTypography>
-                            </Popover>
-                            <DsTypography variant="Regular_14">Not analyzed</DsTypography>
-                        </div>
-                    );
-                }
-                if (rowData?.optimizationStatusLoading) {
-                    return <DsFlashingDotsLoader />;
-                }
-                return (
-                    <div className={styles.statusCol}>
-                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                    </div>
-                );
-            }
-        },
-        {
-            id: '7',
-            Header: t('databases.instance-table.headers.fsx-for-ontap'),
-            accessor: 'fileSystemName',
-            isSortable: false,
-            filterOptions: getFilterOptions(updatedTableData, 'fileSystemName'),
-            width: '213px',
-            renderCell: (cellData: any, rowData: any) => {
-                let loading = rowData?.loading || rowData?.subLoading;
-                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-                    loading = true;
-                }
-                return (
-                    <>
-                        {!loading && rowData?.fsxId && (
-                            <div className={styles.fsxNameContainer}>
-                                <DsTooltipInfo
-                                    className={`${styles.fsxName} ${styles['tooltip-icon']}`}
-                                    trigger="hover"
-                                >
-                                    <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
-                                        <DsTypography variant="Regular_13">{rowData?.fsxId}</DsTypography>
-                                        <Popover
-                                            popoverClass={styles['copy-popover']}
-                                            children="Copied"
-                                            container={
-                                                <CopyToClipboardCommon
-                                                    value={rowData?.fsxId}
-                                                    iconProvided={<CopyIcon fill="#A7A7A7" />}
-                                                />
-                                            }
-                                        />
-                                    </div>
-                                </DsTooltipInfo>
-                                <div className={styles.fsxName}>
-                                    <DsTypography
-                                        className={styles.fsxNameText}
-                                        variant="Regular_13"
-                                        title={cellData || GENERAL.NOT_AVAILABLE}
-                                    >
-                                        {cellData || GENERAL.NOT_AVAILABLE}
-                                    </DsTypography>
-                                </div>
-                            </div>
-                        )}
-                        {loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && !rowData?.fsxId && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {GENERAL.NOT_AVAILABLE}
-                            </DsTypography>
-                        )}
-                    </>
-                );
-            }
-        },
-        {
-            Header: t('databases.instance-table.headers.protection-status'),
-            accessor: 'protectionText',
-            id: '8',
-            width: '200px',
-            filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
-            renderCell: (cellData: string, rowData: any) => {
-                let loading = rowData?.loading || rowData?.subLoading;
-                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-                    loading = true;
-                }
-                const protectedByList = [];
-                const protection = rowData?.protection ?? {};
-                if (
-                    [
-                        protection?.isSqlNativeEnabled,
-                        protection?.isAwsBackupEnabled?.fsxn,
-                        protection?.isCRREnabled,
-                        protection?.isFsxOntapSnapshotsEnabled
-                    ].some(Boolean)
-                ) {
-                    protectedByList.push(t('databases.general.storage-consistent'));
-                }
-
-                if (protection?.isAppConsistentBackupEnabled) {
-                    protectedByList.push(t('databases.general.application-consistent'));
-                }
-                return (
-                    <>
-                        {cellData && (
-                            <div className={styles.colTextProtection}>
-                                <div className={styles.protection}>
-                                    {cellData === GENERAL.PROTECTED && (
-                                        <ProtectedIcon
-                                            style={{
-                                                // @ts-ignore
-                                                '--icon-primary-color': 'var(--green-60)'
-                                            }}
-                                        />
-                                    )}
-                                    {cellData === GENERAL.NOT_PROTECTED && (
-                                        <NotProtectedIcon
-                                            style={{
-                                                // @ts-ignore
-                                                '--icon-primary-color': 'var(--grey-45)'
-                                            }}
-                                        />
-                                    )}
-                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                                </div>
-                                {protectedByList?.length > 0 && (
-                                    <div className={commonStyles.protectionTooltipPopOver}>
-                                        <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                            {protectionTooltipText(protectedByList)}
-                                        </TooltipInfo>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {GENERAL.NOT_AVAILABLE}
-                            </DsTypography>
-                        )}
-                    </>
-                );
-            }
-        },
-        {
-            Header: t('databases.instance-table.headers.performance'),
-            accessor: 'performance.assessment',
-            id: '9',
-            width: '200px',
-            filterOptions: getFilterOptions(updatedTableData, 'performance.assessment'),
-            renderCell: (cellData: string, rowData: any) => {
-                let loadingPA = rowData?.loading || rowData?.subLoading;
-                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-                    loadingPA = true;
-                }
-                return (
-                    <>
-                        {cellData && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {cellData}
-                            </DsTypography>
-                        )}
-                        {!cellData && loadingPA && <DsFlashingDotsLoader />}
-                        {!cellData && !loadingPA && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {GENERAL.NOT_AVAILABLE}
-                            </DsTypography>
-                        )}
-                    </>
-                );
-            }
-        },
-        {
-            id: '10',
-            Header: t('databases.instance-table.headers.aws-credentials'),
-            accessor: 'credentialName',
-            isSortable: true,
-            filterOptions: getFilterOptions(updatedTableData, 'credentialName'),
-            width: '213px',
-            renderCell: (cellData: any) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            )
-        },
-        {
-            id: '11',
-            Header: t('databases.instance-table.headers.aws-account'),
-            accessor: 'accountId',
-            isSortable: true,
-            filterOptions: getFilterOptions(updatedTableData, 'accountId'),
-            width: '213px',
-            renderCell: (cellData: any) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            )
-        },
-        {
-            id: '12',
-            Header: t('databases.instance-table.headers.region'),
-            accessor: 'regionName',
-            isSortable: true,
-            filterOptions: getFilterOptions(updatedTableData, 'regionName'),
-            width: '213px',
-            renderCell: (cellData: any) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            )
-        },
-        {
-            id: '13',
-            Header: '',
-            accessor: '',
-            isSortable: false,
-            width: '200px',
-            isSticky: true,
-            renderCell: (cellData: any, rowData: any) => {
-                const { colText, disableMsg } = manageActionCol(t, rowData);
-                return (
-                    <>
-                        {disableMsg ? (
-                            <Popover
-                                isAppendedToBody
-                                children={disableMsg}
-                                trigger="hover"
-                                container={
-                                    <div className={styles.buttonContainer}>
-                                        <DsButton variant="secondary" isThin isDisabled>
-                                            {colText}
-                                        </DsButton>
-                                    </div>
-                                }
-                            />
-                        ) : (
-                            <div className={styles.buttonContainer}>
-                                <DsButton
-                                    variant="secondary"
-                                    isThin
-                                    onClick={() => {
-                                        if (
-                                            colText === ACTION_CTA.FIX_ISSUES ||
-                                            colText === ACTION_CTA.WELL_ARCHITECTED
-                                        ) {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-                                            dispatch(
-                                                setSelectedWellArchitectTab(
-                                                    WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
-                                                )
-                                            );
-                                            optimizeAction(rowData);
-                                        } else {
-                                            dispatch(setManageSingleInstanceData(rowData));
-                                            dispatch(setWizardOperationType('single'));
-                                            navigate('../register-wizard');
-                                            postBlueXPMessage({
-                                                type: BlueXPListeners.navigate,
-                                                payload: {
-                                                    pathname: './register-wizard',
-                                                    replace: true
-                                                }
-                                            });
-                                        }
-                                    }}
-                                >
-                                    {colText}
-                                </DsButton>
-                            </div>
-                        )}
-                    </>
-                );
-            }
-        }
-    ];
+    const getTableColDefsPerEngineType = () => getInstanceTableColumns({ t, updatedTableData, selectedHostType });
 
     const tableProps = useTable({
         isSorting: false,
-        columns: managedHostSubTableColDefs,
+        columns: getTableColDefsPerEngineType(),
         rows: updatedTableData,
         pageSize: 50,
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
         initialFilterState: getInitialFilter(),
-        initialColumnState: tableManageColumnState.instanceTable,
+        initialColumnState: Object.fromEntries(
+            Object.entries(getInitialInstanceTableColState(selectedHostType)).filter(
+                ([_, value]) => value !== undefined
+            )
+        ),
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];

@@ -5,7 +5,7 @@ import styles from './Inventory.module.scss';
 import InventoryCards from './InventoryCards/InventoryCards';
 import InventoryTab from './InventoryTab/InventoryTab';
 import InventoryTablesComponent from './InventoryTablesComponent/InventoryTablesComponent';
-import { INVENTORY_ACTIONS, INVENTORY_STATUS, PROTECTION_TEXT_STATUS } from '../../utils/consts';
+import { DBType, INVENTORY_ACTIONS, INVENTORY_STATUS, PROTECTION_TEXT_STATUS } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
 import {
@@ -18,8 +18,9 @@ import {
     sortInventoryTableData,
     uniqueHostRow
 } from './InventoryUtilsV2';
-import { setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
+import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
+import EngineTypeSelector from './EngineTypeSelector/EngineTypeSelector';
 
 const InventoryV2 = () => {
     const dispatch = useDispatch();
@@ -28,7 +29,11 @@ const InventoryV2 = () => {
         inProgressInstances,
         removeSecNodeDiscoveredList,
         allmssqlHostAssessmentLoading,
-        allmssqlHostAssessmentData
+        allmssqlHostAssessmentData,
+        selectedHostType,
+        fullHostTableRows,
+        fullInstanceTableRows,
+        fullDatabaseTableRows
     } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
 
@@ -36,11 +41,11 @@ const InventoryV2 = () => {
         if (inventoryTableData) {
             const state = store.getState();
             const { allmssqlHostAssessmentData: allmssqlHostAssessmentDataLatest } = state.inventoryV2;
-            const hostTableRows: any = [];
-            let instanceTableRows: any = [];
+            const allHostTableRows: any = [];
+            let allInstanceTableRows: any = [];
             let hostUniqueId: number = 0;
             let instanceUniqueId: number = 0;
-            const databaseTableRows: any = [];
+            const allDatabaseTableRows: any = [];
             Object.keys(inventoryTableData).map((key: string) => {
                 if (removeSecNodeDiscoveredList.includes(key)) {
                     return;
@@ -91,7 +96,7 @@ const InventoryV2 = () => {
                         ? inventoryTableData[key]?.serverAllInstallationMode.join(', ')
                         : inventoryTableData[key]?.serverInstallationMode
                 };
-                hostTableRows.push(rowData);
+                allHostTableRows.push(rowData);
 
                 // Instance table
                 if (inventoryTableData?.[key] && inventoryTableData?.[key]?.sqlServerInstances) {
@@ -180,7 +185,7 @@ const InventoryV2 = () => {
                         };
                         perInstanceData.push(perRowData);
                     });
-                    instanceTableRows = [...instanceTableRows, ...(perInstanceData || [])];
+                    allInstanceTableRows = [...allInstanceTableRows, ...(perInstanceData || [])];
                 }
 
                 // Database table
@@ -226,7 +231,7 @@ const InventoryV2 = () => {
                                 resourceId: perHost?.resourceId,
                                 ec2InstanceId: perHost?.ec2InstanceId
                             };
-                            databaseTableRows.push(perRowData);
+                            allDatabaseTableRows.push(perRowData);
                         });
                     });
                 }
@@ -234,13 +239,35 @@ const InventoryV2 = () => {
 
             // sort it based on action and whether it is disable or enable
             dispatch(
+                setFullInventoryTablesRows({
+                    hosts: sortInventoryTableData(allHostTableRows),
+                    instances: sortInstanceTableData(allInstanceTableRows),
+                    databases: sortDatabaseTableData(allDatabaseTableRows)
+                })
+            );
+
+            // Save filtered data for default selectedHostType (MSSQL)
+            const engineType = selectedHostType || DBType.MSSQL;
+            dispatch(
                 setInventoryTablesRows({
-                    hosts: sortInventoryTableData(hostTableRows),
-                    instances: sortInstanceTableData(instanceTableRows),
-                    databases: sortDatabaseTableData(databaseTableRows)
+                    hosts: sortInventoryTableData(allHostTableRows.filter((row: any) => row.hostType === engineType)),
+                    instances: sortInstanceTableData(
+                        allInstanceTableRows.filter((row: any) => row.hostType === engineType)
+                    ),
+                    databases: sortDatabaseTableData(
+                        allDatabaseTableRows.filter((row: any) => row.hostType === engineType)
+                    )
                 })
             );
         } else {
+            dispatch(
+                setFullInventoryTablesRows({
+                    hosts: [],
+                    instances: [],
+                    databases: []
+                })
+            );
+
             dispatch(
                 setInventoryTablesRows({
                     hosts: [],
@@ -258,11 +285,26 @@ const InventoryV2 = () => {
         headerSelectedMultiRegionIdsList
     ]);
 
+    // When selectedHostType changes, update filtered rows
+    useEffect(() => {
+        dispatch(
+            setInventoryTablesRows({
+                hosts: sortInventoryTableData(fullHostTableRows.filter(row => row.hostType === selectedHostType)),
+                instances: sortInstanceTableData(
+                    fullInstanceTableRows.filter(row => row.hostType === selectedHostType)
+                ),
+                databases: sortDatabaseTableData(fullDatabaseTableRows.filter(row => row.hostType === selectedHostType))
+            })
+        );
+    }, [selectedHostType, fullHostTableRows, fullInstanceTableRows, fullDatabaseTableRows]);
+
     return (
         <div className={styles.inventory}>
             <InventoryCards />
+            <EngineTypeSelector />
             <InventoryTab />
-            <InventoryTablesComponent />
+            {/* selectedHostType is send as key  so that on remounting the component it fetches the correct data */}
+            <InventoryTablesComponent key={selectedHostType} />
         </div>
     );
 };

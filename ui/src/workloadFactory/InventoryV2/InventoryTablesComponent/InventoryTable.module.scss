@@ -192,6 +192,12 @@
             position: relative;
             top: 2px;
         }
+
+        .ssmOffline {
+            [class*='Popover-module_base'] {
+                max-width: unset !important;
+            }
+        }
     }
 
     .ssmOffline:hover {

@@ -1,0 +1,10 @@
+.engine-type-selector {
+    background-color: var(--content-background);
+    box-shadow: 2px 2px 6px 0px var(--drop-shadow);
+    display: flex;
+    gap: 48px;
+    align-items: center;
+    width: calc(87.33% - 4px);
+    margin-bottom: 40px;
+    padding: 16px 40px;
+}

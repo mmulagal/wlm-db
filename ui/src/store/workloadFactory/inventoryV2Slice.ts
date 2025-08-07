@@ -1,10 +1,10 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
-import { AUTHENTICATION_TYPE, WLF_TABS } from '../../utils/consts';
+import { AUTHENTICATION_TYPE, DBType, WLF_TABS } from '../../utils/consts';
 import {
-    initialDatabaseTableColState,
-    initialHostsTableColState,
-    initialInstanceTableColState
+    getInitialInstanceTableColState,
+    getInitialHostTableColState,
+    getInitialDatabaseTableColState
 } from '../../utils/manageColumnUtils';
 
 const initialInventoryV2State: InventorySliceData = {
@@ -80,13 +80,17 @@ const initialInventoryV2State: InventorySliceData = {
         filterType: ''
     },
     tableManageColumnState: {
-        instanceTable: initialInstanceTableColState,
-        hostTable: initialHostsTableColState,
-        databaseTable: initialDatabaseTableColState
+        instanceTable: getInitialInstanceTableColState(DBType.MSSQL),
+        hostTable: getInitialHostTableColState(DBType.MSSQL),
+        databaseTable: getInitialDatabaseTableColState(DBType.MSSQL)
     },
+    selectedHostType: 'Microsoft SQL Server',
     hostTableRows: [],
     instanceTableRows: [],
     databaseTableRows: [],
+    fullHostTableRows: [],
+    fullInstanceTableRows: [],
+    fullDatabaseTableRows: [],
     dashSandboxList: {
         data: [],
         loading: false,
@@ -307,6 +311,21 @@ const inventoryV2Slice = createSlice({
             state.instanceTableRows = action.payload?.instances;
             state.databaseTableRows = action.payload?.databases;
         },
+        setSelectedHostType: (state, action: PayloadAction<string>) => {
+            state.selectedHostType = action.payload;
+            // Update columns for new engine type
+            state.tableManageColumnState = {
+                ...state.tableManageColumnState,
+                instanceTable: getInitialInstanceTableColState(action.payload),
+                hostTable: getInitialHostTableColState(action.payload),
+                databaseTable: getInitialDatabaseTableColState(action.payload)
+            };
+        },
+        setFullInventoryTablesRows: (state, action: PayloadAction<any>) => {
+            state.fullHostTableRows = action.payload?.hosts;
+            state.fullInstanceTableRows = action.payload?.instances;
+            state.fullDatabaseTableRows = action.payload?.databases;
+        },
         setDashSandboxListData: (state, action: PayloadAction<any>) => {
             state.dashSandboxList.data = action.payload;
         },
@@ -472,6 +491,8 @@ export const {
     setInstanceTableRows,
     setDatabaseTableRows,
     setInventoryTablesRows,
+    setSelectedHostType,
+    setFullInventoryTablesRows,
     setDashSandboxListData,
     setDashSandboxListLoading,
     setDashSandboxSavingsData,
