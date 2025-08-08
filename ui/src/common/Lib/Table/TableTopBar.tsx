@@ -145,7 +145,11 @@ export const TableTopBar = ({
                         </div>
                     )}
                 </div>
-                {subTitle && <Typography variant="Regular_14">{subTitle}</Typography>}
+                {subTitle && (
+                    <Typography title={subTitle} className={styles.subTextClass} variant="Regular_14">
+                        {subTitle}
+                    </Typography>
+                )}
             </Typography>
             <div className={styles.actions}>
                 {actionsLeft}

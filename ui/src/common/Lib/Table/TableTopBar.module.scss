@@ -36,6 +36,12 @@
         gap: 4px;
     }
 
+    .subTextClass {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .actions {
         display: flex;
         align-items: center;
