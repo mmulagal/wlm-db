@@ -1290,7 +1290,8 @@ async function givebackClusterOwnership(
             `Preferred node: ${preferredNodeId}, Non-preferred node: ${standbyNodeId}, Active node: ${activeNodeInstanceId}`
         );
 
-        if (activeNodeInstanceId === preferredNodeId) {
+        if (activeNodeInstanceId === preferredNodeId || isDemoFlow) {
+            // isDemoFlow check is used to skip the giveback operation in demo mode
             jobStatus = JOBSTATUS.WARNING;
             errorMessage = `Cluster ownership is already on the preferred node (${preferredNodeId}).`;
         } else if (activeNodeInstanceId === standbyNodeId) {
