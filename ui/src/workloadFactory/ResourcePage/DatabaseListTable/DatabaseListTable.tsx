@@ -141,7 +141,8 @@ const DatabaseListTable = () => {
         columns: EncryptionColDefs,
         rows: formatData(data),
         pageSize: 50,
-        isLazyLoading: databaseListLoading
+        isLazyLoading: databaseListLoading,
+        isHorizontalScroll: true
     });
 
     return (

@@ -67,7 +67,7 @@
     }
 
     .getWellSecondLevel {
-        width: 87.3%;
+        width: 100%;
         margin-top: 24px;
         justify-content: center;
 
@@ -81,9 +81,8 @@
     }
 
     .sectionTwo {
-        width: 87.3%;
+        width: 100%;
         margin-top: 26px;
-        max-width: 1608px;
 
         [class*='accordionHeader'] {
             height: 56px !important;
