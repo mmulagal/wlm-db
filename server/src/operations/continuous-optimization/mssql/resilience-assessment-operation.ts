@@ -1339,6 +1339,16 @@ async function getHighAvailabilityDriftData(
                       name: 'cluster-quorum',
                       status: clusterQuorum.status as AssessmentStatus,
                       objectsInViolation: clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
+                      violationDetails:
+                          clusterQuorum.status !== AssessmentStatus.OPTIMIZED
+                              ? [
+                                    {
+                                        objectName: 'isPhysicalDiskAndMajority',
+                                        value: 'false',
+                                        objectType: 'configuration'
+                                    }
+                                ]
+                              : [],
                       totalObjectsAssessed: 1,
                       totalObjectsInViolation: clusterQuorum.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
                   },
@@ -1351,6 +1361,16 @@ async function getHighAvailabilityDriftData(
                       name: 'heartbeat-settings',
                       status: heartbeat.status as AssessmentStatus,
                       objectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
+                      violationDetails:
+                          heartbeat.status !== AssessmentStatus.OPTIMIZED
+                              ? Object.entries(heartbeat.details || {})
+                                    .filter(([, value]) => value.status !== 'optimized')
+                                    .map(([key, value]) => ({
+                                        objectName: key,
+                                        value: value.current.toString(),
+                                        objectType: 'configuration'
+                                    }))
+                              : [],
                       totalObjectsAssessed: 1,
                       totalObjectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? 0 : 1
                   },
@@ -1370,6 +1390,7 @@ async function getHighAvailabilityDriftData(
                       totalObjectsInViolation: sqlServerServices.nodesInViolation?.length
                   }
         ];
+
         return haChecks;
     } catch (error) {
         logger.error('Error calculating high availability drift data:', error);

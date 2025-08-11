@@ -870,7 +870,12 @@ async function initiateInstanceLevelAssessmentDataCollection(
         sqlServerDeploymentType: RESOURCESTYPE.MSSQL
     });
 
-    const resourceWithInstanceName = `${databaseInstanceRecord.resourceName}\\${databaseInstanceRecord.name}`;
+    const resourceWithInstanceName = isDemoFlow
+        ? `${databaseInstanceRecord.resourceName}\\${databaseInstanceRecord.name.replace(
+              databaseInstanceRecord.resourceName,
+              ''
+          )}`
+        : `${databaseInstanceRecord.resourceName}\\${databaseInstanceRecord.name}`;
     const jobName = `Microsoft SQL Server assessment for instance ${resourceWithInstanceName}`;
     const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
 
@@ -1178,7 +1183,9 @@ async function onDemandTriggerMssqlDriftAssessment(
             resource: { resource_name: resourceName },
             database_instance_name: instanceName
         } = managedInstance;
-        const savedInstanceName = `${resourceName}\\${instanceName}`;
+        const savedInstanceName = isDemoFlow
+            ? `${resourceName}\\${instanceName.replace(resourceName!, '')}`
+            : `${resourceName}\\${instanceName}`;
         const jobName = `Microsoft SQL Server assessment for instance ${savedInstanceName}`;
         const jobDescription = `${jobName}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
