@@ -520,7 +520,8 @@
                     "aws-credentials": "AWS credentials",
                     "aws-account": "AWS account",
                     "region": "Region"
-                }
+                },
+                "tenancy-column-info": "Multi tenant refers to CDB/PDB deployments, whereas Single tenant refers to non-CDB deployments."
             }
         },
         "host-table": {

@@ -271,6 +271,7 @@ export function getOracleDatabaseColumnsList({
             id: '7',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'instanceType'),
+            info: t('databases.databases-table.oracle.tenancy-column-info'),
             renderCell: (cellData: string) => (
                 <DsTypography variant="Regular_13" className={styles.colText}>
                     {cellData || t('databases.general.not-available-table-columns')}
