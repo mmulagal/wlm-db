@@ -1,3 +1,4 @@
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -15,7 +16,11 @@ import {
     handleResiliecyOptimize
 } from '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations';
 import { RESOURCE_ID } from '../../../src/utils/consts';
-import { OPTIMIZE_RESILIENCY_CONFIGS } from '../../../src/utils/continous-optimization-consts';
+import {
+    OPTIMIZE_RESILIENCY_CONFIGS,
+    OptimizeHighAvailabilityParams
+} from '../../../src/utils/continous-optimization-consts';
+import { registerJob } from '../../../src/operations/database/job-operations';
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -83,5 +88,321 @@ describe('Should set snapshot policy on volume level', () => {
             }
         );
         expect(jobId).toBeDefined();
+    });
+});
+
+describe('Optimize High Availability Configuration', () => {
+    let parentJobId: string;
+
+    beforeEach(async () => {
+        // Create a parent job for testing
+        const { id } = await registerJob(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
+            type: JOBTYPE.WELL_ARCHITECTED,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: 'test-resource',
+            name: 'Test Parent Job',
+            startTime: Date.now(),
+            description: 'Test parent job for optimization'
+        });
+        parentJobId = id;
+    });
+
+    it('should successfully optimize heartbeat settings configuration', async () => {
+        const { optimizeHighAvailabilityConfiguration } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(
+            optimizeHighAvailabilityConfiguration(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS,
+                parentJobId
+            )
+        ).resolves.not.toThrow();
+    });
+
+    it('should successfully optimize cluster quorum configuration', async () => {
+        const { optimizeHighAvailabilityConfiguration } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(
+            optimizeHighAvailabilityConfiguration(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                OptimizeHighAvailabilityParams.CLUSTER_QUORUM,
+                parentJobId
+            )
+        ).resolves.not.toThrow();
+    });
+
+    it('should throw error for invalid configuration name', async () => {
+        const { optimizeHighAvailabilityConfiguration } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(
+            optimizeHighAvailabilityConfiguration(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                'INVALID_CONFIG',
+                parentJobId
+            )
+        ).rejects.toThrow('Invalid configuration name INVALID_CONFIG');
+    });
+
+    it('should throw error for non-existent database host', async () => {
+        const { optimizeHighAvailabilityConfiguration } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(
+            optimizeHighAvailabilityConfiguration(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                'non-existent-host-id',
+                ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS,
+                parentJobId
+            )
+        ).rejects.toThrow('No database host by id non-existent-host-id');
+    });
+
+    it('should throw error for standalone SQL Server deployment', async () => {
+        // Create a standalone resource for testing
+        const standaloneResourceId = 'standalone-resource-id';
+        await createResource(ACCOUNT_ID, {
+            resourceId: standaloneResourceId,
+            resourceName: 'standalone-test-resource',
+            resourceType: 'MSSQL',
+            coRelationId: 'fs-standalone',
+            cloudProviderAccountId: 'test-aws-account',
+            cloudProviderName: 'AWS',
+            region: DEFAULT_AWS_REGION,
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: 'FSXN',
+            metadata: {
+                node1InstanceId: 'i-standalone',
+                sqlDeploymentType: 'Standalone'
+            }
+        });
+
+        const { optimizeHighAvailabilityConfiguration } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(
+            optimizeHighAvailabilityConfiguration(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                standaloneResourceId,
+                ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS,
+                parentJobId
+            )
+        ).rejects.toThrow('Standalone SQL Server deployment is not supported for high availability optimization');
+    });
+});
+
+describe('Optimize SQL Server Service', () => {
+    let parentJobId: string;
+
+    beforeEach(async () => {
+        // Create a parent job for testing
+        const { id } = await registerJob(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
+            type: JOBTYPE.WELL_ARCHITECTED,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: 'test-resource',
+            name: 'Test Parent Job for SQL Service',
+            startTime: Date.now(),
+            description: 'Test parent job for SQL service optimization'
+        });
+        parentJobId = id;
+    });
+
+    it('should successfully optimize SQL Server service configuration', async () => {
+        const { optimizeSqlServerService } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(
+            optimizeSqlServerService(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                parentJobId
+            )
+        ).resolves.not.toThrow();
+    }, 120000); // 120 second timeout for complex integration test
+
+    it('should throw error for non-existent database host in SQL service optimization', async () => {
+        const { optimizeSqlServerService } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(
+            optimizeSqlServerService(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                'non-existent-host-id',
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                parentJobId
+            )
+        ).rejects.toThrow('No database host by id non-existent-host-id');
+    });
+
+    it('should handle missing instance configuration gracefully', async () => {
+        // Create a resource without proper instance configuration
+        const missingConfigResourceId = 'missing-config-resource-id';
+        await createResource(ACCOUNT_ID, {
+            resourceId: missingConfigResourceId,
+            resourceName: 'missing-config-resource',
+            resourceType: 'MSSQL',
+            coRelationId: 'fs-missing-config',
+            cloudProviderAccountId: 'test-aws-account',
+            cloudProviderName: 'AWS',
+            region: DEFAULT_AWS_REGION,
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: 'FSXN',
+            metadata: {
+                node1InstanceId: 'i-missing-config',
+                sqlDeploymentType: 'FCI'
+            }
+        });
+
+        const { optimizeSqlServerService } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(
+            optimizeSqlServerService(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                missingConfigResourceId,
+                'non-existent-instance-id',
+                parentJobId
+            )
+        ).resolves.not.toThrow();
+    });
+});
+
+describe('Handle Shared Storage Optimize', () => {
+    let parentJobId: string;
+
+    beforeEach(async () => {
+        // Create a parent job for testing
+        const { id } = await registerJob(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
+            type: JOBTYPE.WELL_ARCHITECTED,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: 'test-resource',
+            name: 'Test Parent Job for Shared Storage',
+            startTime: Date.now(),
+            description: 'Test parent job for shared storage optimization'
+        });
+        parentJobId = id;
+    });
+
+    it('should successfully handle shared storage optimization with valid data', async () => {
+        const { handleSharedStorageOptimize } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        const hostsToOptimize = [
+            {
+                configurationName: OptimizeHighAvailabilityParams.SHARED_STORAGE,
+                databaseHosts: [
+                    {
+                        id: RESOURCE_ID,
+                        region: DEFAULT_AWS_REGION,
+                        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                        sqlServerInstances: [
+                            {
+                                databaseInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+                                ontapLunPaths: ['/vol/test_volume/test_lun']
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        await expect(handleSharedStorageOptimize(ACCOUNT_ID, hostsToOptimize, parentJobId)).resolves.not.toThrow();
+    });
+
+    it('should handle empty hosts list gracefully', async () => {
+        const { handleSharedStorageOptimize } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        await expect(handleSharedStorageOptimize(ACCOUNT_ID, [], parentJobId)).resolves.not.toThrow();
+    });
+
+    it('should handle hosts with no instances gracefully', async () => {
+        const { handleSharedStorageOptimize } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        const hostsToOptimize = [
+            {
+                configurationName: OptimizeHighAvailabilityParams.SHARED_STORAGE,
+                databaseHosts: [
+                    {
+                        id: RESOURCE_ID,
+                        region: DEFAULT_AWS_REGION,
+                        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                        sqlServerInstances: []
+                    }
+                ]
+            }
+        ];
+
+        await expect(handleSharedStorageOptimize(ACCOUNT_ID, hostsToOptimize, parentJobId)).resolves.not.toThrow();
+    });
+
+    it('should handle a host with multiple instances', async () => {
+        const { handleSharedStorageOptimize } = await import(
+            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
+        );
+
+        const hostsToOptimize = [
+            {
+                configurationName: OptimizeHighAvailabilityParams.SHARED_STORAGE,
+                databaseHosts: [
+                    {
+                        id: RESOURCE_ID,
+                        region: DEFAULT_AWS_REGION,
+                        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                        sqlServerInstances: [
+                            {
+                                databaseInstanceId: 'instance-id-1',
+                                ontapLunPaths: ['/vol/volume1/lun1']
+                            },
+                            {
+                                databaseInstanceId: 'instance-id-2',
+                                ontapLunPaths: ['/vol/volume2/lun2', '/vol/volume3/lun3']
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        await expect(handleSharedStorageOptimize(ACCOUNT_ID, hostsToOptimize, parentJobId)).resolves.not.toThrow();
     });
 });

@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash-es';
-import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
+import { createResource, upsertDatabaseInstance, deleteResource } from '../../../src/lib/database/db';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
@@ -15,7 +15,9 @@ import { RESOURCE_ID } from '../../../src/utils/consts';
 import {
     collectVolumeSnapshotCopiesData,
     getResilienceDriftAssessment,
-    getVolumesWithoutSnapshotPolicy
+    getVolumesWithoutSnapshotPolicy,
+    initiateInstanceLevelHighAvailabilityAssessment,
+    initiateHostLevelHighAvailabilityAssessment
 } from '../../../src/operations/continuous-optimization/mssql/resilience-assessment-operation';
 import { WorkloadInstance } from '../../../src/utils/common-types';
 import { createDatabaseInstanceConfigData } from '../../../src/lib/database/database-instance-config';
@@ -113,11 +115,27 @@ beforeAll(async () => {
     await createDatabaseInstanceConfigData([DatabaseInstanceConfigData]);
 });
 
+afterAll(async () => {
+    await deleteResource(ACCOUNT_ID, RESOURCE_ID);
+});
+
 describe('Snapshot policy assessment', () => {
-    const { volumes } = INSTANCE_CONFIG;
     it('should return volumes without snapshot policy', () => {
-        const vols = volumes;
-        const result = getVolumesWithoutSnapshotPolicy(vols as any);
+        const testVolumes = [
+            {
+                name: 'wlmdb_sqldata_1728552629461',
+                'snapshot-policy': 'none'
+            },
+            {
+                name: 'wlmdb_sqltemp_1728552629461',
+                'snapshot-policy': 'daily'
+            },
+            {
+                name: 'wlmdb_sqldata_1728574994',
+                'snapshot-policy': 'daily'
+            }
+        ];
+        const result = getVolumesWithoutSnapshotPolicy(testVolumes as Array<Record<string, string>>);
         expect(result).toEqual(['wlmdb_sqldata_1728552629461']);
     });
 
@@ -135,17 +153,20 @@ describe('Snapshot policy assessment', () => {
             cloudProviderAccountId: 'aws-account',
             resourceName: 'fsxn'
         };
-        const volumeAssessmentData = volumes;
+        const volumeAssessmentData = INSTANCE_CONFIG.volumes;
         const violations = ['vol1'];
 
         const result = await collectVolumeSnapshotCopiesData(
             credentialsId,
             accountId,
             instanceRecord,
-            volumeAssessmentData as any,
+            volumeAssessmentData as Array<Record<string, unknown>>,
             violations
         );
-        const dates = Object.values(result).map((dateValues: any) => new Date(dateValues.create_time));
+        const dates = Object.values(result).map(dateValues => {
+            const record = dateValues as Record<string, unknown>;
+            return new Date(record.create_time as string);
+        });
         expect(dates.length).toBeGreaterThan(0);
     });
 });
@@ -162,10 +183,72 @@ describe('Resilience drift assessment', () => {
             [
                 AssessmentCategories.SNAPSHOT_POLICY.toLowerCase(),
                 AssessmentCategories.CRR.toLowerCase(),
-                AssessmentCategories.AWS_BACKUP.toLowerCase()
+                AssessmentCategories.AWS_BACKUP.toLowerCase(),
+                AssessmentCategories.HIGH_AVAILABILITY.toLowerCase()
             ]
         );
         expect(res.snapshotPolicy).toBeDefined();
         expect(isEmpty(res.snapshotPolicy)).toBeFalsy();
+    });
+});
+describe('High Availability Assessment', () => {
+    const accountId = ACCOUNT_ID;
+    const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
+    const region = DEFAULT_AWS_REGION;
+    const databaseHostId = RESOURCE_ID;
+    const parentJobId = 'parent-job-id';
+
+    it('should complete host level assessment and return cluster and heartbeat assessment', async () => {
+        const instanceRecord: WorkloadInstance = {
+            resourceName: 'test-resource',
+            name: 'test-instance',
+            activeNodeInstanceid: 'i-123456',
+            id: 'db-instance-id',
+            region: DEFAULT_AWS_REGION,
+            fsxFileSystem: 'fs-1234',
+            type: 'MSSQL',
+            sqlAuthEnabled: false,
+            cloudProviderAccountId: 'aws-account'
+        };
+
+        const result = await initiateHostLevelHighAvailabilityAssessment(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceRecord,
+            parentJobId
+        );
+
+        expect(result).toBeDefined();
+        expect(result.clusterQuorum).toBeDefined();
+        expect(result.heartbeat).toBeDefined();
+        expect(result.clusterQuorum.status).toBeDefined();
+        expect(result.heartbeat.status).toBeDefined();
+    });
+
+    it('should complete instance level assessment and return undefined', async () => {
+        const instanceRecord: WorkloadInstance = {
+            resourceName: 'test-resource',
+            name: 'test-instance',
+            activeNodeInstanceid: 'i-123456',
+            id: 'f4b7c5d3-e1f6-4g2a-9b5d',
+            region: DEFAULT_AWS_REGION,
+            fsxFileSystem: 'fs-1234',
+            type: 'MSSQL',
+            sqlAuthEnabled: false,
+            cloudProviderAccountId: 'aws-account'
+        };
+
+        const result = await initiateInstanceLevelHighAvailabilityAssessment(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceRecord,
+            parentJobId
+        );
+
+        expect(result).toBeUndefined();
     });
 });
