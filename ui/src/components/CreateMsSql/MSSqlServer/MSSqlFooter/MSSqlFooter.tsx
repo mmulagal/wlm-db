@@ -122,9 +122,15 @@ const MSSqlFooter = () => {
             navigate('databases/inventory');
         } else if (databaseHostEntryPoint === 'database') {
             if (isWorkloadFactoryStatus) {
-                navigate('/databases');
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../databases/dashboard', replace: true }
+                });
             } else {
-                navigate('../../fsxdb');
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../fsxdb/dashboard', replace: true }
+                });
             }
         } else if (isWorkloadFactoryStatus) {
             navigateToCanvas('/');
