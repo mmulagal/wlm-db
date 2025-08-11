@@ -338,6 +338,9 @@ const DatabasesTable = () => {
         ),
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
+                if (rowData?.hostType === DBType.ORACLE) {
+                    return null;
+                }
                 let disableOption = false;
                 let disableMessage = '';
 

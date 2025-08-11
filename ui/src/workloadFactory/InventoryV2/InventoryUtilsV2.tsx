@@ -1435,6 +1435,10 @@ export const getDetectOptionForInstance = (
     if (type === GENERAL.POSTGRESQL_TYPE) {
         auth = perRow?.defaultAuth;
     }
+    if (type === GENERAL.ORACLE_TYPE) {
+        // For Oracle: If isDefaultAuthentication is false, no default authentication is added and no auth check is needed. If true, check auth using oracleServerAuthentication.
+        auth = perRow?.oracleServerAuthentication || !perRow?.isDefaultAuthentication;
+    }
     const isSqlRunning = state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN;
     if (ssmState?.toLowerCase() !== INVENTORY_STATUS.SSM_CONNECTED) {
         detectOption = DETECT_HOST_VAR.HIDE;
