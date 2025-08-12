@@ -121,7 +121,7 @@ const FSxNSystem = ({ wizardType }: any) => {
             if (
                 deploymentMode?.label === GENERAL.FAILOVER_CLUSTER &&
                 fsxType &&
-                fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                (fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1 || fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_2)
             ) {
                 if (
                     fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val))
@@ -133,18 +133,15 @@ const FSxNSystem = ({ wizardType }: any) => {
             if (
                 deploymentMode?.label === GENERAL.SINGLE_INSTANCE &&
                 fsxType &&
-                (fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 || fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1)
+                (fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 ||
+                    fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1 ||
+                    fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_2 ||
+                    fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_2)
             ) {
                 if (fsxSubnets.some((val: string) => node1SubnetsList.includes(val))) {
                     return '';
                 }
                 return GENERAL.FSXN_PRIMARY_SUBNET_ERROR;
-            }
-            if (fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_2) {
-                return GENERAL.MULTI_FSXN_DEPLOYMENT_MODE_ERROR;
-            }
-            if (fsxType && fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_2) {
-                return GENERAL.SINGLE_FSXN_DEPLOYMENT_MODE_ERROR;
             }
             return GENERAL.FSXN_DEPLOYMENT_MODE_ERROR;
         }
