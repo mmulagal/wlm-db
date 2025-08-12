@@ -1,46 +1,341 @@
 {
-    "count": 2,
+    "count": 7,
     "items": [
+        {
+            "ec2InstanceId": "i-04eaee0ad42d2476f",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "notconnected",
+            "ec2InstanceName": "qa-alpha-oracleasm-pdb-iscsi-110825055113",
+            "ec2UsageOperation": "RunInstances:0010",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux"
+        },
+        {
+            "ec2InstanceId": "i-017ee2b4ca9245080",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "notconnected",
+            "ec2InstanceName": "qa-alpha-oracleasm-pdb-iscsi-120825035309",
+            "ec2UsageOperation": "RunInstances:0010",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux"
+        },
+        {
+            "ec2InstanceId": "i-0ed647af697051ee3",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "qa-alpha-oracle19c-pdb-nfs-ASM-120825035309",
+            "ec2UsageOperation": "RunInstances:0010",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux",
+            "oracleServerDeploymentType": "standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "asm28n",
+                    "instanceId": "asm28n",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "MULTI_TENANT",
+                    "databaseCount": 4,
+                    "databaseDetails": {
+                        "databaseId": "2744159639",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "pluggableDatabases": [
+                        {
+                            "pdbName": "PDB1",
+                            "pdbId": "3",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB$SEED",
+                            "pdbId": "2",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB2",
+                            "pdbId": "4",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB3",
+                            "pdbId": "5",
+                            "pdbStatus": "NORMAL"
+                        }
+                    ],
+                    "isInstanceStorageAsmManaged": true,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-0a333def9bfd29537",
+                            "fileSystemStorageType": "SSD",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "/data_120825035726",
+                                    "protocol": "NFS",
+                                    "mountIp": "172.31.255.252"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "missingModules": []
+                    }
+                }
+            ]
+        },
         {
             "ec2InstanceId": "i-055ed011c2068033a",
             "ec2InstanceType": "m5.large",
             "ssmState": "connected",
-            "ec2InstanceName": "ORACLERAC123",
+            "ec2InstanceName": "oracle19c_on_rhel81_fsxn",
             "ec2UsageOperation": "RunInstances:0014",
             "vpc": {
                 "id": "vpc-84b3afe6",
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "oracleServerDeploymentType": "Standalone",
+            "platform": "Red Hat Enterprise Linux with SQL Server Standard",
+            "oracleServerDeploymentType": "standalone",
             "databaseInstanceDetails": [
                 {
                     "instanceName": "ordbsdl",
-                    "instanceId": "1",
+                    "instanceId": "ordbsdl",
                     "instanceState": "OPEN",
-                    "version": "19.0.0.0.0",
+                    "version": "undefined",
                     "instanceType": "SINGLE_TENANT",
                     "databaseCount": 1,
                     "databaseDetails": {
-                        "databaseName": "ORDBSDL",
-                        "databaseId": "1558942727",
-                        "openMode": "READ WRITE"
+                        "error": "failed to retrieve database details for instance ordbsdl"
                     },
+                    "oracleServerAuthentication": true,
+                    "isDefaultAuthentication": false,
+                    "isInstanceStorageAsmManaged": false,
                     "storage": [
                         {
                             "type": "FSXN",
                             "id": "fs-0d5efc3057c4f12cb",
                             "svmId": "svm-0b7a50ff9c4b8346b",
-                            "protocol": "NFS",
                             "fileSystemStorageType": "SSD",
                             "deploymentType": "MULTI_AZ_1",
                             "zones": ["ap-southeast-1c", "ap-southeast-1b"],
-                            "nfsMountPoint": "/oracledata2"
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "/oraclearch2",
+                                    "protocol": "NFS",
+                                    "mountIp": "172.31.255.231"
+                                },
+                                {
+                                    "mountPoint": "/oracledata2",
+                                    "protocol": "NFS",
+                                    "mountIp": "172.31.255.231"
+                                }
+                            ]
                         }
                     ],
-                    "modulesAvailability": {
-                        "isAwsCliInstalled": true,
-                        "isJqInstalled": true
+                    "manageReadiness": {
+                        "missingModules": []
+                    }
+                },
+                {
+                    "instanceName": "oraclesan2",
+                    "instanceId": "oraclesan2",
+                    "instanceState": "OPEN",
+                    "version": "undefined",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "error": "failed to retrieve database details for instance oraclesan2"
+                    },
+                    "oracleServerAuthentication": true,
+                    "isDefaultAuthentication": false,
+                    "isInstanceStorageAsmManaged": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-0a333def9bfd29537",
+                            "fileSystemStorageType": "SSD",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "lWB23]VAYAWk",
+                                    "protocol": "iSCSI",
+                                    "mountIp": "172.31.6.100"
+                                },
+                                {
+                                    "mountPoint": "lWB23]VAYAWj",
+                                    "protocol": "iSCSI",
+                                    "mountIp": "172.31.6.100"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "missingModules": []
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-098abb9499711c03c",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "qa-alpha-oracle19c-pdb-nfs-ASM-110825055113",
+            "ec2UsageOperation": "RunInstances:0010",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux",
+            "oracleServerDeploymentType": "standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "asm28n",
+                    "instanceId": "asm28n",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "MULTI_TENANT",
+                    "databaseCount": 4,
+                    "databaseDetails": {
+                        "databaseId": "2744080388",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "pluggableDatabases": [
+                        {
+                            "pdbName": "PDB1",
+                            "pdbId": "3",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB$SEED",
+                            "pdbId": "2",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB2",
+                            "pdbId": "4",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB3",
+                            "pdbId": "5",
+                            "pdbStatus": "NORMAL"
+                        }
+                    ],
+                    "isInstanceStorageAsmManaged": true,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-0a333def9bfd29537",
+                            "fileSystemStorageType": "SSD",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "/data_110825055536",
+                                    "protocol": "NFS",
+                                    "mountIp": "172.31.255.252"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "missingModules": []
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-00c9fe571812f0e90",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "qa-alpha-oracleasm-pdb-iscsi-ASM-120825073323",
+            "ec2UsageOperation": "RunInstances:0010",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux",
+            "oracleServerDeploymentType": "standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "asm28n",
+                    "instanceId": "asm28n",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "MULTI_TENANT",
+                    "databaseCount": 4,
+                    "databaseDetails": {
+                        "databaseId": "2744172843",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "pluggableDatabases": [
+                        {
+                            "pdbName": "PDB1",
+                            "pdbId": "3",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB$SEED",
+                            "pdbId": "2",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB2",
+                            "pdbId": "4",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB3",
+                            "pdbId": "5",
+                            "pdbStatus": "NORMAL"
+                        }
+                    ],
+                    "isInstanceStorageAsmManaged": true,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-0a333def9bfd29537",
+                            "fileSystemStorageType": "SSD",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "lWB23]VAYA/4",
+                                    "protocol": "iSCSI",
+                                    "mountIp": "172.31.48.72"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "missingModules": []
                     }
                 }
             ]
@@ -56,47 +351,41 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "oracleServerDeploymentType": "Standalone",
+            "platform": "Red Hat Enterprise Linux with SQL Server Standard",
+            "oracleServerDeploymentType": "standalone",
             "databaseInstanceDetails": [
                 {
                     "instanceName": "oradb1san",
-                    "instanceId": "1",
+                    "instanceId": "oradb1san",
                     "instanceState": "OPEN",
-                    "version": "19.0.0.0.0",
-                    "instanceType": "MULTI_TENANT",
-                    "databaseCount": 2,
+                    "version": "undefined",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
                     "databaseDetails": {
-                        "databaseName": "ORADB1SA",
-                        "databaseId": "28096904",
-                        "openMode": "READ WRITE"
+                        "error": "failed to retrieve database details for instance oradb1san"
                     },
-                    "pluggableDatabases": [
-                        {
-                            "pdbName": "ORCLPDB",
-                            "pdbId": "3",
-                            "pdbStatus": "NORMAL"
-                        },
-                        {
-                            "pdbName": "PDB$SEED",
-                            "pdbId": "2",
-                            "pdbStatus": "NORMAL"
-                        }
-                    ],
+                    "oracleServerAuthentication": true,
+                    "isDefaultAuthentication": false,
+                    "isInstanceStorageAsmManaged": false,
                     "storage": [
                         {
                             "type": "FSXN",
                             "id": "fs-0d5efc3057c4f12cb",
                             "svmId": "svm-024086825a37d1c5b",
-                            "protocol": "NFS",
                             "fileSystemStorageType": "SSD",
                             "deploymentType": "MULTI_AZ_1",
                             "zones": ["ap-southeast-1c", "ap-southeast-1b"],
-                            "nfsMountPoint": "/ORADATA1"
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "/ORADATA1",
+                                    "protocol": "NFS",
+                                    "mountIp": "172.31.255.207"
+                                }
+                            ]
                         }
                     ],
-                    "modulesAvailability": {
-                        "isAwsCliInstalled": false,
-                        "isJqInstalled": true
+                    "manageReadiness": {
+                        "missingModules": []
                     }
                 }
             ]

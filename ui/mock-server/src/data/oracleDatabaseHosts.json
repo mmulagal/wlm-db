@@ -1,0 +1,121 @@
+{
+    "count": 2,
+    "items": [
+        {
+            "id": "c7e74bc0e78b1f9f",
+            "name": "asm28n",
+            "databaseHostStatus": "UNKNOWN",
+            "ssmStatus": "notconnected",
+            "databaseInstanceDetails": []
+        },
+        {
+            "id": "3aae8727849ea447",
+            "name": "ordbsdl",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "storageAllocation": {
+                "fsxn": 1099511627776,
+                "fsxw": 0,
+                "ebs": 0
+            },
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ordbsdl",
+                    "databaseInstanceId": "ordbsdl",
+                    "isManaged": true,
+                    "instanceState": "Up",
+                    "isDefault": false
+                },
+                {
+                    "instanceName": "oraclesan2",
+                    "isManaged": false,
+                    "instanceState": "Down",
+                    "isDefault": false
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-0d5efc3057c4f12cb",
+                    "capacityCost": 307.2,
+                    "operationalCost": 178.052,
+                    "size": 1099511627776
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 154.76,
+                "storage": {
+                    "fsxn": 485.25199999999995,
+                    "ebs": 9.6,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "capacityCost": 307.2,
+                            "operationalCost": 178.052,
+                            "size": 1099511627776
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "ordbsdl",
+                    "databaseInstanceName": "ordbsdl",
+                    "status": "Up",
+                    "databaseCount": 1,
+                    "databaseInstanceTopology": {
+                        "serverType": "ORACLE",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fs-0d5efc3057c4f12cb",
+                        "fileSystemName": "wlmdb-fsx-1",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "AVAILABLE",
+                        "fileSystemStorageCapacity": 1024,
+                        "fileSystemThroughputCapacity": 128,
+                        "fileSystemStorageType": "SSD"
+                    },
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Excellent ( <=1 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": 0,
+                                "write": 0,
+                                "serverIo": 0
+                            },
+                            "iops": {
+                                "read": 0.1,
+                                "write": 0.62
+                            },
+                            "throughput": {
+                                "read": 0.001,
+                                "write": 0.005
+                            }
+                        }
+                    },
+                    "sqlServerDeploymentType": "Standalone",
+                    "databases": [
+                        {
+                            "name": "ORDBSDL",
+                            "status": "ONLINE",
+                            "type": "Single tenant",
+                            "size": 2.53
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "nextToken": "876384a1-1c1b-407f-ae69-c7ff28935f40"
+}

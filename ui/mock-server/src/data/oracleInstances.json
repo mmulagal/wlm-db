@@ -1,30 +1,50 @@
 {
-    "count": 2,
+    "count": 5,
     "items": [
         {
             "id": "i-055ed011c2068033a",
             "name": "oracle19c_on_rhel81_fsxn",
             "databaseHostStatus": "ONLINE",
             "ssmStatus": "connected",
+            "storageAllocation": {
+                "fsxn": 1099511627776,
+                "fsxw": 0,
+                "ebs": 0
+            },
             "databaseInstanceDetails": [
                 {
-                    "databaseInstanceId": "1",
                     "instanceName": "ordbsdl",
-                    "isManaged": false,
-                    "instanceState": "OPEN",
+                    "databaseInstanceId": "ordbsdl",
+                    "isManaged": true,
+                    "instanceState": "Up",
                     "isDefault": false
+                },
+                {
+                    "instanceName": "oraclesan2",
+                    "databaseInstanceId": "oraclesan2",
+                    "isManaged": true,
+                    "instanceState": "Down",
+                    "isDefault": false
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-0d5efc3057c4f12cb",
+                    "capacityCost": 307.2,
+                    "operationalCost": 178.052,
+                    "size": 1099511627776
                 }
             ],
             "estimatedUsageCost": {
                 "compute": 154.76,
                 "storage": {
-                    "fsxn": 260.74,
+                    "fsxn": 485.25199999999995,
                     "ebs": 9.6,
                     "fsxnBreakDownById": [
                         {
-                            "id": "fs-09a78da5fd349eed5",
-                            "capacityCost": 153.6,
-                            "operationalCost": 107.14,
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "capacityCost": 307.2,
+                            "operationalCost": 178.052,
                             "size": 1099511627776
                         }
                     ]
@@ -35,7 +55,7 @@
             },
             "databaseInstancesSummary": [
                 {
-                    "databaseInstanceId": "1",
+                    "databaseInstanceId": "ordbsdl",
                     "databaseInstanceName": "ordbsdl",
                     "status": "Up",
                     "protection": {
@@ -56,44 +76,75 @@
                                 "serverIo": 0
                             },
                             "iops": {
-                                "read": 0.11,
-                                "write": 0.6
+                                "read": 0.1,
+                                "write": 0.62
                             },
                             "throughput": {
                                 "read": 0.001,
                                 "write": 0.005
                             }
+                        }
+                    },
+                    "sqlServerDeploymentType": "Standalone"
+                },
+                {
+                    "databaseInstanceId": "oraclesan2",
+                    "databaseInstanceName": "oraclesan2",
+                    "status": "Up",
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
                         },
-                        "sqlServerDeploymentType": "standalone"
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "sqlServerDeploymentType": "Standalone",
+                    "errors": {
+                        "performance": "{\"message\":\"Error fetching oracle performance metrics: InternalServerError: Error parsing query response: Error: Failed to get Oracle performance metrics\\n, 58313490-70fd-4b1b-b013-e13f6044537e, ap-southeast-1\"}"
                     }
                 }
             ]
         },
         {
-            "id": "i-08d0bd2b32ead74e1",
-            "name": "oracle19c_on_rhel91_fsxn",
+            "id": "i-098abb9499711c03c",
+            "name": "qa-alpha-oracle19c-pdb-nfs-asm-110825055113",
             "databaseHostStatus": "ONLINE",
             "ssmStatus": "connected",
+            "storageAllocation": {
+                "fsxn": 1099511627776,
+                "fsxw": 0,
+                "ebs": 0
+            },
             "databaseInstanceDetails": [
                 {
-                    "instanceName": "oraclesan1",
-                    "databaseInstanceId": "1",
-                    "isManaged": false,
-                    "instanceState": "STARTED",
+                    "instanceName": "asm28n",
+                    "databaseInstanceId": "asm28n",
+                    "isManaged": true,
+                    "instanceState": "Up",
                     "isDefault": false
                 }
             ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-0d5efc3057c4f12cb",
+                    "capacityCost": 307.2,
+                    "operationalCost": 178.052,
+                    "size": 1099511627776
+                }
+            ],
             "estimatedUsageCost": {
-                "compute": 132.76,
+                "compute": 154.76,
                 "storage": {
-                    "fsxn": 240.74,
-                    "ebs": 7.6,
+                    "fsxn": 485.25199999999995,
+                    "ebs": 9.6,
                     "fsxnBreakDownById": [
                         {
-                            "id": "fs-09a78da5fd349eed5",
-                            "capacityCost": 135.6,
-                            "operationalCost": 170.14,
-                            "size": 1022519027776
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "capacityCost": 307.2,
+                            "operationalCost": 178.052,
+                            "size": 1099511627776
                         }
                     ]
                 },
@@ -103,14 +154,280 @@
             },
             "databaseInstancesSummary": [
                 {
-                    "databaseInstanceId": "1",
-                    "databaseInstanceName": "oraclesan1",
+                    "databaseInstanceId": "asm28n",
+                    "databaseInstanceName": "asm28n",
                     "status": "Up",
-                    "sqlServerDeploymentType": "standalone",
-                    "errors": {
-                        "protection": "{\"message\":\"Error fetching oracle protection status: BadRequestError: Missing mountIp, junctionPath or protocol for fsxnId: , 0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8, ap-southeast-1, 0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8, ap-southeast-1\"}",
-                        "performance": "{\"message\":\"Error fetching oracle performance metrics: InternalServerError: Error parsing query response: Error: Failed to get Oracle performance metrics\\n, 0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8, ap-southeast-1\"}"
-                    }
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Excellent ( <=1 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": 0,
+                                "write": 0,
+                                "serverIo": 0.68
+                            },
+                            "iops": {
+                                "read": 2.58,
+                                "write": 1.55
+                            },
+                            "throughput": {
+                                "read": 0.021,
+                                "write": 0.013
+                            }
+                        }
+                    },
+                    "sqlServerDeploymentType": "Standalone"
+                }
+            ]
+        },
+        {
+            "id": "i-0ed647af697051ee3",
+            "name": "qa-alpha-oracle19c-pdb-nfs-asm-120825035309",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "storageAllocation": {
+                "fsxn": 1099511627776,
+                "fsxw": 0,
+                "ebs": 0
+            },
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "asm28n",
+                    "databaseInstanceId": "asm28n",
+                    "isManaged": true,
+                    "instanceState": "Up",
+                    "isDefault": false
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-0d5efc3057c4f12cb",
+                    "capacityCost": 307.2,
+                    "operationalCost": 178.052,
+                    "size": 1099511627776
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 154.76,
+                "storage": {
+                    "fsxn": 485.25199999999995,
+                    "ebs": 9.6,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "capacityCost": 307.2,
+                            "operationalCost": 178.052,
+                            "size": 1099511627776
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "asm28n",
+                    "databaseInstanceName": "asm28n",
+                    "status": "Up",
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": false,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Very Good ( <5 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": 0,
+                                "write": 0,
+                                "serverIo": 1.24
+                            },
+                            "iops": {
+                                "read": 6.37,
+                                "write": 3.24
+                            },
+                            "throughput": {
+                                "read": 0.052,
+                                "write": 0.027
+                            }
+                        }
+                    },
+                    "sqlServerDeploymentType": "Standalone"
+                }
+            ]
+        },
+        {
+            "id": "i-00c9fe571812f0e90",
+            "name": "qa-alpha-oracleasm-pdb-iscsi-asm-120825073323",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "storageAllocation": {
+                "fsxn": 1099511627776,
+                "fsxw": 0,
+                "ebs": 0
+            },
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "asm28n",
+                    "databaseInstanceId": "asm28n",
+                    "isManaged": true,
+                    "instanceState": "Up",
+                    "isDefault": false
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-0d5efc3057c4f12cb",
+                    "capacityCost": 307.2,
+                    "operationalCost": 178.052,
+                    "size": 1099511627776
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 154.76,
+                "storage": {
+                    "fsxn": 485.25199999999995,
+                    "ebs": 9.6,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "capacityCost": 307.2,
+                            "operationalCost": 178.052,
+                            "size": 1099511627776
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "asm28n",
+                    "databaseInstanceName": "asm28n",
+                    "status": "Up",
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": false,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Excellent ( <=1 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": 0,
+                                "write": 0,
+                                "serverIo": 0.77
+                            },
+                            "iops": {
+                                "read": 13.56,
+                                "write": 1.93
+                            },
+                            "throughput": {
+                                "read": 0.111,
+                                "write": 0.016
+                            }
+                        }
+                    },
+                    "sqlServerDeploymentType": "Standalone"
+                }
+            ]
+        },
+        {
+            "id": "i-08d0bd2b32ead74e1",
+            "name": "oraclerac1",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "storageAllocation": {
+                "fsxn": 1099511627776,
+                "fsxw": 0,
+                "ebs": 0
+            },
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "oradb1san",
+                    "databaseInstanceId": "oradb1san",
+                    "isManaged": true,
+                    "instanceState": "Up",
+                    "isDefault": false
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-0d5efc3057c4f12cb",
+                    "capacityCost": 307.2,
+                    "operationalCost": 178.052,
+                    "size": 1099511627776
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 154.76,
+                "storage": {
+                    "fsxn": 485.25199999999995,
+                    "ebs": 9.6,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "capacityCost": 307.2,
+                            "operationalCost": 178.052,
+                            "size": 1099511627776
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "oradb1san",
+                    "databaseInstanceName": "oradb1san",
+                    "status": "Up",
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Excellent ( <=1 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": 0,
+                                "write": 0,
+                                "serverIo": 0
+                            },
+                            "iops": {
+                                "read": 0.04,
+                                "write": 0.74
+                            },
+                            "throughput": {
+                                "read": 0,
+                                "write": 0.006
+                            }
+                        }
+                    },
+                    "sqlServerDeploymentType": "Standalone"
                 }
             ]
         }

@@ -136,7 +136,7 @@ const OracleServer = ({ handleToggle, openKey }: oracleServer) => {
     return (
         <div className={styles.sqlServer}>
             <DbAccordion
-                heading="Oracle server"
+                heading={t('databases.oracle-inner-page.oracle-server')}
                 toggle={handleToggle}
                 open={openKey === 'Oracle server'}
                 content={contentArea()}
