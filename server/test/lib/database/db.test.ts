@@ -294,7 +294,7 @@ describe('Tracked EC2 operations', () => {
             }
         ];
         await createTrackedEc2Records(trackedEc2Records);
-        const resp = await listTrackedEc2('TCO');
+        const resp = await listTrackedEc2({ filters: { feature: 'TCO' } });
         expect(resp.length).toEqual(1);
         await removeTrackedEc2Record(ACCOUNT_ID, 'us-east-1', DEFAULT_AWS_CREDENTIALS_ID, 'i-1234567890abcdef0', 'TCO');
     });
@@ -321,7 +321,9 @@ describe('Tracked EC2 operations', () => {
             { last_updated: newTime }
         );
         expect(resp.count).toEqual(1);
-        const [instanceRecord] = await listTrackedEc2('TCO', undefined, undefined, undefined, 'i-1234567890abcdef0');
+        const [instanceRecord] = await listTrackedEc2({
+            filters: { feature: 'TCO', instance_id: 'i-1234567890abcdef0' }
+        });
         expect(instanceRecord.last_updated).toEqual(newTime);
         await removeTrackedEc2Record(ACCOUNT_ID, 'us-east-1', DEFAULT_AWS_CREDENTIALS_ID, 'i-1234567890abcdef0', 'TCO');
     });

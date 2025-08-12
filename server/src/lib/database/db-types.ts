@@ -181,6 +181,29 @@ interface PaginatedDatabaseInstancesResponse {
     totalCount: number;
 }
 
+interface ListTrackedEc2Params {
+    feature: string;
+    accountId?: string;
+    region?: string;
+    credentialsId?: string;
+    instanceId?: string;
+    awsAccountId?: string;
+    pageSize?: number;
+    nextToken?: string;
+}
+
+interface TrackedEc2Record {
+    account_id: string;
+    region: string;
+    credentials_id: string;
+    instance_id: string;
+    feature: string;
+    cloud_provider_account_id: string;
+    last_updated?: Date;
+}
+
+type TrackedEc2RecordFilters = Partial<TrackedEc2Record>;
+
 export {
     Deployment,
     Event,
@@ -193,5 +216,8 @@ export {
     CountDatabaseInstanceConfigRecordsParams,
     ListResourcesParams,
     GetResourcesParams,
-    PaginatedDatabaseInstancesResponse
+    PaginatedDatabaseInstancesResponse,
+    ListTrackedEc2Params,
+    TrackedEc2Record,
+    TrackedEc2RecordFilters
 };

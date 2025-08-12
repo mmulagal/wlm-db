@@ -10,10 +10,11 @@ import {
     Config,
     DatabaseInstanceRecord,
     ListDatabaseInstancesRecord,
-    ListResourcesParams
+    ListResourcesParams,
+    TrackedEc2Record,
+    TrackedEc2RecordFilters
 } from './db-types';
 import { ResourceDetails } from '../../utils/common-types';
-import { TCO_FEATURE } from '../../utils/consts';
 import { RESOURCE_DEFAULT_SELECT_FIELDS, INSTANCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
@@ -772,15 +773,6 @@ async function deleteDatabaseInstance(
     });
 }
 
-interface TrackedEc2Record {
-    account_id: string;
-    region: string;
-    credentials_id: string;
-    instance_id: string;
-    feature: string;
-    cloud_provider_account_id: string;
-    last_updated?: Date;
-}
 async function createTrackedEc2Records(records: TrackedEc2Record[]) {
     logger.info('Creating tracked EC2 instances', { records });
 
@@ -789,24 +781,35 @@ async function createTrackedEc2Records(records: TrackedEc2Record[]) {
     });
 }
 
-async function listTrackedEc2(
-    feature: string = TCO_FEATURE,
-    accountId?: string,
-    region?: string,
-    credentialsId?: string,
-    instanceId?: string
-) {
-    logger.info('Listing tracked EC2 instances', { feature, accountId, region, credentialsId, instanceId });
+async function listTrackedEc2({ filters, ...params }: { filters: TrackedEc2RecordFilters; [key: string]: any }) {
+    const { pageSize, nextToken } = params;
+    logger.info('Listing tracked EC2 instances', { ...filters });
 
     return prisma.client.tracked_ec2.findMany({
         where: {
-            feature,
-            ...(accountId && { account_id: accountId }),
-            ...(region && { region }),
-            ...(credentialsId && { credentials_id: credentialsId }),
-            ...(instanceId && { instance_id: instanceId })
+            ...filters
+        },
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
+    });
+}
+
+async function countTrackedEc2(filters: TrackedEc2RecordFilters) {
+    logger.info('Counting tracked EC2 instances', { filters });
+
+    const result = await prisma.client.tracked_ec2.aggregate({
+        _count: {
+            id: true
+        },
+        where: {
+            ...filters
         }
     });
+
+    return result?._count?.id || 0;
 }
 
 async function removeTrackedEc2Record(
@@ -925,5 +928,6 @@ export {
     removeTrackedEc2Record,
     updateTrackedEc2Record,
     deleteOlderDeployments,
-    countDatabaseInstances
+    countDatabaseInstances,
+    countTrackedEc2
 };

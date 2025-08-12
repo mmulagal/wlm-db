@@ -21,8 +21,9 @@ import {
 } from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
 import { CONTINUOUS_ASSESSMENT_FEATURE, FINDING, TCO_FEATURE } from '../../utils/consts';
-import { createTrackedEc2Records, listTrackedEc2, updateTrackedEc2Record } from '../../lib/database/db';
+import { createTrackedEc2Records, updateTrackedEc2Record } from '../../lib/database/db';
 import { NodeDetails } from '../../utils/common-types';
+import { listTrackedEc2Operation } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -260,7 +261,7 @@ async function addEc2InstancesToTrackedList(
         instanceIds,
         feature
     });
-    const trackedEc2Instances = await listTrackedEc2(feature, accountId, region, credentialsId);
+    const { items: trackedEc2Instances } = await listTrackedEc2Operation({ feature, accountId, region, credentialsId });
     const records = instanceIds
         .map(instanceId => ({
             account_id: accountId,

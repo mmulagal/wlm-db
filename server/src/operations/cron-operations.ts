@@ -1,8 +1,9 @@
+/* eslint-disable no-await-in-loop */
 import config from 'config';
 import throat from 'throat';
 import ms from 'ms';
 import { STORAGE_TYPE, database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
-import { compact, isEmpty } from 'lodash-es';
+import { compact } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
@@ -23,7 +24,6 @@ import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './d
 import {
     deleteOlderDeployments,
     deleteResource,
-    listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record
 } from '../lib/database/db';
@@ -45,7 +45,7 @@ import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continou
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
 import processWellArchitectedAssessmentNotifications from './continuous-optimization/notification';
 import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/database-instance-config';
-import { listAllManagedInstances } from './database/database-operations';
+import { listAllManagedInstances, listTrackedEc2Operation } from './database/database-operations';
 
 const logger = getLogger();
 
@@ -92,88 +92,104 @@ function updateTcoInstanceRecommendationPreferences() {
 async function updateTcoInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
         logger.info('Updating instance recommendation preferences for TCO feature');
-        const trackedEc2Instances = await listTrackedEc2(TCO_FEATURE);
-        await Promise.all(
-            trackedEc2Instances.map(
-                throat(5, async instance => {
-                    const {
-                        cloud_provider_account_id: awsAccountId,
-                        instance_id: instanceId,
-                        account_id: accountId,
-                        credentials_id: credentialsId,
-                        region
-                    } = instance;
-                    setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
-                    try {
+        const pageSize = 50;
+        let nextToken;
+        do {
+            const { items: trackedEc2Instances, nextToken: newNextToken } = await listTrackedEc2Operation({
+                feature: TCO_FEATURE,
+                pageSize,
+                ...(nextToken && { nextToken })
+            });
+            nextToken = newNextToken;
+            await Promise.all(
+                trackedEc2Instances.map(
+                    throat(5, async instance => {
                         const {
-                            items: [ec2HostDetails]
-                        } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
-                            instanceId
-                        ]);
-                        const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
+                            cloud_provider_account_id: awsAccountId,
+                            instance_id: instanceId,
+                            account_id: accountId,
+                            credentials_id: credentialsId,
+                            region
+                        } = instance;
+                        setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                        try {
+                            const {
+                                items: [ec2HostDetails]
+                            } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
+                                instanceId
+                            ]);
+                            const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
 
-                        let { sqlServerInstances } = ec2HostDetails;
-                        if (sqlServerInstances !== undefined) {
-                            const { sqlServerDeploymentType, nodeIps } =
-                                fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
-                            const instanceIds = [instanceId];
-                            if (nodeIps && nodeIps.length > 0) {
-                                const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    instanceId,
-                                    nodeIps
+                            let { sqlServerInstances } = ec2HostDetails;
+                            if (sqlServerInstances !== undefined) {
+                                const { sqlServerDeploymentType, nodeIps } =
+                                    fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
+                                const instanceIds = [instanceId];
+                                if (nodeIps && nodeIps.length > 0) {
+                                    const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        instanceId,
+                                        nodeIps
+                                    );
+
+                                    partnerNodeDetails?.forEach(partnerNode => {
+                                        const { sqlServerInstances: partnerSqlServerInstances, ec2InstanceId } =
+                                            partnerNode;
+                                        if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
+                                            sqlServerInstances = sqlServerInstances?.concat(partnerSqlServerInstances);
+                                        }
+                                        instanceIds.push(ec2InstanceId);
+                                    });
+                                }
+                                const ebsVolumeIds = compact(
+                                    sqlServerInstances?.flatMap(server =>
+                                        server?.storage
+                                            ?.filter(storage => storage.type === STORAGE_TYPE.EBS)
+                                            .map(storage => storage.id)
+                                    )
                                 );
 
-                                partnerNodeDetails?.forEach(partnerNode => {
-                                    const { sqlServerInstances: partnerSqlServerInstances, ec2InstanceId } =
-                                        partnerNode;
-                                    if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
-                                        sqlServerInstances = sqlServerInstances?.concat(partnerSqlServerInstances);
+                                await manageInstanceRecommendationPreReqs(
+                                    awsAccountId,
+                                    region,
+                                    credentialsId,
+                                    resourceArn,
+                                    accountId,
+                                    instanceIds,
+                                    ebsVolumeIds,
+                                    sqlServerDeploymentType!
+                                );
+                                await updateTrackedEc2Record(
+                                    accountId,
+                                    region,
+                                    credentialsId,
+                                    instanceId,
+                                    TCO_FEATURE,
+                                    {
+                                        last_updated: new Date()
                                     }
-                                    instanceIds.push(ec2InstanceId);
-                                });
+                                );
                             }
-                            const ebsVolumeIds = compact(
-                                sqlServerInstances?.flatMap(server =>
-                                    server?.storage
-                                        ?.filter(storage => storage.type === STORAGE_TYPE.EBS)
-                                        .map(storage => storage.id)
-                                )
-                            );
-
-                            await manageInstanceRecommendationPreReqs(
-                                awsAccountId,
-                                region,
-                                credentialsId,
-                                resourceArn,
-                                accountId,
-                                instanceIds,
-                                ebsVolumeIds,
-                                sqlServerDeploymentType!
-                            );
-                            await updateTrackedEc2Record(accountId, region, credentialsId, instanceId, TCO_FEATURE, {
-                                last_updated: new Date()
-                            });
-                        }
-                    } catch (error: any) {
-                        if (error?.Code && error.Code === 'InvalidInstanceID.NotFound') {
-                            await removeTrackedEc2Record(
-                                accountId,
-                                region,
-                                credentialsId,
-                                instance.instance_id,
-                                TCO_FEATURE
+                        } catch (error: any) {
+                            if (error?.Code && error.Code === 'InvalidInstanceID.NotFound') {
+                                await removeTrackedEc2Record(
+                                    accountId,
+                                    region,
+                                    credentialsId,
+                                    instance.instance_id,
+                                    TCO_FEATURE
+                                );
+                            }
+                            logger.error(
+                                `Error while updating instance recommendation preferences for instance ${instanceId}: ${error}`
                             );
                         }
-                        logger.error(
-                            `Error while updating instance recommendation preferences for instance ${instanceId}: ${error}`
-                        );
-                    }
-                })
-            )
-        );
+                    })
+                )
+            );
+        } while (nextToken);
         logger.info('Updating instance recommendation preferences completed');
     });
 }
@@ -192,86 +208,92 @@ async function updateManagedInstRecPrefs() {
     getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
         logger.info('Updating instance recommendation preferences for Continuous optimization feature');
 
-        const { items: managedInstances } = await listAllManagedInstances();
-        if (isEmpty(managedInstances)) {
-            logger.error(
-                'No successfully managed database instances found during instance recommendation preference update.'
-            );
-            return;
-        }
-        const trackedEc2Instances = await listTrackedEc2(CONTINUOUS_ASSESSMENT_FEATURE);
+        const { items: trackedEc2Instances } = await listTrackedEc2Operation({
+            feature: CONTINUOUS_ASSESSMENT_FEATURE
+        });
         const trackedEc2InstanceIds = trackedEc2Instances.map(instance => instance.instance_id);
 
-        // group managed instances by account_id, region, credentials_id, cloud_provider_account_id, and database_deployment_type so that we can manage a set of instances in bulk
-        const grouped: { [key: string]: DatabaseInstancesIncludingResource[] } = managedInstances.reduce(
-            (acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
-                const instance = managedInstance as DatabaseInstancesIncludingResource;
-                const key = `${instance.account_id}||${instance.region}||${instance.credentials_id}||${instance.resource.cloud_provider_account_id}||${instance.database_deployment_type}`;
-                if (!acc[key]) {
-                    acc[key] = [];
-                }
-                acc[key].push(instance);
-                return acc;
-            },
-            {} as { [key: string]: DatabaseInstancesIncludingResource[] }
-        );
+        const pageSize = 50;
+        let nextToken;
+        do {
+            const { items: managedInstances, nextToken: newNextToken } = await listAllManagedInstances(undefined, {
+                selectKeys: ['account_id', 'region', 'credentials_id', 'database_deployment_type'],
+                shouldIncludeResource: true,
+                pageSize,
+                ...(nextToken && { nextToken })
+            });
+            // group managed instances by account_id, region, credentials_id, cloud_provider_account_id, and database_deployment_type so that we can manage a set of instances in bulk
+            const grouped: { [key: string]: DatabaseInstancesIncludingResource[] } = (managedInstances || []).reduce(
+                (acc: { [key: string]: DatabaseInstancesIncludingResource[] }, managedInstance) => {
+                    const instance = managedInstance as DatabaseInstancesIncludingResource;
+                    const key = `${instance.account_id}||${instance.region}||${instance.credentials_id}||${instance.resource.cloud_provider_account_id}||${instance.database_deployment_type}`;
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+                    acc[key].push(instance);
+                    return acc;
+                },
+                {} as { [key: string]: DatabaseInstancesIncludingResource[] }
+            );
 
-        await Promise.all(
-            Object.entries(grouped).map(async ([key, instances]) => {
-                const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('||');
-                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
-                const managedInstanceToBeUpdated = instances.filter((instance: { resource: Resource }) => {
-                    const resourceInfo = instance?.resource;
-                    const { node1InstanceId, node2InstanceId } = resourceInfo?.metadata as unknown as Metadata;
-                    return (
-                        !trackedEc2InstanceIds.includes(node1InstanceId) &&
-                        !trackedEc2InstanceIds.includes(node2InstanceId!)
-                    );
-                }); // update compute optimizer recommendation preferences only for managed instances that are not already being tracked, becuase the recommendation preference is static irrespsctive of the number of times it is updated
-                if (managedInstanceToBeUpdated.length === 0) {
-                    logger.info('No new managed instances found to update instance recommendation preferences.');
-                    return;
-                }
-
-                if (managedInstanceToBeUpdated.length > 0) {
-                    let coOptedIn = false;
-                    try {
-                        await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
-                        coOptedIn = true;
-                    } catch (error) {
-                        logger.info(
-                            `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
+            await Promise.all(
+                Object.entries(grouped).map(async ([key, instances]) => {
+                    const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('||');
+                    setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                    const managedInstanceToBeUpdated = instances.filter((instance: { resource: Resource }) => {
+                        const resourceInfo = instance?.resource;
+                        const { node1InstanceId, node2InstanceId } = resourceInfo?.metadata as unknown as Metadata;
+                        return (
+                            !trackedEc2InstanceIds.includes(node1InstanceId) &&
+                            !trackedEc2InstanceIds.includes(node2InstanceId!)
                         );
+                    }); // update compute optimizer recommendation preferences only for managed instances that are not already being tracked, becuase the recommendation preference is static irrespsctive of the number of times it is updated
+                    if (managedInstanceToBeUpdated.length === 0) {
+                        logger.info('No new managed instances found to update instance recommendation preferences.');
+                        return;
                     }
-                    if (coOptedIn) {
-                        managedInstanceToBeUpdated.forEach(async (instance: { resource: Resource }) => {
-                            const { node1InstanceId, node2InstanceId } = instance?.resource
-                                ?.metadata as unknown as Metadata;
 
-                            const instanceIds = [node1InstanceId];
-                            if (node2InstanceId) {
-                                instanceIds.push(node2InstanceId);
-                            }
-                            try {
-                                await manageInstanceRecommendationPreReqsForManagedInstances(
-                                    awsAccountId,
-                                    region,
-                                    credentialsId,
-                                    instanceIds,
-                                    accountId,
-                                    deploymentType as string
-                                );
-                            } catch (error: any) {
-                                if (error?.Code && error.Code === 'InvalidInstanceID.NotFound') {
-                                    // TODO: This covers most of the scenarios. Only for accounts where compute optimizer is not opted in, we may not be able to delete the resource record from our DB. See the pattern after Jan 2025 release and accordingly introduce a new cron operation to delete the managed instances if required
-                                    await deleteResource(accountId, instance?.resource?.resource_id, credentialsId);
+                    if (managedInstanceToBeUpdated.length > 0) {
+                        let coOptedIn = false;
+                        try {
+                            await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
+                            coOptedIn = true;
+                        } catch (error) {
+                            logger.info(
+                                `Failed fetching compute otimizer opt in status or Compute optimizer is not enabled for account ${awsAccountId} in region ${region}. Skipping updating instance recommendation preferences for managed instances.`
+                            );
+                        }
+                        if (coOptedIn) {
+                            managedInstanceToBeUpdated.forEach(async (instance: { resource: Resource }) => {
+                                const { node1InstanceId, node2InstanceId } = instance?.resource
+                                    ?.metadata as unknown as Metadata;
+
+                                const instanceIds = [node1InstanceId];
+                                if (node2InstanceId) {
+                                    instanceIds.push(node2InstanceId);
                                 }
-                            }
-                        });
+                                try {
+                                    await manageInstanceRecommendationPreReqsForManagedInstances(
+                                        awsAccountId,
+                                        region,
+                                        credentialsId,
+                                        instanceIds,
+                                        accountId,
+                                        deploymentType as string
+                                    );
+                                } catch (error: any) {
+                                    if (error?.Code && error.Code === 'InvalidInstanceID.NotFound') {
+                                        // TODO: This covers most of the scenarios. Only for accounts where compute optimizer is not opted in, we may not be able to delete the resource record from our DB. See the pattern after Jan 2025 release and accordingly introduce a new cron operation to delete the managed instances if required
+                                        await deleteResource(accountId, instance?.resource?.resource_id, credentialsId);
+                                    }
+                                }
+                            });
+                        }
                     }
-                }
-            })
-        );
+                })
+            );
+            nextToken = newNextToken;
+        } while (nextToken);
 
         logger.info('Updating instance recommendation preferences for managed instances completed');
     });

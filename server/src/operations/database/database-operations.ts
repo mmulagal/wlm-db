@@ -13,7 +13,9 @@ import {
     listDatabaseInstances,
     updateDatabaseInstance,
     updateResource,
-    countDatabaseInstances
+    countDatabaseInstances,
+    listTrackedEc2,
+    countTrackedEc2
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -23,13 +25,14 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
-import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND } from '../../utils/consts';
+import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND, TCO_FEATURE } from '../../utils/consts';
 import { ResourceDetails, DeploymentDetails, DatabaseInstance } from '../../utils/common-types';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
     ListDatabaseInstancesRecord,
     GetResourcesParams,
-    PaginatedDatabaseInstancesResponse
+    PaginatedDatabaseInstancesResponse,
+    ListTrackedEc2Params
 } from '../../lib/database/db-types';
 import { getInstancesWithResourceForDemo, getNextToken, isDemo } from '../../utils/utils';
 import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
@@ -523,6 +526,38 @@ async function populateDbInstances(resourceDetails: ResourceDetails) {
     }
 }
 
+async function listTrackedEc2Operation({
+    feature,
+    accountId,
+    region,
+    credentialsId,
+    instanceId,
+    pageSize,
+    nextToken
+}: ListTrackedEc2Params) {
+    logger.info('Listing tracked EC2 instances', { feature, accountId, region, credentialsId, instanceId });
+
+    feature = feature || TCO_FEATURE;
+    const filters = {
+        feature,
+        ...(accountId && { account_id: accountId }),
+        ...(region && { region }),
+        ...(credentialsId && { credentials_id: credentialsId }),
+        ...(instanceId && { instance_id: instanceId })
+    };
+
+    const [records, count] = await Promise.all([
+        listTrackedEc2({ filters, pageSize, nextToken }),
+        pageSize ? countTrackedEc2({ ...filters }) : Promise.resolve(0)
+    ]);
+
+    return {
+        totalCount: count ?? 0,
+        items: records ?? [],
+        ...(pageSize && { nextToken: getNextToken(records, count, pageSize) })
+    };
+}
+
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -544,5 +579,6 @@ export {
     updateDatabaseHostAssessmentData,
     updateDatabaseHostAssessmentResults,
     updateDatabaseInstanceAssessmentResults,
-    populateDbInstances
+    populateDbInstances,
+    listTrackedEc2Operation
 };
