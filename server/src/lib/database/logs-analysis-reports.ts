@@ -61,26 +61,33 @@ async function removeLogsAnalysisReports(
     });
 }
 
-async function listLogsAnalysisReports(
-    accountId: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    jobId?: string,
-    reportId?: string,
-    sort: string = 'creation_time',
-    sortOrder: string = 'desc',
-    pageSize?: number,
-    nextToken?: string,
-    select?: Record<string, boolean>
-) {
-    logger.info('Listing logs analysis reports', {
+async function listLogsAnalysisReports(params: {
+    accountId: string;
+    databaseHostId?: string;
+    databaseInstanceId?: string;
+    credentialsId?: string;
+    jobId?: string;
+    reportId?: string;
+    sort?: string;
+    sortOrder?: string;
+    pageSize?: number;
+    nextToken?: string;
+    select?: Record<string, boolean>;
+}) {
+    logger.info('Listing logs analysis reports', params);
+    let {
         accountId,
         databaseHostId,
         databaseInstanceId,
+        credentialsId,
         jobId,
+        reportId,
+        sort = 'creation_time',
+        sortOrder = 'desc',
         pageSize,
-        reportId
-    });
+        nextToken,
+        select
+    } = params;
 
     accountId = checkAccount(accountId);
 
@@ -91,8 +98,9 @@ async function listLogsAnalysisReports(
     const sortedIdQuery = await prisma.client.logs_analysis_reports.findMany({
         where: {
             account_id: accountId,
-            resource_id: databaseHostId,
-            database_instance_id: databaseInstanceId,
+            ...(databaseHostId && { resource_id: databaseHostId }),
+            ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
+            ...(credentialsId && { credentials_id: credentialsId }),
             ...(jobId && { job_id: jobId }),
             ...(reportId && { id: reportId })
         },
@@ -121,4 +129,25 @@ async function listLogsAnalysisReports(
     });
 }
 
-export { createLogsAnalysisReports, removeLogsAnalysisReports, listLogsAnalysisReports, LogsAnalysisReportObject };
+async function countLogsAnalysisReports(accountId: string, credentialsId?: string) {
+    logger.info('Counting logs analysis reports', { accountId, credentialsId });
+
+    if (accountId) {
+        accountId = checkAccount(accountId);
+    }
+
+    return prisma.client.resource.count({
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(credentialsId && { credentials_id: credentialsId })
+        }
+    });
+}
+
+export {
+    createLogsAnalysisReports,
+    removeLogsAnalysisReports,
+    listLogsAnalysisReports,
+    LogsAnalysisReportObject,
+    countLogsAnalysisReports
+};

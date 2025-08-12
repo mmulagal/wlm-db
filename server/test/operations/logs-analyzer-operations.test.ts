@@ -3,7 +3,8 @@ import {
     getLogsAnalysisReport,
     listLogsAnalysisReportsIdentifiers,
     triggerLogsAnalysis,
-    analyzePreRequisites
+    analyzePreRequisites,
+    getLatestLogsAnalysisReports
 } from '../../src/operations/logs-analyzer/logs-analyzer-operations';
 
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
@@ -155,5 +156,79 @@ describe('Logs Analyzer Operations', () => {
         await expect(
             analyzePreRequisites(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, 'invalid-resource-id', 'mssql')
         ).rejects.toThrow();
+    });
+
+    it('Should get latest logs analysis reports at account level', async () => {
+        await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
+
+        const response = await getLatestLogsAnalysisReports(ACCOUNT_ID, TEST_CREDENTIALS_ID, 'mssql');
+
+        expect(response).toBeDefined();
+        expect(response).toHaveProperty('items');
+        expect(Array.isArray(response.items)).toBe(true);
+
+        if (response.items.length > 0) {
+            const report = response.items[0];
+            expect(report).toHaveProperty('id');
+            expect(report).toHaveProperty('databaseHostId');
+            expect(report).toHaveProperty('databaseInstanceId');
+            expect(report.latestReport).toHaveProperty('creationTime');
+            expect(report.latestReport).toHaveProperty('errorCount');
+            expect(report.latestReport).toHaveProperty('jobId');
+            expect(typeof report.latestReport.creationTime).toBe('number');
+            expect(typeof report.latestReport.errorCount).toBe('number');
+        }
+    });
+
+    it('Should return empty items array when no reports exist for account', async () => {
+        const nonExistentAccountId = 'non-existent-account-123';
+
+        const response = await getLatestLogsAnalysisReports(nonExistentAccountId);
+
+        expect(response).toBeDefined();
+        expect(response).toHaveProperty('items');
+        expect(Array.isArray(response.items)).toBe(true);
+        expect(response.items).toHaveLength(0);
+    });
+
+    it('Should handle optional parameters for getLatestLogsAnalysisReports', async () => {
+        const response = await getLatestLogsAnalysisReports(ACCOUNT_ID);
+
+        expect(response).toBeDefined();
+        expect(response).toHaveProperty('items');
+        expect(Array.isArray(response.items)).toBe(true);
+    });
+
+    it('Should filter reports to only include latest per database instance', async () => {
+        await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
+
+        const { jobId: secondJobId } = await triggerLogsAnalysis(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            TEST_RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d'
+        );
+
+        await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, secondJobId);
+
+        const response = await getLatestLogsAnalysisReports(ACCOUNT_ID, TEST_CREDENTIALS_ID, 'mssql');
+
+        expect(response).toBeDefined();
+        expect(response.items).toBeDefined();
+
+        const instanceIds = response.items.map(item => item.databaseInstanceId);
+        const uniqueInstanceIds = [...new Set(instanceIds)];
+        expect(instanceIds).toHaveLength(uniqueInstanceIds.length);
+
+        response.items.forEach(item => {
+            expect(item).toHaveProperty('id');
+            expect(item).toHaveProperty('databaseInstanceId');
+            expect(item.databaseInstanceId).toBe('f4b7c5d3-e1f6-4g2a-9b5d');
+            expect(item).toHaveProperty('databaseHostId');
+            expect(item.databaseHostId).toBe(TEST_RESOURCE_ID);
+            expect(typeof item.latestReport.errorCount).toBe('number');
+            expect(item.latestReport.errorCount).toBeGreaterThanOrEqual(0);
+        });
     });
 });

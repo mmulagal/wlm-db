@@ -1,6 +1,7 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
 import {
+    LatestReports,
     LogsAnalysisPreRequisites,
     LogsAnalyzerBody,
     LogsAnalyzerParams,
@@ -8,6 +9,7 @@ import {
     ReportIdentifier
 } from '../types/logs-analyzer.types';
 import { DatabaseHostSummaryParams } from '../types/database-hosts.types';
+import { CredentialsIdParams } from '../types/generic.types';
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
@@ -74,4 +76,24 @@ const AnalyzePreRequisitesSchema = {
     }
 };
 
-export { LogsAnalyzerSchema, GetLogsAnalyzerSchema, AnalyzePreRequisitesSchema, ListLogsAnalyzerReportsSchema };
+const LatestReportsSchema = {
+    tags: [RouteTags.LOGS_ANALYSIS],
+    description: 'Logs analysis latest report at each database host level for an account, credentials and region',
+    summary:
+        'Logs analysis latest report at each database host level for an account, credentials and region, analyzes the logs analysis reports for all database instances for latest scan time and error count',
+    params: CredentialsIdParams,
+    queryString: Type.Object({
+        databaseType: Type.Optional(Type.String())
+    }),
+    response: {
+        200: LatestReports
+    }
+};
+
+export {
+    LogsAnalyzerSchema,
+    GetLogsAnalyzerSchema,
+    AnalyzePreRequisitesSchema,
+    ListLogsAnalyzerReportsSchema,
+    LatestReportsSchema
+};

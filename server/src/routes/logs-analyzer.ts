@@ -4,6 +4,7 @@ import { DATABASE_TYPE } from '@prisma/client';
 import {
     AnalyzePreRequisitesSchema,
     GetLogsAnalyzerSchema,
+    LatestReportsSchema,
     ListLogsAnalyzerReportsSchema,
     LogsAnalyzerSchema
 } from './schemas/logs-analyzer-schema';
@@ -12,7 +13,8 @@ import {
     getLogsAnalysisReport,
     listLogsAnalysisReportsIdentifiers,
     triggerLogsAnalysis,
-    analyzePreRequisites
+    analyzePreRequisites,
+    getLatestLogsAnalysisReports
 } from '../operations/logs-analyzer/logs-analyzer-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -21,7 +23,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server.get(
-        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/logs-analysis/pre-requisite`,
+        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/logs-analysis/pre-requisites`,
         { schema: AnalyzePreRequisitesSchema },
         async (request, reply) => {
             const {
@@ -41,6 +43,24 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
         }
     );
 
+    server.get(
+        `${MSSQL_API_PREFIX_PATH}/logs-analysis/summary`,
+        { schema: LatestReportsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId },
+                query: { databaseType }
+            } = castRequest(request);
+
+            const response = await getLatestLogsAnalysisReports(
+                accountId,
+                credentialsId,
+                databaseType || DATABASE_TYPE.mssql
+            );
+
+            return reply.send(response);
+        }
+    );
     server.post(
         `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`,
         { schema: LogsAnalyzerSchema },

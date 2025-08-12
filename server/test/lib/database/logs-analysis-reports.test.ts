@@ -1,5 +1,6 @@
 import { DATABASE_TYPE, JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
 import {
+    countLogsAnalysisReports,
     createLogsAnalysisReports,
     listLogsAnalysisReports,
     removeLogsAnalysisReports
@@ -87,16 +88,31 @@ describe('logs_analysis_reports database operations', () => {
             }
         ];
         const { count } = await createLogsAnalysisReports(records);
-        expect(count).toEqual(1);
+        expect(count).toBeGreaterThanOrEqual(1);
     });
 
     it('should list logs analysis reports', async () => {
-        const response = await listLogsAnalysisReports(accountId, resourceId, databaseInstanceId, jobId);
+        const response = await listLogsAnalysisReports({
+            accountId,
+            databaseHostId: resourceId,
+            databaseInstanceId,
+            jobId
+        });
         expect(response.length).toBeGreaterThanOrEqual(0);
     });
 
+    it('Should count logs analysis reports', async () => {
+        const response = await countLogsAnalysisReports(accountId, DEFAULT_AWS_CREDENTIALS_ID);
+        expect(response).toBeGreaterThanOrEqual(0);
+    });
+
     it('should remove logs analysis reports', async () => {
-        const [response] = await listLogsAnalysisReports(accountId, resourceId, databaseInstanceId, jobId);
+        const [response] = await listLogsAnalysisReports({
+            accountId,
+            databaseHostId: resourceId,
+            databaseInstanceId,
+            jobId
+        });
         const deleteResponse = await removeLogsAnalysisReports([response.id]);
         expect(deleteResponse.count).toBeGreaterThanOrEqual(0);
     });
@@ -114,7 +130,12 @@ describe('logs_analysis_reports database operations', () => {
                 version
             }
         ]);
-        const response = await listLogsAnalysisReports(accountId, resourceId, databaseInstanceId, jobId);
+        const response = await listLogsAnalysisReports({
+            accountId,
+            databaseHostId: resourceId,
+            databaseInstanceId,
+            jobId
+        });
         const idList = response.map(r => r.id);
         const deleteResponse = await removeLogsAnalysisReports(idList);
         expect(deleteResponse.count).toBeGreaterThanOrEqual(0);

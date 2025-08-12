@@ -606,7 +606,7 @@ export default async function optimizeCompute(
     });
     const [{ resource_name: resourceName, metadata, assessment_data: assessmentData }] = resourceDetails;
 
-    const { recommendationOptions } = await calculateComputeDrift(
+    const { recommendationOptions } = calculateComputeDrift(
         accountId,
         credentialsId,
         region,

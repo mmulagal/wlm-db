@@ -13,7 +13,13 @@ import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
 import { AuditStatus, DEFAULT_INSTANCE_NAME, HttpErrorCodes } from '../../utils/consts';
 
-import { generateHash, getArtifactsRegionBucketName, isDemo, sqlResponseParsing } from '../../utils/utils';
+import {
+    generateHash,
+    getArtifactsRegionBucketName,
+    getNextToken,
+    isDemo,
+    sqlResponseParsing
+} from '../../utils/utils';
 import {
     AVG_TOKEN_COUNT_PER_ERROR,
     BEDROCK_PRICE,
@@ -48,7 +54,11 @@ import {
     getWindowsPrepareScript
 } from './remote-script-functions';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../workloads/pgsql/const';
-import { createLogsAnalysisReports, listLogsAnalysisReports } from '../../lib/database/logs-analysis-reports';
+import {
+    countLogsAnalysisReports,
+    createLogsAnalysisReports,
+    listLogsAnalysisReports
+} from '../../lib/database/logs-analysis-reports';
 import { getPaginatedDatabaseInstances } from '../database/database-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
@@ -207,16 +217,14 @@ async function getLastAnalysisData(accountId: string, databaseHostId: string, da
         databaseInstanceId
     });
     try {
-        const [report] = await listLogsAnalysisReports(
+        const [report] = await listLogsAnalysisReports({
             accountId,
             databaseHostId,
             databaseInstanceId,
-            undefined,
-            undefined,
-            'creation_time',
-            'desc',
-            1
-        );
+            sort: 'creation_time',
+            sortOrder: 'desc',
+            pageSize: 1
+        });
         return report;
     } catch (error) {
         logger.error('Error fetching last logs analysis data:', error);
@@ -546,7 +554,7 @@ async function getLogsAnalysisReport(
         reportId
     });
 
-    const reports = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId, reportId);
+    const reports = await listLogsAnalysisReports({ accountId, databaseHostId, databaseInstanceId, jobId, reportId });
 
     if (reports.length === 0) {
         const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
@@ -579,21 +587,18 @@ async function listLogsAnalysisReportsIdentifiers(
         pageSize
     });
 
-    const response = await listLogsAnalysisReports(
+    const response = await listLogsAnalysisReports({
         accountId,
         databaseHostId,
         databaseInstanceId,
-        undefined,
-        undefined,
-        'creation_time',
-        'desc',
+        sort: 'creation_time',
+        sortOrder: 'desc',
         pageSize,
-        undefined,
-        {
+        select: {
             id: true,
             creation_time: true
         }
-    );
+    });
 
     if (response && response.length > 0) {
         const reports = response.map(({ id, creation_time: creationTime }) => ({
@@ -871,11 +876,92 @@ async function analyzePreRequisites(
     };
 }
 
+async function getLatestLogsAnalysisReports(accountId: string, credentialsId?: string, databaseType?: string) {
+    logger.info('Getting latest report data of database instances at account level', {
+        accountId,
+        credentialsId,
+        databaseType
+    });
+    // iterate through all pages of listLogsAnalysisReports
+    let processedCount = 0;
+    let nextToken: string | undefined;
+    const DEFAULT_PAGE_SIZE = 50;
+    const totalReportCount = await countLogsAnalysisReports(accountId, credentialsId);
+
+    const instanceReportsMap = new Map<string, any>();
+
+    do {
+        // eslint-disable-next-line no-await-in-loop
+        const reports = await listLogsAnalysisReports({
+            accountId,
+            credentialsId,
+            sort: 'creation_time',
+            sortOrder: 'desc',
+            pageSize: DEFAULT_PAGE_SIZE,
+            select: {
+                id: true,
+                creation_time: true,
+                database_instance_id: true,
+                logs_analysis_data: true,
+                resource_id: true,
+                job_id: true
+            }
+        });
+        processedCount += reports.length;
+
+        for (const report of reports) {
+            const instanceId = report.database_instance_id;
+
+            if (
+                !instanceReportsMap.has(instanceId) ||
+                report.creation_time > instanceReportsMap.get(instanceId).creation_time
+            ) {
+                instanceReportsMap.set(instanceId, report);
+            }
+        }
+        nextToken = getNextToken(reports, totalReportCount, DEFAULT_PAGE_SIZE);
+    } while (nextToken && processedCount < totalReportCount);
+
+    const latestReports: {
+        id: string;
+        databaseHostId: string;
+        databaseInstanceId: string;
+        latestReport: {
+            jobId: string;
+            creationTime: number;
+            errorCount: number;
+        };
+    }[] = [];
+    instanceReportsMap.forEach((report, instanceId) => {
+        const {
+            logs_analysis_data: [{ data: logsAnalysisData }],
+            id,
+            resource_id: databaseHostId,
+            job_id: jobId
+        } = report;
+        if (logsAnalysisData?.remediationRecommendation) {
+            latestReports.push({
+                id,
+                databaseHostId,
+                databaseInstanceId: instanceId,
+                latestReport: {
+                    jobId,
+                    creationTime: report.creation_time.getTime(),
+                    errorCount: logsAnalysisData?.remediationRecommendation?.length
+                } // TODO: can be extended to include host level report/ instance level report count if needed.
+            });
+        }
+    });
+
+    return { items: latestReports };
+}
+
 export {
     triggerLogsAnalysis,
     handleLogsAnalysis,
     getLogsAnalysisReport,
+    listLogsAnalysisReportsIdentifiers,
     calculateLogsAnalysisPrice,
     analyzePreRequisites,
-    listLogsAnalysisReportsIdentifiers
+    getLatestLogsAnalysisReports
 };

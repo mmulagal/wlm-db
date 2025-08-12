@@ -71,6 +71,21 @@ const LogsAnalysisPreRequisites = Type.Object({
     networkingPreRequisites: Type.Optional(LAPRReadiness)
 });
 
+const LatestReportObject = Type.Object({
+    id: Type.String(),
+    databaseHostId: Type.String(),
+    databaseInstanceId: Type.String(),
+    latestReport: Type.Object({
+        jobId: Type.String(),
+        creationTime: Type.Number(),
+        errorCount: Type.Number()
+    })
+});
+
+const LatestReports = Type.Object({
+    items: Type.Array(LatestReportObject)
+});
+
 export {
     LogsAnalyzerParams,
     LogsAnalyzerParamsType,
@@ -79,5 +94,6 @@ export {
     RemediationRecommendationObject,
     ReportIdentifier,
     RemediationRecommendationObjectType,
-    LogsAnalysisPreRequisites
+    LogsAnalysisPreRequisites,
+    LatestReports
 };
