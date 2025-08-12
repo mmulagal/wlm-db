@@ -8,7 +8,8 @@ const RESOURCE_DEFAULT_SELECT_FIELDS = [
     'resource_type',
     'cloud_provider_account_id',
     'region',
-    'metadata'
+    'metadata',
+    'co_relation_id'
 ];
 
 const INSTANCE_DEFAULT_SELECT_FIELDS = [

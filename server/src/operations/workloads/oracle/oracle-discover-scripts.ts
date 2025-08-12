@@ -864,8 +864,29 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
     echo $results
 `;
 
-const getOracleDbMountDetails = (ec2InstanceId: string) => `
+const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) => `
     oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
+    # Convert oracleSids to bash array and filter oratab_entries
+    oracleSidsString="${oracleSids.join(',')}"
+    IFS=',' read -ra oracleSidsArray <<< "$oracleSidsString"
+
+    # Create filtered oratab entries containing only the specified SIDs
+    filtered_oratab_entries=""
+    while IFS=: read -r sid oracle_home; do
+        for target_sid in "\${oracleSidsArray[@]}"; do
+            if [ "$sid" = "$target_sid" ]; then
+                if [ -z "$filtered_oratab_entries" ]; then
+                    filtered_oratab_entries="$sid:$oracle_home"
+                else
+                    filtered_oratab_entries="$filtered_oratab_entries"$'\n'"$sid:$oracle_home"
+                fi
+                break
+            fi
+        done
+    done <<< "$oratab_entries"
+
+    # Use filtered entries instead of all oratab_entries
+    oratab_entries="$filtered_oratab_entries"
     # Initialize final result JSON
     finalResult="{"
     firstSid=true
@@ -947,8 +968,13 @@ const getOracleDbMountDetails = (ec2InstanceId: string) => `
     mountPointData=$(echo "$finalResult" | tr -d '\n' | tr -d ' ')
 `;
 
-const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: string, region: string) => `
-    ${getOracleDbMountDetails(ec2InstanceId)}
+const getMappedOntapDataVolumeForInstance = (
+    ec2InstanceId: string,
+    oracleSids: string[],
+    fsxnId: string,
+    region: string
+) => `
+    ${getOracleDbMountDetails(ec2InstanceId, oracleSids)}
     processMountDetail() {
         local mountDetail="$1"
         local fileTypeVolumes="[]"
@@ -997,6 +1023,7 @@ const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: stri
     volumeMappings="[]"
     lunRecords="[]"
     protocol=""
+    echo "DEBUG: Mount point data: $mountPointData" >&2
     for sid in $(echo "$mountPointData" | jq -r 'keys[]'); do
         sidData=$(echo "$mountPointData" | jq -r --arg sid "$sid" '.[$sid]')
         isCDB=$(echo "$sidData" | jq -r '.isCDB')
@@ -1011,15 +1038,19 @@ const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: stri
             ontapVolumes='{}'
             for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
                 fileTypeVolumes="[]"
-
                 mountDetails=$(echo "$sidData" | jq -c --arg ft "$fileType" '.mountDetails[$ft] // []')
-                
-                for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
-                    volMappings=$(processMountDetail "$mountDetail")
-                    fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
-                done
-                
-                ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                # Check if mountDetails is empty
+                if [ "$(echo "$mountDetails" | jq 'length')" -eq 0 ]; then
+                    ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" '.[$ft] = []')
+                    continue
+                else
+                    for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
+                        volMappings=$(processMountDetail "$mountDetail")
+                        fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
+                    done
+                    
+                    ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                fi
             done
 
             sidMapping="{\\"$sid\\": {\\"isCDB\\": false, \\"ontapVolumes\\": $ontapVolumes}}"
@@ -1036,12 +1067,18 @@ const getMappedOntapDataVolumeForInstance = (ec2InstanceId: string, fsxnId: stri
                     fileTypeVolumes="[]"
                     mountDetails=$(echo "$sidData" | jq -c --arg pdb "$pdb" --arg ft "$fileType" '.pdbMountDetails[$pdb][$ft] // []')
                     
-                    for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
-                        volMappings=$(processMountDetail "$mountDetail")
-                        fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
-                    done
-                    
-                    pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                    # Check if mountDetails is empty
+                    if [ "$(echo "$mountDetails" | jq 'length')" -eq 0 ]; then
+                        pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" '.[$ft] = []')
+                        continue
+                    else
+                        for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
+                            volMappings=$(processMountDetail "$mountDetail")
+                            fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
+                        done
+                        
+                        pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                    fi
                 done
                 
                 pdbVolumes=$(echo "$pdbVolumes" | jq --arg pdb "$pdb" --argjson pov "$pdbOntapVolumes" '.[$pdb] = $pov')

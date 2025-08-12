@@ -8,7 +8,12 @@ import {
     getOracleProtectionStatus
 } from '../../../src/operations/workloads/oracle/oracle-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
-import { createResource, deleteResource } from '../../../src/lib/database/db';
+import {
+    createResource,
+    deleteDatabaseInstance,
+    deleteResource,
+    upsertDatabaseInstance
+} from '../../../src/lib/database/db';
 
 const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
 const region = DEFAULT_AWS_REGION;
@@ -32,9 +37,23 @@ beforeAll(async () => {
             node1InstanceId: 'i-07e76a4b916548dc0'
         }
     });
+    await upsertDatabaseInstance(ACCOUNT_ID, {
+        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+        region: DEFAULT_AWS_REGION,
+        resourceId: '6cbdabbfe3fb147e',
+        databaseInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+        databaseInstanceName: 'MSSQLSERVER',
+        isDefault: true,
+        source: 'deployment',
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
+        fsxnIds: 'fs-0f53fbecdd3d85fb2',
+        databaseType: '' // Add the missing property 'databaseType'
+    });
 });
 afterAll(async () => {
     await deleteResource(ACCOUNT_ID, '6cbdabbfe3fb147e');
+    await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, '6cbdabbfe3fb147e', [dbInstanceSid]);
 });
 describe('Oracle Database Operations', () => {
     it('should return oracle db performance metrics', async () => {
@@ -88,6 +107,6 @@ describe('Oracle Database Operations', () => {
 
     it('should return oracle volume-DB mappings', async () => {
         const result = await getOracleDatabaseMappedVolumes(accountId, credentialsId, region, '6cbdabbfe3fb147e');
-        expect(result?.VolumeMappings?.length).toBeGreaterThan(0);
+        expect(result?.size).toBeGreaterThan(0);
     });
 });

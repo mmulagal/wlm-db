@@ -28,6 +28,9 @@ import {
 } from './oracle-discover-scripts';
 import { getSqlInstanceUtilizationAndPerformance } from '../../aws/cloud-watch-operations';
 import { listResources } from '../../../lib/database/db';
+import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
+import { AssessmentCategories } from '../../../utils/continous-optimization-consts';
+import { OracleInstanceMountpointResponse } from './common-types';
 
 const logger = getLogger();
 
@@ -694,17 +697,19 @@ async function getOracleDatabaseMappedVolumes(
     credentialsId: string,
     region: string,
     resourceId: string,
+    databaseInstanceId?: string,
     resourceDetail?: ResourceDetails
 ) {
     logger.info('Fetch mapped volume data for oracle DBs', { accountId, credentialsId, region, resourceId });
     try {
-        if (!resourceDetail) {
+        if (!resourceDetail?.database_instances?.length) {
             [resourceDetail] = await listResources({
                 accountId,
                 resourceId,
                 credentialIds: credentialsId,
                 region,
-                resourceType: DatabaseTypes.ORACLE
+                resourceType: DatabaseTypes.ORACLE,
+                includeDatabaseInstances: true
             });
             if (!resourceDetail) {
                 const errorMessage = `No database host by id ${resourceId} for ${accountId} is found.`;
@@ -713,30 +718,100 @@ async function getOracleDatabaseMappedVolumes(
             }
         }
 
-        const { co_relation_id: fsxid = '' } = resourceDetail || {};
+        const databaseInstances = databaseInstanceId
+            ? resourceDetail.database_instances?.filter(di => di.database_instance_id === databaseInstanceId)
+            : resourceDetail.database_instances;
+        if (!databaseInstances || databaseInstances.length === 0) {
+            const errorMessage = `No database instances found for resource ${resourceId} in account ${accountId}.`;
+            logger.error(errorMessage);
+            throw Error(errorMessage);
+        }
+
+        const fsxnIds = resourceDetail.database_instances?.flatMap(di => (di.fsxn_ids ? di.fsxn_ids.split(',') : []));
+        const fsxnToDatabaseInstancesMap = new Map<string, DatabaseInstance[]>();
+        fsxnIds?.forEach(fsxnId => {
+            const matchingInstances = databaseInstances.filter(di =>
+                di.fsxn_ids?.replace(/\s+/g, '').split(',').includes(fsxnId)
+            );
+            if (matchingInstances.length > 0) {
+                fsxnToDatabaseInstancesMap.set(fsxnId, matchingInstances);
+            }
+        });
+
         const { node1InstanceId = '' } = (resourceDetail?.metadata as Metadata) || {};
+
         if (!node1InstanceId) {
             const errorMessage = `No EC2 instance id found for resource ${resourceId} in account ${accountId}.`;
             logger.error(errorMessage);
             throw Error(errorMessage);
         }
+        if (fsxnToDatabaseInstancesMap.size === 0) {
+            const errorMessage = `No FSxN found for resource ${resourceId} in account ${accountId}.`;
+            logger.error(errorMessage);
+            throw Error(errorMessage);
+        }
 
-        const mappedVolCommand = getMappedOntapDataVolumeForInstance(node1InstanceId, fsxid!, region);
-        const mappedVolRes = await callSsmExecution(
-            credentialsId,
-            region,
-            [mappedVolCommand],
-            node1InstanceId,
-            'Get mapped volume details for Oracle db',
-            accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        const [mappedVolRes] = await Promise.all(
+            Array.from(fsxnToDatabaseInstancesMap.entries()).map(async ([fsxId, mappedDatabaseInstances]) => {
+                try {
+                    const oracleSids = mappedDatabaseInstances.map(di => di.database_instance_id);
+                    const mappedVolCommand = getMappedOntapDataVolumeForInstance(
+                        node1InstanceId,
+                        oracleSids,
+                        fsxId,
+                        region
+                    );
+                    const ssmResponse = await callSsmExecution(
+                        credentialsId,
+                        region,
+                        [mappedVolCommand],
+                        node1InstanceId,
+                        'Get mapped volume details for Oracle db',
+                        accountId,
+                        undefined,
+                        undefined,
+                        undefined,
+                        SSM_RUN_SHELL_SCRIPT_DOC,
+                        SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+                    );
+                    const parsedMappedVolRes: OracleInstanceMountpointResponse = sqlResponseParsing(ssmResponse);
+                    const instanceToFsxnMap = new Map<string, Map<string, OracleInstanceMountpointResponse>>();
+                    mappedDatabaseInstances.forEach(instance => {
+                        const instanceId = instance.database_instance_id;
+                        if (!instanceToFsxnMap.has(instanceId)) {
+                            instanceToFsxnMap.set(instanceId, new Map<string, OracleInstanceMountpointResponse>());
+                        }
+                        instanceToFsxnMap.get(instanceId)!.set(fsxId, parsedMappedVolRes);
+                    });
+                    return instanceToFsxnMap;
+                } catch (error) {
+                    logger.error(`Error processing fsxnId ${fsxId}:`, error);
+                }
+            })
         );
-        const parsedMappedVolRes = sqlResponseParsing(mappedVolRes);
-        return parsedMappedVolRes;
+
+        if (!mappedVolRes || mappedVolRes.size === 0) {
+            const errorMessage = `No mapped volume data found for resource ${resourceId},  in account ${accountId}.`;
+            logger.error(errorMessage);
+            throw Error(errorMessage);
+        }
+        Array.from(mappedVolRes.keys()).forEach(async oracleSid => {
+            const res = Object.fromEntries(mappedVolRes.get(oracleSid)?.entries() ?? []);
+            createDatabaseInstanceConfigData([
+                {
+                    account_id: accountId,
+                    credentials_id: credentialsId,
+                    region,
+                    resource_id: resourceId,
+                    database_instance_id: oracleSid,
+                    creation_time: new Date(),
+                    last_updated: new Date(),
+                    config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
+                    config_data: res
+                }
+            ]);
+        });
+        return mappedVolRes;
     } catch (err) {
         const errorMessage = `Error fetching oracle instance mapped volume information ${credentialsId},${region}, ${err}`;
         logger.error(errorMessage);
