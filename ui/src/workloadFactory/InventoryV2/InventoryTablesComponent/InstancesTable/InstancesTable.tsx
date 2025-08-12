@@ -31,31 +31,14 @@ import {
     uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
-import {
-    bxpRedirect,
-    formatDateWithTime,
-    formatTime,
-    getFilterOptions,
-    isSmbProtocol
-} from '../../../../utils/utilityFunctions';
-import {
-    ACTION_CTA,
-    DBType,
-    DETECT_HOST_VAR,
-    FROM_DIALOG,
-    INVENTORY_STATUS,
-    WELL_ARCHITECTED_TABS,
-    WLF_TABS
-} from '../../../../utils/consts';
+import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import { ACTION_CTA, DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
-    setBreadCrumbSelectedFrom,
     setInProgressInstances,
     setInventoryTableData,
     setSelectedFilterValue,
-    setSelectedHeaderTab,
-    setSelectedInventoryTab,
     setSelectedMultiDetectInstances,
     setTableManageColumnState,
     setWizardOperationType
@@ -67,23 +50,10 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import {
-    setFSXId,
-    setGwPageLoadInstanceData,
-    setLandingFrom,
-    setSelectedWellArchitectTab
-} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { setGwPageLoadInstanceData, setLandingFrom } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
-import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
-import {
-    addInitialDBCreateData,
-    initialCreateNewUserState,
-    setCdbPageData
-} from '../../../../store/workloadFactory/createNewDBSlice';
-import { updateResourceId } from '../../../../store/authSlice';
 import styles from '../InventoryTable.module.scss';
-import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -91,8 +61,6 @@ import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import { cancelProtectionForRow } from '../../../../store/workloadFactory/snapcenterSlice';
-import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
-import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
 import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
@@ -101,6 +69,7 @@ import { mssqlInstanceColumnFilterMap } from './MssqlInstanceColumnList';
 import { oracleDatabaseColumnFilterMap } from './OracleDatabaseColumnsList';
 import { pgsqlInstanceColumnFilterMap } from './PgsqlInstanceColumnList';
 import { getInitialInstanceTableColState } from '../../../../utils/manageColumnUtils';
+import { getInstanceTableMenuOptions, handleInstanceMenuSelection } from './InstanceTableHelper';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -614,71 +583,16 @@ const InstancesTable = () => {
                 }
 
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
-                    if (rowData.hostType === DBType.ORACLE || rowData.hostType === DBType.POSTGRESQL) {
-                        menu.push({
-                            id: 'unManage',
-                            displayName: 'Deregister'
-                        });
-                    } else if (rowData.hostType === DBType.MSSQL) {
-                        menu.push(
-                            {
-                                id: 'optimize',
-                                displayName: t('databases.well-architect.well-architect-state'),
-                                disabled: disableOption,
-                                infoText: disableMessage
-                            },
-                            {
-                                id: 'investigateErrors',
-                                displayName: 'Investigate errors',
-                                disabled: disableOption,
-                                infoText: disableMessage
-                            },
-                            {
-                                id: 'viewInstance',
-                                displayName: 'Manage instance',
-                                disabled: disableOption,
-                                infoText: disableMessage,
-                                subMenu: [
-                                    {
-                                        id: 'viewInstance',
-                                        displayName: 'Instance dashboard',
-                                        disabled: disableOption,
-                                        infoText: disableMessage
-                                    },
-                                    {
-                                        id: 'viewDatabases',
-                                        displayName: 'View databases',
-                                        disabled: disableOption,
-                                        infoText: disableMessage
-                                    },
-
-                                    {
-                                        id: 'createUserDb',
-                                        displayName: 'Create database',
-                                        disabled: disableOption || disableCreateDb,
-                                        infoText: disableMessage || disableCreateDbMsg
-                                    },
-                                    {
-                                        id: 'createSandbox',
-                                        displayName: 'Create sandbox',
-                                        disabled: disableOption,
-                                        infoText: disableMessage
-                                    }
-                                ]
-                            },
-                            {
-                                id: 'protect',
-                                displayName: 'Protect',
-                                disabled: disableOption || !rowData?.fsxId || !rowData?.hostRow?.nodeIpAddress,
-                                infoText: disableMessage
-                            },
-
-                            {
-                                id: 'unManage',
-                                displayName: 'Deregister'
-                            }
-                        );
-                    }
+                    menu.push(
+                        ...getInstanceTableMenuOptions(
+                            rowData,
+                            t,
+                            disableOption,
+                            disableMessage,
+                            disableCreateDb,
+                            disableCreateDbMsg
+                        )
+                    );
                 }
 
                 let disableMsg = '';
@@ -779,108 +693,15 @@ const InstancesTable = () => {
                                     } else if (toggleType === 'selectedOption') {
                                         menuOpenedRowDetail.current = null;
                                         setOpenedRow(null);
-
-                                        // Protect POC code
-                                        if (menuId === 'protect') {
-                                            handleProtection(rowData);
-                                        }
-
-                                        if (menuId === 'optimize') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-                                            dispatch(
-                                                setFSXId({
-                                                    fsxId: rowData?.fsxId,
-                                                    ec2InstanceId: rowData?.ec2InstanceId
-                                                })
-                                            );
-
-                                            dispatch(
-                                                setSelectedWellArchitectTab(
-                                                    WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
-                                                )
-                                            );
-                                            optimizeAction(rowData);
-                                        }
-
-                                        if (menuId === 'investigateErrors') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-                                            dispatch(
-                                                setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION)
-                                            );
-                                            dispatch(
-                                                setFSXId({
-                                                    fsxId: rowData?.fsxId,
-                                                    ec2InstanceId: rowData?.ec2InstanceId
-                                                })
-                                            );
-                                            optimizeAction(rowData);
-                                        }
-
-                                        if (menuId === 'viewInstance') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-                                            dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
-                                            dispatch(
-                                                setFSXId({
-                                                    fsxId: rowData?.fsxId,
-                                                    ec2InstanceId: rowData?.ec2InstanceId
-                                                })
-                                            );
-                                            optimizeAction(rowData);
-                                        }
-                                        if (menuId === 'viewDatabases') {
-                                            dispatch(setSelectedInventoryTab('Databases'));
-                                            dispatch(
-                                                setSelectedFilterValue({
-                                                    flag: true,
-                                                    value: {
-                                                        hostName: rowData?.name,
-                                                        instanceName: rowData?.databaseInstanceName,
-                                                        credentialName: rowData?.credentialName,
-                                                        regionName: rowData?.regionName
-                                                    },
-                                                    filterType: 'multi'
-                                                })
-                                            );
-                                        }
-                                        if (menuId === 'createUserDb') {
-                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                            dispatch(updateResourceId(rowData?.resourceId));
-                                            dispatch(
-                                                setCdbPageData({
-                                                    dbHostName: rowData?.name,
-                                                    instanceId: rowData?.databaseInstanceId,
-                                                    instanceName: rowData?.databaseInstanceName,
-                                                    cdbCredId: rowData?.credentialId,
-                                                    cdbRegionId: rowData?.regionId
-                                                })
-                                            );
-                                            navigate('../create-new-user');
-                                        }
-                                        if (menuId === 'createSandbox') {
-                                            dispatch(
-                                                setSelectedSandboxHeaderValue({
-                                                    credId: rowData?.credentialId,
-                                                    regionId: rowData?.regionId
-                                                })
-                                            );
-                                            dispatch(
-                                                setSelectedCsData({
-                                                    host: rowData?.name,
-                                                    instance: rowData?.databaseInstanceName,
-                                                    database: null
-                                                })
-                                            );
-                                            navigate('../create-new-sandbox');
-                                        }
-                                        if (menuId === 'unManage') {
-                                            handleDialog(rowData);
-                                        }
+                                        handleInstanceMenuSelection({
+                                            menuId,
+                                            rowData,
+                                            dispatch,
+                                            navigate,
+                                            handleProtection,
+                                            handleDialog,
+                                            optimizeAction
+                                        });
                                     }
                                 }}
                                 CustomMenu={undefined}

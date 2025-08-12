@@ -1,11 +1,11 @@
 import { Typography } from '@netapp/design-system';
 import moment from 'moment';
+import { useTranslation } from 'react-i18next';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 import styles from './SQLServer.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useTranslation } from 'react-i18next';
 
 type oracleServer = {
     handleToggle: any;
@@ -136,7 +136,7 @@ const OracleServer = ({ handleToggle, openKey }: oracleServer) => {
     return (
         <div className={styles.sqlServer}>
             <DbAccordion
-                heading={'Oracle server'}
+                heading="Oracle server"
                 toggle={handleToggle}
                 open={openKey === 'Oracle server'}
                 content={contentArea()}

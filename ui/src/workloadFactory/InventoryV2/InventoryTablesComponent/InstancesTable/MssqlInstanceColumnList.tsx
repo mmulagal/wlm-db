@@ -144,17 +144,17 @@ export function getMssqlInstanceTableColumns({
                                             {t('databases.log-analyzer.detected-errors1')}:{' '}
                                             {rowData?.logAnalyzer?.errorCount !== 0
                                                 ? `${rowData?.logAnalyzer?.errorCount} ${t(
-                                                    'databases.log-analyzer.detected-errors2'
-                                                )}`
+                                                      'databases.log-analyzer.detected-errors2'
+                                                  )}`
                                                 : t('databases.log-analyzer.no-errors')}
                                         </DsTypography>
                                     </div>
                                 </TooltipInfo>
                             </div>
-                            
+
                             <DsTypography variant="Regular_14">{cellData}</DsTypography>
                         </div>
-                    )
+                    );
                 }
                 if (cellData === ERROR_ANALYZER_STATUS.NOT_ACTIVE) {
                     return (
@@ -179,10 +179,10 @@ export function getMssqlInstanceTableColumns({
                                     </div>
                                 </TooltipInfo>
                             </div>
-                            
+
                             <DsTypography variant="Regular_14">{ERROR_ANALYZER_STATUS.ACTIVE}</DsTypography>
                         </div>
-                    )
+                    );
                 }
                 if (!rowData?.logAnalyzer?.lastScan && rowData?.logAnalyzer?.loading) {
                     return <DsFlashingDotsLoader />;

@@ -530,7 +530,18 @@
                 "aws-account": "AWS account",
                 "region": "Region"
             },
-            "not-analyzed": "Not analyzed"
+            "not-analyzed": "Not analyzed",
+            "menu-options": {
+                "well-architected": "Well-architected",
+                "investigate-errors": "Investigate errors",
+                "manage-instance": "Manage instance",
+                "instance-dashboard": "Instance dashboard",
+                "view-databases": "View databases",
+                "create-database": "Create database",
+                "create-sandbox": "Create sandbox",
+                "protect": "Protect",
+                "deregister": "Deregister"
+            }
         },
         "databases-table": {
             "headers": {
@@ -563,7 +574,13 @@
                     "aws-account": "AWS account",
                     "region": "Region"
                 },
-                "tenancy-column-info": "Multi tenant refers to CDB/PDB deployments, whereas Single tenant refers to non-CDB deployments."
+                "tenancy-column-info": "Multi tenant refers to CDB/PDB deployments, whereas Single tenant refers to non-CDB deployments.",
+                "menu-options": {
+                    "well-architected": "Well-architected",
+                    "manage-database": "Manage database",
+                    "database-dashboard": "Database dashboard",
+                    "deregister": "Deregister"
+                }
             }
         },
         "host-table": {

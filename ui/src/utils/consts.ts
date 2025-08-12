@@ -388,6 +388,7 @@ export const WLF_TABS = {
     UNDETECTED_HOSTS: 'Undetected hosts',
     REDIRECT_COMPONENT: 'Redirect Component',
     OPTIMIZE: 'Optimize',
+    ORACLE_WELL_ARCHITECTED: 'Oracle Well Architected',
     MSSQL_ELASTIC_BLOCK_STORE: 'SQL Server on Elastic Block Store (EBS)',
     MSSQL_FSX_FOR_WINDOWS: 'SQL Server on FSx for Windows',
     MSSQL_ON_PREMISES: 'SQL Server On-Premises',
