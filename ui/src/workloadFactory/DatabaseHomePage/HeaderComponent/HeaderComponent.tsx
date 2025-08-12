@@ -160,6 +160,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const {
         isManagedHostListLoading,
         allmssqlHostAssessmentLoading,
+        allLogAnalysisLoading,
         fsxCredentialStatusLoading,
         mssqlInstancesData,
         pgsqlInstancesData,
@@ -470,6 +471,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             !pgsqlDatabaseHostsLoading &&
             !pgsqlFullHostDataLoading &&
             !allmssqlHostAssessmentLoading &&
+            !allLogAnalysisLoading &&
             !dashSandboxListLoading &&
             !dashSandboxSavingsLoading &&
             !discoverHostLoading &&
@@ -584,6 +586,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         pgsqlDatabaseHostsLoading,
         pgsqlFullHostDataLoading,
         allmssqlHostAssessmentLoading,
+        allLogAnalysisLoading,
         dashSandboxListLoading,
         dashSandboxSavingsLoading,
         discoverHostLoading,

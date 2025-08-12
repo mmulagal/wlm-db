@@ -1,6 +1,6 @@
 import React from 'react';
-import { DsTypography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import styles from './ManageInstanceAccordion.module.scss';
 import { ReactComponent as Arrow } from '../../../../../../assets/row arrow2.svg';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
@@ -24,13 +24,15 @@ type AccordionProps = {
     expandedId: string | null;
     setExpandedId: any;
     disableAll?: boolean;
+    loading?: boolean;
 };
 
 export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     items,
     expandedId,
     setExpandedId,
-    disableAll = false
+    disableAll = false,
+    loading = false
 }) => {
     const { t } = useTranslation();
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
@@ -62,11 +64,17 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
                                 <div className={styles.readinessSection}>
                                     <div className={styles.valueSection}>
-                                        <div className={styles.statusSection}>
-                                            {!item?.missingPermission && <Success />}
-                                            {item?.missingPermission && <Cross />}
-                                            <DsTypography variant="Semibold_14">{item.readinessStatus}</DsTypography>
-                                        </div>
+                                        {loading ? (
+                                            <DsFlashingDotsLoader />
+                                        ) : (
+                                            <div className={styles.statusSection}>
+                                                {!item?.missingPermission && <Success />}
+                                                {item?.missingPermission && <Cross />}
+                                                <DsTypography variant="Semibold_14">
+                                                    {item.readinessStatus}
+                                                </DsTypography>
+                                            </div>
+                                        )}
 
                                         <DsTypography variant="Regular_14">
                                             {t('databases.register-flow.readiness')}

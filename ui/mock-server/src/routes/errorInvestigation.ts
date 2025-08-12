@@ -2,6 +2,7 @@
 import express from 'express';
 import { BASE_URL, generateResponse } from '../utils/appUtils';
 import ErrorInvestigationData from '../data/errorInvestigationGet.json';
+import ErrCountAcc from '../data/errorCountAcc.json';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/data
         generateResponse(res, 200, ErrorInvestigationData);
         // generateResponse(res, 200, {remediationRecommendation: []});
         // generateResponse(res, 500, {message: 'Server Error: Unable to fetch logs analysis data.'});
-    }, 7000);
+    }, 700);
 });
 
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/reports`, async (req: express.Request, res: any) => {
@@ -74,7 +75,44 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/data
                 }
             ]
         });
-    }, 7000);
+    }, 700);
+});
+
+router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs-analysis/summary`, async (req: express.Request, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, ErrCountAcc);
+    }, 700);
+});
+
+router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/logs-analysis/pre-requisites`, async (req: express.Request, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            bedrockPreRequisites: {
+                ready: true,
+                message: 'Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment.'
+            },
+            instanceProfilePreRequisites: {
+                ready: true,
+                message: 'Ensure that the instance profile has the required permissions to access Bedrock Runtime Interface.'
+            },
+            credentialsPreRequisites: {
+                ready: true,
+                message: 'Ensure that the credentials used have the necessary permissions to access Bedrock Runtime Interface.'
+            },
+            networkingPreRequisites: {
+                ready: true,
+                message: "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            }
+    });
+    }, 700);
+});
+
+router.get(`${BASE_URL}/v1/pricing/regions/:region/logs-analysis`, async (req: express.Request, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            costPerError: 4
+        });
+    }, 2000);
 });
 
 export default router;

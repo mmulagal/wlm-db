@@ -43,7 +43,9 @@ import {
     setRemoveSecNodeDiscoveredList,
     setResetManagedData,
     setUnManagedPerfInstanceIdsList,
-    resetManagedInventoryData
+    resetManagedInventoryData,
+    setAllLogAnalysisLoading,
+    addAllLogAnalysisData
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
     useCreateDemoResourcesMutation,
@@ -64,7 +66,8 @@ import {
     useLazyGetSandboxListQuery,
     useLazyGetSandboxSavingsQuery,
     useLazyGetOracleDatabaseHostsListQuery,
-    useLazyGetOracleDatabaseHostsFullDataV2Query
+    useLazyGetOracleDatabaseHostsFullDataV2Query,
+    useGetAccLogAnalysisLatestMutation
 } from '../../utils/apiService';
 import {
     addInstanceIdToGetPerf,
@@ -87,7 +90,12 @@ import {
 } from './InventoryUtilsV2';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
-import { EBS_PROTECTED_OPTIONS, INSTANCE_API_FIELDS, SNAPSHOT_FREQUENCY } from '../../utils/consts';
+import {
+    EBS_PROTECTED_OPTIONS,
+    ERROR_ANALYZER_STATUS,
+    INSTANCE_API_FIELDS,
+    SNAPSHOT_FREQUENCY
+} from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import {
     addInitialData,
@@ -136,6 +144,7 @@ const InventoryApisV3 = () => {
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const allmssqlHostAssessmentDataS = useAppSelector(state => state.inventoryV2.allmssqlHostAssessmentData);
+    const allLogAnalysisDataS = useAppSelector(state => state.inventoryV2.allLogAnalysisData);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
     const { multiMssqlDatabaseHostsData, multiPgSqlDatabaseHostsData, multiOracleDatabaseHostsData } = useAppSelector(
@@ -200,6 +209,10 @@ const InventoryApisV3 = () => {
     // Get all managed hosts assessment data
     const [getAllMssqlHostAssessmentAPI] = useLazyGetAllMssqlHostsAssessmentDataQuery();
     const [allmssqlHostAssessmentData, setAllmssqlHostAssessmentData] = useState<any>([]);
+
+    // Get all managed hosts error analyzer data
+    const [getLogAnalysisLatestAPI] = useGetAccLogAnalysisLatestMutation();
+    const [allLogAnalysisData, setAllLogAnalysisData] = useState<any>([]);
 
     // Get all sandbox API data
     const [getSandboxListApi] = useLazyGetSandboxListQuery();
@@ -414,6 +427,7 @@ const InventoryApisV3 = () => {
             const pgsqlTopologyHostData: any = {};
             const oracleTopologyHostData: any = {};
             const assessmentData: any = [];
+            const logAnalysisData: any = [];
             const sandboxListData: any = [];
             const sandboxSavingsData: any = [];
             getDatabaseHostsList(topologyHostData, null, credId, regionId);
@@ -423,6 +437,7 @@ const InventoryApisV3 = () => {
             getPgsqlDatabaseHostsFullData(fullPgsqlHostData, null, credId, regionId);
             getOracleDatabaseHostsFullData(fullOracleHostData, null, credId, regionId);
             getAllMssqlHostAssessmentData(assessmentData, null, credId, regionId);
+            getAllLogAnalysisLatestData(logAnalysisData, null, credId, regionId);
             // sandbox APIs
             getAllSandboxListData(sandboxListData, null, credId, regionId);
             getAllSandboxSavingsData(sandboxSavingsData, credId, regionId);
@@ -1398,6 +1413,61 @@ const InventoryApisV3 = () => {
         }
     };
 
+    const getAllLogAnalysisLatestData = async (
+        logAnalysisData: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getLogAnalysisLatestAPI({
+                    credentialId: credId,
+                    regionId,
+                    nextToken
+                });
+                if (
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+                ) {
+                    if (result && !result?.error) {
+                        logAnalysisData = [
+                            ...(Array.isArray(result?.data?.items)
+                                ? result.data.items.map((item: any) => ({
+                                      ...item,
+                                      credentialId: credId,
+                                      regionId,
+                                      status: ERROR_ANALYZER_STATUS.ACTIVE
+                                  }))
+                                : [])
+                        ];
+                        if (result?.data?.nextToken) {
+                            setAllLogAnalysisData(logAnalysisData);
+                            getAllLogAnalysisLatestData(
+                                logAnalysisData,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setAllLogAnalysisLoading(false));
+                            setAllLogAnalysisData(logAnalysisData);
+                        }
+                    } else {
+                        dispatch(setAllLogAnalysisLoading(false));
+                        setAllLogAnalysisData(logAnalysisData);
+                    }
+                }
+            } catch (error) {
+                dispatch(setAllLogAnalysisLoading(false));
+                setAllLogAnalysisData(logAnalysisData);
+            }
+        }
+    };
+
     const getAllSandboxListData = async (
         sandboxListData: any,
         nextToken: string | null,
@@ -1758,6 +1828,7 @@ const InventoryApisV3 = () => {
         setRunningPerfInstanceList([]);
         setRunningManagedAssessmentList([]);
         setAllmssqlHostAssessmentData([]);
+        setAllLogAnalysisData([]);
     };
 
     const resetFullData = () => {
@@ -2188,6 +2259,12 @@ const InventoryApisV3 = () => {
             // dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentData]));
         }
     }, [allmssqlHostAssessmentData]);
+
+    useEffect(() => {
+        if (!refreshBlocked) {
+            dispatch(addAllLogAnalysisData([...allLogAnalysisDataS, ...allLogAnalysisData]));
+        }
+    }, [allLogAnalysisData]);
 };
 
 export default InventoryApisV3;

@@ -136,6 +136,12 @@
         gap: 16px;
         align-items: center;
 
+        .tooltipContent {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
         svg {
             position: relative;
             top: 2px;

@@ -1352,6 +1352,24 @@ export const errorInvestigationApi = createApi({
                 method: 'POST',
                 body: payload
             })
+        }),
+        getAccLogAnalysisLatest: builder.mutation({
+            query: ({ credentialId, regionId, nextToken = null }) => {
+                if (nextToken) {
+                    return `v1/mssql/credentials/${credentialId}/regions/${regionId}/logs-analysis/summary?nextToken=${nextToken}`;
+                }
+                return `v1/mssql/credentials/${credentialId}/regions/${regionId}/logs-analysis/summary`;
+            }
+        }),
+        getLogAnalyzerPreReq: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/logs-analysis/pre-requisites`
+            })
+        }),
+        getLogAnalyzerPricing: builder.mutation({
+            query: ({ regionId }) => ({
+                url: `v1/pricing/region/${regionId}/logs-analysis`
+            })
         })
     })
 });
@@ -1534,5 +1552,8 @@ export const {
 export const {
     useGetErrorInvestigationDataMutation,
     useGetInvestigationDatesMutation,
-    useScanErrorInvestigationMutation
+    useScanErrorInvestigationMutation,
+    useGetAccLogAnalysisLatestMutation,
+    useGetLogAnalyzerPreReqMutation,
+    useGetLogAnalyzerPricingMutation
 } = errorInvestigationApi;

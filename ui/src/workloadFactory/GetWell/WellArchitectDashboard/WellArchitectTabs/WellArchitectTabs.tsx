@@ -65,8 +65,7 @@ const WellArchitectTabs = () => {
 
             <div
                 className={
-                    selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION ||
-                    selectedTab === WELL_ARCHITECTED_TABS.ACTIVATING_LOG_ANALYZER
+                    selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
                         ? `${styles.headers} ${styles.headerWidthSecond} ${styles.active}`
                         : `${styles.headers} ${styles.headerWidthSecond}`
                 }

@@ -5,7 +5,13 @@ import styles from './Inventory.module.scss';
 import InventoryCards from './InventoryCards/InventoryCards';
 import InventoryTab from './InventoryTab/InventoryTab';
 import InventoryTablesComponent from './InventoryTablesComponent/InventoryTablesComponent';
-import { DBType, INVENTORY_ACTIONS, INVENTORY_STATUS, PROTECTION_TEXT_STATUS } from '../../utils/consts';
+import {
+    DBType,
+    ERROR_ANALYZER_STATUS,
+    INVENTORY_ACTIONS,
+    INVENTORY_STATUS,
+    PROTECTION_TEXT_STATUS
+} from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
 import {
@@ -30,6 +36,8 @@ const InventoryV2 = () => {
         removeSecNodeDiscoveredList,
         allmssqlHostAssessmentLoading,
         allmssqlHostAssessmentData,
+        allLogAnalysisData,
+        allLogAnalysisLoading,
         selectedHostType,
         fullHostTableRows,
         fullInstanceTableRows,
@@ -40,7 +48,10 @@ const InventoryV2 = () => {
     useEffect(() => {
         if (inventoryTableData) {
             const state = store.getState();
-            const { allmssqlHostAssessmentData: allmssqlHostAssessmentDataLatest } = state.inventoryV2;
+            const {
+                allmssqlHostAssessmentData: allmssqlHostAssessmentDataLatest,
+                allLogAnalysisData: allLogAnalysisDataLatest
+            } = state.inventoryV2;
             const allHostTableRows: any = [];
             let allInstanceTableRows: any = [];
             let hostUniqueId: number = 0;
@@ -139,8 +150,24 @@ const InventoryV2 = () => {
                             : perRow.statusColText === INVENTORY_STATUS.MANAGED
                             ? INVENTORY_STATUS.REGISTERED
                             : INVENTORY_STATUS.NOT_REGISTERED;
+
+                        const logAnalyzerRow = allLogAnalysisDataLatest?.find(
+                            (perLa: any) =>
+                                uniqueHostRow(
+                                    perLa?.databaseHostId,
+                                    perLa?.credentialId || '',
+                                    perLa?.regionId || ''
+                                ) === key && perLa?.databaseInstanceId === perRow?.databaseInstanceId
+                        );
+                        const logAnalyzerStatus = logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE;
                         const perRowData = {
                             ...perRow,
+                            logAnalyzer: {
+                                loading: allLogAnalysisLoading,
+                                errorCount: logAnalyzerRow?.latestReport?.errorCount || 0,
+                                status: logAnalyzerStatus,
+                                lastScan: logAnalyzerRow?.latestReport?.creationTime || ''
+                            },
                             id: String(instanceUniqueId++),
                             hostRow: perHost,
                             name: perHost?.name,
@@ -281,6 +308,8 @@ const InventoryV2 = () => {
         inProgressInstances,
         allmssqlHostAssessmentLoading,
         allmssqlHostAssessmentData,
+        allLogAnalysisData,
+        allLogAnalysisLoading,
         headerSelectedMultiCredIdsList,
         headerSelectedMultiRegionIdsList
     ]);

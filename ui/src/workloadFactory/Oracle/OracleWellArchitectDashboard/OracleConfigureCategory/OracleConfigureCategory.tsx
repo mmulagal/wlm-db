@@ -33,23 +33,18 @@ const OracleConfigureCategory = () => {
                         image={<Storage />}
                         isComingSoon={false}
                     />
-                    <OptimizeComponent value={<ComingSoon />} text="Compute" image={<Compute />} isComingSoon={true} />
+                    <OptimizeComponent value={<ComingSoon />} text="Compute" image={<Compute />} isComingSoon />
                     <OptimizeComponent
                         value={<ComingSoon />}
                         text={GENERAL.APPLICATION}
                         image={<Applications />}
-                        isComingSoon={true}
+                        isComingSoon
                     />
                 </div>
 
                 <div className={styles.rightSide}>
-                    <OptimizeComponent
-                        value={<ComingSoon />}
-                        text="Resiliency"
-                        image={<Resiliency />}
-                        isComingSoon={true}
-                    />
-                    <OptimizeComponent value={<ComingSoon />} text="Cloning" image={<Cloning />} isComingSoon={true} />
+                    <OptimizeComponent value={<ComingSoon />} text="Resiliency" image={<Resiliency />} isComingSoon />
+                    <OptimizeComponent value={<ComingSoon />} text="Cloning" image={<Cloning />} isComingSoon />
                 </div>
             </div>
         </div>

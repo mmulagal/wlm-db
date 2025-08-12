@@ -2,21 +2,15 @@ import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { DsButton, TooltipInfo } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ReactComponent as UniqueError } from '../../../../../assets/unique-errors.svg';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './LogAnalyserHeader.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useLazyGetSubTaskListQuery, useScanErrorInvestigationMutation } from '../../../../../utils/apiService';
-import {
-    setEiRefreshPage,
-    setScanInProgress,
-    setScanStatus,
-    setStopErrorInvestigationScan
-} from '../../../../../store/workloadFactory/agenticAISlice';
-import { JOB_MONITORING_STATUS, LOG_ANALYZER_POLLING_INTERVAL, WLF_TABS } from '../../../../../utils/consts';
-import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
-import store from '../../../../../store/store';
+import { WLF_TABS } from '../../../../../utils/consts';
+import { handleLogAnalyzerJob, logAnalyzerScanUpdate } from '../ErrorInvestigationUtility';
+import { uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 
 interface LogAnalyserHeaderProps {
     uniqueErrors: number;
@@ -28,80 +22,39 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
+    const [instKey, setInstKey] = useState('');
+
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
         useAppSelector(state => state.getWellOptimize);
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const { investigationDatesLoading, noData } = useAppSelector(state => state.agenticAI);
-    const { scanInProgress, stopErrorInvestigationScan } = useAppSelector(state => state.agenticAI.scanStatus);
+    const { scanInProgress } = useAppSelector(state => state.agenticAI);
     const loading = errorInvestigationLoading || investigationDatesLoading;
 
     const [scanErrorInvestigation] = useScanErrorInvestigationMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     useEffect(() => {
-        if (stopErrorInvestigationScan) {
-            dispatch(setScanInProgress(false));
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stopErrorInvestigationScan]);
+        const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
+        const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
+        const key = uniqueHostRow(`${selectedResourceId}_${selectedDatabaseInstance}`, credId, regionId);
+        setInstKey(key);
+    }, [scanInProgress]);
 
     const handleScan = () => {
-        dispatch(setScanInProgress(true));
+        const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
+        const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
+        const key = uniqueHostRow(`${selectedResourceId}_${selectedDatabaseInstance}`, credId, regionId);
+        logAnalyzerScanUpdate(key, true, dispatch);
         scanErrorInvestigation({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+            credentialId: credId,
+            regionId,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
             payload: {}
         }).then((res: any) => {
-            const jobId = res?.data?.jobId;
-            const state = store.getState();
-            const { stopErrorInvestigationScan: stopScan } = state.agenticAI.scanStatus;
-            if (stopScan) {
-                dispatch(setScanStatus({ stopScan: false, inProgress: false }));
-            } else if (jobId) {
-                const jobInterval = setInterval(() => {
-                    getJobDetailApi({
-                        id: jobId
-                    }).then((jobRes: any) => {
-                        const status = jobRes?.data?.status;
-                        const state1 = store.getState();
-                        const { stopErrorInvestigationScan: stopScan1 } = state1.agenticAI.scanStatus;
-                        if (stopScan1) {
-                            clearInterval(jobInterval);
-                            dispatch(setScanStatus({ stopScan: false, inProgress: false }));
-                        } else if (
-                            status === JOB_MONITORING_STATUS.COMPLETED ||
-                            status === JOB_MONITORING_STATUS.WARNING
-                        ) {
-                            dispatch(setScanInProgress(false));
-                            clearInterval(jobInterval);
-                            if (!stopScan1) {
-                                dispatch(setEiRefreshPage(true));
-                                dispatch(setStopErrorInvestigationScan(false));
-                            }
-                        } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                            dispatch(setScanInProgress(false));
-                            clearInterval(jobInterval);
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.ERROR,
-                                    message: jobRes?.data?.error || t('databases.log-analyzer.scan-failed')
-                                })
-                            );
-                        }
-                    });
-                }, LOG_ANALYZER_POLLING_INTERVAL);
-            } else {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: t('databases.log-analyzer.scan-trigger-error')
-                    })
-                );
-                dispatch(setScanInProgress(false));
-            }
+            handleLogAnalyzerJob(dispatch, res, getJobDetailApi, t, false, key, null);
         });
     };
 
@@ -158,13 +111,13 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
 
                 <div className={`${styles.column} `} style={{ borderRight: 'none', flex: '1 1 450px' }}>
                     <div className={styles.lastContainer}>
-                        {scanInProgress && (
+                        {scanInProgress?.[instKey] && (
                             <div className={styles.inProgressContainer}>
                                 <DsFlashingDotsLoader />
                                 <DsTypography variant="Regular_14">{t('databases.log-analyzer.new-scan')}</DsTypography>
                             </div>
                         )}
-                        {!scanInProgress && (
+                        {!scanInProgress?.[instKey] && (
                             <div className={styles.tooltipContainer}>
                                 <TooltipInfo>
                                     <div className={styles.mainSection}>
@@ -203,7 +156,7 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                             variant="Default"
                             isThin
                             type="button"
-                            isDisabled={loading || scanInProgress}
+                            isDisabled={loading || scanInProgress?.[instKey]}
                             onClick={handleScan}
                         >
                             {t('databases.log-analyzer.scan-now')}

@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     ACTION_CTA,
     DBType,
+    ERROR_ANALYZER_STATUS,
     INVENTORY_STATUS,
     INVENTORY_TABLE_STATUS,
     PROTECTION_COLUMN_TEXT_STATUS,
@@ -16,9 +17,10 @@ import {
 } from '../../../../utils/consts';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { getFilterOptions } from '../../../../utils/utilityFunctions';
+import { formatDateWithTime, getFilterOptions } from '../../../../utils/utilityFunctions';
 import { instanceNameHyperLink, optimizeAction, protectionTooltipText } from './InstanceTableColumnsHelper';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
+import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
@@ -119,6 +121,78 @@ export function getMssqlInstanceTableColumns({
                     {cellData || t('databases.general.not-available-table-columns')}
                 </DsTypography>
             )
+        },
+        {
+            Header: t('databases.instance-table.headers.error-analyzer'),
+            accessor: 'logAnalyzer.status',
+            id: '14',
+            width: '200px',
+            filterOptions: getFilterOptions(updatedTableData, 'logAnalyzer.status'),
+            renderCell: (cellData: string, rowData: any) => {
+                // If the computed display value is "Not active", show with tooltip
+                if (cellData === ERROR_ANALYZER_STATUS.ACTIVE) {
+                    return (
+                        <div className={styles.naContainer}>
+                            <div>
+                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                    <div className={styles.tooltipContent}>
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.log-analyzer.last-scan-date')}:{' '}
+                                            {formatDateWithTime(rowData?.logAnalyzer?.lastScan)}
+                                        </DsTypography>
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.log-analyzer.detected-errors1')}:{' '}
+                                            {rowData?.logAnalyzer?.errorCount !== 0
+                                                ? `${rowData?.logAnalyzer?.errorCount} ${t(
+                                                    'databases.log-analyzer.detected-errors2'
+                                                )}`
+                                                : t('databases.log-analyzer.no-errors')}
+                                        </DsTypography>
+                                    </div>
+                                </TooltipInfo>
+                            </div>
+                            
+                            <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                        </div>
+                    )
+                }
+                if (cellData === ERROR_ANALYZER_STATUS.NOT_ACTIVE) {
+                    return (
+                        <div className={styles.naContainer}>
+                            <NotActiveNotificationIcon />
+                            <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                        </div>
+                    );
+                }
+                if (cellData === ERROR_ANALYZER_STATUS.RUNNING) {
+                    return (
+                        <div className={styles.naContainer}>
+                            <div>
+                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                    <div className={styles.tooltipContent}>
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.log-analyzer.status-investigating')}
+                                        </DsTypography>
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.log-analyzer.running-status')}
+                                        </DsTypography>
+                                    </div>
+                                </TooltipInfo>
+                            </div>
+                            
+                            <DsTypography variant="Regular_14">{ERROR_ANALYZER_STATUS.ACTIVE}</DsTypography>
+                        </div>
+                    )
+                }
+                if (!rowData?.logAnalyzer?.lastScan && rowData?.logAnalyzer?.loading) {
+                    return <DsFlashingDotsLoader />;
+                }
+                return (
+                    <div className={styles.statusCol}>
+                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                    </div>
+                );
+            }
         },
         {
             Header: t('databases.instance-table.headers.well-architected-status'),

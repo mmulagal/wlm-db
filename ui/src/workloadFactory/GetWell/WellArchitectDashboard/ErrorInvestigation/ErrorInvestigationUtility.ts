@@ -1,5 +1,18 @@
-import { MS_PER_HOUR } from '../../../../utils/consts';
-import { ErrorInvestigationGetApiResponse } from '../../../../utils/types/agenticAITypes';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import store from '../../../../store/store';
+import {
+    setEiRefreshPage,
+    setLogAnalyzerState,
+    setScanInProgress
+} from '../../../../store/workloadFactory/agenticAISlice';
+import { addAllLogAnalysisData } from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
+    ERROR_ANALYZER_STATUS,
+    JOB_MONITORING_STATUS,
+    LOG_ANALYZER_POLLING_INTERVAL,
+    MS_PER_HOUR
+} from '../../../../utils/consts';
+import { ErrorInvestigationGetApiResponse, ErrorInvestigationInstance } from '../../../../utils/types/agenticAITypes';
 
 export const eiSeverityOptionList = {
     all: 'All severity levels',
@@ -299,4 +312,126 @@ export const calculateTotalHourlyErrorCounts = (newFilteredData: ErrorInvestigat
     const allTimestamps = Array.from(timestampCountMap.keys()).sort((a, b) => a - b);
     const totalHourlyCounts = allTimestamps.map(ts => ({ hour: ts, count: timestampCountMap.get(ts) || 0 }));
     return totalHourlyCounts;
+};
+
+const removeLogAnalyzerFailedRow = (dispatch: any, newObj: ErrorInvestigationInstance | null) => {
+    const state = store.getState();
+    const { allLogAnalysisData } = state.inventoryV2;
+    // Remove the failed newObj based on unique identifiers
+    const filteredData = allLogAnalysisData.filter(
+        (item: ErrorInvestigationInstance) =>
+            !(
+                item.credentialId === newObj?.credentialId &&
+                item.databaseHostId === newObj?.databaseHostId &&
+                item.databaseInstanceId === newObj?.databaseInstanceId &&
+                item.regionId === newObj?.regionId
+            )
+    );
+    dispatch(addAllLogAnalysisData(filteredData));
+};
+
+const updateLogAnalyzerRow = (dispatch: any, newObj: ErrorInvestigationInstance | null) => {
+    const state = store.getState();
+    const { allLogAnalysisData } = state.inventoryV2;
+    // Find existing row based on unique identifiers and update it, or add new row
+    const existingRowIndex = allLogAnalysisData.findIndex(
+        (item: ErrorInvestigationInstance) =>
+            item.credentialId === newObj?.credentialId &&
+            item.databaseHostId === newObj?.databaseHostId &&
+            item.databaseInstanceId === newObj?.databaseInstanceId &&
+            item.regionId === newObj?.regionId
+    );
+
+    let updatedLogAnalysisData;
+    if (existingRowIndex !== -1) {
+        // Update existing row
+        updatedLogAnalysisData = [...allLogAnalysisData];
+        updatedLogAnalysisData[existingRowIndex] = {
+            ...updatedLogAnalysisData[existingRowIndex],
+            ...newObj
+        };
+    } else {
+        // Add new row
+        updatedLogAnalysisData = [...allLogAnalysisData, newObj];
+    }
+    dispatch(addAllLogAnalysisData(updatedLogAnalysisData));
+};
+
+export const handleLogAnalyzerJob = (
+    dispatch: any,
+    res: any,
+    getJobDetailApi: any,
+    t: any,
+    firstScan: boolean,
+    key: string,
+    newObj: ErrorInvestigationInstance | null
+) => {
+    const jobId = res?.data?.jobId;
+    if (jobId) {
+        const jobInterval = setInterval(() => {
+            getJobDetailApi({
+                id: jobId
+            }).then((jobRes: any) => {
+                const status = jobRes?.data?.status;
+                if (status === JOB_MONITORING_STATUS.COMPLETED || status === JOB_MONITORING_STATUS.WARNING) {
+                    logAnalyzerScanUpdate(key, false, dispatch);
+                    clearInterval(jobInterval);
+                    if (firstScan) {
+                        dispatch(setLogAnalyzerState(ERROR_ANALYZER_STATUS.ACTIVE));
+                        newObj = {
+                            ...newObj,
+                            id: jobId, // ToDo get from res
+                            status: ERROR_ANALYZER_STATUS.ACTIVE,
+                            latestReport: {
+                                creationTime: 0, // ToDo get from res
+                                jobId: jobId || '',
+                                errorCount: 0 // ToDo get from res
+                            }
+                        };
+                        updateLogAnalyzerRow(dispatch, newObj);
+                    }
+                    dispatch(setEiRefreshPage(true));
+                } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                    logAnalyzerScanUpdate(key, false, dispatch);
+                    clearInterval(jobInterval);
+                    dispatch(setLogAnalyzerState(ERROR_ANALYZER_STATUS.NOT_ACTIVE));
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: jobRes?.data?.error || t('databases.log-analyzer.scan-failed')
+                        })
+                    );
+                    if (firstScan) {
+                        removeLogAnalyzerFailedRow(dispatch, newObj);
+                    }
+                }
+            });
+        }, LOG_ANALYZER_POLLING_INTERVAL);
+    } else {
+        dispatch(setLogAnalyzerState(ERROR_ANALYZER_STATUS.NOT_ACTIVE));
+        if (firstScan) {
+            removeLogAnalyzerFailedRow(dispatch, newObj);
+        }
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: t('databases.log-analyzer.scan-trigger-error')
+            })
+        );
+        logAnalyzerScanUpdate(key, false, dispatch);
+    }
+};
+
+export const logAnalyzerScanUpdate = (key: string, status: boolean, dispatch: any) => {
+    const state = store.getState();
+    const { scanInProgress } = state.agenticAI;
+
+    // Update the specific key with the new status
+    const updatedScanInProgress = {
+        ...scanInProgress,
+        [key]: status
+    };
+
+    // Dispatch the updated scanInProgress object
+    dispatch(setScanInProgress(updatedScanInProgress));
 };

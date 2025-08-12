@@ -1,3 +1,5 @@
+import { ErrorInvestigationInstance } from './agenticAITypes';
+
 interface OptionType {
     id: number;
     label: string;
@@ -74,6 +76,8 @@ export interface InventorySliceData {
     managedAssessmentHostIdsList: Array<string>;
     allmssqlHostAssessmentData: any;
     allmssqlHostAssessmentLoading: boolean;
+    allLogAnalysisData: Array<ErrorInvestigationInstance>;
+    allLogAnalysisLoading: boolean;
     potentialSavingsHostData: {
         [key: string]: any;
     };

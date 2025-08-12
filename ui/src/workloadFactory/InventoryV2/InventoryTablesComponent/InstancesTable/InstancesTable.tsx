@@ -31,7 +31,13 @@ import {
     uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
-import { bxpRedirect, getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import {
+    bxpRedirect,
+    formatDateWithTime,
+    formatTime,
+    getFilterOptions,
+    isSmbProtocol
+} from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
     DBType,
@@ -85,7 +91,9 @@ import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import { cancelProtectionForRow } from '../../../../store/workloadFactory/snapcenterSlice';
-import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
+import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
+import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
 import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
 import { getInstanceTableColumns } from './InstanceTableColumns';
@@ -367,6 +375,7 @@ const InstancesTable = () => {
             })
         );
         dispatch(resetEiData({}));
+        dispatch(setLogAnalyzerState(rowData?.logAnalyzer?.status));
     };
 
     // Snapcenter Protection code starts

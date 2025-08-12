@@ -19,7 +19,6 @@ export interface ErrorInvestigationGetApiResponse {
 }
 
 export interface AgenticAIEntities {
-    isAgenticOnboardingActivating: boolean;
     selectedSeverity: [] | any;
     selectedTimeFrame: any;
     selectedErrorCodes: [] | any;
@@ -35,8 +34,47 @@ export interface AgenticAIEntities {
     eiRefreshTimestamp: string;
     eiRefreshPage: boolean;
     noErrorsDetected: boolean;
-    scanStatus: {
-        scanInProgress: boolean;
-        stopErrorInvestigationScan: boolean;
+    scanInProgress: any;
+    logAnalyzerState: string;
+    logAnalyzerPreReq: {
+        data: {
+            bedrockPreRequisites: {
+                ready: boolean;
+                message: string;
+            };
+            instanceProfilePreRequisites: {
+                ready: boolean;
+                message: string;
+            };
+            credentialsPreRequisites: {
+                ready: boolean;
+                message: string;
+            };
+            networkingPreRequisites: {
+                ready: boolean;
+                message: string;
+            };
+        } | null;
+        loading: boolean;
+    };
+    logAnalyzerPricing: {
+        data: {
+            costPerError: number;
+        } | null;
+        loading: boolean;
+    };
+}
+
+export interface ErrorInvestigationInstance {
+    id?: string;
+    databaseInstanceId?: string;
+    databaseHostId?: string;
+    status?: string;
+    credentialId?: string;
+    regionId?: string;
+    latestReport?: {
+        creationTime?: number;
+        jobId?: string;
+        errorCount?: number;
     };
 }

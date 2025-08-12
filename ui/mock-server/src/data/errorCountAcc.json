@@ -1,0 +1,124 @@
+{
+  "items": [
+    {
+      "id": "b3c241a0-4a1c-4670-9f79-ee33d0dec03c",
+      "databaseHostId": "resource-id-1",
+      "databaseInstanceId": "11",
+      "latestReport": {
+        "creationTime": 1752268918138,
+        "jobId": "aa366161-3a90-4525-90ce-e9d07ac7857a",
+        "errorCount": 2
+      }
+    },
+    {
+      "id": "9b9856c8-7743-47fa-9202-465294330736",
+      "databaseInstanceId": "12",
+      "databaseHostId": "resource-id-1",
+      "latestReport": {
+        "creationTime": 1753806245662,
+        "jobId": "2bdce9d9-1f89-4a0a-b777-d29a7f5b857c",
+        "errorCount": 0
+      }
+    },
+    {
+      "id": "63bb1fc2-c0a1-4c2a-ace2-cd5aa57ea6b7",
+      "databaseInstanceId": "CB5F9F8D-C315-42E7-8169-A4BC16A0FEA5",
+      "databaseHostId": "resource-id-2",
+      "latestReport": {
+        "creationTime": 1753806299719,
+        "jobId": "274b16e8-191d-4ba9-a80a-026448ebc984",
+        "errorCount": 0
+      }
+    },
+    {
+      "id": "4af44d23-699c-40c4-83f3-ab725d0d56ab",
+      "databaseInstanceId": "21",
+      "databaseHostId": "resource-id-2",
+      "latestReport": {
+        "creationTime": 1753724342608,
+        "jobId": "305c9df8-4748-4e1a-b2ba-11f7435921cb",
+        "errorCount": 0
+      }
+    },
+    {
+      "id": "635edca5-1da0-4455-b18c-f706238e2e27",
+      "databaseInstanceId": "22",
+      "databaseHostId": "51d94c89c07055d5",
+      "latestReport": {
+        "creationTime": 1753857587760,
+        "jobId": "624242d2-520f-4c4a-84a1-112e1d3dbae5",
+        "errorCount": 2
+      }
+    },
+    {
+      "id": "955cd448-cc80-43d1-8ac9-058f8c3a044d",
+      "databaseInstanceId": "31",
+      "databaseHostId": "resource-id-3",
+      "latestReport": {
+        "creationTime": 1753825518380,
+        "jobId": "7211dd67-cdd7-4b80-a6d7-647a5e94209f",
+        "errorCount": 3
+      }
+    },
+    {
+      "id": "9d489fbb-3f48-410f-8c97-e72f256f5be9",
+      "databaseInstanceId": "32",
+      "databaseHostId": "resource-id-3",
+      "latestReport": {
+        "creationTime": 1753690008515,
+        "jobId": "02849fa1-5416-480b-be12-ab339cf9820b",
+        "errorCount": 3
+      }
+    },
+    {
+      "id": "9d489fbb-3f48-410f-8c97-e72f256f5be9",
+      "databaseInstanceId": "33",
+      "databaseHostId": "resource-id-3",
+      "latestReport": {
+        "creationTime": 1753690008515,
+        "jobId": "02849fa1-5416-480b-be12-ab339cf9820b",
+        "errorCount": 1
+      }
+    },
+    {
+      "id": "955cd448-cc80-43d1-8ac9-058f8c3a044d",
+      "databaseInstanceId": "41",
+      "databaseHostId": "resource-id-4",
+      "latestReport": {
+        "creationTime": 1753825518380,
+        "jobId": "7211dd67-cdd7-4b80-a6d7-647a5e94209f",
+        "errorCount": 3
+      }
+    },
+    {
+      "id": "9d489fbb-3f48-410f-8c97-e72f256f5be9",
+      "databaseInstanceId": "42",
+      "databaseHostId": "resource-id-4",
+      "latestReport": {
+        "creationTime": 1753690008515,
+        "jobId": "02849fa1-5416-480b-be12-ab339cf9820b",
+        "errorCount": 3
+      }
+    },
+    {
+      "id": "9d489fbb-3f48-410f-8c97-e72f256f5be9",
+      "databaseInstanceId": "43",
+      "databaseHostId": "resource-id-4",
+      "latestReport": {
+        "creationTime": 1753690008515,
+        "jobId": "02849fa1-5416-480b-be12-ab339cf9820b",
+        "errorCount": 1
+      }
+    },
+    {
+      "id": "9d489fbb-3f48-410f-8c97-e72f256f5be9",
+      "databaseInstanceId": "44",
+      "databaseHostId": "resource-id-4",
+      "latestReport": {
+        "creationTime": 1753690008515,
+        "jobId": "02849fa1-5416-480b-be12-ab339cf9820b",
+        "errorCount": 1
+      }
+    }
+  ]
+}

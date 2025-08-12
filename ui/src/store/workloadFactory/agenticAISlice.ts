@@ -28,20 +28,22 @@ export const initialSandboxState: AgenticAIEntities = {
     eiRefreshTimestamp: '',
     eiRefreshPage: false,
     noErrorsDetected: false,
-    scanStatus: {
-        scanInProgress: false,
-        stopErrorInvestigationScan: false
+    scanInProgress: {},
+    logAnalyzerState: '',
+    logAnalyzerPreReq: {
+        data: null,
+        loading: false
     },
-    isAgenticOnboardingActivating: false
+    logAnalyzerPricing: {
+        data: null,
+        loading: false
+    }
 };
 
 const agenticAISlice = createSlice({
     name: 'agenticAI',
     initialState: initialSandboxState,
     reducers: {
-        setIsAgenticOnboardingActivating: (state, action: PayloadAction<boolean>) => {
-            state.isAgenticOnboardingActivating = action.payload;
-        },
         setSelectedInvestigationDate: (state, action: PayloadAction<any>) => {
             state.selectedInvestigationDate = action.payload;
         },
@@ -108,19 +110,28 @@ const agenticAISlice = createSlice({
             };
             state.noData = false;
             state.noErrorsDetected = false;
+            state.logAnalyzerState = '';
         },
         setNoErrorsDetected: (state, action: PayloadAction<boolean>) => {
             state.noErrorsDetected = action.payload;
         },
-        setScanInProgress: (state, action: PayloadAction<boolean>) => {
-            state.scanStatus.scanInProgress = action.payload;
+        setScanInProgress: (state, action: PayloadAction<any>) => {
+            state.scanInProgress = action.payload;
         },
-        setStopErrorInvestigationScan: (state, action: PayloadAction<boolean>) => {
-            state.scanStatus.stopErrorInvestigationScan = action.payload;
+        setLogAnalyzerState: (state, action: PayloadAction<string>) => {
+            state.logAnalyzerState = action.payload;
         },
-        setScanStatus: (state, action: PayloadAction<any>) => {
-            state.scanStatus.stopErrorInvestigationScan = action.payload.stopScan;
-            state.scanStatus.scanInProgress = action.payload.inProgress;
+        setLogAnalyzerPreReqData: (state, action: PayloadAction<any>) => {
+            state.logAnalyzerPreReq.data = action.payload;
+        },
+        setLogAnalyzerPreReqLoading: (state, action: PayloadAction<boolean>) => {
+            state.logAnalyzerPreReq.loading = action.payload;
+        },
+        setLogAnalyzerPricingData: (state, action: PayloadAction<any>) => {
+            state.logAnalyzerPricing.data = action.payload;
+        },
+        setLogAnalyzerPricingLoading: (state, action: PayloadAction<boolean>) => {
+            state.logAnalyzerPricing.loading = action.payload;
         }
     }
 });
@@ -142,9 +153,11 @@ export const {
     setNoErrorsDetected,
     setInvestigationDatesLoading,
     setScanInProgress,
-    setStopErrorInvestigationScan,
-    setScanStatus,
-    setIsAgenticOnboardingActivating
+    setLogAnalyzerState,
+    setLogAnalyzerPreReqData,
+    setLogAnalyzerPreReqLoading,
+    setLogAnalyzerPricingData,
+    setLogAnalyzerPricingLoading
 } = agenticAISlice.actions;
 
 export default agenticAISlice;

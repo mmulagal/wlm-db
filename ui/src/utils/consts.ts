@@ -768,11 +768,9 @@ export const GETWELL_STATUS = {
 
 export const WELL_ARCHITECTED_TABS = {
     OVERVIEW: 'Overview',
-    ACTIVATING_LOG_ANALYZER: 'Activating Log Analyzer',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
     DATABASES: 'Databases',
     SANDBOXES: 'Sandboxes',
-    LOG_ANALYZER_ONBOARDING: 'Log Analyzer onboarding',
     ERROR_INVESTIGATION: 'Error investigation'
 };
 
@@ -1009,4 +1007,10 @@ export const INVENTORY_TAB_COMPONENTS = {
     INSTANCES: 'Instances',
     DATABASES: 'Databases',
     PDB: 'PDB'
+};
+
+export const ERROR_ANALYZER_STATUS = {
+    ACTIVE: 'Active',
+    NOT_ACTIVE: 'Not active',
+    RUNNING: 'Running'
 };

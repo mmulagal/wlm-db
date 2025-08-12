@@ -151,7 +151,8 @@ export const getInitialInstanceTableColState = (selectedHostType: string) => {
         10: { isHidden: false },
         11: { isHidden: false },
         12: { isHidden: false },
-        13: { isHidden: false, isRemovalDisabled: true }
+        13: { isHidden: false, isRemovalDisabled: true },
+        14: { isHidden: false }
     };
 };
 

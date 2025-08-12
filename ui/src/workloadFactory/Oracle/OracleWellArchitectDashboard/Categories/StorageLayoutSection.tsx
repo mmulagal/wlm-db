@@ -36,7 +36,7 @@ const StorageLayoutSection = ({
                     <DsAccordion
                         id="1"
                         variant="Default"
-                        isDisabled={false} //Todo add condition
+                        isDisabled={false} // Todo add condition
                         isExpanded={isAccordionExpanded('1', optimizePrintState)}
                         onExpandChange={isExpanded => {
                             handleAccordionExpanded('1', isExpanded);
@@ -74,7 +74,7 @@ const StorageLayoutSection = ({
                     <DsAccordion
                         id="2"
                         variant="Default"
-                        isDisabled={false} //Todo add condition
+                        isDisabled={false} // Todo add condition
                         isExpanded={isAccordionExpanded('2', optimizePrintState)}
                         onExpandChange={isExpanded => {
                             handleAccordionExpanded('2', isExpanded);
@@ -112,7 +112,7 @@ const StorageLayoutSection = ({
                     <DsAccordion
                         id="3"
                         variant="Default"
-                        isDisabled={false} //Todo add condition
+                        isDisabled={false} // Todo add condition
                         isExpanded={isAccordionExpanded('3', optimizePrintState)}
                         onExpandChange={isExpanded => {
                             handleAccordionExpanded('3', isExpanded);
