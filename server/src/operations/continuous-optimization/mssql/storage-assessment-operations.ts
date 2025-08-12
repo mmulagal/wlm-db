@@ -9,8 +9,7 @@ import {
     VALID_MPIO_LB_POLICIES
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
-
-import storageGoldenConfigData from '../golden-configs/storage';
+import storageGoldenConfigData from './golden-config';
 import {
     SizingViolationResponseType,
     StorageParameterDriftResponseType,

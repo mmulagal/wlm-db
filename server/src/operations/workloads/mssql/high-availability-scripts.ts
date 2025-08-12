@@ -1,7 +1,7 @@
 import { IgroupMissingInitiators } from '../../../utils/common-types';
+import GOLDEN_CONFIG from '../../continuous-optimization/mssql/golden-config';
 import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
-import GOLDEN_CONFIG from '../../continuous-optimization/golden-configs/storage';
 
 const { heartbeatSettings } = GOLDEN_CONFIG.resiliency;
 

@@ -84,7 +84,7 @@ interface ListDatabaseInstancesRecord {
     isDefault?: boolean;
     credentialsId?: string;
     region?: string | null;
-    databaseType?: string;
+    databaseType?: string[];
     selectKeys?: string[];
     shouldIncludeResource?: boolean;
     additionalResourceFields?: string[];

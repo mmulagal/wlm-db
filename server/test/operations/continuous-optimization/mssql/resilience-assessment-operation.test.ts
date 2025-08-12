@@ -1,27 +1,27 @@
 import { isEmpty } from 'lodash-es';
-import { createResource, upsertDatabaseInstance, deleteResource } from '../../../src/lib/database/db';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/pricing-scope';
-import '../../simulator/scopes/aws/compute-optimizer-scope';
-import '../../simulator/scopes/aws/cloud-watch-scope';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/aws/ec2-scope';
-import '../../simulator/scopes/aws/ssm-scope';
-import '../../simulator/scopes/aws/fsx-scope';
-import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
-import { RESOURCE_ID } from '../../../src/utils/consts';
+import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
+import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
+import '../../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
+import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import '../../../simulator/scopes/aws/pricing-scope';
+import '../../../simulator/scopes/aws/compute-optimizer-scope';
+import '../../../simulator/scopes/aws/cloud-watch-scope';
+import '../../../simulator/scopes/opentelemetry-scope';
+import '../../../simulator/scopes/aws/ec2-scope';
+import '../../../simulator/scopes/aws/ssm-scope';
+import '../../../simulator/scopes/aws/fsx-scope';
+import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
+import { RESOURCE_ID } from '../../../../src/utils/consts';
 import {
     collectVolumeSnapshotCopiesData,
     getResilienceDriftAssessment,
     getVolumesWithoutSnapshotPolicy,
-    initiateInstanceLevelHighAvailabilityAssessment,
-    initiateHostLevelHighAvailabilityAssessment
-} from '../../../src/operations/continuous-optimization/mssql/resilience-assessment-operation';
-import { WorkloadInstance } from '../../../src/utils/common-types';
-import { createDatabaseInstanceConfigData } from '../../../src/lib/database/database-instance-config';
-import { AssessmentCategories } from '../../../src/utils/continous-optimization-consts';
+    initiateHostLevelHighAvailabilityAssessment,
+    initiateInstanceLevelHighAvailabilityAssessment
+} from '../../../../src/operations/continuous-optimization/mssql/resilience-assessment-operation';
+import { WorkloadInstance } from '../../../../src/utils/common-types';
+import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
+import { AssessmentCategories } from '../../../../src/utils/continous-optimization-consts';
 
 const INSTANCE_CONFIG = {
     volumes: [

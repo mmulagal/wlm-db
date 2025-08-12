@@ -1,0 +1,275 @@
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import createError from 'http-errors';
+import { isEmpty } from 'lodash-es';
+import getLogger from '../../../utils/logger';
+import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
+import { WorkloadInstance } from '../../../utils/common-types';
+import { HttpErrorCodes, ASSESSMENT_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories,
+    AssessmentStatus
+} from '../../../utils/continous-optimization-consts';
+import { sqlResponseParsing } from '../../../utils/utils';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { registerJob } from '../../database/job-operations';
+import { VOLUME_LUN_CONFIGURATION } from '../../workloads/oracle/storage-assessment-scripts';
+import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
+import storageGoldenConfigData from './golden-config';
+import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
+import { StorageParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
+import { OracleMappedOntapVolumesResponse, OracleSysFileTypes } from '../../workloads/oracle/common-types';
+
+const logger = getLogger();
+
+const volumeConfigData = storageGoldenConfigData.configuration.volume;
+
+interface StorageAssessment {
+    volumes: {
+        error: string;
+        data: Record<string, any>[];
+        filesystemId: string;
+    };
+}
+
+function getVolumeConfigDrift(storageAssessmentData: StorageAssessment) {
+    const { volumes } = storageAssessmentData;
+    const { data: volumesData, error } = volumes;
+
+    if (error) {
+        return [{ errorMessage: error }];
+    }
+
+    return volumeConfigData.map(config => {
+        const objectsInViolation: GenericViolationResponseType[] = [];
+        const objectsInViolationNames: string[] = [];
+
+        volumesData.forEach(volume => {
+            const value = volume[config.parameter];
+            if (value !== config.value) {
+                const objectName = volume.name || '';
+                objectsInViolation.push({
+                    objectName,
+                    value: value?.toString() || '',
+                    objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+                });
+                objectsInViolationNames.push(objectName);
+            }
+        });
+
+        return {
+            ...config,
+            recommended: config.value.toString(),
+            status: objectsInViolation.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+            objectsInViolation: objectsInViolationNames,
+            totalObjectsAssessed: volumesData.length,
+            totalObjectsInViolation: objectsInViolation.length,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            violationDetails: objectsInViolation
+        };
+    });
+}
+
+function getVolumeLayoutDrift(
+    databaseInstanceName: string,
+    fsxFileSystem: string,
+    mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>
+) {
+    const volumeLayoutDrift: StorageParameterDriftResponseType['layout'] = [];
+    const instanceVolumeMappings = mappedOntapVolumes[fsxFileSystem]?.volumeMappings?.find(
+        mapping => mapping[databaseInstanceName]
+    );
+    const volumeRecords = instanceVolumeMappings ? instanceVolumeMappings[databaseInstanceName].ontapVolumes : {};
+    const flattenedRecords = Object.entries(volumeRecords ?? {})?.flatMap(([type, volumes]) =>
+        volumes.map(volume => ({ type, volume }))
+    );
+
+    const volumeTypeToIdsMap = Object.values(OracleSysFileTypes).reduce((acc, type) => {
+        acc[type] = flattenedRecords.filter(record => record.type === type).map(({ volume }) => volume.volumeId);
+        return acc;
+    }, {} as Record<OracleSysFileTypes, string[]>);
+
+    const {
+        CONTROL_FILES: controlFileVolumeIds,
+        DATA_FILES: dataFileVolumeIds,
+        REDO_LOGS: redoLogVolumeIds,
+        ARCHIVE_LOGS: archiveLogVolumeIds,
+        TEMP_FILES: tempFileVolumeIds
+    } = volumeTypeToIdsMap;
+
+    const archiveLogConflicts = archiveLogVolumeIds.filter(volumeId =>
+        [controlFileVolumeIds, dataFileVolumeIds, redoLogVolumeIds, tempFileVolumeIds].flat().includes(volumeId)
+    );
+    volumeLayoutDrift.push({
+        ...storageGoldenConfigData.archivePlacement,
+        status: archiveLogConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+        objectsInViolation: archiveLogConflicts,
+        totalObjectsAssessed: archiveLogVolumeIds.length,
+        totalObjectsInViolation: archiveLogConflicts.length
+    });
+
+    const dataControlConflicts = controlFileVolumeIds.filter(volumeId =>
+        [...archiveLogVolumeIds, ...redoLogVolumeIds, ...tempFileVolumeIds].includes(volumeId)
+    );
+    volumeLayoutDrift.push({
+        ...storageGoldenConfigData.datafilesControlfilesPlacement,
+        status: dataControlConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+        objectsInViolation: dataControlConflicts,
+        totalObjectsAssessed: dataFileVolumeIds.length,
+        totalObjectsInViolation: dataControlConflicts.length
+    });
+
+    const redoTempConflicts = [
+        ...new Set(
+            [...redoLogVolumeIds, ...tempFileVolumeIds].filter(volumeId =>
+                [controlFileVolumeIds, dataFileVolumeIds, archiveLogVolumeIds].flat().includes(volumeId)
+            )
+        )
+    ];
+    volumeLayoutDrift.push({
+        ...storageGoldenConfigData.redologsTempPlacement,
+        status: redoTempConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+        objectsInViolation: redoTempConflicts,
+        totalObjectsAssessed: redoLogVolumeIds.length,
+        totalObjectsInViolation: redoTempConflicts.length
+    });
+
+    return volumeLayoutDrift;
+}
+
+function calculateStorageDrift(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    databaseInstanceName: string,
+    fsxFileSystemId: string,
+    mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
+    storageAssessmentData: StorageAssessment
+) {
+    logger.info('Calculating storage drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
+
+    if (isEmpty(storageAssessmentData)) {
+        const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
+        return { errorMessage };
+    }
+
+    const driftAssessmentData: StorageParameterDriftResponseType = {
+        configuration: { volumes: [] },
+        layout: []
+    };
+
+    logger.info('Fetching volume configuration drift');
+    driftAssessmentData.configuration.volumes = getVolumeConfigDrift(storageAssessmentData);
+    logger.info('Fetching volume layout drift');
+    driftAssessmentData.layout = getVolumeLayoutDrift(databaseInstanceName, fsxFileSystemId, mappedOntapVolumes);
+
+    return driftAssessmentData;
+}
+
+async function initiateStorageAssessmentCollection(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    parentJobId: string,
+    instanceRecord: WorkloadInstance
+) {
+    logger.info('Initiating storage assessment data collection for oracle instance', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        parentJobId,
+        instanceName: instanceRecord.name,
+        fsxId: instanceRecord.fsxFileSystem
+    });
+
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+
+    const {
+        resourceName,
+        id: databaseInstanceId,
+        name: databaseInstanceName,
+        activeNodeInstanceid,
+        mappedVolumesUuids,
+        fsxFileSystem
+    } = instanceRecord;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    try {
+        if (isEmpty(mappedVolumesUuids)) {
+            errorMessage = `Found no FSx for ONTAP volumes for the instance ${databaseInstanceName}.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+
+        const command = [VOLUME_LUN_CONFIGURATION(instanceRecord)];
+        const ssmComment = `Get Storage Configuration Assessment for Oracle instance ${resourceWithInstanceName}`;
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            activeNodeInstanceid,
+            ssmComment,
+            accountId,
+            false,
+            ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+            true,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        );
+
+        const parsedResponse = response ? sqlResponseParsing(response) : {};
+
+        await createDatabaseInstanceConfigData([
+            {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: databaseHostId,
+                database_instance_id: databaseInstanceId,
+                creation_time: new Date(Date.now()),
+                config_data_type: AssessmentCategories.STORAGE,
+                config_data: parsedResponse
+            }
+        ]);
+
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage configuration assessment',
+            description: 'Storage configuration assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: jobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
+        });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage layout assessment',
+            description: 'Storage layout assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: jobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
+        });
+    } catch (error) {
+        logger.error('Error while initiating storage assessment collection', {
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceName: databaseInstanceName,
+            fsxId: fsxFileSystem,
+            error
+        });
+        errorMessage = `Error while initiating storage assessment collection. ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    }
+}
+
+export { initiateStorageAssessmentCollection, calculateStorageDrift, StorageAssessment };

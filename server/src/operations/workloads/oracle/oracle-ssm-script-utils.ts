@@ -52,6 +52,7 @@ const getMappedOntapDataVolume = (
         check_status "Failed to get matching SVM with IP address"
 
         svmName=$(echo "$svmResult" | jq -r '.name')
+        svmId=$(echo "$svmResult" | jq -r '.uuid')
         check_status "Failed to extract SVM name"
 
         volEndpoint="storage/volumes?svm.name=$svmName&nas.path=$junctionPath"
@@ -59,6 +60,7 @@ const getMappedOntapDataVolume = (
         check_status "Failed to fetch volume endpoint data"
 
         mountedVolume=$(echo "$response" | jq -r '.records[0].name')
+        mountedVolumeId=$(echo "$response" | jq -r '.records[0].uuid')
         check_status "Failed to extract mounted volume name"
     fi
 `;
@@ -747,6 +749,8 @@ export {
     checkOracleModuleAvailability,
     installOracleDependentModules,
     checkAndInstallRequiredOracleDependentModules,
+    ontapRestApi,
+    checkCommandStatus,
     trendGraphCreateScriptForOracle,
     getMappedOntapDataVolume
 };

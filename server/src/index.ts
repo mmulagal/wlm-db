@@ -49,6 +49,7 @@ import discoverRoutes from './routes/discover';
 import storageSavingsRoutes from './routes/storage-savings';
 import onpremTcoRoutes from './routes/onprem-tco';
 import continuousOptimizationRoutes from './routes/continuous-optimization';
+import oracleContinuousOptimizationRoutes from './routes/oracle-continuous-optimization';
 import notificationRoutes from './routes/notification';
 import logsAnalyzerRoutes from './routes/logs-analyzer';
 import registerRoutes from './routes/register';
@@ -225,6 +226,7 @@ const app = fastify({
             sandboxRoutes(instance);
             registerRoutes(instance);
             ubrProtectionRoutes(instance);
+            oracleContinuousOptimizationRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }

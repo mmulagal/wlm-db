@@ -17,6 +17,11 @@ enum AssessmentCategories {
     HIGH_AVAILABILITY = 'high-availability'
 }
 
+enum AssessmentCategoriesOracle {
+    STORAGE = 'storage',
+    MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes'
+}
+
 enum AssessmentTriggeredBy {
     SYSTEM = 'system',
     USER = 'user'
@@ -369,5 +374,6 @@ export {
     STORAGE_CONFIGURATION_ASSESMENT_MAP,
     DISMISS_STATUS_ENUM,
     DEFAULT_MPIO_TIMEOUT,
-    OptimizeHighAvailabilityParams
+    OptimizeHighAvailabilityParams,
+    AssessmentCategoriesOracle
 };

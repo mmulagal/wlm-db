@@ -316,5 +316,6 @@ export {
     BulkOptimizeSharedStorageSchema,
     BulkOptimizeHeartbeatSchema,
     BulkOptimizeClusterQuorumSchema,
-    BulkOptimizeSQLServerServiceSchema
+    BulkOptimizeSQLServerServiceSchema,
+    resourceRequest
 };

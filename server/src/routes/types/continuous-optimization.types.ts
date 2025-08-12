@@ -674,6 +674,7 @@ export {
     SnapshotPolicyType,
     SnapshotPolicyDetails,
     SnapshotPolicyDetailsType,
+    OntapVolume,
     OntapVolumeType,
     AvailableSnapshotPoliciesResponse,
     AvailableSnapshotPoliciesResponseType,
@@ -686,6 +687,7 @@ export {
     OptimizePerHostRequestBody,
     OptimizePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType,
+    GenericViolationResponse,
     GenericViolationResponseType,
     OptimizeResiliencyBodyType,
     OptimizeResiliencyBody,
@@ -719,5 +721,6 @@ export {
     OptimizeHASharedStorageRequestBodyType,
     OptimizeHASharedStorageRequestBody,
     BulkOptimizeHASharedStorageRequestBodyType,
+    ErrorResponse,
     ErrorResponseType
 };

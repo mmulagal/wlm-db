@@ -403,7 +403,7 @@ describe('getPaginatedDatabaseInstances', () => {
 
         it('should support filtering by databaseType', async () => {
             const result = await getPaginatedDatabaseInstances(ACCOUNT_ID, {
-                databaseType: 'MS_SQL_SERVER',
+                databaseType: ['MS_SQL_SERVER'],
                 pageSize: 3
             });
 
@@ -435,7 +435,7 @@ describe('getPaginatedDatabaseInstances', () => {
             const result = await getPaginatedDatabaseInstances(ACCOUNT_ID, {
                 credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
                 region: DEFAULT_AWS_REGION,
-                databaseType: 'MS_SQL_SERVER',
+                databaseType: ['MS_SQL_SERVER'],
                 pageSize: 2
             });
 

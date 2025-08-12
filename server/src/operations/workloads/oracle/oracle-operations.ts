@@ -795,6 +795,7 @@ async function getOracleDatabaseMappedVolumes(
             logger.error(errorMessage);
             throw Error(errorMessage);
         }
+
         Array.from(mappedVolRes.keys()).forEach(async oracleSid => {
             const res = Object.fromEntries(mappedVolRes.get(oracleSid)?.entries() ?? []);
             createDatabaseInstanceConfigData([

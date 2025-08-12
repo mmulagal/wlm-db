@@ -983,6 +983,7 @@ const getMappedOntapDataVolumeForInstance = (
         local mountProtocol=$(echo "$mountDetail" | jq -r '.protocol')
         local isAsm=$(echo "$mountDetail" | jq -r '.isAsmManaged')
         local volumeName
+        local volumeId
         local lunName
         local volumeEntry
         local lunExists
@@ -999,12 +1000,13 @@ const getMappedOntapDataVolumeForInstance = (
         ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
         
         volumeName="$mountedVolume"
+        volumeId="$mountedVolumeId"
         
         if [ "$mountProtocol" == "iSCSI" ]; then
             # For iSCSI, extract LUN details
             lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
-            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\", \\"lunName\\": \\"$lunName\\"}"
-            
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\",\\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\", \\"svmId\\": \\"$svmId\\", \\"lunName\\": \\"$lunName\\"}"
+
             lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
             if [ -z "$lunExists" ]; then
                 lunRecord="{\\"name\\": \\"$(echo "$response" | jq -r '.records[0].name')\\", \\"serial\\": \\"$mountPoint\\"}"
@@ -1012,7 +1014,7 @@ const getMappedOntapDataVolumeForInstance = (
             fi
         else
             # For NFS
-            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"svmName\\": \\"$svmName\\"}"
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\",\\"svmId\\": \\"$svmId\\"}"
         fi
         
         fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
@@ -1023,7 +1025,7 @@ const getMappedOntapDataVolumeForInstance = (
     volumeMappings="[]"
     lunRecords="[]"
     protocol=""
-    echo "DEBUG: Mount point data: $mountPointData" >&2
+    
     for sid in $(echo "$mountPointData" | jq -r 'keys[]'); do
         sidData=$(echo "$mountPointData" | jq -r --arg sid "$sid" '.[$sid]')
         isCDB=$(echo "$sidData" | jq -r '.isCDB')
@@ -1097,7 +1099,7 @@ const getMappedOntapDataVolumeForInstance = (
             protocol: $protocol,
             lunRecords: $lunRecords,
             isASMManaged: ($isASMManaged == "true"),
-            VolumeMappings: $volumeMappings
+            volumeMappings: $volumeMappings
         }')
     
     echo "$result" | tr -d '\n' | tr -d ' '

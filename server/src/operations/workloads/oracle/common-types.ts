@@ -18,4 +18,27 @@ enum OracleSysFileTypes {
     CONTROL_FILES = 'CONTROL_FILES'
 }
 
-export { OracleInstanceMountpointResponse, MountPointDetails, OracleSysFileTypes };
+interface OracleVolumeRecord {
+    volumeId: string;
+    volumeName: string;
+    svmUuid: string;
+    svmName: string;
+}
+interface OracleMappedOntapVolumeRecord {
+    isCDB?: boolean;
+    ontapVolumes?: Record<string, OracleVolumeRecord[]>;
+}
+interface OracleMappedOntapVolumesResponse {
+    isASMManaged?: boolean;
+    protocol?: string;
+    volumeMappings?: [Record<string, OracleMappedOntapVolumeRecord>];
+}
+
+export {
+    OracleInstanceMountpointResponse,
+    MountPointDetails,
+    OracleSysFileTypes,
+    OracleMappedOntapVolumesResponse,
+    OracleMappedOntapVolumeRecord,
+    OracleVolumeRecord
+};

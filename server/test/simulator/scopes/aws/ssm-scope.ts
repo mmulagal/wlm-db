@@ -1376,7 +1376,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'oracleMappedVolumeDetails',
-            '{"protocol":"NFS","lunRecords":[],"isASMManaged":false,"VolumeMappings":[{"oradbsan":{"isCDB":false,"ontapVolumes":{"REDO_LOGS":[{"volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}],"ARCHIVE_LOGS":[{"volumeName":"log_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}],"CONTROL_FILES":[{"volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"},{"volumeName":"oraredoctl_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}],"TEMP_FILES":[{"volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}],"DATA_FILES":[{"volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083"}]}}}]}'
+            '{"protocol":"NFS","lunRecords":[],"isASMManaged":false,"volumeMappings":[{"oradbsan":{"isCDB":false,"ontapVolumes":{"REDO_LOGS":[{"volumeId":"volumeId1", "volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083", "svmId":"svmId1"}],"ARCHIVE_LOGS":[{"volumeId":"volumeId2","volumeName":"log_180725000939","svmName":"wlmdb_sqlsvm_1733286308083", "svmId":"svmId2"}],"CONTROL_FILES":[{"volumeId":"volumeId3","volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083", "svmId":"svmId3"},{"volumeId":"volumeId4","volumeName":"oraredoctl_180725000939","svmName":"wlmdb_sqlsvm_1733286308083", "svmId":"svmId4"}],"TEMP_FILES":[{"volumeId":"volumeId5","volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083", "svmId":"svmId5"}],"DATA_FILES":[{"volumeId":"volumeId6","volumeName":"data_180725000939","svmName":"wlmdb_sqlsvm_1733286308083", "svmId":"svmId1"}]}}}]}'
         )
     )
     .on(GetCommandInvocationCommand, {

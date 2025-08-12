@@ -75,7 +75,7 @@ export default async function processWellArchitectedAssessmentNotifications(init
             // Using await in the loop is appropriate here because each page must be processed before fetching the next.
             // eslint-disable-next-line no-await-in-loop
             const response = await getPaginatedDatabaseInstances(undefined, {
-                databaseType: DatabaseTypes.MS_SQL_SERVER,
+                databaseType: [DatabaseTypes.MS_SQL_SERVER, DatabaseTypes.ORACLE],
                 shouldIncludeResource: true,
                 additionalResourceFields: ['assessment_results'],
                 pageSize: PAGE_SIZE,

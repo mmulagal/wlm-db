@@ -733,7 +733,7 @@ async function listDatabaseInstances(accountId?: string, record?: ListDatabaseIn
         ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
         ...(region && { region }),
         ...(isDefault && { is_default: isDefault }),
-        ...(databaseType && { database_type: databaseType })
+        ...(databaseType && { database_type: { in: databaseType } })
     };
 
     const select = buildDatabaseInstancesSelect(selectKeys, shouldIncludeResource, additionalResourceFields);

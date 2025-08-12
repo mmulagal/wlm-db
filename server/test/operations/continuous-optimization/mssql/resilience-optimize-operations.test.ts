@@ -1,26 +1,29 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/pricing-scope';
-import '../../simulator/scopes/aws/compute-optimizer-scope';
-import '../../simulator/scopes/aws/cloud-watch-scope';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/aws/ec2-scope';
-import '../../simulator/scopes/aws/ssm-scope';
-import '../../simulator/scopes/aws/fsx-scope';
-import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
+import { createResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
+import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
+import '../../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
+import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import '../../../simulator/scopes/aws/pricing-scope';
+import '../../../simulator/scopes/aws/compute-optimizer-scope';
+import '../../../simulator/scopes/aws/cloud-watch-scope';
+import '../../../simulator/scopes/opentelemetry-scope';
+import '../../../simulator/scopes/aws/ec2-scope';
+import '../../../simulator/scopes/aws/ssm-scope';
+import '../../../simulator/scopes/aws/fsx-scope';
+import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
     getAvailableSnapshotPolicyList,
-    handleResiliecyOptimize
-} from '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations';
-import { RESOURCE_ID } from '../../../src/utils/consts';
+    handleResiliecyOptimize,
+    handleSharedStorageOptimize,
+    optimizeHighAvailabilityConfiguration,
+    optimizeSqlServerService
+} from '../../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations';
+import { RESOURCE_ID } from '../../../../src/utils/consts';
 import {
     OPTIMIZE_RESILIENCY_CONFIGS,
     OptimizeHighAvailabilityParams
-} from '../../../src/utils/continous-optimization-consts';
-import { registerJob } from '../../../src/operations/database/job-operations';
+} from '../../../../src/utils/continous-optimization-consts';
+import { registerJob } from '../../../../src/operations/database/job-operations';
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -108,10 +111,6 @@ describe('Optimize High Availability Configuration', () => {
     });
 
     it('should successfully optimize heartbeat settings configuration', async () => {
-        const { optimizeHighAvailabilityConfiguration } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(
             optimizeHighAvailabilityConfiguration(
                 ACCOUNT_ID,
@@ -126,10 +125,6 @@ describe('Optimize High Availability Configuration', () => {
     });
 
     it('should successfully optimize cluster quorum configuration', async () => {
-        const { optimizeHighAvailabilityConfiguration } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(
             optimizeHighAvailabilityConfiguration(
                 ACCOUNT_ID,
@@ -144,10 +139,6 @@ describe('Optimize High Availability Configuration', () => {
     });
 
     it('should throw error for invalid configuration name', async () => {
-        const { optimizeHighAvailabilityConfiguration } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(
             optimizeHighAvailabilityConfiguration(
                 ACCOUNT_ID,
@@ -162,10 +153,6 @@ describe('Optimize High Availability Configuration', () => {
     });
 
     it('should throw error for non-existent database host', async () => {
-        const { optimizeHighAvailabilityConfiguration } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(
             optimizeHighAvailabilityConfiguration(
                 ACCOUNT_ID,
@@ -198,10 +185,6 @@ describe('Optimize High Availability Configuration', () => {
             }
         });
 
-        const { optimizeHighAvailabilityConfiguration } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(
             optimizeHighAvailabilityConfiguration(
                 ACCOUNT_ID,
@@ -233,10 +216,6 @@ describe('Optimize SQL Server Service', () => {
     });
 
     it('should successfully optimize SQL Server service configuration', async () => {
-        const { optimizeSqlServerService } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(
             optimizeSqlServerService(
                 ACCOUNT_ID,
@@ -250,10 +229,6 @@ describe('Optimize SQL Server Service', () => {
     }, 120000); // 120 second timeout for complex integration test
 
     it('should throw error for non-existent database host in SQL service optimization', async () => {
-        const { optimizeSqlServerService } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(
             optimizeSqlServerService(
                 ACCOUNT_ID,
@@ -285,10 +260,6 @@ describe('Optimize SQL Server Service', () => {
             }
         });
 
-        const { optimizeSqlServerService } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(
             optimizeSqlServerService(
                 ACCOUNT_ID,
@@ -319,10 +290,6 @@ describe('Handle Shared Storage Optimize', () => {
     });
 
     it('should successfully handle shared storage optimization with valid data', async () => {
-        const { handleSharedStorageOptimize } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         const hostsToOptimize = [
             {
                 configurationName: OptimizeHighAvailabilityParams.SHARED_STORAGE,
@@ -346,18 +313,10 @@ describe('Handle Shared Storage Optimize', () => {
     });
 
     it('should handle empty hosts list gracefully', async () => {
-        const { handleSharedStorageOptimize } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         await expect(handleSharedStorageOptimize(ACCOUNT_ID, [], parentJobId)).resolves.not.toThrow();
     });
 
     it('should handle hosts with no instances gracefully', async () => {
-        const { handleSharedStorageOptimize } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         const hostsToOptimize = [
             {
                 configurationName: OptimizeHighAvailabilityParams.SHARED_STORAGE,
@@ -376,10 +335,6 @@ describe('Handle Shared Storage Optimize', () => {
     });
 
     it('should handle a host with multiple instances', async () => {
-        const { handleSharedStorageOptimize } = await import(
-            '../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations'
-        );
-
         const hostsToOptimize = [
             {
                 configurationName: OptimizeHighAvailabilityParams.SHARED_STORAGE,

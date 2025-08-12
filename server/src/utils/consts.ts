@@ -158,7 +158,8 @@ enum RouteTags {
     ONPREM_TCO = 'OnPremises TCO',
     NOTIFICATION = 'Notification',
     LOGS_ANALYSIS = 'Logs Analysis',
-    REGISTER = 'Register'
+    REGISTER = 'Register',
+    ORACLE_ASSESSMENT = 'Well Architected - Oracle'
 }
 
 enum HttpErrorCodes {

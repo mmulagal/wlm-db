@@ -13,6 +13,7 @@ import {
 } from './continuous-optimization/mssql/assessment-operations';
 import { formatDuration, sleep } from '../utils/utils';
 import { INSTANCE_DEFAULT_SELECT_FIELDS } from '../utils/database-consts';
+import { triggerOracleAssessment } from './continuous-optimization/oracle/assessment-operations';
 
 const logger = getLogger();
 
@@ -133,16 +134,29 @@ async function processAccountInstancesBatch(
         // Instance-level assessments
         const instanceAssessmentWithErrors = await Promise.allSettled(
             instances.map(
-                throat(3, async instance =>
-                    triggerMssqlAssessment(instance, parentJobId, [
-                        AssessmentCategories.STORAGE,
-                        AssessmentCategories.AWS_BACKUP,
-                        AssessmentCategories.CRR,
-                        AssessmentCategories.CLONE,
-                        AssessmentCategories.MAXDOP,
-                        AssessmentCategories.HIGH_AVAILABILITY
-                    ])
-                )
+                throat(3, async instance => {
+                    const { database_instance_id: databaseInstanceId, database_type: databaseType } = instance;
+                    switch (databaseType) {
+                        case DatabaseTypes.MS_SQL_SERVER:
+                            await triggerMssqlAssessment(instance, parentJobId, [
+                                AssessmentCategories.STORAGE,
+                                AssessmentCategories.AWS_BACKUP,
+                                AssessmentCategories.CRR,
+                                AssessmentCategories.CLONE,
+                                AssessmentCategories.MAXDOP,
+                                AssessmentCategories.HIGH_AVAILABILITY
+                            ]);
+                            break;
+                        case DatabaseTypes.ORACLE:
+                            await triggerOracleAssessment(instance, parentJobId, [AssessmentCategories.STORAGE]);
+                            break;
+                        default:
+                            logger.error(
+                                `Unsupported database type ${databaseType} for instance ${databaseInstanceId}. Skipping assessment.`
+                            );
+                            break;
+                    }
+                })
             )
         );
 
@@ -291,7 +305,7 @@ async function cronAssessmentCollection(initiatedBy: string) {
                 // Using await in the loop is appropriate here because each page must be processed before fetching the next.
                 // eslint-disable-next-line no-await-in-loop
                 const response = await getPaginatedDatabaseInstances(undefined, {
-                    databaseType: DatabaseTypes.MS_SQL_SERVER,
+                    databaseType: [DatabaseTypes.MS_SQL_SERVER, DatabaseTypes.ORACLE],
                     shouldIncludeResource: true,
                     pageSize: PAGE_SIZE,
                     nextToken,

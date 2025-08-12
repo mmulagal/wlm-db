@@ -19,7 +19,7 @@ import {
     AwsWellArchitecturedPillars,
     ASSESSMENT_RESOURCE_TYPE
 } from '../../../utils/continous-optimization-consts';
-import storageGoldenConfigData from '../golden-configs/storage';
+import storageGoldenConfigData from './golden-config';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../../utils/consts';
 import {
     DatabaseInstance,
