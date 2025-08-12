@@ -435,6 +435,11 @@ export const workloadFactoryResourceApiV2 = createApi({
                 url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
             })
         }),
+        getOracleOverviewDetails: builder.mutation({
+            query: ({ credentialId, region, id, sqlInstanceId }) => ({
+                url: `v1/oracle/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
+            })
+        }),
         generateDiagram: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/generate-diagram`,
@@ -1425,6 +1430,7 @@ export const {
 
 export const {
     useLazyGetResourceDetailsV2Query,
+    useGetOracleOverviewDetailsMutation,
     useGenerateDiagramMutation,
     useGetDatabaseListV2Query,
     useLazyGetDatabaseListV2Query

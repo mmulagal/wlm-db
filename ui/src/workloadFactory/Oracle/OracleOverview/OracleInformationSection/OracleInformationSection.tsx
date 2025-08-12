@@ -9,7 +9,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import OracleServer from '../../../ResourcePage/InformationSection/SQLServer/OracleServer';
 
 const OracleInformationSection = () => {
-    const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const { resourceLoading, resourceDetails } = useAppSelector(state => state.oracleSlice);
     const [openKey, setOpenKey] = useState('');
     const disabled: boolean = resourceLoading;
 
@@ -29,9 +29,24 @@ const OracleInformationSection = () => {
 
             <div className={styles.accordionSection}>
                 <OracleServer handleToggle={handleToggle} openKey={openKey} />
-                <Location handleToggle={handleToggle} openKey={openKey} resourceDetails={resourceDetails} />
-                <StorageCompute handleToggle={handleToggle} openKey={openKey} resourceDetails={resourceDetails} />
-                <ISConnectivity handleToggle={handleToggle} openKey={openKey} resourceDetails={resourceDetails} />
+                <Location
+                    handleToggle={handleToggle}
+                    openKey={openKey}
+                    resourceDetails={resourceDetails}
+                    resourceLoading={resourceLoading}
+                />
+                <StorageCompute
+                    handleToggle={handleToggle}
+                    openKey={openKey}
+                    resourceDetails={resourceDetails}
+                    resourceLoading={resourceLoading}
+                />
+                <ISConnectivity
+                    handleToggle={handleToggle}
+                    openKey={openKey}
+                    resourceDetails={resourceDetails}
+                    resourceLoading={resourceLoading}
+                />
             </div>
         </div>
     );

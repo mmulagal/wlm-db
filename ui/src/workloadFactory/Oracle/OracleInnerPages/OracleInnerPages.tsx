@@ -8,11 +8,31 @@ import { useAppSelector } from '../../../store/storeHooks';
 import OracleTabs from './OracleTabs/OracleTabs';
 import OracleWellArchitectDashboard from '../OracleWellArchitectDashboard/OracleWellArchitectDashboard';
 import OracleOverview from '../OracleOverview/OracleOverview';
+import {
+    resetOracleResourceVisitedTabs,
+    setOracleResourceVisitedTabs
+} from '../../../store/workloadFactory/oracleSlice';
+import { useEffect } from 'react';
 
 const OracleInnerPages = () => {
     const dispatch = useDispatch();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
-    const { selectedOracleInnerPageTab } = useAppSelector(state => state.oracleSlice);
+    const { selectedOracleInnerPageTab, visitedTabs } = useAppSelector(state => state.oracleSlice);
+
+    // Reset visited tabs when leaving the dashboard
+    useEffect(
+        () => () => {
+            dispatch(resetOracleResourceVisitedTabs());
+        },
+        [dispatch]
+    );
+
+    // Mark the current tab as visited when the component mounts
+    useEffect(() => {
+        if (!visitedTabs[selectedOracleInnerPageTab]) {
+            dispatch(setOracleResourceVisitedTabs(selectedOracleInnerPageTab));
+        }
+    }, [selectedOracleInnerPageTab, visitedTabs, dispatch]);
     return (
         <div className={styles['oracle-inner-pages']}>
             <div className={`${commonStyles.commonBreadCrumb} ${styles.breadCrumb}`} style={{ left: '0%' }}>

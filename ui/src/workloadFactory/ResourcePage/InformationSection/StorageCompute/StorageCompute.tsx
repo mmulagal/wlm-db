@@ -17,9 +17,10 @@ type accordionType = {
     handleToggle: any;
     openKey: string;
     resourceDetails: any;
+    resourceLoading: boolean;
 };
 
-const StorageCompute = ({ handleToggle, openKey, resourceDetails }: accordionType) => {
+const StorageCompute = ({ handleToggle, openKey, resourceDetails, resourceLoading }: accordionType) => {
     const { setDialog } = useDialog();
 
     const { t } = useTranslation();
@@ -167,6 +168,7 @@ const StorageCompute = ({ handleToggle, openKey, resourceDetails }: accordionTyp
     return (
         <div className="">
             <DbAccordion
+                resourceLoading={resourceLoading}
                 heading="Storage & Compute"
                 toggle={handleToggle}
                 open={openKey === 'Storage & Compute'}

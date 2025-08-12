@@ -4,16 +4,16 @@ import IOPSCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview
 import LatencyCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/LatencyCard/LatencyCard';
 import ResourceHeader from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ResourceHeader/ResourceHeader';
 import ThroughputCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ThroughputCard/ThroughputCard';
-import DatabaseHostOverviewApiV2 from '../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
+import OracleResourceOverviewApi from '../OracleWellArchitectDashboard/OracleResourceOverviewApi';
 import OracleInformationSection from './OracleInformationSection/OracleInformationSection';
 import styles from './OracleOverview.module.scss';
 
 const OracleOverview = () => {
-    const { resourceLoading, resourceDetails, selectedHostname, selectedDatabaseInstanceName } = useAppSelector(
-        state => state.workloadFactoryResource
-    );
+    const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.workloadFactoryResource);
 
-    DatabaseHostOverviewApiV2();
+    const { resourceLoading, resourceDetails } = useAppSelector(state => state.oracleSlice);
+
+    OracleResourceOverviewApi();
     return (
         <div className={styles.oracleOverview}>
             <div className={styles.leftSide}>

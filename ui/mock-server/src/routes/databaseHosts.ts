@@ -6,17 +6,15 @@ import DatabaseHosts from '../data/databaseHosts.json';
 import JobsSummary from '../data/jobsSummary.json';
 import JobsSummaryTimeline from '../data/jobsSummaryTimeline.json';
 import Templates from '../data/template.json';
-import TerraformSetup from '../data/terraformSetup.json';
 import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
-import optimizeBulkJobs from '../data/optimizeBulkJobs.json';
-import registerBulkJobs from '../data/registerBulkJob.json';
 import DiscoverEC2 from '../data/discoverEc2V2.json';
 import DiscoverOracle from '../data/discoverOracle.json';
 import DiscoverPgsql from '../data/discoverPgsql.json';
 import CredentialsStatus from '../data/credentialsStatus.json';
 import ManagedInstanceList from '../data/managedInstanceList.json';
 import MssqlInstanceData from '../data/mssqlInstance.json';
+import OracleOverviewData from '../data/oracleOverview.json';
 
 const router = require('express').Router();
 
@@ -46,6 +44,14 @@ router.get(
     async (req: {}, res: any) => {
         await delay(3000);
         generateResponse(res, 200, MssqlInstanceData);
+    }
+);
+
+router.get(
+    `${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/database-hosts/:id/database-instances/:instanceId`,
+    async (req: {}, res: any) => {
+        await delay(3000);
+        generateResponse(res, 200, OracleOverviewData);
     }
 );
 
@@ -124,36 +130,31 @@ router.get(
     }
 );
 
-router.post(
-    `${BASE_URL}/v1/register-credentials`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, 
+router.post(`${BASE_URL}/v1/register-credentials`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            items: [
                 {
-                    items: [
+                    ec2InstanceId: 'i-0aa85d4735ae74bf6',
+                    credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd5',
+                    region: 'ap-southeast-1',
+                    error: '',
+                    registerDetails: [
                         {
-                            "ec2InstanceId": "i-0aa85d4735ae74bf6",
-                            "credentialsId": "3ad8702c-a2fd-48d2-be50-1ba6ce83acd5",
-                            "region": "ap-southeast-1",
-                            "error": "",
-                            "registerDetails": [
-                                {
-                                    "resourceId": "fs-0420e46c6ee7561ed",
-                                    "databaseCount": "5",
-                                    "databaseServerEdition": "a",
-                                    "databaseServerError": "",
-                                    "fsxnError": "",
-                                    "requiredModuleError": "",
-                                    "manageReadiness": []
-                                }
-                            ]
+                            resourceId: 'fs-0420e46c6ee7561ed',
+                            databaseCount: '5',
+                            databaseServerEdition: 'a',
+                            databaseServerError: '',
+                            fsxnError: '',
+                            requiredModuleError: '',
+                            manageReadiness: []
                         }
                     ]
                 }
-            );
-        }, 5000);
-    }
-);
+            ]
+        });
+    }, 5000);
+});
 
 router.post(
     `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/manage`,
@@ -176,13 +177,10 @@ router.post(
     }
 );
 
-router.get(
-    `${BASE_URL}/v1/managed-hosts`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, ManagedInstanceList);
-        }, 10);
-    }
-);
+router.get(`${BASE_URL}/v1/managed-hosts`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, ManagedInstanceList);
+    }, 10);
+});
 
 export default router;

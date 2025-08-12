@@ -2,16 +2,16 @@ import { Typography } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 
 type accordionType = {
     handleToggle: any;
     openKey: string;
     resourceDetails: any;
+    resourceLoading: boolean;
 };
 
-const ISConnectivity = ({ handleToggle, openKey, resourceDetails }: accordionType) => {
+const ISConnectivity = ({ handleToggle, openKey, resourceDetails, resourceLoading }: accordionType) => {
     const contentArea = () => (
         <>
             <div className={commonStyles.row}>
@@ -33,6 +33,7 @@ const ISConnectivity = ({ handleToggle, openKey, resourceDetails }: accordionTyp
     return (
         <div className="">
             <DbAccordion
+                resourceLoading={resourceLoading}
                 heading="Connectivity"
                 toggle={handleToggle}
                 open={openKey === 'Connectivity'}

@@ -2,18 +2,16 @@ import { Typography } from '@netapp/design-system';
 import { ReactComponent as Add } from '../../../../assets/ic_add.svg';
 import { ReactComponent as Remove } from '../../../../assets/ic_remove.svg';
 import styles from './DBAccordion.module.scss';
-import { useAppSelector } from '../../../../store/storeHooks';
 
 type AccordionContent = {
     heading: string;
     content: any;
     toggle: any;
     open: boolean;
+    resourceLoading?: boolean;
 };
 
-const DbAccordion = ({ heading, toggle, open, content }: AccordionContent) => {
-    const { resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
-
+const DbAccordion = ({ heading, toggle, open, content, resourceLoading }: AccordionContent) => {
     return (
         <div className={resourceLoading ? `${styles.dbAccordion} ${styles.disabledApplied}` : `${styles.dbAccordion}`}>
             <div

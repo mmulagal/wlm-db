@@ -32,9 +32,24 @@ const InformationSection = () => {
 
             <div className={styles.accordionSection}>
                 <SQLServer handleToggle={handleToggle} openKey={openKey} />
-                <Location handleToggle={handleToggle} openKey={openKey} resourceDetails={resourceDetails} />
-                <StorageCompute handleToggle={handleToggle} openKey={openKey} resourceDetails={resourceDetails} />
-                <ISConnectivity handleToggle={handleToggle} openKey={openKey} resourceDetails={resourceDetails} />
+                <Location
+                    handleToggle={handleToggle}
+                    openKey={openKey}
+                    resourceDetails={resourceDetails}
+                    resourceLoading={resourceLoading}
+                />
+                <StorageCompute
+                    handleToggle={handleToggle}
+                    openKey={openKey}
+                    resourceDetails={resourceDetails}
+                    resourceLoading={resourceLoading}
+                />
+                <ISConnectivity
+                    handleToggle={handleToggle}
+                    openKey={openKey}
+                    resourceDetails={resourceDetails}
+                    resourceLoading={resourceLoading}
+                />
                 <ISActiveDirectory handleToggle={handleToggle} openKey={openKey} />
             </div>
         </div>

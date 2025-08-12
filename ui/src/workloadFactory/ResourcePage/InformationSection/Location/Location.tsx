@@ -9,9 +9,10 @@ type accordionType = {
     handleToggle: any;
     openKey: string;
     resourceDetails: any;
+    resourceLoading: boolean;
 };
 
-const Location = ({ handleToggle, openKey, resourceDetails }: accordionType) => {
+const Location = ({ handleToggle, openKey, resourceDetails, resourceLoading }: accordionType) => {
     const contentArea = () => (
         <>
             <div className={commonStyles.row}>
@@ -104,6 +105,7 @@ const Location = ({ handleToggle, openKey, resourceDetails }: accordionType) => 
     return (
         <div className="">
             <DbAccordion
+                resourceLoading={resourceLoading}
                 heading="Location"
                 toggle={handleToggle}
                 open={openKey === 'Location'}

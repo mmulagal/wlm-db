@@ -14,7 +14,7 @@ type oracleServer = {
 
 const OracleServer = ({ handleToggle, openKey }: oracleServer) => {
     const { t } = useTranslation();
-    const { resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const { resourceDetails } = useAppSelector(state => state.oracleSlice);
     const contentArea = () => (
         <>
             <div className={commonStyles.row}>
