@@ -1504,7 +1504,7 @@ Function Get-FCIName {
 }
 `;
 
-const trendGraphCreateScript = (databaseHostId: string, ec2InstanceId: string) => `
+const trendGraphCreateScriptForMssql = (databaseHostId: string, ec2InstanceId: string) => `
 Start-Transcript -Path "C:\\cfn\\log\\instance_performance_collection.log.txt" -Append | Out-Null
 
 $moduleFound = Get-Module -ListAvailable -Name AWS.Tools.CloudWatch
@@ -1824,7 +1824,7 @@ export {
     sqlQueryExecutionWithAuth,
     compressResponse,
     GET_FCI_NAME,
-    trendGraphCreateScript,
+    trendGraphCreateScriptForMssql,
     GET_NODE_IP_ADDRESS,
     GET_FQDN
 };

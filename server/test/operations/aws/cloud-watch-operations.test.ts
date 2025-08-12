@@ -39,7 +39,7 @@ describe('getSqlInstanceUtilizationAndPerformance', () => {
     const region = 'us-west-2';
     const credentialsId = 'cred-abc';
     const databaseHostId = 'host-xyz';
-    const databaseInstances = [{ database_instance_name: 'db1' }, { database_instance_name: 'db2' }];
+    const databaseInstances = ['db1', 'db2'];
 
     it('should return formatted performance metrics data for each instance', async () => {
         const result = await getSqlInstanceUtilizationAndPerformance(

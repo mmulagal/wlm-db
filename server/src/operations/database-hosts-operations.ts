@@ -119,8 +119,10 @@ import {
     getOracleDatabaseInstancesDetails,
     getOracleDatabaseInstancesSummary
 } from './workloads/oracle/oracle-operations';
-import { trendGraphCreateScript } from './workloads/mssql/ssm-script-utils';
+import { trendGraphCreateScriptForMssql } from './workloads/mssql/ssm-script-utils';
+import { trendGraphCreateScriptForOracle } from './workloads/oracle/oracle-ssm-script-utils';
 import { getPaginatedDatabaseInstances, getResources, populateDbInstances } from './database/database-operations';
+import { SSM_RUN_SHELL_SCRIPT_DOC } from './workloads/pgsql/const';
 
 const logger = getLogger();
 
@@ -2123,7 +2125,7 @@ async function getDatabaseInstancesSummary(
                               region,
                               credentialsId,
                               databaseHostId,
-                              databaseInstances
+                              databaseInstances.map(instance => instance.database_instance_name)
                           )
                       ]
                     : [Promise.resolve()])
@@ -2408,15 +2410,16 @@ async function triggerInstancePerformanceAssessment(initiatedBy: string) {
             // Using await in the loop is appropriate here because each page must be processed before fetching the next.
             // eslint-disable-next-line no-await-in-loop
             const response = await getResources({
-                resourceType: [RESOURCESTYPE.MSSQL],
+                resourceType: [RESOURCESTYPE.MSSQL, RESOURCESTYPE.ORACLE],
                 pageSize: PAGE_SIZE,
-                nextToken
+                nextToken,
+                includeDatabaseInstances: true
             });
 
             const { items: batchManagedResources, nextToken: newNextToken } = response;
 
             if (isEmpty(batchManagedResources)) {
-                logger.info('No more managed MSSQL database hosts found. Processing completed.');
+                logger.info('No more managed database hosts found. Processing completed.');
                 break;
             }
 
@@ -2479,9 +2482,11 @@ async function processResourcesBatch(
                 const {
                     metadata,
                     resource_id: databaseHostId,
+                    resource_type: resourceType,
                     region,
                     credentials_id: credentialsId,
-                    account_id: accountId
+                    account_id: accountId,
+                    database_instances: dbInstances
                 } = resource;
 
                 try {
@@ -2491,7 +2496,9 @@ async function processResourcesBatch(
                         region!,
                         databaseHostId!,
                         metadata,
-                        batchNumber
+                        batchNumber,
+                        resourceType as RESOURCESTYPE,
+                        dbInstances?.map(dbInstance => dbInstance.database_instance_name) || []
                     );
 
                     // Mark as processed after successful processing
@@ -2521,7 +2528,9 @@ async function processResourceNodes(
     region: string,
     databaseHostId: string,
     metadata: any,
-    batchNumber: number
+    batchNumber: number,
+    resourceType: RESOURCESTYPE,
+    dbInstanceNames: string[] = []
 ) {
     logger.info('Processing resource metadata for performance assessment', {
         accountId,
@@ -2551,7 +2560,14 @@ async function processResourceNodes(
                                 batchNumber
                             });
 
-                            const command = trendGraphCreateScript(databaseHostId, nodeId);
+                            let command;
+                            if (resourceType === RESOURCESTYPE.MSSQL) {
+                                command = trendGraphCreateScriptForMssql(databaseHostId, nodeId);
+                            } else {
+                                // Any one oracle db sid is needed
+                                const [dbSid] = dbInstanceNames;
+                                command = trendGraphCreateScriptForOracle(dbSid, nodeId);
+                            }
                             const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
 
                             await callSsmExecution(
@@ -2562,7 +2578,9 @@ async function processResourceNodes(
                                 ssmComment,
                                 accountId,
                                 true,
-                                CUSTOM_SSM_EXECUTION_TIMEOUT
+                                CUSTOM_SSM_EXECUTION_TIMEOUT,
+                                false,
+                                SSM_RUN_SHELL_SCRIPT_DOC
                             );
 
                             logger.info('Successfully triggered performance assessment for node', {

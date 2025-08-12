@@ -630,6 +630,113 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
         fi
 `;
 
+const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) => `
+    oracleSid="${dbSid}"
+    ec2InstanceId="${ec2InstanceId}"
+
+    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+
+    jsonPayload=$(sudo -i -u oracle bash <<EOF
+        set -e
+        export ORACLE_SID="$oracleSid"
+        $sqlplus_command
+        WHENEVER SQLERROR EXIT SQL.SQLCODE
+        SET HEADING OFF FEEDBACK OFF PAGESIZE 0 VERIFY OFF ECHO OFF TRIMSPOOL ON
+        SET LINESIZE 32767
+        SET LONG  1000000
+        SET TRIMOUT ON
+        SET TRIMSPOOL ON
+
+        WITH
+            sysMetric AS (
+                SELECT
+                    MAX(CASE WHEN METRIC_NAME='CPU Usage Per Sec'                 THEN VALUE END)   AS maxCpu,
+                    MAX(CASE WHEN METRIC_NAME='Physical Read IO Requests Per Sec' THEN VALUE END)   AS readIops,
+                    MAX(CASE WHEN METRIC_NAME='Physical Write IO Requests Per Sec' THEN VALUE END)  AS writeIops,
+                    MAX(CASE WHEN METRIC_NAME='Physical Read Bytes Per Sec'       THEN VALUE END)/1024 AS readKBps,
+                    MAX(CASE WHEN METRIC_NAME='Physical Write Bytes Per Sec'      THEN VALUE END)/1024 AS writeKBps
+                FROM V\\$SYSMETRIC_HISTORY
+                WHERE METRIC_NAME IN (
+                'CPU Usage Per Sec',
+                'Physical Read IO Requests Per Sec',
+                'Physical Write IO Requests Per Sec',
+                'Physical Read Bytes Per Sec',
+                'Physical Write Bytes Per Sec'
+                )
+                AND BEGIN_TIME >= SYSDATE - INTERVAL '24' HOUR
+            ),
+            cpuCores AS (
+                SELECT
+                    MAX(CASE WHEN stat_name='NUM_CPU_CORES' THEN VALUE END) AS cores
+                FROM V\\$OSSTAT
+            ),
+            ioStats AS (
+                SELECT
+                    NVL(SUM(readtim),0)/DECODE(NVL(SUM(phyrds),0),0,1,SUM(phyrds))   AS avgReadLat,
+                    NVL(SUM(writetim),0)/DECODE(NVL(SUM(phywrts),0),0,1,SUM(phywrts)) AS avgWriteLat
+                FROM V\\$FILESTAT
+            )
+            SELECT JSON_OBJECT(
+                'maxCpuSec'    VALUE sysMetric.maxCpu,
+                'numCores'     VALUE cpuCores.cores,
+                'maxReadIops'  VALUE sysMetric.readIops,
+                'maxWriteIops' VALUE sysMetric.writeIops,
+                'maxReadKbps'  VALUE sysMetric.readKBps,
+                'maxWriteKbps' VALUE sysMetric.writeKBps,
+                'avgReadLatMs' VALUE ioStats.avgReadLat,
+                'avgWriteLatMs' VALUE ioStats.avgWriteLat
+            )
+            FROM sysMetric
+            CROSS JOIN cpuCores
+            CROSS JOIN ioStats;
+            EXIT;
+EOF
+)
+
+    maxCpuSec=$(   echo "\${jsonPayload}" | jq -r '.maxCpuSec'   )
+    numCores=$(    echo "\${jsonPayload}" | jq -r '.numCores'    )
+    maxReadIops=$( echo "\${jsonPayload}" | jq -r '.maxReadIops' )
+    maxWriteIops=$(echo "\${jsonPayload}" | jq -r '.maxWriteIops')
+    maxReadKbps=$( echo "\${jsonPayload}" | jq -r '.maxReadKbps' )
+    maxWriteKbps=$(echo "\${jsonPayload}" | jq -r '.maxWriteKbps')
+    avgReadLatMs=$(echo "\${jsonPayload}" | jq -r '.avgReadLatMs')
+    avgWriteLatMs=$(echo "\${jsonPayload}" | jq -r '.avgWriteLatMs')
+    
+
+    if [[ -z "\${numCores}" || \${numCores} -le 0 ]]; then
+        echo "WARNING: invalid numCores='\${numCores}', defaulting to 1"
+        numCores=1
+    fi
+
+    cpuUtilPct=$(echo "scale=4; \${maxCpuSec} / \${numCores}" * 100 | bc -l)
+
+    namespace="netapp/wlmdb/performance"
+    metricArgs=()
+    addMetric(){
+        local name=\\$1 val=\\$2 unit=\\$3
+        metricArgs+=( --metric-data
+            "MetricName=\${name},Value=\${val},Unit=\${unit},Dimensions=[{Name=databaseHostId,Value=${ec2InstanceId}}]"
+        )
+    }
+
+    addMetric(){
+        local name=$1 val=$2 unit=$3
+        metricData+=("MetricName=\${name},Value=\${val},Unit=\${unit},Dimensions=[{Name=databaseHostId,Value=\${ec2InstanceId}}]")
+    }
+
+    addMetric "cpuUsed"         "$(printf "%.2f" "\${cpuUtilPct}")"    "Percent"
+    addMetric "readIops"        "$(printf "%.0f" "\${maxReadIops}")"   "Count"
+    addMetric "writeIops"       "$(printf "%.0f" "\${maxWriteIops}")"  "Count"
+    addMetric "readThroughput"  "$(printf "%.2f" "\${maxReadKbps}")"   "Kilobytes/Second"
+    addMetric "writeThroughput" "$(printf "%.2f" "\${maxWriteKbps}")"  "Kilobytes/Second"
+    addMetric "readLatency"     "$(printf "%.2f" "\${avgReadLatMs}")"  "Milliseconds"
+    addMetric "writeLatency"    "$(printf "%.2f" "\${avgWriteLatMs}")" "Milliseconds"
+    
+    aws cloudwatch put-metric-data --namespace "\${namespace}" --metric-data "\${metricData[@]}"
+
+    exit 0
+  `;
+
 export {
     getOracleProtectionData,
     ORACLE_PERFORMANCE_METRICS,
@@ -640,5 +747,6 @@ export {
     checkOracleModuleAvailability,
     installOracleDependentModules,
     checkAndInstallRequiredOracleDependentModules,
+    trendGraphCreateScriptForOracle,
     getMappedOntapDataVolume
 };

@@ -26,6 +26,7 @@ import {
     getMappedOntapDataVolumeForInstance,
     getStorageDetailsForRegisteredInstances
 } from './oracle-discover-scripts';
+import { getSqlInstanceUtilizationAndPerformance } from '../../aws/cloud-watch-operations';
 import { listResources } from '../../../lib/database/db';
 
 const logger = getLogger();
@@ -492,6 +493,7 @@ async function getOracleDatabaseInstancesSummary(
             let protectionData: any;
             let databasesCount: any;
             let databases: any;
+            let resourceTrendsData: any;
             const errormessages: { [index: string]: string } = {};
             const dbInstanceSid = databaseInstance.database_instance_name; // In Oracle database instance name is same as sid
             const metadata = databaseInstance?.metadata as
@@ -522,78 +524,94 @@ async function getOracleDatabaseInstancesSummary(
                 mountPoint = encodeURIComponent(mountPoint!); // mount point in case of iscsi is serial number of lun, it can have special characters (like ], [ ) which needs to be encoded
             }
             try {
-                [databaseInstancetopologyData, performanceData, protectionData, databasesCount, databases] =
-                    await Promise.all(
-                        [
-                            ...(shouldQueryDatabaseTopology
-                                ? [
-                                      getDatabaseInstanceTopology(
-                                          accountId,
-                                          credentialsId,
-                                          region,
-                                          activeNodeInstanceId,
-                                          databaseInstance
-                                      )
-                                  ]
-                                : [Promise.resolve()]),
-                            ...(getPerformanceMetrics
-                                ? [
-                                      getOraclePerformanceMetrics(
-                                          accountId,
-                                          credentialsId,
-                                          region,
-                                          activeNodeInstanceId,
-                                          dbInstanceSid
-                                      )
-                                  ]
-                                : [Promise.resolve()]),
-                            ...(getProtectionStatus || getDatabasesWithProtection
-                                ? [
-                                      getOracleProtectionStatus(
-                                          accountId,
-                                          credentialsId,
-                                          region,
-                                          activeNodeInstanceId,
-                                          databaseInstance.fsxn_ids,
-                                          dbInstanceSid,
-                                          mountIp,
-                                          mountPoint,
-                                          protocol
-                                      )
-                                  ]
-                                : [Promise.resolve()]),
-                            ...(getDbCount
-                                ? [
-                                      getOracleDatabaseCount(
-                                          accountId,
-                                          credentialsId,
-                                          region,
-                                          activeNodeInstanceId,
-                                          dbInstanceSid
-                                      )
-                                  ]
-                                : [Promise.resolve()]),
-                            ...(getDatabasesWithoutProtection || getDatabasesWithProtection
-                                ? [
-                                      getOracleDatabasesList(
-                                          accountId,
-                                          credentialsId,
-                                          region,
-                                          activeNodeInstanceId,
-                                          dbInstanceSid
-                                      )
-                                  ]
-                                : [Promise.resolve()])
-                        ].map((p, index) =>
-                            p.catch(error => {
-                                if (ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
-                                    errormessages[ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]] =
-                                        JSON.stringify(error);
-                                }
-                                logger.error(`Error while fetching data: ${error}.`);
-                            })
-                        )
-                    );
+                [
+                    databaseInstancetopologyData,
+                    performanceData,
+                    protectionData,
+                    databasesCount,
+                    databases,
+                    resourceTrendsData
+                ] = await Promise.all(
+                    [
+                        ...(shouldQueryDatabaseTopology
+                            ? [
+                                  getDatabaseInstanceTopology(
+                                      accountId,
+                                      credentialsId,
+                                      region,
+                                      activeNodeInstanceId,
+                                      databaseInstance
+                                  )
+                              ]
+                            : [Promise.resolve()]),
+                        ...(getPerformanceMetrics
+                            ? [
+                                  getOraclePerformanceMetrics(
+                                      accountId,
+                                      credentialsId,
+                                      region,
+                                      activeNodeInstanceId,
+                                      dbInstanceSid
+                                  )
+                              ]
+                            : [Promise.resolve()]),
+                        ...(getProtectionStatus || getDatabasesWithProtection
+                            ? [
+                                  getOracleProtectionStatus(
+                                      accountId,
+                                      credentialsId,
+                                      region,
+                                      activeNodeInstanceId,
+                                      databaseInstance.fsxn_ids,
+                                      dbInstanceSid,
+                                      mountIp,
+                                      mountPoint,
+                                      protocol
+                                  )
+                              ]
+                            : [Promise.resolve()]),
+                        ...(getDbCount
+                            ? [
+                                  getOracleDatabaseCount(
+                                      accountId,
+                                      credentialsId,
+                                      region,
+                                      activeNodeInstanceId,
+                                      dbInstanceSid
+                                  )
+                              ]
+                            : [Promise.resolve()]),
+                        ...(getDatabasesWithoutProtection || getDatabasesWithProtection
+                            ? [
+                                  getOracleDatabasesList(
+                                      accountId,
+                                      credentialsId,
+                                      region,
+                                      activeNodeInstanceId,
+                                      dbInstanceSid
+                                  )
+                              ]
+                            : [Promise.resolve()]),
+                        ...(getPerformanceMetrics
+                            ? [
+                                  getSqlInstanceUtilizationAndPerformance(
+                                      accountId,
+                                      region,
+                                      credentialsId,
+                                      activeNodeInstanceId,
+                                      [dbInstanceSid]
+                                  )
+                              ]
+                            : [Promise.resolve()])
+                    ].map((p, index) =>
+                        p.catch(error => {
+                            if (ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                                errormessages[ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
+                            }
+                            logger.error(`Error while fetching data: ${error}.`);
+                        })
+                    )
+                );
             } catch (error) {
                 logger.error(`Error while fetching Oracle database instance summary ${accountId}, ${error}`);
                 throw createError(
@@ -635,6 +653,33 @@ async function getOracleDatabaseInstancesSummary(
             }
             if (getDbCount) {
                 databaseInstanceDetails.databaseCount = databasesCount;
+            }
+
+            if (resourceTrendsData?.[dbInstanceSid] && getPerformanceMetrics) {
+                const instanceResourceTrendsData = resourceTrendsData?.[dbInstanceSid] || {};
+                if (instanceResourceTrendsData.serverIOLatency.length > 0) {
+                    // const { serverIoLatency, assessment } = assessMssqlServerPerformance(
+                    //     instanceResourceTrendsData.serverIOLatency
+                    // );
+                    databaseInstanceDetails.performance = {
+                        // assessment,
+                        rwMetrics: {
+                            latency: {
+                                read: instanceResourceTrendsData.readLatency,
+                                write: instanceResourceTrendsData.writeLatency,
+                                serverIo: 0 // serverIoLatency
+                            },
+                            iops: {
+                                read: instanceResourceTrendsData.readIops,
+                                write: instanceResourceTrendsData.writeIops
+                            },
+                            throughput: {
+                                read: instanceResourceTrendsData.readThroughput,
+                                write: instanceResourceTrendsData.writeThroughput
+                            }
+                        }
+                    };
+                }
             }
 
             return databaseInstanceDetails;

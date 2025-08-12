@@ -5,7 +5,6 @@ import { getMetricStatistics, getCloudWatchMetrics } from '../../lib/aws/cloud-w
 import getLogger from '../../utils/logger';
 import { describeFSx } from '../../lib/aws/fsx';
 import { getSqlInstanceMetricDataQueries, getUnitForMetric } from '../../utils/utils';
-import { DatabaseInstance } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -288,19 +287,18 @@ async function getSqlInstanceUtilizationAndPerformance(
     region: string,
     credentialsId: string,
     databaseHostId: string,
-    databaseInstances: DatabaseInstance[]
+    instanceNames: string[]
 ) {
     logger.info('Get SQL instance utilization from CloudWatch metrics', {
         accountId,
         region,
         credentialsId,
         databaseHostId,
-        databaseInstancesLength: databaseInstances.length
+        noOfInstances: instanceNames.length
     });
 
     const finalFormattedPerformanceMetricsData: Record<string, any> = {};
 
-    const instanceNames = databaseInstances.map(instance => instance.database_instance_name);
     await Promise.all(
         instanceNames.map(
             throat(3, async instanceName => {
