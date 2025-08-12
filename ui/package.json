@@ -30,7 +30,7 @@
         "react-collapse": "^5.1.1",
         "react-dom": "^19.1.0",
         "react-fullstory": "^1.4.0",
-        "react-i18next": "^15.5.3",
+        "react-i18next": "15.5.3",
         "react-measure": "^2.5.2",
         "react-redux": "^9.2.0",
         "react-router-dom": "^7.6.3",
@@ -39,7 +39,7 @@
         "sanitize-html": "^2.17.0",
         "style-inject": "^0.3.0",
         "uuid": "^11.0.5",
-        "vite": "^6.3.5",
+        "vite": "^7.0.1",
         "vite-tsconfig-paths": "^5.1.4",
         "web-vitals": "^5.0.3"
     },
