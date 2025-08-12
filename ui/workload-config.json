@@ -16,7 +16,7 @@
     "homepage": {
         "marketingUrl": "/databases/marketing",
         "marketingBlueXPUrl": "/fsxdb/marketing",
-        "description": "Detect your existing database estate on AWS, assess potential cost savings by moving to FSx for ONTAP, deploy databases end-to-end with built-in best practices for optimization, and automate thin cloning for CI/CD pipelines.",
+        "description": "Automate database deployment, validate best practices, and optimize databases for performance, cost, and protection.",
         "mainPrimaryCtaDropdownLabel": "Deploy host",
         "secondaryCtaLabel": "Go to Databases inventory",
         "secondaryCtaTo": "/databases/inventory",
