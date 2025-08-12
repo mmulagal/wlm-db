@@ -44,7 +44,7 @@ const IOPSCard = ({ resourceDetails, resourceLoading }: IOPSCardProps) => {
             <div className={styles.headSection}>
                 <div className={CommonStyles.textWithTooltip}>
                     <DsTypography variant="Regular_16" className={styles.title}>
-                        IOPS
+                        {t('databases.resource-overview.iops')}
                     </DsTypography>
                     <TooltipInfo>{t('databases.resource-overview.iops-tooltip')}</TooltipInfo>
                 </div>

@@ -42,7 +42,7 @@ const LatencyCard = ({ resourceDetails, resourceLoading }: LatencyCardProps) => 
             <div className={styles.headSection}>
                 <div className={CommonStyles.textWithTooltip}>
                     <DsTypography variant="Regular_16" className={styles.title}>
-                        Latency
+                        {t('databases.resource-overview.latency')}
                     </DsTypography>
                     <TooltipInfo>{t('databases.resource-overview.latency-tooltip')}</TooltipInfo>
                 </div>

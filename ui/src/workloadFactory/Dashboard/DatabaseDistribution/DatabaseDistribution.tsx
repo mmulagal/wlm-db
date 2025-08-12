@@ -24,7 +24,7 @@ const DatabaseDistribution = () => {
         <div className={`${styles.databaseDistribution} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Databases distribution
+                    {t('databases.dashboard.database-distribution')}
                 </DsTypography>
 
                 {loading && <DsFlashingDotsLoader />}
@@ -50,7 +50,7 @@ const DatabaseDistribution = () => {
                                 {loading && <DsFlashingDotsLoader />}
                             </DsTypography>
                             <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                Total databases
+                                {t('databases.dashboard.total-databases')}
                             </DsTypography>
                         </div>
                     </div>
@@ -71,18 +71,18 @@ const DatabaseDistribution = () => {
                         </DsTypography>
 
                         <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                            Registered databases
+                            {t('databases.dashboard.registered-databases')}
                         </DsTypography>
                     </div>
                 </div>
 
                 <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                    Registered databases
+                    {t('databases.dashboard.registered-databases')}
                 </DsTypography>
                 <div className={`${styles.barContainer} ${showNA ? CommonStyles.notAvailable : ''}`}>
                     <BarComponent
                         color="var(--chart-3)"
-                        headingText="Microsoft SQL Server"
+                        headingText={t('databases.dashboard.microsoft-sql-server')}
                         percentage={
                             showNA
                                 ? t('databases.general.not-available')
@@ -95,14 +95,14 @@ const DatabaseDistribution = () => {
                         }
                         beforeOutOf={showNA ? undefined : aggregatedHostsCount?.managedDatabases || 0}
                         afterOutOf={showNA ? undefined : aggregatedHostsCount?.totalDatabases || 0}
-                        bottomText={showNA ? undefined : 'Registered databases:'}
+                        bottomText={showNA ? undefined : `${t('databases.dashboard.registered-databases')}:`}
                         width="auto"
                         loading={loading}
                         isDisabled={showNA}
                     />
                     <BarComponent
                         color="var(--chart-9)"
-                        headingText="PostgreSQL"
+                        headingText={t('databases.dashboard.postgresql')}
                         percentage={
                             showNA
                                 ? t('databases.general.not-available')
@@ -115,7 +115,7 @@ const DatabaseDistribution = () => {
                         }
                         beforeOutOf={showNA ? undefined : aggregatedPgSqlHostsCount?.managedDatabases || 0}
                         afterOutOf={showNA ? undefined : aggregatedPgSqlHostsCount?.totalDatabases || 0}
-                        bottomText={showNA ? undefined : 'Registered databases:'}
+                        bottomText={showNA ? undefined : `${t('databases.dashboard.registered-databases')}:`}
                         width="auto"
                         loading={loading}
                         isDisabled={showNA}

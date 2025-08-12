@@ -1,6 +1,7 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import _ from 'lodash';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import DoughnutChartComponent from '../../Doughnut/DoughnutChartComponent';
 import styles from './CapacityUtilization.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -12,6 +13,7 @@ const CapacityUtilization = React.memo(() => {
     const color2 = isDarkTheme ? '#A855B8' : '#DE9EFF';
     const color3 = isDarkTheme ? '#CBD4DA' : '#550057';
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const { t } = useTranslation();
 
     function bytesToTB(bytes: number) {
         const TB = bytes / 1024 ** 4;
@@ -63,13 +65,13 @@ const CapacityUtilization = React.memo(() => {
 
                 <div className={styles.rightSide}>
                     <DsTypography variant="Semibold_14" style={{ marginBottom: '16px' }}>
-                        SSD capacity
+                        {t('databases.resource-overview.ssd-capacity')}
                     </DsTypography>
                     <div className={styles.individualRow}>
                         <div className={styles.squareSetup}>
                             <div className={styles.square} style={{ backgroundColor: color1 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
-                                Used
+                                {t('databases.resource-overview.used')}
                             </DsTypography>
                         </div>
 
@@ -88,7 +90,7 @@ const CapacityUtilization = React.memo(() => {
                         <div className={styles.squareSetup}>
                             <div className={styles.square} style={{ backgroundColor: color2 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
-                                Available
+                                {t('databases.resource-overview.available')}
                             </DsTypography>
                         </div>
 
@@ -99,7 +101,7 @@ const CapacityUtilization = React.memo(() => {
                                         (resourceDetails?.storage?.fsxn?.size ?? 0) -
                                             (resourceDetails?.storage?.fsxn?.used ?? 0)
                                     ).toFixed(2)}{' '}
-                                    TiB
+                                    {t('databases.resource-overview.tib')}
                                 </DsTypography>
                             )}
 
@@ -111,14 +113,15 @@ const CapacityUtilization = React.memo(() => {
                         <div className={styles.squareSetup}>
                             <div className={styles.square} style={{ backgroundColor: color3 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
-                                Size (allocated)
+                                {t('databases.resource-overview.size-allocated')}
                             </DsTypography>
                         </div>
 
                         <div className={styles.count}>
                             {!resourceLoading && (
                                 <DsTypography variant="Semibold_14">
-                                    {bytesToTB(resourceDetails?.storage?.fsxn?.size ?? 0).toFixed(2)} TiB
+                                    {bytesToTB(resourceDetails?.storage?.fsxn?.size ?? 0).toFixed(2)}{' '}
+                                    {t('databases.resource-overview.tib')}
                                 </DsTypography>
                             )}
 

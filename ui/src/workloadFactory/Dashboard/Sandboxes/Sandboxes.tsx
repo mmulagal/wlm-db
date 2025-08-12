@@ -64,7 +64,7 @@ const Sandboxes = () => {
         <div className={styles.sandboxes}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Sandboxes
+                    {t('databases.dashboard.sandboxes')}
                 </DsTypography>
             </div>
 
@@ -76,7 +76,7 @@ const Sandboxes = () => {
                         style={{ marginBottom: '16px' }}
                         className={showNA ? CommonStyles.notAvailable : ''}
                     >
-                        Sandboxes distribution by age
+                        {t('databases.dashboard.sandbox-distribution-by-age')}
                     </DsTypography>
                     <div className={styles.individualRow}>
                         <div className={styles.squareSetup}>
@@ -113,7 +113,7 @@ const Sandboxes = () => {
                                 onClick={() => redirectToSandbox(GENERAL.ONE_THIRTY_DAYS)}
                                 isDisabled={showNA}
                             >
-                                View
+                                {t('databases.dashboard.view')}
                             </DsButton>
                         </div>
                     </div>

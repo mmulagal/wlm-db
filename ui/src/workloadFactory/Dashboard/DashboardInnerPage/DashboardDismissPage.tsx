@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { DsTypography, useDialog } from '@netapp/design-system';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
@@ -34,6 +35,7 @@ import { NOTIFICATION_TYPES, addNotification } from '../../../store/notification
 
 const DashboardDismissPage = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { selectedConfig, selectedConfigSummary, dismissPageLanding } = useAppSelector(state => state.databaseHome);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
@@ -795,7 +797,7 @@ const DashboardDismissPage = () => {
                         data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
                         variant="Semibold_20"
                     >
-                        Update configuration analysis state for {selectedConfig}
+                        {t('databases.dashboard.update-configuration-state-for')} {selectedConfig}
                     </DsTypography>
                     <DsTypography
                         className={styles.dismissPageMessage}

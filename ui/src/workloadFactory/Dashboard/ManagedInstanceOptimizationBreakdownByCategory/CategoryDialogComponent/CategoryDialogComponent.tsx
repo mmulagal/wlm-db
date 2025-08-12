@@ -2,6 +2,7 @@ import { DsFlashingDotsLoader, DsTypography, Table, useTable, TableTopBar } from
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './CategoryDialogComponent.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -11,6 +12,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
     const dispatch = useDispatch();
     const selectedRow = useAppSelector(state => state.databaseHome.selectedAssessmentRow);
+    const { t } = useTranslation();
 
     const ColDefs: ColumnProps[] = [
         {
@@ -109,9 +111,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
 
     return (
         <div className={styles.categoryDialogContent}>
-            <DsTypography variant="Regular_14">
-                Select the instance to fix and then select 'Continue' to be redirected to the well-architected page.
-            </DsTypography>
+            <DsTypography variant="Regular_14">{t('databases.dashboard.category-dialog-component')}</DsTypography>
             <div className={styles.table}>
                 <TableTopBar
                     // @ts-ignore

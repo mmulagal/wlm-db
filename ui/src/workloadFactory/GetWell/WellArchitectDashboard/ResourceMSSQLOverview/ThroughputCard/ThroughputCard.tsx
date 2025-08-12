@@ -39,7 +39,7 @@ const ThroughputCard = ({ resourceDetails, resourceLoading }: ThroughputCardProp
             <div className={styles.headSection}>
                 <div className={CommonStyles.textWithTooltip}>
                     <DsTypography variant="Regular_16" className={styles.title}>
-                        Throughput
+                        {t('databases.resource-overview.throughput')}
                     </DsTypography>
                     <TooltipInfo>{t('databases.resource-overview.throughput-tooltip')}</TooltipInfo>
                 </div>

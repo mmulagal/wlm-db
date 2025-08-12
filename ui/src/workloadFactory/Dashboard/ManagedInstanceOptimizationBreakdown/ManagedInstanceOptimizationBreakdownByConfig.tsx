@@ -119,7 +119,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         <div className={`${styles.managedBreakdown} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Well-architected breakdown by configurations
+                    {t('databases.dashboard.well-architected-breakdown-by-configurations')}
                 </DsTypography>
 
                 {loading && <FlashingDotsLoader />}

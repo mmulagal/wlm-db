@@ -32,7 +32,7 @@ const InstanceDistribution = () => {
         <div className={`${styles.instanceDistribution} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Instances distribution
+                    {t('databases.dashboard.instances-distribution')}
                 </DsTypography>
 
                 <div className={styles.rightSection}>
@@ -46,7 +46,7 @@ const InstanceDistribution = () => {
                         onClick={() => handleClick(WLF_TABS.INVENTORY)}
                         isDisabled={showNA}
                     >
-                        Register instances
+                        {t('databases.dashboard.register-instances')}
                     </DsButton>
                 </div>
             </div>
@@ -72,7 +72,7 @@ const InstanceDistribution = () => {
                                 )}
                             </DsTypography>
                             <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                Total instances
+                                {t('databases.dashboard.total-instances')}
                             </DsTypography>
                         </div>
                     </div>
@@ -94,18 +94,18 @@ const InstanceDistribution = () => {
                         </DsTypography>
 
                         <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                            Registered instances
+                            {t('databases.dashboard.registered-instances')}
                         </DsTypography>
                     </div>
                 </div>
 
                 <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                    Registered instances
+                    {t('databases.dashboard.registered-instances')}
                 </DsTypography>
                 <div className={`${styles.barContainer} ${showNA ? CommonStyles.notAvailable : ''}`}>
                     <BarComponent
                         color="var(--chart-3)"
-                        headingText="Microsoft SQL Server"
+                        headingText={t('databases.dashboard.microsoft-sql-server')}
                         percentage={
                             showNA
                                 ? t('databases.general.not-available')
@@ -117,14 +117,14 @@ const InstanceDistribution = () => {
                         }
                         beforeOutOf={showNA ? undefined : mssqlHostData?.managedInstances || 0}
                         afterOutOf={showNA ? undefined : mssqlHostData?.totalInstances || 0}
-                        bottomText={showNA ? undefined : 'Registered instances:'}
+                        bottomText={showNA ? undefined : `${t('databases.dashboard.registered-instances')}:`}
                         width="auto"
                         loading={mssqlDatabaseHostsLoading || multiDataLoading}
                         isDisabled={showNA}
                     />
                     <BarComponent
                         color="var(--chart-9)"
-                        headingText="PostgreSQL"
+                        headingText={t('databases.dashboard.postgresql')}
                         percentage={
                             showNA
                                 ? t('databases.general.not-available')
@@ -136,7 +136,7 @@ const InstanceDistribution = () => {
                         }
                         beforeOutOf={showNA ? undefined : pgsqlHostData?.managedInstances || 0}
                         afterOutOf={showNA ? undefined : pgsqlHostData?.totalInstances || 0}
-                        bottomText={showNA ? undefined : 'Registered instances:'}
+                        bottomText={showNA ? undefined : `${t('databases.dashboard.registered-instances')}:`}
                         width="auto"
                         loading={pgsqlDatabaseHostsLoading || multiDataLoading}
                         isDisabled={showNA}

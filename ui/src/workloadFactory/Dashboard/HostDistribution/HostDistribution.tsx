@@ -45,7 +45,7 @@ const HostDistribution = () => {
         <div className={`${styles.hostDistribution} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Host distribution
+                    {t('databases.dashboard.host-distribution')}
                 </DsTypography>
 
                 {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && <FlashingDotsLoader />}

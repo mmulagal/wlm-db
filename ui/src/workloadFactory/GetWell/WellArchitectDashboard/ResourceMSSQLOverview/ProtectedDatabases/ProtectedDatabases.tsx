@@ -1,4 +1,5 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import styles from './ProtectedDatabases.module.scss';
 import ProgressBar from '../../../../../common/ProgressBar/ProgressBar';
@@ -7,6 +8,7 @@ import { getAggrProtection } from '../../../../../utils/utilityFunctions';
 
 const ProtectedDatabases = () => {
     const { databaseList, databaseListLoading } = useAppSelector(state => state.workloadFactoryResource);
+    const { t } = useTranslation();
 
     const protectionData = useMemo(() => getAggrProtection(databaseList), [databaseList]);
     return (
@@ -20,7 +22,9 @@ const ProtectedDatabases = () => {
             <div className={styles.mainSection}>
                 <div className={styles.barContainer}>
                     <div className={styles.valueSection}>
-                        <DsTypography variant="Semibold_14">Local protection (snapshots)</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.resource-overview.local-protection')}
+                        </DsTypography>
                         <div className={styles.count}>
                             {!databaseListLoading && (
                                 <>
@@ -43,7 +47,9 @@ const ProtectedDatabases = () => {
 
                 <div className={styles.barContainer}>
                     <div className={styles.valueSection}>
-                        <DsTypography variant="Semibold_14">Remote protection (replicated volumes)</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.resource-overview.remote-protection')}
+                        </DsTypography>
 
                         <div className={styles.count}>
                             <DsTypography variant="Regular_20">{protectionData?.crrEnabled}</DsTypography>

@@ -3,6 +3,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './DismissTables.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
@@ -34,6 +35,7 @@ interface StorageTierTableProps {
 
 const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }: StorageTierTableProps) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { selectedRowsForDismiss } = useAppSelector(state => state.databaseHome);
     const { inProgressStateData } = useAppSelector(state => state.getWellOptimize);
 
@@ -159,7 +161,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                         }
                     >
                         <DsTypography variant="Regular_14" className={styles.actionText}>
-                            Update state
+                            {t('databases.dashboard.update-state')}
                         </DsTypography>
                         <ButtonWithDropdown
                             variant="icon"

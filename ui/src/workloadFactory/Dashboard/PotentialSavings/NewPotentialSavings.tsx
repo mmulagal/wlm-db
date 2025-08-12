@@ -145,7 +145,7 @@ const NewPotentialSavings = () => {
                                             variant="Regular_14"
                                             className={showNA ? CommonStyles.notAvailable : ''}
                                         >
-                                            EBS & FSx for Windows hosts
+                                            {t('databases.dashboard.ebs-and-fsx-for-window-hosts')}
                                         </DsTypography>
                                     </div>
 
@@ -162,7 +162,7 @@ const NewPotentialSavings = () => {
                                             variant="Regular_14"
                                             className={showNA ? CommonStyles.notAvailable : ''}
                                         >
-                                            Savings percentage
+                                            {t('databases.dashboard.savings-percentage')}
                                         </DsTypography>
                                     </div>
 
@@ -234,7 +234,7 @@ const NewPotentialSavings = () => {
                                             className={`${styles.firstTile} ${showNA ? CommonStyles.notAvailable : ''}`}
                                             variant="Regular_14"
                                         >
-                                            Switching to FSx for ONTAP won't save you money.
+                                            {t('databases.dashboard.switching-to-fsx-for-ontap-wont-save-you-money')}
                                         </DsTypography>
                                         <DsTypography
                                             className={`${styles.secondTile} ${
@@ -242,7 +242,9 @@ const NewPotentialSavings = () => {
                                             }`}
                                             variant="Regular_14"
                                         >
-                                            Select Explore savings to review the cost breakdown.
+                                            {t(
+                                                'databases.dashboard.select-explore-savings-to-review-the-cost-breakdown'
+                                            )}
                                         </DsTypography>
                                     </div>
                                 </div>
@@ -278,7 +280,7 @@ const NewPotentialSavings = () => {
                                         variant="Regular_14"
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                     >
-                                        EBS & FSx for Windows hosts
+                                        {t('databases.dashboard.ebs-and-fsx-for-window-hosts')}
                                     </DsTypography>
                                 </div>
 
@@ -303,7 +305,7 @@ const NewPotentialSavings = () => {
                                         variant="Regular_14"
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                     >
-                                        Savings percentage
+                                        {t('databases.dashboard.savings-percentage')}
                                     </DsTypography>
                                 </div>
 

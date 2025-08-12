@@ -1,4 +1,5 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as DescriptionIcon } from '../../../../../assets/Description Icons.svg';
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg';
@@ -6,7 +7,6 @@ import styles from './ResourceHeader.module.scss';
 
 import { GENERAL } from '../../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../../utils/consts';
-import { useTranslation } from 'react-i18next';
 
 type ResourceHeaderProps = {
     selectedHostname: string;

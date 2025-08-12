@@ -111,7 +111,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                         style={{ whiteSpace: 'nowrap' }}
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                     >
-                                        Total registered instances
+                                        {t('databases.dashboard.total-registered-instances')}
                                     </DsTypography>
                                 </div>
                                 <SeparatorComponent variant="vertical" height="48px" />
@@ -157,7 +157,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                             style={{ whiteSpace: 'nowrap' }}
                                             className={showNA ? CommonStyles.notAvailable : ''}
                                         >
-                                            Total registered instances &nbsp;
+                                            {t('databases.dashboard.total-registered-instances')} &nbsp;
                                             {showNA
                                                 ? t('databases.general.not-available')
                                                 : instanceOptimizationSummary?.totalInstances}
@@ -187,7 +187,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                             style={{ lineHeight: 'unset' }}
                                             className={showNA ? CommonStyles.notAvailable : ''}
                                         >
-                                            Well-architected instances
+                                            {t('databases.dashboard.well-architected-instances')}
                                         </DsTypography>
                                     </div>
                                     <div className={styles.loadingState}>
@@ -198,7 +198,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                             {showNA
                                                 ? t('databases.general.not-available')
                                                 : String(instanceOptimizationSummary?.optimizedInstances)}{' '}
-                                            instances
+                                            {t('databases.dashboard.instances')}
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
@@ -217,7 +217,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                             style={{ lineHeight: 'unset' }}
                                             className={showNA ? CommonStyles.notAvailable : ''}
                                         >
-                                            Not-optimized instances
+                                            {t('databases.dashboard.not-optimized-instances')}
                                         </DsTypography>
                                     </div>
                                     <div className={styles.loadingState}>
@@ -228,7 +228,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                             {showNA
                                                 ? t('databases.general.not-available')
                                                 : String(instanceOptimizationSummary?.notOptimizedInstances)}{' '}
-                                            instances
+                                            {t('databases.dashboard.instances')}
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
@@ -248,13 +248,17 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                     <div className={styles.text}>
                         <div className={styles.firstBlock}>
                             <Success />
-                            <DsTypography variant="Semibold_16">All instances are well-architected!</DsTypography>
+                            <DsTypography variant="Semibold_16">
+                                {t('databases.dashboard.all-instances-are-well-architected')}
+                            </DsTypography>
                         </div>
 
                         <div className={styles.secondBlock}>
-                            <DsTypography variant="Regular_14">There are no issues.</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Your instance is analyzed every 24 hours for configuration issues.
+                                {t('databases.dashboard.there-are-no-issues')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.dashboard.instance-analyzed')}
                             </DsTypography>
                         </div>
                     </div>
