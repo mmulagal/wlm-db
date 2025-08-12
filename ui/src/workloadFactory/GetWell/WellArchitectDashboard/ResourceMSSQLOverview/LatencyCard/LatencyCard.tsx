@@ -6,10 +6,11 @@ import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import LineGraph from '../../LineGraph/LineGraph';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
-const LatencyCard = () => {
+type LatencyCardProps = { resourceDetails: any; resourceLoading: boolean };
+
+const LatencyCard = ({ resourceDetails, resourceLoading }: LatencyCardProps) => {
     const { t } = useTranslation();
 
-    const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [datasets, setDatasets] = useState<number[][]>([[], []]);
@@ -29,7 +30,7 @@ const LatencyCard = () => {
         ]);
 
         setReadDataPoints(
-            readLatency.map(item => ({
+            readLatency.map((item: any) => ({
                 statisticsDate: item.timestamp,
                 average: item.value
             }))

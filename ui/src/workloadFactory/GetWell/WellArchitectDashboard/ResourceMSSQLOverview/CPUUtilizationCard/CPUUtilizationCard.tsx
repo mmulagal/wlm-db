@@ -8,9 +8,10 @@ import { twoFractionDigits } from '../../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
-const CPUUtilizationCard = () => {
+type CPUUtilizationCardProps = { resourceDetails: any; resourceLoading: boolean };
+
+const CPUUtilizationCard = ({ resourceDetails, resourceLoading }: CPUUtilizationCardProps) => {
     const { t } = useTranslation();
-    const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [dataPoints, setDataPoints] = useState<any[]>([]);

@@ -17,7 +17,9 @@ import { MS_PER_HOUR } from '../../../../utils/consts';
 const PARTIAL_DATA_THRESHOLD = 6 * MS_PER_HOUR; // 6 hours in milliseconds
 
 const ResourceMSSQLOverview = () => {
-    const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const { resourceLoading, resourceDetails, selectedHostname, selectedDatabaseInstanceName } = useAppSelector(
+        state => state.workloadFactoryResource
+    );
 
     DatabaseHostOverviewApiV2();
     return (
@@ -32,11 +34,17 @@ const ResourceMSSQLOverview = () => {
                 )}
             <div className={styles['resource-mssql-overview']}>
                 <div className={styles.leftSide}>
-                    <ResourceHeader />
+                    <ResourceHeader
+                        resourceDetails={resourceDetails}
+                        resourceLoading={resourceLoading}
+                        selectedHostname={selectedHostname}
+                        selectedDatabaseInstanceName={selectedDatabaseInstanceName}
+                        resourceHeaderType="mssql"
+                    />
 
                     <div className={styles.commonBlock}>
-                        <CPUUtilizationCard />
-                        <LatencyCard />
+                        <CPUUtilizationCard resourceDetails={resourceDetails} resourceLoading={resourceLoading} />
+                        <LatencyCard resourceDetails={resourceDetails} resourceLoading={resourceLoading} />
                     </div>
 
                     {/* <div className={styles.commonBlock}>
@@ -49,8 +57,8 @@ const ResourceMSSQLOverview = () => {
                     </div>
 
                     <div className={styles.commonBlock}>
-                        <IOPSCard />
-                        <ThroughputCard />
+                        <IOPSCard resourceDetails={resourceDetails} resourceLoading={resourceLoading} />
+                        <ThroughputCard resourceDetails={resourceDetails} resourceLoading={resourceLoading} />
                     </div>
 
                     {/* <div className={styles.commonBlock}>

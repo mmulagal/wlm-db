@@ -7,6 +7,7 @@ import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import OracleTabs from './OracleTabs/OracleTabs';
 import OracleWellArchitectDashboard from '../OracleWellArchitectDashboard/OracleWellArchitectDashboard';
+import OracleOverview from '../OracleOverview/OracleOverview';
 
 const OracleInnerPages = () => {
     const dispatch = useDispatch();
@@ -39,6 +40,8 @@ const OracleInnerPages = () => {
             {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS && (
                 <OracleWellArchitectDashboard />
             )}
+
+            {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW && <OracleOverview />}
         </div>
     );
 };

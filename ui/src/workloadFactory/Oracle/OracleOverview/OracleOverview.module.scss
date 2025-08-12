@@ -1,0 +1,37 @@
+.oracleOverview {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    width: 100%;
+
+    .leftSide {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        width: 67%;
+
+        .commonBlock {
+            display: flex;
+            gap: 24px;
+        }
+
+        .barContainer {
+            display: flex;
+            width: 100%;
+            gap: 24px;
+
+            margin-bottom: 80px;
+
+            .commonContainer {
+                background-color: var(--content-background);
+                box-shadow: 2px 2px 6px var(--grey-15);
+                height: 188px;
+                width: 100%;
+            }
+        }
+    }
+
+    .rightSide {
+        width: 33%;
+    }
+}

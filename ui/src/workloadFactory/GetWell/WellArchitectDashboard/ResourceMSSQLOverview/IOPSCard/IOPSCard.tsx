@@ -6,10 +6,11 @@ import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import LineGraph from '../../LineGraph/LineGraph';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
-const IOPSCard = () => {
+type IOPSCardProps = { resourceDetails: any; resourceLoading: boolean };
+
+const IOPSCard = ({ resourceDetails, resourceLoading }: IOPSCardProps) => {
     const { t } = useTranslation();
 
-    const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [datasets, setDatasets] = useState<number[][]>([[], []]);

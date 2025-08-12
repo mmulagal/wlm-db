@@ -8,10 +8,10 @@ import { GENERAL } from '../../../../utils/appConstants';
 type accordionType = {
     handleToggle: any;
     openKey: string;
+    resourceDetails: any;
 };
 
-const ISConnectivity = ({ handleToggle, openKey }: accordionType) => {
-    const resourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
+const ISConnectivity = ({ handleToggle, openKey, resourceDetails }: accordionType) => {
     const contentArea = () => (
         <>
             <div className={commonStyles.row}>

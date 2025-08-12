@@ -16,11 +16,12 @@ import LunsDialogContent from './LunsDialogContent/LunsDialogContent';
 type accordionType = {
     handleToggle: any;
     openKey: string;
+    resourceDetails: any;
 };
 
-const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
+const StorageCompute = ({ handleToggle, openKey, resourceDetails }: accordionType) => {
     const { setDialog } = useDialog();
-    const resourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
+
     const { t } = useTranslation();
 
     const handleLUNSDialog = () => {

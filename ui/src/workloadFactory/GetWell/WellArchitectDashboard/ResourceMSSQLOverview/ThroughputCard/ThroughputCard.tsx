@@ -6,9 +6,11 @@ import styles from './ThroughputCard.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
-const ThroughputCard = () => {
+type ThroughputCardProps = { resourceDetails: any; resourceLoading: boolean };
+
+const ThroughputCard = ({ resourceDetails, resourceLoading }: ThroughputCardProps) => {
     const { t } = useTranslation();
-    const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
+
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [datasets, setDatasets] = useState<number[][]>([[], []]);
@@ -22,10 +24,10 @@ const ThroughputCard = () => {
             ? resourceDetails.performance.rwMetrics.throughput.write
             : [];
 
-        setDatasets([readThroughput.map(item => item.value), writeThroughput.map(item => item.value)]);
+        setDatasets([readThroughput.map((item: any) => item.value), writeThroughput.map((item: any) => item.value)]);
 
         setReadDataPoints(
-            readThroughput.map(item => ({
+            readThroughput.map((item: any) => ({
                 statisticsDate: item.timestamp,
                 average: item.value
             }))
