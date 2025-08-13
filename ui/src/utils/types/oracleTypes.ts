@@ -3,4 +3,6 @@ export interface OracleEntities {
     visitedTabs: any;
     resourceDetails: any;
     resourceLoading: boolean;
+    oracleDefaultFilterOptions: {} | any;
+    oracleOptimizeFilterTags: [] | any;
 }

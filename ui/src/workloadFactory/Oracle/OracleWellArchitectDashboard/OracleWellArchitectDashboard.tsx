@@ -4,6 +4,7 @@ import OracleConfigureCategory from './OracleConfigureCategory/OracleConfigureCa
 import styles from './OracleWellArchitectDashboard.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
+import FilterComponent from './FilterComponent/FilterComponent';
 
 const OracleWellArchitectDashboard = () => {
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -30,6 +31,8 @@ const OracleWellArchitectDashboard = () => {
                 <TotalOptimizationScore />
                 <OracleConfigureCategory />
             </div>
+
+            <FilterComponent />
 
             <div className={styles.sectionTwo}>
                 <div className={styles.sectionClass}>

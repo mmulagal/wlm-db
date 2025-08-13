@@ -38,15 +38,7 @@ import {
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
-import {
-    getUniqueEntries,
-    groupByType,
-    removeEntry,
-    removeObjectFromArray,
-    generateDate,
-    applyFilter,
-    resetGwValuesOnRefresh
-} from './GetWellUtils';
+import { generateDate, applyFilter, resetGwValuesOnRefresh } from './GetWellUtils';
 import {
     setDefaultFilterOptions,
     setOptimizeFilterTags,
@@ -69,12 +61,11 @@ import downloadPdf from '../../common/pdfGenerator';
 import { useLazyGetSubTaskListQuery, useTriggerInstanceAssessmentMutation } from '../../utils/apiService';
 import AssessmentContainer from './AssessmentContainer/AssessmentContainer';
 import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
+import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../utils/utilityFunctions';
 
 const GetWell = () => {
     const dispatch = useDispatch();
-    const { optimizeFilterTags, defaultFilterOptions, breadCrumbSelectedFrom } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
@@ -121,29 +112,14 @@ const GetWell = () => {
     }, [loading]);
 
     const handleSelect = (filters: any, filterLabel: any) => {
-        let updatedFilters = [...optimizeFilterTags];
-
-        const selectedIds = new Set(filters.map((filter: any) => filter.id));
-
-        updatedFilters = updatedFilters.filter(
-            (filter: any) => !(filter.type === filterLabel && !selectedIds.has(filter.id))
+        handleSelectForFilter(
+            filters,
+            filterLabel,
+            optimizeFilterTags,
+            dispatch,
+            setOptimizeFilterTags,
+            setDefaultFilterOptions
         );
-
-        filters.forEach((filter: any) => {
-            const existingFilterIndex = updatedFilters.findIndex(
-                (selectedFilter: any) => selectedFilter.value === filter.value && selectedFilter.type === filterLabel
-            );
-
-            if (existingFilterIndex === -1) {
-                updatedFilters.push({ ...filter, type: filterLabel });
-            }
-        });
-
-        const uniqueArray = getUniqueEntries([updatedFilters]);
-        const reArrange = groupByType(uniqueArray);
-
-        dispatch(setOptimizeFilterTags(uniqueArray));
-        dispatch(setDefaultFilterOptions(reArrange));
     };
 
     const handleCancelFilter = (option: any) => {

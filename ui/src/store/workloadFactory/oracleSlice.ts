@@ -6,7 +6,9 @@ export const initialOracleState: OracleEntities = {
     selectedOracleInnerPageTab: WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS,
     visitedTabs: {},
     resourceDetails: {},
-    resourceLoading: true
+    resourceLoading: true,
+    oracleOptimizeFilterTags: [],
+    oracleDefaultFilterOptions: {}
 };
 
 const oracleSlice = createSlice({
@@ -27,6 +29,12 @@ const oracleSlice = createSlice({
         },
         setOracleResourceLoading: (state, action: PayloadAction<boolean>) => {
             state.resourceLoading = action.payload;
+        },
+        setOracleDefaultFilterOptions: (state, action: PayloadAction<any>) => {
+            state.oracleDefaultFilterOptions = action.payload;
+        },
+        setOracleOptimizeFilterTags: (state, action: PayloadAction<any>) => {
+            state.oracleOptimizeFilterTags = action.payload;
         }
     }
 });
@@ -36,7 +44,9 @@ export const {
     setOracleResourceVisitedTabs,
     resetOracleResourceVisitedTabs,
     setOracleResourceDetails,
-    setOracleResourceLoading
+    setOracleResourceLoading,
+    setOracleDefaultFilterOptions,
+    setOracleOptimizeFilterTags
 } = oracleSlice.actions;
 
 export default oracleSlice;

@@ -1,0 +1,99 @@
+.filterComponent {
+    margin-top: 40px;
+    margin-bottom: 40px;
+
+    [class*='accordionHeader'] {
+        height: 72px !important;
+    }
+
+    .filterHeaderStyle {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        .dark-theme-union {
+            svg {
+                path {
+                    fill: #fff;
+                }
+            }
+        }
+    }
+
+    .filterHeader {
+        display: flex;
+        gap: 48px;
+
+        .items {
+            display: flex;
+            gap: 8px;
+        }
+    }
+
+    .mainSection {
+        display: flex;
+        flex-direction: column;
+        gap: 42px;
+        .dropdownList {
+            display: flex;
+            gap: 52px;
+            flex-wrap: wrap;
+            .dropDown {
+                width: 220px;
+
+                [class*='dsTextFieldFrame'] {
+                    max-width: 220px !important;
+                    width: 220px;
+                }
+
+                .not-optimized-tooltip {
+                    display: flex;
+                    gap: 96px;
+                }
+            }
+
+            .optimized-drop-down {
+                [class*='selectItem'] {
+                    padding: 12px 20px 12px 24px;
+                }
+
+                [class*='tooltipInfoBaloon'] {
+                    max-width: 500px;
+                    width: 500px;
+                }
+            }
+        }
+
+        .filtersOption {
+            display: flex;
+            margin-bottom: 30px;
+
+            .tagsContainer {
+                display: flex;
+                flex-wrap: wrap;
+                width: calc(100% - 56px);
+                gap: 24px;
+            }
+        }
+
+        .filterTag {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            gap: 24px;
+            height: 26px;
+            width: fit-content;
+            padding: 2px 11px;
+            background-color: var(--tag-3-bg);
+            color: var(--text-button-primary-hover);
+            border-radius: 24px;
+            border: 1px solid var(--tag-3-text, #1e4a93);
+
+            .closeButton {
+                cursor: pointer;
+                position: relative;
+                top: 2px;
+            }
+        }
+    }
+}
