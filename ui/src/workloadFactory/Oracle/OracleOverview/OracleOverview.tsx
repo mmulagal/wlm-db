@@ -4,7 +4,7 @@ import IOPSCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview
 import LatencyCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/LatencyCard/LatencyCard';
 import ResourceHeader from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ResourceHeader/ResourceHeader';
 import ThroughputCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ThroughputCard/ThroughputCard';
-import OracleResourceOverviewApi from '../OracleWellArchitectDashboard/OracleResourceOverviewApi';
+import useOracleResourceOverview from '../OracleWellArchitectDashboard/OracleResourceOverviewApi';
 import OracleInformationSection from './OracleInformationSection/OracleInformationSection';
 import styles from './OracleOverview.module.scss';
 
@@ -13,7 +13,7 @@ const OracleOverview = () => {
 
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.oracleSlice);
 
-    OracleResourceOverviewApi();
+    useOracleResourceOverview();
     return (
         <div className={styles.oracleOverview}>
             <div className={styles.leftSide}>

@@ -5,15 +5,10 @@ import { useGetOracleOverviewDetailsMutation } from '../../../utils/apiService';
 
 import { setOracleResourceDetails, setOracleResourceLoading } from '../../../store/workloadFactory/oracleSlice';
 
-const OracleResourceOverviewApi = () => {
+const useOracleResourceOverview = () => {
     const dispatch = useDispatch();
-    const {
-        selectedResourceId,
-        selectedDatabaseInstance,
-
-        selectedResourceCredId,
-        selectedResourceRegionId
-    } = useAppSelector(state => state.workloadFactoryResource);
+    const { selectedResourceId, selectedDatabaseInstance, selectedResourceCredId, selectedResourceRegionId } =
+        useAppSelector(state => state.workloadFactoryResource);
 
     const {
         credIdFromJM,
@@ -30,6 +25,7 @@ const OracleResourceOverviewApi = () => {
         if (!visitedTabs.Overview) {
             viewResourceAction();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visitedTabs]);
 
     //To do enable when refresh enable
@@ -44,11 +40,12 @@ const OracleResourceOverviewApi = () => {
     const runResourceDetailsApi = async () => {
         try {
             const result: any = await getOracleOverviewDetails({
-                credentialId: selectedResourceCredId || credIdFromJM, // || condition is for when coming from JM
-                region: selectedResourceRegionId || regionFromJM, // || condition is for when coming from JM
-                id: selectedResourceId || getWellResourceId, // || condition is for when coming from JM
-                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance // || condition is for when coming from JM
+                credentialId: selectedResourceCredId || credIdFromJM,
+                region: selectedResourceRegionId || regionFromJM,
+                id: selectedResourceId || getWellResourceId,
+                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance
             });
+
             if (result && !result?.error) {
                 const resourceData = {
                     ...result?.data,
@@ -58,10 +55,8 @@ const OracleResourceOverviewApi = () => {
                     }
                 };
                 dispatch(setOracleResourceDetails(resourceData));
-                dispatch(setOracleResourceLoading(false));
-            } else {
-                dispatch(setOracleResourceLoading(false));
             }
+            dispatch(setOracleResourceLoading(false));
         } catch (error) {
             dispatch(setOracleResourceLoading(false));
         }
@@ -74,4 +69,4 @@ const OracleResourceOverviewApi = () => {
     };
 };
 
-export default OracleResourceOverviewApi;
+export default useOracleResourceOverview;
