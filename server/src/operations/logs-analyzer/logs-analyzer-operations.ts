@@ -399,9 +399,19 @@ async function handleLogsAnalysis(
             endTime ? new Date(endTime) : undefined
         );
         await updateLongRunningAuditGroup(AuditStatus.SUCCESS, 'Logs analysis completed successfully');
+        const { items: [{ id, latestReport: { creationTime, errorCount } = {} } = {}] = [] } =
+            await getLatestLogsAnalysisReports(accountId, credentialsId, databaseType, jobId);
+
         await updateJobDetails(accountId, jobId, {
             endTime: Date.now(),
-            status: JOBSTATUS.COMPLETED
+            status: JOBSTATUS.COMPLETED,
+            metadata: {
+                latestReport: {
+                    creationTime,
+                    id,
+                    errorCount
+                }
+            }
         });
         return jsonSsmLogsResponse;
     } catch (error) {
@@ -735,6 +745,9 @@ async function calculateLogsAnalysisPrice(region: string) {
     };
 }
 
+const READY_TRUE = {
+    ready: true
+};
 async function analyzePreRequisites(
     accountId: string,
     credentialsId: string,
@@ -811,6 +824,8 @@ async function analyzePreRequisites(
                 ).replace('%sregion%s', region)
             };
         }
+        bedrockPreRequisites = READY_TRUE;
+        credentialsPreRequisites = READY_TRUE;
     } catch (error) {
         if (error instanceof Error && error.message.includes('not authorized to perform')) {
             credentialsPreRequisites = {
@@ -851,17 +866,26 @@ async function analyzePreRequisites(
                         ready: false,
                         message: PRE_REQ_MESSAGES.BEDROCK_TOOL_NOT_FOUND
                     };
-                } else if (jsonResponse?.error?.includes('not authorized to perform')) {
+                } else {
+                    bedrockPreRequisites = READY_TRUE;
+                }
+
+                if (jsonResponse?.error?.includes('not authorized to perform')) {
                     instanceProfilePreRequisites = {
                         ready: false,
                         message: PRE_REQ_MESSAGES.IAM_INSTANCE_PROFILE
                     };
                 } else {
-                    networkingPreRequisites = {
-                        ready: false,
-                        message: PRE_REQ_MESSAGES.BEDROCK_NW_CONFIGURATION
-                    };
+                    instanceProfilePreRequisites = READY_TRUE;
                 }
+                networkingPreRequisites = {
+                    ready: false,
+                    message: PRE_REQ_MESSAGES.BEDROCK_NW_CONFIGURATION
+                };
+            } else {
+                bedrockPreRequisites = READY_TRUE;
+                instanceProfilePreRequisites = READY_TRUE;
+                networkingPreRequisites = READY_TRUE;
             }
         }
     } catch (error) {
@@ -876,7 +900,12 @@ async function analyzePreRequisites(
     };
 }
 
-async function getLatestLogsAnalysisReports(accountId: string, credentialsId?: string, databaseType?: string) {
+async function getLatestLogsAnalysisReports(
+    accountId: string,
+    credentialsId?: string,
+    databaseType?: string,
+    jobId?: string
+) {
     logger.info('Getting latest report data of database instances at account level', {
         accountId,
         credentialsId,
@@ -905,7 +934,8 @@ async function getLatestLogsAnalysisReports(accountId: string, credentialsId?: s
                 logs_analysis_data: true,
                 resource_id: true,
                 job_id: true
-            }
+            },
+            jobId
         });
         processedCount += reports.length;
 
@@ -937,7 +967,7 @@ async function getLatestLogsAnalysisReports(accountId: string, credentialsId?: s
             logs_analysis_data: [{ data: logsAnalysisData }],
             id,
             resource_id: databaseHostId,
-            job_id: jobId
+            job_id: jobIdFromReport
         } = report;
         if (logsAnalysisData?.remediationRecommendation) {
             latestReports.push({
@@ -945,7 +975,7 @@ async function getLatestLogsAnalysisReports(accountId: string, credentialsId?: s
                 databaseHostId,
                 databaseInstanceId: instanceId,
                 latestReport: {
-                    jobId,
+                    jobId: jobIdFromReport,
                     creationTime: report.creation_time.getTime(),
                     errorCount: logsAnalysisData?.remediationRecommendation?.length
                 } // TODO: can be extended to include host level report/ instance level report count if needed.
