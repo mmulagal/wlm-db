@@ -11,6 +11,7 @@ const StatusResponse = Type.Object({
 const VolumeObject = Type.Object({
     id: Type.String(),
     name: Type.String(),
+    fsxId: Type.String(),
     ontapUuid: Type.Optional(Type.String())
 });
 

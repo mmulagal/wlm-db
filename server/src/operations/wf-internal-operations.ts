@@ -43,23 +43,25 @@ async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?:
         configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
         ...(pageSize && { pageSize }),
         ...(nextToken && { nextToken }),
-        select: { config_data: true, id: true },
+        select: { config_data: true, id: true, database_instances: { select: { fsxn_ids: true } } },
         filters: { config_data: { not: {} } }
     });
 
-    let volumes = items.flatMap(obj =>
-        obj.config_data
+    let volumes = items.flatMap(obj => {
+        const { fsxn_ids: fsxId = '' } = obj.database_instances || {};
+        return obj.config_data
             ? Object.values(obj.config_data).flatMap(cfg =>
                   (cfg as MappedOnTapVolumeResponse)?.volumeRecords
                       ?.filter(({ fsxVolumeId }) => Boolean(fsxVolumeId))
                       ?.map(({ uuid, name, fsxVolumeId }) => ({
                           id: fsxVolumeId ?? '',
                           name,
+                          fsxId,
                           ontapUuid: uuid
                       }))
               )
-            : []
-    );
+            : [];
+    });
 
     volumes = uniqBy(volumes, 'id');
     return { count: volumes?.length ?? 0, volumes, nextToken: newToken };
