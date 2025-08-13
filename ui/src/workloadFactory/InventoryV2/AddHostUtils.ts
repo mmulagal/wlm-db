@@ -31,9 +31,14 @@ export const handleProtectionUtil = async (
         getFsxDetails,
         discoverExistingFsxN,
         assignRBACPrivileges,
-        getRBACPrivileges
+        getRBACPrivileges,
+        isDemoMode
     }: any
 ) => {
+    if (isDemoMode) {
+        return showSingleAgentDialog([], true, rowData);
+    }
+
     const key = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
     const existingData = store.getState().snapCenter.dataMap[key] || {};
 

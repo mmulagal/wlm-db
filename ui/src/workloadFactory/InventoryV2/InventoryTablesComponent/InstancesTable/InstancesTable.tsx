@@ -75,6 +75,7 @@ const InstancesTable = () => {
     const { t } = useTranslation();
 
     const { instanceTableRows, tableManageColumnState } = useAppSelector(state => state.inventoryV2);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
@@ -380,7 +381,8 @@ const InstancesTable = () => {
             getFsxDetails,
             discoverExistingFsxN,
             assignRBACPrivileges,
-            getRBACPrivileges
+            getRBACPrivileges,
+            isDemoMode
         });
     };
 

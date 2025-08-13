@@ -48,6 +48,7 @@ const DatabasesTable = () => {
     const { t } = useTranslation();
     const { selectedInventoryTab, selectedFilterValue, selectedHostType, databaseTableRows, tableManageColumnState } =
         useAppSelector(state => state.inventoryV2);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const { setDialog, closeDialog } = useDialog();
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqldatabaseHostsLoading, fullHostDataLoading: pgsqlfullHostDataLoading } =
@@ -235,7 +236,8 @@ const DatabasesTable = () => {
             getFsxDetails,
             discoverExistingFsxN,
             assignRBACPrivileges,
-            getRBACPrivileges
+            getRBACPrivileges,
+            isDemoMode
         });
     };
 
