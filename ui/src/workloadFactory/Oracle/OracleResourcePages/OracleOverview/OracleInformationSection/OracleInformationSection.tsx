@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { useAppSelector } from '../../../../store/storeHooks';
-import Location from '../../../ResourcePage/InformationSection/Location/Location';
-import StorageCompute from '../../../ResourcePage/InformationSection/StorageCompute/StorageCompute';
-import ISConnectivity from '../../../ResourcePage/InformationSection/ISConnectivity/ISConnectivity';
+import { useAppSelector } from '../../../../../store/storeHooks';
+import Location from '../../../../ResourcePage/InformationSection/Location/Location';
+import StorageCompute from '../../../../ResourcePage/InformationSection/StorageCompute/StorageCompute';
+import ISConnectivity from '../../../../ResourcePage/InformationSection/ISConnectivity/ISConnectivity';
 import styles from './OracleInformationSection.module.scss';
-import { GENERAL } from '../../../../utils/appConstants';
-import OracleServer from '../../../ResourcePage/InformationSection/SQLServer/OracleServer';
+import { GENERAL } from '../../../../../utils/appConstants';
+import OracleServer from '../../../../ResourcePage/InformationSection/SQLServer/OracleServer';
 
 const OracleInformationSection = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.oracleSlice);

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import TotalOptimizationScore from '../../GetWell/TotalOptimizationScore/TotalOptimizationScore';
+import TotalOptimizationScore from '../../../GetWell/TotalOptimizationScore/TotalOptimizationScore';
 import OracleConfigureCategory from './OracleConfigureCategory/OracleConfigureCategory';
 import styles from './OracleWellArchitectDashboard.module.scss';
-import { useAppSelector } from '../../../store/storeHooks';
+import { useAppSelector } from '../../../../store/storeHooks';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
-import FilterComponent from './FilterComponent/FilterComponent';
+import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 
 const OracleWellArchitectDashboard = () => {
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -32,7 +32,7 @@ const OracleWellArchitectDashboard = () => {
                 <OracleConfigureCategory />
             </div>
 
-            <FilterComponent />
+            <OracleFilterComponent />
 
             <div className={styles.sectionTwo}>
                 <div className={styles.sectionClass}>

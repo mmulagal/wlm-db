@@ -1,10 +1,10 @@
-import { useAppSelector } from '../../../store/storeHooks';
-import CPUUtilizationCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/CPUUtilizationCard/CPUUtilizationCard';
-import IOPSCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/IOPSCard/IOPSCard';
-import LatencyCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/LatencyCard/LatencyCard';
-import ResourceHeader from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ResourceHeader/ResourceHeader';
-import ThroughputCard from '../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ThroughputCard/ThroughputCard';
-import useOracleResourceOverview from '../OracleWellArchitectDashboard/OracleResourceOverviewApi';
+import { useAppSelector } from '../../../../store/storeHooks';
+import CPUUtilizationCard from '../../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/CPUUtilizationCard/CPUUtilizationCard';
+import IOPSCard from '../../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/IOPSCard/IOPSCard';
+import LatencyCard from '../../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/LatencyCard/LatencyCard';
+import ResourceHeader from '../../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ResourceHeader/ResourceHeader';
+import ThroughputCard from '../../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ThroughputCard/ThroughputCard';
+import useOracleResourceOverview from './OracleResourceOverviewApi';
 import OracleInformationSection from './OracleInformationSection/OracleInformationSection';
 import styles from './OracleOverview.module.scss';
 

@@ -2,19 +2,19 @@ import { useDispatch } from 'react-redux';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import styles from './OracleInnerPages.module.scss';
+import styles from './OracleResourcePages.module.scss';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import OracleTabs from './OracleTabs/OracleTabs';
-import OracleWellArchitectDashboard from '../OracleWellArchitectDashboard/OracleWellArchitectDashboard';
-import OracleOverview from '../OracleOverview/OracleOverview';
+import OracleWellArchitectDashboard from './OracleWellArchitectDashboard/OracleWellArchitectDashboard';
+import OracleOverview from './OracleOverview/OracleOverview';
 import {
     resetOracleResourceVisitedTabs,
     setOracleResourceVisitedTabs
 } from '../../../store/workloadFactory/oracleSlice';
 import { useEffect } from 'react';
 
-const OracleInnerPages = () => {
+const OracleResourcePages = () => {
     const dispatch = useDispatch();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
     const { selectedOracleInnerPageTab, visitedTabs } = useAppSelector(state => state.oracleSlice);
@@ -66,4 +66,4 @@ const OracleInnerPages = () => {
     );
 };
 
-export default OracleInnerPages;
+export default OracleResourcePages;

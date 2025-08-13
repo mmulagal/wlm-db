@@ -2,21 +2,21 @@ import { useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { TooltipInfo } from '@netapp/design-system';
 import { DsAccordion, DsButton, DsSelect, DsTypography } from '@tlveng/wlm-ds';
-import { ReactComponent as RowArrow } from '../../../../assets/row arrow-down.svg';
-import { ReactComponent as Union } from '../../../../assets/Union.svg';
-import { ReactComponent as Close } from '../../../../assets/ic_close_blue.svg';
-import styles from './FilterComponent.module.scss';
-import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as RowArrow } from '../../../../../assets/row arrow-down.svg';
+import { ReactComponent as Union } from '../../../../../assets/Union.svg';
+import { ReactComponent as Close } from '../../../../../assets/ic_close_blue.svg';
+import styles from './OracleFilterComponent.module.scss';
+import { useAppSelector } from '../../../../../store/storeHooks';
+import { GENERAL } from '../../../../../utils/appConstants';
 import {
     setOracleDefaultFilterOptions,
     setOracleOptimizeFilterTags
-} from '../../../../store/workloadFactory/oracleSlice';
+} from '../../../../../store/workloadFactory/oracleSlice';
 
-import { CONFIG_STATES } from '../../../../utils/consts';
-import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../../../utils/utilityFunctions';
+import { CONFIG_STATES } from '../../../../../utils/consts';
+import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../../../../utils/resourceUtils';
 
-const FilterComponent = () => {
+const OracleFilterComponent = () => {
     const dispatch = useDispatch();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { oracleDefaultFilterOptions, oracleOptimizeFilterTags } = useAppSelector(state => state.oracleSlice);
@@ -782,4 +782,4 @@ const FilterComponent = () => {
     );
 };
 
-export default FilterComponent;
+export default OracleFilterComponent;

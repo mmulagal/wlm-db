@@ -1,4 +1,4 @@
-import { ASSESSMENT_CONFIG_NAMES } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 
 export const oracleCardData = {
     user_data_files: {

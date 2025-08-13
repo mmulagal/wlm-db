@@ -1,15 +1,15 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
-import { ReactComponent as Storage } from '../../../../assets/Storage.svg';
-import { ReactComponent as Applications } from '../../../../assets/Application.svg';
-import { ReactComponent as Resiliency } from '../../../../assets/Resiliency.svg';
-import { ReactComponent as Cloning } from '../../../../assets/Cloning.svg';
-import { ReactComponent as Compute } from '../../../../assets/Compute.svg';
-import { ReactComponent as ComingSoon } from '../../../../assets/comingSoon2.svg';
+import { ReactComponent as Storage } from '../../../../../assets/Storage.svg';
+import { ReactComponent as Applications } from '../../../../../assets/Application.svg';
+import { ReactComponent as Resiliency } from '../../../../../assets/Resiliency.svg';
+import { ReactComponent as Cloning } from '../../../../../assets/Cloning.svg';
+import { ReactComponent as Compute } from '../../../../../assets/Compute.svg';
+import { ReactComponent as ComingSoon } from '../../../../../assets/comingSoon2.svg';
 import styles from './OracleConfigureCategory.module.scss';
 
-import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
-import OptimizeComponent from '../../../GetWell/OptimizeComponent/OptimizeComponent';
+import { useAppSelector } from '../../../../../store/storeHooks';
+import { GENERAL } from '../../../../../utils/appConstants';
+import OptimizeComponent from '../../../../GetWell/OptimizeComponent/OptimizeComponent';
 
 const OracleConfigureCategory = () => {
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);

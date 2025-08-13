@@ -2,10 +2,10 @@ import { DsAccordion, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import OracleCardComponent from '../OracleCardComponent/OracleCardComponent';
 import { oracleCardData } from '../OracleWellArchitectedUtils';
-import Tag from '../../../../common/Tag/Tag';
-import RecommendationText from '../../../GetWell/RecommendationText/RecommendationText';
-import { ReactComponent as Light } from '../../../../assets/Light.svg';
-import { ReactComponent as LightDisabled } from '../../../../assets/Light-Disabled.svg';
+import Tag from '../../../../../common/Tag/Tag';
+import RecommendationText from '../../../../GetWell/RecommendationText/RecommendationText';
+import { ReactComponent as Light } from '../../../../../assets/Light.svg';
+import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
 
 const StorageLayoutSection = ({
     styles,

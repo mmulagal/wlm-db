@@ -124,7 +124,7 @@ import { DsBlueXpMenu } from '../../../common/DsMenuBlueXP/DsBlueXpMenu';
 import WellArchitectDashboard from '../../GetWell/WellArchitectDashboard/WellArchitectDashboard';
 import RegisterWizard from '../../InventoryV2/InventoryTablesComponent/ManageInstanceWizard/RegisterWizard';
 import DummySelect from '../../../common/DummySelect/DummySelect';
-import OracleInnerPages from '../../Oracle/OracleInnerPages/OracleInnerPages';
+import OracleResourcePages from '../../Oracle/OracleResourcePages/OracleResourcePages';
 
 type Tab = {
     tab: string;
@@ -1547,7 +1547,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {/* For optimize tab */}
 
                     {selectedHeaderTab === WLF_TABS.OPTIMIZE && <WellArchitectDashboard />}
-                    {selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED && <OracleInnerPages />}
+
+                    {/* Route for oracle resource screen */}
+                    {selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED && <OracleResourcePages />}
 
                     {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
 

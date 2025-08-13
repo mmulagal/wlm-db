@@ -61,7 +61,7 @@ import downloadPdf from '../../common/pdfGenerator';
 import { useLazyGetSubTaskListQuery, useTriggerInstanceAssessmentMutation } from '../../utils/apiService';
 import AssessmentContainer from './AssessmentContainer/AssessmentContainer';
 import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
-import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../utils/utilityFunctions';
+import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../utils/resourceUtils';
 
 const GetWell = () => {
     const dispatch = useDispatch();

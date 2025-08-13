@@ -37,6 +37,7 @@ import {
     OPTIMIZE_POLLING_INTERVAL,
     STATUS_CONST
 } from '../../utils/consts';
+import { groupByType } from '../../utils/resourceUtils';
 import {
     AssessmentResponseInterface,
     GwCardDataInterface,
@@ -48,7 +49,6 @@ import {
     formatDateWithTime,
     formatNumberWithCustomComma,
     getCurrentDateTime,
-    groupByType,
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';

@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { useAppSelector } from '../../../store/storeHooks';
-import { useGetOracleOverviewDetailsMutation } from '../../../utils/apiService';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useGetOracleOverviewDetailsMutation } from '../../../../utils/apiService';
 
-import { setOracleResourceDetails, setOracleResourceLoading } from '../../../store/workloadFactory/oracleSlice';
+import { setOracleResourceDetails, setOracleResourceLoading } from '../../../../store/workloadFactory/oracleSlice';
 
 const useOracleResourceOverview = () => {
     const dispatch = useDispatch();
