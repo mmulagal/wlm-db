@@ -28,7 +28,7 @@ const useOracleResourceOverview = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visitedTabs]);
 
-    //To do enable when refresh enable
+    // To do enable when refresh enable
 
     // useEffect(() => {
     //     if (isResourceRefresh) {

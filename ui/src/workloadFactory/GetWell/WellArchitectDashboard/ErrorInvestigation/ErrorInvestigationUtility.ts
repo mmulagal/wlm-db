@@ -377,15 +377,16 @@ export const handleLogAnalyzerJob = (
                     logAnalyzerScanUpdate(key, false, dispatch);
                     clearInterval(jobInterval);
                     if (firstScan) {
+                        const latestReport = jobRes?.data?.metadata?.latestReport || {};
                         dispatch(setLogAnalyzerState(ERROR_ANALYZER_STATUS.ACTIVE));
                         newObj = {
                             ...newObj,
-                            id: jobId, // ToDo get from res
+                            id: latestReport?.id || '',
                             status: ERROR_ANALYZER_STATUS.ACTIVE,
                             latestReport: {
-                                creationTime: 0, // ToDo get from res
+                                creationTime: latestReport?.creationTime || 0,
                                 jobId: jobId || '',
-                                errorCount: 0 // ToDo get from res
+                                errorCount: latestReport?.errorCount || 0
                             }
                         };
                         updateLogAnalyzerRow(dispatch, newObj);

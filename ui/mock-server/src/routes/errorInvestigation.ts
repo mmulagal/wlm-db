@@ -107,7 +107,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/data
     }, 700);
 });
 
-router.get(`${BASE_URL}/v1/pricing/regions/:region/logs-analysis`, async (req: express.Request, res: any) => {
+router.get(`${BASE_URL}/v1/pricing/region/:region/logs-analysis`, async (req: express.Request, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, {
             costPerError: 4

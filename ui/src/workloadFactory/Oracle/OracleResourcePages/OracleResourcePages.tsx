@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -12,7 +13,6 @@ import {
     resetOracleResourceVisitedTabs,
     setOracleResourceVisitedTabs
 } from '../../../store/workloadFactory/oracleSlice';
-import { useEffect } from 'react';
 
 const OracleResourcePages = () => {
     const dispatch = useDispatch();

@@ -2,20 +2,30 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useGetLogAnalyzerPreReqMutation, useGetLogAnalyzerPricingMutation } from '../../../../../utils/apiService';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { WLF_TABS } from '../../../../../utils/consts';
+import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../../utils/consts';
 import {
+    setEiRefreshPage,
     setLogAnalyzerPreReqData,
     setLogAnalyzerPreReqLoading,
     setLogAnalyzerPricingData,
     setLogAnalyzerPricingLoading
 } from '../../../../../store/workloadFactory/agenticAISlice';
+import { setLandingFromInnerPage } from '../../../../../store/workloadFactory/getWellOptimizeSlice';
 
 const LogAnalyzerOnboardingAPI = () => {
     const dispatch = useDispatch();
-    const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
+    const {
+        credIdFromJM,
+        regionFromJM,
+        landingFrom,
+        landingFromInnerPage,
+        selectedResourceId,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        visitedTabs
+    } = useAppSelector(state => state.getWellOptimize);
 
-    const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
-        useAppSelector(state => state.getWellOptimize);
+    const { eiRefreshPage } = useAppSelector(state => state.agenticAI);
 
     const [getLogAnalyzerPreReqApi] = useGetLogAnalyzerPreReqMutation();
     const [getLogAnalyzerPricingApi] = useGetLogAnalyzerPricingMutation();
@@ -59,8 +69,23 @@ const LogAnalyzerOnboardingAPI = () => {
     };
 
     useEffect(() => {
-        runInvestigationPreReqApi();
-        runInvestigationPricingApi();
+        // On page refresh, call the API to get data
+        if (eiRefreshPage) {
+            runInvestigationPreReqApi();
+            runInvestigationPricingApi();
+            dispatch(setEiRefreshPage(false));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [eiRefreshPage]);
+
+    useEffect(() => {
+        // On page load, call the API to get data
+        if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION]) {
+            runInvestigationPreReqApi();
+            runInvestigationPricingApi();
+        } else {
+            dispatch(setLandingFromInnerPage(false));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 };

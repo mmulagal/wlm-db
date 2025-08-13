@@ -110,7 +110,8 @@ const agenticAISlice = createSlice({
             };
             state.noData = false;
             state.noErrorsDetected = false;
-            state.logAnalyzerState = '';
+            state.logAnalyzerPreReq.data = null;
+            state.logAnalyzerPricing.data = null;
         },
         setNoErrorsDetected: (state, action: PayloadAction<boolean>) => {
             state.noErrorsDetected = action.payload;

@@ -11,25 +11,21 @@ type AccordionContent = {
     resourceLoading?: boolean;
 };
 
-const DbAccordion = ({ heading, toggle, open, content, resourceLoading }: AccordionContent) => {
-    return (
-        <div className={resourceLoading ? `${styles.dbAccordion} ${styles.disabledApplied}` : `${styles.dbAccordion}`}>
-            <div
-                className={!open ? `${styles.accordionContainer} ${styles.addBorder}` : `${styles.accordionContainer}`}
-            >
-                <div className={styles.accordionHeader} onClick={() => toggle(heading)}>
-                    <div className={styles.firstLevel}>
-                        <Typography variant="Semibold_14" className={styles.accordionHeading}>
-                            {heading}
-                        </Typography>
+const DbAccordion = ({ heading, toggle, open, content, resourceLoading }: AccordionContent) => (
+    <div className={resourceLoading ? `${styles.dbAccordion} ${styles.disabledApplied}` : `${styles.dbAccordion}`}>
+        <div className={!open ? `${styles.accordionContainer} ${styles.addBorder}` : `${styles.accordionContainer}`}>
+            <div className={styles.accordionHeader} onClick={() => toggle(heading)}>
+                <div className={styles.firstLevel}>
+                    <Typography variant="Semibold_14" className={styles.accordionHeading}>
+                        {heading}
+                    </Typography>
 
-                        <div className={styles.rightMenu}>{open ? <Remove /> : <Add />}</div>
-                    </div>
+                    <div className={styles.rightMenu}>{open ? <Remove /> : <Add />}</div>
                 </div>
-                {open && <div className={styles.contentBorder}>{content}</div>}
             </div>
+            {open && <div className={styles.contentBorder}>{content}</div>}
         </div>
-    );
-};
+    </div>
+);
 
 export default DbAccordion;
