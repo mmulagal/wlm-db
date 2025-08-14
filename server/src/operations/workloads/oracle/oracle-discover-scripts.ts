@@ -396,6 +396,83 @@ EOF
         echo $(get_directory_mount_details "$dataDirectories")
     }
 
+    is_setup_running_iscsi_sessions() {
+        local iqns
+        iqns=$(sudo iscsiadm -m session 2>/dev/null | grep -oP 'iqn\\.[^ ]+')
+        if [ -z "$iqns" ]; then
+            echo "false"
+        else
+            echo "true"
+        fi
+    }
+
+    is_setup_asm_managed() {
+        if pgrep -lf '^asm_pmon_+' >/dev/null 2>&1 ; then
+            echo "true"
+        else
+            echo "false"
+        fi
+    }
+
+    get_asm_iscsi_storage_details_without_creds() {
+        iqns=$(sudo iscsiadm -m session | grep -oP 'iqn\\.[^ ]+')
+
+        iscsiStorageMappings="["
+        for iqn in $iqns; do
+            # Get device path for this IQN
+            device=$(ls -l /dev/disk/by-path/ | grep "$iqn" | awk '{print $9}' | head -n 1)
+            if [ -z "$device" ]; then
+                continue
+            fi
+            source="/dev/disk/by-path/$device"
+            udevInfo=$(sudo udevadm info --query=all --name="$source")
+            mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
+            mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
+            iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
+            mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
+            if echo "$mountPoint" | grep -q "iscsi"; then
+                protocol="iSCSI"
+            else
+                protocol="others"
+            fi
+            mountPoint="$iscsiSerialNumber"
+            jsonObj="{\\"isAsmManaged\\":\\"true\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+            if [ "$iscsiStorageMappings" == "[" ]; then
+                iscsiStorageMappings+="$jsonObj"
+            else
+                iscsiStorageMappings+=", $jsonObj"
+            fi
+        done
+
+        iscsiStorageMappings+="]"
+        echo "$iscsiStorageMappings"
+    }
+    
+    get_asm_nfs_storage_details_without_creds() {
+        nfsStorageMappings="["
+        nfsSources=$(sudo findmnt -t nfs,nfs4 -o SOURCE,TARGET | tail -n +2 | awk '{print $1}')
+        while IFS= read -r source; do
+            dns_name=$(echo "$source" | cut -d':' -f1)
+            mountPoint=$(echo "$source" | cut -d':' -f2-)
+            protocol="NFS"
+        
+            if [[ $dns_name =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+                mountIp="$dns_name"
+            else
+                mountIp=$(dig +short "$dns_name")
+            fi
+            jsonObj="{\\"isAsmManaged\\":\\"true\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+
+            if [ "$nfsStorageMappings" == "[" ]; then
+                nfsStorageMappings+="$jsonObj"
+            else
+                nfsStorageMappings+=", $jsonObj"
+            fi
+        done <<< "$nfsSources"
+        nfsStorageMappings+="]"
+        echo "$nfsStorageMappings"
+    }
+
     get_oracle_db_mount_details() {
         local ORACLE_SID="$1"
         local isCDB="$2"
@@ -461,8 +538,17 @@ const getInstanceStorageDetails = `
 `;
 
 const getStorageWithoutCreds = `
-    # TODO: Handle ASM setups without credentials.
-    storageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "NO" "null" "false" "$oracle_home")
+    isASMManaged=$(is_setup_asm_managed)
+    if [ "$isASMManaged" == "true" ]; then
+        isSetupRunningISCSISessions=$(is_setup_running_iscsi_sessions)
+        if [ "$isSetupRunningISCSISessions" == "true" ]; then
+            storageDetails=$(get_asm_iscsi_storage_details_without_creds)
+        else
+            storageDetails=$(get_asm_nfs_storage_details_without_creds)
+        fi
+    else
+        storageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "NO" "null" "false" "$oracle_home")
+    fi
 `;
 
 const loadDatabaseDetectionModules = `
