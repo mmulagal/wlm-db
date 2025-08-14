@@ -1,5 +1,6 @@
 import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import useResize from '../../../common/hooks/useResize';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
@@ -45,6 +46,7 @@ import store from '../../../store/store';
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, hostId, instanceId }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const windowSize = useResize();
     const { setDialog, closeDialog } = useDialog();
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
@@ -360,7 +362,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '1',
             Header: 'Configuration',
             accessor: 'name',
-            width: from === WLF_TABS.INVENTORY ? '268px' : '250px',
+            width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '268px' : '250px',
             isSortable: true,
             renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
@@ -368,7 +370,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '2',
             Header: 'Status',
             accessor: 'status',
-            width: '220px',
+            width: windowSize.width > 1700 ? '15%' : '220px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <>
@@ -395,7 +397,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '3',
             Header: 'Severity',
             accessor: 'severity',
-            width: from === WLF_TABS.INVENTORY ? '173px' : '200px',
+            width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '173px' : '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 if (rowData?.errorMessage) {
@@ -428,7 +430,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '4',
             Header: 'Impacted resources',
             accessor: 'totalObjectsInViolation',
-            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '220px' : '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 let type = '';
@@ -465,7 +467,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '5',
             Header: 'Tags',
             accessor: 'tags',
-            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            width: windowSize.width > 1700 ? '10%' : from === WLF_TABS.INVENTORY ? '220px' : '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <div className={styles.tooltipContainer}>
@@ -504,7 +506,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: from === WLF_TABS.INVENTORY ? '202px' : '290px',
+            width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '202px' : '290px',
             renderCell: (cellData: any, rowData: any) => (
                 <div className={styles.recommendation}>
                     <div className={styles.tooltipContainer}>
@@ -537,7 +539,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             Header: '',
             accessor: '',
             isSticky: true,
-            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '220px' : '200px',
             renderCell: (cellData: any, rowData: any) => (
                 <div className={styles.recommendation}>
                     {!optimizePrintState &&
