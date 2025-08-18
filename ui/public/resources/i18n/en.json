@@ -294,7 +294,17 @@
             "associated_volumes": "Associated volume",
             "associated_lun": "Associated LUN",
             "associated_luns": "Associated LUNs",
-            "fsx-for-ontap:": "FSx for ONTAP"
+            "fsx-for-ontap:": "FSx for ONTAP",
+            "latency": "Latency",
+            "iops": "IOPS",
+            "throughput": "Throughput",
+            "local-protection": "Local protection",
+            "remote-protection": "Remote protection",
+            "used": "Used",
+            "available": "Available",
+            "size-allocated": "Size allocated",
+            "tib": "TiB",
+            "ssd-capacity": "SSD capacity"
         },
         "inventory": {
             "protect-header": "Protect Microsoft SQL Server instance",
