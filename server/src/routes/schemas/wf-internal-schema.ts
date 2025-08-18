@@ -1,5 +1,5 @@
-import { AccountIdParams, NextTokenQueryString } from '../types/generic.types';
-import { ListVolumesResponse, StatusParams, StatusResponse } from '../types/wf-internal.types';
+import { AccountIdParams } from '../types/generic.types';
+import { ListVolumesQueryParams, ListVolumesResponse, StatusParams, StatusResponse } from '../types/wf-internal.types';
 
 const GetSystemStatusSchema = {
     tags: ['WF-Internal'],
@@ -14,7 +14,7 @@ const GetSystemStatusSchema = {
 const GetDatabaseVolumesSchema = {
     tags: ['WF-Internal'],
     params: AccountIdParams,
-    querystring: NextTokenQueryString,
+    querystring: ListVolumesQueryParams,
     summary: 'Get WLMDB volumes',
     description: 'List all the volumes managed by WLMDB for the given account',
     response: {

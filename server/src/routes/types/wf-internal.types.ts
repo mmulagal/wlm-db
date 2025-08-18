@@ -1,4 +1,5 @@
 import { Type } from '@fastify/type-provider-typebox';
+import { NextTokenQueryString } from './generic.types';
 
 const StatusParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -21,4 +22,11 @@ const ListVolumesResponse = Type.Object({
     volumes: Type.Array(VolumeObject)
 });
 
-export { StatusParams, StatusResponse, VolumeObject, ListVolumesResponse };
+const ListVolumesQueryParams = Type.Composite([
+    NextTokenQueryString,
+    Type.Object({
+        fsxId: Type.Optional(Type.String())
+    })
+]);
+
+export { StatusParams, StatusResponse, VolumeObject, ListVolumesResponse, ListVolumesQueryParams };

@@ -35,16 +35,24 @@ async function getSystemStatus(accountId: string) {
     return { isActive: true };
 }
 
-async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?: string) {
-    logger.info('Getting database volumes for account.', accountId, pageSize, nextToken);
+async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?: string, fileSystemId?: string) {
+    logger.info('Getting database volumes for account.', accountId, pageSize, nextToken, fileSystemId);
 
+    const fileSystemIds = fileSystemId ? fileSystemId.trim().split(',') : undefined;
     const { items, nextToken: newToken } = await paginateListInstanceConfigData({
         accountId,
         configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
         ...(pageSize && { pageSize }),
         ...(nextToken && { nextToken }),
         select: { config_data: true, id: true, database_instances: { select: { fsxn_ids: true } } },
-        filters: { config_data: { not: {} } }
+        filters: {
+            config_data: { not: {} },
+            ...(!isEmpty(fileSystemIds) && {
+                database_instances: {
+                    fsxn_ids: { in: fileSystemIds }
+                }
+            })
+        }
     });
 
     let volumes = items.flatMap(obj => {
