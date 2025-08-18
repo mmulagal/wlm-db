@@ -66,6 +66,7 @@ import { setSelectedCredentials, setSelectedRegionData } from '../../../store/ms
 import {
     DBType,
     SAVINGS_CALC_MODE,
+    STAGING,
     WLF_TABS,
     WLF_TO_FORM_NAVIGATE,
     WLF_TO_PROTECT_NAVIGATE
@@ -1196,7 +1197,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                     </div>
                 ) : (
                     <>
-                        {!(isWorkloadFactory && topBarFlag) && (
+                        {!(
+                            isWorkloadFactory ||
+                            (!isWorkloadFactory && import.meta.env.VITE_APP_ENVIRONMENT === STAGING)
+                        ) && (
                             <div className={styles.firstSection}>
                                 <div className={styles.withWorkLoad}>
                                     <div className={styles.firstRow}>
@@ -1386,7 +1390,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                     </>
                 )}
 
-                {!(isWorkloadFactory && topBarFlag) && <div className={styles.extraSpace} />}
+                {!(isWorkloadFactory || (!isWorkloadFactory && import.meta.env.VITE_APP_ENVIRONMENT === STAGING)) && (
+                    <div className={styles.extraSpace} />
+                )}
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>

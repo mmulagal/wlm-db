@@ -18,11 +18,11 @@ const NoCredBanner = ({ width }: any) => {
 
     const openCred = () => {
         if (!isWorkloadFactory) {
-            navigate('../../credentials/wlf');
+            navigate('../../fsxadministration/credentials');
             postBlueXPMessage({
                 type: BlueXPListeners.navigate,
                 payload: {
-                    pathname: '../../credentials/wlf',
+                    pathname: '../../fsxadministration/credentials',
                     replace: true
                 }
             });

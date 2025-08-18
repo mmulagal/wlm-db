@@ -48,8 +48,8 @@ export const DEFAULT_MASTER_KEY = 'aws/fsx';
 export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 
 // Add credentials link
-export const CREDENTIAL_STAGE_LINK = 'https://staging.console.bluexp.netapp.com/credentials/wlf';
-export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials/account-credentials';
+export const CREDENTIAL_STAGE_LINK = 'https://staging.console.bluexp.netapp.com/fsxadministration/credentials';
+export const CREDENTIAL_PROD_LINK = 'https://console.bluexp.netapp.com/fsxadministration/credentials';
 
 // Add WF credentials link
 // export const CREDENTIAL_WF_STAGE_LINK = 'https://staging.console.workloads.netapp.com/credentials';
