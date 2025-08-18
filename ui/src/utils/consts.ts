@@ -839,7 +839,10 @@ export const GETWELL_CONFIG: any = {
     'cluster-quorum': 'Cluster Quorum',
     'sqlServer-service': 'SQL Server Services',
     clone: 'clone_management',
-    'clone-management': 'clone_management'
+    'clone-management': 'clone_management',
+    'redologs-temp-placement': 'redologs_temp_placement',
+    'archive-placement': 'archive_placement',
+    'datafiles-controlfiles-placement': 'datafiles_controlfiles_placement'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -884,7 +887,10 @@ export const ASSESSMENT_CONFIG_NAMES = {
     DRIVE_LETTER: 'Drive Letter',
     HEARTBEAT_SETTINGS: 'Heartbeat Settings',
     CLUSTER_QUORUM: 'Cluster Quorum',
-    SQL_SERVER_SERVICE: 'SQL Server Services'
+    SQL_SERVER_SERVICE: 'SQL Server Services',
+    REDO_LOGS_TEMP_PLACEMENT: 'Redo logs and Temp Placement',
+    ARCHIVE_PLACEMENT: 'Archive Placement',
+    DATAFILES_CONTROLFILES_PLACEMENT: 'Data Files and Control Files Placement'
 };
 
 export const CONFIG_STATES = {

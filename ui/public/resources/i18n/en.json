@@ -127,14 +127,17 @@
             "oracle": "Oracle instance"
         },
         "oracle-inner-page": {
+            "storage-configuration": "Storage configuration",
             "storage-layout": "Storage layout",
             "view-recommendation": "View recommendation",
             "view-and-fix": " View and fix",
+            "view": " View",
             "database-name": "Database name",
             "tenancy": "Tenancy",
             "number-of-pdbs": "Number of PDBs",
             "deployment-type": "Deployment type",
-            "oracle-server": "Oracle server"
+            "oracle-server": "Oracle server",
+            "view-recommendations-optimizations": "View recommendations & optimizations"
         },
         "well-architect": {
             "non-optimal-critical": "Non-optimal configuration (Critical)",

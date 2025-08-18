@@ -1,9 +1,9 @@
 import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import useResize from '../../../common/hooks/useResize';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
+import useResize from '../../../common/hooks/useResize';
 import styles from './RecommendationTable.module.scss';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Active } from '../../../assets/success.svg';

@@ -1,0 +1,372 @@
+{
+   "storage":{
+      "configuration":{
+         "volumes":[
+            {
+               "name":"thin-provision",
+               "status":"optimized",
+               "recommended":"true",
+               "severity":"critical",
+               "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence"
+               ],
+               "objectsInViolation":[
+                  
+               ],
+               "violationDetails":[
+                  
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":0,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"autosize",
+               "status":"not-optimized",
+               "recommended":"on",
+               "severity":"critical",
+               "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence"
+               ],
+               "objectsInViolation":[
+                  "oracleredo2",
+                  "oraclearch2",
+                  "oracledata2"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"oracleredo2",
+                     "value":"off",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oraclearch2",
+                     "value":"off",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oracledata2",
+                     "value":"off",
+                     "objectType":"Volume"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"autosize-mode",
+               "status":"not-optimized",
+               "recommended":"grow",
+               "severity":"critical",
+               "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence"
+               ],
+               "objectsInViolation":[
+                  "oracleredo2",
+                  "oraclearch2",
+                  "oracledata2"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"oracleredo2",
+                     "value":"off",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oraclearch2",
+                     "value":"off",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oracledata2",
+                     "value":"off",
+                     "objectType":"Volume"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"fractional-reserve",
+               "status":"not-optimized",
+               "recommended":"0",
+               "severity":"critical",
+               "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence"
+               ],
+               "objectsInViolation":[
+                  "oracleredo2",
+                  "oraclearch2",
+                  "oracledata2"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"oracleredo2",
+                     "value":"100",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oraclearch2",
+                     "value":"100",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oracledata2",
+                     "value":"100",
+                     "objectType":"Volume"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"snapshot-copy-reserve",
+               "status":"not-optimized",
+               "recommended":"0",
+               "severity":"critical",
+               "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence"
+               ],
+               "objectsInViolation":[
+                  "oracleredo2",
+                  "oraclearch2",
+                  "oracledata2"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"oracleredo2",
+                     "value":"5",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oraclearch2",
+                     "value":"5",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oracledata2",
+                     "value":"5",
+                     "objectType":"Volume"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"snapshot-autodelete",
+               "status":"not-optimized",
+               "recommended":"true",
+               "severity":"warning",
+               "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence"
+               ],
+               "objectsInViolation":[
+                  "oracleredo2",
+                  "oraclearch2",
+                  "oracledata2"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"oracleredo2",
+                     "value":"false",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oraclearch2",
+                     "value":"false",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oracledata2",
+                     "value":"false",
+                     "objectType":"Volume"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"space-mgmt-try-first",
+               "status":"not-optimized",
+               "recommended":"volume_grow",
+               "severity":"warning",
+               "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence"
+               ],
+               "objectsInViolation":[
+                  "oracleredo2",
+                  "oraclearch2",
+                  "oracledata2"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"oracleredo2",
+                     "value":"",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oraclearch2",
+                     "value":"",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oracledata2",
+                     "value":"",
+                     "objectType":"Volume"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"tiering-policy",
+               "status":"not-optimized",
+               "recommended":"snapshot_only",
+               "severity":"critical",
+               "recommendation":"For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
+               "tags":[
+                  "Performance efficiency"
+               ],
+               "objectsInViolation":[
+                  "oracleredo2",
+                  "oraclearch2",
+                  "oracledata2"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"oracleredo2",
+                     "value":"none",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oraclearch2",
+                     "value":"none",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oracledata2",
+                     "value":"all",
+                     "objectType":"Volume"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"tiering-min-cooling-days",
+               "status":"not-optimized",
+               "recommended":"7",
+               "severity":"warning",
+               "recommendation":"For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
+               "tags":[
+                  "Cost optimization"
+               ],
+               "objectsInViolation":[
+                  "oracleredo2",
+                  "oraclearch2",
+                  "oracledata2"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"oracleredo2",
+                     "value":"",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oraclearch2",
+                     "value":"",
+                     "objectType":"Volume"
+                  },
+                  {
+                     "objectName":"oracledata2",
+                     "value":"",
+                     "objectType":"Volume"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            }
+         ]
+      },
+      "layout":[
+         {
+            "name":"archive-placement",
+            "status":"optimized",
+            "recommended":"separate-volume",
+            "severity":"warning",
+            "recommendation":"Placing archive logs on a dedicated volume enhances performance and recovery processes. This isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.",
+            "tags":[
+               "Cost optimization",
+               "Operational excellence",
+               "Performance efficiency"
+            ],
+            "objectsInViolation":[
+               
+            ],
+            "totalObjectsAssessed":1,
+            "totalObjectsInViolation":0
+         },
+         {
+            "name":"datafiles-controlfiles-placement",
+            "status":"not-optimized",
+            "recommended":"separate-volume",
+            "severity":"warning",
+            "recommendation":"Data files and control files should reside on a dedicated volume to optimize performance and maintain data integrity. Isolating these files allows for efficient read/write operations and ensures critical control file accessibility, reducing the risk of corruption and enhancing database robustness.",
+            "tags":[
+               "Cost optimization",
+               "Operational excellence",
+               "Performance efficiency"
+            ],
+            "objectsInViolation":[
+               "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+            ],
+            "totalObjectsAssessed":1,
+            "totalObjectsInViolation":1
+         },
+         {
+            "name":"redologs-temp-placement",
+            "status":"not-optimized",
+            "recommended":"separate-volume",
+            "severity":"warning",
+            "recommendation":"Placing redo logs, temp files, and archive logs on a dedicated volume enhances performance and recovery processes. This isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.",
+            "tags":[
+               "Cost optimization",
+               "Operational excellence",
+               "Performance efficiency"
+            ],
+            "objectsInViolation":[
+               "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+            ],
+            "totalObjectsAssessed":1,
+            "totalObjectsInViolation":1
+         }
+      ]
+   },
+   "fileSystemId":"fs-0d5efc3057c4f12cb",
+   "ec2InstanceId":"i-055ed011c2068033a",
+   "databaseInstanceName":"ordbsdl",
+   "deploymentType":"Standalone",
+   "lastAssessmentTimestamp": 1730074791000
+}

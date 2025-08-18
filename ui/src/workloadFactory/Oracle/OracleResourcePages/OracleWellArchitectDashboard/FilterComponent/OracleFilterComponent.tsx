@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { TooltipInfo } from '@netapp/design-system';
 import { DsAccordion, DsButton, DsSelect, DsTypography } from '@tlveng/wlm-ds';
@@ -15,19 +15,29 @@ import {
 
 import { CONFIG_STATES } from '../../../../../utils/consts';
 import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../../../../utils/resourceUtils';
+import { oracleApplyFilter } from '../OracleWellArchitectedUtils';
 
-const OracleFilterComponent = () => {
+const OracleFilterComponent = ({ setFilteredCardData }: any) => {
     const dispatch = useDispatch();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { oracleDefaultFilterOptions, oracleOptimizeFilterTags } = useAppSelector(state => state.oracleSlice);
     // This might be pass from parent
     const [configCount, setConfigCount] = useState(0);
 
-    const loading = false;
-    const isAssessmentAvailable = true; // This should be replaced with actual logic to check assessment availability
-
-    // To do
     const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
+    const {
+        optimizePageLoading: loading,
+        isAssessmentAvailable,
+        cardData,
+        ontapConfigTableData
+    } = useAppSelector(state => state.getWellOptimize);
+
+    // To apply filters on change of filters or card data
+    useEffect(() => {
+        const { data, configCount } = oracleApplyFilter(cardData, oracleOptimizeFilterTags);
+        setFilteredCardData(data);
+        setConfigCount(configCount);
+    }, [cardData, oracleOptimizeFilterTags, ontapConfigTableData]);
 
     const generateSubCategoryOptions = useMemo(() => {
         const selectedCategories = oracleOptimizeFilterTags
@@ -36,12 +46,6 @@ const OracleFilterComponent = () => {
         const options = [
             {
                 id: 0,
-                label: 'Storage sizing',
-                value: 'Storage sizing',
-                category: 'Storage'
-            },
-            {
-                id: 1,
                 label: 'Storage layout',
                 value: 'Storage layout',
                 category: 'Storage'
@@ -51,30 +55,6 @@ const OracleFilterComponent = () => {
                 label: 'Storage configuration',
                 value: 'Storage configuration',
                 category: 'Storage'
-            },
-            {
-                id: 3,
-                label: 'Compute',
-                value: 'Compute_sub',
-                category: 'Compute'
-            },
-            {
-                id: 4,
-                label: GENERAL.APPLICATION,
-                value: 'Application_sub',
-                category: 'Application'
-            },
-            {
-                id: 5,
-                label: 'Protection',
-                value: 'Protection',
-                category: GENERAL.RESILIENCY
-            },
-            {
-                id: 6,
-                label: 'Cloning',
-                value: 'Cloning',
-                category: GENERAL.CLONING
             }
         ];
         const filteredOptions = selectedCategories.length
@@ -135,13 +115,13 @@ const OracleFilterComponent = () => {
             formatLabel={() =>
                 `Categories: ${
                     !oracleDefaultFilterOptions['all-catagories']?.length ||
-                    oracleDefaultFilterOptions['all-catagories'].length === 2
+                    oracleDefaultFilterOptions['all-catagories'].length === 1
                         ? 'All'
                         : ''
                 }(${
                     oracleDefaultFilterOptions['all-catagories']?.length > 0
                         ? oracleDefaultFilterOptions['all-catagories']?.length
-                        : 5
+                        : 1
                 })`
             }
             placeholder="Placeholder text"
@@ -150,26 +130,6 @@ const OracleFilterComponent = () => {
                     id: 0,
                     label: 'Storage ',
                     value: 'Storage'
-                },
-                {
-                    id: 1,
-                    label: 'Compute',
-                    value: 'Compute'
-                },
-                {
-                    id: 2,
-                    label: GENERAL.APPLICATION,
-                    value: 'Application'
-                },
-                {
-                    id: 3,
-                    label: GENERAL.RESILIENCY,
-                    value: 'Resiliency'
-                },
-                {
-                    id: 4,
-                    label: GENERAL.CLONING,
-                    value: 'Cloning'
                 }
             ]}
             selectionType="multi"
@@ -304,10 +264,10 @@ const OracleFilterComponent = () => {
             isCleanable={false}
             formatLabel={() =>
                 `Tags: ${
-                    !oracleDefaultFilterOptions.tags?.length || oracleDefaultFilterOptions.tags.length === 6
+                    !oracleDefaultFilterOptions.tags?.length || oracleDefaultFilterOptions.tags.length === 3
                         ? 'All'
                         : ''
-                }(${oracleDefaultFilterOptions.tags?.length > 0 ? oracleDefaultFilterOptions.tags?.length : 6})`
+                }(${oracleDefaultFilterOptions.tags?.length > 0 ? oracleDefaultFilterOptions.tags?.length : 3})`
             }
             placeholder="Placeholder text"
             options={[
@@ -318,28 +278,13 @@ const OracleFilterComponent = () => {
                 },
                 {
                     id: 1,
-                    label: 'Cost efficiency',
-                    value: 'Cost efficiency'
-                },
-                {
-                    id: 2,
                     label: 'Performance efficiency',
                     value: 'Performance efficiency'
                 },
                 {
-                    id: 3,
+                    id: 2,
                     label: 'Operational excellence',
                     value: 'Operational excellence'
-                },
-                {
-                    id: 4,
-                    label: 'Reliability',
-                    value: 'Reliability'
-                },
-                {
-                    id: 5,
-                    label: 'Security',
-                    value: 'Security'
                 }
             ]}
             selectionType="multi"
@@ -405,13 +350,13 @@ const OracleFilterComponent = () => {
             formatLabel={() =>
                 `Resource type: ${
                     !oracleDefaultFilterOptions.resourceType?.length ||
-                    oracleDefaultFilterOptions.resourceType.length === 9
+                    oracleDefaultFilterOptions.resourceType.length === 2
                         ? 'All'
                         : ''
                 }(${
                     oracleDefaultFilterOptions.resourceType?.length > 0
                         ? oracleDefaultFilterOptions.resourceType?.length
-                        : 9
+                        : 2
                 })`
             }
             placeholder="Placeholder text"
@@ -425,41 +370,6 @@ const OracleFilterComponent = () => {
                     id: 1,
                     label: 'Volume',
                     value: 'Volume'
-                },
-                {
-                    id: 2,
-                    label: 'File system (FSx for ONTAP)',
-                    value: 'File system (FSx for ONTAP)'
-                },
-                {
-                    id: 3,
-                    label: 'Drive',
-                    value: 'Drive'
-                },
-                {
-                    id: 4,
-                    label: 'LUN path',
-                    value: 'LUN path'
-                },
-                {
-                    id: 5,
-                    label: 'Storage multipath',
-                    value: 'Storage multipath'
-                },
-                {
-                    id: 6,
-                    label: 'EC2 instance',
-                    value: 'EC2 instance'
-                },
-                {
-                    id: 8,
-                    label: 'SQL instance',
-                    value: 'SQL instance'
-                },
-                {
-                    id: 9,
-                    label: 'Network Adapter',
-                    value: 'Network Adapter'
                 }
             ]}
             selectionType="multi"
@@ -520,7 +430,7 @@ const OracleFilterComponent = () => {
                             </div>
                             <div className={styles.dropDown}>{severitySelectBox()}</div>
                             <div className={styles.dropDown}>{tagsSelectBox()}</div>
-                            <div className={styles.dropDown}>{configStateSelectBox()}</div>
+                            {/* <div className={styles.dropDown}>{configStateSelectBox()}</div> */}
                             <div className={styles.dropDown}>{resourceTypeSelectBox()}</div>
                         </div>
 
@@ -581,9 +491,9 @@ const OracleFilterComponent = () => {
                                 variant="Semibold_14"
                             >
                                 {!oracleDefaultFilterOptions['all-catagories']?.length ||
-                                oracleDefaultFilterOptions['all-catagories']?.length === 5
-                                    ? 'All(5)'
-                                    : `${oracleDefaultFilterOptions['all-catagories']?.length}/5`}
+                                oracleDefaultFilterOptions['all-catagories']?.length === 1
+                                    ? 'All(1)'
+                                    : `${oracleDefaultFilterOptions['all-catagories']?.length}/1`}
                             </DsTypography>
                         </div>
 
@@ -694,13 +604,13 @@ const OracleFilterComponent = () => {
                                 variant="Semibold_14"
                             >
                                 {!oracleDefaultFilterOptions.tags?.length ||
-                                oracleDefaultFilterOptions.tags?.length === 6
-                                    ? 'All(6)'
-                                    : `${oracleDefaultFilterOptions.tags?.length}/6`}
+                                oracleDefaultFilterOptions.tags?.length === 3
+                                    ? 'All(3)'
+                                    : `${oracleDefaultFilterOptions.tags?.length}/3`}
                             </DsTypography>
                         </div>
 
-                        <div className={styles.items}>
+                        {/* <div className={styles.items}>
                             <DsTypography
                                 style={{
                                     color:
@@ -726,7 +636,7 @@ const OracleFilterComponent = () => {
                                     ? 'All(3)'
                                     : `${oracleDefaultFilterOptions.configState?.length}/3`}
                             </DsTypography>
-                        </div>
+                        </div> */}
 
                         <div className={styles.items}>
                             <DsTypography
@@ -750,9 +660,9 @@ const OracleFilterComponent = () => {
                                 variant="Semibold_14"
                             >
                                 {!oracleDefaultFilterOptions.resourceType?.length ||
-                                oracleDefaultFilterOptions.resourceType?.length === 9
-                                    ? 'All(9)'
-                                    : `${oracleDefaultFilterOptions.resourceType?.length}/9`}
+                                oracleDefaultFilterOptions.resourceType?.length === 2
+                                    ? 'All(2)'
+                                    : `${oracleDefaultFilterOptions.resourceType?.length}/2`}
                             </DsTypography>
                         </div>
                     </div>

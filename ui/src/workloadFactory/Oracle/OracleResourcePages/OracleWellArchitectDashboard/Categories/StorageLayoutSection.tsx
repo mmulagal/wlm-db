@@ -1,7 +1,6 @@
 import { DsAccordion, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import OracleCardComponent from '../OracleCardComponent/OracleCardComponent';
-import { oracleCardData } from '../OracleWellArchitectedUtils';
 import Tag from '../../../../../common/Tag/Tag';
 import RecommendationText from '../../../../GetWell/RecommendationText/RecommendationText';
 import { ReactComponent as Light } from '../../../../../assets/Light.svg';
@@ -14,7 +13,8 @@ const StorageLayoutSection = ({
     loading,
     handleAccordionExpanded,
     isDarkTheme,
-    optimizePrintState
+    optimizePrintState,
+    oracleCardData
 }: any) => {
     const { t } = useTranslation();
     return (
@@ -31,119 +31,135 @@ const StorageLayoutSection = ({
             </div>
 
             <div className={styles.accordionGroups}>
-                <div>
-                    <OracleCardComponent cardData={oracleCardData.user_data_files} />
-                    <DsAccordion
-                        id="1"
-                        variant="Default"
-                        isDisabled={false} // Todo add condition
-                        isExpanded={isAccordionExpanded('1', optimizePrintState)}
-                        onExpandChange={isExpanded => {
-                            handleAccordionExpanded('1', isExpanded);
-                        }}
-                        onClick={() => setClickedAccordionId('1')}
-                        title={
-                            <div className={styles.tagPlacement}>
-                                {oracleCardData.user_data_files?.tags?.map((perTag: string, index: number) => (
-                                    <div key={index}>
-                                        <Tag text={perTag} />
+                {oracleCardData?.redologs_temp_placement && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.redologs_temp_placement} />
+                        <DsAccordion
+                            id="1"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('1', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('1', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('1')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.redologs_temp_placement?.tags?.map(
+                                        (perTag: string, index: number) => (
+                                            <div key={index}>
+                                                <Tag text={perTag} />
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
                                     </div>
-                                ))}
-                            </div>
-                        }
-                        headerActions={[
-                            <div className={styles.headerAction}>
-                                <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                    {loading ? <LightDisabled /> : <Light />}
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
                                 </div>
-                                <div
-                                    style={{
-                                        color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                    }}
-                                >
-                                    {t('databases.oracle-inner-page.view-recommendation')}
-                                </div>
-                            </div>
-                        ]}
-                        children={<RecommendationText data={oracleCardData?.user_data_files?.recommendation} />}
-                    />
-                </div>
+                            ]}
+                            children={
+                                <RecommendationText data={oracleCardData?.redologs_temp_placement?.recommendation} />
+                            }
+                        />
+                    </div>
+                )}
 
-                <div>
-                    <OracleCardComponent cardData={oracleCardData.transaction_log_files} />
-                    <DsAccordion
-                        id="2"
-                        variant="Default"
-                        isDisabled={false} // Todo add condition
-                        isExpanded={isAccordionExpanded('2', optimizePrintState)}
-                        onExpandChange={isExpanded => {
-                            handleAccordionExpanded('2', isExpanded);
-                        }}
-                        onClick={() => setClickedAccordionId('2')}
-                        title={
-                            <div className={styles.tagPlacement}>
-                                {oracleCardData.transaction_log_files?.tags?.map((perTag: string, index: number) => (
-                                    <div key={index}>
-                                        <Tag text={perTag} />
+                {oracleCardData?.archive_placement && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.archive_placement} />
+                        <DsAccordion
+                            id="2"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('2', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('2', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('2')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.archive_placement?.tags?.map((perTag: string, index: number) => (
+                                        <div key={index}>
+                                            <Tag text={perTag} />
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
                                     </div>
-                                ))}
-                            </div>
-                        }
-                        headerActions={[
-                            <div className={styles.headerAction}>
-                                <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                    {loading ? <LightDisabled /> : <Light />}
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
                                 </div>
-                                <div
-                                    style={{
-                                        color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                    }}
-                                >
-                                    {t('databases.oracle-inner-page.view-recommendation')}
-                                </div>
-                            </div>
-                        ]}
-                        children={<RecommendationText data={oracleCardData?.transaction_log_files?.recommendation} />}
-                    />
-                </div>
+                            ]}
+                            children={<RecommendationText data={oracleCardData?.archive_placement?.recommendation} />}
+                        />
+                    </div>
+                )}
 
-                <div>
-                    <OracleCardComponent cardData={oracleCardData.tempdb_files} />
-                    <DsAccordion
-                        id="3"
-                        variant="Default"
-                        isDisabled={false} // Todo add condition
-                        isExpanded={isAccordionExpanded('3', optimizePrintState)}
-                        onExpandChange={isExpanded => {
-                            handleAccordionExpanded('3', isExpanded);
-                        }}
-                        onClick={() => setClickedAccordionId('3')}
-                        title={
-                            <div className={styles.tagPlacement}>
-                                {oracleCardData.tempdb_files?.tags?.map((perTag: string, index: number) => (
-                                    <div key={index}>
-                                        <Tag text={perTag} />
+                {oracleCardData?.datafiles_controlfiles_placement && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.datafiles_controlfiles_placement} />
+                        <DsAccordion
+                            id="3"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('3', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('3', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('3')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.datafiles_controlfiles_placement?.tags?.map(
+                                        (perTag: string, index: number) => (
+                                            <div key={index}>
+                                                <Tag text={perTag} />
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
                                     </div>
-                                ))}
-                            </div>
-                        }
-                        headerActions={[
-                            <div className={styles.headerAction}>
-                                <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                    {loading ? <LightDisabled /> : <Light />}
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
                                 </div>
-                                <div
-                                    style={{
-                                        color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                    }}
-                                >
-                                    {t('databases.oracle-inner-page.view-recommendation')}
-                                </div>
-                            </div>
-                        ]}
-                        children={<RecommendationText data={oracleCardData?.tempdb_files?.recommendation} />}
-                    />
-                </div>
+                            ]}
+                            children={
+                                <RecommendationText
+                                    data={oracleCardData?.datafiles_controlfiles_placement?.recommendation}
+                                />
+                            }
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

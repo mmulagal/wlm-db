@@ -5,13 +5,24 @@ import styles from './OracleWellArchitectDashboard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
+import useOracleWellArchitectApi from './OracleWellArchitectApi';
+import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 
 const OracleWellArchitectDashboard = () => {
     const [optimizePrintState, setOptimizePrintState] = useState(false);
-    const loading = false;
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const [expandedValue, setExpandedValue] = useState(undefined);
     const [clickedAccordionId, setClickedAccordionId] = useState<string | undefined>(undefined);
+    const [filteredCardData, setFilteredCardData] = useState<any>({});
+
+    const {
+        optimizationBreakDown,
+        isAssessmentAvailable,
+        cardData,
+        optimizePageLoading: loading
+    } = useAppSelector(state => state.getWellOptimize);
+
+    useOracleWellArchitectApi();
 
     const isAccordionExpanded = (id: string, optimizePrintState: any): boolean | undefined => {
         if (optimizePrintState) {
@@ -28,25 +39,51 @@ const OracleWellArchitectDashboard = () => {
     return (
         <div className={styles['well-architected']}>
             <div className={styles.cards}>
-                <TotalOptimizationScore />
+                <TotalOptimizationScore
+                    loading={loading}
+                    optimizationBreakDown={optimizationBreakDown}
+                    isAssessmentAvailable={isAssessmentAvailable}
+                />
                 <OracleConfigureCategory />
             </div>
 
-            <OracleFilterComponent />
+            <OracleFilterComponent setFilteredCardData={setFilteredCardData} />
 
-            <div className={styles.sectionTwo}>
-                <div className={styles.sectionClass}>
-                    <StorageLayoutSection
-                        styles={styles}
-                        isAccordionExpanded={isAccordionExpanded}
-                        setClickedAccordionId={setClickedAccordionId}
-                        loading={loading}
-                        handleAccordionExpanded={handleAccordionExpanded}
-                        isDarkTheme={isDarkTheme}
-                        optimizePrintState={optimizePrintState}
-                    />
+            {(filteredCardData?.redologs_temp_placement ||
+                filteredCardData?.archive_placement ||
+                filteredCardData?.datafiles_controlfiles_placement) && (
+                <div className={styles.sectionTwo}>
+                    <div className={styles.sectionClass}>
+                        <StorageLayoutSection
+                            styles={styles}
+                            isAccordionExpanded={isAccordionExpanded}
+                            setClickedAccordionId={setClickedAccordionId}
+                            loading={loading}
+                            handleAccordionExpanded={handleAccordionExpanded}
+                            isDarkTheme={isDarkTheme}
+                            optimizePrintState={optimizePrintState}
+                            oracleCardData={filteredCardData}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {filteredCardData?.ontap_configuration && (
+                <div className={styles.sectionTwo}>
+                    <div className={styles.sectionClass}>
+                        <StorageConfigurationSection
+                            styles={styles}
+                            isAccordionExpanded={isAccordionExpanded}
+                            setClickedAccordionId={setClickedAccordionId}
+                            loading={loading}
+                            handleAccordionExpanded={handleAccordionExpanded}
+                            isDarkTheme={isDarkTheme}
+                            optimizePrintState={optimizePrintState}
+                            oracleCardData={filteredCardData}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

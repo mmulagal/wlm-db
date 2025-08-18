@@ -3,6 +3,7 @@ import GetWellJson from '../data/getWell.json';
 import GetWellHostJson from '../data/getWellHost.json';
 import SnapshotPolicies from '../data/snapshotPolicies.json';
 import GetWellAccJson from '../data/getWellAcc.json';
+import OracleAssessmentJson from '../data/oracleAssessment.json';
 
 const router = require('express').Router();
 
@@ -45,13 +46,22 @@ router.get(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, GetWellJson);
-        }, 20);
+        }, 2000);
     }
     // For compute missing permissions case update compute object as below under getWell.json
     // "compute": {
     //     "errorMessage":"Error while calculating compute drift. Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment. User: arn:aws:sts::464262061435:assumed-role/preprod_automation_role/CredentialsAssumeRoleValidator is not authorized to perform: compute-optimizer:GetEnrollmentStatus on resource: * because no identity-based policy allows the compute-optimizer:GetEnrollmentStatus action",
     //     "error":{}
     // }
+);
+
+router.get(
+    `${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, OracleAssessmentJson);
+        }, 2000);
+    }
 );
 
 router.post(

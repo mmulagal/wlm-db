@@ -80,3 +80,31 @@ export const handleSelectForFilter = (
     dispatch(setFilterTags(uniqueArray));
     dispatch(setDefaultFilterOptions(reArrange));
 };
+
+/** Function to map the dismissed values */
+export const mapDismissedValues = (data: any, itemName: string | any) => {
+    for (const key in data) {
+        const section = data[key];
+        if (Array.isArray(section)) {
+            // For sizing and layout
+            for (const item of section) {
+                if (item?.configurationName === itemName) {
+                    return item;
+                }
+            }
+        } else if (typeof section === 'object') {
+            // For configuration
+            for (const subKey in section) {
+                const subSection = section[subKey];
+                if (Array.isArray(subSection)) {
+                    for (const item of subSection) {
+                        if (item?.configurationName === itemName) {
+                            return item;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return null;
+};

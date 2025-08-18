@@ -5,6 +5,12 @@
     width: 100%;
     border-bottom: 1px solid var(--border);
 
+    .loadingSection {
+        height: 24px;
+        display: flex;
+        align-items: center;
+    }
+
     .cardContainer {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -47,6 +53,59 @@
             align-items: center;
             justify-content: end;
             gap: 32px;
+        }
+    }
+
+    .centerTextContainer {
+        display: flex;
+        gap: 8px;
+
+        .centerText {
+            position: relative;
+            top: 4.5px;
+        }
+    }
+
+    .titleText {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        .warningMsg {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+
+            .centerText {
+                position: relative;
+                top: 4.5px;
+            }
+        }
+
+        .svgSection {
+            position: relative;
+            left: -1px;
+            top: 8px;
+        }
+
+        .valueSection {
+            margin-left: 8px;
+        }
+    }
+
+    .warningMsg {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        svg {
+            width: 24px !important;
+            height: 24px !important;
+        }
+
+        .centerText {
+            position: relative;
+            top: 4.5px;
         }
     }
 }
