@@ -17,7 +17,7 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
+import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
 
 export const instanceNameHyperLink = (rowData: any, name: string, dispatch: any) => {
     if (
@@ -93,6 +93,7 @@ export const optimizeAction = (rowData: any, dispatch: any) => {
         })
     );
     dispatch(resetEiData({}));
+    dispatch(setLogAnalyzerState(rowData?.logAnalyzer?.status));
 };
 
 export const protectionTooltipText = (data: any) => (

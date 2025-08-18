@@ -52,10 +52,7 @@ import {
 } from '../../../store/workloadFactory/sandboxSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import store from '../../../store/store';
-import ErrorInvestigation from './ErrorInvestigation/ErrorInvestigation';
 import { resetEiData, setEiRefreshPage, setEiRefreshTimestamp } from '../../../store/workloadFactory/agenticAISlice';
-import LogAnalyzerOnboarding from './ErrorInvestigation/LogAnalyzerOnboarding/LogAnalyzerOnboarding';
-import ActivatingScreen from './ErrorInvestigation/LogAnalyzerOnboarding/ActivatingScreen/ActivatingScreen';
 import ErrorInvestigationTab from './ErrorInvestigation/ErrorInvestigationTab';
 
 const WellArchitectDashboard = () => {
@@ -348,11 +345,6 @@ const WellArchitectDashboard = () => {
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW && <ResourceMSSQLOverview />}
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS && <GetWell />}
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && <ErrorInvestigationTab />}
-                {/* {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.LOG_ANALYZER_ONBOARDING && (
-                    <LogAnalyzerOnboarding />
-                )}
-                {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.ACTIVATING_LOG_ANALYZER && <ActivatingScreen />} */}
-
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && (
                     <div className={styles.databaseListTable}>
                         <DatabaseListTable />
