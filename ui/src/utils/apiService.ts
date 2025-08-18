@@ -18,7 +18,6 @@ import {
     WLMDB_POLICIES_STAGE_LINK
 } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
-import { setResourceTables } from '../store/resource/resourceSlice';
 import { delay, generateRandomDBName, sortListOfDict } from './utilityFunctions';
 import { SELECT_CONFIG } from './appConstants';
 
@@ -313,38 +312,6 @@ export const awsApi = createApi({
             query: ({ databaseVersion }) => ({
                 url: `v1/mssql/collations?version=${databaseVersion}`
             })
-        })
-    })
-});
-
-export const resourceApi = createApi({
-    reducerPath: 'resource',
-    baseQuery: dynamicBaseQuery,
-    endpoints: builder => ({
-        removeMSSQL: builder.mutation({
-            async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                return await handleRemoveWE(`v1/mssql/resources/${id}`, baseQuery, queryApi);
-            }
-        }),
-        getMSSQLDatabases: builder.query({
-            query: id => ({ url: `v1/mssql/resources/${id}/databases` })
-        }),
-        getMSSQLSummary: builder.query({
-            query: id => ({ url: `v1/mssql/resources/${id}/summary` })
-        }),
-        getMSSQLCpuUtilization: builder.query({
-            query: id => ({ url: `v1/mssql/resources/${id}/utilization/cpu` })
-        }),
-        getMSSQLDiskUtilization: builder.query({
-            query: id => ({ url: `v1/mssql/resources/${id}/utilization/disk` })
-        }),
-        getMSSQLMemoryUtilization: builder.query({
-            query: id => ({ url: `v1/mssql/resources/${id}/utilization/memory` })
-        }),
-        batchTables: builder.mutation<DatabaseTables[], BatchEntry[][]>({
-            async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                return await handleRootListItems<DatabaseTables>(queryApi, arg, baseQuery, setResourceTables, 'tables');
-            }
         })
     })
 });
@@ -1402,16 +1369,6 @@ export const {
     useGetEstimationCostMutation,
     useGetSqlServerCollationListQuery
 } = awsApi;
-
-export const {
-    useRemoveMSSQLMutation,
-    useGetMSSQLDatabasesQuery,
-    useGetMSSQLSummaryQuery,
-    useGetMSSQLCpuUtilizationQuery,
-    useGetMSSQLDiskUtilizationQuery,
-    useGetMSSQLMemoryUtilizationQuery,
-    useBatchTablesMutation
-} = resourceApi;
 
 export const {
     useGetConfigListQuery,

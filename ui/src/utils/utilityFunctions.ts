@@ -411,9 +411,6 @@ export const customErrorMessages = (inputString: string, endpoint: string) => {
     return inputString;
 };
 
-export const getCssVariableValue = (variableName: string) =>
-    getComputedStyle(document.body).getPropertyValue(variableName);
-
 export const formatDateAssess = (date: string | number) => {
     const dateStr = date.toString();
     return moment(new Date(parseInt(dateStr))).format('DD MMMM YYYY');
@@ -437,13 +434,6 @@ export const formatTime = (date: string | number) => {
 
 export const getTimeDifferenceInDays = (timeStamp1: number, timeStamp2: number) =>
     Math.floor((timeStamp1 - timeStamp2) / 1000 / 60 / 60 / 24);
-
-export const isNotNumberOrNA = (value: string | number) => {
-    if (!value) {
-        return false;
-    }
-    return isNaN(parseFloat(String(value))) && value !== GENERAL.NOT_AVAILABLE;
-};
 
 export const formatSizeOrString = (value: number) => {
     if (!isNaN(parseFloat(value.toString()))) {
@@ -534,8 +524,6 @@ export const formatSizeSplit = (value: number | string) => {
     const format = splitted[1];
     return { value: actualValue, format };
 };
-
-export const displayFormattedValue = (value: number, msg: string) => `${formatSize(value)} ${msg}`;
 
 export const generateRandomDBName = () =>
     SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');

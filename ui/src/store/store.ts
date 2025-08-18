@@ -9,7 +9,6 @@ import {
     headersApi,
     jobMonitoringApi,
     policiesApi,
-    resourceApi,
     inventoryApi,
     sandboxApi,
     exploreSavingsApi,
@@ -24,7 +23,7 @@ import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
 import postgreFormSlice from './postgre/postgreFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
-import resourceSlice from './resource/resourceSlice';
+
 import { GENERAL } from '../utils/appConstants';
 import {
     customErrorMessages,
@@ -33,7 +32,7 @@ import {
     requiredFieldError
 } from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
-import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
+import chatbotSlice from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
 import inventoryV2Slice from './workloadFactory/inventoryV2Slice';
@@ -53,12 +52,10 @@ const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
     [authSlice.name]: authSlice.reducer,
     [awsApi.reducerPath]: awsApi.reducer,
-    [resourceApi.reducerPath]: resourceApi.reducer,
     [mssqlSlice.name]: mssqlSlice.reducer,
     [mssqlFormSlice.name]: mssqlFormSlice.reducer,
     [postgreFormSlice.name]: postgreFormSlice.reducer,
     [msSqlActionSlice.name]: msSqlActionSlice.reducer,
-    [resourceSlice.name]: resourceSlice.reducer,
     [configApi.reducerPath]: configApi.reducer,
     [databaseHomeApi.reducerPath]: databaseHomeApi.reducer,
     [chatbotApi.reducerPath]: chatbotApi.reducer,
@@ -156,7 +153,6 @@ const store = configureStore({
     middleware: getDefaultMiddleware =>
         getDefaultMiddleware({ serializableCheck: false })
             .concat(awsApi.middleware)
-            .concat(resourceApi.middleware)
             .concat(configApi.middleware)
             .concat(databaseHomeApi.middleware)
             .concat(chatbotApi.middleware)

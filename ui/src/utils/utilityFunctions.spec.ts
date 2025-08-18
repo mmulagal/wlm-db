@@ -12,17 +12,14 @@ import {
     encodeAll,
     requiredFieldError,
     customErrorMessages,
-    getCssVariableValue,
     formatDate,
     formatDateWithTime,
-    isNotNumberOrNA,
     formatSizeOrString,
     regionsSort,
     isValidUserName,
     sortListOfDict,
     formatSizeOnePrecision,
     formatSizeSplit,
-    displayFormattedValue,
     generateRandomDBName,
     formatFractionalNumber,
     jobStatusPercent,
@@ -657,13 +654,6 @@ describe('customErrorMessages', () => {
     });
 });
 
-describe('getCssVariableValue', () => {
-    it('Get css variable name', () => {
-        const result = getCssVariableValue('--scroller');
-        expect(result).toEqual('');
-    });
-});
-
 describe('formatDate', () => {
     it('Return formatted date', () => {
         const result = formatDate(1705602600000);
@@ -675,21 +665,6 @@ describe('formatDateWithTime', () => {
     it('Return formatted date', () => {
         const result = formatDateWithTime(1705602600000);
         expect(result).toEqual('January 19, 2024 00:00');
-    });
-});
-
-describe('isNotNumberOrNA', () => {
-    it('Return false if number', () => {
-        const result = isNotNumberOrNA('12345');
-        expect(result).toEqual(false);
-    });
-    it('Return true if text', () => {
-        const result = isNotNumberOrNA('abc');
-        expect(result).toEqual(true);
-    });
-    it('Return false if empty', () => {
-        const result = isNotNumberOrNA('');
-        expect(result).toEqual(false);
     });
 });
 
@@ -809,13 +784,6 @@ describe('formatSizeSplit', () => {
         const result = formatSizeSplit('12345');
         expect(result.value).toEqual('12.1');
         expect(result.format).toEqual('KiB');
-    });
-});
-
-describe('displayFormattedValue', () => {
-    it('Return displayFormattedValue', () => {
-        const result = displayFormattedValue(12345, 'storage used');
-        expect(result).toEqual('12.06 KiB storage used');
     });
 });
 
