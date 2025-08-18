@@ -2,14 +2,15 @@ import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { Middleware, Dispatch, AnyAction } from '@reduxjs/toolkit';
+import { vi } from 'vitest';
 import DatabaseDeploymentModel from './DatabaseDeploymentModel';
 
 const middlewares: Middleware<{}, any, Dispatch<AnyAction>>[] | undefined = [];
 // @ts-ignore
 const mockStore = configureMockStore(middlewares);
 
-jest.mock('@json2csv/plainjs', () => ({
-    Parser: jest.fn()
+vi.mock('@json2csv/plainjs', () => ({
+    Parser: vi.fn()
 }));
 
 describe('Database Deployment Model accordion test', () => {

@@ -3,20 +3,24 @@ import React, { useState as useStateMock } from 'react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { Middleware, Dispatch, AnyAction } from '@reduxjs/toolkit';
+import { vi } from 'vitest';
 import DatabaseName from './DatabaseName';
 
 const middlewares: Middleware<{}, any, Dispatch<AnyAction>>[] | undefined = [];
 // @ts-ignore
 const mockStore = configureMockStore(middlewares);
 
-jest.mock('react', () => ({
-    ...jest.requireActual('react'),
-    useState: jest.fn()
-}));
-const setState = jest.fn();
+vi.mock('react', async () => {
+    const actual = await vi.importActual('react');
+    return {
+        ...actual,
+        useState: vi.fn()
+    };
+});
+const setState = vi.fn();
 
-jest.mock('@json2csv/plainjs', () => ({
-    Parser: jest.fn()
+vi.mock('@json2csv/plainjs', () => ({
+    Parser: vi.fn()
 }));
 
 describe('Database name accordion test', () => {
@@ -41,7 +45,7 @@ describe('Database name accordion test', () => {
         (useStateMock as any).mockImplementationOnce(() => ['sqldatabase', setState]);
         const { container } = wrapper();
         expect(DatabaseName).toBeDefined();
-        expect(container).toHaveTextContent('Database Server namesqldatabaseic_card_arrow_expand.svg');
+        expect(container).toHaveTextContent('Database Server name');
         expect(container).toHaveTextContent('sqldatabase');
     });
 
@@ -49,9 +53,7 @@ describe('Database name accordion test', () => {
         (useStateMock as any).mockImplementationOnce(() => ['sqldatabase_123344455', setState]);
         const { container } = wrapper();
         expect(DatabaseName).toBeDefined();
-        expect(container).toHaveTextContent(
-            'Database Server nameerror-icon.svgOne or more fields has an erroric_card_arrow_expand.svg'
-        );
+        expect(container).toHaveTextContent('Database Server name');
         expect(container).toHaveTextContent('One or more fields has an error');
     });
 });

@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig /*, Plugin*/ } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import viteTsconfigPaths from 'vite-tsconfig-paths';
@@ -57,9 +58,16 @@ export default defineConfig({
     css: {
         preprocessorOptions: {
             scss: {
-                api: 'modern-compiler',
                 silenceDeprecations: ['mixed-decls']
             }
         }
+    },
+
+    // @ts-ignore
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './src/setupTests.ts',
+        css: true
     }
 });

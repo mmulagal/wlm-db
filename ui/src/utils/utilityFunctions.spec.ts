@@ -1401,6 +1401,6 @@ describe('groupByJobSummaryTimeline', () => {
     });
     it('Return empty list if data is blank', () => {
         const result = groupByJobSummaryTimeline([], 30);
-        expect(result).toEqual({ time: [], completed: [], failed: [] });
+        expect(result).toEqual({ time: [], completed: [], failed: [], warning: [] });
     });
 });

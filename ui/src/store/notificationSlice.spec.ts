@@ -1,4 +1,5 @@
 import { configureStore, createAction } from '@reduxjs/toolkit';
+import { vi } from 'vitest';
 import notificationSlice, {
     Notification,
     addNotification,
@@ -7,10 +8,10 @@ import notificationSlice, {
     NewNotificationPayload
 } from './notificationSlice';
 
-jest.mock('@netapp/design-system', () => ({
-    Notification: jest.fn(),
-    NotificationPanel: jest.fn(),
-    Typography: jest.fn()
+vi.mock('@netapp/design-system', () => ({
+    Notification: vi.fn(),
+    NotificationPanel: vi.fn(),
+    Typography: vi.fn()
 }));
 
 describe('notificationSlice', () => {
