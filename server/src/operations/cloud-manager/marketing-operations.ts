@@ -21,6 +21,7 @@ import {
     EbsCostCalculation,
     FsxCalculation,
     FsxCostCalculations,
+    FsxNoSnapshotCalculation,
     FsxwCostCalculation,
     InstanceEbsData,
     ManualModeComparisionResponse,
@@ -175,17 +176,25 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
     };
 }
 
-function handleMarketingApiFsxCalculationObject(fsxCalculationData: FsxCalculation) {
+function handleMarketingApiFsxCalculationObject(
+    fsxCalculationData: FsxCalculation,
+    fsxCalculationDataNoSnapshot?: FsxNoSnapshotCalculation
+) {
     logger.debug('Handling marketing FSx calculation object', fsxCalculationData);
     const fsxCalculationObject = camelizeKeys(fsxCalculationData);
     const { totalStorageCapacity, effectiveCapacity, ssdTierReqCapacity, capacityPoolTier, monthlySnapshotCapacity } =
         fsxCalculationObject;
+    const { desiredStorageCapacityGB: desiredStorageCapacityGb, EBSCapacity: ebsCapacity } =
+        fsxCalculationDataNoSnapshot || {};
+
     const capacities = [
         { totalStorageCapacity },
         { effectiveCapacity },
         { ssdTierReqCapacity },
         { capacityPoolTier },
-        { monthlySnapshotCapacity }
+        { monthlySnapshotCapacity },
+        { desiredStorageCapacityGb },
+        { ebsCapacity }
     ];
 
     capacities.forEach(capacity => {

@@ -141,21 +141,29 @@ describe('Logs Analyzer Operations', () => {
             ACCOUNT_ID,
             TEST_CREDENTIALS_ID,
             TEST_REGION,
-            TEST_RESOURCE_ID,
-            'mssql'
+            'mssql',
+            undefined,
+            TEST_RESOURCE_ID
         );
 
-        expect(response).toBeDefined();
-        expect(response).toHaveProperty('bedrockPreRequisites');
-        expect(response).toHaveProperty('instanceProfilePreRequisites');
-        expect(response).toHaveProperty('credentialsPreRequisites');
-        expect(response).toHaveProperty('networkingPreRequisites');
+        expect(response.items[0]).toBeDefined();
+        expect(response.items[0]).toHaveProperty('bedrockPreRequisites');
+        expect(response.items[0]).toHaveProperty('instanceProfilePreRequisites');
+        expect(response.items[0]).toHaveProperty('credentialsPreRequisites');
+        expect(response.items[0]).toHaveProperty('networkingPreRequisites');
     });
 
     it('Should handle prerequisites analysis with invalid database instance', async () => {
-        await expect(
-            analyzePreRequisites(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, 'invalid-resource-id', 'mssql')
-        ).rejects.toThrow();
+        const response = await analyzePreRequisites(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            'mssql',
+            undefined,
+            'invalid-resource-id'
+        );
+        expect(response.items[0]).toBeDefined();
+        expect(response.items[0]).toHaveProperty('errorMessage');
     });
 
     it('Should get latest logs analysis reports at account level', async () => {

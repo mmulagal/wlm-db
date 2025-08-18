@@ -65,10 +65,17 @@ const LAPRReadiness = Type.Object({
 });
 
 const LogsAnalysisPreRequisites = Type.Object({
-    bedrockPreRequisites: Type.Optional(LAPRReadiness),
-    instanceProfilePreRequisites: Type.Optional(LAPRReadiness),
-    credentialsPreRequisites: Type.Optional(LAPRReadiness),
-    networkingPreRequisites: Type.Optional(LAPRReadiness)
+    items: Type.Array(
+        Type.Object({
+            errorMessage: Type.Optional(Type.String()),
+            databaseHostId: Type.Optional(Type.String()),
+            ec2InstanceId: Type.Optional(Type.String()),
+            bedrockPreRequisites: Type.Optional(LAPRReadiness),
+            instanceProfilePreRequisites: Type.Optional(LAPRReadiness),
+            credentialsPreRequisites: Type.Optional(LAPRReadiness),
+            networkingPreRequisites: Type.Optional(LAPRReadiness)
+        })
+    )
 });
 
 const LatestReportObject = Type.Object({
@@ -86,6 +93,25 @@ const LatestReports = Type.Object({
     items: Type.Array(LatestReportObject)
 });
 
+const AnalyzePreRequisitesQuery = Type.Object({
+    databaseHostId: Type.Optional(
+        Type.String({
+            description: 'Database Host ID of managed database hosts',
+            minLength: 8,
+            maxLength: 200,
+            pattern: '^[a-zA-Z0-9-]{5,}(?:,[a-zA-Z0-9-]{5,}){0,4}$'
+        })
+    ),
+    ec2InstanceId: Type.Optional(
+        Type.String({
+            description: 'EC2 Instance ID of unmanaged database host instances',
+            minLength: 8,
+            maxLength: 200,
+            pattern: '^i-[0-9a-f]{8,17}(?:,i-[0-9a-f]{8,17}){0,4}$'
+        })
+    )
+});
+
 export {
     LogsAnalyzerParams,
     LogsAnalyzerParamsType,
@@ -95,5 +121,6 @@ export {
     ReportIdentifier,
     RemediationRecommendationObjectType,
     LogsAnalysisPreRequisites,
-    LatestReports
+    LatestReports,
+    AnalyzePreRequisitesQuery
 };

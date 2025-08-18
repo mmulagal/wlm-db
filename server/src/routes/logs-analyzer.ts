@@ -23,20 +23,21 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server.get(
-        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/logs-analysis/pre-requisites`,
+        `${MSSQL_API_PREFIX_PATH}/logs-analysis/pre-requisites`,
         { schema: AnalyzePreRequisitesSchema },
         async (request, reply) => {
             const {
-                params: { accountId, credentialsId, region, databaseHostId },
-                query: { databaseType }
+                params: { accountId, credentialsId, region },
+                query: { ec2InstanceId, databaseHostId }
             } = castRequest(request);
 
             const response = await analyzePreRequisites(
                 accountId,
                 credentialsId,
                 region,
-                databaseHostId,
-                databaseType || DATABASE_TYPE.mssql
+                DATABASE_TYPE.mssql,
+                ec2InstanceId,
+                databaseHostId
             );
 
             return reply.send(response);
@@ -48,15 +49,10 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
         { schema: LatestReportsSchema },
         async (request, reply) => {
             const {
-                params: { accountId, credentialsId },
-                query: { databaseType }
+                params: { accountId, credentialsId }
             } = castRequest(request);
 
-            const response = await getLatestLogsAnalysisReports(
-                accountId,
-                credentialsId,
-                databaseType || DATABASE_TYPE.mssql
-            );
+            const response = await getLatestLogsAnalysisReports(accountId, credentialsId, DATABASE_TYPE.mssql);
 
             return reply.send(response);
         }

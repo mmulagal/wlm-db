@@ -9,6 +9,7 @@ import {
     STORAGE_TYPE
 } from '@prisma/client';
 import ms from 'ms';
+import throat from 'throat';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
 import { AuditStatus, DEFAULT_INSTANCE_NAME, HttpErrorCodes } from '../../utils/consts';
@@ -748,45 +749,179 @@ async function calculateLogsAnalysisPrice(region: string) {
 const READY_TRUE = {
     ready: true
 };
-async function analyzePreRequisites(
+
+const MAX_INSTANCES_LIMIT = 5;
+function validateEc2InstanceId(ec2InstanceId: string = '') {
+    if (!ec2InstanceId || typeof ec2InstanceId !== 'string' || ec2InstanceId.trim() === '') {
+        throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid ec2 instance ID provided');
+    }
+    const ec2InstanceIdList = ec2InstanceId.split(',');
+    if (ec2InstanceIdList.length > 5) {
+        throw createError(HttpErrorCodes.BAD_REQUEST, 'Too many EC2 instance IDs provided, maximum allowed is 5');
+    }
+    return ec2InstanceIdList;
+}
+
+function validateDatabaseHostId(databaseHostId: string) {
+    if (!databaseHostId || typeof databaseHostId !== 'string' || databaseHostId.trim() === '') {
+        throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid database host ID provided');
+    }
+    const databaseHostIdList = databaseHostId.split(',');
+    if (databaseHostIdList.length > MAX_INSTANCES_LIMIT) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            `Too many database host IDs provided, maximum allowed is ${MAX_INSTANCES_LIMIT}`
+        );
+    }
+    return databaseHostIdList;
+}
+
+function validateQueryParams(ec2InstanceId?: string, databaseHostId?: string) {
+    if (ec2InstanceId && databaseHostId) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'Please provide either database host ID or EC2 instance ID, not both'
+        );
+    }
+
+    if ((!ec2InstanceId || ec2InstanceId.trim() === '') && (!databaseHostId || databaseHostId.trim() === '')) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'Please provide at least one of database host ID or EC2 instance ID'
+        );
+    }
+
+    const ec2InstanceIdList = ec2InstanceId ? validateEc2InstanceId(ec2InstanceId) : [];
+    const databaseHostIdList = databaseHostId ? validateDatabaseHostId(databaseHostId) : [];
+
+    return {
+        ec2InstanceIdList,
+        databaseHostIdList
+    };
+}
+
+async function handlePreReqCheckBasedOnEc2InstanceId(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string,
-    databaseType: string
+    ec2InstanceIdList: string[],
+    databaseType: DATABASE_TYPE
 ) {
-    logger.info('Analyzing prerequisites for logs analysis:', {
+    logger.info('Handling pre-requisite check based on EC2 instance ID:', {
         accountId,
         credentialsId,
         region,
-        databaseHostId,
+        ec2InstanceIdList,
         databaseType
     });
+    return Promise.all(
+        ec2InstanceIdList.map(
+            throat(5, async ec2InstanceId => {
+                try {
+                    const preReqCheckResponse = await handlePreReqCheck(
+                        accountId,
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        databaseType
+                    );
+                    return {
+                        ec2InstanceId,
+                        ...preReqCheckResponse
+                    };
+                } catch (error) {
+                    const errorMessage = `Error verifying pre-requisite check for EC2 instance ID ${ec2InstanceId}: ${error}`;
+                    logger.error(errorMessage);
+                    return {
+                        ec2InstanceId,
+                        errorMessage
+                    };
+                }
+            })
+        )
+    );
+}
 
-    const {
-        items: [managedInstance]
-    } = await getPaginatedDatabaseInstances(accountId, {
-        resourceId: databaseHostId,
-        credentialsId,
-        region,
-        shouldIncludeResource: true,
-        pageSize: 1
-    });
-
-    const databaseInstanceDetails = {
-        ...managedInstance,
-        storage_type: STORAGE_TYPE.FSXN,
-        isManaged: true
-    };
-
-    const { nodeId: activeNodeInstanceId } = await getActiveNodeAndInstanceDetails(
+async function handlePreReqCheckBasedOnDatabaseHostId(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostIdList: string[],
+    databaseType: DATABASE_TYPE
+) {
+    logger.info('Handling pre-requisite check based on database host ID:', {
         accountId,
         credentialsId,
         region,
-        managedInstance.resource,
-        databaseInstanceDetails as unknown as DatabaseInstance
-    );
+        databaseHostIdList,
+        databaseType
+    });
+    return Promise.all(
+        databaseHostIdList.map(
+            throat(5, async databaseHostId => {
+                try {
+                    const {
+                        items: [managedInstance]
+                    } = await getPaginatedDatabaseInstances(accountId, {
+                        resourceId: databaseHostId,
+                        credentialsId,
+                        region,
+                        shouldIncludeResource: true,
+                        pageSize: 1
+                    });
 
+                    const databaseInstanceDetails = {
+                        ...managedInstance,
+                        storage_type: STORAGE_TYPE.FSXN,
+                        isManaged: true
+                    };
+
+                    const { nodeId: activeNodeInstanceId } = await getActiveNodeAndInstanceDetails(
+                        accountId,
+                        credentialsId,
+                        region,
+                        managedInstance.resource,
+                        databaseInstanceDetails as unknown as DatabaseInstance
+                    );
+                    const preReqCheckResponse = await handlePreReqCheck(
+                        accountId,
+                        credentialsId,
+                        region,
+                        activeNodeInstanceId,
+                        databaseType
+                    );
+                    return {
+                        databaseHostId,
+                        ec2InstanceId: activeNodeInstanceId,
+                        ...preReqCheckResponse
+                    };
+                } catch (error) {
+                    const errorMessage = `Error verifying pre-requisite check for database host ID ${databaseHostId}: ${error}`;
+                    logger.error(errorMessage);
+                    return {
+                        databaseHostId,
+                        errorMessage
+                    };
+                }
+            })
+        )
+    );
+}
+
+async function handlePreReqCheck(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    databaseType: string
+) {
+    logger.info('Handling pre-requisite check:', {
+        accountId,
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        databaseType
+    });
     let bedrockPreRequisites;
     let instanceProfilePreRequisites;
     let credentialsPreRequisites;
@@ -898,6 +1033,43 @@ async function analyzePreRequisites(
         credentialsPreRequisites,
         networkingPreRequisites
     };
+}
+
+async function analyzePreRequisites(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseType: string,
+    ec2InstanceId?: string,
+    databaseHostId?: string
+) {
+    logger.info('Analyzing prerequisites for logs analysis:', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        databaseType
+    });
+
+    const { ec2InstanceIdList, databaseHostIdList } = validateQueryParams(ec2InstanceId, databaseHostId);
+
+    const response =
+        ec2InstanceIdList.length > 0
+            ? await handlePreReqCheckBasedOnEc2InstanceId(
+                  accountId,
+                  credentialsId,
+                  region,
+                  ec2InstanceIdList,
+                  databaseType as DATABASE_TYPE
+              )
+            : await handlePreReqCheckBasedOnDatabaseHostId(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostIdList,
+                  databaseType as DATABASE_TYPE
+              );
+    return { items: response };
 }
 
 async function getLatestLogsAnalysisReports(

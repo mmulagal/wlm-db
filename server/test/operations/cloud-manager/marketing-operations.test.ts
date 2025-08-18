@@ -64,21 +64,16 @@ describe('Marketing API operations', () => {
     });
 
     it('should handle fsx calculation object', async () => {
-        const { single: { fsx_calculation: fsxCalcObject } = {} } = await invokeMarketingApi(
-            ACCOUNT_ID,
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            'AOAG',
-            ebsVolumeIds,
-            {
-                snapshotFrequency: 'daily',
-                clonedCopiesCount: 1,
-                cloneRefreshFrequency: 'daily',
-                monthlyChangeRatePercentage: 30
-            }
-        );
+        const {
+            single: { fsx_calculation: fsxCalcObject, fsx_cost_calculation_no_snapshot: fsxNoSnapshotCalcObject } = {}
+        } = await invokeMarketingApi(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'AOAG', ebsVolumeIds, {
+            snapshotFrequency: 'daily',
+            clonedCopiesCount: 1,
+            cloneRefreshFrequency: 'daily',
+            monthlyChangeRatePercentage: 30
+        });
         if (fsxCalcObject) {
-            const result = handleMarketingApiFsxCalculationObject(fsxCalcObject);
+            const result = handleMarketingApiFsxCalculationObject(fsxCalcObject, fsxNoSnapshotCalcObject);
             expect(result).toBeDefined();
         }
     });

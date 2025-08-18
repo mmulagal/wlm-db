@@ -162,7 +162,9 @@ const fsxCalculationData = Type.Object({
         throughputCapacity: Type.Number(),
         useCase: Type.String(),
         regionName: Type.String(),
-        monthlySnapshotCapacity: Type.Number()
+        monthlySnapshotCapacity: Type.Number(),
+        desiredStorageCapacity: Type.Number(),
+        ebsCapacity: Type.Number()
     }),
     fsxBreakdown: Type.Object({
         fsxDataLunSize: Type.Number(),

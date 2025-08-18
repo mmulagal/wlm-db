@@ -218,10 +218,10 @@ async function aoagStorageSavingsCalculations(
         const recommendedLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedLicensePrice || 0);
 
         const singleFsxCalculationData = single?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
             : undefined;
         const multiFsxCalculationData = multi?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
             : undefined;
         return {
             compute,
@@ -540,11 +540,11 @@ async function performStorageSavingsCalculations(
         const recommendedComputeLicensePrice = Number(compute?.recommended?.instanceMonthlyPrice || 0);
 
         const singleFsxCalculationData = single?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
             : undefined;
 
         const multiFsxCalculationData = multi?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
             : undefined;
 
         return {
@@ -622,10 +622,10 @@ async function performStorageSavingsCalculations(
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
 
     const singleFsxCalculationData = single?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
         : undefined;
     const multiFsxCalculationData = multi?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
         : undefined;
     return {
         compute,
@@ -852,10 +852,10 @@ async function performManualModeStorageSavingsCalculations(
         const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
 
         const singleFsxCalculationData = single?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
+            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
             : undefined;
         const multiFsxCalculationData = multi?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation)
+            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
             : undefined;
 
         return {
@@ -898,8 +898,15 @@ async function performManualModeStorageSavingsCalculations(
     // FSXw flow
     const resp = await getManualModeStorageSavings<ManualModeFsxwComparisonResponse>(accountId, marketingRequestBody);
 
-    const { fsx_calculation: fsxCalculation, fsx, fsxw } = resp;
-    const fsxCalculationData = fsxCalculation ? handleMarketingApiFsxCalculationObject(fsxCalculation) : undefined;
+    const {
+        fsx_calculation: fsxCalculation,
+        fsx_cost_calculation_no_snapshot: fsxCalculationDataNoSnapshot,
+        fsx,
+        fsxw
+    } = resp;
+    const fsxCalculationData = fsxCalculation
+        ? handleMarketingApiFsxCalculationObject(fsxCalculation, fsxCalculationDataNoSnapshot)
+        : undefined;
 
     const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount);
 

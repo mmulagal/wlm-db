@@ -1,6 +1,7 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
 import {
+    AnalyzePreRequisitesQuery,
     LatestReports,
     LogsAnalysisPreRequisites,
     LogsAnalyzerBody,
@@ -8,7 +9,6 @@ import {
     RemediationRecommendationObject,
     ReportIdentifier
 } from '../types/logs-analyzer.types';
-import { DatabaseHostSummaryParams } from '../types/database-hosts.types';
 import { CredentialsIdParams } from '../types/generic.types';
 
 const LogsAnalyzerSchema = {
@@ -67,10 +67,8 @@ const AnalyzePreRequisitesSchema = {
         'Check pre-requisites for logs analysis for a specific database instance in a remote database host machine',
     summary:
         'Logs analysis pre-requisites include checking if Bedrock model is available, if the networking configuration is correct, and if the required IAM policies are in place.',
-    params: DatabaseHostSummaryParams,
-    queryString: Type.Object({
-        databaseType: Type.Optional(Type.String())
-    }),
+    params: { ...CredentialsIdParams },
+    querystring: AnalyzePreRequisitesQuery,
     response: {
         200: LogsAnalysisPreRequisites
     }
@@ -82,9 +80,6 @@ const LatestReportsSchema = {
     summary:
         'Logs analysis latest report at each database host level for an account, credentials and region, analyzes the logs analysis reports for all database instances for latest scan time and error count',
     params: CredentialsIdParams,
-    queryString: Type.Object({
-        databaseType: Type.Optional(Type.String())
-    }),
     response: {
         200: LatestReports
     }
