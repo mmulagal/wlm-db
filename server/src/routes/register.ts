@@ -9,7 +9,8 @@ import {
     OracleRegisterInstancesSchema,
     UnmanageOracleSchema,
     UnManagePgSqlSchema,
-    UnManageMsSqlSchema
+    UnManageMsSqlSchema,
+    CheckCredentialsExistenceSchema
 } from './schemas/register-schema';
 import { prepareForManage } from '../operations/discover-operations';
 
@@ -20,7 +21,8 @@ import {
     registerResourceCredentials,
     validateAndStoreDiscoveredParameters,
     registerDatabaseServerInstances,
-    unmanageDatabaseInstance
+    unmanageDatabaseInstance,
+    checkCredentialsExistence
 } from '../operations/register-operations';
 import { SingleRegisterCredentialsResponseType } from './types/register.types';
 import { DatabaseTypes } from '../utils/consts';
@@ -64,6 +66,21 @@ export default function registerRoutes(fastify: FastifyInstance) {
             );
 
             return response as SingleRegisterCredentialsResponseType;
+        }
+    );
+
+    server.get(
+        `${MSSQL_API_PATH}/instances/:instanceId/credentials/exists`,
+        { schema: CheckCredentialsExistenceSchema },
+        async request => {
+            const {
+                params: { accountId, credentialsId, region, instanceId },
+                query: { resourceId }
+            } = castRequest(request);
+
+            const response = await checkCredentialsExistence(accountId, credentialsId, region, instanceId, resourceId);
+
+            return response;
         }
     );
 

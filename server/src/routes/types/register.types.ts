@@ -232,6 +232,15 @@ const RegisterCredentialsResponse = Type.Object({
     )
 });
 
+const checkCredentialsExistenceResponse = Type.Object({
+    exists: Type.Boolean(),
+    error: Type.Optional(Type.String())
+});
+
+const checkCredentialsExistenceQueryParams = Type.Object({
+    resourceId: Type.String()
+});
+
 type RegisterCredentialsResponseType = Static<typeof RegisterCredentialsResponse>;
 
 type SingleRegisterCredentialsResponseType = Static<typeof SingleRegisterCredentialsResponse>;
@@ -260,5 +269,7 @@ export {
     MultiInstanceRegisterOracleRequestBody,
     UnmanageInstanceParams,
     MultiInstanceUnmanageResponseBody,
-    DatabaseInstanceQueryString
+    DatabaseInstanceQueryString,
+    checkCredentialsExistenceResponse,
+    checkCredentialsExistenceQueryParams
 };

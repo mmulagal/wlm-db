@@ -3,6 +3,8 @@ import { RouteTags } from '../../utils/consts';
 import { GenericHeaders, AccountIdParams } from '../types/generic.types';
 import {
     BulkRegisterCredentialsRequestBody,
+    checkCredentialsExistenceQueryParams,
+    checkCredentialsExistenceResponse,
     DatabaseInstanceQueryString,
     JobBasedManageResponseBody,
     MultiHostManageResponseBody,
@@ -123,6 +125,17 @@ const UnmanageOracleSchema = {
     }
 };
 
+const CheckCredentialsExistenceSchema = {
+    ...RegisterBaseRequest,
+    params: RegisterInstanceParams,
+    summary: 'Check if credentials exist for a specific instance',
+    description: 'Check if credentials exist for a specific instance',
+    querystring: checkCredentialsExistenceQueryParams,
+    response: {
+        200: checkCredentialsExistenceResponse
+    }
+};
+
 export {
     JobBasedManageSchema,
     RegisterCredentialsSchema,
@@ -132,5 +145,6 @@ export {
     OracleRegisterInstancesSchema,
     UnmanageOracleSchema,
     UnManagePgSqlSchema,
-    UnManageMsSqlSchema
+    UnManageMsSqlSchema,
+    CheckCredentialsExistenceSchema
 };

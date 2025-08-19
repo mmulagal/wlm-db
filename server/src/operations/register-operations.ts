@@ -19,6 +19,7 @@ import {
     AWS_CLI_LINUX_RELATIVE_PATH,
     CloudProviders,
     DatabaseTypes,
+    DEFAULT_INSTANCE_NAME,
     HttpErrorCodes,
     JQ_LINUX_RELATIVE_PATH,
     MAKE_LINUX_RELATIVE_PATH,
@@ -2709,11 +2710,47 @@ async function unmanageDatabaseInstance(
     };
 }
 
+async function checkCredentialsExistence(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.info('Checking credentials existence', { accountId, credentialsId, region, instanceId, resourceId });
+
+    const { domain: domainCredentials = [] } = await getEc2SqlParameters(credentialsId, region, instanceId);
+    if (isEmpty(domainCredentials)) {
+        return {
+            exists: false,
+            error: `No credentials found in parameter store for instance ${instanceId}.`
+        };
+    }
+
+    const { username, password } =
+        domainCredentials.find(
+            ({ sqlinstancename }: SqlCredential) =>
+                sqlinstancename === resourceId || sqlinstancename === DEFAULT_INSTANCE_NAME
+        ) || {};
+
+    if (!username || !password) {
+        return {
+            exists: false,
+            error: `Credentials matching the resource ID ${resourceId} not found for instance ${instanceId}.`
+        };
+    }
+
+    return {
+        exists: true
+    };
+}
+
 export {
     registerDatabaseServerInstances,
     registerResourceCredentials,
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
     validateOracleCredentials,
-    unmanageDatabaseInstance
+    unmanageDatabaseInstance,
+    checkCredentialsExistence
 };
