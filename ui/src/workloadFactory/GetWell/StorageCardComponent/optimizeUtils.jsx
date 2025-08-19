@@ -1,6 +1,6 @@
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
-import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG } from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
 
 // Function for handling the dialog from getwell page
@@ -67,17 +67,19 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
 };
 
 const isDialogPrimaryBtnDisabled = rowData =>
-    rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
+    rowData?.data?.name === 'OS type' ||
+    rowData?.data?.name === 'NTFS allocation unit size' ||
+    rowData?.engineType === DBType.ORACLE;
 
 export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
     setDialog(
         <DialogComponent
-            header={`${rowData?.name} `}
-            content={<DialogContent type={rowData?.name} />}
+            header={`${rowData?.data?.name} `}
+            content={<DialogContent type={rowData?.data?.name} engineType={rowData?.engineType} />}
             primaryButton={GENERAL.CONTINUE}
             secondaryButton={GENERAL.CANCEL}
             callback={() => {
-                callOptimizeApi(rowData, operation, singleRowData);
+                callOptimizeApi(rowData?.data, operation, singleRowData);
             }}
             closeCallback={() => {
                 closeDialog();

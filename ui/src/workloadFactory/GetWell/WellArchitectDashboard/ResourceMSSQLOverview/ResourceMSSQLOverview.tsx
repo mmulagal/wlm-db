@@ -12,7 +12,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { getAggrStorageSavings, isPartialData } from '../../../../utils/utilityFunctions';
 import DatabaseHostOverviewApiV2 from '../../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
 import ResourceMSSQLPartialContainer from './ResourceMSSQLPartailContainer/ResourceMSSQLPartailContainer';
-import { MS_PER_HOUR } from '../../../../utils/consts';
+import { DBType, MS_PER_HOUR } from '../../../../utils/consts';
 
 const PARTIAL_DATA_THRESHOLD = 6 * MS_PER_HOUR; // 6 hours in milliseconds
 
@@ -39,7 +39,7 @@ const ResourceMSSQLOverview = () => {
                         resourceLoading={resourceLoading}
                         selectedHostname={selectedHostname}
                         selectedDatabaseInstanceName={selectedDatabaseInstanceName}
-                        resourceHeaderType="mssql"
+                        resourceHeaderType={DBType.MSSQL}
                     />
 
                     <div className={styles.commonBlock}>

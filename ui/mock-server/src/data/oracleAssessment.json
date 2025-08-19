@@ -361,7 +361,22 @@
             ],
             "totalObjectsAssessed":1,
             "totalObjectsInViolation":1
-         }
+         },
+         {
+                "name": "oracle-binary-placement",
+                "status": "optimized",
+                "recommended": "separate-volume",
+                "severity": "warning",
+                "recommendation": "Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. This separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.",
+                "tags": [
+                    "Cost optimization",
+                    "Operational excellence",
+                    "Performance efficiency"
+                ],
+                "objectsInViolation": [],
+                "totalObjectsAssessed": 1,
+                "totalObjectsInViolation": 0
+            }
       ]
    },
    "fileSystemId":"fs-0d5efc3057c4f12cb",

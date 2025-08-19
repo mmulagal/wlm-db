@@ -9,6 +9,7 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     WLF_TABS
@@ -74,50 +75,68 @@ const OptimizeOntapInnerPage = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     useEffect(() => {
-        switch (selectedOptimizeConfig?.type) {
-            case 'OS type':
-            case 'Space reservation':
-            case 'NTFS allocation unit size':
-                setCardHeight({
-                    recommendationSection: '140px',
-                    tagSection: '236px'
-                });
-                break;
-            case 'Space allocation':
-                setCardHeight({
-                    recommendationSection: '160px',
-                    tagSection: '256px'
-                });
-                break;
-            case 'Tiering minimum cooling days':
-                setCardHeight({
-                    recommendationSection: '260px',
-                    tagSection: '356px'
-                });
-                break;
-            case 'Multipath I/O Policy':
-                setCardHeight({
-                    recommendationSection: '180px',
-                    tagSection: '276px'
-                });
-                break;
-            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
-            case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE:
-            case ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER:
-            case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
-            case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
-            case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
-                setCardHeight({
-                    recommendationSection: '180px',
-                    tagSection: '276px'
-                });
-                break;
-            default:
-                setCardHeight({
-                    recommendationSection: '260px',
-                    tagSection: '356px'
-                });
-                break;
+        if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
+            switch (selectedOptimizeConfig?.type) {
+                case 'Tiering policy':
+                case 'Tiering minimum cooling days':
+                    setCardHeight({
+                        recommendationSection: '210px',
+                        tagSection: '306px'
+                    });
+                    break;
+                default:
+                    setCardHeight({
+                        recommendationSection: '280px',
+                        tagSection: '376px'
+                    });
+                    break;
+            }
+        } else {
+            switch (selectedOptimizeConfig?.type) {
+                case 'OS type':
+                case 'Space reservation':
+                case 'NTFS allocation unit size':
+                    setCardHeight({
+                        recommendationSection: '140px',
+                        tagSection: '236px'
+                    });
+                    break;
+                case 'Space allocation':
+                    setCardHeight({
+                        recommendationSection: '160px',
+                        tagSection: '256px'
+                    });
+                    break;
+                case 'Tiering minimum cooling days':
+                    setCardHeight({
+                        recommendationSection: '260px',
+                        tagSection: '356px'
+                    });
+                    break;
+                case 'Multipath I/O Policy':
+                    setCardHeight({
+                        recommendationSection: '180px',
+                        tagSection: '276px'
+                    });
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+                case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE:
+                case ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER:
+                case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
+                case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
+                case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
+                    setCardHeight({
+                        recommendationSection: '180px',
+                        tagSection: '276px'
+                    });
+                    break;
+                default:
+                    setCardHeight({
+                        recommendationSection: '260px',
+                        tagSection: '356px'
+                    });
+                    break;
+            }
         }
     }, [selectedOptimizeConfig]);
 
@@ -148,7 +167,7 @@ const OptimizeOntapInnerPage = () => {
                         setDialog,
                         callOptimizeApi,
                         closeDialog,
-                        selectedOptimizeConfig?.data,
+                        selectedOptimizeConfig,
                         'single',
                         rowData
                     );
@@ -377,7 +396,7 @@ const OptimizeOntapInnerPage = () => {
     };
 
     const handleBulkAction = () => {
-        handleOntapDialog(setDialog, callOptimizeApi, closeDialog, selectedOptimizeConfig?.data, 'bulk');
+        handleOntapDialog(setDialog, callOptimizeApi, closeDialog, selectedOptimizeConfig, 'bulk');
     };
 
     const renderTable = () => {
@@ -474,7 +493,12 @@ const OptimizeOntapInnerPage = () => {
                                 title: `${selectedHostname} / ${selectedDatabaseInstanceName}`,
                                 dataTestId: 'wlm-db-optimize-configuration',
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+                                    } else {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    }
+
                                     dispatch(setLandingFromInnerPage(true));
                                 }
                             },

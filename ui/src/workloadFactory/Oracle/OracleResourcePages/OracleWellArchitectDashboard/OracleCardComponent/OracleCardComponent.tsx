@@ -30,7 +30,11 @@ const OracleCardComponent = ({ cardData }: any) => {
                 <div className={styles.itemContainer}>
                     <div className={styles.item}>
                         <div className={styles.summaryValue}>
-                            <DsTypography variant="Semibold_14" className={styles.labelText}>
+                            <DsTypography
+                                variant="Semibold_14"
+                                className={styles.labelText}
+                                title={cardData?.block_one?.value || '-'}
+                            >
                                 {cardData?.block_one?.value || '-'}
                             </DsTypography>
                         </div>

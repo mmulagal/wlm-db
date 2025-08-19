@@ -7,6 +7,7 @@ import ThroughputCard from '../../../GetWell/WellArchitectDashboard/ResourceMSSQ
 import useOracleResourceOverview from './OracleResourceOverviewApi';
 import OracleInformationSection from './OracleInformationSection/OracleInformationSection';
 import styles from './OracleOverview.module.scss';
+import { DBType } from '../../../../utils/consts';
 
 const OracleOverview = () => {
     const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.workloadFactoryResource);
@@ -22,7 +23,7 @@ const OracleOverview = () => {
                     resourceLoading={resourceLoading}
                     selectedHostname={selectedHostname}
                     selectedDatabaseInstanceName={selectedDatabaseInstanceName}
-                    resourceHeaderType="oracle"
+                    resourceHeaderType={DBType.ORACLE}
                 />
 
                 <div className={styles.commonBlock}>

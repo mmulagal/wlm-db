@@ -51,7 +51,8 @@ const OracleWellArchitectDashboard = () => {
 
             {(filteredCardData?.redologs_temp_placement ||
                 filteredCardData?.archive_placement ||
-                filteredCardData?.datafiles_controlfiles_placement) && (
+                filteredCardData?.datafiles_controlfiles_placement ||
+                filteredCardData?.oracle_binary_placement) && (
                 <div className={styles.sectionTwo}>
                     <div className={styles.sectionClass}>
                         <StorageLayoutSection

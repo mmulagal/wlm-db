@@ -52,7 +52,7 @@ export const oracleCardData: any = {
         recommendation: {
             title: 'Redo Logs, Temp, and Archive Placement Recommendation',
             description:
-                'Placing redo logs, temp files, and archive logs on a dedicated volume enhances performance and recovery processes. This isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.'
+                'Placing redo logs, temp files, and archive logs on a dedicated volume enhances performance and recovery processes. \nThis isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.'
         },
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
     },
@@ -85,7 +85,7 @@ export const oracleCardData: any = {
         recommendation: {
             title: 'Archive Placement Recommendation',
             description:
-                'Placing archive logs on a dedicated volume enhances performance and recovery processes. This isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.'
+                'Placing archive logs on a dedicated volume enhances performance and recovery processes. \nThis isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.'
         },
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
     },
@@ -117,7 +117,39 @@ export const oracleCardData: any = {
         recommendation: {
             title: 'Data Files and Control Files Placement Recommendation',
             description:
-                'Data files and control files should reside on a dedicated volume to optimize performance and maintain data integrity. Isolating these files allows for efficient read/write operations and ensures critical control file accessibility, reducing the risk of corruption and enhancing database robustness.'
+                'Data files and control files should reside on a dedicated volume to optimize performance and maintain data integrity. \nIsolating these files allows for efficient read/write operations and ensures critical control file accessibility, reducing the risk of corruption and enhancing database robustness.'
+        },
+        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+    },
+    oracle_binary_placement: {
+        id: 'oracle-binary-placement',
+        mapName: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+        category: 'storage',
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+            type: 'Storage layout'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: 'Database'
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: ''
+        },
+        recommendation: {
+            title: 'Oracle Binary Placement Recommendation',
+            description:
+                'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. \nThis separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.'
         },
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
     },
@@ -155,7 +187,12 @@ export const oracleCardData: any = {
 const formatValue = (value: string): string => GETWELL_VALUES?.[value] || value;
 
 const isPlacementConfig = (itemName: string): boolean =>
-    ['redologs_temp_placement', 'archive_placement', 'datafiles_controlfiles_placement'].includes(itemName);
+    [
+        'redologs_temp_placement',
+        'archive_placement',
+        'datafiles_controlfiles_placement',
+        'oracle_binary_placement'
+    ].includes(itemName);
 
 const calculateBlockValues = (item: PerConfigInterface, itemName: string, categoryVal: string) => {
     const blockThreeValue = categoryVal === 'storage' ? formatValue(item?.current || '') : '';
@@ -470,6 +507,7 @@ export const oracleApplyFilter = (cardData: any, optimizeFilterTags: any) => {
         redologs_temp_placement: { category: 'Storage', subCategory: 'Storage layout' },
         archive_placement: { category: 'Storage', subCategory: 'Storage layout' },
         datafiles_controlfiles_placement: { category: 'Storage', subCategory: 'Storage layout' },
+        oracle_binary_placement: { category: 'Storage', subCategory: 'Storage layout' },
         ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' }
     };
 

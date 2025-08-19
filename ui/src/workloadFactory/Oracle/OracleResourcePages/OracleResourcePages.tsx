@@ -18,6 +18,7 @@ const OracleResourcePages = () => {
     const dispatch = useDispatch();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
     const { selectedOracleInnerPageTab, visitedTabs } = useAppSelector(state => state.oracleSlice);
+    const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
 
     // Reset visited tabs when leaving the dashboard
     useEffect(
@@ -49,7 +50,7 @@ const OracleResourcePages = () => {
                             }
                         },
                         {
-                            title: 'Host name'
+                            title: `${selectedHostname}/${selectedDatabaseInstanceName}` || 'Host name/instance name'
                         }
                     ]}
                 />

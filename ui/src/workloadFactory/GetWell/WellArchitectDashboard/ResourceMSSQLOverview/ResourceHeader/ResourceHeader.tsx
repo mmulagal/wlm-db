@@ -6,7 +6,7 @@ import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg'
 import styles from './ResourceHeader.module.scss';
 
 import { GENERAL } from '../../../../../utils/appConstants';
-import { INVENTORY_STATUS } from '../../../../../utils/consts';
+import { DBType, INVENTORY_STATUS } from '../../../../../utils/consts';
 
 type ResourceHeaderProps = {
     selectedHostname: string;
@@ -36,7 +36,7 @@ const ResourceHeader = ({
 
     return (
         <div className={styles.cardHeader}>
-            {resourceHeaderType === 'mssql' && (
+            {resourceHeaderType === DBType.MSSQL && (
                 <div className={styles.cardContent}>
                     {/* image */}
                     <div className={`${styles.column} ${styles.columnImage}`}>
@@ -118,7 +118,7 @@ const ResourceHeader = ({
                     </div>
                 </div>
             )}
-            {resourceHeaderType === 'oracle' && (
+            {resourceHeaderType === DBType.ORACLE && (
                 <div className={styles.cardContent}>
                     {/* image */}
                     <div className={`${styles.column} ${styles.columnImage}`}>

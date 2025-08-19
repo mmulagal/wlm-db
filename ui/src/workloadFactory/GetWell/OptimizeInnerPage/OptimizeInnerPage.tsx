@@ -8,6 +8,7 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     WLF_TABS
@@ -676,7 +677,11 @@ const OptimizeInnerPage = () => {
                                     'Host name/instance name',
                                 dataTestId: 'wlm-db-optimize-configuration',
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+                                    } else {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    }
                                     dispatch(setLandingFromInnerPage(true));
                                 }
                             },

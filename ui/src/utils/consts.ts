@@ -842,7 +842,8 @@ export const GETWELL_CONFIG: any = {
     'clone-management': 'clone_management',
     'redologs-temp-placement': 'redologs_temp_placement',
     'archive-placement': 'archive_placement',
-    'datafiles-controlfiles-placement': 'datafiles_controlfiles_placement'
+    'datafiles-controlfiles-placement': 'datafiles_controlfiles_placement',
+    'oracle-binary-placement': 'oracle_binary_placement'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -890,7 +891,8 @@ export const ASSESSMENT_CONFIG_NAMES = {
     SQL_SERVER_SERVICE: 'SQL Server Services',
     REDO_LOGS_TEMP_PLACEMENT: 'Redo logs and Temp Placement',
     ARCHIVE_PLACEMENT: 'Archive Placement',
-    DATAFILES_CONTROLFILES_PLACEMENT: 'Data Files and Control Files Placement'
+    DATAFILES_CONTROLFILES_PLACEMENT: 'Data Files and Control Files Placement',
+    ORACLE_BINARY_PLACEMENT: 'Oracle Binary Placement'
 };
 
 export const CONFIG_STATES = {

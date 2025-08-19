@@ -8,6 +8,7 @@ import {
     setCardData,
     setDriftAssessmentData,
     setIsAssessmentAvailable,
+    setLandingFromInnerPage,
     setOptimizePageLoading
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
@@ -20,7 +21,8 @@ const useOracleWellArchitectApi = () => {
         credIdFromJM,
         regionFromJM,
         selectedResourceId: getWellResourceId,
-        selectedDatabaseInstance: getWellSelectedDatabaseInstance
+        selectedDatabaseInstance: getWellSelectedDatabaseInstance,
+        landingFromInnerPage
     } = useAppSelector(state => state.getWellOptimize);
 
     const { visitedTabs } = useAppSelector(state => state.oracleSlice);
@@ -60,11 +62,13 @@ const useOracleWellArchitectApi = () => {
     };
 
     useEffect(() => {
-        if (!visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
+        // On page load, call the API to get the assessment details
+        if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
             viewResourceAction();
+        } else {
+            dispatch(setLandingFromInnerPage(false));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [visitedTabs]);
+    }, []);
 };
 
 export default useOracleWellArchitectApi;

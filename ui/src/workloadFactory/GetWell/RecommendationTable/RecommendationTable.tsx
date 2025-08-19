@@ -26,6 +26,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     GETWELL_STATUS,
@@ -43,7 +44,15 @@ import {
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import store from '../../../store/store';
 
-const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, hostId, instanceId }: any) => {
+const RecommendationTable = ({
+    tableData,
+    isLoading,
+    optimizePrintState,
+    from,
+    hostId,
+    instanceId,
+    engineType = DBType.MSSQL
+}: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const windowSize = useResize();
@@ -315,12 +324,15 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
     const handleNavigateToOptimizePage = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
-        dispatch(setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId, instanceId }));
+        dispatch(setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId, instanceId, engineType }));
     };
 
     // This is for inner page
     const handleDifferentNavigation = (rowData: any) => {
-        if (selectedHeaderTab === WLF_TABS.OPTIMIZE && innerPageCheck(rowData?.name)) {
+        if (
+            (selectedHeaderTab === WLF_TABS.OPTIMIZE || selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED) &&
+            innerPageCheck(rowData?.name)
+        ) {
             handleNavigateToOptimizePage(rowData);
         } else {
             handleOntapDialog(rowData);

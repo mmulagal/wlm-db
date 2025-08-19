@@ -15,7 +15,7 @@ import {
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL, DBType } from '../../../../utils/consts';
 import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
@@ -58,6 +58,7 @@ type DialogType = {
     missingPatchList?: MissingPatch[];
     operation?: string;
     objectsInViolation?: string[];
+    engineType?: string;
 };
 
 const DialogContent = ({
@@ -68,7 +69,8 @@ const DialogContent = ({
     bulkRecommendationOptions = [],
     missingPatchList = [],
     operation = 'single',
-    objectsInViolation = []
+    objectsInViolation = [],
+    engineType = DBType.MSSQL
 }: DialogType) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
@@ -157,6 +159,19 @@ const DialogContent = ({
                           t('databases.well-architect.sql-service-role-ownership-config')
                       ]
                     : [];
+            default:
+                return '';
+        }
+    };
+
+    const engineTypeText = () => {
+        switch (engineType) {
+            case DBType.MSSQL:
+                return 'SQL Server';
+            case DBType.ORACLE:
+                return 'Oracle';
+            case DBType.POSTGRESQL:
+                return 'PostgreSQL';
             default:
                 return '';
         }
@@ -528,8 +543,8 @@ const DialogContent = ({
             case 'Tiering policy':
             case 'Tiering minimum cooling days':
                 return createStandardDialog(
-                    t('databases.well-architect.autosize-action-summary'),
-                    t('databases.well-architect.autosize-what-will-happen'),
+                    t('databases.well-architect.autosize-action-summary', { engineType: engineTypeText() }),
+                    t('databases.well-architect.autosize-what-will-happen', { engineType: engineTypeText() }),
                     createStandardNotesSection(),
                     createONTAPConfigSection()
                 );
@@ -538,8 +553,12 @@ const DialogContent = ({
             case 'Space reservation':
             case 'Space allocation':
                 return createStandardDialog(
-                    t('databases.well-architect.os-type-space-allocation-reservation-action-summary'),
-                    t('databases.well-architect.os-type-space-allocation-reservation-what-will-happen'),
+                    t('databases.well-architect.os-type-space-allocation-reservation-action-summary', {
+                        engineType: engineTypeText()
+                    }),
+                    t('databases.well-architect.os-type-space-allocation-reservation-what-will-happen', {
+                        engineType: engineTypeText()
+                    }),
                     createStandardNotesSection(),
                     createONTAPConfigSection()
                 );

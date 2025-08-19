@@ -4,7 +4,7 @@ import OracleCardComponent from '../OracleCardComponent/OracleCardComponent';
 import Tag from '../../../../../common/Tag/Tag';
 import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
-import { WLF_TABS } from '../../../../../utils/consts';
+import { DBType, WLF_TABS } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import RecommendationTable from '../../../../GetWell/RecommendationTable/RecommendationTable';
 
@@ -39,14 +39,14 @@ const StorageConfigurationSection = ({
                         <OracleCardComponent cardData={oracleCardData.ontap_configuration} />
 
                         <DsAccordion
-                            id="4"
+                            id="5"
                             variant="Default"
                             isDisabled={loading || !oracleCardData?.ontap_configuration?.block_two?.value}
-                            isExpanded={isAccordionExpanded('4', optimizePrintState)}
+                            isExpanded={isAccordionExpanded('5', optimizePrintState)}
                             onExpandChange={isExpanded => {
-                                handleAccordionExpanded('4', isExpanded);
+                                handleAccordionExpanded('5', isExpanded);
                             }}
-                            onClick={() => setClickedAccordionId('4')}
+                            onClick={() => setClickedAccordionId('5')}
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData?.ontap_configuration?.tags?.map((perTag: string, index: number) => (
@@ -83,6 +83,7 @@ const StorageConfigurationSection = ({
                                     isLoading={loading}
                                     optimizePrintState={optimizePrintState}
                                     from={WLF_TABS.INVENTORY}
+                                    engineType={DBType.ORACLE}
                                 />
                             }
                         />
