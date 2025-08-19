@@ -1195,7 +1195,7 @@ async function getDatabaseEnvironmentDetails(
     const databaseInstanceInfo = await getPaginatedDatabaseInstances(accountId, {
         credentialsId,
         resourceId,
-        sqlInstanceName: databaseInstanceName
+        databaseInstanceName
     });
 
     if (!isEmpty(databaseInstanceInfo)) {
@@ -1230,7 +1230,7 @@ async function checkDatabaseExists(
     activeNodeInstanceId: string,
     instanceName: string = DEFAULT_INSTANCE_NAME,
     executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
-    sqlInstanceId?: string,
+    databaseInstanceId?: string,
     sqlAuthEnabled: boolean = false
 ) {
     logger.info('Checking Database name exists', {
@@ -1242,13 +1242,16 @@ async function checkDatabaseExists(
         activeNodeInstanceId,
         instanceName,
         executableInstanceName,
-        sqlInstanceId,
+        databaseInstanceId,
         sqlAuthEnabled
     });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        if (sqlInstanceId) {
-            const dbInstancesResult = await getPaginatedDatabaseInstances(accountId, { sqlInstanceId, credentialsId });
+        if (databaseInstanceId) {
+            const dbInstancesResult = await getPaginatedDatabaseInstances(accountId, {
+                databaseInstanceId,
+                credentialsId
+            });
             const dbInstance = Array.isArray(dbInstancesResult) ? dbInstancesResult[0] : dbInstancesResult?.items?.[0];
             const { userDatabase } = (dbInstance?.metadata || { userDatabase: undefined }) as { userDatabase: any[] };
             return userDatabase?.some(db => db.name === databaseName) ?? false;

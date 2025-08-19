@@ -1723,7 +1723,7 @@ async function getInstanceDetails(
         const instanceResult = await getPaginatedDatabaseInstances(accountId, {
             resourceId: databaseHostId,
             credentialsId,
-            sqlInstanceId: databaseInstanceId,
+            databaseInstanceId,
             region,
             shouldIncludeResource: true
         });

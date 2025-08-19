@@ -79,8 +79,8 @@ interface DatabaseInstanceRecord {
 
 interface ListDatabaseInstancesRecord {
     resourceId?: string;
-    sqlInstanceId?: string;
-    sqlInstanceName?: string;
+    databaseInstanceId?: string;
+    databaseInstanceName?: string;
     isDefault?: boolean;
     credentialsId?: string;
     region?: string | null;

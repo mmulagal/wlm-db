@@ -8,8 +8,12 @@ import {
 } from '../types/database-hosts.types';
 
 import {
+    ContinuousOptimizationQueryString,
+    AssessmentQueryStringPerAccount
+} from '../types/continuous-optimization.types';
+import {
     OptimizeStorageRequestBody,
-    DriftAssessmentResponse,
+    MSSQLDriftAssessmentResponse,
     OptimizeComputeRequestBody,
     OptimizeOperatingSystemRequestBody,
     DriftAssessmentResponsePerHost,
@@ -22,25 +26,19 @@ import {
     BulkOptimizeCloneBody,
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
-    ContinuousOptimizationQueryString,
-    AssessmentQueryStringPerAccount,
     BulkOptimizeHASharedStorageBody
-} from '../types/continuous-optimization.types';
-
-const resourceRequest = {
-    tags: [RouteTags.RESOURCE],
-    params: CredentialsIdParams
-};
+} from '../types/mssql-continuous-optimisation.types';
+import { resourceRequest } from './database-hosts-schemas';
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
     summary: 'Get database instance parameters drift from recommended settings',
     description: 'Get database instance parameters drift from recommended settings',
     params: DatabaseHostOptionalInstanceSummaryParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
     response: {
-        200: DriftAssessmentResponse
+        200: MSSQLDriftAssessmentResponse
     }
 };
 
@@ -49,7 +47,7 @@ const DriftAssessmentPerHost = {
     summary: 'Get database parameter drift from recommended settings for all instances on a host',
     description: 'Get database parameters drift from recommended settings for all instances on a host',
     params: DatabaseHostSummaryParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
     response: {
         200: DriftAssessmentResponsePerHost
@@ -61,7 +59,7 @@ const TriggerDriftAssessmentSchema = {
     summary: 'Trigger assessment for a database instance',
     description: 'Trigger assessment for best practice misalignments on a managed database instance',
     params: DatabaseHostOptionalInstanceSummaryParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
     response: {
         202: Type.Object({
@@ -78,7 +76,7 @@ const OptimizeStorageSchema = {
     summary: 'Fix storage for a database instance',
     description: OptimizeStorageSchemaDescription,
     params: DatabaseHostOptionalInstanceSummaryParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     body: OptimizeStorageRequestBody,
     response: {
         200: Type.Object({
@@ -93,7 +91,7 @@ const OptimizeSizingSchema = {
     description: 'Fix sizing parameters as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeGenericRequestBody,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
         200: Type.Object({
             jobId: Type.String()
@@ -107,7 +105,7 @@ const OptimizeComputeSchema = {
     description: 'Fix compute rightsizing as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeComputeRequestBody,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
         200: Type.Object({
             jobId: Type.String()
@@ -120,7 +118,7 @@ const OptimizeOperatingSystemSchema = {
     summary: 'Fix MPIO settings for a database instance',
     description: 'Fix MPIO settings parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     body: OptimizeOperatingSystemRequestBody,
     response: {
         200: Type.Object({
@@ -134,7 +132,7 @@ const OptimizeStorageTierSchema = {
     summary: 'Fix storage-tier settings for a database instance',
     description: 'Fix storage-tier parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     body: OptimizeGenericRequestBody,
     response: {
         200: Type.Object({
@@ -148,7 +146,7 @@ const DriftAssessmentPerAccount = {
     summary: 'Get database parameter drift from recommended settings for all registered instances on an account',
     description: 'Get database parameter drift from recommended settings for all registered instances on an account',
     params: CredentialsIdParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: AssessmentQueryStringPerAccount,
     response: {
         200: DriftAssessmentResponsePerAccount
@@ -161,7 +159,7 @@ const AvailableSnapshotPolicies = {
     description:
         'Get available snapshot policies for a database instance, returns snapshot policies on cluster and SVM level',
     params: DatabaseHostOptionalInstanceSummaryParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
         200: AvailableSnapshotPoliciesResponse
     }
@@ -173,7 +171,7 @@ const OptimizeResilienceSchema = {
     description: 'Fix resilience parameters for database instances',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeResiliencyBody,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
         200: Type.Object({
             jobId: Type.String()
@@ -184,7 +182,7 @@ const OptimizeResilienceSchema = {
 const BulkOptimizeGeneralSchema = {
     ...resourceRequest,
     params: AccountIdParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeGeneralRequestBody,
     response: {
         200: Type.Object({
@@ -214,7 +212,7 @@ const BulkOptimizeStorageTierSchema = {
 const BulkOptimizeComputeSchema = {
     ...resourceRequest,
     params: AccountIdParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeComputeRequestBody,
     summary: 'Fix compute',
     description: 'Fix compute parameters as per the best practice for selected database instances.',
@@ -239,7 +237,7 @@ const BulkOptimizeAwsBackupSchema = {
 
 const BulkDismissConfigurationSchema = {
     params: AccountIdParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkDismissConfigurationRequestBody,
     summary: 'Dismiss Assessment Configurations',
     description: 'Dismiss Assessment Configurations for selected database instances.',
@@ -253,7 +251,7 @@ const BulkOptimizeCloneSchema = {
     summary: 'Fix clone parameters for database instances',
     description: 'Fix clone parameters for database instances',
     body: BulkOptimizeCloneBody,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
         200: Type.Object({
             jobId: Type.String()
@@ -264,7 +262,7 @@ const BulkOptimizeCloneSchema = {
 const BulkOptimizeSharedStorageSchema = {
     ...BulkOptimizeGeneralSchema,
     params: AccountIdParams,
-    tags: [RouteTags.ASSESSMENT],
+    tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeHASharedStorageBody,
     summary: 'Fix shared storage parameters as part of High Availability Cluster configuration',
     description: 'Fix shared storage parameters as per the best practice for selected database instances.',
@@ -316,6 +314,5 @@ export {
     BulkOptimizeSharedStorageSchema,
     BulkOptimizeHeartbeatSchema,
     BulkOptimizeClusterQuorumSchema,
-    BulkOptimizeSQLServerServiceSchema,
-    resourceRequest
+    BulkOptimizeSQLServerServiceSchema
 };

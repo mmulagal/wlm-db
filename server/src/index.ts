@@ -48,7 +48,7 @@ import workloadFactoryInternalRoutes from './routes/wf-internal';
 import discoverRoutes from './routes/discover';
 import storageSavingsRoutes from './routes/storage-savings';
 import onpremTcoRoutes from './routes/onprem-tco';
-import continuousOptimizationRoutes from './routes/continuous-optimization';
+import mssqlContinuousOptimizationRoutes from './routes/mssql-continuous-optimization';
 import oracleContinuousOptimizationRoutes from './routes/oracle-continuous-optimization';
 import notificationRoutes from './routes/notification';
 import logsAnalyzerRoutes from './routes/logs-analyzer';
@@ -219,7 +219,7 @@ const app = fastify({
             discoverRoutes(instance);
             resourceRoutes(instance);
             storageSavingsRoutes(instance);
-            continuousOptimizationRoutes(instance);
+            mssqlContinuousOptimizationRoutes(instance);
             onpremTcoRoutes(instance);
             notificationRoutes(instance);
             logsAnalyzerRoutes(instance);

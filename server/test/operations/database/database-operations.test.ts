@@ -512,7 +512,7 @@ describe('getPaginatedDatabaseInstances', () => {
     describe('Specific database instance queries', () => {
         it('should support filtering by specific sqlInstanceId', async () => {
             const result = await getPaginatedDatabaseInstances(ACCOUNT_ID, {
-                sqlInstanceId: testInstanceIds[0]
+                databaseInstanceId: testInstanceIds[0]
             });
 
             expect(result.items.length).toBeLessThanOrEqual(1);
@@ -523,7 +523,7 @@ describe('getPaginatedDatabaseInstances', () => {
 
         it('should support filtering by sqlInstanceName', async () => {
             const result = await getPaginatedDatabaseInstances(ACCOUNT_ID, {
-                sqlInstanceName: 'PAGINATED_TEST_INSTANCE_1'
+                databaseInstanceId: 'PAGINATED_TEST_INSTANCE_1'
             });
 
             expect(result.items).toBeInstanceOf(Array);

@@ -1,32 +1,28 @@
 import { isEmpty } from 'bullmq';
+import throat from 'throat';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import throat from 'throat';
 import getLogger from '../utils/logger';
-import { AuditStatus, HttpErrorCodes, SSM_COMMAND_CACHE_TYPE } from '../utils/consts';
+import { HttpErrorCodes } from '../utils/consts';
 import {
     BulkOptimizeCloneInHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType,
-    CloneDetailType,
     OptimizeClonesPerHostRequestBodyType,
     OptimizePerHostRequestBodyType,
     OptimizeHASharedStorageRequestBodyType,
     BulkOptimizeHASharedStorageRequestBodyType
-} from '../routes/types/continuous-optimization.types';
+} from '../routes/types/mssql-continuous-optimisation.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import {
     handleUpdateAwsBackup,
-    optimizeClone,
     optimizeMaxDop,
     optimizeOperatingSystemSettings,
     optimizeSizing,
-    optimizeStorageTier,
-    triggerAssessmentAfterOptimization
+    optimizeStorageTier
 } from './cont-opt-optimize-operations';
 import { updateJobDetails, updateParentJobStatus } from './database/job-operations';
 import {
-    AssessmentCategories,
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
@@ -37,28 +33,14 @@ import {
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
 import { handleOptimizeRssOptimization } from './continuous-optimization/mssql/rssConfig-optimize-operations';
-import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
-import { resetCache } from '../utils/cache';
-import { getServerNameWithHostname, isDemo } from '../utils/utils';
-import { paginateListInstanceConfigData } from './database/instance-config-operations';
-import {
-    CloneAssessment,
-    CloneDetail,
-    DatabaseInstance,
-    DatabaseInstanceMetadata,
-    MappedVolumeResponseForClone
-} from '../utils/common-types';
-import { getMappedVolumeDetailForInstance } from './continuous-optimization/mssql/clone-optimization-operations';
-import { getInstanceInfo } from './database/database-operations';
-import { updateOptimizedConfigMetaData } from './demo-operations';
+
+import { handleBulkCloneOptimization } from './continuous-optimization/mssql/clone-optimization-operations';
 import {
     handleSharedStorageOptimize,
-    optimizeHighAvailabilityConfiguration,
     optimizeSqlServerService
 } from './continuous-optimization/mssql/resilience-optimize-operations';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 async function formatJobMetadata<T extends { configurationName: string; databaseHosts: any[] }>(hostsToOptimize: T[]) {
     return hostsToOptimize.flatMap(({ configurationName, databaseHosts }) =>
@@ -188,206 +170,49 @@ async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOpt
     return { jobId: parentJobId };
 }
 
-async function handleBulkCloneOptimization(
+async function bulkHostLevelOptimization(
     accountId: string,
-    hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[],
-    parentJobId: string
+    optimizationCategory: string,
+    hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[],
+    masterOptimizeParentId: string
 ) {
     logger.info(
-        `Handle bulk optimizing clone: ${accountId}, hostsToOptimize: ${hostsToOptimize?.length}, parentJobId: ${parentJobId}`
+        `Handle bulk optimizing host level: ${accountId}, ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeParentId}`
     );
+    let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
 
-    const flattenedInstances = extractInstancesToOptimize(hostsToOptimize);
-    // Process all instances and their clones with a concurrency limit of 3
-    await Promise.all(
-        flattenedInstances.map(
-            throat(3, async instance => {
-                const { instanceId, clones, region, credentialsId, databaseHostId } = instance;
-                if (isEmpty(clones)) {
-                    logger.warn(`No clones found for instance ${instanceId} in databaseHost ${databaseHostId}.`);
-                    return;
-                }
+    const groupedHosts = hostsToOptimize.reduce((acc, { configurationName, databaseHosts }) => {
+        databaseHosts.forEach(({ credentialsId, region, ...rest }) => {
+            const key = `${credentialsId}-${region}-${configurationName}`;
+            acc[key] ??= { credentialsId, region, optimizationSubcategory: configurationName, databaseHosts: [] };
+            acc[key].databaseHosts.push({ ...rest });
+        });
+        return acc;
+    }, {} as Record<string, { credentialsId: string; region: string; optimizationSubcategory: string; databaseHosts: any[] }>);
 
-                try {
-                    // Fetch configuration data once for the databaseHostId and databaseInstanceId
-                    const { configData, instanceName, sqlServerName, serverNameWithHostName, volumeMapping } =
-                        await fetchInstanceConfigurationAndVolumeMapping(
-                            accountId,
-                            credentialsId,
-                            region,
-                            databaseHostId,
-                            instanceId,
-                            clones
-                        );
-
-                    await Promise.all(
-                        clones?.map(
-                            throat(3, async clone => {
-                                try {
-                                    await optimizeClone(
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        databaseHostId,
-                                        instanceId,
-                                        clone,
-                                        configData as unknown as CloneAssessment,
-                                        sqlServerName,
-                                        instanceName,
-                                        parentJobId,
-                                        volumeMapping
-                                    );
-                                    logger.info(
-                                        `Successfully optimized clone ${clone.cloneDatabaseName} for instance ${instanceId} in databaseHost ${databaseHostId}.`
-                                    );
-                                } catch (error: any) {
-                                    logger.error(
-                                        `Error occurred while optimizing clone ${clone.cloneDatabaseName} for host ${databaseHostId}, instance ${instanceId}. Error: ${error}`
-                                    );
-                                }
-                            })
-                        )
-                    );
-                    if (isDemoFlow) {
-                        await updateAllOptimizedClonesDemoFlow(
-                            accountId,
-                            credentialsId,
-                            databaseHostId,
-                            instanceId,
-                            configData,
-                            clones
-                        );
-                    }
-                    // once the optimize done for the specific instance id in a host, Run the assessment for that
-                    resetCache(SSM_COMMAND_CACHE_TYPE);
-                    await triggerAssessmentAfterOptimization(
+    try {
+        await Promise.all(
+            Object.entries(groupedHosts).map(async ([, { credentialsId, region, databaseHosts }]) => {
+                if (optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
+                    return handleUpdateAwsBackup(
+                        accountId,
                         credentialsId,
                         region,
-                        accountId,
-                        databaseHostId,
-                        serverNameWithHostName,
-                        parentJobId,
-                        { id: instanceId },
-                        AssessmentCategories.CLONE
-                    );
-                } catch (err: any) {
-                    logger.error(
-                        `Error occurred while optimizing clone configuration for account ${accountId}. Error: ${err}`
+                        databaseHosts,
+                        masterOptimizeParentId
                     );
                 }
             })
-        )
-    );
-    const status = await updateParentJobStatus(accountId, parentJobId);
-    if (status === JOBSTATUS.COMPLETED) {
-        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
-    } else if (status === JOBSTATUS.FAILED) {
-        updateLongRunningAuditGroup(AuditStatus.FAILED, `Error occurred while fixing clone for account ${accountId}`);
-    }
-}
-
-async function updateAllOptimizedClonesDemoFlow(
-    accountId: string,
-    credentialsId: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    configData: CloneAssessment,
-    clones: CloneDetailType[]
-) {
-    logger.info('Updating all optimized clones for demo flow', {
-        accountId,
-        credentialsId,
-        databaseHostId,
-        databaseInstanceId
-    });
-
-    // Filter only the clones that were optimized
-    const { oldCloneDetails } = configData as unknown as CloneAssessment;
-    const matchingClones: CloneDetail[] = Array.isArray(oldCloneDetails)
-        ? oldCloneDetails.filter(({ cloneDatabaseName, clonedBy }) =>
-              clones.some(c => c.cloneDatabaseName === cloneDatabaseName && c.clonedBy?.toLowerCase() === clonedBy)
-          )
-        : [];
-
-    // Fetch instance metadata once
-    const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-    const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
-
-    // Update all matching clones in one DB call
-    await updateOptimizedConfigMetaData(
-        accountId,
-        databaseInstanceId,
-        matchingClones,
-        'CLONE',
-        instanceMetadata as DatabaseInstanceMetadata
-    );
-}
-
-async function handleOptimization(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    optimizationCategory: string,
-    optimizationSubcategory: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    parentJobId: string
-) {
-    try {
-        switch (optimizationCategory) {
-            case OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM:
-                await optimizeOperatingSystemSettings(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    optimizationSubcategory,
-                    parentJobId
-                );
-                break;
-            case OPTIMIZATION_CATEGORIES.STORAGE_TIER:
-                await optimizeStorageTier(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    undefined,
-                    parentJobId
-                );
-                break;
-            case OPTIMIZATION_CATEGORIES.STORAGE_SIZING:
-                await optimizeSizing(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    [optimizationSubcategory as unknown as OPTIMIZE_SIZING_CONFIGS],
-                    parentJobId
-                );
-                break;
-            case OPTIMIZATION_CATEGORIES.MAXDOP:
-                await optimizeMaxDop(accountId, credentialsId, region, databaseHostId, databaseInstanceId, parentJobId);
-                break;
-            case OptimizeHighAvailabilityParams.SQLSERVER_SERVICE:
-                await optimizeSqlServerService(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    parentJobId
-                );
-                break;
-            default:
-                break;
-        }
+        );
     } catch (error: any) {
         logger.error(
-            `Error occurred while optimizing storage tier for host ${databaseHostId}, instance ${databaseInstanceId}, configuration category ${optimizationCategory}. Error: ${error}`
+            `Error occurred while optimizing for account ${accountId}, ${optimizationCategory}. Error: ${error}`
         );
+        masterOptimizeParentStatus = JOBSTATUS.FAILED;
+    } finally {
+        if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
+            await updateParentJobStatus(accountId, masterOptimizeParentId);
+        }
     }
 }
 
@@ -400,60 +225,104 @@ async function handleBulkOptimization(
     logger.info(
         `Handle bulk optimizing : ${accountId}, ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeParentId}`
     );
+
+    if (optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
+        return bulkHostLevelOptimization(accountId, optimizationCategory, hostsToOptimize, masterOptimizeParentId);
+    }
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    const flattenedHosts = hostsToOptimize.flatMap(({ configurationName: optimizationSubcategory, databaseHosts }) =>
+        databaseHosts.map(databaseHost => ({
+            ...databaseHost,
+            optimizationSubcategory
+        }))
+    );
+
     try {
         await Promise.all(
-            hostsToOptimize.map(async ({ configurationName: optimizationSubcategory, databaseHosts }) =>
-                Promise.all(
-                    databaseHosts.map(
-                        throat(3, async ({ id: databaseHostId, sqlServerInstances, credentialsId, region }) => {
-                            if (optimizationSubcategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
-                                await handleUpdateAwsBackup(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    databaseHosts,
-                                    masterOptimizeParentId
-                                );
-                            } else if (
-                                optimizationCategory === OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS ||
-                                optimizationCategory === OptimizeHighAvailabilityParams.CLUSTER_QUORUM
-                            ) {
-                                await optimizeHighAvailabilityConfiguration(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    databaseHostId,
-                                    sqlServerInstances,
-                                    optimizationSubcategory,
-                                    masterOptimizeParentId
-                                );
-                            } else {
-                                if (isEmpty(sqlServerInstances)) {
-                                    logger.error(`No instances given for resource ${databaseHostId}.`);
-                                }
-                                await Promise.all(
-                                    sqlServerInstances.map(async instance => {
-                                        await handleOptimization(
+            flattenedHosts.map(
+                throat(
+                    3,
+                    async ({
+                        id: databaseHostId,
+                        sqlServerInstances,
+                        credentialsId,
+                        region,
+                        optimizationSubcategory
+                    }) => {
+                        if (isEmpty(sqlServerInstances)) {
+                            logger.error(`No instances given for resource ${databaseHostId}.`);
+                        }
+
+                        await Promise.all(
+                            sqlServerInstances.map(async databaseInstanceId => {
+                                switch (optimizationCategory) {
+                                    case OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM:
+                                        await optimizeOperatingSystemSettings(
                                             accountId,
                                             credentialsId,
                                             region,
-                                            optimizationCategory,
-                                            optimizationSubcategory,
                                             databaseHostId,
-                                            instance,
+                                            databaseInstanceId,
+                                            optimizationSubcategory,
                                             masterOptimizeParentId
                                         );
-                                    })
-                                );
-                            }
-                        })
-                    )
+                                        break;
+                                    case OPTIMIZATION_CATEGORIES.STORAGE_TIER:
+                                        await optimizeStorageTier(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            databaseHostId,
+                                            databaseInstanceId,
+                                            undefined,
+                                            masterOptimizeParentId
+                                        );
+                                        break;
+                                    case OPTIMIZATION_CATEGORIES.STORAGE_SIZING:
+                                        await optimizeSizing(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            databaseHostId,
+                                            databaseInstanceId,
+                                            [optimizationSubcategory as unknown as OPTIMIZE_SIZING_CONFIGS],
+                                            masterOptimizeParentId
+                                        );
+                                        break;
+                                    case OPTIMIZATION_CATEGORIES.MAXDOP:
+                                        await optimizeMaxDop(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            databaseHostId,
+                                            databaseInstanceId,
+                                            masterOptimizeParentId
+                                        );
+                                        break;
+                                    case OptimizeHighAvailabilityParams.SQLSERVER_SERVICE:
+                                        await optimizeSqlServerService(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            databaseHostId,
+                                            databaseInstanceId,
+                                            masterOptimizeParentId
+                                        );
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            })
+                        );
+                    }
                 )
             )
         );
     } catch (error: any) {
-        logger.error(`Error occurred while optimizing  for account ${accountId}. Error: ${error}`);
+        logger.error(
+            `Error occurred while optimizing for account ${accountId}, ${optimizationCategory}. Error: ${error}`
+        );
         masterOptimizeParentStatus = JOBSTATUS.FAILED;
     } finally {
         // Main Master job is updated here
@@ -652,86 +521,6 @@ async function bulkHASharedStorageOptimization(
     return { jobId: parentJobId };
 }
 
-async function fetchInstanceConfigurationAndVolumeMapping(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    instanceId: string,
-    clones: CloneDetailType[]
-): Promise<{
-    configData: CloneAssessment;
-    instanceName: string;
-    sqlServerName: string;
-    serverNameWithHostName: string;
-    volumeMapping?: MappedVolumeResponseForClone;
-}> {
-    // Fetch configuration data for the databaseHostId and databaseInstanceId
-    const {
-        items: [persistedConfigurationData]
-    } = await paginateListInstanceConfigData({
-        accountId,
-        region,
-        credentialsId,
-        resourceId: databaseHostId,
-        databaseInstanceId: instanceId,
-        configDataType: AssessmentCategories.CLONE,
-        includeDatabaseInstance: true,
-        includeResource: true
-    });
-
-    const {
-        config_data: configData,
-        database_instances: { database_instance_name: instanceName = '' } = {},
-        resource: { resource_name: sqlServerName = '' } = {}
-    } = persistedConfigurationData || {};
-
-    if (!instanceName || !sqlServerName) {
-        logger.error('Instance name or SQL server name is missing');
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or SQL server name is missing');
-    }
-
-    const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName);
-
-    // Check if any clone requires volume mapping
-    const requiresVolumeMapping = clones.some(clone => clone.action === 'delete' && clone.clonedBy === 'other');
-
-    let volumeMapping: MappedVolumeResponseForClone | undefined;
-    if (requiresVolumeMapping) {
-        // Fetch the mapped volume details for the instance
-        volumeMapping = await getMappedVolumeDetailForInstance(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            instanceId
-        );
-    }
-
-    return {
-        configData: configData as unknown as CloneAssessment,
-        instanceName,
-        sqlServerName,
-        serverNameWithHostName,
-        volumeMapping
-    };
-}
-
-// Flattens hostsToOptimize to extract SQL Server instances and their metadata.
-function extractInstancesToOptimize(hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[]) {
-    return hostsToOptimize.flatMap(({ databaseHosts }) =>
-        databaseHosts.flatMap(({ sqlServerInstances, region, credentialsId, id: databaseHostId }) =>
-            sqlServerInstances.map(({ instanceId, clones }) => ({
-                instanceId,
-                clones,
-                region,
-                credentialsId,
-                databaseHostId
-            }))
-        )
-    );
-}
-
 async function validateAndFilterDatabaseHosts<T extends { credentialsId: string; region: string; id: string }>(
     accountId: string,
     databaseHosts: T[]
@@ -784,4 +573,10 @@ async function validateRequestDetails(
     return true;
 }
 
-export { bulkOptimization, bulkComputeOptimization, bulkCloneOptimization, bulkHASharedStorageOptimization };
+export {
+    bulkOptimization,
+    bulkComputeOptimization,
+    bulkCloneOptimization,
+    bulkHASharedStorageOptimization,
+    bulkHostLevelOptimization
+};

@@ -347,7 +347,7 @@ async function getSandboxInfoByInstanceId(
         credentialsId,
         region,
         resourceId: databaseHostId,
-        sqlInstanceId: databaseInstanceId,
+        databaseInstanceId,
         shouldIncludeResource: true
     });
     const managedInstances = Array.isArray(managedResult) ? managedResult : managedResult.items;
@@ -3388,7 +3388,7 @@ async function runSandboxPreValidations(
         getPaginatedDatabaseInstances(accountId, {
             credentialsId,
             resourceId: source.host,
-            sqlInstanceId: source.instance
+            databaseInstanceId: source.instance
         }),
         source.host === dest.host ? Promise.resolve([]) : listResources({ accountId, resourceId: dest.host }),
         source.host === dest.host && source.instance === dest.instance
@@ -3396,7 +3396,7 @@ async function runSandboxPreValidations(
             : getPaginatedDatabaseInstances(accountId, {
                   credentialsId,
                   resourceId: dest.host,
-                  sqlInstanceId: dest.instance
+                  databaseInstanceId: dest.instance
               })
     ]);
 

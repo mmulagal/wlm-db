@@ -9,12 +9,9 @@ import {
     VALID_MPIO_LB_POLICIES
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
+
+import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
 import storageGoldenConfigData from './golden-config';
-import {
-    SizingViolationResponseType,
-    StorageParameterDriftResponseType,
-    GenericViolationResponseType
-} from '../../../routes/types/continuous-optimization.types';
 import { LogDriveDetails, StorageAssessment, TempDbDriveDetails, WorkloadInstance } from '../../../utils/common-types';
 import {
     calculateFsxStorageCapacityForHeadroomOptimization,
@@ -35,6 +32,10 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from '../../workloads/mssql/continuous-optimization-scripts';
 import { collectSnapshotCopyData } from './resilience-assessment-operation';
+import {
+    SizingViolationResponseType,
+    StorageParameterDriftResponseType
+} from '../../../routes/types/mssql-continuous-optimisation.types';
 
 const logger = getLogger();
 

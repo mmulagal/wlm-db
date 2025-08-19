@@ -3,12 +3,14 @@ import moment from 'moment';
 import { compact, isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
-    DriftAssessmentResponseType,
     ErrorResponseType,
     GenericAssessmentResponseType,
-    OntapVolumeType,
-    ParameterDriftResponseType
+    OntapVolumeType
 } from '../../../routes/types/continuous-optimization.types';
+import {
+    MSSQLDriftAssessmentResponseType,
+    ParameterDriftResponseType
+} from '../../../routes/types/mssql-continuous-optimisation.types';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import {
@@ -267,7 +269,7 @@ async function getResilienceDriftAssessment(
                 ? haChecks
                 : [];
 
-        const assessmentData: DriftAssessmentResponseType = {
+        const assessmentData: MSSQLDriftAssessmentResponseType = {
             snapshotPolicy,
             crr: crrData,
             awsBackup: awsBackup as ParameterDriftResponseType,

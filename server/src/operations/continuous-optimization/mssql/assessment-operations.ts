@@ -66,16 +66,16 @@ import { getInstanceDetails } from '../../database-hosts-operations';
 import { checkAndUpdatePostponedEndTime, updateFieldsBasedOnDismissedConfigurations } from '../assessment-utils';
 import { listResources } from '../../../lib/database/db';
 import {
+    ParameterDriftResponseType,
     ComputeDriftResponseType,
     LicenseDriftResponseType,
     HostOsPatchDriftResponseType,
     RssConfigDriftResponseType,
     MSSQLPatchDriftResponseType,
-    DriftAssessmentResponseType,
+    MSSQLDriftAssessmentResponseType,
     StorageParameterDriftResponseType,
-    ParameterDriftResponseType,
     DriftAssessmentResponsePerHostType
-} from '../../../routes/types/continuous-optimization.types';
+} from '../../../routes/types/mssql-continuous-optimisation.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetAssessmentForDemo } from '../../demo-operations';
 import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../../utils/database-consts';
@@ -327,7 +327,7 @@ async function fetchMssqlDriftAssessment(
             : {}
     ];
 
-    let driftAssessmentData: DriftAssessmentResponseType = {
+    let driftAssessmentData: MSSQLDriftAssessmentResponseType = {
         storage: !isEmpty(storageAssessmentResponse)
             ? (storageAssessmentResponse as StorageParameterDriftResponseType)
             : undefined,

@@ -20,7 +20,7 @@ import {
     updateDatabaseHostConfigurations,
     updateDatabaseInstanceConfigurations
 } from '../database/database-operations';
-import { BulkDismissConfigurationType } from '../../routes/types/continuous-optimization.types';
+import { BulkDismissConfigurationType } from '../../routes/types/mssql-continuous-optimisation.types';
 import {
     DatabaseInstanceDismissConfigs,
     DatabaseInstanceConfigurations,

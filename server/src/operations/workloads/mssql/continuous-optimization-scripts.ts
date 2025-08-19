@@ -1,4 +1,4 @@
-import { BulkOptimizeSnapshotPolicyParamsType } from '../../../routes/types/continuous-optimization.types';
+import { BulkOptimizeSnapshotPolicyParamsType } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {

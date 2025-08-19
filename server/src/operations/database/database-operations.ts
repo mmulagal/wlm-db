@@ -359,7 +359,7 @@ async function getInstanceInfo(
     const result = await getPaginatedDatabaseInstances(accountId, {
         credentialsId,
         resourceId: databaseHostId,
-        sqlInstanceId: databaseInstanceId,
+        databaseInstanceId,
         region,
         shouldIncludeResource: true,
         additionalResourceFields: ['assessment_data', 'configurations']
@@ -420,7 +420,7 @@ async function getPaginatedDatabaseInstances(
 ): Promise<PaginatedDatabaseInstancesResponse> {
     const {
         resourceId,
-        sqlInstanceId,
+        databaseInstanceId,
         credentialsId,
         region,
         pageSize,
@@ -432,7 +432,7 @@ async function getPaginatedDatabaseInstances(
     logger.info('Get paginated database instances', {
         accountId,
         resourceId,
-        sqlInstanceId,
+        databaseInstanceId,
         credentialsId,
         region,
         pageSize,

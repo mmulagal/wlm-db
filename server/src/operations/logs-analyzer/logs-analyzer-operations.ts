@@ -489,7 +489,7 @@ async function triggerLogsAnalysis(
         credentialsId,
         region,
         resourceId: databaseHostId,
-        sqlInstanceId: databaseInstanceId,
+        databaseInstanceId,
         shouldIncludeResource: true
     });
     const [managedInstance] = paginatedResponse.items as DatabaseInstancesIncludingResource[];

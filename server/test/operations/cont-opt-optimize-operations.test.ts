@@ -8,18 +8,14 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/cloud-watch-scope';
 import '../simulator/scopes/aws/compute-optimizer-scope';
 
-import {
-    optimizeClone,
-    optimizeMaxDop,
-    optimizeSizing,
-    optimizeStorage
-} from '../../src/operations/cont-opt-optimize-operations';
+import { optimizeMaxDop, optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import { AssessmentCategories, OPTIMIZE_SIZING_CONFIGS } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import { createDatabaseInstanceConfigData } from '../../src/lib/database/database-instance-config';
 import { updateJobDetails } from '../../src/operations/database/job-operations';
 import optimizeCompute from '../../src/operations/continuous-optimization/compute-optimize-operations';
+import { optimizeClone } from '../../src/operations/continuous-optimization/mssql/clone-optimization-operations';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 const CREDENTIALS_ID = DEFAULT_AWS_CREDENTIALS_ID;

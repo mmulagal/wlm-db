@@ -16,7 +16,7 @@ import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { GET_VCPU_AND_MAXDOP_DETAILS } from '../../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { sqlResponseParsing } from '../../../utils/utils';
-import { ParameterDriftResponseType } from '../../../routes/types/continuous-optimization.types';
+import { ParameterDriftResponseType } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 
 const logger = getLogger();

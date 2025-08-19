@@ -1,7 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
-import { TriggerDriftAssessmentSchema } from './schemas/continuous-optimization-schema';
+import { TriggerDriftAssessmentSchema } from './schemas/mssql-continuous-optimization-schema';
 import castRequest from './utils';
 import {
     fetchOracleDriftAssessment,

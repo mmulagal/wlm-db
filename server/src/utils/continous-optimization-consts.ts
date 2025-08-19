@@ -137,8 +137,7 @@ enum OPTIMIZATION_CATEGORIES {
     COMPUTE = 'compute',
     MAXDOP = 'max-dop',
     RSS_CONFIG = 'rss-config',
-    CLONE = 'clone',
-    HIGH_AVAILABILITY = 'high-availability'
+    CLONE = 'clone'
 }
 
 enum DISMISS_STATUS_ENUM {

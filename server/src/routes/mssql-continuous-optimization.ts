@@ -31,7 +31,7 @@ import {
     BulkOptimizeSQLServerServiceSchema,
     BulkOptimizeClusterQuorumSchema,
     BulkOptimizeHeartbeatSchema
-} from './schemas/continuous-optimization-schema';
+} from './schemas/mssql-continuous-optimization-schema';
 import {
     optimizeStorage,
     optimizeSizing,
@@ -53,7 +53,7 @@ import {
 import {
     OptimizeResiliencyBodyType,
     BulkOptimizeCloneInHostRequestBodyType
-} from './types/continuous-optimization.types';
+} from './types/mssql-continuous-optimisation.types';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-utils';
 import {
     fetchMssqlDriftAssessment,
@@ -65,7 +65,7 @@ import {
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
 
-export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
+export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server

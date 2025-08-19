@@ -247,5 +247,6 @@ export {
     PgSqlDbHostsSummarySchema,
     PgSqlDbHostDetailsSchema,
     oracleDbHostDetailsSchema,
-    OracleDbHostsSummarySchema
+    OracleDbHostsSummarySchema,
+    resourceRequest
 };

@@ -3,17 +3,17 @@ import { isEmpty, isNil } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import throat from 'throat';
 import getLogger from '../../../utils/logger';
+import { OntapVolumeType } from '../../../routes/types/continuous-optimization.types';
 import {
     AvailableSnapshotPoliciesResponseType,
     BulkOptimizeSnapshotPolicyRequestBody,
-    OntapVolumeType,
     OptimizeResiliencyBodyType,
     SnapshotPolicyDetailsType,
     SnapshotPolicyType,
     SnapshotScheduleType,
     BulkOptimizeSnapshotPolicyParamsType,
     BulkOptimizeHASharedStorageRequestBodyType
-} from '../../../routes/types/continuous-optimization.types';
+} from '../../../routes/types/mssql-continuous-optimisation.types';
 import {
     DatabaseInstanceMetadata,
     Metadata,
@@ -144,7 +144,7 @@ async function getAvailableSnapshotPolicyList(
         const dbInstancesResult = await getPaginatedDatabaseInstances(accountId, {
             resourceId: databaseHostId,
             credentialsId,
-            sqlInstanceId: databaseInstanceId,
+            databaseInstanceId,
             region,
             shouldIncludeResource: true
         });

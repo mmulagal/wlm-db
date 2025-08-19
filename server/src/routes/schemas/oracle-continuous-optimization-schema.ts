@@ -2,8 +2,8 @@ import { RouteTags } from '../../utils/consts';
 import { DatabaseHostOptionalInstanceSummaryParams } from '../types/database-hosts.types';
 
 import { ContinuousOptimizationQueryString } from '../types/continuous-optimization.types';
-import { resourceRequest } from './continuous-optimization-schema';
 import { OracleDriftAssessmentResponse } from '../types/oracle-continuous-optimization.types';
+import { resourceRequest } from './database-hosts-schemas';
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,

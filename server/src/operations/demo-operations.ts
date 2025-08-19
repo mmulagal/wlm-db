@@ -22,7 +22,8 @@ import {
     DatabaseInstanceMetadata,
     ResourceAssessmentData,
     DatabaseInstance,
-    CloneDetail
+    CloneDetail,
+    CloneAssessment
 } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
@@ -64,21 +65,22 @@ import {
     MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
 } from '../utils/demo-utils/demoInventoryData';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
+import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 import {
     mockResourceAssessmentData,
     mockResourceAssessmentDataAllOptimized,
     optimizedResourceName
 } from '../utils/demo-utils/hostAssementsData';
 import {
+    ParameterDriftResponseType,
+    CloneDetailType,
     CloneDriftResponseType,
     ComputeDriftResponseType,
-    DriftAssessmentResponseType,
+    MSSQLDriftAssessmentResponseType,
     HostOsPatchDriftResponseType,
     LicenseDriftResponseType,
-    ParameterDriftResponseType,
     StorageParameterDriftResponseType
-} from '../routes/types/continuous-optimization.types';
+} from '../routes/types/mssql-continuous-optimisation.types';
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
@@ -1088,7 +1090,7 @@ function prepareDemoSandboxMetadata(
 function handleGetAssessmentForDemo(
     accountId: string,
     instanceDetail: DatabaseInstance,
-    assessmentData: DriftAssessmentResponseType
+    assessmentData: MSSQLDriftAssessmentResponseType
 ) {
     logger.info('Handling demo for assessment', { accountId });
     const { resource: { metadata = {} } = {}, metadata: instanceMetadata } =
@@ -1204,6 +1206,43 @@ function handleGetAssessmentForDemo(
     return assessmentData;
 }
 
+async function updateAllOptimizedClonesDemoFlow(
+    accountId: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    configData: CloneAssessment,
+    clones: CloneDetailType[]
+) {
+    logger.info('Updating all optimized clones for demo flow', {
+        accountId,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    // Filter only the clones that were optimized
+    const { oldCloneDetails } = configData as unknown as CloneAssessment;
+    const matchingClones: CloneDetail[] = Array.isArray(oldCloneDetails)
+        ? oldCloneDetails.filter(({ cloneDatabaseName, clonedBy }) =>
+              clones.some(c => c.cloneDatabaseName === cloneDatabaseName && c.clonedBy?.toLowerCase() === clonedBy)
+          )
+        : [];
+
+    // Fetch instance metadata once
+    const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+
+    // Update all matching clones in one DB call
+    await updateOptimizedConfigMetaData(
+        accountId,
+        databaseInstanceId,
+        matchingClones,
+        'CLONE',
+        instanceMetadata as DatabaseInstanceMetadata
+    );
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -1227,5 +1266,6 @@ export {
     prepareDemoSandboxMetadata,
     updateOptimizedConfigMetaData,
     handleGetAssessmentForDemo,
+    updateAllOptimizedClonesDemoFlow,
     createDeploymentMockDataInDBForOracle
 };
