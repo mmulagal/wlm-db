@@ -29,7 +29,7 @@ export const getInstanceHeaderContent = (type: string, t: TFunction) => {
     }
 };
 
-export const authenticationFields = {
+export const authenticationFieldsTexts = {
     [DBType.MSSQL]: {
         heading: 'databases.register-flow.detect-mssql-heading',
         usernameLabel: 'databases.register-flow.detect-mssql-username',

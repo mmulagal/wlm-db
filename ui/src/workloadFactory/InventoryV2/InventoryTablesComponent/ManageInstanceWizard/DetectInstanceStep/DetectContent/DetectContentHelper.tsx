@@ -14,8 +14,10 @@ export const isAuthRequiredForInstance = (instanceData: any, hostType: string) =
         }
     } else {
         // For MSSQL and others: no auth if all auth fields are falsy
-        return authenticationFields[(hostType as keyof typeof authenticationFields) || DBType.MSSQL]?.every(
-            field => !instanceData?.[field]
+        return (
+            !instanceData?.sqlServerAuthentication &&
+            !instanceData?.windowsAuthentication &&
+            !instanceData?.windowsDomainUserAuthentication
         );
     }
 };

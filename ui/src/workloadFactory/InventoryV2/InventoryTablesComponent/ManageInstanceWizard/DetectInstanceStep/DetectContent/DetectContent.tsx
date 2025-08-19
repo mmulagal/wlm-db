@@ -16,7 +16,7 @@ import {
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { getBulkDetectChecks } from '../../ManageInstanceUtils';
 import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
-import { authenticationFields } from '../DetectInstanceHelper';
+import { authenticationFieldsTexts } from '../DetectInstanceHelper';
 import { isAuthRequiredForInstance } from './DetectContentHelper';
 
 const DetectContent = () => {
@@ -149,7 +149,7 @@ const DetectContent = () => {
     );
 
     const mssqlInputFields = (hostType: string) => {
-        const config = authenticationFields[hostType] || authenticationFields[DBType.MSSQL];
+        const config = authenticationFieldsTexts[hostType] || authenticationFieldsTexts[DBType.MSSQL];
         return (
             <div className={hostType === DBType.ORACLE ? styles.secondSection : styles.firstSection}>
                 <DsTypography variant="Semibold_14">{t(config.heading)}</DsTypography>
