@@ -1071,9 +1071,11 @@ const getMappedOntapDataVolumeForInstance = (
         local volumeName
         local volumeId
         local lunName
+        local lunId
         local volumeEntry
         local lunExists
         local lunRecord
+
         
         if [ -z "$protocol" ]; then
             protocol="$mountProtocol"
@@ -1091,7 +1093,7 @@ const getMappedOntapDataVolumeForInstance = (
         if [ "$mountProtocol" == "iSCSI" ]; then
             # For iSCSI, extract LUN details
             lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
-            volumeEntry="{\\"volumeName\\": \\"$volumeName\\",\\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\", \\"svmId\\": \\"$svmId\\", \\"lunName\\": \\"$lunName\\"}"
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\",\\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\", \\"svmId\\": \\"$svmId\\", \\"lunName\\": \\"$lunName\\", \\"lunId\\": \\"$lunId\\"}"
 
             lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
             if [ -z "$lunExists" ]; then
