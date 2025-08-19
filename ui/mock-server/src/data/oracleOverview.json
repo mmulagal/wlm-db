@@ -40,15 +40,11 @@
                 "availabilityZone": "availability-zone-3",
                 "subnetId": "subnet-adda86eb"
             }
-        ],
-        "activeDirectoryDetails": {
-            "name": "wlm.com",
-            "address": "33.88.6.139, 148.56.215.111"
-        }
+        ]
     },
     "databaseInstanceTopology": {
-        "serverType": "MSSQL",
-        "serverInstallationMode": "FCI",
+        "serverType": "ORACLE",
+        "serverInstallationMode": "Standalone",
         "fileSystemType": "FSx for ONTAP",
         "fileSystemId": "fs-37449530",
         "fileSystemName": "DBSFSX",

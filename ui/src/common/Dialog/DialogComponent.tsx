@@ -78,6 +78,7 @@ const DialogComponent = ({
     const { userName: exploreSavingsUserName, password: exploreSavingsPassword } = useAppSelector(
         state => state.exploreSavings.serverDetails
     );
+    const { username: scUsername, password: scPassword } = useAppSelector(state => state.snapCenter.credentials);
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() =>
@@ -130,6 +131,9 @@ const DialogComponent = ({
 
     const disabledCheck = () => {
         if (dialogFrom === FROM_DIALOG.LOADER) {
+            return true;
+        }
+        if (dialogFrom === FROM_DIALOG.WINDOWS_AUTH && (scUsername.length === 0 || scPassword.length === 0)) {
             return true;
         }
         // Condition to disable Apply in FSX Admin and SQL Server password dialogs

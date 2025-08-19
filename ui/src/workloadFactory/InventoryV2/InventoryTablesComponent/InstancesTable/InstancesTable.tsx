@@ -16,9 +16,11 @@ import {
     useGetDiscoverHostResultMutation,
     useGetFsxDetailsMutation,
     useGetRBACPrivilegesMutation,
+    useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
     useListAllDirectoriesMutation,
     useListExistingHostsMutation,
+    useRegisterResourceCredentialsBulkMutation,
     useUnmanageMssqlInstanceMutation,
     useUnmanageOracleInstanceMutation,
     useUnmanagePgsqlInstanceMutation
@@ -60,7 +62,7 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
-import { cancelProtectionForRow } from '../../../../store/workloadFactory/snapcenterSlice';
+import { cancelProtectionForRow, setDataForRow } from '../../../../store/workloadFactory/snapcenterSlice';
 import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
 import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
@@ -69,6 +71,8 @@ import { mssqlInstanceColumnFilterMap } from './MssqlInstanceColumnList';
 import { oracleDatabaseColumnFilterMap } from './OracleDatabaseColumnsList';
 import { pgsqlInstanceColumnFilterMap } from './PgsqlInstanceColumnList';
 import { getInitialInstanceTableColState } from '../../../../utils/manageColumnUtils';
+
+import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
 import {
     getInstableTableTopMenuOptions,
     getInstanceTableMenuOptions,
@@ -123,6 +127,8 @@ const InstancesTable = () => {
     const [configureDirectory] = useConfigureDirectoryMutation();
     const [listAllDirectories] = useListAllDirectoriesMutation();
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
+    const [getSCCrendentials] = useGetSCCrendentialsMutation();
+    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
 
     const { title, exportToCsvFileName, buttonText } = getInstableTableTopMenuOptions(selectedHostType, t);
 
@@ -377,6 +383,68 @@ const InstancesTable = () => {
         );
     };
 
+    //SC Auth Dialog
+    const scAuthDialog = (key: string, dialogToOpen: string, activeAgents?: [], boolValue?: boolean, rowData?: any) => {
+        setDialog(
+            <DialogComponent
+                header={
+                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+
+                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                            {t('databases.inventory.step-1-out-of')}
+                        </DsTypography>
+                    </div>
+                }
+                content={<WindowsAuthDialog />}
+                primaryButton={t('databases.inventory.continue')}
+                secondaryButton={GENERAL.CANCEL}
+                closeCallback={() => {
+                    dispatch(cancelProtectionForRow(key));
+                    closeDialog();
+                }}
+                callback={async () => {
+                    const state = store.getState(); //For live state
+                    const credDetails = state.snapCenter.credentials;
+                    const payload = {
+                        resourceId: rowData?.fsxId,
+                        resourceType: DETECT_HOST_VAR.MSSQL,
+                        username: credDetails.username,
+                        password: credDetails.password,
+                        ec2InstanceId: rowData?.ec2InstanceId,
+                        region: rowData.regionId,
+                        credentialsId: rowData.credentialId
+                    };
+                    const result = await registerResourceCredBulk({ payload });
+                    if (result && !result?.error && result?.data) {
+                        // Mark authentication as completed for this row
+                        dispatch(
+                            setDataForRow({
+                                key,
+                                stepData: {
+                                    scCredentialsChecked: true,
+                                    scCredentialsValid: true
+                                }
+                            })
+                        );
+
+                        if (dialogToOpen === 'openNoAgent') {
+                            setTimeout(() => {
+                                showNoAgentDialog(true);
+                            }, 10);
+                        } else {
+                            setTimeout(() => {
+                                showSingleAgentDialog(activeAgents, boolValue, rowData, true);
+                            }, 10);
+                        }
+                    }
+                }}
+                customClass={styles.protectionDialog}
+                dialogFrom={FROM_DIALOG.WINDOWS_AUTH}
+            />
+        );
+    };
+
     const handleProtection = async (rowData: any) => {
         await handleProtectionUtil(rowData, {
             dispatch,
@@ -391,14 +459,26 @@ const InstancesTable = () => {
             discoverExistingFsxN,
             assignRBACPrivileges,
             getRBACPrivileges,
-            isDemoMode
+            isDemoMode,
+            getSCCrendentials,
+            scAuthDialog
         });
     };
 
-    const showNoAgentDialog = () => {
+    const showNoAgentDialog = (extraStep?: boolean) => {
         setDialog(
             <DialogComponent
-                header={t('databases.inventory.protect-header')}
+                header={
+                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+
+                        {extraStep && (
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-2-out-of')}
+                            </DsTypography>
+                        )}
+                    </div>
+                }
                 content={<NoAgentDialog />}
                 primaryButton={t('databases.inventory.redirect')}
                 secondaryButton={GENERAL.CANCEL}
@@ -413,7 +493,7 @@ const InstancesTable = () => {
         );
     };
 
-    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any) => {
+    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any, extraStep?: boolean) => {
         const state = store.getState();
         const dialogKeyValue = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
         const protectionState = state.snapCenter.protectionProcessState[dialogKeyValue];
@@ -428,14 +508,26 @@ const InstancesTable = () => {
                 header={
                     <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-                        {!hostExists && (
+                        {!hostExists && !extraStep && (
                             <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
                                 {t('databases.inventory.step-1-out-of')}
                             </DsTypography>
                         )}
+                        {extraStep && !hostExists && (
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-2-out-of-3')}
+                            </DsTypography>
+                        )}
                     </div>
                 }
-                content={<SingleAgentDialog agents={connectors} hostExists={hostExists} dialogKey={dialogKeyValue} />}
+                content={
+                    <SingleAgentDialog
+                        agents={connectors}
+                        hostExists={hostExists}
+                        dialogKey={dialogKeyValue}
+                        extraStep={extraStep}
+                    />
+                }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
                 secondaryButton={t('databases.inventory.cancel')}
                 closeCallback={() => {

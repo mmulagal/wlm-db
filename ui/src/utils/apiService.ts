@@ -550,6 +550,11 @@ export const snapcenterAPI = createApi({
     baseQuery: dynamicBaseQuery,
     refetchOnMountOrArgChange: true,
     endpoints: builder => ({
+        getSCCrendentials: builder.mutation({
+            query: ({ credentialID, regionID, instanceId, sqlServerInstance }) => ({
+                url: `v1/mssql/credentials/${credentialID}/regions/${regionID}/instances/${instanceId}/credentials/exists?resourceId=${sqlServerInstance}`
+            })
+        }),
         getConnectors: builder.mutation({
             query: ({ accountID }) => ({
                 url: `agents-mgmt/list-connectors/${accountID}`
@@ -1438,6 +1443,7 @@ export const {
 } = inventoryApi;
 
 export const {
+    useGetSCCrendentialsMutation,
     useGetConnectorsMutation,
     useGetFsxDetailsMutation,
     useAssignRBACPrivilegesMutation,

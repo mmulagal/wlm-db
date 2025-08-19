@@ -136,6 +136,17 @@ router.post(
     }
 );
 
+router.get(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/credentials/exists`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, {
+                exists: false
+            });
+        }, 10);
+    }
+);
+
 // Job api call - add host
 router.post('/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts', async (req: {}, res: any) => {
     setTimeout(() => {

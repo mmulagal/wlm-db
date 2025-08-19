@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { SnapCenterEntities } from '../../utils/types/snapCenterTypes';
+import { SnapCenterEntities, UserCredentials } from '../../utils/types/snapCenterTypes';
 
 export interface ProtectionProcessStatus {
     step1Status: 'idle' | 'running' | 'done';
@@ -14,7 +14,11 @@ export const initialSandboxState: SnapCenterEntities = {
     selectedAgent: [],
     dataMap: {},
     workSpaceData: {},
-    protectionProcessState: {}
+    protectionProcessState: {},
+    credentials: {
+        username: '',
+        password: ''
+    }
 };
 
 const snapCenterSlice = createSlice({
@@ -57,6 +61,12 @@ const snapCenterSlice = createSlice({
         setSelectedAgent: (state, action: PayloadAction<any>) => {
             state.selectedAgent = action.payload;
         },
+        setSCCredentials: (state, action: PayloadAction<Partial<UserCredentials>>) => {
+            state.credentials = {
+                ...state.credentials,
+                ...action.payload
+            };
+        },
         setDataForRow: (state, action) => {
             const { key, stepData } = action.payload;
             if (!state.dataMap[key]) {
@@ -82,6 +92,7 @@ const snapCenterSlice = createSlice({
 export const {
     setWorkSpaceData,
     setSelectedAgent,
+    setSCCredentials,
     setDataForRow,
     clearDataForRow,
     startProtectionStep1,

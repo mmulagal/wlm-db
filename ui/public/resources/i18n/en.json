@@ -332,6 +332,12 @@
             "ssd-capacity": "SSD capacity"
         },
         "inventory": {
+            "enter-windows-username": "Enter Windows user name",
+            "enter-password": "Enter password",
+            "windows-authentication": "Windows authentication",
+            "windows-user-name": "Windows user name",
+            "windows-password": "Windows password",
+            "continue": "Continue",
             "protect-header": "Protect Microsoft SQL Server instance",
             "protect-header-database": "Protect Microsoft SQL Server database",
             "redirect": "Redirect",
@@ -351,6 +357,9 @@
             "point-3-text": "After creating the Connector, return to your inventory and select Protect to assign a protection policy for your SQL Server instance. ",
             "step-1-out-of": "Step 1 out of 2",
             "step-2-out-of": "Step 2 out of 2",
+            "step-3-out-of": "Step 3 out of 3",
+            "step-1-out-of-2": "Step 1 out of 3",
+            "step-2-out-of-3": "Step 2 out of 3",
             "learn-about-bxp-connectors": " Learn about BlueXP Connectors",
             "protection-steps-text": "Protection steps for SQL Server instance",
             "protection-steps-text-database": "Protection steps for SQL Server database",

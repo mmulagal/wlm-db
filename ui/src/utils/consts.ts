@@ -125,7 +125,8 @@ export const FROM_DIALOG = {
     SQLSERVER: 'sqlserver',
     SINGLE_AGENT: 'single_agent',
     LOADER: '',
-    EXPLORE_SAVINGS: 'explore_savings'
+    EXPLORE_SAVINGS: 'explore_savings',
+    WINDOWS_AUTH: 'windows_auth'
 };
 
 export const DBType = {

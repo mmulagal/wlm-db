@@ -20,7 +20,7 @@ import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorC
 import { resetProtectionProcess, setSelectedAgent } from '../../../../store/workloadFactory/snapcenterSlice';
 import { SNAPCENTER_STATUS } from '../../../../utils/consts';
 
-const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType }: any) => {
+const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType, extraStep }: any) => {
     const { t } = useTranslation();
 
     const { setDialog, closeDialog } = useDialog();
@@ -55,7 +55,9 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType }: any) =
                                         : t('databases.inventory.protect-header')}
                                 </DsTypography>
                                 <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                    {t('databases.inventory.step-2-out-of')}
+                                    {extraStep
+                                        ? t('databases.inventory.step-3-out-of')
+                                        : t('databases.inventory.step-2-out-of')}
                                 </DsTypography>
                             </div>
                         }

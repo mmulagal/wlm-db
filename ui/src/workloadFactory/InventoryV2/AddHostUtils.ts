@@ -5,9 +5,47 @@ import { PRODUCTION, RBAC_PROD_ROLE_ID, RBAC_STAGE_ROLE_ID } from '../../utils/c
 
 export const isCancelled = (key: any) => store.getState().snapCenter.dataMap[key]?.cancelled;
 
-const proceedWithProtection = (data: any, rowData: any, showNoAgentDialog: any, showSingleAgentDialog: any) => {
+const proceedWithProtection = (
+    data: any,
+    rowData: any,
+    showNoAgentDialog: any,
+    showSingleAgentDialog: any,
+    scAuthDialog: any,
+    key: string
+) => {
+    // Check if SC credentials are valid first
+    const existingData = store.getState().snapCenter.dataMap[key] || {};
+
     const activeAgents = data?.occms?.filter((item: any) => item.agent.status === 'active') || [];
 
+    // If credentials were already checked and found invalid, show auth dialog
+    if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {
+        if (activeAgents.length === 0) {
+            return scAuthDialog(key, 'openNoAgent');
+        } else {
+            return scAuthDialog(key, 'openSingleAgent', activeAgents, false, rowData);
+        }
+    }
+
+    // If credentials were already checked and valid, skip auth dialog and go directly to appropriate dialog
+    if (existingData.scCredentialsChecked && existingData.scCredentialsValid) {
+        if (activeAgents.length === 0) {
+            return showNoAgentDialog();
+        } else {
+            return showSingleAgentDialog(activeAgents, false, rowData);
+        }
+    }
+
+    // If credentials haven't been checked yet, show auth dialog first
+    if (!existingData.scCredentialsChecked) {
+        if (activeAgents.length === 0) {
+            return scAuthDialog(key, 'openNoAgent');
+        } else {
+            return scAuthDialog(key, 'openSingleAgent', activeAgents, false, rowData);
+        }
+    }
+
+    // Default fallback (should not reach here under normal circumstances)
     if (activeAgents.length === 0) {
         showNoAgentDialog();
     }
@@ -32,7 +70,9 @@ export const handleProtectionUtil = async (
         discoverExistingFsxN,
         assignRBACPrivileges,
         getRBACPrivileges,
-        isDemoMode
+        isDemoMode,
+        getSCCrendentials,
+        scAuthDialog
     }: any
 ) => {
     if (isDemoMode) {
@@ -45,6 +85,24 @@ export const handleProtectionUtil = async (
     dispatch(setDataForRow({ key, stepData: { cancelled: false } }));
 
     fetchDialog(key);
+
+    // Check SC credentials first
+    if (!existingData.scCredentialsChecked) {
+        const scCredentialsRes = await getSCCrendentials({
+            credentialID: rowData.credentialId,
+            regionID: rowData.regionId,
+            instanceId: rowData.databaseInstanceId,
+            sqlServerInstance: rowData.resourceId
+        });
+        if (isCancelled(key)) return;
+
+        if (!scCredentialsRes.data.exists) {
+            // Store that credentials check was done to avoid calling again if user cancels
+            dispatch(setDataForRow({ key, stepData: { scCredentialsChecked: true, scCredentialsValid: false } }));
+        } else {
+            dispatch(setDataForRow({ key, stepData: { scCredentialsChecked: true, scCredentialsValid: true } }));
+        }
+    }
 
     if (existingData.initialHostCheck) {
         if (existingData.isHostManaged) {
@@ -102,7 +160,8 @@ export const handleProtectionUtil = async (
             listExistingHosts,
             getRBACPrivileges,
             showNoAgentDialog,
-            showSingleAgentDialog
+            showSingleAgentDialog,
+            scAuthDialog
         });
         return;
     }
@@ -126,11 +185,16 @@ export const handleProtectionUtil = async (
                     listExistingHosts,
                     getRBACPrivileges,
                     showNoAgentDialog,
-                    showSingleAgentDialog
+                    showSingleAgentDialog,
+                    scAuthDialog
                 }
             );
         } else {
-            showNoAgentDialog();
+            if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {
+                scAuthDialog(key, 'openNoAgent');
+            } else {
+                showNoAgentDialog();
+            }
         }
     } else {
         closeDialog();
@@ -150,7 +214,8 @@ export const handleFsxFlow = async (
         listExistingHosts,
         getRBACPrivileges,
         showNoAgentDialog,
-        showSingleAgentDialog
+        showSingleAgentDialog,
+        scAuthDialog
     }: any
 ) => {
     // if already have fsx info, skip
@@ -243,5 +308,5 @@ export const handleFsxFlow = async (
 
     if (isCancelled(key)) return;
 
-    proceedWithProtection(stepData.connectors, rowData, showNoAgentDialog, showSingleAgentDialog);
+    proceedWithProtection(stepData.connectors, rowData, showNoAgentDialog, showSingleAgentDialog, scAuthDialog, key);
 };

@@ -65,6 +65,7 @@ import {
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import {
     DBType,
+    LOCAL,
     SAVINGS_CALC_MODE,
     STAGING,
     WLF_TABS,
@@ -1200,10 +1201,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                     </div>
                 ) : (
                     <>
-                        {!(
+                        {(!(
                             isWorkloadFactory ||
                             (!isWorkloadFactory && import.meta.env.VITE_APP_ENVIRONMENT === STAGING)
-                        ) && (
+                        ) ||
+                            import.meta.env.VITE_APP_ENVIRONMENT === LOCAL) && (
                             <div className={styles.firstSection}>
                                 <div className={styles.withWorkLoad}>
                                     <div className={styles.firstRow}>

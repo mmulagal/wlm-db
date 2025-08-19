@@ -274,3 +274,19 @@
     width: 650px;
     height: 350px;
 }
+
+.windowsAuthDialog {
+    .authHeader {
+        margin-bottom: 16px;
+    }
+
+    .textSection {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 120px;
+
+        .textFieldStyle {
+            width: 342px;
+        }
+    }
+}
