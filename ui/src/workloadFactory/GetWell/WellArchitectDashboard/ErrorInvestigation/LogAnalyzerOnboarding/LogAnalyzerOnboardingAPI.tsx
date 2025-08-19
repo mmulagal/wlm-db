@@ -38,8 +38,8 @@ const LogAnalyzerOnboardingAPI = () => {
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 databaseHostId: selectedResourceId
             });
-            if (result && !result?.error) {
-                dispatch(setLogAnalyzerPreReqData(result?.data));
+            if (result && !result?.error && result?.data?.items?.length > 0 && !result?.data?.items[0]?.errorMessage) {
+                dispatch(setLogAnalyzerPreReqData(result?.data?.items[0]));
             } else {
                 dispatch(setLogAnalyzerPreReqData(null));
             }

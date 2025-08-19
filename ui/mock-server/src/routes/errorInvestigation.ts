@@ -84,9 +84,11 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs
     }, 700);
 });
 
-router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/logs-analysis/pre-requisites`, async (req: express.Request, res: any) => {
+router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs-analysis/pre-requisites`, async (req: express.Request, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, {
+        generateResponse(res, 200, {items: [{
+            databaseHostId: '1124',
+            ec2InstanceId: 'i-0a1b2c3d4e5f6g7h8',
             bedrockPreRequisites: {
                 ready: true,
                 message: 'Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment.'
@@ -103,7 +105,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/data
                 ready: true,
                 message: "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
             }
-    });
+    }]});
     }, 700);
 });
 
