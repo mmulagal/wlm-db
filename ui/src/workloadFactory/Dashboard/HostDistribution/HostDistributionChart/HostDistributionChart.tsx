@@ -35,6 +35,7 @@ const HostDistributionChart = ({
         responsive: true,
         maintainAspectRatio: true,
         aspectRatio: 1,
+        cutout: '80%', // This creates the doughnut hole
         plugins: {
             legend: {
                 display: false
