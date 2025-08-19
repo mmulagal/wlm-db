@@ -32,6 +32,9 @@ const HostDistributionChart = ({
     const chartInstanceRef = useRef<any>(null);
 
     const doughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
         plugins: {
             legend: {
                 display: false
@@ -93,7 +96,7 @@ const HostDistributionChart = ({
                 )}
             </div>
             {/* {!totalHosts && <div className={styles.emptyCircle}></div>} */}
-            <canvas ref={ref} id="chart-area" width={200} height={200} />
+            <canvas ref={ref} id="chart-area" />
         </div>
     );
 };
