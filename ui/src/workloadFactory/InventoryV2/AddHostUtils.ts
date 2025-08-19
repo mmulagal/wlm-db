@@ -53,13 +53,13 @@ export const handleProtectionUtil = async (
         // else proceed to normal flow
     } else {
         // FIRST host API call under fetching dialog
-        const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
+        const hostsRes = await listExistingHosts({ accountID: store.getState().auth.orgId });
         if (isCancelled(key)) return;
 
         let hostExists = false;
 
         // Getting workspace id
-        const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+        const workSpaceRes = await getWorkSpaceID({ accountID: store.getState().auth.orgId });
         if (workSpaceRes?.data?.items?.length) {
             dispatch(setWorkSpaceData(workSpaceRes.data.items[0]));
         }
@@ -107,7 +107,7 @@ export const handleProtectionUtil = async (
         return;
     }
 
-    const res = await getConnector({ accountID: store.getState().auth.accountId });
+    const res = await getConnector({ accountID: store.getState().auth.orgId });
     if (isCancelled(key)) return;
 
     if (res?.data?.occms) {
@@ -155,7 +155,7 @@ export const handleFsxFlow = async (
 ) => {
     // if already have fsx info, skip
     if (!stepData.fsxChecked) {
-        const fsxRes = await getFsxDetails({ accountID: store.getState().auth.accountId });
+        const fsxRes = await getFsxDetails({ accountID: store.getState().auth.orgId });
         if (isCancelled(key)) return;
 
         const fsxExists = fsxRes?.data?.some(
@@ -165,7 +165,7 @@ export const handleFsxFlow = async (
 
         let workSpaceRes = '';
         if (!workSpaceIdExists) {
-            const workSpaceResponse = await getWorkSpaceID({ accountID: store.getState().auth.accountId });
+            const workSpaceResponse = await getWorkSpaceID({ accountID: store.getState().auth.orgId });
             if (workSpaceResponse?.data?.items?.length) {
                 workSpaceRes = workSpaceResponse.data.items[0].id;
                 dispatch(setWorkSpaceData(workSpaceResponse.data.items[0]));
@@ -178,7 +178,7 @@ export const handleFsxFlow = async (
             if (isCancelled(key)) return;
 
             await discoverExistingFsxN({
-                accountID: store.getState().auth.accountId,
+                accountID: store.getState().auth.orgId,
                 credentialID: rowData.credentialId,
                 workSpaceID: workSpaceRes,
                 regionID: rowData.regionId,
@@ -191,7 +191,7 @@ export const handleFsxFlow = async (
     }
 
     if (!stepData.rbac) {
-        const rbacRes = await getRBACPrivileges({ accountID: store.getState().auth.accountId });
+        const rbacRes = await getRBACPrivileges({ accountID: store.getState().auth.orgId });
         if (rbacRes?.data?.items && rbacRes?.data?.items?.length > 0) {
             const emailID = store.getState().auth.userMetadata?.email;
             const matchingUser = rbacRes.data.items.find((item: any) => item.email === emailID);
@@ -201,7 +201,7 @@ export const handleFsxFlow = async (
                 const hasRequiredRole = matchingUser?.roles.includes(roleCheck);
                 if (!hasRequiredRole) {
                     await assignRBACPrivileges({
-                        accountID: store.getState().auth.accountId,
+                        accountID: store.getState().auth.orgId,
                         payload: {
                             type: 'application/vnd.netapp.bxp.userbulk',
                             users: [{ userId: matchingUser?.id }],

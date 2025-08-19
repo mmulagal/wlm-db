@@ -3611,7 +3611,7 @@ export const addHostJobPolling = async (
         isProcessing = true;
         try {
             const jobRes = await addHostJobScApi({
-                accountID: store.getState().auth.accountId,
+                accountID: store.getState().auth.orgId,
                 jobID: jobId
             });
             const status = jobRes?.data?.status;
@@ -3684,7 +3684,7 @@ export const addHostJobPolling = async (
                         step1Done
                     ) {
                         const state: any = store.getState().snapCenter;
-                        const accountID = store.getState().auth.accountId;
+                        const accountID = store.getState().auth.orgId;
                         const hostName = fqdn;
                         const agentID = state.selectedAgent[0]?.id;
                         const workspaceID = state?.workSpaceData?.id;
@@ -3754,7 +3754,7 @@ export const deleteHostJobPolling = (
     new Promise(resolve => {
         const jobInterval = setInterval(() => {
             addHostJobScApi({
-                accountID: store.getState().auth.accountId,
+                accountID: store.getState().auth.orgId,
                 jobID: jobId
             })
                 .then((jobRes: any) => {
@@ -3826,7 +3826,7 @@ export const addHostHandlerSc = async (
         if (credIdResponse?.data?.credentialsId) {
             // Do something with the credentialsId
             const addHostResponse = await addHostScApi({
-                accountID: store.getState().auth.accountId,
+                accountID: store.getState().auth.orgId,
                 payload: {
                     workloadType: 'SQL',
                     hostName: rowData?.hostRow?.nodeIpAddress,

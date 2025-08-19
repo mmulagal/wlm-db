@@ -7,6 +7,7 @@ import {
     updateAccountId,
     updateAuthSuccess,
     updateFeatures,
+    updateOrgId,
     updateIsDemoMode,
     updateIsLoading,
     updateIsWorkloadfactory,
@@ -90,11 +91,12 @@ const useInitialize = () => {
 
     useBlueXP({
         onReady: (initialData: any) => {
-            const { accessToken, accountId, isDemoMode, features, userMetadata } = initialData;
+            const { accessToken, accountId, isDemoMode, features, userMetadata, organizationId } = initialData;
             dispatch(updateUserMetaData(userMetadata));
             dispatch(updateFeatures(features));
             dispatch(updateAuthSuccess({ accessToken }));
             dispatch(updateAccountId(accountId));
+            dispatch(updateOrgId(organizationId));
             dispatch(updateIsLoading(false));
             dispatch(updateIsDemoMode(isDemoMode));
 
