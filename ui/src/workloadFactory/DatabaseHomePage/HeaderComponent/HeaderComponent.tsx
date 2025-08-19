@@ -164,6 +164,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         allmssqlHostAssessmentLoading,
         allLogAnalysisLoading,
         fsxCredentialStatusLoading,
+        fsxCredentialStatusLoadingOracle,
         mssqlInstancesData,
         pgsqlInstancesData,
         oracleInstancesData,
@@ -479,7 +480,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             !discoverHostLoading &&
             !discoverOracleHostLoading &&
             !discoverPgsqlHostLoading &&
-            !fsxCredentialStatusLoading
+            !fsxCredentialStatusLoading &&
+            !fsxCredentialStatusLoadingOracle
         ) {
             const currentCredId = headerSelectedCred?.data?.credentialsId;
             const currentRegionId = headerSelectedRegion?.data?.regionCode;
@@ -595,6 +597,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         discoverOracleHostLoading,
         discoverPgsqlHostLoading,
         fsxCredentialStatusLoading,
+        fsxCredentialStatusLoadingOracle,
         mssqlInstancesData,
         pgsqlInstancesData,
         oracleInstancesData,

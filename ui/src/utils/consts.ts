@@ -491,6 +491,7 @@ export const DETECT_HOST_VAR = {
     MOVE_TO_UNMANAGE: 'move_to_unmanage',
     FSX: 'FSX',
     MSSQL: 'MSSQL',
+    ORACLE: 'ORACLE',
     WINDOWS: 'WINDOWS_USER',
     RUNNING: 'Running',
     DISABLE: 'disable',
@@ -971,14 +972,17 @@ export const MANAGE_STATES = {
     READY: 'Ready',
     NOT_READY: 'Not ready',
     MISSING_POWERSHELL: 'Missing PowerShell modules',
+    MISSING_JQ: 'Missing JQ modules',
     MISSING_PREREQUISITES: 'Missing prerequisites',
-    POWERSHELL7: 'Powershell 7'
+    POWERSHELL7: 'Powershell 7',
+    JQ: 'jq'
 };
 
 export const ACTION_CTA = {
     FIX_ISSUES: 'View and fix',
     WELL_ARCHITECTED: 'Well-architected',
-    MANAGE_INSTANCES: 'Register instance'
+    MANAGE_INSTANCES: 'Register instance',
+    REGISTER_DATABASE: 'Register database'
 };
 
 export const RESPONSE_STATUS = {
@@ -1022,4 +1026,8 @@ export const ERROR_ANALYZER_STATUS = {
     ACTIVE: 'Active',
     NOT_ACTIVE: 'Not active',
     RUNNING: 'Running'
+};
+
+export const REGISTER_INSTANCE_STATE = {
+    NOT_AVAILABLE: 'n/a'
 };

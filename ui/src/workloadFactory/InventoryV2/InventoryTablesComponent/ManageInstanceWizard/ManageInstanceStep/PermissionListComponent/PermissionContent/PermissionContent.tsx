@@ -11,6 +11,7 @@ import WellArchitectPolicyDialog from './WellArchitectPolicyDialog/WellArchitect
 type PermissionBlock = {
     label: string;
     values: (string | { title: string; items: string[] })[];
+    secondLineValues?: (string | { title: string; items: string[] })[];
     showCopy?: boolean;
     viewPolicy?: {
         value: boolean;
@@ -78,6 +79,9 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                     <div className={styles['permission-value']}>
                         {(() => {
                             const inlineValues = block.values.filter(v => typeof v === 'string') as string[];
+                            const inlineSecondLineValues = block?.secondLineValues?.filter(
+                                v => typeof v === 'string'
+                            ) as string[];
                             const nestedValues = block.values.filter(v => typeof v === 'object') as {
                                 title: string;
                                 items: string[];
@@ -91,6 +95,18 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                                                 <React.Fragment key={i}>
                                                     <span className={styles['value-inline']}>{val}</span>
                                                     {i < inlineValues.length - 1 && (
+                                                        <span className={styles.separator}>|</span>
+                                                    )}
+                                                </React.Fragment>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {inlineSecondLineValues?.length > 0 && (
+                                        <div className={styles['inline-container']}>
+                                            {inlineSecondLineValues?.map((val, i) => (
+                                                <React.Fragment key={i}>
+                                                    <span className={styles['value-inline']}>{val}</span>
+                                                    {i < inlineSecondLineValues?.length - 1 && (
                                                         <span className={styles.separator}>|</span>
                                                     )}
                                                 </React.Fragment>

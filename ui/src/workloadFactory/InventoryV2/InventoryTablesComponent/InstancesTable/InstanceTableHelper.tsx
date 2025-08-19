@@ -251,3 +251,24 @@ export const handleInstanceMenuSelection = ({
             break;
     }
 };
+
+export const getInstableTableTopMenuOptions = (
+    engineType: string,
+    t: TFunction
+): { title: string; exportToCsvFileName: string; buttonText: string } => {
+    switch (engineType) {
+        case DBType.MSSQL:
+            return {
+                title: 'Instances',
+                exportToCsvFileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv`,
+                buttonText: t('databases.register-flow.register-multiple-instances')
+            };
+        case DBType.ORACLE:
+        default:
+            return {
+                title: 'Databases',
+                exportToCsvFileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv`,
+                buttonText: t('databases.register-flow.register-multiple-databases')
+            };
+    }
+};

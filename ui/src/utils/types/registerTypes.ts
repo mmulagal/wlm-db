@@ -10,7 +10,8 @@ export interface ManageReadinessData {
 export interface ManageStates {
     installMissingAWS: boolean;
     installMissingAWSList: string[];
-    installMissingPowershell: boolean;
+    installMissingPowershell?: boolean;
+    installMissingJQ?: boolean;
     assessment: string;
     remediation: string;
     dbcreation: string;
@@ -91,9 +92,9 @@ export interface WizardState {
     authenticationTypeSelected?: string;
     hitNext?: boolean;
     installMissingAWS?: boolean;
-    installMissingPowershell?: boolean;
     installMissingAWSList?: string[];
-    // Add other keys as needed
+    installMissingPowershell?: boolean;
+    installMissingJQ?: boolean;
 }
 
 export interface UseWizardReturn {

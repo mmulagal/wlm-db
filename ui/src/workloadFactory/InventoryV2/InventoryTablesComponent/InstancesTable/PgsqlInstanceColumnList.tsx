@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
     ACTION_CTA,
+    DBType,
     INVENTORY_STATUS,
     PROTECTION_COLUMN_TEXT_STATUS,
     WELL_ARCHITECTED_TABS,
@@ -327,7 +328,7 @@ export function getPgsqlInstanceTableColumns({
             width: '200px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const { colText, disableMsg } = manageActionCol(t, rowData);
+                const { colText, disableMsg } = manageActionCol(t, DBType.POSTGRESQL, rowData);
                 return (
                     <>
                         {disableMsg ? (

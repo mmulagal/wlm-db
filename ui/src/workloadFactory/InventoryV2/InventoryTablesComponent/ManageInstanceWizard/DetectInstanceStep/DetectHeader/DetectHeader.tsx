@@ -5,12 +5,13 @@ import { ReactComponent as InstanceName } from '../../../../../../assets/instanc
 import styles from './DetectHeader.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 
-import { GENERAL } from '../../../../../../utils/appConstants';
-import { INVENTORY_STATUS } from '../../../../../../utils/consts';
+import { INVENTORY_STATUS, REGISTER_INSTANCE_STATE } from '../../../../../../utils/consts';
+import { getInstanceHeaderContent } from '../DetectInstanceHelper';
 
 const DetectHeader = () => {
     const { t } = useTranslation();
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+    const { nameLabel, statusLabel } = getInstanceHeaderContent(manageSingleInstanceData?.hostType, t);
 
     return (
         <div className={styles.cardHeader}>
@@ -25,17 +26,13 @@ const DetectHeader = () => {
                         variant="Semibold_14"
                         className={styles.titleText}
                         style={{ paddingRight: '8px' }}
-                        title={manageSingleInstanceData?.databaseInstanceName || GENERAL.NOT_AVAILABLE}
+                        title={manageSingleInstanceData?.databaseInstanceName || REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
                     >
-                        {manageSingleInstanceData?.databaseInstanceName || GENERAL.NOT_AVAILABLE}
+                        {manageSingleInstanceData?.databaseInstanceName || REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
                     </DsTypography>
 
-                    <DsTypography
-                        variant="Regular_14"
-                        className={styles.label}
-                        title={t('databases.register-flow.instance-header.instance-name')}
-                    >
-                        {t('databases.register-flow.instance-header.instance-name')}
+                    <DsTypography variant="Regular_14" className={styles.label} title={nameLabel}>
+                        {nameLabel}
                     </DsTypography>
                 </div>
 
@@ -67,9 +64,7 @@ const DetectHeader = () => {
                         </>
                     </DsTypography>
 
-                    <DsTypography variant="Regular_14">
-                        {t('databases.register-flow.instance-header.instance-status')}
-                    </DsTypography>
+                    <DsTypography variant="Regular_14">{statusLabel}</DsTypography>
                 </div>
 
                 {/* section 3 */}
@@ -77,9 +72,9 @@ const DetectHeader = () => {
                     <DsTypography
                         variant="Semibold_14"
                         className={styles.titleText}
-                        title={manageSingleInstanceData?.name || GENERAL.NOT_AVAILABLE}
+                        title={manageSingleInstanceData?.name || REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
                     >
-                        {manageSingleInstanceData?.name || GENERAL.NOT_AVAILABLE}
+                        {manageSingleInstanceData?.name || REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
                     </DsTypography>
 
                     <DsTypography
@@ -94,7 +89,7 @@ const DetectHeader = () => {
                 {/* section 4 */}
                 <div className={`${styles.column}`} style={{ borderRight: 'none' }}>
                     <DsTypography variant="Semibold_14" className={styles.titleText}>
-                        {manageSingleInstanceData?.hostType || GENERAL.NOT_AVAILABLE}
+                        {manageSingleInstanceData?.hostType || REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
                     </DsTypography>
 
                     <DsTypography

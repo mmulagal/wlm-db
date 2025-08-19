@@ -982,6 +982,13 @@ export const inventoryApiV2 = createApi({
                 method: 'POST',
                 body: payload
             })
+        }),
+        manageBulkV2OracleInstance: builder.mutation({
+            query: ({ payload }) => ({
+                url: 'v1/oracle/register',
+                method: 'POST',
+                body: payload
+            })
         })
     })
 });
@@ -1463,7 +1470,8 @@ export const {
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,
     useLazyGetAllMssqlHostsAssessmentDataQuery,
-    useManageBulkV2MssqlInstanceMutation
+    useManageBulkV2MssqlInstanceMutation,
+    useManageBulkV2OracleInstanceMutation
 } = inventoryApiV2;
 
 export const {

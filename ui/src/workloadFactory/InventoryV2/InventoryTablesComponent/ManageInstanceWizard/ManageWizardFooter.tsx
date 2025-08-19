@@ -10,6 +10,7 @@ import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice
 import {
     useLazyGetSubTaskListQuery,
     useManageBulkV2MssqlInstanceMutation,
+    useManageBulkV2OracleInstanceMutation,
     useRegisterResourceCredentialsBulkMutation
 } from '../../../../utils/apiService';
 import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
@@ -59,7 +60,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [manageBulkV2InstanceApi] = useManageBulkV2MssqlInstanceMutation();
+    const [manageBulkV2OracleInstanceApi] = useManageBulkV2OracleInstanceMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const engineType = useAppSelector(state => state.inventoryV2.manageSingleInstanceData?.hostType);
 
     const goBack = () => {
         setState({ hitNext: false });
@@ -97,7 +100,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     newSelectedMultiDetectInstances = updateDetectBulkResponse(
                         newSelectedMultiDetectInstances,
                         result,
-                        dispatch
+                        dispatch,
+                        engineType
                     );
                     dispatch(setSelectedMultiDetectInstances([...newSelectedMultiDetectInstances]));
                 } else {
@@ -210,7 +214,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const goForward = () => {
         if (wizardOperationType === ACTION_TYPE.SINGLE) {
             setState({ hitNext: true });
-            const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData);
+            const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData, engineType);
             if (fieldsCorrect) {
                 handleRegisterResourceCred();
             }
@@ -235,7 +239,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 goToNextStep();
             } else {
                 setState({ hitNext: true });
-                const fieldsCorrect = detectFieldsValidation(bulkInstanceData);
+                const fieldsCorrect = detectFieldsValidation(bulkInstanceData, engineType);
                 if (fieldsCorrect) {
                     handleMultiRegisterResourceCred();
                 }
@@ -244,21 +248,18 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const handleManage = () => {
+        const manageApi = engineType === 'ORACLE' ? manageBulkV2OracleInstanceApi : manageBulkV2InstanceApi;
         if (wizardOperationType === ACTION_TYPE.BULK) {
-            handleMultiInstanceManage(
-                bulkDetectedInstanceList,
-                dispatch,
-                manageBulkV2InstanceApi,
-                getJobDetailApi,
-                navigate
-            );
+            handleMultiInstanceManage(bulkDetectedInstanceList, dispatch, manageApi, getJobDetailApi, navigate);
         } else {
             handleSingleInstanceManage(
                 manageSingleInstanceChecks,
                 dispatch,
-                manageBulkV2InstanceApi,
+                manageApi,
                 getJobDetailApi,
-                navigate
+                navigate,
+                engineType,
+                t
             );
         }
     };

@@ -20,6 +20,7 @@ import {
     setDashSandboxSavingsLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
+    setFsxCredentialStatusLoadingOracle,
     setInventoryChartData,
     setInventoryTableData,
     setIsDatabaseHostsLoading,
@@ -91,6 +92,7 @@ import {
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
 import {
+    DBType,
     EBS_PROTECTED_OPTIONS,
     ERROR_ANALYZER_STATUS,
     INSTANCE_API_FIELDS,
@@ -293,16 +295,35 @@ const InventoryApisV3 = () => {
         headerSelectedMultiRegionIdsListRef.current = headerSelectedMultiRegionIdsList;
     }, [headerSelectedMultiRegionIdsList]);
 
+    // Mapping function for FSx credential status actions based on engine type
+    const getFsxCredentialStatusActions = (engineType: string) => {
+        switch (engineType) {
+            case DBType.ORACLE:
+                return {
+                    setStatus: setFsxCredentialStatus,
+                    setLoading: setFsxCredentialStatusLoadingOracle
+                };
+            case DBType.MSSQL:
+            default:
+                return {
+                    setStatus: setFsxCredentialStatus,
+                    setLoading: setFsxCredentialStatusLoading
+                };
+        }
+    };
+
     // This function is to get managed list and respective instance IDs. This will be used to map logic for resource id and instance.
     const getFsxCredentialStatusList = async (
         fsxIdsList: Array<string>,
         runningCredId: string,
-        runningRegionId: string
+        runningRegionId: string,
+        engineType: string
     ) => {
         if (
             headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
             headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
+            const { setStatus, setLoading } = getFsxCredentialStatusActions(engineType);
             try {
                 const result: any = await getFsxCredentialStatusListApi({
                     credentialsId: credId,
@@ -313,7 +334,7 @@ const InventoryApisV3 = () => {
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
                     headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
-                    dispatch(setFsxCredentialStatusLoading(false));
+                    dispatch(setLoading(false));
                     if (result && !result?.error) {
                         if (result?.data?.fileSystems) {
                             const fsxCredStatusObj: any = {};
@@ -322,13 +343,13 @@ const InventoryApisV3 = () => {
                             });
                             if (fsxCredentialStatusObjRef.current) {
                                 dispatch(
-                                    setFsxCredentialStatus({
+                                    setStatus({
                                         ...fsxCredentialStatusObjRef.current,
                                         ...fsxCredStatusObj
                                     })
                                 );
                             } else {
-                                dispatch(setFsxCredentialStatus(fsxCredStatusObj));
+                                dispatch(setStatus(fsxCredStatusObj));
                             }
                         }
                     }
@@ -797,7 +818,7 @@ const InventoryApisV3 = () => {
                         const fsxIds = getFsxIdsFromdiscover(result?.data?.items);
                         if (fsxIds && fsxIds.length > 0) {
                             dispatch(setFsxCredentialStatusLoading(true));
-                            getFsxCredentialStatusList(fsxIds, runningCredId, runningRegionId);
+                            getFsxCredentialStatusList(fsxIds, runningCredId, runningRegionId, DBType.MSSQL);
                         }
                         if (result?.data?.nextToken) {
                             dispatch(setIsDiscoveredHostData(discoveredList));
@@ -859,6 +880,12 @@ const InventoryApisV3 = () => {
                                 ];
                             }
                         });
+                        // call fsx id cred status API is fsxids are found
+                        const fsxIds = getFsxIdsFromdiscover(result?.data?.items);
+                        if (fsxIds && fsxIds.length > 0) {
+                            dispatch(setFsxCredentialStatusLoadingOracle(true));
+                            getFsxCredentialStatusList(fsxIds, runningCredId, runningRegionId, DBType.ORACLE);
+                        }
                         if (result?.data?.nextToken) {
                             dispatch(setIsDiscoveredOracleHostData(discoveredOracleList));
                             getDiscoveryOracleHostsList(

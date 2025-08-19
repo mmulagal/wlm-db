@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import styles from './DetectContent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { ACTION_TYPE, AUTHENTICATION_TYPE } from '../../../../../../utils/consts';
+import { ACTION_TYPE, AUTHENTICATION_TYPE, DBType } from '../../../../../../utils/consts';
 import {
     setAuthenticationType,
     setDetectManagePassword,
@@ -16,6 +16,8 @@ import {
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { getBulkDetectChecks } from '../../ManageInstanceUtils';
 import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
+import { authenticationFields } from '../DetectInstanceHelper';
+import { isAuthRequiredForInstance } from './DetectContentHelper';
 
 const DetectContent = () => {
     const { t } = useTranslation();
@@ -70,10 +72,7 @@ const DetectContent = () => {
     useEffect(() => {
         if (authenticationTypeSelected === undefined) {
             setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
-            // When the windows authentication was selected in previous dialog, we need to set the state accordingly
-            if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
-                setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION });
-            }
+            dispatch(setAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
         }
     }, []);
 
@@ -149,38 +148,39 @@ const DetectContent = () => {
         </div>
     );
 
-    const mssqlInputFields = () => (
-        <div className={styles.firstSection}>
-            <DsTypography variant="Semibold_14">{t('databases.register-flow.detect-mssql-heading')}</DsTypography>
-            <div className={styles.textFieldContainer}>
-                <TextField
-                    label={t('databases.register-flow.detect-mssql-username')}
-                    value={detectUserName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setDetectUserName(e.target.value);
-                        setState({ mssqlUserNameFromWizard: e.target.value });
-                    }}
-                    className={styles.textFieldStyle}
-                    error={!detectManageUserName && hitNext ? t('databases.general.action-required') : ''}
-                    placeholder={`${t('databases.general.enter')} ${t(
-                        'databases.register-flow.detect-mssql-username'
-                    )}`}
-                />
+    const mssqlInputFields = (hostType: string) => {
+        const config = authenticationFields[hostType] || authenticationFields[DBType.MSSQL];
+        return (
+            <div className={hostType === DBType.ORACLE ? styles.secondSection : styles.firstSection}>
+                <DsTypography variant="Semibold_14">{t(config.heading)}</DsTypography>
+                <div className={styles.textFieldContainer}>
+                    <TextField
+                        label={t(config.usernameLabel)}
+                        value={detectUserName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            setDetectUserName(e.target.value);
+                            setState({ mssqlUserNameFromWizard: e.target.value });
+                        }}
+                        className={styles.textFieldStyle}
+                        error={!detectManageUserName && hitNext ? t('databases.general.action-required') : ''}
+                        placeholder={`${t('databases.general.enter')} ${t(config.usernameLabel)}`}
+                    />
 
-                <PasswordField
-                    label={t('databases.register-flow.detect-mssql-password')}
-                    value={detectPassword}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setDetectPassword(e.target.value);
-                        setState({ mssqlPasswordFromWizard: e.target.value });
-                    }}
-                    className={styles.textFieldStyle}
-                    error={!detectManagePassword && hitNext ? t('databases.general.action-required') : ''}
-                    placeholder={t('databases.general.enter-password')}
-                />
+                    <PasswordField
+                        label={t(config.passwordLabel)}
+                        value={detectPassword}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            setDetectPassword(e.target.value);
+                            setState({ mssqlPasswordFromWizard: e.target.value });
+                        }}
+                        className={styles.textFieldStyle}
+                        error={!detectManagePassword && hitNext ? t('databases.general.action-required') : ''}
+                        placeholder={t('databases.general.enter-password')}
+                    />
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const windowsAuthInputFields = () => (
         <div className={styles.firstSection}>
@@ -261,20 +261,15 @@ const DetectContent = () => {
             {wizardOperationType === ACTION_TYPE.SINGLE && (
                 <>
                     {/* When Action Type is Single and all the 3 types of authentication are false, we show the authentication mode radio buttons and based on authentication type selected, we show the respective input fields */}
-                    {!manageSingleInstanceData?.sqlServerAuthentication &&
-                        !manageSingleInstanceData?.windowsAuthentication &&
-                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
+                    {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
+                        manageSingleInstanceData?.hostType === DBType.MSSQL &&
                         authModeRadio()}
 
-                    {!manageSingleInstanceData?.sqlServerAuthentication &&
-                        !manageSingleInstanceData?.windowsAuthentication &&
-                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
+                    {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
                         authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION &&
-                        mssqlInputFields()}
+                        mssqlInputFields(manageSingleInstanceData?.hostType)}
 
-                    {!manageSingleInstanceData?.sqlServerAuthentication &&
-                        !manageSingleInstanceData?.windowsAuthentication &&
-                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
+                    {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
                         authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
                         windowsAuthInputFields()}
 
@@ -285,20 +280,15 @@ const DetectContent = () => {
             {wizardOperationType === ACTION_TYPE.BULK && (
                 <>
                     {/* When Action Type is Bulk and all the 3 types of authentication are false, we show the authentication mode radio buttons and based on authentication type selected, we show the respective input fields */}
-                    {!bulkInstanceData?.sqlServerAuthentication &&
-                        !bulkInstanceData?.windowsAuthentication &&
-                        !bulkInstanceData?.windowsDomainUserAuthentication &&
+                    {isAuthRequiredForInstance(bulkInstanceData, bulkInstanceData?.hostType) &&
+                        bulkInstanceData.hostType === DBType.MSSQL &&
                         authModeRadio()}
 
-                    {!bulkInstanceData?.sqlServerAuthentication &&
-                        !bulkInstanceData?.windowsAuthentication &&
-                        !bulkInstanceData?.windowsDomainUserAuthentication &&
+                    {isAuthRequiredForInstance(bulkInstanceData, bulkInstanceData?.hostType) &&
                         authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION &&
-                        mssqlInputFields()}
+                        mssqlInputFields(bulkInstanceData?.hostType)}
 
-                    {!bulkInstanceData?.windowsAuthentication &&
-                        !bulkInstanceData?.sqlServerAuthentication &&
-                        !bulkInstanceData?.windowsDomainUserAuthentication &&
+                    {isAuthRequiredForInstance(bulkInstanceData, bulkInstanceData?.hostType) &&
                         authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
                         windowsAuthInputFields()}
 

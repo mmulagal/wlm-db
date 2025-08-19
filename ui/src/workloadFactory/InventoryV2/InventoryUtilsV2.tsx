@@ -371,6 +371,19 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             const statusObj = nonManagedStatus?.filter(
                 (per: StatusObjInterface) => per?.name?.toLowerCase() === perRow?.instanceName?.toLowerCase()
             );
+            let authFields = {};
+            if (row?.hostType === DBType.ORACLE) {
+                authFields = {
+                    oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
+                    isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication
+                };
+            } else {
+                authFields = {
+                    windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
+                    sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
+                    windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
+                };
+            }
             return {
                 ...perRow,
                 databaseInstanceId: perRow?.databaseInstanceId,
@@ -381,9 +394,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     ? INVENTORY_STATUS.MANAGED
                     : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
                 isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
-                windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
-                sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
-                windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
+                ...authFields
             };
         });
     }
@@ -398,6 +409,19 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             const statusObj = nonManagedStatus?.filter(
                 (per: StatusObjInterface) => per?.name?.toLowerCase() === perRow?.databaseInstanceName?.toLowerCase()
             );
+            let authFields = {};
+            if (row?.hostType === DBType.ORACLE) {
+                authFields = {
+                    oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
+                    isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication
+                };
+            } else {
+                authFields = {
+                    windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
+                    sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
+                    windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
+                };
+            }
             const allocatedCapacity =
                 (perRow?.storage?.fsxn?.size || 0) +
                 (perRow?.storage?.fsxw?.size || 0) +
@@ -426,9 +450,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                     manageReadiness: statusObj?.[0]?.manageReadiness,
                     isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
-                    windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
-                    sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
-                    windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
+                    ...authFields
                 };
             }
             return instRow;
@@ -1295,6 +1317,8 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
         row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
             let statusObj = {};
             if (perRow?.instanceName) {
+                const isDefaultAuthentication = perRow?.isDefaultAuthentication;
+                const oracleServerAuthentication = perRow?.oracleServerAuthentication;
                 let fsxCredentialValidationFailed;
                 let storageTypeCheck;
                 const fsxIdObject = perRow?.storage?.find(
@@ -1313,7 +1337,12 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                     );
                 }
 
-                if (ssmState !== INVENTORY_STATUS.ONLINE || fsxCredentialValidationFailed || !storageTypeCheck) {
+                if (
+                    ssmState !== INVENTORY_STATUS.ONLINE ||
+                    (isDefaultAuthentication && !oracleServerAuthentication) ||
+                    fsxCredentialValidationFailed ||
+                    !storageTypeCheck
+                ) {
                     const detectOptionObj = getDetectOptionForInstance(
                         perRow,
                         row?.ssmState,
@@ -1327,7 +1356,9 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         status: INVENTORY_STATUS.UNDETECTED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
-                        isFsxRegistered: !fsxCredentialValidationFailed
+                        isFsxRegistered: !fsxCredentialValidationFailed,
+                        isDefaultAuthentication,
+                        oracleServerAuthentication
                     };
                 } else {
                     statusObj = {
@@ -1335,7 +1366,9 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
-                        isFsxRegistered: !fsxCredentialValidationFailed
+                        isFsxRegistered: !fsxCredentialValidationFailed,
+                        isDefaultAuthentication,
+                        oracleServerAuthentication
                     };
                 }
                 result = [...result, ...[statusObj]];
@@ -1630,6 +1663,8 @@ export const formatOracleDiscoverInstanceData = (
             storage: perRow?.storage,
             fsxId: statusObj?.[0]?.fsxId,
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+            oracleServerAuthentication: perRow?.oracleServerAuthentication,
+            isDefaultAuthentication: perRow?.isDefaultAuthentication,
             defaultAuth: perRow?.defaultAuth,
             detectOption: statusObj?.[0]?.detectOption,
             detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
@@ -2363,6 +2398,24 @@ export const updateSqlServerInstancesForUnmanaged = (
                     existingInstanceRow?.regionId || '',
                     instRow
                 );
+                // Add authentication fields based on hostType
+                let authFields = {};
+                if (existingInstanceRow?.hostType === DBType.ORACLE) {
+                    authFields = {
+                        oracleServerAuthentication:
+                            instRow?.oracleServerAuthentication || statusObj?.[0]?.oracleServerAuthentication,
+                        isDefaultAuthentication:
+                            instRow?.isDefaultAuthentication || statusObj?.[0]?.isDefaultAuthentication
+                    };
+                } else {
+                    authFields = {
+                        windowsAuthentication: instRow?.windowsAuthentication || statusObj?.[0]?.windowsAuthentication,
+                        sqlServerAuthentication:
+                            instRow?.sqlServerAuthentication || statusObj?.[0]?.sqlServerAuthentication,
+                        windowsDomainUserAuthentication:
+                            instRow?.windowsDomainUserAuthentication || statusObj?.[0]?.windowsDomainUserAuthentication
+                    };
+                }
                 return {
                     ...instRow,
                     databaseCount: perRow?.databaseCount,
@@ -2383,11 +2436,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                         getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
                     sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType,
                     isFsxRegistered: instRow?.isFsxRegistered || statusObj?.[0]?.isFsxRegistered,
-                    windowsAuthentication: instRow?.windowsAuthentication || statusObj?.[0]?.windowsAuthentication,
-                    sqlServerAuthentication:
-                        instRow?.sqlServerAuthentication || statusObj?.[0]?.sqlServerAuthentication,
-                    windowsDomainUserAuthentication:
-                        instRow?.windowsDomainUserAuthentication || statusObj?.[0]?.windowsDomainUserAuthentication
+                    ...authFields
                 };
             }
             const perfData = getPerfUnmanagedData(
@@ -2418,6 +2467,20 @@ export const updateSqlServerInstancesForUnmanaged = (
                         (per: StatusObjInterface) =>
                             per?.name?.toLowerCase() === instRow?.databaseInstanceName?.toLowerCase()
                     );
+                    // Add authentication fields based on hostType
+                    let authFields = {};
+                    if (existingInstanceRow?.hostType === DBType.ORACLE) {
+                        authFields = {
+                            oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
+                            isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication
+                        };
+                    } else {
+                        authFields = {
+                            windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
+                            sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
+                            windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
+                        };
+                    }
                     if (statusObj && statusObj?.length > 0) {
                         return {
                             ...statusObj?.[0]?.discoverInstanceData,
@@ -2431,9 +2494,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                                     : instRow?.statusColText,
                             fsxId: statusObj?.[0]?.fsxId || instRow?.fsxId,
                             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
-                            windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
-                            sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
-                            windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
+                            ...authFields
                         };
                     }
                     return {
@@ -2721,7 +2782,7 @@ export const updateInstanceBulkStatus = (action: InstanceActions, response: any)
     return updatedInventoryTableData;
 };
 
-export const detectFieldsValidation = (entryData: any) => {
+export const detectFieldsValidation = (entryData: any, engineType: string) => {
     const state = store.getState();
     const {
         detectManageUserName,
@@ -2733,50 +2794,84 @@ export const detectFieldsValidation = (entryData: any) => {
     } = state.inventoryV2;
 
     // Checks if the respective authentication fields are present
-    const isSqlAuthValid = () => !!(detectManageUserName && detectManagePassword);
+    const isAuthValid = () => !!(detectManageUserName && detectManagePassword);
     const isWindowsAuthValid = () => !!(detectWindowsAuthentication?.username && detectWindowsAuthentication?.password);
     const isFsxAuthValid = () => !!(detectOntapUsername && detectOntapPassword);
 
-    // Check when neither SQL Server nor Windows Domain User is authenticated and FsxId is not registered
-    if (
-        !entryData?.sqlServerAuthentication &&
-        !entryData?.windowsAuthentication &&
-        !entryData?.windowsDomainUserAuthentication &&
-        entryData?.fsxId &&
-        !entryData?.isFsxRegistered
-    ) {
-        // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
-        if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
-            return isSqlAuthValid() && isFsxAuthValid();
+    switch (engineType) {
+        case DBType.ORACLE: {
+            const isDefault = entryData?.isDefaultAuthentication;
+            const isOracleAuth = entryData?.oracleServerAuthentication;
+            const needsFsx = entryData?.fsxId && !entryData?.isFsxRegistered;
+
+            // In Oracle if isDefaultAuthentication is false then no need to check for Oracle auth
+            if (isDefault === false) {
+                // Only FSx registration matters
+                if (needsFsx) {
+                    return isFsxAuthValid();
+                }
+                return true;
+            }
+            if (isDefault === true) {
+                // 1. Need both Oracle Auth and FSx
+                if (!isOracleAuth && needsFsx) {
+                    return isAuthValid() && isFsxAuthValid();
+                }
+                // 2. Need Oracle Auth
+                if (!isOracleAuth) {
+                    return isAuthValid();
+                }
+                // 3. Need FSx
+                if (needsFsx) {
+                    return isFsxAuthValid();
+                }
+                // 4. Oracle Auth is present and no FSx needed
+                return true;
+            }
+            return false; // If isDefault is undefined or null, return false
         }
-        if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
-            return isWindowsAuthValid() && isFsxAuthValid();
-        }
-        return false;
-    }
-    // Check if SQL Server fields are valid when SQL Server Authentication is selected
-    if (
-        !entryData?.sqlServerAuthentication &&
-        !entryData?.windowsAuthentication &&
-        !entryData?.windowsDomainUserAuthentication &&
-        authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-    ) {
-        return isSqlAuthValid();
-    }
-    // Check if Windows fields are valid when Windows Authentication is selected
-    if (
-        !entryData?.windowsAuthentication &&
-        !entryData?.sqlServerAuthentication &&
-        !entryData?.windowsDomainUserAuthentication &&
-        authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
-    ) {
-        return isWindowsAuthValid();
-    }
-    if (entryData?.fsxId && !entryData?.isFsxRegistered) {
-        if (detectOntapUsername && detectOntapPassword) {
+        case DBType.MSSQL:
+        default: {
+            // Check when neither SQL Server nor Windows Domain User is authenticated and FsxId is not registered
+            if (
+                !entryData?.sqlServerAuthentication &&
+                !entryData?.windowsAuthentication &&
+                !entryData?.windowsDomainUserAuthentication &&
+                entryData?.fsxId &&
+                !entryData?.isFsxRegistered
+            ) {
+                // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
+                if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
+                    return isAuthValid() && isFsxAuthValid();
+                }
+                if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+                    return isWindowsAuthValid() && isFsxAuthValid();
+                }
+                return false;
+            }
+            // Check if SQL Server fields are valid when SQL Server Authentication is selected
+            if (
+                !entryData?.sqlServerAuthentication &&
+                !entryData?.windowsAuthentication &&
+                !entryData?.windowsDomainUserAuthentication &&
+                authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+            ) {
+                return isAuthValid();
+            }
+            // Check if Windows fields are valid when Windows Authentication is selected
+            if (
+                !entryData?.windowsAuthentication &&
+                !entryData?.sqlServerAuthentication &&
+                !entryData?.windowsDomainUserAuthentication &&
+                authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+            ) {
+                return isWindowsAuthValid();
+            }
+            if (entryData?.fsxId && !entryData?.isFsxRegistered) {
+                return isFsxAuthValid();
+            }
             return true;
         }
-        return false;
     }
 };
 
@@ -3389,7 +3484,7 @@ export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any,
     return triggeredPrepare;
 };
 
-export const manageActionCol = (translation: TFunction, rowData?: any) => {
+export const manageActionCol = (translation: TFunction, engineType: string, rowData?: any) => {
     let colText = '';
     let disableMsg = '';
     if (
@@ -3402,7 +3497,7 @@ export const manageActionCol = (translation: TFunction, rowData?: any) => {
             colText = ACTION_CTA.FIX_ISSUES;
         }
     } else {
-        colText = ACTION_CTA.MANAGE_INSTANCES;
+        colText = engineType === DBType.ORACLE ? ACTION_CTA.REGISTER_DATABASE : ACTION_CTA.MANAGE_INSTANCES;
     }
 
     if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
@@ -3410,8 +3505,11 @@ export const manageActionCol = (translation: TFunction, rowData?: any) => {
     } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
         disableMsg = GENERAL.SSM_DOWN;
     } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
-        disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-    } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+        disableMsg =
+            engineType === DBType.ORACLE
+                ? translation('databases.register-flow.oracle-server-instance-down')
+                : translation('databases.register-flow.sql-server-instance-down');
+    } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
         disableMsg = GENERAL.PGSQL_CTA_NA;
     } else if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
         disableMsg = rowData?.detectOptionDisableMsg;
@@ -3440,11 +3538,7 @@ export const manageActionCol = (translation: TFunction, rowData?: any) => {
 export const fixIssueDisableMsg = (rowData: any, translation: TFunction) => {
     let disableMsg = '';
     if (rowData?.hostType === DBType.POSTGRESQL) {
-        disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
-        return disableMsg;
-    }
-    if (rowData?.hostType === DBType.ORACLE) {
-        disableMsg = translation('databases.general.coming-soon');
+        disableMsg = translation('databases.register-flow.non-mssql-assessment-na');
         return disableMsg;
     }
     if (
@@ -3894,7 +3988,7 @@ export const getOptimizationStatusData = (rowData: any, t: any) => {
 
     const getDisableMessage = () => {
         if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
-            return GENERAL.NON_MSSQL_ASSESSMENT_NA;
+            return t('databases.register-flow.non-mssql-assessment-na');
         }
         if (
             rowData?.status === INVENTORY_STATUS.OFFLINE ||

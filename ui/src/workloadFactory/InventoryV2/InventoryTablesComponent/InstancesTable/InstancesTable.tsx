@@ -69,7 +69,11 @@ import { mssqlInstanceColumnFilterMap } from './MssqlInstanceColumnList';
 import { oracleDatabaseColumnFilterMap } from './OracleDatabaseColumnsList';
 import { pgsqlInstanceColumnFilterMap } from './PgsqlInstanceColumnList';
 import { getInitialInstanceTableColState } from '../../../../utils/manageColumnUtils';
-import { getInstanceTableMenuOptions, handleInstanceMenuSelection } from './InstanceTableHelper';
+import {
+    getInstableTableTopMenuOptions,
+    getInstanceTableMenuOptions,
+    handleInstanceMenuSelection
+} from './InstanceTableHelper';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -85,6 +89,7 @@ const InstancesTable = () => {
     const {
         isManagedHostListLoading,
         fsxCredentialStatusLoading,
+        fsxCredentialStatusLoadingOracle,
         selectedHostType,
         selectedInventoryTab,
         selectedFilterValue
@@ -119,6 +124,8 @@ const InstancesTable = () => {
     const [listAllDirectories] = useListAllDirectoriesMutation();
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
 
+    const { title, exportToCsvFileName, buttonText } = getInstableTableTopMenuOptions(selectedHostType, t);
+
     useEffect(() => {
         setLoading(
             databaseHostsLoading ||
@@ -126,6 +133,7 @@ const InstancesTable = () => {
                 fullHostDataLoading ||
                 isManagedHostListLoading ||
                 fsxCredentialStatusLoading ||
+                fsxCredentialStatusLoadingOracle ||
                 pgsqlDatabaseHostsLoading ||
                 pgsqlFullHostDataLoading ||
                 multiDataLoading
@@ -136,6 +144,7 @@ const InstancesTable = () => {
         fullHostDataLoading,
         isManagedHostListLoading,
         fsxCredentialStatusLoading,
+        fsxCredentialStatusLoadingOracle,
         pgsqlDatabaseHostsLoading,
         pgsqlFullHostDataLoading,
         multiDataLoading
@@ -482,7 +491,10 @@ const InstancesTable = () => {
             errorMessage = GENERAL.SSM_DOWN;
         } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
             isDisabled = true;
-            errorMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+            errorMessage =
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.register-flow.oracle-server-instance-down')
+                    : t('databases.register-flow.sql-server-instance-down');
         }
         return { isDisabled, errorMessage };
     };
@@ -544,7 +556,10 @@ const InstancesTable = () => {
     const isUnregisteredRows = useMemo(
         () =>
             instanceTableRows?.some((row: any) => {
-                const { colText, disableMsg } = manageActionCol(t, row);
+                const { colText, disableMsg } = manageActionCol(t, selectedHostType, row);
+                if (selectedHostType === DBType.ORACLE) {
+                    return colText === ACTION_CTA.REGISTER_DATABASE && disableMsg === '';
+                }
                 return colText === ACTION_CTA.MANAGE_INSTANCES && disableMsg === '';
             }),
         [instanceTableRows]
@@ -580,7 +595,10 @@ const InstancesTable = () => {
                     disableMessage = GENERAL.SSM_DOWN;
                     disableOption = true;
                 } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
-                    disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                    disableMessage =
+                        selectedHostType === DBType.ORACLE
+                            ? t('databases.register-flow.oracle-server-instance-down')
+                            : t('databases.register-flow.sql-server-instance-down');
                     disableOption = true;
                 }
 
@@ -636,7 +654,10 @@ const InstancesTable = () => {
                         rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN &&
                         rowData?.statusColText !== INVENTORY_STATUS.MANAGED
                     ) {
-                        disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                        disableMsg =
+                            selectedHostType === DBType.ORACLE
+                                ? t('databases.register-flow.oracle-server-instance-down')
+                                : t('databases.register-flow.sql-server-instance-down');
                         width = '220px';
                         height = '33px';
                         return true;
@@ -739,9 +760,9 @@ const InstancesTable = () => {
                 <TableTopBar
                     // @ts-ignore
                     tableProps={tableProps}
-                    pluralTitle="Instances"
-                    singularTitle="Instance"
-                    exportToCsvOptions={{ fileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv` }}
+                    pluralTitle={title}
+                    singularTitle={title}
+                    exportToCsvOptions={{ fileName: exportToCsvFileName }}
                     subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     actionsRight={
                         <div className={styles.manageInstanceButton}>
@@ -752,7 +773,7 @@ const InstancesTable = () => {
                                     trigger="hover"
                                     container={
                                         <DsButton isThin isDisabled>
-                                            {t('databases.register-flow.register-multiple-instances')}
+                                            {buttonText}
                                         </DsButton>
                                     }
                                 />
@@ -762,7 +783,7 @@ const InstancesTable = () => {
                                     onClick={() => handleManageBulk()}
                                     isDisabled={loading || !isUnregisteredRows}
                                 >
-                                    {t('databases.register-flow.register-multiple-instances')}
+                                    {buttonText}
                                 </DsButton>
                             )}
                         </div>

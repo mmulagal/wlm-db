@@ -33,9 +33,12 @@ const HostTable = () => {
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
-    const { isManagedHostListLoading, fsxCredentialStatusLoading, tableManageColumnState } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const {
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading,
+        fsxCredentialStatusLoadingOracle,
+        tableManageColumnState
+    } = useAppSelector(state => state.inventoryV2);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
     const { multiDataLoading } = useAppSelector(state => state.headers);
@@ -52,6 +55,7 @@ const HostTable = () => {
                 fullHostDataLoading ||
                 isManagedHostListLoading ||
                 fsxCredentialStatusLoading ||
+                fsxCredentialStatusLoadingOracle ||
                 pgsqlDatabaseHostsLoading ||
                 pgsqlFullHostDataLoading ||
                 multiDataLoading
@@ -62,6 +66,7 @@ const HostTable = () => {
         fullHostDataLoading,
         isManagedHostListLoading,
         fsxCredentialStatusLoading,
+        fsxCredentialStatusLoadingOracle,
         pgsqlDatabaseHostsLoading,
         pgsqlFullHostDataLoading,
         multiDataLoading

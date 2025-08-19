@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import styles from './DetectContent.module.scss';
 import { setSelectedMultiDetectInstances } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { ACTION_CTA } from '../../../../../../utils/consts';
+import { ACTION_CTA, DBType } from '../../../../../../utils/consts';
 import { manageActionCol } from '../../../../InventoryUtilsV2';
 import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
 import { DsSelectFsx } from '../../../../../../common/FsxSelectField/fsxSelectField';
 import { isAlreadyDetectedCheck } from '../../ManageInstanceUtils';
+import { getSelectDropdownLabels } from './DetectContentHelper';
 
 interface OptionType {
     id: number;
@@ -17,7 +18,7 @@ interface OptionType {
     value: string;
 }
 
-const SelectInstances = () => {
+const SelectInstances = ({ engineType }: { engineType: string }) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
@@ -76,11 +77,26 @@ const SelectInstances = () => {
         setSelectedOptions(newSelected);
     };
 
+    // Helper function: returns true if the row should be excluded from options
+    function shouldExcludeRow(engineType: string, colText: string, disableMsg: string): boolean {
+        switch (engineType) {
+            case DBType.MSSQL:
+                // Exclude if not a managed instance or if disabled
+                return colText !== ACTION_CTA.MANAGE_INSTANCES || disableMsg !== '';
+            case DBType.ORACLE:
+                // Exclude if not a registered database or if disabled
+                return colText !== ACTION_CTA.REGISTER_DATABASE || disableMsg !== '';
+            // Add more cases for future DB types here
+            default:
+                return true; // Exclude by default
+        }
+    }
+
     const options = useMemo(
         () =>
             instanceTableRows?.flatMap((row: any) => {
-                const { colText, disableMsg } = manageActionCol(t, row);
-                if (colText !== ACTION_CTA.MANAGE_INSTANCES || disableMsg !== '') return [];
+                const { colText, disableMsg } = manageActionCol(t, engineType, row);
+                if (shouldExcludeRow(engineType, colText, disableMsg)) return [];
 
                 const isAlreadySelectedAndAuthorized = selectedMultiDetectInstances.some(
                     (item: any) => item?.id === row?.id && item?.authorized
@@ -122,17 +138,19 @@ const SelectInstances = () => {
         dispatch(setSelectedMultiDetectInstances(selected));
     };
 
+    const labels = getSelectDropdownLabels(engineType);
+
     return (
         <div className={styles.detectInstanceSelect}>
             <DsSelectFsx
-                title={t('databases.register-flow.instances')}
+                title={t(labels.title)}
                 isCleanable={false}
                 formatLabel={() =>
                     selectedMultiDetectInstances.length > 0
-                        ? `${selectedMultiDetectInstances.length} ${t('databases.register-flow.instances-selected')}`
-                        : t('databases.register-flow.select-instances')
+                        ? `${selectedMultiDetectInstances.length} ${t(labels.selected)}`
+                        : t(labels.placeholder)
                 }
-                placeholder={t('databases.register-flow.select-instances')}
+                placeholder={t(labels.placeholder)}
                 options={options}
                 value={selectedOptions}
                 onSelectionChange={(selectedOptions: any) => {

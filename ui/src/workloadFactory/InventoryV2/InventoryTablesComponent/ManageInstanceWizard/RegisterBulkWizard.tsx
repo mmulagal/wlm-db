@@ -3,11 +3,13 @@ import { StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
 import * as SelectInstancesStep from './SelectInstancesStep/SelectInstancesStep';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { DBType } from '../../../../utils/consts';
 
 const Wizard = () => {
     const { t } = useTranslation();
@@ -44,10 +46,15 @@ const Wizard = () => {
 
 const RegisterBulkWizard = () => {
     const { t } = useTranslation();
+    const { selectedHostType } = useAppSelector(state => state.inventoryV2);
+
     const MANAGE_STEPS = [
         {
             key: 'select-instances',
-            label: t('databases.register-flow.select-instances'),
+            label:
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.register-flow.select-databases')
+                    : t('databases.register-flow.select-instances'),
             component: SelectInstancesStep
         },
         { key: 'detect-instance', label: t('databases.register-flow.authenticate'), component: DetectInstanceStep },

@@ -145,4 +145,11 @@ router.post(`${BASE_URL}/v1/mssql/register`, async (req: {}, res: any) => {
     }, 20);
 });
 
+router.post(`${BASE_URL}/v1/oracle/register`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, { jobId: '1234' });
+        // generateResponse(res, 404, { message: 'No data found' });
+    }, 20);
+});
+
 export default router;

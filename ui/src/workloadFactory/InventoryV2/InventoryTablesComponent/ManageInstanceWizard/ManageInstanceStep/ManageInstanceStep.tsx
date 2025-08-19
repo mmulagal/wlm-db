@@ -9,16 +9,14 @@ import NoteComponent from './NoteComponent/NoteComponent';
 import PermissionListComponent from './PermissionListComponent/PermissionListComponent';
 import DetectHeader from '../DetectInstanceStep/DetectHeader/DetectHeader';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { ACTION_TYPE, MANAGE_STATES } from '../../../../../utils/consts';
-import { GENERAL } from '../../../../../utils/appConstants';
+import { ACTION_TYPE, DBType, MANAGE_STATES } from '../../../../../utils/consts';
 import {
     setBulkDetectedInstanceList,
     setManageSingleInstanceChecks
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanceHeader';
 import {
-    checkOverallManageState,
-    getPermissionState,
+    hasMissingJQ,
     hasMissingPowershell7,
     isAlreadyDetectedCheck,
     mergeReadinessData,
@@ -31,6 +29,18 @@ import {
     ManageReadinessData,
     ManageStates
 } from '../../../../../utils/types/registerTypes';
+import {
+    ENGINE_AUTH_FIELDS,
+    ENGINE_TYPE_CHECKS,
+    ENGINE_TYPE_CONTENT_KEYS,
+    getDiscoveredHostDataByType,
+    getEffectiveManageReadinessData,
+    getManageCheckObjFinal,
+    getManageCheckObjInitial,
+    getManageCheckObjMultiFinal,
+    getManageCheckObjMultiInitial,
+    getManageReadinessFromInstance
+} from './ManageInstanceStepHelper';
 
 export const Content = () => {
     const { t } = useTranslation();
@@ -41,11 +51,23 @@ export const Content = () => {
         state => state.inventoryV2
     );
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
+    const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
 
     const isAlreadyDetected = useMemo(
         () => isAlreadyDetectedCheck(manageSingleInstanceData),
         [manageSingleInstanceData]
     );
+
+    // Determine the host type based on the operation type
+    const hostType =
+        wizardOperationType === ACTION_TYPE.SINGLE
+            ? manageSingleInstanceData?.hostType
+            : (selectedMultiDetectInstances?.[0] as BulkDetectedInstance | undefined)?.data?.hostType || DBType.MSSQL;
+
+    const contentKeys = ENGINE_TYPE_CONTENT_KEYS[hostType] || ENGINE_TYPE_CONTENT_KEYS[DBType.MSSQL];
+
+    const getAuthFieldsForEngine = (hostType: string) =>
+        ENGINE_AUTH_FIELDS[hostType] || ENGINE_AUTH_FIELDS[DBType.MSSQL];
 
     const { data: policiesList } = useGetWlmdbPoliciesQuery({});
 
@@ -56,7 +78,7 @@ export const Content = () => {
         regionId: string,
         sqlServerName: string
     ) => {
-        // Get managereadiness data directly from discoveredHostData for MSSQL
+        // Get managereadiness data directly from discoveredHostData
         if (!Array.isArray(data)) {
             return null; // Return null if data is not an array
         }
@@ -65,12 +87,8 @@ export const Content = () => {
                 inst.ec2InstanceId === ec2InstanceId && inst.credentialId === credentialId && inst.regionId === regionId
         );
         if (instance) {
-            const sqlInstance = instance.sqlServerInstances.find(
-                (sqlInst: any) => sqlInst.sqlServerInstance === sqlServerName
-            );
-            if (sqlInstance) {
-                return sqlInstance.manageReadiness;
-            }
+            // Use helper to get manageReadiness for MSSQL or Oracle
+            return getManageReadinessFromInstance(instance, instance?.hostType || DBType.MSSQL, sqlServerName);
         }
         return null; // Return null if no match is found
     };
@@ -82,7 +100,6 @@ export const Content = () => {
     ) => {
         const { ec2InstanceId, credentialId, regionId, databaseInstanceName, hostRow, manageReadiness } =
             instanceData || {};
-
         // Find partner instance (if any)
         const partnerInstance = hostRow?.ec2Details?.find((inst: { id?: string }) => inst.id !== ec2InstanceId);
 
@@ -120,176 +137,145 @@ export const Content = () => {
         if (wizardOperationType !== ACTION_TYPE.SINGLE) {
             return;
         }
-        let manageCheckObj: Partial<ManageStates> = {
-            installMissingAWS: false,
-            installMissingAWSList: [],
-            installMissingPowershell: false,
-            assessment: GENERAL.NOT_AVAILABLE,
-            remediation: GENERAL.NOT_AVAILABLE,
-            dbcreation: GENERAL.NOT_AVAILABLE,
-            sandbox: GENERAL.NOT_AVAILABLE,
-            ec2InstanceId: '',
-            region: '',
-            credentialsId: '',
-            databaseInstanceName: ''
-        };
+        let manageCheckObj: Partial<ManageStates> = getManageCheckObjInitial(hostType);
 
         let manageReadinessData: ManageReadinessData | null = null;
-        if (
-            !manageSingleInstanceData?.windowsAuthentication &&
-            !manageSingleInstanceData?.sqlServerAuthentication &&
-            !manageSingleInstanceData?.windowsDomainUserAuthentication &&
-            manageSingleInstanceReadiness
-        ) {
+        const authFields = getAuthFieldsForEngine(hostType);
+
+        let isNoAuth = false;
+        if (hostType === DBType.ORACLE) {
+            const isDefault = manageSingleInstanceData?.isDefaultAuthentication;
+            const isOracleAuth = manageSingleInstanceData?.oracleServerAuthentication;
+            if (isDefault === false) {
+                isNoAuth = !!manageSingleInstanceReadiness;
+            } else if (isDefault === true) {
+                isNoAuth = isOracleAuth === true ? !!manageSingleInstanceReadiness : false;
+            }
+        } else {
+            // For MSSQL and others: no auth if all auth fields are falsy
+            isNoAuth = authFields.every(field => !manageSingleInstanceData?.[field]) && !!manageSingleInstanceReadiness;
+        }
+        if (isNoAuth) {
             manageReadinessData = manageSingleInstanceReadiness;
         } else {
-            manageReadinessData = getMergedReadinessData(manageSingleInstanceData, discoveredHostData);
+            const discoveredData = getDiscoveredHostDataByType(hostType, discoveredHostData, discoveredOracleHostData);
+            manageReadinessData = getMergedReadinessData(manageSingleInstanceData, discoveredData);
         }
+
         if (manageReadinessData) {
             const missingModulesList = missingModules(manageReadinessData);
-            manageCheckObj = {
-                installMissingAWS: missingModulesList.length > 0,
-                installMissingAWSList: missingModulesList,
-                installMissingPowershell: hasMissingPowershell7(manageReadinessData),
-                assessment: getPermissionState('assessment', manageReadinessData),
-                remediation: getPermissionState('remediation', manageReadinessData),
-                dbcreation: getPermissionState('dbcreation', manageReadinessData),
-                sandbox: getPermissionState('sandbox', manageReadinessData),
-                ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
-                region: manageSingleInstanceData?.regionId,
-                credentialsId: manageSingleInstanceData?.credentialId,
-                databaseInstanceName: manageSingleInstanceData?.databaseInstanceName,
-                manageReadinessData
-            };
+
+            // Dynamically build checks based on engine type
+            const engineChecks = ENGINE_TYPE_CHECKS[hostType] || [];
+            engineChecks.forEach(check => {
+                if (check === 'installMissingAWS') {
+                    manageCheckObj.installMissingAWS = missingModulesList.length > 0;
+                    manageCheckObj.installMissingAWSList = missingModulesList;
+                }
+                if (check === 'installMissingPowershell') {
+                    manageCheckObj.installMissingPowershell = hasMissingPowershell7(manageReadinessData);
+                }
+                if (check === 'installMissingJQ') {
+                    manageCheckObj.installMissingJQ = hasMissingJQ(manageReadinessData);
+                }
+            });
+
+            manageCheckObj = getManageCheckObjFinal(
+                hostType,
+                manageReadinessData,
+                manageSingleInstanceData,
+                manageCheckObj
+            );
             dispatch(setManageSingleInstanceChecks(manageCheckObj));
             return manageCheckObj;
         }
         return manageCheckObj;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [manageSingleInstanceData, manageSingleInstanceReadiness]);
+    }, [manageSingleInstanceData, manageSingleInstanceReadiness, hostType]);
+
+    // Function to determine if the action component should be shown
+    const shouldShowActionComponent = (manageChecks: any, engineType: string) => {
+        const checks = ENGINE_TYPE_CHECKS[engineType] || [];
+        return checks.some(check => manageChecks[check]);
+    };
 
     // Manage checks for multiple instances
     const manageCheck = (instance: BulkDetectedInstance) => {
-        let manageCheckObj: Partial<ExtendedManageStates> = {
-            installMissingAWS: false,
-            installMissingAWSList: [],
-            installMissingPowershell: false,
-            assessment: GENERAL.NOT_AVAILABLE,
-            remediation: GENERAL.NOT_AVAILABLE,
-            dbcreation: GENERAL.NOT_AVAILABLE,
-            sandbox: GENERAL.NOT_AVAILABLE,
-            ec2InstanceId: '',
-            region: '',
-            credentialsId: '',
-            databaseInstanceName: '',
-            overallState: GENERAL.NOT_AVAILABLE,
-            readyCount: 0,
-            perRowState: [
-                {
-                    key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-                    value: GENERAL.NOT_AVAILABLE
-                },
-                {
-                    key: t('databases.register-flow.fix-well-architected-issues'),
-                    value: GENERAL.NOT_AVAILABLE
-                },
-                {
-                    key: t('databases.register-flow.create-database'),
-                    value: GENERAL.NOT_AVAILABLE
-                },
-                {
-                    key: t('databases.register-flow.create-database-copies-sandbox'),
-                    value: GENERAL.NOT_AVAILABLE
-                }
-            ]
-        };
+        let manageCheckObj: Partial<ExtendedManageStates> = getManageCheckObjMultiInitial(instance?.data?.hostType, t);
 
-        let manageReadinessData: ManageReadinessData | null = null;
-        // If no authentication methods are set, use manageReadiness
-        if (
-            !instance?.data?.windowsAuthentication &&
-            !instance?.data?.sqlServerAuthentication &&
-            !instance?.data?.windowsDomainUserAuthentication
-        ) {
-            manageReadinessData = instance?.manageReadiness;
-        } else {
-            manageReadinessData = getMergedReadinessData(instance?.data, discoveredHostData);
-        }
+        const manageReadinessData: ManageReadinessData | null = getEffectiveManageReadinessData(
+            instance,
+            discoveredHostData,
+            discoveredOracleHostData,
+            getMergedReadinessData
+        );
+
         if (manageReadinessData) {
             const missingModulesList = missingModules(manageReadinessData);
-            const assessment = getPermissionState('assessment', manageReadinessData);
-            const remediation = getPermissionState('remediation', manageReadinessData);
-            const dbcreation = getPermissionState('dbcreation', manageReadinessData);
-            const sandbox = getPermissionState('sandbox', manageReadinessData);
-            const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
-            let readyCount = 0;
-            const perRowState = [
-                {
-                    key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-                    value: assessment
-                },
-                {
-                    key: t('databases.register-flow.fix-well-architected-issues'),
-                    value: remediation
-                },
-                {
-                    key: t('databases.register-flow.create-database'),
-                    value: dbcreation
-                },
-                {
-                    key: t('databases.register-flow.create-database-copies-sandbox'),
-                    value: sandbox
-                }
-            ];
-            if (assessment === MANAGE_STATES.READY) {
-                readyCount += 1;
+            manageCheckObj.installMissingAWS = missingModulesList.length > 0;
+            manageCheckObj.installMissingAWSList = missingModulesList;
+
+            manageCheckObj = getManageCheckObjMultiFinal(
+                instance?.data?.hostType,
+                manageReadinessData,
+                instance.data,
+                manageCheckObj,
+                t
+            );
+
+            const hostType = instance?.data?.hostType || DBType.MSSQL;
+            const engineChecks = ENGINE_TYPE_CHECKS[hostType] || [];
+            if (engineChecks.includes('installMissingPowershell')) {
+                manageCheckObj.installMissingPowershell = hasMissingPowershell7(manageReadinessData);
             }
-            if (remediation === MANAGE_STATES.READY) {
-                readyCount += 1;
+            if (engineChecks.includes('installMissingJQ')) {
+                manageCheckObj.installMissingJQ = hasMissingJQ(manageReadinessData);
             }
-            if (dbcreation === MANAGE_STATES.READY) {
-                readyCount += 1;
-            }
-            if (sandbox === MANAGE_STATES.READY) {
-                readyCount += 1;
-            }
-            manageCheckObj = {
-                installMissingAWS: missingModulesList.length > 0,
-                installMissingAWSList: missingModulesList,
-                installMissingPowershell: hasMissingPowershell7(manageReadinessData),
-                assessment,
-                remediation,
-                dbcreation,
-                sandbox,
-                ec2InstanceId: instance?.data?.ec2InstanceId,
-                region: instance?.data?.regionId,
-                credentialsId: instance?.data?.credentialId,
-                databaseInstanceName: instance?.data?.databaseInstanceName,
-                overallState,
-                readyCount,
-                perRowState
-            };
             return manageCheckObj;
         }
         return manageCheckObj;
     };
 
-    // Effect to handle single instance checks
+    // Effect to handle bulk instance checks
     useEffect(() => {
         if (wizardOperationType !== ACTION_TYPE.BULK) {
             return;
         }
         const newTableData: BulkDetectedInstance[] = [];
-        let installMissingAWSAll = false;
-        let installMissingPowershellAll = false;
+        const bulkHostType =
+            (selectedMultiDetectInstances?.[0] as BulkDetectedInstance | undefined)?.data?.hostType || DBType.MSSQL;
+        const engineChecks = ENGINE_TYPE_CHECKS[bulkHostType] || [];
+        // Track if any instance is missing a required module for each check
+        const checksAll: Record<string, boolean> = {};
+        engineChecks.forEach(check => {
+            checksAll[check] = false;
+        });
+
         selectedMultiDetectInstances?.forEach((item: BulkDetectedInstance) => {
             const manageStates = manageCheck(item);
-            if (manageStates?.installMissingAWS) {
-                installMissingAWSAll = true;
-            }
-            if (manageStates?.installMissingPowershell) {
-                installMissingPowershellAll = true;
-            }
+            // For each check, update checksAll if any instance is missing it
+            engineChecks.forEach(check => {
+                if ((manageStates as any)?.[check]) {
+                    checksAll[check] = true;
+                }
+            });
+            // Build manageStates for this row, only including relevant checks
+            const rowManageStates: Record<string, any> = { ...manageStates };
+            engineChecks.forEach(check => {
+                rowManageStates[check] = (manageStates as any)?.[check] ?? false;
+                // If you have associated lists (like installMissingAWSList), add them here as needed
+                if (check === 'installMissingAWS') {
+                    rowManageStates.installMissingAWS = (manageStates?.installMissingAWSList?.length ?? 0) > 0;
+                    rowManageStates.installMissingAWSList = manageStates?.installMissingAWSList ?? [];
+                }
+                if (check === 'installMissingPowershell') {
+                    rowManageStates.installMissingPowershell = manageStates?.installMissingPowershell ?? false;
+                }
+                if (check === 'installMissingJQ') {
+                    rowManageStates.installMissingJQ = manageStates?.installMissingJQ ?? false;
+                }
+            });
+
             newTableData.push({
                 ...item,
                 id: item?.id,
@@ -302,25 +288,14 @@ export const Content = () => {
                 readyCount: manageStates?.readyCount,
                 totalCount: 4,
                 perRowState: manageStates?.perRowState || [],
-                manageStates: {
-                    installMissingAWS: manageStates?.installMissingAWS ?? false,
-                    installMissingAWSList: manageStates?.installMissingAWSList ?? [],
-                    installMissingPowershell: manageStates?.installMissingPowershell ?? false,
-                    assessment: manageStates?.assessment ?? GENERAL.NOT_AVAILABLE,
-                    remediation: manageStates?.remediation ?? GENERAL.NOT_AVAILABLE,
-                    dbcreation: manageStates?.dbcreation ?? GENERAL.NOT_AVAILABLE,
-                    sandbox: manageStates?.sandbox ?? GENERAL.NOT_AVAILABLE,
-                    ec2InstanceId: manageStates?.ec2InstanceId ?? '',
-                    region: manageStates?.region ?? '',
-                    credentialsId: manageStates?.credentialsId ?? '',
-                    databaseInstanceName: manageStates?.databaseInstanceName ?? ''
-                }
+                manageStates: rowManageStates
             });
         });
-        setManageMultiChecks({
-            installMissingAWS: installMissingAWSAll,
-            installMissingPowershell: installMissingPowershellAll
+        const multiChecks: Record<string, boolean> = {};
+        engineChecks.forEach(check => {
+            multiChecks[check] = checksAll[check];
         });
+        setManageMultiChecks(multiChecks);
         dispatch(setBulkDetectedInstanceList(newTableData));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedMultiDetectInstances]);
@@ -335,31 +310,43 @@ export const Content = () => {
 
             {wizardOperationType === ACTION_TYPE.BULK && (
                 <div style={{ marginBottom: '40px', width: '100%' }}>
-                    <MultiInstanceHeader />
+                    <MultiInstanceHeader engineType={hostType} />
                 </div>
             )}
 
             <div className={styles.textSection}>
-                <DsTypography variant="Regular_14">
-                    {t('databases.register-flow.manage-instance-page-content1')}
-                </DsTypography>
-                <DsTypography variant="Regular_14">
-                    {t('databases.register-flow.manage-instance-page-content2')}
-                </DsTypography>
+                <DsTypography variant="Regular_14">{t(contentKeys.content1)}</DsTypography>
+                <DsTypography variant="Regular_14">{t(contentKeys.content2)}</DsTypography>
             </div>
 
             {/* Action component */}
             {wizardOperationType === ACTION_TYPE.SINGLE &&
-                (manageChecks?.installMissingPowershell || manageChecks?.installMissingAWS) && (
-                    <ActionComponent manageChecks={manageChecks} />
+                manageChecks &&
+                shouldShowActionComponent(manageChecks, hostType) && (
+                    <ActionComponent manageChecks={manageChecks} engineType={hostType} />
                 )}
             {wizardOperationType === ACTION_TYPE.BULK &&
-                (manageMultiChecks?.installMissingPowershell || manageMultiChecks?.installMissingAWS) && (
-                    <ActionComponent manageChecks={manageMultiChecks} />
+                manageMultiChecks &&
+                shouldShowActionComponent(manageMultiChecks, hostType) && (
+                    <ActionComponent manageChecks={manageMultiChecks} engineType={hostType} />
                 )}
 
             {/* Accordions */}
-            <PermissionListComponent manageChecks={manageChecks} policiesList={policiesList} />
+            {wizardOperationType === ACTION_TYPE.SINGLE && manageChecks && (
+                <PermissionListComponent
+                    manageChecks={manageChecks}
+                    policiesList={policiesList}
+                    engineType={hostType}
+                />
+            )}
+
+            {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks && (
+                <PermissionListComponent
+                    manageChecks={manageMultiChecks}
+                    policiesList={policiesList}
+                    engineType={hostType}
+                />
+            )}
 
             {/* Note */}
             {wizardOperationType === ACTION_TYPE.SINGLE && manageChecks?.installMissingPowershell && <NoteComponent />}

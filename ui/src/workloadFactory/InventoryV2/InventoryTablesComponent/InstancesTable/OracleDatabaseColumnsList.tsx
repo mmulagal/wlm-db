@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
     ACTION_CTA,
+    DBType,
     INVENTORY_STATUS,
     INVENTORY_TABLE_STATUS,
     PROTECTION_COLUMN_TEXT_STATUS,
@@ -28,9 +29,8 @@ import {
     setSelectedHeaderTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { manageActionCol } from '../../InventoryUtilsV2';
+import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 
 export function getOracleDatabaseColumnsList({
     t,
@@ -446,7 +446,7 @@ export function getOracleDatabaseColumnsList({
             width: '200px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const { colText, disableMsg } = manageActionCol(t, rowData);
+                const { colText, disableMsg } = manageActionCol(t, DBType.ORACLE, rowData);
                 return (
                     <>
                         {disableMsg ? (
@@ -472,14 +472,13 @@ export function getOracleDatabaseColumnsList({
                                             colText === ACTION_CTA.FIX_ISSUES ||
                                             colText === ACTION_CTA.WELL_ARCHITECTED
                                         ) {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
                                             dispatch(
-                                                setSelectedWellArchitectTab(
+                                                setSelectedOracleInnerPageTab(
                                                     WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
                                                 )
                                             );
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
                                             optimizeAction(rowData, dispatch);
                                         } else {
                                             dispatch(setManageSingleInstanceData(rowData));

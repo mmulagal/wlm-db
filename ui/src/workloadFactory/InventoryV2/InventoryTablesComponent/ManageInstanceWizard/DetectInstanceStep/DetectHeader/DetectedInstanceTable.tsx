@@ -7,10 +7,14 @@ import { ReactComponent as Cross } from '../../../../../../assets/black-cross.sv
 import { ReactComponent as TooltipIcon } from '../../../../../../assets/tooltipGrey.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import DotComponent from '../../../../../../common/DotComponent/DotComponent';
-import { MANAGE_STATES } from '../../../../../../utils/consts';
+import { DBType, MANAGE_STATES } from '../../../../../../utils/consts';
 import TooltipCard from '../../../../../../common/TooltipCard/TooltipCard';
 
-const DetectedInstanceTable = () => {
+interface DetectedInstanceTableProps {
+    engineType: string;
+}
+
+const DetectedInstanceTable = ({ engineType }: DetectedInstanceTableProps) => {
     const { t } = useTranslation();
     const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
 
@@ -57,8 +61,11 @@ const DetectedInstanceTable = () => {
                     <DsTypography variant="Regular_14">{cellData}</DsTypography>
                 </div>
             )
-        },
-        {
+        }
+    ];
+
+    if (engineType !== DBType.ORACLE) {
+        ColDefs.push({
             id: '5',
             Header: t('databases.register-flow.detect-instance-table-col.prerequisite-check'),
             accessor: 'readyCount',
@@ -76,8 +83,8 @@ const DetectedInstanceTable = () => {
                     <DsTypography variant="Regular_14">{`${cellData}/${rowData?.totalCount}`}</DsTypography>
                 </div>
             )
-        }
-    ];
+        });
+    }
 
     const tableProps = useTable({
         // @ts-ignore

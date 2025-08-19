@@ -8,9 +8,14 @@ import ManageWizardFooter from '../ManageWizardFooter';
 import { ReactComponent as MultipleInstances } from '../../../../../assets/Multiple instances credentials 3.svg';
 import SelectInstances from '../DetectInstanceStep/DetectContent/SelectInstances';
 import { UseWizardReturn } from '../../../../../utils/types/registerTypes';
+import { useAppSelector } from '../../../../../store/storeHooks';
+import { getSelectInstancesPageContentKeys } from './SelectInstancesStepHelper';
 
 export const Content = () => {
     const { t } = useTranslation();
+    const { selectedHostType } = useAppSelector(state => state.inventoryV2);
+    const pageContentKeys = getSelectInstancesPageContentKeys(selectedHostType);
+
     return (
         <div className={styles['select-instances']}>
             <div className={styles.container}>
@@ -18,16 +23,14 @@ export const Content = () => {
                     <MultipleInstances />
                 </div>
                 <div className={styles.textSection}>
-                    <DsTypography variant="Semibold_16">
-                        {t('databases.register-flow.select-instance-page-content1')}
-                    </DsTypography>
+                    <DsTypography variant="Semibold_16">{t(pageContentKeys.content1)}</DsTypography>
                     <DsTypography variant="Regular_14" className={styles.description}>
-                        {t('databases.register-flow.select-instance-page-content2')}
+                        {t(pageContentKeys.content2)}
                     </DsTypography>
                 </div>
 
                 <div className={styles.selectInstances}>
-                    <SelectInstances />
+                    <SelectInstances engineType={selectedHostType} />
                 </div>
             </div>
         </div>

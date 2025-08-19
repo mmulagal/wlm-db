@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
+import { TFunction } from 'i18next';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
 import {
     setInProgressInstances,
@@ -10,6 +11,7 @@ import {
 import { GENERAL } from '../../../../utils/appConstants';
 import {
     AUTHENTICATION_TYPE,
+    DBType,
     DETECT_HOST_VAR,
     FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
@@ -18,6 +20,7 @@ import {
     JOB_MONITORING_STATUS,
     MANAGE_POLLING_INTERVAL,
     MANAGE_STATES,
+    REGISTER_INSTANCE_STATE,
     SQL_DEPLOYMENT_MODE,
     WLF_TABS
 } from '../../../../utils/consts';
@@ -33,11 +36,16 @@ import {
     RegisterResourceCredBulkResultItem,
     SubJob
 } from '../../../../utils/types/registerTypes';
+import {
+    getBulkDetectChecksHelper,
+    isAuthRequiredForInstance
+} from './DetectInstanceStep/DetectContent/DetectContentHelper';
 
 // Checks if the manage readiness data allows for management actions based on missing permissions and modules
 export const isAllowManage = (manageReadinessData: ManageReadinessInterface) => {
     const state = store.getState();
-    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
+    const { installMissingAWS, installMissingPowershell, installMissingJQ } =
+        state.inventoryV2.manageInstanceInstallAction;
 
     let anyListEmpty = false;
     const readinessKeys = Object.keys(manageReadinessData);
@@ -48,23 +56,23 @@ export const isAllowManage = (manageReadinessData: ManageReadinessInterface) => 
         }
         const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
         const missingModules = manageReadinessData[key]?.missingModules || [];
-        const otherMissingModules = missingModules.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
+        const otherMissingModules = missingModules.filter(
+            (module: string) => module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ
+        );
         if (missingSqlPermissions.length === 0 && missingModules.length === 0) {
             anyListEmpty = true;
         } else if (missingSqlPermissions.length === 0 || missingModules.length > 0) {
-            let notMissingPowershellCheck = false;
-            if (
+            const checks = [
+                // PowerShell7 check
                 (missingModules.includes(MANAGE_STATES.POWERSHELL7) && installMissingPowershell) ||
-                !missingModules.includes(MANAGE_STATES.POWERSHELL7)
-            ) {
-                notMissingPowershellCheck = true;
-            }
-            let notMissingModulesCheck = false;
-            if (otherMissingModules.length === 0 || (otherMissingModules.length > 0 && installMissingAWS)) {
-                notMissingModulesCheck = true;
-            }
-
-            if (notMissingPowershellCheck && notMissingModulesCheck) {
+                    !missingModules.includes(MANAGE_STATES.POWERSHELL7),
+                // JQ check
+                (missingModules.includes(MANAGE_STATES.JQ) && installMissingJQ) ||
+                    !missingModules.includes(MANAGE_STATES.JQ),
+                // Other modules check
+                otherMissingModules.length === 0 || (otherMissingModules.length > 0 && installMissingAWS)
+            ];
+            if (checks.every(Boolean)) {
                 anyListEmpty = true;
             }
         }
@@ -124,14 +132,17 @@ export const callManageSingleInstanceApi = async (
     navigate: ReturnType<typeof useNavigate>
 ) => {
     const state = store.getState();
-    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
-    let installModules: Array<string> = [];
-    if (manageSingleInstanceChecks?.installMissingAWS && installMissingAWS) {
-        installModules = [...installModules, ...(manageSingleInstanceChecks?.installMissingAWSList || [])];
-    }
-    if (manageSingleInstanceChecks?.installMissingPowershell && installMissingPowershell) {
-        installModules = [...installModules, MANAGE_STATES.POWERSHELL7];
-    }
+    const { installMissingAWS, installMissingPowershell, installMissingJQ } =
+        state.inventoryV2.manageInstanceInstallAction;
+    const installModules: Array<string> = [
+        ...(manageSingleInstanceChecks?.installMissingAWS && installMissingAWS
+            ? manageSingleInstanceChecks?.installMissingAWSList || []
+            : []),
+        ...(manageSingleInstanceChecks?.installMissingPowershell && installMissingPowershell
+            ? [MANAGE_STATES.POWERSHELL7]
+            : []),
+        ...(manageSingleInstanceChecks?.installMissingJQ && installMissingJQ ? [MANAGE_STATES.JQ] : [])
+    ];
     const payload = {
         items: [
             {
@@ -210,28 +221,47 @@ export const callManageSingleInstanceApi = async (
     });
 };
 
+const permissionMissing = (engineType: string, manageSingleInstanceChecks: ManageStates) => {
+    switch (engineType) {
+        case DBType.ORACLE:
+            return manageSingleInstanceChecks?.assessment === REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
+        case DBType.MSSQL:
+            return (
+                manageSingleInstanceChecks?.assessment === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
+                manageSingleInstanceChecks?.remediation === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
+                manageSingleInstanceChecks?.dbcreation === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
+                manageSingleInstanceChecks?.sandbox === REGISTER_INSTANCE_STATE.NOT_AVAILABLE
+            );
+        default:
+            return false;
+    }
+};
+
 // Handles manage action for a single instance, including permission checks and API call
 export const handleSingleInstanceManage = (
     manageSingleInstanceChecks: ManageStates,
     dispatch: AppDispatch,
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
-    navigate: ReturnType<typeof useNavigate>
+    navigate: ReturnType<typeof useNavigate>,
+    engineType: string,
+    t: TFunction
 ) => {
     const allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData || {});
-    if (
-        manageSingleInstanceChecks?.assessment === GENERAL.NOT_AVAILABLE &&
-        manageSingleInstanceChecks?.remediation === GENERAL.NOT_AVAILABLE &&
-        manageSingleInstanceChecks?.dbcreation === GENERAL.NOT_AVAILABLE &&
-        manageSingleInstanceChecks?.sandbox === GENERAL.NOT_AVAILABLE
-    ) {
+    if (permissionMissing(engineType, manageSingleInstanceChecks)) {
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.ERROR,
                 message: (
                     <>
-                        <span style={{ fontWeight: '500' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[0]}</span>
-                        <span style={{ fontWeight: '400' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[1]}</span>
+                        <span style={{ fontWeight: '500' }}>
+                            {t('databases.register-flow.manage-min-permissions-requirement-content1')}
+                        </span>
+                        <span style={{ fontWeight: '400' }}>
+                            {engineType === DBType.ORACLE
+                                ? t('databases.register-flow.manage-min-permissions-requirement-content2-oracle')
+                                : t('databases.register-flow.manage-min-permissions-requirement-content2')}
+                        </span>
                     </>
                 )
             })
@@ -242,8 +272,14 @@ export const handleSingleInstanceManage = (
                 notificationType: NOTIFICATION_TYPES.ERROR,
                 message: (
                     <>
-                        <span style={{ fontWeight: '500' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[0]}</span>
-                        <span style={{ fontWeight: '400' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[1]}</span>
+                        <span style={{ fontWeight: '500' }}>
+                            {t('databases.register-flow.manage-min-permissions-requirement-content1')}
+                        </span>
+                        <span style={{ fontWeight: '400' }}>
+                            {engineType === DBType.ORACLE
+                                ? t('databases.register-flow.manage-min-permissions-requirement-content2-oracle')
+                                : t('databases.register-flow.manage-min-permissions-requirement-content2')}
+                        </span>
                     </>
                 )
             })
@@ -390,7 +426,8 @@ export const callManageMultiInstanceApi = async (
     navigate: ReturnType<typeof useNavigate>
 ) => {
     const state = store.getState();
-    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
+    const { installMissingAWS, installMissingPowershell, installMissingJQ } =
+        state.inventoryV2.manageInstanceInstallAction;
 
     // Build payload for each instance, grouping by ec2InstanceId, region, credentialsId
     const instanceMap = new Map<string, ManageApiPayloadItem>();
@@ -400,13 +437,15 @@ export const callManageMultiInstanceApi = async (
                 instance.authorized && isAllowManage(instance?.manageReadiness || instance?.data?.manageReadiness || {})
         )
         .forEach((instance: BulkDetectedInstance) => {
-            let installModules: Array<string> = [];
-            if (instance?.manageStates?.installMissingAWS && installMissingAWS) {
-                installModules = [...installModules, ...(instance?.manageStates?.installMissingAWSList || [])];
-            }
-            if (instance?.manageStates?.installMissingPowershell && installMissingPowershell) {
-                installModules = [...installModules, MANAGE_STATES.POWERSHELL7];
-            }
+            const installModules: Array<string> = [
+                ...(instance?.manageStates?.installMissingAWS && installMissingAWS
+                    ? instance?.manageStates?.installMissingAWSList || []
+                    : []),
+                ...(instance?.manageStates?.installMissingPowershell && installMissingPowershell
+                    ? [MANAGE_STATES.POWERSHELL7]
+                    : []),
+                ...(instance?.manageStates?.installMissingJQ && installMissingJQ ? [MANAGE_STATES.JQ] : [])
+            ];
 
             const ec2InstanceId: string = instance?.ec2InstanceId || instance?.data?.ec2InstanceId || '';
             const region: string = instance?.region || instance?.data?.regionId || '';
@@ -562,7 +601,15 @@ export const hasMissingPowershell7 = (manageReadinessData: any) => {
     );
 };
 
-// Filters and returns a list of unique missing modules from the manage readiness data, excluding PowerShell 7
+// Checks if the manage readiness data has missing JQ modules
+export const hasMissingJQ = (manageReadinessData: any) => {
+    if (!manageReadinessData) return false;
+    return Object.keys(manageReadinessData).some(key =>
+        (manageReadinessData[key]?.missingModules || []).includes(MANAGE_STATES.JQ)
+    );
+};
+
+// Filters and returns a list of unique missing modules from the manage readiness data, excluding PowerShell 7 and JQ
 export const missingModules = (manageReadinessData: ManageReadinessInterface) => {
     if (!manageReadinessData) return [];
 
@@ -572,7 +619,7 @@ export const missingModules = (manageReadinessData: ManageReadinessInterface) =>
     readinessKeys.forEach(key => {
         const missingModulesList = manageReadinessData[key]?.missingModules || [];
         missingModulesList
-            .filter((module: string) => module !== MANAGE_STATES.POWERSHELL7)
+            .filter((module: string) => module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ)
             .forEach((module: string) => filteredModulesSet.add(module));
     });
 
@@ -589,6 +636,7 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
 
     const missingModulesList = readinessData?.missingModules || [];
     const hasPowershell7 = missingModulesList.includes(MANAGE_STATES.POWERSHELL7);
+    const hasJQ = missingModulesList.includes(MANAGE_STATES.JQ);
     const otherModules = missingModulesList.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
 
     const permissions = readinessData?.missingSqlPermissions;
@@ -599,6 +647,10 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
 
     if (hasPowershell7) {
         return MANAGE_STATES.MISSING_POWERSHELL;
+    }
+
+    if (hasJQ) {
+        return MANAGE_STATES.MISSING_JQ;
     }
 
     return MANAGE_STATES.READY;
@@ -659,29 +711,90 @@ export const mergeReadinessData = (
 
 // Gets the bulk detect checks for multiple instances, returning a summary of authentication and FSx registration status
 export const getBulkDetectChecks = (selectedMultiDetectInstances: any) => {
-    const result = {
-        sqlServerAuthentication: true,
-        windowsAuthentication: true,
-        windowsDomainUserAuthentication: true,
-        fsxId: false,
-        isFsxRegistered: true
-    };
-    if (selectedMultiDetectInstances?.length) {
-        selectedMultiDetectInstances?.forEach((item: any) => {
-            if (!item?.data?.sqlServerAuthentication && !item?.data?.windowsAuthentication) {
-                result.sqlServerAuthentication = false;
-                result.windowsAuthentication = false;
+    const hostType = selectedMultiDetectInstances?.[0]?.data?.hostType || DBType.MSSQL;
+    return getBulkDetectChecksHelper(selectedMultiDetectInstances, hostType);
+};
+
+const addCredentialsBasedOnEngineType = (
+    instance: BulkDetectedInstance,
+    credentials: any[],
+    detectManageUserName: string,
+    detectManagePassword: string,
+    detectWindowsAuthentication: any,
+    detectOntapUsername: string,
+    detectOntapPassword: string,
+    authenticationType: string,
+    engineType: string
+) => {
+    const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
+
+    switch (engineType) {
+        case DBType.ORACLE: {
+            const { isDefaultAuthentication, oracleServerAuthentication } = instance?.data || {};
+            // For Oracle: Only push if isDefaultAuthentication === true && oracleServerAuthentication === false
+            if (
+                isDefaultAuthentication === true &&
+                oracleServerAuthentication === false &&
+                detectManageUserName &&
+                detectManagePassword
+            ) {
+                credentials.push({
+                    resourceId: sqlServerInstance,
+                    resourceType: DETECT_HOST_VAR.ORACLE,
+                    username: detectManageUserName,
+                    password: detectManagePassword
+                });
             }
-            if (!item?.data?.windowsDomainUserAuthentication) {
-                result.windowsDomainUserAuthentication = false;
+            break;
+        }
+        case DBType.MSSQL:
+        default: {
+            // Add SQL credential if not already registered
+            if (
+                !instance?.data?.sqlServerAuthentication &&
+                !instance?.data?.windowsAuthentication &&
+                !instance?.data?.windowsDomainUserAuthentication &&
+                detectManageUserName &&
+                detectManagePassword &&
+                authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+            ) {
+                credentials.push({
+                    resourceId: sqlServerInstance,
+                    resourceType: DETECT_HOST_VAR.MSSQL,
+                    username: detectManageUserName,
+                    password: detectManagePassword
+                });
             }
-            if (item?.data?.fsxId && !item?.data?.isFsxRegistered) {
-                result.fsxId = true;
-                result.isFsxRegistered = false;
+
+            // Add Windows credential if not already registered
+            else if (
+                !instance?.data?.sqlServerAuthentication &&
+                !instance?.data?.windowsAuthentication &&
+                !instance?.data?.windowsDomainUserAuthentication &&
+                detectWindowsAuthentication.username &&
+                detectWindowsAuthentication.password &&
+                authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+            ) {
+                credentials.push({
+                    resourceId: sqlServerInstance,
+                    resourceType: DETECT_HOST_VAR.WINDOWS,
+                    username: detectWindowsAuthentication.username,
+                    password: detectWindowsAuthentication.password
+                });
             }
+            break;
+        }
+    }
+
+    // Add FSX credential if not already registered
+    if (instance?.data?.fsxId && !instance?.data?.isFsxRegistered && detectOntapUsername && detectOntapPassword) {
+        credentials.push({
+            resourceId: instance?.data?.fsxId,
+            resourceType: DETECT_HOST_VAR.FSX,
+            username: detectOntapUsername,
+            password: detectOntapPassword
         });
     }
-    return result;
 };
 
 export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDetectedInstance[]) => {
@@ -699,58 +812,25 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
     } = state?.inventoryV2 || {};
 
     selectedMultiDetectInstances?.forEach((instance: BulkDetectedInstance) => {
-        const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
         const ec2InstanceId = instance?.data?.ec2InstanceId;
         if (!ec2InstanceId) return;
 
         // Build credentials array for this instance
         const credentials: any[] = [];
-        let checkManageReadiness = false;
+        const checkManageReadiness = false;
 
-        // Add SQL credential if not already registered
-        if (
-            !instance?.data?.sqlServerAuthentication &&
-            !instance?.data?.windowsAuthentication &&
-            !instance?.data?.windowsDomainUserAuthentication &&
-            detectManageUserName &&
-            detectManagePassword &&
-            authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-        ) {
-            credentials.push({
-                resourceId: sqlServerInstance,
-                resourceType: DETECT_HOST_VAR.MSSQL,
-                username: detectManageUserName,
-                password: detectManagePassword
-            });
-            checkManageReadiness = true;
-        }
-
-        if (
-            !instance?.data?.sqlServerAuthentication &&
-            !instance?.data?.windowsAuthentication &&
-            !instance?.data?.windowsDomainUserAuthentication &&
-            detectWindowsAuthentication.username &&
-            detectWindowsAuthentication.password &&
-            authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
-        ) {
-            credentials.push({
-                resourceId: sqlServerInstance,
-                resourceType: DETECT_HOST_VAR.WINDOWS,
-                username: detectWindowsAuthentication.username,
-                password: detectWindowsAuthentication.password
-            });
-            checkManageReadiness = true;
-        }
-
-        // Add FSX credential if not already registered
-        if (instance?.data?.fsxId && !instance?.data?.isFsxRegistered && detectOntapUsername && detectOntapPassword) {
-            credentials.push({
-                resourceId: instance?.data?.fsxId,
-                resourceType: DETECT_HOST_VAR.FSX,
-                username: detectOntapUsername,
-                password: detectOntapPassword
-            });
-        }
+        // Add credentials if not already registered
+        addCredentialsBasedOnEngineType(
+            instance,
+            credentials,
+            detectManageUserName,
+            detectManagePassword,
+            detectWindowsAuthentication,
+            detectOntapUsername,
+            detectOntapPassword,
+            authenticationType,
+            instance?.data?.hostType
+        );
 
         // If already present, merge credentials arrays
         if (instanceMap[ec2InstanceId]) {
@@ -795,13 +875,11 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
 export const updateDetectBulkResponse = (
     newSelectedMultiDetectInstances: BulkDetectedInstance[],
     result: { data: { items: RegisterResourceCredBulkResultItem[] } },
-    dispatch: AppDispatch
+    dispatch: AppDispatch,
+    engineType: string
 ) => {
     const updatedInstances = newSelectedMultiDetectInstances?.map((instance: any) => {
-        const isSqlAuthRequired =
-            !instance?.data?.sqlServerAuthentication &&
-            !instance?.data?.windowsAuthentication &&
-            !instance?.data?.windowsDomainUserAuthentication;
+        const isAuthRequired = isAuthRequiredForInstance(instance, engineType);
         const isFsxRegisterRequired = instance?.data?.fsxId && !instance?.data?.isFsxRegistered;
 
         const res = result?.data?.items?.find(
@@ -813,14 +891,14 @@ export const updateDetectBulkResponse = (
 
         if (!res) return instance;
 
-        let sqlAuthSuccess = true;
+        let authSuccess = true;
         let fsxSuccess = true;
 
-        if (isSqlAuthRequired) {
+        if (isAuthRequired) {
             const sqlDetail = res.registerDetails?.find(
                 (d: any) => d.resourceId === instance?.data?.databaseInstanceName
             );
-            sqlAuthSuccess =
+            authSuccess =
                 !!sqlDetail && !(sqlDetail.databaseServerError || sqlDetail.fsxnError || sqlDetail.requiredModuleError);
         }
 
@@ -833,10 +911,10 @@ export const updateDetectBulkResponse = (
         }
 
         let authorized = false;
-        if (isSqlAuthRequired && isFsxRegisterRequired) {
-            authorized = sqlAuthSuccess && fsxSuccess;
-        } else if (isSqlAuthRequired) {
-            authorized = sqlAuthSuccess;
+        if (isAuthRequired && isFsxRegisterRequired) {
+            authorized = authSuccess && fsxSuccess;
+        } else if (isAuthRequired) {
+            authorized = authSuccess;
         } else if (isFsxRegisterRequired) {
             authorized = fsxSuccess;
         }
@@ -845,7 +923,7 @@ export const updateDetectBulkResponse = (
         let manageReadiness = null;
         if (authorized) {
             const detail = res.registerDetails?.find(
-                (d: any) => isSqlAuthRequired && d.resourceId === instance?.data?.databaseInstanceName
+                (d: any) => isAuthRequired && d.resourceId === instance?.data?.databaseInstanceName
             );
             manageReadiness = detail?.manageReadiness || null;
         }
@@ -866,9 +944,25 @@ export const updateDetectBulkResponse = (
     return updatedInstances;
 };
 
-export const isAlreadyDetectedCheck = (data: InventoryTableInstanceDatInterface) =>
-    !!(
-        data &&
-        (data?.sqlServerAuthentication || data?.windowsAuthentication || data?.windowsDomainUserAuthentication) &&
-        (!data?.fsxId || (data?.fsxId && data?.isFsxRegistered))
+export const isAlreadyDetectedCheck = (data: any) => {
+    if (!data) return false;
+
+    if (data.hostType === DBType.ORACLE) {
+        if (data.isDefaultAuthentication === false) {
+            // If not default authentication, only check FSx registration
+            return !data.fsxId || (data.fsxId && data.isFsxRegistered);
+        }
+        if (data.isDefaultAuthentication === true) {
+            // If default authentication, check FSx registration and oracleServerAuthentication must be true
+            return (!data.fsxId || (data.fsxId && data.isFsxRegistered)) && data.oracleServerAuthentication === true;
+        }
+        // If isDefaultAuthentication is undefined/null, treat as not detected
+        return false;
+    }
+
+    // For MSSQL and others
+    return !!(
+        (data.sqlServerAuthentication || data.windowsAuthentication || data.windowsDomainUserAuthentication) &&
+        (!data.fsxId || (data.fsxId && data.isFsxRegistered))
     );
+};

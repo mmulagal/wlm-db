@@ -22,14 +22,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-39466",
-                        "sqlnode2-39466"
-                    ],
-                    "nodeIps": [
-                        "172.31.48.90",
-                        "172.31.9.72"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-39466", "sqlnode2-39466"],
+                    "nodeIps": ["172.31.48.90", "172.31.9.72"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -62,9 +56,7 @@
                     "sqlServerName": "Rheo",
                     "serverGuid": "491FF39F-8759-4B06-9D0C-C995FFD81CA9",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "Rheo"
-                    ],
+                    "sqlServerNodes": ["Rheo"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 4,
@@ -80,14 +72,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1c",
-                                "ap-southeast-1b"
-                            ]
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": ["Powershell 7"]
                         },
@@ -128,14 +117,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": true,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-69338",
-                        "sqlnode2-69338"
-                    ],
-                    "nodeIps": [
-                        "10.0.138.100",
-                        "10.0.27.149"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-69338", "sqlnode2-69338"],
+                    "nodeIps": ["10.0.138.100", "10.0.27.149"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -168,9 +151,7 @@
                     "sqlServerName": "EC2AMAZ-3UTIH78",
                     "serverGuid": "0A63AA51-6120-48A4-AF08-18EF0B68E84C",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-3UTIH78"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
@@ -182,8 +163,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
                         },
@@ -196,7 +177,7 @@
                             "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
                         },
                         "sandbox": {
-                            "missingSqlPermissions":["abc", "def"],
+                            "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
                         }
                     }
@@ -214,9 +195,7 @@
                     "sqlServerName": "EC2AMAZ-3UTIH78",
                     "serverGuid": "78D8D6A3-E93F-43CC-9BD7-501D832831BA",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-3UTIH78"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
@@ -228,8 +207,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
                         },
@@ -242,7 +221,7 @@
                             "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
                         },
                         "sandbox": {
-                            "missingSqlPermissions":["abc", "def"],
+                            "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
                         }
                     }
@@ -260,9 +239,7 @@
                     "sqlServerName": "EC2AMAZ-3UTIH78",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-3UTIH78"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 4,
@@ -274,8 +251,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -288,7 +265,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -320,9 +297,7 @@
                     "sqlServerName": "EC2AMAZ-3UTIH781",
                     "serverGuid": "0A63AA51-6120-48A4-AF08-18EF0B68E84C",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-3UTIH781"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-3UTIH781"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
@@ -335,13 +310,13 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
                         "remediation": {
-                            "missingSqlPermissions": [],
+                            "missingSqlPermissions": ["VIEW ANY DEFINITION"],
                             "missingModules": []
                         },
                         "dbcreation": {
@@ -349,7 +324,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -367,9 +342,7 @@
                     "sqlServerName": "EC2AMAZ-3UTIH781",
                     "serverGuid": "78D8D6A3-E93F-43CC-9BD7-501D832831BA",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-3UTIH781"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-3UTIH781"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
@@ -382,8 +355,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -396,7 +369,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -414,9 +387,7 @@
                     "sqlServerName": "EC2AMAZ-3UTIH781",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-3UTIH781"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-3UTIH781"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
@@ -429,8 +400,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -443,7 +414,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -475,9 +446,7 @@
                     "sqlServerName": "SQLDBAPFKD",
                     "serverGuid": "CB5F9F8D-C315-42E7-8169-A4BC16A0FEA5",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqldbapfkd"
-                    ],
+                    "sqlServerNodes": ["sqldbapfkd"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 7,
@@ -493,13 +462,11 @@
                     "deploymentTypes": [
                         {
                             "type": "Single_AZ_1",
-                            "zones": [
-                                "ap-southeast-1c"
-                            ]
+                            "zones": ["ap-southeast-1c"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -512,7 +479,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -544,9 +511,7 @@
                     "sqlServerName": "EC2AMAZ-FC7VH9R",
                     "serverGuid": "40CE7485-4BF5-4BEC-811B-48E06A8C4F4A",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-FC7VH9R"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-FC7VH9R"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 4,
@@ -558,8 +523,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -572,7 +537,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -604,9 +569,7 @@
                     "sqlServerName": "EC2AMAZ-FC7VH92",
                     "serverGuid": "40CE7485-4BF5-4BEC-811B-48E06A8C4F42",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-FC7VH92"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-FC7VH92"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 4,
@@ -619,8 +582,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -633,7 +596,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -661,14 +624,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-46551",
-                        "sqlnode2-46551"
-                    ],
-                    "nodeIps": [
-                        "10.0.135.21",
-                        "10.0.17.225"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-46551", "sqlnode2-46551"],
+                    "nodeIps": ["10.0.135.21", "10.0.17.225"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -701,14 +658,8 @@
                     "sqlServerName": "WEBER",
                     "serverGuid": "FF715E64-E06E-4623-B2C8-EC86F98DAEF9",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-17126",
-                        "sqlnode2-17126"
-                    ],
-                    "nodeIps": [
-                        "172.31.48.44",
-                        "172.31.10.206"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-17126", "sqlnode2-17126"],
+                    "nodeIps": ["172.31.48.44", "172.31.10.206"],
                     "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
@@ -723,14 +674,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1c",
-                                "ap-southeast-1b"
-                            ]
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -743,7 +691,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -771,14 +719,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-85618",
-                        "sqlnode2-85618"
-                    ],
-                    "nodeIps": [
-                        "10.0.130.208",
-                        "10.0.20.168"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-85618", "sqlnode2-85618"],
+                    "nodeIps": ["10.0.130.208", "10.0.20.168"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -807,14 +749,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": true,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-12926",
-                        "sqlnode2-12926"
-                    ],
-                    "nodeIps": [
-                        "10.0.134.162",
-                        "10.0.28.85"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-12926", "sqlnode2-12926"],
+                    "nodeIps": ["10.0.134.162", "10.0.28.85"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -843,14 +779,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-37687",
-                        "sqlnode2-37687"
-                    ],
-                    "nodeIps": [
-                        "10.0.143.197",
-                        "10.0.19.151"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-37687", "sqlnode2-37687"],
+                    "nodeIps": ["10.0.143.197", "10.0.19.151"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -879,14 +809,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-17126",
-                        "sqlnode2-17126"
-                    ],
-                    "nodeIps": [
-                        "172.31.48.44",
-                        "172.31.10.206"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-17126", "sqlnode2-17126"],
+                    "nodeIps": ["172.31.48.44", "172.31.10.206"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -915,16 +839,14 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Exception: The term 'sqlcmd' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.\n",
-                    "sqlServerNodes": [
-                        "ADWLMCOM"
-                    ],
+                    "sqlServerNodes": ["ADWLMCOM"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": true,
                     "storage": [],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -937,7 +859,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -965,16 +887,14 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\nException: Sqlcmd: Error: Microsoft ODBC Driver 17 for SQL Server : Login failed for user 'WORKGROUP\\EC2AMAZ-SRFHK18$'..\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-SRFHK18"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-SRFHK18"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -987,7 +907,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1015,16 +935,14 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\nException: The term 'sqlcmd' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.\n",
-                    "sqlServerNodes": [
-                        "ADWLMNEWCOM"
-                    ],
+                    "sqlServerNodes": ["ADWLMNEWCOM"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": true,
                     "storage": [],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1037,7 +955,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1065,14 +983,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": true,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-31974",
-                        "sqlnode2-31974"
-                    ],
-                    "nodeIps": [
-                        "10.0.139.193",
-                        "10.0.177.176"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-31974", "sqlnode2-31974"],
+                    "nodeIps": ["10.0.139.193", "10.0.177.176"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -1101,14 +1013,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-49314",
-                        "sqlnode2-49314"
-                    ],
-                    "nodeIps": [
-                        "10.0.135.211",
-                        "10.0.180.149"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-49314", "sqlnode2-49314"],
+                    "nodeIps": ["10.0.135.211", "10.0.180.149"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -1141,14 +1047,8 @@
                     "sqlServerName": "SNAPMAY22",
                     "serverGuid": "C14E3B5A-C8AD-410E-A040-391BB922FEDC",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-39466",
-                        "sqlnode2-39466"
-                    ],
-                    "nodeIps": [
-                        "172.31.48.90",
-                        "172.31.9.72"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-39466", "sqlnode2-39466"],
+                    "nodeIps": ["172.31.48.90", "172.31.9.72"],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 36,
                     "sqlServerAuthentication": false,
@@ -1163,14 +1063,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1c",
-                                "ap-southeast-1b"
-                            ]
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1183,7 +1080,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1215,9 +1112,7 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-6F4OJSL"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 5,
@@ -1237,14 +1132,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1c",
-                                "ap-southeast-1b"
-                            ]
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1257,7 +1149,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1275,9 +1167,7 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-6F4OJSL"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 5,
@@ -1292,14 +1182,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1c",
-                                "ap-southeast-1b"
-                            ]
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1312,7 +1199,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1344,14 +1231,8 @@
                     "sqlServerName": "SQLDBVYB5E",
                     "serverGuid": "5B07DF94-C03F-47ED-8BE3-AC4C189C2754",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-85618",
-                        "sqlnode2-85618"
-                    ],
-                    "nodeIps": [
-                        "10.0.130.208",
-                        "10.0.20.168"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-85618", "sqlnode2-85618"],
+                    "nodeIps": ["10.0.130.208", "10.0.20.168"],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
@@ -1366,14 +1247,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1a",
-                                "ap-southeast-1c"
-                            ]
+                            "zones": ["ap-southeast-1a", "ap-southeast-1c"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1386,7 +1264,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1414,14 +1292,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-37687",
-                        "sqlnode2-37687"
-                    ],
-                    "nodeIps": [
-                        "10.0.143.197",
-                        "10.0.19.151"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-37687", "sqlnode2-37687"],
+                    "nodeIps": ["10.0.143.197", "10.0.19.151"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -1454,14 +1326,8 @@
                     "sqlServerName": "SQLDBVY0AI",
                     "serverGuid": "DE3E7E2E-1C54-4865-9BDB-F529725FF07D",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-69338",
-                        "sqlnode2-69338"
-                    ],
-                    "nodeIps": [
-                        "10.0.138.100",
-                        "10.0.27.149"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-69338", "sqlnode2-69338"],
+                    "nodeIps": ["10.0.138.100", "10.0.27.149"],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 6,
                     "sqlServerAuthentication": false,
@@ -1476,14 +1342,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1a",
-                                "ap-southeast-1c"
-                            ]
+                            "zones": ["ap-southeast-1a", "ap-southeast-1c"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1496,7 +1359,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1524,14 +1387,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-46551",
-                        "sqlnode2-46551"
-                    ],
-                    "nodeIps": [
-                        "10.0.135.21",
-                        "10.0.17.225"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-46551", "sqlnode2-46551"],
+                    "nodeIps": ["10.0.135.21", "10.0.17.225"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -1559,14 +1416,8 @@
                     "isDefaultInstance": true,
                     "windowsAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-12926",
-                        "sqlnode2-12926"
-                    ],
-                    "nodeIps": [
-                        "10.0.134.162",
-                        "10.0.28.85"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-12926", "sqlnode2-12926"],
+                    "nodeIps": ["10.0.134.162", "10.0.28.85"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -1599,9 +1450,7 @@
                     "sqlServerName": "sqldbapnsr",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqldbapnsr"
-                    ],
+                    "sqlServerNodes": ["sqldbapnsr"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 7,
@@ -1621,13 +1470,11 @@
                     "deploymentTypes": [
                         {
                             "type": "SINGLE_AZ_1",
-                            "zones": [
-                                "ap-southeast-1a"
-                            ]
+                            "zones": ["ap-southeast-1a"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1640,7 +1487,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1668,23 +1515,8 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": true,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-52601"
-                    ],
-                    "nodeIps": [
-                        "1",
-                        "0",
-                        ".",
-                        "0",
-                        ".",
-                        "1",
-                        "4",
-                        "0",
-                        ".",
-                        "1",
-                        "0",
-                        "3"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-52601"],
+                    "nodeIps": ["1", "0", ".", "0", ".", "1", "4", "0", ".", "1", "0", "3"],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
@@ -1717,14 +1549,8 @@
                     "sqlServerName": "SQPVTVYPHZ",
                     "serverGuid": "70385C91-5ECB-4608-9071-AE95DCCBB950",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-31974",
-                        "sqlnode2-31974"
-                    ],
-                    "nodeIps": [
-                        "10.0.139.193",
-                        "10.0.177.176"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-31974", "sqlnode2-31974"],
+                    "nodeIps": ["10.0.139.193", "10.0.177.176"],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 6,
                     "sqlServerAuthentication": false,
@@ -1739,14 +1565,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1a",
-                                "ap-southeast-1b"
-                            ]
+                            "zones": ["ap-southeast-1a", "ap-southeast-1b"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1759,7 +1582,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1791,14 +1614,8 @@
                     "sqlServerName": "SQPVTVY0H8",
                     "serverGuid": "AFE32784-B15B-4A2C-8BEB-8FC34D46797D",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "sqlnode1-49314",
-                        "sqlnode2-49314"
-                    ],
-                    "nodeIps": [
-                        "10.0.135.211",
-                        "10.0.180.149"
-                    ],
+                    "sqlServerNodes": ["sqlnode1-49314", "sqlnode2-49314"],
+                    "nodeIps": ["10.0.135.211", "10.0.180.149"],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
@@ -1813,14 +1630,11 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": [
-                                "ap-southeast-1a",
-                                "ap-southeast-1b"
-                            ]
+                            "zones": ["ap-southeast-1a", "ap-southeast-1b"]
                         }
                     ],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1833,7 +1647,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1865,9 +1679,7 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-6F4OJSL"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 5,
@@ -1884,8 +1696,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1898,7 +1710,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1916,9 +1728,7 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-6F4OJSL"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 5,
@@ -1930,8 +1740,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1944,7 +1754,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -1962,9 +1772,7 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-6F4OJSL"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 5,
@@ -1980,8 +1788,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1994,7 +1802,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }
@@ -2012,9 +1820,7 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": [
-                        "EC2AMAZ-6F4OJSL"
-                    ],
+                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 5,
@@ -2026,8 +1832,8 @@
                         }
                     ],
                     "deploymentTypes": [],
-                    "manageReadiness": { 
-                        "assessment" : { 
+                    "manageReadiness": {
+                        "assessment": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -2040,7 +1846,7 @@
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions":[],
+                            "missingSqlPermissions": [],
                             "missingModules": []
                         }
                     }

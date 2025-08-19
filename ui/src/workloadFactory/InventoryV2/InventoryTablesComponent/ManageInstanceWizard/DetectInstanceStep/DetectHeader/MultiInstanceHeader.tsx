@@ -1,25 +1,25 @@
 import { DsButton, DsTypography, useDialog } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
-import { ReactComponent as InstanceName } from '../../../../../../assets/instance-name.svg';
-
 import styles from './DetectHeader.module.scss';
 import DialogComponent from '../../../../../../common/Dialog/DialogComponent';
 import DetectedInstanceTable from './DetectedInstanceTable';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { BulkDetectedInstance } from '../../../../../../utils/types/registerTypes';
+import { getInstanceHeaderContent } from '../DetectInstanceHelper';
 
-interface CountSummary {
+export interface CountSummary {
     total?: number;
     success?: number;
     readyForManagement?: number;
 }
 
-const MultiInstanceHeader = () => {
+const MultiInstanceHeader = ({ engineType }: { engineType: string }) => {
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
     const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
     const [countSummary, setCountSummary] = useState<CountSummary>({});
+    const { selectedLabel, icon } = getInstanceHeaderContent(engineType, t);
 
     useEffect(() => {
         const newCountSummary = {
@@ -44,7 +44,7 @@ const MultiInstanceHeader = () => {
             <div className={styles.dialogContainer}>
                 <DialogComponent
                     header={t('databases.register-flow.multiinstance-header-dialog-heading')}
-                    content={<DetectedInstanceTable />}
+                    content={<DetectedInstanceTable engineType={engineType} />}
                     primaryButton={t('databases.general.close')}
                     callback={() => {}}
                     closeCallback={() => {
@@ -58,21 +58,15 @@ const MultiInstanceHeader = () => {
         <div className={styles.cardHeader}>
             <div className={styles.cardContent}>
                 {/* image */}
-                <div className={`${styles.column} ${styles.columnImage}`}>
-                    <InstanceName />
-                </div>
+                <div className={`${styles.column} ${styles.columnImage}`}>{icon}</div>
 
                 <div className={`${styles.column}`}>
                     <DsTypography variant="Semibold_24" className={styles.titleText} style={{ lineHeight: 'unset' }}>
                         {countSummary.total}
                     </DsTypography>
 
-                    <DsTypography
-                        variant="Regular_14"
-                        className={styles.label}
-                        title={t('databases.register-flow.selected-instances')}
-                    >
-                        {t('databases.register-flow.selected-instances')}
+                    <DsTypography variant="Regular_14" className={styles.label} title={selectedLabel}>
+                        {selectedLabel}
                     </DsTypography>
                 </div>
 

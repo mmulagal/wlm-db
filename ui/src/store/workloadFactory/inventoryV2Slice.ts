@@ -44,6 +44,7 @@ const initialInventoryV2State: InventorySliceData = {
     },
     fsxCredentialStatusObj: {},
     fsxCredentialStatusLoading: false,
+    fsxCredentialStatusLoadingOracle: false,
     mssqlInstancesData: null,
     pgsqlInstancesData: null,
     oracleInstancesData: null,
@@ -107,7 +108,8 @@ const initialInventoryV2State: InventorySliceData = {
     authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
     manageInstanceInstallAction: {
         installMissingAWS: false,
-        installMissingPowershell: false
+        installMissingPowershell: false,
+        installMissingJQ: false
     },
     manageSingleInstanceReadiness: null,
     manageSingleInstanceChecks: null,
@@ -229,6 +231,9 @@ const inventoryV2Slice = createSlice({
         },
         setFsxCredentialStatusLoading: (state, action: PayloadAction<any>) => {
             state.fsxCredentialStatusLoading = action.payload;
+        },
+        setFsxCredentialStatusLoadingOracle: (state, action: PayloadAction<any>) => {
+            state.fsxCredentialStatusLoadingOracle = action.payload;
         },
         setMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.mssqlInstancesData = action.payload;
@@ -476,6 +481,7 @@ export const {
     setIsDiscoverPgsqlHostLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
+    setFsxCredentialStatusLoadingOracle,
     setMssqlInstancesData,
     setPgsqlInstancesData,
     setOracleInstancesData,

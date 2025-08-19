@@ -466,7 +466,7 @@ export function getMssqlInstanceTableColumns({
             width: '200px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const { colText, disableMsg } = manageActionCol(t, rowData);
+                const { colText, disableMsg } = manageActionCol(t, DBType.MSSQL, rowData);
                 return (
                     <>
                         {disableMsg ? (

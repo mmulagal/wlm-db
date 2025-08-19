@@ -14,6 +14,7 @@ import {
     CREATE_DATABASE_YAML,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
+    DBType,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DETECT_HOST_VAR,
@@ -1653,7 +1654,7 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
     ) {
         credList.push({
             resourceId: sqlServerInstance,
-            resourceType: DETECT_HOST_VAR.MSSQL,
+            resourceType: rowData?.hostType === DBType.MSSQL ? DETECT_HOST_VAR.MSSQL : rowData?.hostType?.toUpperCase(),
             username: detectManageUserName,
             password: detectManagePassword
         });

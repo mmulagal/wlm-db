@@ -1176,8 +1176,6 @@ export const GENERAL = {
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
     ONLINE_INSTANCE_DISMISS: 'Analysis state can be updated for online instances.',
-    NON_MSSQL_ASSESSMENT_NA:
-        'Well-architected analysis is only available for Microsoft SQL Server registered instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
@@ -1195,8 +1193,6 @@ export const GENERAL = {
     ASSESSMENT_AOAG_DETECTED: 'Well-architected analysis is only supported for registered instances.',
     ASSESSMENT_AOAG_UNDETECTED:
         'Well-architected analysis is only supported for authenticated and registered instances.',
-
-    SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',

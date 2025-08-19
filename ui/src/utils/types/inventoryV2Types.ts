@@ -54,6 +54,7 @@ export interface InventorySliceData {
     };
     fsxCredentialStatusObj: any;
     fsxCredentialStatusLoading: boolean;
+    fsxCredentialStatusLoadingOracle: boolean;
     mssqlInstancesData: any;
     pgsqlInstancesData: any;
     oracleInstancesData: Record<string, OracleInstanceData> | null;
@@ -194,6 +195,8 @@ export interface InventoryTableInstanceDatInterface {
     sqlServerDeploymentType?: string;
     discoverInstanceData?: any;
     isFsxRegistered?: boolean;
+    isDefaultAuthentication?: boolean;
+    oracleServerAuthentication?: boolean;
     windowsAuthentication?: boolean;
     sqlServerAuthentication?: boolean;
     windowsDomainUserAuthentication?: boolean;
@@ -509,6 +512,8 @@ export interface OracleInstancesDiscovered {
     instanceId?: string;
     instanceState?: string;
     version?: string;
+    isDefaultAuthentication?: boolean;
+    oracleServerAuthentication?: boolean;
     instanceType?: string;
     databaseCount?: number;
     databaseDetails?: {
