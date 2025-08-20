@@ -154,35 +154,18 @@ export const getTruncatedItems = (items: any) => {
     };
 };
 
-const openNewTabWithPayload = (url: string, payload: {}, targetOrigin = '*') => {
-    const newTab = window.open(url, '_blank');
+const openNewTabWithPayload = (url: string, payload: {}) => {
+    const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
+
+    const compactPayload = btoa(payloadString);
+
+    const urlWithFragment = `${url}#wlmdb_data=${compactPayload}`;
+
+    const newTab = window.open(urlWithFragment, '_blank');
 
     if (!newTab) {
         throw new Error('Failed to open new tab...');
     }
-
-    const sendPayload = () => {
-        newTab.postMessage(
-            {
-                type: 'PARENT_DATA',
-                payload: payload
-            },
-            targetOrigin
-        );
-    };
-
-    const messageHandler = (event: MessageEvent) => {
-        if (event.source === newTab && event.data.type === 'TAB_READY') {
-            sendPayload();
-            window.removeEventListener('message', messageHandler);
-        }
-    };
-
-    window.addEventListener('message', messageHandler);
-
-    // Fallback: send after a delay
-
-    setTimeout(sendPayload, 2000);
 
     return newTab;
 };
@@ -208,7 +191,7 @@ export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
     };
 
     if (isWorkloadFactory) {
-        openNewTabWithPayload(url, JSON.stringify(wlmdbParams), window.location.origin);
+        openNewTabWithPayload(url, JSON.stringify(wlmdbParams));
     } else {
         // Keep existing postMessage for non-workload factory
         window.parent.postMessage(
@@ -217,7 +200,7 @@ export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
                 payload: {
                     pathname: '/unified-backup-restore',
                     state: {
-                        wlmdbParams: JSON.stringify(wlmdbParams)
+                        hash: JSON.stringify(wlmdbParams)
                     }
                 }
             },
