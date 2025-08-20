@@ -51,10 +51,10 @@ const ScrollableCard = () => {
                             <div className={styles.column}>
                                 <div className={styles.contentArea}>
                                     <DsTypography variant="Semibold_16">
-                                        {t('databases.log-analyzer.second-card-point-1-heading')}
+                                        {t('databases.log-analyzer.second-card-point-2-heading')}
                                     </DsTypography>
                                     <DsTypography variant="Regular_14">
-                                        {t('databases.log-analyzer.second-card-point-1-text')}
+                                        {t('databases.log-analyzer.second-card-point-2-text')}
                                     </DsTypography>
                                 </div>
 
@@ -68,10 +68,10 @@ const ScrollableCard = () => {
                                 </div>
                                 <div className={styles.contentArea}>
                                     <DsTypography variant="Semibold_16">
-                                        {t('databases.log-analyzer.second-card-point-5-heading')}
+                                        {t('databases.log-analyzer.second-card-point-4-heading')}
                                     </DsTypography>
                                     <DsTypography variant="Regular_14">
-                                        {t('databases.log-analyzer.second-card-point-5-text')}
+                                        {t('databases.log-analyzer.second-card-point-4-text')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -79,18 +79,19 @@ const ScrollableCard = () => {
                             <div className={styles.column}>
                                 <div className={styles.contentArea}>
                                     <DsTypography variant="Semibold_16">
-                                        {t('databases.log-analyzer.second-card-point-2-heading')}
+                                        {t('databases.log-analyzer.second-card-point-1-heading')}
                                     </DsTypography>
                                     <DsTypography variant="Regular_14">
-                                        {t('databases.log-analyzer.second-card-point-2-text')}
+                                        {t('databases.log-analyzer.second-card-point-1-text')}
                                     </DsTypography>
                                 </div>
+
                                 <div className={styles.contentArea}>
                                     <DsTypography variant="Semibold_16">
-                                        {t('databases.log-analyzer.second-card-point-4-heading')}
+                                        {t('databases.log-analyzer.second-card-point-5-heading')}
                                     </DsTypography>
                                     <DsTypography variant="Regular_14">
-                                        {t('databases.log-analyzer.second-card-point-4-text')}
+                                        {t('databases.log-analyzer.second-card-point-5-text')}
                                     </DsTypography>
                                 </div>
                             </div>

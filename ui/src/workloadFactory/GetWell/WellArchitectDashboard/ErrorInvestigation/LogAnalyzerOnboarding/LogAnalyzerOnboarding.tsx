@@ -147,9 +147,7 @@ const LogAnalyzerOnboarding = () => {
                     <OnboardingAccordions />
                 </div>
                 <div className={styles.legalNoticeSection}>
-                    <DsTypography variant="Semibold_16" className={styles.legalNoticeHeading}>
-                        {t('databases.log-analyzer.cost-legal-overview')}
-                    </DsTypography>
+                    <div className={styles.legalNoticeHeading} />
                     <div className={styles.legalNotice}>
                         <div style={{ height: '24px' }} />
                         <div className={styles.legalContentSection}>
