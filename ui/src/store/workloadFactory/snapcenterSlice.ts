@@ -18,13 +18,17 @@ export const initialSandboxState: SnapCenterEntities = {
     credentials: {
         username: '',
         password: ''
-    }
+    },
+    authVerification: false
 };
 
 const snapCenterSlice = createSlice({
     name: 'snapCenter',
     initialState: initialSandboxState,
     reducers: {
+        setAuthVerification: (state, action: PayloadAction<any>) => {
+            state.authVerification = action.payload;
+        },
         startProtectionStep1: (state, action: PayloadAction<string>) => {
             const key = action.payload;
             state.protectionProcessState[key] ??= {
@@ -90,6 +94,7 @@ const snapCenterSlice = createSlice({
 });
 
 export const {
+    setAuthVerification,
     setWorkSpaceData,
     setSelectedAgent,
     setSCCredentials,

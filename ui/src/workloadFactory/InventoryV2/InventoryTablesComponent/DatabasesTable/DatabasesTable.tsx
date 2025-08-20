@@ -39,7 +39,11 @@ import {
     useRegisterResourceCredentialsBulkMutation
 } from '../../../../utils/apiService';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
-import { cancelProtectionForRow, setDataForRow } from '../../../../store/workloadFactory/snapcenterSlice';
+import {
+    cancelProtectionForRow,
+    setAuthVerification,
+    setDataForRow
+} from '../../../../store/workloadFactory/snapcenterSlice';
 import { addHostHandlerSc } from '../../InventoryUtilsV2';
 import { getDatabaseTableColumns } from './DatabaseTableColumns';
 import { mssqlPgsqlDatabaseColumnFilterMap } from './MssqlPgsqlDatabaseTableColumns';
@@ -249,39 +253,46 @@ const DatabasesTable = () => {
                     closeDialog();
                 }}
                 callback={async () => {
-                    const state = store.getState(); //For live state
-                    const credDetails = state.snapCenter.credentials;
-                    const payload = {
-                        resourceId: rowData?.fsxId,
-                        resourceType: DETECT_HOST_VAR.MSSQL,
-                        username: credDetails.username,
-                        password: credDetails.password,
-                        ec2InstanceId: rowData?.ec2InstanceId,
-                        region: rowData.regionId,
-                        credentialsId: rowData.credentialId
-                    };
-                    const result = await registerResourceCredBulk({ payload });
-                    if (result && !result?.error && result?.data) {
-                        // Mark authentication as completed for this row
-                        dispatch(
-                            setDataForRow({
-                                key,
-                                stepData: {
-                                    scCredentialsChecked: true,
-                                    scCredentialsValid: true
-                                }
-                            })
-                        );
+                    try {
+                        dispatch(setAuthVerification(true));
+                        const state = store.getState(); //For live state
+                        const credDetails = state.snapCenter.credentials;
+                        const payload = {
+                            resourceId: rowData?.fsxId,
+                            resourceType: DETECT_HOST_VAR.MSSQL,
+                            username: credDetails.username,
+                            password: credDetails.password,
+                            ec2InstanceId: rowData?.ec2InstanceId,
+                            region: rowData.regionId,
+                            credentialsId: rowData.credentialId
+                        };
+                        const result = await registerResourceCredBulk({ payload });
+                        if (result && !result?.error && result?.data) {
+                            // Mark authentication as completed for this row
+                            dispatch(
+                                setDataForRow({
+                                    key,
+                                    stepData: {
+                                        scCredentialsChecked: true,
+                                        scCredentialsValid: true
+                                    }
+                                })
+                            );
 
-                        if (dialogToOpen === 'openNoAgent') {
-                            setTimeout(() => {
-                                showNoAgentDialog(true);
-                            }, 10);
-                        } else {
-                            setTimeout(() => {
-                                showSingleAgentDialog(activeAgents, boolValue, rowData, true);
-                            }, 10);
+                            if (dialogToOpen === 'openNoAgent') {
+                                setTimeout(() => {
+                                    showNoAgentDialog(true);
+                                }, 10);
+                            } else {
+                                setTimeout(() => {
+                                    showSingleAgentDialog(activeAgents, boolValue, rowData, true);
+                                }, 10);
+                            }
                         }
+                    } catch (error) {
+                        dispatch(setAuthVerification(false));
+                    } finally {
+                        dispatch(setAuthVerification(false));
                     }
                 }}
                 customClass={styles.protectionDialog}

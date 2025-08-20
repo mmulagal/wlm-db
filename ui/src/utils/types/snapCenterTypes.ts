@@ -11,4 +11,5 @@ export interface SnapCenterEntities {
     workSpaceData: any;
     protectionProcessState: ProtectionProcessState;
     credentials: UserCredentials;
+    authVerification: boolean;
 }

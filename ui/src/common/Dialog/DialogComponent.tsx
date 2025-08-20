@@ -79,6 +79,7 @@ const DialogComponent = ({
         state => state.exploreSavings.serverDetails
     );
     const { username: scUsername, password: scPassword } = useAppSelector(state => state.snapCenter.credentials);
+    const { authVerification } = useAppSelector(state => state.snapCenter);
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() =>
@@ -87,6 +88,7 @@ const DialogComponent = ({
         (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
         (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading) ||
         (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS && actionsDisabled) ||
+        (dialogFrom === FROM_DIALOG.WINDOWS_AUTH && authVerification) ||
         (dialogFrom === FROM_DIALOG.SINGLE_AGENT && actionsDisabled))();
 
     // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
@@ -99,7 +101,8 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.FSXADMIN &&
             dialogFrom !== FROM_DIALOG.SQLSERVER &&
             dialogFrom !== FROM_DIALOG.SINGLE_AGENT &&
-            dialogFrom !== FROM_DIALOG.EXPLORE_SAVINGS
+            dialogFrom !== FROM_DIALOG.EXPLORE_SAVINGS &&
+            dialogFrom !== FROM_DIALOG.WINDOWS_AUTH
         ) {
             closeDialog();
         }
