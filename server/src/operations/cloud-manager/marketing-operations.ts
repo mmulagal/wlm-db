@@ -184,7 +184,7 @@ function handleMarketingApiFsxCalculationObject(
     const fsxCalculationObject = camelizeKeys(fsxCalculationData);
     const { totalStorageCapacity, effectiveCapacity, ssdTierReqCapacity, capacityPoolTier, monthlySnapshotCapacity } =
         fsxCalculationObject;
-    const { desiredStorageCapacityGB: desiredStorageCapacityGb, EBSCapacity: ebsCapacity } =
+    const { desiredStorageCapacityGB: desiredStorageCapacity, EBSCapacity: ebsCapacity } =
         fsxCalculationDataNoSnapshot || {};
 
     const capacities = [
@@ -193,7 +193,7 @@ function handleMarketingApiFsxCalculationObject(
         { ssdTierReqCapacity },
         { capacityPoolTier },
         { monthlySnapshotCapacity },
-        { desiredStorageCapacityGb },
+        { desiredStorageCapacity },
         { ebsCapacity }
     ];
 
