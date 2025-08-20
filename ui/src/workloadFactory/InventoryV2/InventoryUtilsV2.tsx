@@ -3848,7 +3848,7 @@ export const deleteHostJobPolling = (
     new Promise(resolve => {
         const jobInterval = setInterval(() => {
             addHostJobScApi({
-                accountID: store.getState().auth.orgId,
+                accountID: store.getState().auth.accountId,
                 jobID: jobId
             })
                 .then((jobRes: any) => {

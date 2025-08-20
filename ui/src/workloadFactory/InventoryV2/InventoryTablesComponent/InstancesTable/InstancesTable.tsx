@@ -413,13 +413,22 @@ const InstancesTable = () => {
                         const state = store.getState(); // For live state
                         const credDetails = state.snapCenter.credentials;
                         const payload = {
-                            resourceId: rowData?.fsxId,
-                            resourceType: DETECT_HOST_VAR.MSSQL,
-                            username: credDetails.username,
-                            password: credDetails.password,
-                            ec2InstanceId: rowData?.ec2InstanceId,
-                            region: rowData.regionId,
-                            credentialsId: rowData.credentialId
+                            items: [
+                                {
+                                    credentials: [
+                                        {
+                                            resourceId: rowData?.resourceId,
+                                            resourceType: DETECT_HOST_VAR.MSSQL,
+                                            username: credDetails.username,
+                                            password: credDetails.password
+                                        }
+                                    ],
+
+                                    ec2InstanceId: rowData?.ec2InstanceId,
+                                    region: rowData.regionId,
+                                    credentialsId: rowData.credentialId
+                                }
+                            ]
                         };
                         const result = await registerResourceCredBulk({ payload });
                         if (result && !result?.error && result?.data) {

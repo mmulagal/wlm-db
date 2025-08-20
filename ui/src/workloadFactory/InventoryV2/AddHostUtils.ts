@@ -238,7 +238,7 @@ export const handleFsxFlow = async (
             if (isCancelled(key)) return;
 
             await discoverExistingFsxN({
-                accountID: store.getState().auth.orgId,
+                accountID: store.getState().auth.accountId,
                 credentialID: rowData.credentialId,
                 workSpaceID: workSpaceRes,
                 regionID: rowData.regionId,
@@ -278,7 +278,7 @@ export const handleFsxFlow = async (
     }
 
     if (!stepData.hostChecked) {
-        const hostsRes = await listExistingHosts({ accountID: store.getState().auth.accountId });
+        const hostsRes = await listExistingHosts({ accountID: store.getState().auth.orgId });
         if (isCancelled(key)) return;
 
         if (hostsRes?.error?.data === 'Unauthorized') {
