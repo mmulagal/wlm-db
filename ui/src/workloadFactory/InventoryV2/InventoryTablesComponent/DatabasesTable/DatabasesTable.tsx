@@ -232,7 +232,7 @@ const DatabasesTable = () => {
         );
     };
 
-    //SC Auth Dialog
+    // SC Auth Dialog
     const scAuthDialog = (key: string, dialogToOpen: string, activeAgents?: [], boolValue?: boolean, rowData?: any) => {
         setDialog(
             <DialogComponent
@@ -255,7 +255,7 @@ const DatabasesTable = () => {
                 callback={async () => {
                     try {
                         dispatch(setAuthVerification(true));
-                        const state = store.getState(); //For live state
+                        const state = store.getState(); // For live state
                         const credDetails = state.snapCenter.credentials;
                         const payload = {
                             resourceId: rowData?.fsxId,

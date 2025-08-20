@@ -4,7 +4,6 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
-import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -20,6 +19,21 @@ import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
 import ScheduledAWSBackupDialog from './ScheduledAWSBackupDialog';
+import {
+    createBulletRow,
+    createClusterQuorumSQLNotesSection,
+    createCodeBox,
+    createContentWithBullets,
+    createDriveLetterNotesSection,
+    createDriveSizeMissingPermissionsDialog,
+    createFailoverClusterDialog,
+    createFailoverClusterNotesSection,
+    createOSNotesSection,
+    createSection,
+    createStandardDialog,
+    createStandardNotesSection
+} from './DialogContentHelper';
+import StorageLayoutOracleDialog from './StorageLayoutOracleDialog';
 
 interface SavingsOpportunity {
     savingsOpportunityPercentage?: number;
@@ -107,6 +121,24 @@ const DialogContent = ({
     };
 
     const ontapConfigTextSet = () => {
+        if (engineType === DBType.ORACLE) {
+            switch (type) {
+                case 'Snapshot policy':
+                    return 'Snapshot policy = none';
+                case 'Tiering policy':
+                    return 'Tiering-policy (data)= snapshot-only, Tiering-policy (redo log)= none, Tiering-policy (archive) = auto';
+                case 'Tiering minimum cooling days':
+                    return 'Tiering-minimum-cooling-days (Archive - non FRA)= two days, Tiering-minimum-cooling-days (FRA)= two days if RMAN backup compression is being used.14 days if RMAN compression is not used​, Tiering-minimum-cooling-days (data)= 7​';
+                case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
+                    return 'Compression(log vol)= disabled, Compression=Inline, adaptive, 8KB block size';
+                case ASSESSMENT_CONFIG_NAMES.COMPACTION:
+                    return 'Compaction = enabled';
+                case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
+                    return 'Deduplication (log)= disabled, Deduplication = Inline, enabled';
+                case 'OS type':
+                    return 'OS type =linux ( for linux OS) ';
+            }
+        }
         switch (type) {
             case 'Autosize':
                 return 'Autosize on';
@@ -177,124 +209,6 @@ const DialogContent = ({
         }
     };
 
-    // Helper function to create a section with title and description
-    const createSection = (title: string, description?: string | React.ReactNode, style?: React.CSSProperties) => (
-        <div className={styles['first-section']}>
-            <DsTypography variant="Semibold_14" style={style}>
-                {title}
-            </DsTypography>
-            {description &&
-                (typeof description === 'string' ? (
-                    <DsTypography variant="Regular_14" style={style}>
-                        {description}
-                    </DsTypography>
-                ) : (
-                    description
-                ))}
-        </div>
-    );
-
-    // Helper function to create a bullet point row
-    const createBulletRow = (text: string | React.ReactNode, hasBullet: boolean = true) => (
-        <div className={styles.row}>
-            {hasBullet && (
-                <div>
-                    <Bullet />
-                </div>
-            )}
-            {typeof text === 'string' ? <DsTypography variant="Regular_14">{text}</DsTypography> : text}
-        </div>
-    );
-
-    // Helper function to create content with bullet points
-    const createContentWithBullets = (items: (string | React.ReactNode)[]) => (
-        <div className={styles.content}>
-            {items.map(item => (
-                <div key={typeof item === 'string' ? item : Math.random().toString()} className={styles.row}>
-                    <div>
-                        <Bullet />
-                    </div>
-                    {typeof item === 'string' ? <DsTypography variant="Regular_14">{item}</DsTypography> : item}
-                </div>
-            ))}
-        </div>
-    );
-
-    // Helper function to create a code box
-    const createCodeBox = (content: string | string[]) => (
-        <div className={styles['dialog-body']}>
-            <div className={styles['code-box']}>
-                <div className={styles.code}>
-                    {Array.isArray(content) ? (
-                        content.map((line, index) => (
-                            <DsTypography key={index} variant="Regular_14" style={{ display: 'block' }}>
-                                {line}
-                            </DsTypography>
-                        ))
-                    ) : (
-                        <DsTypography variant="Regular_14">{content}</DsTypography>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-
-    // Helper function to create standard notes section
-    const createStandardNotesSection = () =>
-        createSection(GENERAL.NOTE, createContentWithBullets([GENERAL.NOTE_PONT_ONE, GENERAL.NOTE_PONT_TWO]), {
-            width: '712px'
-        });
-
-    // Helper function to create OS notes section
-    const createOSNotesSection = () =>
-        createSection(GENERAL.NOTE, createContentWithBullets([GENERAL.OS_NOTE_POINT_ONE, GENERAL.OS_NOTE_POINT_TWO]), {
-            width: '712px'
-        });
-
-    // Helper function to create failover cluster notes section
-    const createFailoverClusterNotesSection = () =>
-        createSection(
-            GENERAL.NOTE,
-            createContentWithBullets([
-                t('databases.well-architect.failover-cluster-note1'),
-                t('databases.well-architect.failover-cluster-note2')
-            ]),
-            { width: '712px' }
-        );
-
-    // Helper function to create drive letter notes section
-    const createDriveLetterNotesSection = () =>
-        createSection(GENERAL.NOTE, createContentWithBullets([t('databases.well-architect.drive-letter-note1')]), {
-            width: '712px'
-        });
-
-    // Helper function to create cluster quorum and SQL server notes section
-    const createClusterQuorumSQLNotesSection = () =>
-        createSection(
-            GENERAL.NOTE,
-            createContentWithBullets([
-                t('databases.well-architect.failover-cluster-note3'),
-                t('databases.well-architect.failover-cluster-note4')
-            ]),
-            { width: '712px' }
-        );
-
-    // Helper function to create standard dialog structure
-    const createStandardDialog = (
-        actionSummary: string,
-        whatWillHappen: string | React.ReactNode,
-        notesSection: React.ReactNode,
-        configSection?: React.ReactNode
-    ) => (
-        <div className={styles['storage-tier-block']}>
-            {createSection(t('databases.well-architect.action-summary'), actionSummary)}
-            {createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
-            {configSection}
-            {notesSection}
-        </div>
-    );
-
-    // Helper function to create ONTAP configuration section
     const createONTAPConfigSection = () =>
         createSection(
             t('databases.well-architect.well-architected-configuration'),
@@ -302,86 +216,16 @@ const DialogContent = ({
             { width: '712px' }
         );
 
-    // Helper function to create failover cluster dialog with multiple action summaries
-    const createFailoverClusterDialog = (
-        actionSummaries: string[],
-        whatWillHappen: string | React.ReactNode,
-        configSection?: React.ReactNode,
-        notesSection?: React.ReactNode
-    ) => (
-        <div className={styles['storage-tier-block']}>
-            <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14">{t('databases.well-architect.action-summary')}</DsTypography>
-                {actionSummaries.map(summary => (
-                    <DsTypography
-                        key={`action-summary-${summary.slice(0, 30).replace(/\s+/g, '-')}`}
-                        variant="Regular_14"
-                    >
-                        {summary}
-                    </DsTypography>
-                ))}
-            </div>
-
-            {whatWillHappen &&
-                createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
-
-            {configSection}
-
-            {notesSection || createFailoverClusterNotesSection()}
-        </div>
-    );
-
-    // Helper function to create drive size missing permissions dialog
-    const createDriveSizeMissingPermissionsDialog = (missingPermissionsList: string[]) => (
-        <div className={styles['storage-tier-block']}>
-            {createSection(
-                t('databases.well-architect.action-summary'),
-                t('databases.well-architect.drive-size-missing-permission-action-summary')
-            )}
-
-            {createSection(
-                t('databases.well-architect.action-required'),
-                <>
-                    <DsTypography variant="Regular_14" style={{ width: '712px' }}>
-                        {t('databases.well-architect.drive-size-and-headroom-action-content1')}
-                    </DsTypography>
-                    {createContentWithBullets([
-                        t('databases.well-architect.drive-size-and-headroom-action-content2'),
-                        t('databases.well-architect.drive-size-and-headroom-action-content3')
-                    ])}
-                    <div className={styles['dialog-body']}>
-                        <div className={styles['code-box']}>
-                            <div className={styles.code}>
-                                <DsTypography variant="Regular_14">
-                                    {missingPermissionsList.map((permission: string) => (
-                                        <DsTypography key={permission} variant="Regular_14">
-                                            {permission}
-                                        </DsTypography>
-                                    ))}
-                                </DsTypography>
-                                <div className={styles.copy}>
-                                    <CopyToClipboardCommon
-                                        value={missingPermissionsList}
-                                        iconProvided={
-                                            <div className={styles.menuItem}>
-                                                <CopyIcon />
-                                            </div>
-                                        }
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>,
-                { width: '712px' }
-            )}
-        </div>
-    );
-
     const setContent = () => {
         switch (type) {
+            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+                return <StorageLayoutOracleDialog type={type} />;
             case GENERAL.CLONE_MANAGEMENT_REFRESH:
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.clone-refresh-action-summary'),
                     t('databases.well-architect.clone-refresh-what-will-happen'),
                     createSection(
@@ -395,6 +239,7 @@ const DialogContent = ({
                 );
             case GENERAL.CLONE_MANAGEMENT_DELETE:
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.clone-delete-action-summary'),
                     t('databases.well-architect.clone-delete-what-will-happen'),
                     createSection(
@@ -408,6 +253,7 @@ const DialogContent = ({
                 );
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.storage-tier-action-summary'),
                     createContentWithBullets([
                         t('databases.well-architect.storage-tier-what-will-happen-content1'),
@@ -506,6 +352,7 @@ const DialogContent = ({
                     </div>
                 ) : (
                     createStandardDialog(
+                        t,
                         'Workload Factory recommends increasing the FSx for ONTAP file system capacity to maintain the right headroom.',
                         createBulletRow(
                             `Storage capacity update: The capacity of your FSx for ONTAP file system will be increased${
@@ -518,8 +365,9 @@ const DialogContent = ({
 
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 return missingPermissions && missingPermissions.length
-                    ? createDriveSizeMissingPermissionsDialog(missingPermissions)
+                    ? createDriveSizeMissingPermissionsDialog(t, missingPermissions)
                     : createStandardDialog(
+                          t,
                           t('databases.well-architect.log-drive-size-action-summary'),
                           createContentWithBullets([t('databases.well-architect.log-drive-size-what-will-happen')]),
                           createStandardNotesSection()
@@ -527,8 +375,9 @@ const DialogContent = ({
 
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 return missingPermissions && missingPermissions.length
-                    ? createDriveSizeMissingPermissionsDialog(missingPermissions)
+                    ? createDriveSizeMissingPermissionsDialog(t, missingPermissions)
                     : createStandardDialog(
+                          t,
                           t('databases.well-architect.tempdb-drive-size-action-summary'),
                           createContentWithBullets([t('databases.well-architect.tempdb-drive-size-what-will-happen')]),
                           createStandardNotesSection()
@@ -541,8 +390,12 @@ const DialogContent = ({
             case 'Snapshot autodelete':
             case 'Space management':
             case 'Tiering policy':
+            case ASSESSMENT_CONFIG_NAMES.COMPACTION:
+            case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
+            case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
             case 'Tiering minimum cooling days':
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.autosize-action-summary', { engineType: engineTypeText() }),
                     t('databases.well-architect.autosize-what-will-happen', { engineType: engineTypeText() }),
                     createStandardNotesSection(),
@@ -553,6 +406,7 @@ const DialogContent = ({
             case 'Space reservation':
             case 'Space allocation':
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.os-type-space-allocation-reservation-action-summary', {
                         engineType: engineTypeText()
                     }),
@@ -566,6 +420,7 @@ const DialogContent = ({
             case 'Multipath I/O Status':
             case 'Multipath I/O Policy':
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.mpio-status-policy-action-summary'),
                     t('databases.well-architect.mpio-status-policy-what-will-happen'),
                     createOSNotesSection(),
@@ -574,6 +429,7 @@ const DialogContent = ({
 
             case 'Multipath I/O Timeout':
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.mpio-timeout-action-summary'),
                     t('databases.well-architect.mpio-timeout-what-will-happen'),
                     createSection(GENERAL.NOTE, t('databases.well-architect.note1'), { width: '712px' }),
@@ -582,6 +438,7 @@ const DialogContent = ({
 
             case 'Multipath I/O Sessions':
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.mpio-session-action-summary'),
                     t('databases.well-architect.mpio-session-what-will-happen'),
                     createStandardNotesSection(),
@@ -629,6 +486,7 @@ const DialogContent = ({
 
             case 'Shared storage':
                 return createFailoverClusterDialog(
+                    t,
                     [
                         t('databases.well-architect.failover-cluster-action-summary'),
                         t('databases.well-architect.shared-storage-action-summary')
@@ -636,10 +494,11 @@ const DialogContent = ({
                     t('databases.well-architect.shared-storage-what-will-happen'),
                     // createONTAPConfigSection(),     will be added again after the dynamic values are populated
                     <></>,
-                    createFailoverClusterNotesSection()
+                    createFailoverClusterNotesSection(t)
                 );
             case 'Drive Letter':
                 return createFailoverClusterDialog(
+                    t,
                     [
                         t('databases.well-architect.failover-cluster-action-summary'),
                         t('databases.well-architect.drive-letter-action-summary1'),
@@ -651,10 +510,11 @@ const DialogContent = ({
                         createCodeBox(ontapConfigTextSet()),
                         { width: '712px' }
                     ),
-                    createDriveLetterNotesSection()
+                    createDriveLetterNotesSection(t)
                 );
             case 'Heartbeat Settings':
                 return createFailoverClusterDialog(
+                    t,
                     [
                         t('databases.well-architect.failover-cluster-action-summary'),
                         t('databases.well-architect.heartbeat-setting-action-summary1'),
@@ -670,10 +530,11 @@ const DialogContent = ({
                         t('databases.well-architect.heartbeat-setting-what-will-happen-content6')
                     ]),
                     <></>, // Placeholder to maintain parameter order when skipping optional sections
-                    createFailoverClusterNotesSection()
+                    createFailoverClusterNotesSection(t)
                 );
             case 'Cluster Quorum':
                 return createFailoverClusterDialog(
+                    t,
                     [
                         t('databases.well-architect.failover-cluster-action-summary'),
                         t('databases.well-architect.cluster-quorum-action-summary')
@@ -681,17 +542,18 @@ const DialogContent = ({
                     t('databases.well-architect.cluster-quorum-what-will-happen'),
                     // createONTAPConfigSection(),  will be added again after the dynamic values are populated
                     <></>,
-                    createClusterQuorumSQLNotesSection()
+                    createClusterQuorumSQLNotesSection(t)
                 );
             case 'SQL Server Services':
                 return createFailoverClusterDialog(
+                    t,
                     [
                         t('databases.well-architect.sql-server-configuration-action-summary1'),
                         t('databases.well-architect.sql-server-configuration-action-summary2')
                     ],
                     t('databases.well-architect.sql-server-configuration-what-will-happen'),
                     createONTAPConfigSection(),
-                    createClusterQuorumSQLNotesSection()
+                    createClusterQuorumSQLNotesSection(t)
                 );
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
@@ -822,6 +684,7 @@ const DialogContent = ({
 
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
                 return createStandardDialog(
+                    t,
                     t('databases.well-architect.maxdop-action-summary'),
                     t('databases.well-architect.maxdop-what-will-happen'),
                     createStandardNotesSection()

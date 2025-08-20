@@ -800,6 +800,7 @@ export const GETWELL_VALUES: any = {
 };
 
 export const GETWELL_CONFIG: any = {
+    efficiencies: 'Efficiencies',
     'thin-provision': 'Thin provisioning',
     autosize: 'Autosize',
     'autosize-mode': 'Autosize-mode',
@@ -818,6 +819,9 @@ export const GETWELL_CONFIG: any = {
     'mpio-load-balance-policy': 'Multipath I/O Policy',
     'ntfs-allocation-size': 'NTFS allocation unit size',
     'ntfs-allocation-unit-size': 'NTFS allocation unit size',
+    compression: 'Compression',
+    deduplication: 'Deduplication',
+    compaction: 'Compaction',
     'log-drive-size': 'transaction_log_drive_size',
     'performance-tier': 'storage_tier',
     'tempdb-drive-size': 'tempdb_drive_size',
@@ -894,7 +898,10 @@ export const ASSESSMENT_CONFIG_NAMES = {
     REDO_LOGS_TEMP_PLACEMENT: 'Redo logs and Temp Placement',
     ARCHIVE_PLACEMENT: 'Archive Placement',
     DATAFILES_CONTROLFILES_PLACEMENT: 'Data Files and Control Files Placement',
-    ORACLE_BINARY_PLACEMENT: 'Oracle Binary Placement'
+    ORACLE_BINARY_PLACEMENT: 'Oracle Binary Placement',
+    COMPRESSION: 'Compression',
+    DEDUPLICATION: 'Deduplication',
+    COMPACTION: 'Compaction'
 };
 
 export const CONFIG_STATES = {

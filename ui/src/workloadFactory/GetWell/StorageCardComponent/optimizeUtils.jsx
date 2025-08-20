@@ -4,7 +4,16 @@ import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG } from '../../../utils/con
 import DialogContent from './DialogContent/DialogContent';
 
 // Function for handling the dialog from getwell page
-export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, cardData, operation, singleRowData) => {
+export const handleDialog = (
+    setDialog,
+    type,
+    callOptimizeApi,
+    closeDialog,
+    cardData,
+    operation,
+    singleRowData,
+    engineType = DBType.MSSQL
+) => {
     if (
         type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
         type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH ||
@@ -42,6 +51,7 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
                         recommendationOptions={cardData?.recommendationOptions}
                         missingPermissions={cardData?.missingPermissions}
                         recommendedSizeInGib={cardData?.recommendedSizeInGib}
+                        engineType={engineType}
                     />
                 }
                 primaryButton={GENERAL.CONTINUE}
@@ -54,6 +64,7 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
                     closeDialog();
                 }}
                 customClass="innerPage"
+                primaryButtonDisabled={engineType === DBType.ORACLE}
                 hidePrimaryButton={
                     (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||

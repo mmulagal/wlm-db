@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import styles from './ProtectionDialogs.module.scss';
 import { DsTextField, DsTypography } from '@tlveng/wlm-ds';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { setSCCredentials } from '../../../../store/workloadFactory/snapcenterSlice';
 import { ChangeEvent } from 'react';
+import styles from './ProtectionDialogs.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { setSCCredentials } from '../../../../store/workloadFactory/snapcenterSlice';
 
 const WindowsAuthDialog = () => {
     const { t } = useTranslation();

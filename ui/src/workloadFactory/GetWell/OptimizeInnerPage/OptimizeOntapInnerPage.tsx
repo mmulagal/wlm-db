@@ -77,6 +77,9 @@ const OptimizeOntapInnerPage = () => {
     useEffect(() => {
         if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
             switch (selectedOptimizeConfig?.type) {
+                case ASSESSMENT_CONFIG_NAMES.COMPACTION:
+                case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
+                case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
                 case 'Tiering policy':
                 case 'Tiering minimum cooling days':
                     setCardHeight({
@@ -431,6 +434,7 @@ const OptimizeOntapInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        engineType={selectedOptimizeConfig?.engineType}
                     />
                 );
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
@@ -454,6 +458,7 @@ const OptimizeOntapInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        engineType={selectedOptimizeConfig?.engineType}
                     />
                 );
         }

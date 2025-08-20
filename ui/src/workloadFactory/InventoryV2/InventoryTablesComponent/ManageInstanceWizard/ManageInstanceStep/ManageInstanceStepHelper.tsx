@@ -229,56 +229,55 @@ export function getManageCheckObjMultiFinal(
             databaseInstanceName: manageInstanceData?.databaseInstanceName || '',
             manageReadinessData
         };
-    } 
-        const assessment = getPermissionState('assessment', manageReadinessData);
-        const remediation = getPermissionState('remediation', manageReadinessData);
-        const dbcreation = getPermissionState('dbcreation', manageReadinessData);
-        const sandbox = getPermissionState('sandbox', manageReadinessData);
-        const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
-        let readyCount = 0;
-        const perRowState = [
-            {
-                key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-                value: assessment
-            },
-            {
-                key: t('databases.register-flow.fix-well-architected-issues'),
-                value: remediation
-            },
-            {
-                key: t('databases.register-flow.create-database'),
-                value: dbcreation
-            },
-            {
-                key: t('databases.register-flow.create-database-copies-sandbox'),
-                value: sandbox
-            }
-        ];
-        if (assessment === MANAGE_STATES.READY) {
-            readyCount += 1;
+    }
+    const assessment = getPermissionState('assessment', manageReadinessData);
+    const remediation = getPermissionState('remediation', manageReadinessData);
+    const dbcreation = getPermissionState('dbcreation', manageReadinessData);
+    const sandbox = getPermissionState('sandbox', manageReadinessData);
+    const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
+    let readyCount = 0;
+    const perRowState = [
+        {
+            key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
+            value: assessment
+        },
+        {
+            key: t('databases.register-flow.fix-well-architected-issues'),
+            value: remediation
+        },
+        {
+            key: t('databases.register-flow.create-database'),
+            value: dbcreation
+        },
+        {
+            key: t('databases.register-flow.create-database-copies-sandbox'),
+            value: sandbox
         }
-        if (remediation === MANAGE_STATES.READY) {
-            readyCount += 1;
-        }
-        if (dbcreation === MANAGE_STATES.READY) {
-            readyCount += 1;
-        }
-        if (sandbox === MANAGE_STATES.READY) {
-            readyCount += 1;
-        }
-        return {
-            ...manageCheckObj,
-            assessment,
-            remediation,
-            dbcreation,
-            sandbox,
-            ec2InstanceId: manageInstanceData?.data?.ec2InstanceId,
-            region: manageInstanceData?.data?.regionId,
-            credentialsId: manageInstanceData?.data?.credentialId,
-            databaseInstanceName: manageInstanceData?.data?.databaseInstanceName,
-            overallState,
-            readyCount,
-            perRowState
-        };
-    
+    ];
+    if (assessment === MANAGE_STATES.READY) {
+        readyCount += 1;
+    }
+    if (remediation === MANAGE_STATES.READY) {
+        readyCount += 1;
+    }
+    if (dbcreation === MANAGE_STATES.READY) {
+        readyCount += 1;
+    }
+    if (sandbox === MANAGE_STATES.READY) {
+        readyCount += 1;
+    }
+    return {
+        ...manageCheckObj,
+        assessment,
+        remediation,
+        dbcreation,
+        sandbox,
+        ec2InstanceId: manageInstanceData?.data?.ec2InstanceId,
+        region: manageInstanceData?.data?.regionId,
+        credentialsId: manageInstanceData?.data?.credentialId,
+        databaseInstanceName: manageInstanceData?.data?.databaseInstanceName,
+        overallState,
+        readyCount,
+        perRowState
+    };
 }

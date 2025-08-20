@@ -22,27 +22,24 @@ const proceedWithProtection = (
     if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {
         if (activeAgents.length === 0) {
             return scAuthDialog(key, 'openNoAgent');
-        } else {
-            return scAuthDialog(key, 'openSingleAgent', activeAgents, false, rowData);
         }
+        return scAuthDialog(key, 'openSingleAgent', activeAgents, false, rowData);
     }
 
     // If credentials were already checked and valid, skip auth dialog and go directly to appropriate dialog
     if (existingData.scCredentialsChecked && existingData.scCredentialsValid) {
         if (activeAgents.length === 0) {
-            return showNoAgentDialog(false, rowData);
-        } else {
-            return showSingleAgentDialog(activeAgents, false, rowData);
+            return showNoAgentDialog();
         }
+        return showSingleAgentDialog(activeAgents, false, rowData);
     }
 
     // If credentials haven't been checked yet, show auth dialog first
     if (!existingData.scCredentialsChecked) {
         if (activeAgents.length === 0) {
             return scAuthDialog(key, 'openNoAgent');
-        } else {
-            return scAuthDialog(key, 'openSingleAgent', activeAgents, false, rowData);
         }
+        return scAuthDialog(key, 'openSingleAgent', activeAgents, false, rowData);
     }
 
     // Default fallback (should not reach here under normal circumstances)
@@ -189,12 +186,10 @@ export const handleProtectionUtil = async (
                     scAuthDialog
                 }
             );
+        } else if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {
+            scAuthDialog(key, 'openNoAgent');
         } else {
-            if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {
-                scAuthDialog(key, 'openNoAgent');
-            } else {
-                showNoAgentDialog(false, rowData);
-            }
+            showNoAgentDialog();
         }
     } else {
         closeDialog();

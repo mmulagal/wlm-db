@@ -2,15 +2,17 @@ import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
-import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType } from '../../../../utils/consts';
 
-const OntapTableWithData = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const OntapTableWithData = ({ type, data, lastColDetails, handleBulkAction, engineType = DBType.ORACLE }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
@@ -60,6 +62,22 @@ const OntapTableWithData = ({ type, data, lastColDetails, handleBulkAction }: an
                 return value || GENERAL.NOT_AVAILABLE;
             }
         },
+
+        // Conditional column for Oracle
+        ...(engineType === DBType.ORACLE
+            ? [
+                  {
+                      Header: t('databases.well-architect.recommended-value'),
+                      accessor: 'recommended',
+                      id: '3',
+                      isSortable: false,
+                      filterOptions: 'auto',
+                      isSticky: false,
+                      width: 'auto',
+                      renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+                  }
+              ]
+            : []),
 
         lastColDetails(type, {})
     ];

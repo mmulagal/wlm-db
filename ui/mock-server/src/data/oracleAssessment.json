@@ -10,7 +10,8 @@
                "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                "tags":[
                   "Cost optimization",
-                  "Operational excellence"
+                  "Operational excellence",
+                  "Performance efficiency"
                ],
                "objectsInViolation":[
                   
@@ -30,28 +31,35 @@
                "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                "tags":[
                   "Cost optimization",
-                  "Operational excellence"
+                  "Operational excellence",
+                  "Performance efficiency"
                ],
                "objectsInViolation":[
-                  "oracleredo2",
-                  "oraclearch2",
-                  "oracledata2"
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
                ],
                "violationDetails":[
                   {
-                     "objectName":"oracleredo2",
+                     "objectName":"log_190825064014",
                      "value":"off",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"on",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oraclearch2",
+                     "objectName":"oraredoctl_190825064014",
                      "value":"off",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"on",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oracledata2",
+                     "objectName":"data_190825064014",
                      "value":"off",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"on",
+                     "dataCategory":""
                   }
                ],
                "totalObjectsAssessed":3,
@@ -66,28 +74,35 @@
                "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                "tags":[
                   "Cost optimization",
-                  "Operational excellence"
+                  "Operational excellence",
+                  "Performance efficiency"
                ],
                "objectsInViolation":[
-                  "oracleredo2",
-                  "oraclearch2",
-                  "oracledata2"
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
                ],
                "violationDetails":[
                   {
-                     "objectName":"oracleredo2",
+                     "objectName":"log_190825064014",
                      "value":"off",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"grow",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oraclearch2",
+                     "objectName":"oraredoctl_190825064014",
                      "value":"off",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"grow",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oracledata2",
+                     "objectName":"data_190825064014",
                      "value":"off",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"grow",
+                     "dataCategory":""
                   }
                ],
                "totalObjectsAssessed":3,
@@ -96,38 +111,23 @@
             },
             {
                "name":"fractional-reserve",
-               "status":"not-optimized",
+               "status":"optimized",
                "recommended":"0",
                "severity":"critical",
                "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                "tags":[
                   "Cost optimization",
-                  "Operational excellence"
+                  "Operational excellence",
+                  "Performance efficiency"
                ],
                "objectsInViolation":[
-                  "oracleredo2",
-                  "oraclearch2",
-                  "oracledata2"
+                  
                ],
                "violationDetails":[
-                  {
-                     "objectName":"oracleredo2",
-                     "value":"100",
-                     "objectType":"Volume"
-                  },
-                  {
-                     "objectName":"oraclearch2",
-                     "value":"100",
-                     "objectType":"Volume"
-                  },
-                  {
-                     "objectName":"oracledata2",
-                     "value":"100",
-                     "objectType":"Volume"
-                  }
+                  
                ],
                "totalObjectsAssessed":3,
-               "totalObjectsInViolation":3,
+               "totalObjectsInViolation":0,
                "resourceType":"Volume"
             },
             {
@@ -138,28 +138,35 @@
                "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                "tags":[
                   "Cost optimization",
-                  "Operational excellence"
+                  "Operational excellence",
+                  "Performance efficiency"
                ],
                "objectsInViolation":[
-                  "oracleredo2",
-                  "oraclearch2",
-                  "oracledata2"
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
                ],
                "violationDetails":[
                   {
-                     "objectName":"oracleredo2",
+                     "objectName":"log_190825064014",
                      "value":"5",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"0",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oraclearch2",
+                     "objectName":"oraredoctl_190825064014",
                      "value":"5",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"0",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oracledata2",
+                     "objectName":"data_190825064014",
                      "value":"5",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"0",
+                     "dataCategory":""
                   }
                ],
                "totalObjectsAssessed":3,
@@ -174,28 +181,35 @@
                "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                "tags":[
                   "Cost optimization",
-                  "Operational excellence"
+                  "Operational excellence",
+                  "Performance efficiency"
                ],
                "objectsInViolation":[
-                  "oracleredo2",
-                  "oraclearch2",
-                  "oracledata2"
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
                ],
                "violationDetails":[
                   {
-                     "objectName":"oracleredo2",
+                     "objectName":"log_190825064014",
                      "value":"false",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"true",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oraclearch2",
+                     "objectName":"oraredoctl_190825064014",
                      "value":"false",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"true",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oracledata2",
+                     "objectName":"data_190825064014",
                      "value":"false",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"true",
+                     "dataCategory":""
                   }
                ],
                "totalObjectsAssessed":3,
@@ -210,28 +224,35 @@
                "recommendation":"To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                "tags":[
                   "Cost optimization",
-                  "Operational excellence"
+                  "Operational excellence",
+                  "Performance efficiency"
                ],
                "objectsInViolation":[
-                  "oracleredo2",
-                  "oraclearch2",
-                  "oracledata2"
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
                ],
                "violationDetails":[
                   {
-                     "objectName":"oracleredo2",
+                     "objectName":"log_190825064014",
                      "value":"",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"volume_grow",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oraclearch2",
+                     "objectName":"oraredoctl_190825064014",
                      "value":"",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"volume_grow",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oracledata2",
+                     "objectName":"data_190825064014",
                      "value":"",
-                     "objectType":"Volume"
+                     "objectType":"Volume",
+                     "recommended":"volume_grow",
+                     "dataCategory":""
                   }
                ],
                "totalObjectsAssessed":3,
@@ -245,28 +266,36 @@
                "severity":"critical",
                "recommendation":"For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
                "tags":[
+                  "Cost optimization",
+                  "Operational excellence",
                   "Performance efficiency"
                ],
                "objectsInViolation":[
-                  "oracleredo2",
-                  "oraclearch2",
-                  "oracledata2"
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
                ],
                "violationDetails":[
                   {
-                     "objectName":"oracleredo2",
-                     "value":"none",
-                     "objectType":"Volume"
+                     "objectName":"log_190825064014",
+                     "value":"snapshot_only",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
                   },
                   {
-                     "objectName":"oraclearch2",
-                     "value":"none",
-                     "objectType":"Volume"
+                     "objectName":"oraredoctl_190825064014",
+                     "value":"snapshot_only",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
                   },
                   {
-                     "objectName":"oracledata2",
-                     "value":"all",
-                     "objectType":"Volume"
+                     "objectName":"data_190825064014",
+                     "value":"snapshot_only",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
                   }
                ],
                "totalObjectsAssessed":3,
@@ -277,36 +306,213 @@
                "name":"tiering-min-cooling-days",
                "status":"not-optimized",
                "recommended":"7",
-               "severity":"warning",
+               "severity":"critical",
                "recommendation":"For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
                "tags":[
-                  "Cost optimization"
+                  "Cost optimization",
+                  "Operational excellence",
+                  "Performance efficiency"
                ],
                "objectsInViolation":[
-                  "oracleredo2",
-                  "oraclearch2",
-                  "oracledata2"
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
                ],
                "violationDetails":[
                   {
-                     "objectName":"oracleredo2",
-                     "value":"",
-                     "objectType":"Volume"
+                     "objectName":"log_190825064014",
+                     "value":"2",
+                     "objectType":"Volume",
+                     "recommended":"7",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oraclearch2",
-                     "value":"",
-                     "objectType":"Volume"
+                     "objectName":"oraredoctl_190825064014",
+                     "value":"2",
+                     "objectType":"Volume",
+                     "recommended":"7",
+                     "dataCategory":""
                   },
                   {
-                     "objectName":"oracledata2",
-                     "value":"",
-                     "objectType":"Volume"
+                     "objectName":"data_190825064014",
+                     "value":"2",
+                     "objectType":"Volume",
+                     "recommended":"7",
+                     "dataCategory":""
                   }
                ],
                "totalObjectsAssessed":3,
                "totalObjectsInViolation":3,
                "resourceType":"Volume"
+            },
+            {
+               "name":"compression",
+               "status":"not-optimized",
+               "recommended":"",
+               "severity":"critical",
+               "recommendation":"",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence",
+                  "Performance efficiency"
+               ],
+               "objectsInViolation":[
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"log_190825064014",
+                     "value":"inline",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
+                  },
+                  {
+                     "objectName":"oraredoctl_190825064014",
+                     "value":"inline",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
+                  },
+                  {
+                     "objectName":"data_190825064014",
+                     "value":"inline",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"deduplication",
+               "status":"not-optimized",
+               "recommended":"",
+               "severity":"critical",
+               "recommendation":"",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence",
+                  "Performance efficiency"
+               ],
+               "objectsInViolation":[
+                  "log_190825064014",
+                  "oraredoctl_190825064014",
+                  "data_190825064014"
+               ],
+               "violationDetails":[
+                  {
+                     "objectName":"log_190825064014",
+                     "value":"both",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
+                  },
+                  {
+                     "objectName":"oraredoctl_190825064014",
+                     "value":"both",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
+                  },
+                  {
+                     "objectName":"data_190825064014",
+                     "value":"both",
+                     "objectType":"Volume",
+                     "recommended":"none",
+                     "dataCategory":"mixed"
+                  }
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":3,
+               "resourceType":"Volume"
+            },
+            {
+               "name":"compaction",
+               "status":"optimized",
+               "recommended":"",
+               "severity":"critical",
+               "recommendation":"",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence",
+                  "Performance efficiency"
+               ],
+               "objectsInViolation":[
+                  
+               ],
+               "violationDetails":[
+                  
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":0,
+               "resourceType":"Volume"
+            }
+         ],
+         "luns":[
+            {
+               "name":"os-type",
+               "status":"optimized",
+               "recommended":"linux",
+               "severity":"critical",
+               "recommendation":"ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence",
+                  "Performance efficiency"
+               ],
+               "objectsInViolation":[
+                  
+               ],
+               "violationDetails":[
+                  
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":0
+            },
+            {
+               "name":"space-reservation-enabled",
+               "status":"optimized",
+               "recommended":"true",
+               "severity":"critical",
+               "recommendation":"When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence",
+                  "Performance efficiency"
+               ],
+               "objectsInViolation":[
+                  
+               ],
+               "violationDetails":[
+                  
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":0
+            },
+            {
+               "name":"space-allocation-allocated",
+               "status":"optimized",
+               "recommended":"true",
+               "severity":"critical",
+               "recommendation":"This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.",
+               "tags":[
+                  "Cost optimization",
+                  "Operational excellence",
+                  "Performance efficiency"
+               ],
+               "objectsInViolation":[
+                  
+               ],
+               "violationDetails":[
+                  
+               ],
+               "totalObjectsAssessed":3,
+               "totalObjectsInViolation":0
             }
          ]
       },
@@ -325,7 +531,7 @@
             "objectsInViolation":[
                
             ],
-            "totalObjectsAssessed":1,
+            "totalObjectsAssessed":2,
             "totalObjectsInViolation":0
          },
          {
@@ -340,9 +546,9 @@
                "Performance efficiency"
             ],
             "objectsInViolation":[
-               "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+               "dedcec84-7ce8-11f0-9e3f-b750f9c1c48e"
             ],
-            "totalObjectsAssessed":1,
+            "totalObjectsAssessed":2,
             "totalObjectsInViolation":1
          },
          {
@@ -357,31 +563,33 @@
                "Performance efficiency"
             ],
             "objectsInViolation":[
-               "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+               "dedcec84-7ce8-11f0-9e3f-b750f9c1c48e"
             ],
-            "totalObjectsAssessed":1,
+            "totalObjectsAssessed":2,
             "totalObjectsInViolation":1
          },
          {
-                "name": "oracle-binary-placement",
-                "status": "optimized",
-                "recommended": "separate-volume",
-                "severity": "warning",
-                "recommendation": "Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. This separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.",
-                "tags": [
-                    "Cost optimization",
-                    "Operational excellence",
-                    "Performance efficiency"
-                ],
-                "objectsInViolation": [],
-                "totalObjectsAssessed": 1,
-                "totalObjectsInViolation": 0
-            }
+            "name":"oracle-binary-placement",
+            "status":"optimized",
+            "recommended":"separate-volume",
+            "severity":"warning",
+            "recommendation":"Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. This separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.",
+            "tags":[
+               "Cost optimization",
+               "Operational excellence",
+               "Performance efficiency"
+            ],
+            "objectsInViolation":[
+               
+            ],
+            "totalObjectsAssessed":1,
+            "totalObjectsInViolation":0
+         }
       ]
    },
+   "lastAssessmentTimestamp":1755629404593,
    "fileSystemId":"fs-0d5efc3057c4f12cb",
-   "ec2InstanceId":"i-055ed011c2068033a",
-   "databaseInstanceName":"ordbsdl",
-   "deploymentType":"Standalone",
-   "lastAssessmentTimestamp": 1730074791000
+   "ec2InstanceId":"i-05fbc9747d558cf12",
+   "databaseInstanceName":"pdb21cnas1",
+   "deploymentType":"Standalone"
 }

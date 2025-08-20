@@ -50,9 +50,9 @@ export const oracleCardData: any = {
             smallFont: true
         },
         recommendation: {
-            title: 'Redo Logs, Temp, and Archive Placement Recommendation',
+            title: 'Redo Logs and Temp Placement Recommendation',
             description:
-                'Placing redo logs, temp files, and archive logs on a dedicated volume enhances performance and recovery processes. \nThis isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.'
+                'Placing redo logs and temp files on a dedicated volume enhances performance and recovery processes. \nThis isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.'
         },
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
     },
@@ -282,12 +282,12 @@ const getHighestSeverity = (hasCritical: boolean, hasWarning: boolean): string =
 };
 
 // Helper function to process volume item
-const processVolumeItem = (item: PerConfigInterface, optimizingData: Record<string, string>) => {
+const processOntapItem = (item: PerConfigInterface, optimizingData: Record<string, string>, type: 'volume' | 'lun') => {
     const status = optimizingData?.[item?.name || ''] || item?.status || '';
     return {
         ...item,
         id: item?.name,
-        type: 'volume',
+        type,
         name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
         status: formatValue(status),
         severity: formatValue(item?.severity || ''),
@@ -298,8 +298,10 @@ const processVolumeItem = (item: PerConfigInterface, optimizingData: Record<stri
 // Optimized function to format ONTAP configuration data
 export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: Record<string, string>) => {
     const volumesList = data?.storage?.configuration?.volumes;
+    const lunsList = data?.storage?.configuration?.luns;
+    const fullList = [volumesList, lunsList];
 
-    if (!volumesList?.length || volumesList[0]?.errorMessage) {
+    if ((!volumesList?.length || volumesList[0]?.errorMessage) && (!lunsList?.length || lunsList[0]?.errorMessage)) {
         return {
             formatOntapConfigList: [],
             ontapTagsList: [],
@@ -316,23 +318,25 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
     let hasCritical = false;
     let hasWarning = false;
 
-    volumesList.forEach((item: PerConfigInterface) => {
-        const processedItem = processVolumeItem(item, optimizingData);
-        formatOntapConfigList.push(processedItem);
+    fullList?.forEach((list: any, index: number) => {
+        list?.forEach((item: PerConfigInterface) => {
+            const processedItem = processOntapItem(item, optimizingData, index === 0 ? 'volume' : 'lun');
+            formatOntapConfigList.push(processedItem);
 
-        // Count optimized vs not optimized
-        if (processedItem.originalStatus === 'optimized') {
-            ontapOptimizedConfig++;
-        } else {
-            ontapNotOptimizedConfig++;
-        }
+            // Count optimized vs not optimized
+            if (processedItem.originalStatus === 'optimized') {
+                ontapOptimizedConfig++;
+            } else {
+                ontapNotOptimizedConfig++;
+            }
 
-        // Track severities
-        if (item?.severity === 'critical') hasCritical = true;
-        if (item?.severity === 'warning') hasWarning = true;
+            // Track severities
+            if (item?.severity === 'critical') hasCritical = true;
+            if (item?.severity === 'warning') hasWarning = true;
 
-        // Collect tags
-        if (item?.tags) allTags.push(...item.tags);
+            // Collect tags
+            if (item?.tags) allTags.push(...item.tags);
+        });
     });
 
     return {
