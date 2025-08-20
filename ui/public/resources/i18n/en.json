@@ -170,6 +170,7 @@
             "well-architected-configs": "Well-architected configurations",
             "well-architect-state": "Well-architected",
             "total": "Total",
+            "export-pdf": "Export PDF",
             "well-architected-score": "Well-architected score",
             "well-architected-issue": "There are no issues. Your instance is analyzed every 24 hours for configuration issues.",
             "well-architected-instance": "This instance is well-architected!",

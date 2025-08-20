@@ -1,0 +1,23 @@
+.oracleExportPDF {
+    .downloadSection {
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+    .downloadSectionDisable {
+        display: flex;
+        justify-content: space-between;
+        svg {
+            path {
+                fill: var(--text-disabled);
+            }
+        }
+    }
+
+    .buttonStyle {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+}

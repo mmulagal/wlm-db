@@ -10,8 +10,18 @@
     }
 
     .sectionTwo {
-        margin-top: 24px;
-        margin-bottom: 30px;
+        width: 100%;
+        margin-top: 26px;
+
+        [class*='accordionHeader'] {
+            height: 56px !important;
+        }
+
+        .downloadSectionHeader {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
 
         .accordionGroups {
             display: flex;
@@ -36,6 +46,10 @@
                 display: flex;
                 gap: 16px;
             }
+        }
+        .sectionClass {
+            display: flex;
+            flex-direction: column;
         }
     }
 }

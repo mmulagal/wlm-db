@@ -7,6 +7,7 @@ import StorageLayoutSection from './Categories/StorageLayoutSection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
+import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 
 const OracleWellArchitectDashboard = () => {
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -37,7 +38,7 @@ const OracleWellArchitectDashboard = () => {
     };
 
     return (
-        <div className={styles['well-architected']}>
+        <div className={styles['well-architected']} id="export-oracle-optimize-pdf">
             <div className={styles.cards}>
                 <TotalOptimizationScore
                     loading={loading}
@@ -47,7 +48,18 @@ const OracleWellArchitectDashboard = () => {
                 <OracleConfigureCategory />
             </div>
 
-            <OracleFilterComponent setFilteredCardData={setFilteredCardData} />
+            <div className={styles.sectionTwo}>
+                <div className={styles.downloadSectionHeader}>
+                    <OracleExportPDF
+                        optimizePrintState={optimizePrintState}
+                        setOptimizePrintState={setOptimizePrintState}
+                        loading={loading}
+                        isAssessmentAvailable={isAssessmentAvailable}
+                    />
+                </div>
+
+                <OracleFilterComponent setFilteredCardData={setFilteredCardData} />
+            </div>
 
             {(filteredCardData?.redologs_temp_placement ||
                 filteredCardData?.archive_placement ||
