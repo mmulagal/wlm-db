@@ -200,7 +200,7 @@ export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
                 payload: {
                     pathname: '/unified-backup-restore',
                     state: {
-                        hash: JSON.stringify(wlmdbParams)
+                        wlmdbParams: JSON.stringify(wlmdbParams)
                     }
                 }
             },
