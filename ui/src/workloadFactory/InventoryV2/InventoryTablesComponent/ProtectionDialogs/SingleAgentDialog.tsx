@@ -20,7 +20,7 @@ import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorC
 import { resetProtectionProcess, setSelectedAgent } from '../../../../store/workloadFactory/snapcenterSlice';
 import { SNAPCENTER_STATUS } from '../../../../utils/consts';
 
-const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType, extraStep }: any) => {
+const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType, extraStep, rowData }: any) => {
     const { t } = useTranslation();
 
     const { setDialog, closeDialog } = useDialog();
@@ -68,7 +68,7 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType, extraSte
                             closeDialog();
                         }}
                         callback={() => {
-                            bxpRedirect(isWorkloadFactory);
+                            bxpRedirect(isWorkloadFactory, rowData);
                         }}
                     />
                 );

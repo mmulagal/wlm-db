@@ -154,7 +154,7 @@ export const getTruncatedItems = (items: any) => {
     };
 };
 
-export const bxpRedirect = (isWorkloadFactory: boolean) => {
+export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
     const stageURL = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
     const prodURL = 'https://console.bluexp.netapp.com/unified-backup-restore';
     let url = '';
@@ -163,11 +163,32 @@ export const bxpRedirect = (isWorkloadFactory: boolean) => {
     } else {
         url = stageURL;
     }
-    if (isWorkloadFactory) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-    } else if (window.top) {
-        window.top.location.href = url;
-    }
+    // if (isWorkloadFactory) {
+    //      window.open(url, '_blank', 'noopener,noreferrer');
+
+    // } else if (window.top) {
+    //      window.top.location.href = url;
+
+    // }
+
+    window.parent.postMessage(
+        {
+            type: 'SERVICE:NAVIGATE',
+            payload: {
+                pathname: '/unified-backup-restore',
+                state: {
+                    from: 'wlmdb',
+                    directProtect: true,
+                    hostName: rowData?.hostRow?.name || '',
+                    instanceName: rowData?.databaseInstanceName || '',
+                    databaseName: rowData?.name || '',
+                    instanceId: rowData?.databaseInstanceId || '',
+                    databaseId: rowData?.id || ''
+                }
+            }
+        },
+        '*'
+    );
 };
 
 export const getFilterOptions = (data: any[], propName: string, renderLabel?: (val: any) => any) =>

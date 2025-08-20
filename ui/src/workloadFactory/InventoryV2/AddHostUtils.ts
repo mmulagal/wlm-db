@@ -30,7 +30,7 @@ const proceedWithProtection = (
     // If credentials were already checked and valid, skip auth dialog and go directly to appropriate dialog
     if (existingData.scCredentialsChecked && existingData.scCredentialsValid) {
         if (activeAgents.length === 0) {
-            return showNoAgentDialog();
+            return showNoAgentDialog(false, rowData);
         } else {
             return showSingleAgentDialog(activeAgents, false, rowData);
         }
@@ -47,7 +47,7 @@ const proceedWithProtection = (
 
     // Default fallback (should not reach here under normal circumstances)
     if (activeAgents.length === 0) {
-        showNoAgentDialog();
+        showNoAgentDialog(false, rowData);
     }
     if (activeAgents.length > 0) {
         // Single Connector case
@@ -193,7 +193,7 @@ export const handleProtectionUtil = async (
             if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {
                 scAuthDialog(key, 'openNoAgent');
             } else {
-                showNoAgentDialog();
+                showNoAgentDialog(false, rowData);
             }
         }
     } else {

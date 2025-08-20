@@ -436,7 +436,7 @@ const InstancesTable = () => {
 
                             if (dialogToOpen === 'openNoAgent') {
                                 setTimeout(() => {
-                                    showNoAgentDialog(true);
+                                    showNoAgentDialog(true, rowData);
                                 }, 10);
                             } else {
                                 setTimeout(() => {
@@ -476,7 +476,7 @@ const InstancesTable = () => {
         });
     };
 
-    const showNoAgentDialog = (extraStep?: boolean) => {
+    const showNoAgentDialog = (extraStep?: boolean, rowData?: any) => {
         setDialog(
             <DialogComponent
                 header={
@@ -497,7 +497,7 @@ const InstancesTable = () => {
                     closeDialog();
                 }}
                 callback={() => {
-                    bxpRedirect(isWorkloadFactory);
+                    bxpRedirect(isWorkloadFactory, rowData);
                 }}
                 customClass={styles.protectionDialog}
             />
@@ -537,6 +537,7 @@ const InstancesTable = () => {
                         hostExists={hostExists}
                         dialogKey={dialogKeyValue}
                         extraStep={extraStep}
+                        rowData={rowData}
                     />
                 }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
@@ -546,7 +547,7 @@ const InstancesTable = () => {
                 }}
                 callback={() => {
                     if (hostExists) {
-                        bxpRedirect(isWorkloadFactory);
+                        bxpRedirect(isWorkloadFactory, rowData);
                     } else {
                         addHostHandlerSc(
                             rowData,

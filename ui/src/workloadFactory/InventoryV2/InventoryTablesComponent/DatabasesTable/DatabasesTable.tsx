@@ -321,7 +321,7 @@ const DatabasesTable = () => {
         });
     };
 
-    const showNoAgentDialog = (extraStep?: boolean) => {
+    const showNoAgentDialog = (extraStep?: boolean, rowData?: any) => {
         setDialog(
             <DialogComponent
                 header={
@@ -344,7 +344,7 @@ const DatabasesTable = () => {
                     closeDialog();
                 }}
                 callback={() => {
-                    bxpRedirect(isWorkloadFactory);
+                    bxpRedirect(isWorkloadFactory, rowData);
                 }}
                 customClass={styles.protectionDialog}
             />
@@ -387,6 +387,7 @@ const DatabasesTable = () => {
                         dialogKey={dialogKeyValue}
                         dialogType="database"
                         extraStep={extraStep}
+                        rowData={rowData}
                     />
                 }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
@@ -396,7 +397,7 @@ const DatabasesTable = () => {
                 }}
                 callback={() => {
                     if (hostExists) {
-                        bxpRedirect(isWorkloadFactory);
+                        bxpRedirect(isWorkloadFactory, rowData);
                     } else {
                         addHostHandlerSc(
                             rowData,
