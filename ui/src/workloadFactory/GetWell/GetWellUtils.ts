@@ -451,6 +451,43 @@ export const cardDataDefault: GwCardDataInterface = {
         rssOptimizedRows: {},
         rssOptimizedValues: {}
     },
+    mtu: {
+        id: 'mtu-alignment',
+        mapName: ASSESSMENT_CONFIG_NAMES.MTU,
+        category: 'compute',
+        block_one: {
+            type: 'Compute',
+            value: ASSESSMENT_CONFIG_NAMES.MTU
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'mtu-alignment',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Not Optimized Configurations',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'MTU Alignment recommendation',
+            description:
+                'Workload Factory recommends aligning the MTU (Maximum Transmission Unit) settings on your EC2 instances with your FSX for ONTAP file system. \nProper MTU alignment helps prevent network fragmentation and ensures optimal performance and reliability for your SQL Server workloads. \nIt is recommended to configure MTU consistently across all nodes and network paths.'
+        },
+        tags: ['Performance efficiency', 'Reliability']
+    },
     host_os_patch: {
         id: 'host-os-patch',
         mapName: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
@@ -1455,6 +1492,62 @@ export const formatRssConfigCardConfig = (
     return cardsData;
 };
 
+export const formatMTUCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    const item: any = data?.mtuAlignment;
+    const categoryVal = 'compute';
+    let itemName = item?.name || 'mtu-alignment';
+    let status = item?.status || '';
+    const severity = item?.severity || '';
+    const resourceType = item?.resourceType || '';
+
+    if (optimizingData?.[itemName]) {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: item?.recommended || ''
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: `${item?.totalObjectsInViolation || 0} out of ${item?.totalObjectsAssessed || 0}`,
+                count: {
+                    totalObjectsAssessed: item?.totalObjectsAssessed || 0,
+                    totalObjectsInViolation: item?.totalObjectsInViolation || 0
+                }
+            },
+            errorMessage: item?.errorMessage,
+            tags: item?.tags,
+            id: item?.name || 'mtu-alignment',
+            category: categoryVal,
+            recommendationText: item?.recommendation || cardDataDefault?.[itemName]?.recommendation?.description,
+            objectsInViolation: item?.objectsInViolation,
+            violationDetails: item?.violationDetails || [],
+            dismissedObj: data?.dismissedConfigurations?.mtuAlignment
+        }
+    };
+    return cardsData;
+};
 // This function is used to format the data for the individual card main config.
 export const formatIndividualCardMainConfig = (
     data: AssessmentResponseInterface,
@@ -2062,6 +2155,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatRssConfigCardConfig(data, optimizingData, cardsData);
 
+    cardsData = formatMTUCardConfig(data, optimizingData, cardsData);
+
     cardsData = formatMicrosoftSqlPatchCardConfig(data, optimizingData, cardsData);
 
     cardsData = formatMaxdopPatchCardConfig(data, optimizingData, cardsData);
@@ -2290,6 +2385,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any, selectedData
         compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
         host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
         rss_config: { category: 'Compute', subCategory: 'Compute_sub' },
+        mtu: { category: 'Compute', subCategory: 'Compute_sub' },
         sql_licenses: { category: 'Application', subCategory: 'Application_sub' },
         microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
         maxdop: { category: 'Application', subCategory: 'Application_sub' },
@@ -3963,6 +4059,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
 
         case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
             configKey = 'clone';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.MTU:
+            configKey = 'mtuConfiguration';
             break;
     }
     const optimizedInstances = configData[configKey] || 0;

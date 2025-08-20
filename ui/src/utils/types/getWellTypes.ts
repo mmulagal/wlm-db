@@ -115,6 +115,7 @@ export interface AssessmentResponseInterface {
     };
     compute?: PerConfigInterface;
     rssConfig?: PerConfigInterface;
+    mtuAlignment?: PerConfigInterface;
     license?: PerConfigInterface;
     hostOsPatch?: PerConfigInterface;
     mssqlPatch?: PerConfigInterface;

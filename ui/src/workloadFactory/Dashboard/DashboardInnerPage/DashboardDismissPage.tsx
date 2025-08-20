@@ -453,6 +453,20 @@ const DashboardDismissPage = () => {
                     tooltipText: selectedConfigSummary?.tooltipText
                 });
                 break;
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                setValueCardData({
+                    instances: selectedConfigSummary.totalInstances,
+                    configurationState: selectedConfigSummary.configState,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '214px',
+                    tagHeight: '311px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.mtu?.recommendation?.description
+                    },
+                    tooltipText: selectedConfigSummary?.tooltipText
+                });
+                break;
             case GENERAL.LICENSE_SQL_SERVER:
                 setValueCardData({
                     instances: selectedConfigSummary.totalInstances,

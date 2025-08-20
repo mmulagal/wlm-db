@@ -242,6 +242,7 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.MTU ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
         ) {

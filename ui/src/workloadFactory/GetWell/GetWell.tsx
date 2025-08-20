@@ -11,6 +11,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useState, useEffect, useMemo } from 'react';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
+import { useTranslation } from 'react-i18next';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -64,6 +65,7 @@ import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
 import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../utils/resourceUtils';
 
 const GetWell = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -1855,9 +1857,10 @@ const GetWell = () => {
                             {/* Section four */}
                             {(filteredCardData?.compute_rightsizing ||
                                 filteredCardData?.host_os_patch ||
-                                filteredCardData?.rss_config) && (
+                                filteredCardData?.rss_config ||
+                                filteredCardData?.mtu) && (
                                 <div className={styles.sectionClass}>
-                                    <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                    <div className={styles['header-buttons']}>
                                         <DsTypography
                                             style={{
                                                 padding: '0 0 8px'
@@ -2091,7 +2094,68 @@ const GetWell = () => {
                                                             data={filteredCardData?.rss_config?.recommendation}
                                                         />
                                                     }
-                                                    style={{ marginBottom: '40px' }}
+                                                />
+                                            </div>
+                                        )}
+                                        {filteredCardData?.mtu && (
+                                            <div className={styles.combineComponent}>
+                                                <StorageCardComponent
+                                                    cardData={filteredCardData?.mtu}
+                                                    optimizePrintState={optimizePrintState}
+                                                    type={t('databases.general.mtu')}
+                                                />
+                                                <DsAccordion
+                                                    id="21"
+                                                    variant="Default"
+                                                    title={
+                                                        <div className={styles.tagPlacement}>
+                                                            {filteredCardData?.mtu?.tags?.map(
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    }
+                                                    isDisabled={loading || !cardData?.mtu?.block_two?.value}
+                                                    isExpanded={isAccordionExpanded('21', optimizePrintState)}
+                                                    onExpandChange={isExpanded => {
+                                                        handleAccordionExpanded('21', isExpanded);
+                                                    }}
+                                                    onClick={() => setClickedAccordionId('21')}
+                                                    headerActions={[
+                                                        <div className={styles.headerAction}>
+                                                            <div
+                                                                className={
+                                                                    isDarkTheme && !loading
+                                                                        ? styles['dark-theme-light']
+                                                                        : ''
+                                                                }
+                                                            >
+                                                                {loading || !cardData?.mtu?.block_two?.value ? (
+                                                                    <LightDisabled />
+                                                                ) : (
+                                                                    <Light />
+                                                                )}
+                                                            </div>
+                                                            <div
+                                                                style={{
+                                                                    color:
+                                                                        loading || !cardData?.mtu?.block_two?.value
+                                                                            ? 'var(--text-disabled)'
+                                                                            : 'var(--text-button-primary)'
+                                                                }}
+                                                            >
+                                                                View recommendation
+                                                            </div>
+                                                        </div>
+                                                    ]}
+                                                    children={
+                                                        <RecommendationText
+                                                            data={filteredCardData?.mtu?.recommendation}
+                                                        />
+                                                    }
                                                 />
                                             </div>
                                         )}

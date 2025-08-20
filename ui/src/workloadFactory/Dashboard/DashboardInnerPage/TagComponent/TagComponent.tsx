@@ -73,6 +73,7 @@ const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
                 break;
 
             case 'Multipath I/O Policy':
+            case ASSESSMENT_CONFIG_NAMES.MTU:
                 setTagData([
                     { label: t('databases.well-architect.tags.performanceEfficiency'), value: 'performanceEfficiency' },
                     { label: t('databases.well-architect.tags.reliability'), value: 'reliability' }

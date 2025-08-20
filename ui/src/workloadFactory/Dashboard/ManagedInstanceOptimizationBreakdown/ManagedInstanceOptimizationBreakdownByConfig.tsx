@@ -698,6 +698,53 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
                 <div className={styles.tile}>
                     {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.MTU,
+                        configData.mtuConfiguration || 0,
+                        t('databases.general.mtu'),
+                        configData?.configState?.mtuConfiguration
+                    )}
+                    <SeparatorComponent variant="vertical" height="60px" />
+                    <div className={styles.buttonContainer}>
+                        <DsButton
+                            variant="secondary"
+                            isThin
+                            data-testid="wlm-db-optimize-mtu"
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.MTU);
+                            }}
+                            isDisabled={
+                                hasDismissedOrPosponed(configData?.configState?.mtuConfiguration) !== '' ||
+                                loading ||
+                                configData?.total === 0 ||
+                                configData?.mtuConfiguration === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MTU]?.length > 0
+                            }
+                        >
+                            {GENERAL.VIEW_AND_FIX}
+                        </DsButton>
+
+                        {loading || showNA ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MTU)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
+                    </div>
+                </div>
+                <div className={styles.tile}>
+                    {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.LICENSE,
                         configData.applicationSqlServer || 0,
                         GENERAL.LICENSE_SQL_SERVER,

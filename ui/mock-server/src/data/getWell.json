@@ -994,6 +994,25 @@
         },
         "resourceType": "Network Adapter"
     },
+    "mtuAlignment": {
+        "name": "mtu-alignment",
+        "status": "not-optimized",
+        "recommended": "optimized",
+        "severity": "critical",
+        "recommendation": "Workload Factory recommends aligning the MTU (Maximum Transmission Unit) settings on your SQL Server network interfaces with your FSx for ONTAP file system. Proper MTU alignment prevents network fragmentation and ensures optimal performance for your SQL Server workloads. Update the MTU on the identified network interfaces to match your FSx MTU configuration.",
+        "tags": ["Performance efficiency", "Reliability"],
+        "objectsInViolation": ["Ethernet 3-Interface9"],
+        "violationDetails": [
+            {
+                "objectName": "Ethernet 3",
+                "value": "9",
+                "objectType": "Network Interface"
+            }
+        ],
+        "totalObjectsAssessed": 1,
+        "totalObjectsInViolation": 1,
+        "resourceType": "Network Interface"
+    },
     "license": {
         "name": "sql-license",
         "status": "not-optimized",
@@ -1545,6 +1564,11 @@
         "compute": {
             "configurationName": "compute-rightsizing",
             "configState": "DISMISSED",
+            "startTime": 1739934199000
+        },
+        "mtuAlignment": {
+            "configurationName": "mtu-alignment",
+            "configState": "ACTIVE",
             "startTime": 1739934199000
         }
     }

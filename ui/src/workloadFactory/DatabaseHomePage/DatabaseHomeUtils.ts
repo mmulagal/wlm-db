@@ -509,6 +509,10 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                     instanceAssessmentData?.hostOsPatch?.status,
                     instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
                 );
+                const isMTUConfigurationOptimized = isOptimized(
+                    instanceAssessmentData?.mtuAlignment?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
+                );
                 const isLicenseOptimized = isOptimized(
                     instanceAssessmentData?.license?.status,
                     instanceAssessmentData?.dismissedConfigurations?.license?.configState
@@ -559,6 +563,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                     isComputeOptimized &&
                     isRssConfigOptimized &&
                     isOperatingSystemOptimized &&
+                    isMTUConfigurationOptimized &&
                     isLicenseOptimized &&
                     isStorageLayoutOptimized &&
                     isAllStorageSizingPresent &&
@@ -626,6 +631,10 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const isRssConfigurationOptimized = isOptimized(
                     instanceAssessmentData?.rssConfig?.status,
                     instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
+                );
+                const isMTUConfigurationOptimized = isOptimized(
+                    instanceAssessmentData?.mtuAlignment?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
                 );
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
                     const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
@@ -707,7 +716,12 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.crr?.configState
                 );
 
-                if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
+                if (
+                    isComputeOptimized &&
+                    isOperatingSystemPatchOptimized &&
+                    isRssConfigurationOptimized &&
+                    isMTUConfigurationOptimized
+                ) {
                     assessmentGroupedByCategory.compute++;
                 }
                 if (
@@ -768,6 +782,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         computeRightsizing: 0,
         operatingSystemPatch: 0,
         rssConfiguration: 0,
+        mtuConfiguration: 0,
         applicationSqlServer: 0,
         mssqlPatch: 0,
         maxdopPatch: 0,
@@ -793,6 +808,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         computeRightsizing: [],
         operatingSystemPatch: [],
         rssConfiguration: [],
+        mtuConfiguration: [],
         applicationSqlServer: [],
         mssqlPatch: [],
         maxdopPatch: [],
@@ -978,6 +994,16 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
                 );
 
+                const isMtuConfigurationOptimized = isOptimized(
+                    instanceAssessmentData?.mtuAlignment?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
+                );
+                setConfigState(
+                    configState,
+                    'mtuConfiguration',
+                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
+                );
+
                 const isApplicationSqlServerOptimized = isOptimized(
                     instanceAssessmentData?.license?.status,
                     instanceAssessmentData?.dismissedConfigurations?.license?.configState
@@ -1088,6 +1114,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.severityObj.rssConfiguration =
                     GETWELL_VALUES[instanceAssessmentData?.rssConfig?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.rssConfiguration;
+                getAssessmentGroupedByConfigurations.mtuConfiguration += isMtuConfigurationOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.mtuConfiguration =
+                    GETWELL_VALUES[instanceAssessmentData?.mtuAlignment?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.mtuConfiguration;
                 getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
                     GETWELL_VALUES[instanceAssessmentData?.license?.severity] ||

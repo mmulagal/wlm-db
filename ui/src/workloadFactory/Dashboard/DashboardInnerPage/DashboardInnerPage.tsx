@@ -72,6 +72,7 @@ import MaxDopTable from './RenderTables/MaxDopTable';
 import MicrosoftSQLPatchTable from './RenderTables/MicrosoftSQLPatchTable';
 import LicenseTable from './RenderTables/LicenseTable';
 import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
+import MTUTable from './RenderTables/MTUTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
@@ -1046,6 +1047,21 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '214px',
+                    tagHeight: '311px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.mtu?.recommendation?.description
+                    }
+                });
+                break;
             case GENERAL.LICENSE_SQL_SERVER:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
@@ -1227,6 +1243,8 @@ const DashboardInnerPage = () => {
                 return <LicenseTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case GENERAL.RSS_CONFIGURATION:
                 return <NetworkAdapterTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                return <MTUTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 return <OSPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:

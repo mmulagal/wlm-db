@@ -729,6 +729,36 @@ const DialogContent = ({
                     </div>
                 );
 
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.mtu-alignment-action-summary')
+                        )}
+
+                        {createSection(
+                            t('databases.well-architect.what-will-happen'),
+                            createContentWithBullets([
+                                t('databases.well-architect.mtu-alignment-what-will-happen1'),
+                                t('databases.well-architect.mtu-alignment-what-will-happen2')
+                            ]),
+                            { width: '712px' }
+                        )}
+
+                        {createSection(
+                            GENERAL.NOTE,
+                            createContentWithBullets([
+                                t('databases.well-architect.mtu-alignment-note1'),
+                                t('databases.well-architect.mtu-alignment-note2'),
+                                t('databases.well-architect.mtu-alignment-note3'),
+                                t('databases.well-architect.mtu-alignment-note4')
+                            ]),
+                            { width: '712px' }
+                        )}
+                    </div>
+                );
+
             default:
                 return (
                     <DsTypography variant="Regular_14">
