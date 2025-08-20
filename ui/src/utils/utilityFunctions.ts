@@ -177,7 +177,7 @@ export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
             payload: {
                 pathname: isWorkloadFactory ? url : '/unified-backup-restore',
                 state: {
-                    wlmdbParams: {
+                    wlmdbParams: JSON.stringify({
                         from: 'wlmdb',
                         directProtect: true,
                         hostName: rowData?.hostRow?.name || '',
@@ -185,7 +185,7 @@ export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
                         databaseName: rowData?.name || '',
                         instanceId: rowData?.databaseInstanceId || '',
                         databaseId: rowData?.id || ''
-                    }
+                    })
                 }
             }
         },
