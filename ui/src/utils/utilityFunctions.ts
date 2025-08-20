@@ -175,15 +175,17 @@ export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
         {
             type: 'SERVICE:NAVIGATE',
             payload: {
-                pathname: '/unified-backup-restore',
+                pathname: isWorkloadFactory ? url : '/unified-backup-restore',
                 state: {
-                    from: 'wlmdb',
-                    directProtect: true,
-                    hostName: rowData?.hostRow?.name || '',
-                    instanceName: rowData?.databaseInstanceName || '',
-                    databaseName: rowData?.name || '',
-                    instanceId: rowData?.databaseInstanceId || '',
-                    databaseId: rowData?.id || ''
+                    wlmdbParams: {
+                        from: 'wlmdb',
+                        directProtect: true,
+                        hostName: rowData?.hostRow?.name || '',
+                        instanceName: rowData?.databaseInstanceName || '',
+                        databaseName: rowData?.name || '',
+                        instanceId: rowData?.databaseInstanceId || '',
+                        databaseId: rowData?.id || ''
+                    }
                 }
             }
         },
