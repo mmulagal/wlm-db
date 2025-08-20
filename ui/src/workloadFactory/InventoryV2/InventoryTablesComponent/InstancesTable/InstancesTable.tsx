@@ -417,8 +417,8 @@ const InstancesTable = () => {
                                 {
                                     credentials: [
                                         {
-                                            resourceId: rowData?.resourceId,
-                                            resourceType: DETECT_HOST_VAR.MSSQL,
+                                            resourceId: rowData?.databaseInstanceName,
+                                            resourceType: 'WINDOWS_USER',
                                             username: credDetails.username,
                                             password: credDetails.password
                                         }

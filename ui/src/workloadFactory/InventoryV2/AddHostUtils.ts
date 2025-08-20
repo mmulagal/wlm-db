@@ -89,7 +89,7 @@ export const handleProtectionUtil = async (
             credentialID: rowData.credentialId,
             regionID: rowData.regionId,
             instanceId: rowData.databaseInstanceId,
-            sqlServerInstance: rowData.resourceId
+            sqlServerInstance: rowData.databaseInstanceName
         });
         if (isCancelled(key)) return;
 
