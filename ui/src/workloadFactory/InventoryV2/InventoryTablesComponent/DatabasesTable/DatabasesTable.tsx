@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { DBType, FROM_DIALOG, INVENTORY_STATUS } from '../../../../utils/consts';
+import { DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -32,17 +32,20 @@ import {
     useGetDiscoverHostResultMutation,
     useGetFsxDetailsMutation,
     useGetRBACPrivilegesMutation,
+    useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
     useListAllDirectoriesMutation,
-    useListExistingHostsMutation
+    useListExistingHostsMutation,
+    useRegisterResourceCredentialsBulkMutation
 } from '../../../../utils/apiService';
 import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
-import { cancelProtectionForRow } from '../../../../store/workloadFactory/snapcenterSlice';
+import { cancelProtectionForRow, setDataForRow } from '../../../../store/workloadFactory/snapcenterSlice';
 import { addHostHandlerSc } from '../../InventoryUtilsV2';
 import { getDatabaseTableColumns } from './DatabaseTableColumns';
 import { mssqlPgsqlDatabaseColumnFilterMap } from './MssqlPgsqlDatabaseTableColumns';
 import { oraclePDBColumnFilterMap } from './OraclePDBTableColumns';
 import { getInitialDatabaseTableColState } from '../../../../utils/manageColumnUtils';
+import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
 
 const DatabasesTable = () => {
     const { t } = useTranslation();
@@ -77,6 +80,8 @@ const DatabasesTable = () => {
     const [configureDirectory] = useConfigureDirectoryMutation();
     const [listAllDirectories] = useListAllDirectoriesMutation();
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
+    const [getSCCrendentials] = useGetSCCrendentialsMutation();
+    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
 
     // Function to check if protect option should be disabled
     const isProtectDisabled = (rowData: any): boolean =>
@@ -223,6 +228,68 @@ const DatabasesTable = () => {
         );
     };
 
+    //SC Auth Dialog
+    const scAuthDialog = (key: string, dialogToOpen: string, activeAgents?: [], boolValue?: boolean, rowData?: any) => {
+        setDialog(
+            <DialogComponent
+                header={
+                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
+
+                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                            {t('databases.inventory.step-1-out-of')}
+                        </DsTypography>
+                    </div>
+                }
+                content={<WindowsAuthDialog />}
+                primaryButton={t('databases.inventory.continue')}
+                secondaryButton={GENERAL.CANCEL}
+                closeCallback={() => {
+                    dispatch(cancelProtectionForRow(key));
+                    closeDialog();
+                }}
+                callback={async () => {
+                    const state = store.getState(); //For live state
+                    const credDetails = state.snapCenter.credentials;
+                    const payload = {
+                        resourceId: rowData?.fsxId,
+                        resourceType: DETECT_HOST_VAR.MSSQL,
+                        username: credDetails.username,
+                        password: credDetails.password,
+                        ec2InstanceId: rowData?.ec2InstanceId,
+                        region: rowData.regionId,
+                        credentialsId: rowData.credentialId
+                    };
+                    const result = await registerResourceCredBulk({ payload });
+                    if (result && !result?.error && result?.data) {
+                        // Mark authentication as completed for this row
+                        dispatch(
+                            setDataForRow({
+                                key,
+                                stepData: {
+                                    scCredentialsChecked: true,
+                                    scCredentialsValid: true
+                                }
+                            })
+                        );
+
+                        if (dialogToOpen === 'openNoAgent') {
+                            setTimeout(() => {
+                                showNoAgentDialog(true);
+                            }, 10);
+                        } else {
+                            setTimeout(() => {
+                                showSingleAgentDialog(activeAgents, boolValue, rowData, true);
+                            }, 10);
+                        }
+                    }
+                }}
+                customClass={styles.protectionDialog}
+                dialogFrom={FROM_DIALOG.WINDOWS_AUTH}
+            />
+        );
+    };
+
     const handleProtection = async (rowData: any) => {
         await handleProtectionUtil(rowData, {
             dispatch,
@@ -237,14 +304,28 @@ const DatabasesTable = () => {
             discoverExistingFsxN,
             assignRBACPrivileges,
             getRBACPrivileges,
-            isDemoMode
+            isDemoMode,
+            getSCCrendentials,
+            scAuthDialog
         });
     };
 
-    const showNoAgentDialog = () => {
+    const showNoAgentDialog = (extraStep?: boolean) => {
         setDialog(
             <DialogComponent
-                header={t('databases.inventory.protect-header-database')}
+                header={
+                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.inventory.protect-header-database')}
+                        </DsTypography>
+
+                        {extraStep && (
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-2-out-of')}
+                            </DsTypography>
+                        )}
+                    </div>
+                }
                 content={<NoAgentDialog dialogType="database" />}
                 primaryButton={t('databases.inventory.redirect')}
                 secondaryButton={GENERAL.CANCEL}
@@ -259,7 +340,7 @@ const DatabasesTable = () => {
         );
     };
 
-    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any) => {
+    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any, extraStep?: boolean) => {
         const state = store.getState();
         const dialogKeyValue = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
         const protectionState = state.snapCenter.protectionProcessState[dialogKeyValue];
@@ -276,9 +357,14 @@ const DatabasesTable = () => {
                         <DsTypography variant="Regular_14">
                             {t('databases.inventory.protect-header-database')}
                         </DsTypography>
-                        {!hostExists && (
+                        {!hostExists && !extraStep && (
                             <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
                                 {t('databases.inventory.step-1-out-of')}
+                            </DsTypography>
+                        )}
+                        {extraStep && !hostExists && (
+                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                                {t('databases.inventory.step-2-out-of-3')}
                             </DsTypography>
                         )}
                     </div>
@@ -289,6 +375,7 @@ const DatabasesTable = () => {
                         hostExists={hostExists}
                         dialogKey={dialogKeyValue}
                         dialogType="database"
+                        extraStep={extraStep}
                     />
                 }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
