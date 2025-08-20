@@ -16,7 +16,11 @@ import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../util
 import { registerJob, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
-import { OracleMappedOntapVolumeRecord, OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
+import {
+    OracleMappedOntapVolumeRecord,
+    OracleMappedOntapVolumesResponse,
+    OracleVolumeRecord
+} from '../../workloads/oracle/common-types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import {
     calculateStorageDrift,
@@ -75,17 +79,42 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 OracleMappedOntapVolumeRecord
             >[]) || [];
 
-        instanceVolumeMapping = allInstanceVolumeMappings?.find(mapping => mapping[databaseInstanceName]) || {};
+        const protocol = response.get(databaseInstanceName)?.get(fsxFileSystem)?.protocol;
 
-        const ontapVolumes =
-            (instanceVolumeMapping as Record<string, OracleMappedOntapVolumeRecord>)?.[databaseInstanceName]
-                .ontapVolumes || {};
-        databaseInstanceRecord.mappedVolumesUuids = Object.values(ontapVolumes).flatMap(volumes =>
-            volumes.map(vol => vol.volumeId)
-        );
-        databaseInstanceRecord.mappedVolumeNames = Object.values(ontapVolumes).flatMap(volumes =>
-            volumes.map(vol => vol.volumeName)
-        );
+        instanceVolumeMapping =
+            allInstanceVolumeMappings.find(mapping => mapping[databaseInstanceName])?.[databaseInstanceName] || {};
+        const { ontapVolumes = {}, isCDB = false } = instanceVolumeMapping || {};
+
+        const extractVolumeData = (volumes: Record<string, OracleVolumeRecord[]>) =>
+            Object.values(volumes).flatMap(pdb =>
+                Object.values(pdb).flatMap(volumeGroup =>
+                    Array.isArray(volumeGroup)
+                        ? volumeGroup.map(vol => ({ id: vol.volumeId, name: vol.volumeName }))
+                        : []
+                )
+            );
+
+        const volumeData = isCDB
+            ? extractVolumeData(ontapVolumes)
+            : Object.values(ontapVolumes).flatMap(volumes =>
+                  volumes.map(vol => ({ id: vol.volumeId, name: vol.volumeName }))
+              );
+
+        databaseInstanceRecord.mappedVolumesUuids = volumeData.map(vol => vol.id);
+        databaseInstanceRecord.mappedVolumeNames = volumeData.map(vol => vol.name);
+        databaseInstanceRecord.storageProtocol = protocol;
+
+        if (protocol === 'iSCSI') {
+            const extractLunData = (volumes: Record<string, OracleVolumeRecord[]>) =>
+                Object.values(volumes).flatMap(pdb =>
+                    Object.values(pdb).flatMap(volumeGroup =>
+                        Array.isArray(volumeGroup) ? volumeGroup.map(vol => ({ id: vol.lunId, name: vol.lunName })) : []
+                    )
+                );
+            const lunData = isCDB ? extractLunData(ontapVolumes) : [];
+            databaseInstanceRecord.mappedLunUuids = [...new Set(lunData.map(lun => lun.id))];
+            databaseInstanceRecord.mappedLunNames = [...new Set(lunData.map(lun => lun.name))];
+        }
     } catch (error: any) {
         const errorMessage = error.message;
         logger.error('Error while fetching mapped ontap volumes data', {
@@ -344,29 +373,25 @@ async function fetchOracleDriftAssessment(
         {} as Record<string, unknown>
     );
 
-    const [storageAssessmentResponse] = [
-        assessmentFlags.storage
-            ? calculateStorageDrift(
-                  accountId,
-                  credentialsId,
-                  region,
-                  databaseHostId,
-                  databaseInstanceId,
-                  databaseInstanceName,
-                  fileSystemId,
-                  assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as Record<
-                      string,
-                      OracleMappedOntapVolumesResponse
-                  >,
-                  assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
-              )
-            : {}
-    ];
+    const { storageDriftData, protocol } = assessmentFlags.storage
+        ? calculateStorageDrift(
+              accountId,
+              credentialsId,
+              region,
+              databaseHostId,
+              databaseInstanceId,
+              databaseInstanceName,
+              fileSystemId,
+              assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as Record<
+                  string,
+                  OracleMappedOntapVolumesResponse
+              >,
+              assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
+          )
+        : { storageDriftData: {}, protocol: '' };
 
     const driftAssessmentData: OracleDriftAssessmentResponseType = {
-        storage: isEmpty(storageAssessmentResponse)
-            ? undefined
-            : (storageAssessmentResponse as StorageParameterDriftResponseType),
+        storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
         fileSystemId,
         databaseInstanceName,
         ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId,
@@ -374,7 +399,8 @@ async function fetchOracleDriftAssessment(
         lastAssessmentTimestamp: (() => {
             const creationTime = databaseInstanceConfigData[0]?.creation_time;
             return creationTime instanceof Date ? moment(creationTime).valueOf() : undefined;
-        })()
+        })(),
+        storageProtocol: protocol
     };
 
     return driftAssessmentData;

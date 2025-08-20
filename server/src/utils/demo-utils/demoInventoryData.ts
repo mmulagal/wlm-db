@@ -508,6 +508,69 @@ const MAPPED_ONTAP_VOLUMES_DATA = {
     }
 };
 
+const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = {
+    'fs-0d5efc3057c4f12cb': {
+        protocol: '',
+        lunRecords: [],
+        isASMManaged: false,
+        volumeMappings: [
+            {
+                ordbsdl: {
+                    isCDB: false,
+                    ontapVolumes: {
+                        REDO_LOGS: [
+                            {
+                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                                svmName: 'wlmdb_sqlsvm_1735809893269',
+                                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                                volumeName: 'oracledata2'
+                            }
+                        ],
+                        DATA_FILES: [
+                            {
+                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                                svmName: 'wlmdb_sqlsvm_1735809893269',
+                                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                                volumeName: 'oracledata2'
+                            }
+                        ],
+                        TEMP_FILES: [
+                            {
+                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                                svmName: 'wlmdb_sqlsvm_1735809893269',
+                                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                                volumeName: 'oracledata2'
+                            }
+                        ],
+                        ARCHIVE_LOGS: [
+                            {
+                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                                svmName: 'wlmdb_sqlsvm_1735809893269',
+                                volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
+                                volumeName: 'oraclearch2'
+                            }
+                        ],
+                        CONTROL_FILES: [
+                            {
+                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                                svmName: 'wlmdb_sqlsvm_1735809893269',
+                                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                                volumeName: 'oracledata2'
+                            },
+                            {
+                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                                svmName: 'wlmdb_sqlsvm_1735809893269',
+                                volumeId: 'beac8c14-eee7-11ef-8fbb-837e18df6f7a',
+                                volumeName: 'oracleredo2'
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    }
+};
+
 const ASSESMENT_CONFIG_DATA = {
     os: {
         'mpio-enabled': false,
@@ -2636,6 +2699,84 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
     filesystemId: 'fs-07a22f282fd4f5a20'
 };
 
+const ORACLE_STORAGE_ASSESSMENT_DATA = {
+    volumes: {
+        data: [
+            {
+                name: 'oracleredo2',
+                uuid: 'beac8c14-eee7-11ef-8fbb-837e18df6f7a',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                autosize: 'off',
+                compaction: 'inline',
+                compression: 'inline',
+                autosizeMode: 'off',
+                deduplication: 'both',
+                thinProvision: true,
+                tieringPolicy: 'none',
+                efficiencyType: 'efficient',
+                snapshotPolicy: 'default',
+                spaceGuarantee: 'none',
+                compressionType: 'adaptive',
+                fractionalReserve: 100,
+                snapshotAutodelete: false,
+                snapshotCopyReserve: 5,
+                tieringMinCoolingDays: null
+            },
+            {
+                name: 'oraclearch2',
+                uuid: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                autosize: 'off',
+                compaction: 'inline',
+                compression: 'inline',
+                autosizeMode: 'off',
+                deduplication: 'both',
+                thinProvision: true,
+                tieringPolicy: 'none',
+                efficiencyType: 'efficient',
+                snapshotPolicy: 'default',
+                spaceGuarantee: 'none',
+                compressionType: 'adaptive',
+                fractionalReserve: 100,
+                snapshotAutodelete: false,
+                snapshotCopyReserve: 5,
+                tieringMinCoolingDays: null
+            },
+            {
+                name: 'oracledata2',
+                uuid: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                autosize: 'off',
+                compaction: 'inline',
+                compression: 'inline',
+                autosizeMode: 'off',
+                deduplication: 'both',
+                thinProvision: true,
+                tieringPolicy: 'all',
+                efficiencyType: 'efficient',
+                snapshotPolicy: 'default',
+                spaceGuarantee: 'none',
+                compressionType: 'adaptive',
+                fractionalReserve: 100,
+                snapshotAutodelete: false,
+                snapshotCopyReserve: 5,
+                tieringMinCoolingDays: null
+            }
+        ],
+        error: '',
+        filesystemId: 'fs-0d5efc3057c4f12cb'
+    },
+    binaryVolumes: {
+        data: [
+            {
+                volumeId: '6264d520-3fb9-423f-8ab8-7a0a8e3d3562',
+                volumeName: 'root'
+            }
+        ],
+        error: ''
+    }
+};
+
 const MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
     driveLetter: {
         status: 'optimized',
@@ -2751,5 +2892,7 @@ export {
     MSSQL_ASSESMENT_CONFIG_DATA,
     MAPPED_ONTAP_VOLUMES_DATA,
     MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
-    ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
+    ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
+    ORACLE_STORAGE_ASSESSMENT_DATA,
+    ORACLE_MAPPED_ONTAP_VOLUMES_DATA
 };

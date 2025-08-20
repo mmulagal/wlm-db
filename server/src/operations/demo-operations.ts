@@ -62,7 +62,9 @@ import {
     MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,
     MAPPED_ONTAP_VOLUMES_DATA,
     ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
-    MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
+    MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
+    ORACLE_STORAGE_ASSESSMENT_DATA,
+    ORACLE_MAPPED_ONTAP_VOLUMES_DATA
 } from '../utils/demo-utils/demoInventoryData';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
@@ -860,6 +862,8 @@ async function createDeploymentMockDataInDBForOracle(
     };
 
     await upsertDatabaseInstance(accountId, instanceRecord);
+
+    await createAssessmentDataForOracle(accountId, credentialsId, region, resourceId, instanceId);
 }
 
 async function demoGetFsxnVolIdsFromOntapVolIds(
@@ -1047,6 +1051,37 @@ async function createAssessmentData(
             : [...configDataRecords, instanceHighAvailabilityDataRecord];
 
     await createDatabaseInstanceConfigData(newConfigDataRecords);
+}
+
+async function createAssessmentDataForOracle(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceId: string,
+    databaseInstanceId: string
+) {
+    const baseConfig = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now())
+    };
+    const instanceConfigDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategories.STORAGE,
+        config_data: ORACLE_STORAGE_ASSESSMENT_DATA
+    };
+    const instanceConfigMappedOntapDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
+        config_data: ORACLE_MAPPED_ONTAP_VOLUMES_DATA
+    };
+
+    const configDataRecords = [instanceConfigDataRecord, instanceConfigMappedOntapDataRecord];
+
+    await createDatabaseInstanceConfigData(configDataRecords);
 }
 
 function prepareDemoSandboxMetadata(
@@ -1266,6 +1301,7 @@ export {
     prepareDemoSandboxMetadata,
     updateOptimizedConfigMetaData,
     handleGetAssessmentForDemo,
-    updateAllOptimizedClonesDemoFlow,
-    createDeploymentMockDataInDBForOracle
+    createDeploymentMockDataInDBForOracle,
+    createAssessmentDataForOracle,
+    updateAllOptimizedClonesDemoFlow
 };

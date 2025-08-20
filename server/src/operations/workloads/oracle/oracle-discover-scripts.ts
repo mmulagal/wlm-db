@@ -1136,6 +1136,9 @@ const getMappedOntapDataVolumeForInstance = (
                 else
                     for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
                         volMappings=$(processMountDetail "$mountDetail")
+                        if [ -z "$protocol" ]; then
+                            protocol=$(echo "$mountDetail" | jq -r '.protocol')
+                        fi
                         fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
                     done
                     
@@ -1164,6 +1167,9 @@ const getMappedOntapDataVolumeForInstance = (
                     else
                         for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
                             volMappings=$(processMountDetail "$mountDetail")
+                            if [ -z "$protocol" ]; then
+                                protocol=$(echo "$mountDetail" | jq -r '.protocol')
+                            fi
                             fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
                         done
                         

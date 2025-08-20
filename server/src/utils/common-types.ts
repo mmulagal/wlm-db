@@ -497,6 +497,7 @@ interface WorkloadInstance {
     svmId?: string;
     svmOntapUuid?: string;
     databaseInstanceObject?: DatabaseInstance;
+    storageProtocol?: string;
 }
 interface LogDriveDetails {
     lunUuid: string;

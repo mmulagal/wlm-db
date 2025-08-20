@@ -12,7 +12,8 @@ const GOLDEN_CONFIG = {
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
                 ]
             },
             {
@@ -24,7 +25,8 @@ const GOLDEN_CONFIG = {
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
                 ]
             },
             {
@@ -36,7 +38,8 @@ const GOLDEN_CONFIG = {
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
                 ]
             },
             {
@@ -48,7 +51,8 @@ const GOLDEN_CONFIG = {
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
                 ]
             },
             {
@@ -60,7 +64,8 @@ const GOLDEN_CONFIG = {
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
                 ]
             },
             {
@@ -72,7 +77,8 @@ const GOLDEN_CONFIG = {
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
                 ]
             },
             {
@@ -84,7 +90,8 @@ const GOLDEN_CONFIG = {
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
                 ]
             },
             {
@@ -94,16 +101,101 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 recommendation:
                     'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
             },
             {
                 parameter: 'tieringMinCoolingDays',
                 name: 'tiering-min-cooling-days',
                 value: 7,
-                severity: SEVERITY.WARNING,
+                severity: SEVERITY.CRITICAL,
                 recommendation:
                     'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
-                tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION]
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            },
+            {
+                parameter: 'compression',
+                name: 'compression',
+                value: '',
+                severity: SEVERITY.CRITICAL,
+                recommendation: '',
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            },
+            {
+                parameter: 'deduplication',
+                name: 'deduplication',
+                value: '',
+                severity: SEVERITY.CRITICAL,
+                recommendation: '',
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            },
+            {
+                parameter: 'compaction',
+                name: 'compaction',
+                value: '',
+                severity: SEVERITY.CRITICAL,
+                recommendation: '',
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            }
+        ],
+        lun: [
+            {
+                name: 'os-type',
+                parameter: 'osType',
+                value: 'linux',
+                severity: SEVERITY.CRITICAL,
+                recommendation:
+                    'ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance',
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            },
+            {
+                name: 'space-reservation-enabled',
+                parameter: 'spaceReservationEnabled',
+                value: true,
+                severity: SEVERITY.CRITICAL,
+                recommendation:
+                    'When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.',
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            },
+            {
+                name: 'space-allocation-allocated',
+                parameter: 'spaceAllocationAllocated',
+                value: true,
+                severity: SEVERITY.CRITICAL,
+                recommendation:
+                    'This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.',
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
             }
         ]
     },

@@ -54,7 +54,7 @@ import {
 import { getPaginatedDatabaseInstances, getResources } from './database/database-operations';
 import { createResource, deleteDatabaseInstance, deleteResource, upsertDatabaseInstance } from '../lib/database/db';
 import { tagResources } from './aws/sqs-operations';
-import { createAssessmentData } from './demo-operations';
+import { createAssessmentData, createAssessmentDataForOracle } from './demo-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import {
     DatabaseInstance,
@@ -1422,6 +1422,10 @@ async function registerOracleInstancesData(
             };
 
             instanceJobStatus = JOBSTATUS.COMPLETED;
+
+            if (isDemoFlow) {
+                await createAssessmentDataForOracle(accountId, credentialsId, region, resourceId, instanceId);
+            }
         }
     } catch (error: any) {
         logger.error('Error while registering Oracle instance', {

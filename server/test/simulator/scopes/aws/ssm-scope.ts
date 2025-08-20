@@ -942,6 +942,8 @@ ssmMock
     .resolves(getSampleCommandResponse('getMssqlInstanceVolumeLunDriveDetailsCommand'))
     .on(SendCommandCommand, params => params.Comment === 'oracle database list')
     .resolves(getSampleCommandResponse('oracleDatabaseList'))
+    .on(SendCommandCommand, params => params.Comment === 'Get Storage Configuration Assessment for Oracle instance')
+    .resolves(getSampleCommandResponse('oracleStorageAssessment'))
     .on(SendCommandCommand, params => {
         return /# Get SQL Server services/.test(params.Parameters.commands?.[0]);
     })
@@ -1454,7 +1456,17 @@ ssmMock
             'oracleDatabaseList',
             '{"database_details":{"name": "ordbsdl","status": "online"}, "is_cdb": "no", "root_db_size": 2.51}'
         )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleStorageAssessment'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleStorageAssessment',
+            JSON.stringify(getCommandInvocationResponse.getOracleStorageAssessmentData)
+        )
     );
+
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
