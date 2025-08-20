@@ -154,6 +154,39 @@ export const getTruncatedItems = (items: any) => {
     };
 };
 
+const openNewTabWithPayload = (url: string, payload: {}, targetOrigin = '*') => {
+    const newTab = window.open(url, '_blank');
+
+    if (!newTab) {
+        throw new Error('Failed to open new tab...');
+    }
+
+    const sendPayload = () => {
+        newTab.postMessage(
+            {
+                type: 'PARENT_DATA',
+                payload: payload
+            },
+            targetOrigin
+        );
+    };
+
+    const messageHandler = (event: MessageEvent) => {
+        if (event.source === newTab && event.data.type === 'TAB_READY') {
+            sendPayload();
+            window.removeEventListener('message', messageHandler);
+        }
+    };
+
+    window.addEventListener('message', messageHandler);
+
+    // Fallback: send after a delay
+
+    setTimeout(sendPayload, 2000);
+
+    return newTab;
+};
+
 export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
     const stageURL = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
     const prodURL = 'https://console.bluexp.netapp.com/unified-backup-restore';
@@ -163,34 +196,34 @@ export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
     } else {
         url = stageURL;
     }
-    // if (isWorkloadFactory) {
-    //      window.open(url, '_blank', 'noopener,noreferrer');
 
-    // } else if (window.top) {
-    //      window.top.location.href = url;
+    const wlmdbParams = {
+        from: 'wlmdb',
+        directProtect: true,
+        hostName: rowData?.hostRow?.name || '',
+        instanceName: rowData?.databaseInstanceName || '',
+        databaseName: rowData?.name || '',
+        instanceId: rowData?.databaseInstanceId || '',
+        databaseId: rowData?.id || ''
+    };
 
-    // }
-
-    window.parent.postMessage(
-        {
-            type: 'SERVICE:NAVIGATE',
-            payload: {
-                pathname: isWorkloadFactory ? url : '/unified-backup-restore',
-                state: {
-                    wlmdbParams: JSON.stringify({
-                        from: 'wlmdb',
-                        directProtect: true,
-                        hostName: rowData?.hostRow?.name || '',
-                        instanceName: rowData?.databaseInstanceName || '',
-                        databaseName: rowData?.name || '',
-                        instanceId: rowData?.databaseInstanceId || '',
-                        databaseId: rowData?.id || ''
-                    })
+    if (isWorkloadFactory) {
+        openNewTabWithPayload(url, JSON.stringify(wlmdbParams), window.location.origin);
+    } else {
+        // Keep existing postMessage for non-workload factory
+        window.parent.postMessage(
+            {
+                type: 'SERVICE:NAVIGATE',
+                payload: {
+                    pathname: '/unified-backup-restore',
+                    state: {
+                        wlmdbParams: JSON.stringify(wlmdbParams)
+                    }
                 }
-            }
-        },
-        '*'
-    );
+            },
+            '*'
+        );
+    }
 };
 
 export const getFilterOptions = (data: any[], propName: string, renderLabel?: (val: any) => any) =>
@@ -1345,7 +1378,7 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
                 } else if (key === 'status' && value) {
                     result += `${jobMonitoringStatusMapping(value)},`;
                 } else if (key === 'type' && value) {
-                    result += `${jobMonitoringTypeMapping(value)},`;
+                    result += `${jobMonitoringTypeMapping(value, null)},`;
                 } else if (value) {
                     result += `${value},`;
                 } else {
