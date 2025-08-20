@@ -11,6 +11,10 @@ const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading }: any) => {
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
     const doughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        cutout: '80%',
         plugins: {
             legend: {
                 display: false

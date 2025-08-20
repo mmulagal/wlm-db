@@ -17,6 +17,10 @@ const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
     const { showNA } = useAppSelector(state => state.headers);
 
     const doughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        cutout: '80%',
         plugins: {
             legend: {
                 display: false
@@ -72,7 +76,7 @@ const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
 
             {(showNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle} />}
 
-            {aggregatedSandboxList.length !== 0 && <canvas ref={ref} id="chart-area" width={184} height={184} />}
+            {aggregatedSandboxList.length !== 0 && <canvas ref={ref} id="chart-area" />}
         </div>
     );
 };

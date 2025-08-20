@@ -21,6 +21,10 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
     const doughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        cutout: '80%',
         plugins: {
             legend: {
                 display: false
@@ -95,9 +99,7 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
                 {optimizePageLoading && <DsFlashingDotsLoader />}
             </div>
             {(!isAssessmentAvailable || optimizePageLoading) && <div className={styles.emptyCircle} />}
-            {isAssessmentAvailable && !optimizePageLoading ? (
-                <canvas ref={ref} id="chart-area" width={144} height={144} />
-            ) : null}
+            {isAssessmentAvailable && !optimizePageLoading ? <canvas ref={ref} id="chart-area" /> : null}
         </div>
     );
 };
