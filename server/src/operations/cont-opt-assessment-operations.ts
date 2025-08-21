@@ -26,7 +26,7 @@ interface AccountJobInfo {
 async function createParentJobForAccount(accountId: string, initiatedBy: string): Promise<string | null> {
     try {
         // Keep simple description without dynamic updates
-        const jobDescription = `Assess online SQL Server instances in account ${accountId} for best practice misalignments.`;
+        const jobDescription = `Assess online database server instances in account ${accountId} for best practice misalignments.`;
 
         const { id: parentJobId } = await registerJob(accountId, '', '', {
             name: jobDescription,
