@@ -45,14 +45,14 @@ const OntapTableWithData = ({ type, data, lastColDetails, handleBulkAction, engi
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '481px',
+            width: 'auto',
             renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: type,
             accessor: 'value',
             id: '2',
-            width: '481px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 let value = cellData;
