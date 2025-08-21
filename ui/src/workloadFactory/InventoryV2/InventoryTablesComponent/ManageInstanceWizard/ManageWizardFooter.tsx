@@ -27,7 +27,7 @@ import {
     handleSingleInstanceManage,
     updateDetectBulkResponse
 } from './ManageInstanceUtils';
-import { ACTION_TYPE, DETECT_PAYLOAD_SIZE } from '../../../../utils/consts';
+import { ACTION_TYPE, DBType, DETECT_PAYLOAD_SIZE } from '../../../../utils/consts';
 import { BulkDetectedInstance, UseWizardReturn } from '../../../../utils/types/registerTypes';
 
 type PlanningWizardFooterProps = {
@@ -89,6 +89,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
         const batches = chunkArray(fullPayload, DETECT_PAYLOAD_SIZE);
         let newSelectedMultiDetectInstances: BulkDetectedInstance[] = selectedMultiDetectInstances;
+        const engineType = selectedMultiDetectInstances[0]?.data?.hostType;
 
         try {
             for (let i = 0; i < batches.length; i++) {
@@ -137,7 +138,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
     };
 
-    const handleRegisterResourceCred = async () => {
+    const handleRegisterResourceCred = async (engineType: any) => {
         dispatch(setIsDetectHostLoading(true));
         dispatch(setManageSingleInstanceReadiness(null));
         const sqlServerInstance =
@@ -183,11 +184,19 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     );
                     dispatch(setInventoryTableData(updatedInventoryTableData));
                     if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
-                        dispatch(
-                            setManageSingleInstanceReadiness(
-                                result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
-                            )
-                        );
+                        if (engineType === DBType.MSSQL) {
+                            dispatch(
+                                setManageSingleInstanceReadiness(
+                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
+                                )
+                            );
+                        } else if (engineType === DBType.ORACLE) {
+                            dispatch(
+                                setManageSingleInstanceReadiness(
+                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness.oracle
+                                )
+                            );
+                        }
                     }
                     goToNextStep();
                 }
@@ -216,7 +225,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             setState({ hitNext: true });
             const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData, engineType);
             if (fieldsCorrect) {
-                handleRegisterResourceCred();
+                handleRegisterResourceCred(engineType);
             }
         }
     };
@@ -239,6 +248,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 goToNextStep();
             } else {
                 setState({ hitNext: true });
+                const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
                 const fieldsCorrect = detectFieldsValidation(bulkInstanceData, engineType);
                 if (fieldsCorrect) {
                     handleMultiRegisterResourceCred();
@@ -248,10 +258,19 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const handleManage = () => {
-        const manageApi = engineType === 'ORACLE' ? manageBulkV2OracleInstanceApi : manageBulkV2InstanceApi;
         if (wizardOperationType === ACTION_TYPE.BULK) {
-            handleMultiInstanceManage(bulkDetectedInstanceList, dispatch, manageApi, getJobDetailApi, navigate);
+            const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
+            const manageApi = engineType === DBType.ORACLE ? manageBulkV2OracleInstanceApi : manageBulkV2InstanceApi;
+            handleMultiInstanceManage(
+                bulkDetectedInstanceList,
+                dispatch,
+                manageApi,
+                getJobDetailApi,
+                navigate,
+                engineType
+            );
         } else {
+            const manageApi = engineType === DBType.ORACLE ? manageBulkV2OracleInstanceApi : manageBulkV2InstanceApi;
             handleSingleInstanceManage(
                 manageSingleInstanceChecks,
                 dispatch,

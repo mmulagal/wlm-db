@@ -75,17 +75,18 @@ export const getEffectiveManageReadinessData = (
     discoveredOracleHostData: any,
     getMergedReadinessData: (
         instanceData: BulkDetectedInstance['data'],
-        discoveredHostDataL: BulkDetectedInstance[]
+        discoveredHostDataL: BulkDetectedInstance[],
+        engineType: string
     ) => ManageReadinessData | null
 ): ManageReadinessData | null => {
     const hostType = instance?.data?.hostType || '';
     const discoveredData = getDiscoveredHostDataByType(hostType, discoveredHostData, discoveredOracleHostData);
     if (hostType === DBType.ORACLE) {
-        if (instance?.data?.isDefaultAuthentication === true && instance?.data?.oracleServerAuthentication === false) {
+        if (instance?.data?.isDefaultAuthentication === true && !instance?.data?.oracleServerAuthentication) {
             return instance?.manageReadiness;
         }
 
-        return getMergedReadinessData(instance?.data, discoveredData);
+        return getMergedReadinessData(instance?.data, discoveredData, hostType);
     }
 
     // Default (MSSQL and others)
@@ -96,7 +97,7 @@ export const getEffectiveManageReadinessData = (
     ) {
         return instance?.manageReadiness;
     }
-    return getMergedReadinessData(instance?.data, discoveredData);
+    return getMergedReadinessData(instance?.data, discoveredData, hostType);
 };
 
 export const getManageCheckObjInitial = (hostType: string) => {
@@ -140,15 +141,15 @@ export function getManageCheckObjFinal(
     if (hostType === DBType.ORACLE) {
         return {
             ...baseObj,
-            assessment: getPermissionState('assessment', manageReadinessData)
+            assessment: getPermissionState('', manageReadinessData, DBType.ORACLE)
         };
     }
     return {
         ...baseObj,
-        assessment: getPermissionState('assessment', manageReadinessData),
-        remediation: getPermissionState('remediation', manageReadinessData),
-        dbcreation: getPermissionState('dbcreation', manageReadinessData),
-        sandbox: getPermissionState('sandbox', manageReadinessData)
+        assessment: getPermissionState('assessment', manageReadinessData, DBType.MSSQL),
+        remediation: getPermissionState('remediation', manageReadinessData, DBType.MSSQL),
+        dbcreation: getPermissionState('dbcreation', manageReadinessData, DBType.MSSQL),
+        sandbox: getPermissionState('sandbox', manageReadinessData, DBType.MSSQL)
     };
 }
 
@@ -208,7 +209,7 @@ export function getManageCheckObjMultiFinal(
     t: TFunction
 ): Partial<ExtendedManageStates> {
     if (hostType === DBType.ORACLE) {
-        const assessment = getPermissionState('assessment', manageReadinessData);
+        const assessment = getPermissionState('', manageReadinessData, DBType.ORACLE);
         const overallState = assessment;
         const readyCount = assessment === MANAGE_STATES.READY ? 1 : 0;
         const perRowState = [
@@ -230,10 +231,10 @@ export function getManageCheckObjMultiFinal(
             manageReadinessData
         };
     }
-    const assessment = getPermissionState('assessment', manageReadinessData);
-    const remediation = getPermissionState('remediation', manageReadinessData);
-    const dbcreation = getPermissionState('dbcreation', manageReadinessData);
-    const sandbox = getPermissionState('sandbox', manageReadinessData);
+    const assessment = getPermissionState('assessment', manageReadinessData, DBType.MSSQL);
+    const remediation = getPermissionState('remediation', manageReadinessData, DBType.MSSQL);
+    const dbcreation = getPermissionState('dbcreation', manageReadinessData, DBType.MSSQL);
+    const sandbox = getPermissionState('sandbox', manageReadinessData, DBType.MSSQL);
     const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
     let readyCount = 0;
     const perRowState = [

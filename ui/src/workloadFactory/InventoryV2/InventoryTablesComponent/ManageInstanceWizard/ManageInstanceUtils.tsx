@@ -42,7 +42,7 @@ import {
 } from './DetectInstanceStep/DetectContent/DetectContentHelper';
 
 // Checks if the manage readiness data allows for management actions based on missing permissions and modules
-export const isAllowManage = (manageReadinessData: ManageReadinessInterface) => {
+export const isAllowManage = (manageReadinessData: ManageReadinessInterface, engineType: string) => {
     const state = store.getState();
     const { installMissingAWS, installMissingPowershell, installMissingJQ } =
         state.inventoryV2.manageInstanceInstallAction;
@@ -54,14 +54,17 @@ export const isAllowManage = (manageReadinessData: ManageReadinessInterface) => 
             // Skip the missingSqlCmd key
             return;
         }
-        const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
+        const missingPermissions =
+            engineType === DBType.ORACLE
+                ? manageReadinessData[key]?.missingPermissions || []
+                : manageReadinessData[key]?.missingSqlPermissions || [];
         const missingModules = manageReadinessData[key]?.missingModules || [];
         const otherMissingModules = missingModules.filter(
             (module: string) => module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ
         );
-        if (missingSqlPermissions.length === 0 && missingModules.length === 0) {
+        if (missingPermissions.length === 0 && missingModules.length === 0) {
             anyListEmpty = true;
-        } else if (missingSqlPermissions.length === 0 || missingModules.length > 0) {
+        } else if (missingPermissions.length === 0 || missingModules.length > 0) {
             const checks = [
                 // PowerShell7 check
                 (missingModules.includes(MANAGE_STATES.POWERSHELL7) && installMissingPowershell) ||
@@ -247,7 +250,7 @@ export const handleSingleInstanceManage = (
     engineType: string,
     t: TFunction
 ) => {
-    const allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData || {});
+    const allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData || {}, engineType);
     if (permissionMissing(engineType, manageSingleInstanceChecks)) {
         dispatch(
             addNotification({
@@ -423,7 +426,8 @@ export const callManageMultiInstanceApi = async (
     dispatch: AppDispatch,
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
-    navigate: ReturnType<typeof useNavigate>
+    navigate: ReturnType<typeof useNavigate>,
+    engineType: string
 ) => {
     const state = store.getState();
     const { installMissingAWS, installMissingPowershell, installMissingJQ } =
@@ -434,7 +438,8 @@ export const callManageMultiInstanceApi = async (
     bulkDetectedInstanceList
         ?.filter(
             (instance: BulkDetectedInstance) =>
-                instance.authorized && isAllowManage(instance?.manageReadiness || instance?.data?.manageReadiness || {})
+                instance.authorized &&
+                isAllowManage(instance?.manageReadiness || instance?.data?.manageReadiness || {}, engineType)
         )
         .forEach((instance: BulkDetectedInstance) => {
             const installModules: Array<string> = [
@@ -559,15 +564,18 @@ export const handleMultiInstanceManage = (
     dispatch: AppDispatch,
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
-    navigate: ReturnType<typeof useNavigate>
+    navigate: ReturnType<typeof useNavigate>,
+    engineType: string
 ) => {
     // Check if any instance is fully ready
     const anyInstanceReady =
         Array.isArray(bulkDetectedInstanceList) &&
         bulkDetectedInstanceList.some(
             (instance: any) =>
-                (instance.authorized && instance?.manageReadiness && isAllowManage(instance.manageReadiness || {})) ||
-                (instance?.data?.manageReadiness && isAllowManage(instance?.data?.manageReadiness || {}))
+                (instance.authorized &&
+                    instance?.manageReadiness &&
+                    isAllowManage(instance.manageReadiness || {}, engineType)) ||
+                (instance?.data?.manageReadiness && isAllowManage(instance?.data?.manageReadiness || {}, engineType))
         );
 
     if (anyInstanceReady) {
@@ -576,7 +584,8 @@ export const handleMultiInstanceManage = (
             dispatch,
             manageBulkV2InstanceApi,
             getJobDetailApi,
-            navigate
+            navigate,
+            engineType
         );
     } else {
         dispatch(
@@ -629,8 +638,13 @@ export const missingModules = (manageReadinessData: ManageReadinessInterface) =>
 };
 
 // Returns the permission state based on the type and manage readiness data
-export const getPermissionState = (type: string, manageReadinessData: ManageReadinessInterface) => {
-    const readinessData = manageReadinessData?.[type];
+export const getPermissionState = (type: string, manageReadinessData: ManageReadinessInterface, engineType: string) => {
+    let readinessData: any;
+    if (type === '') {
+        readinessData = manageReadinessData;
+    } else {
+        readinessData = manageReadinessData?.[type];
+    }
 
     if (!readinessData) return GENERAL.NOT_AVAILABLE;
 
@@ -639,9 +653,10 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
     const hasJQ = missingModulesList.includes(MANAGE_STATES.JQ);
     const otherModules = missingModulesList.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
 
-    const permissions = readinessData?.missingSqlPermissions;
+    const permissions =
+        engineType === DBType.ORACLE ? readinessData?.missingPermissions : readinessData?.missingSqlPermissions;
 
-    if (otherModules.length > 0 || permissions.length > 0) {
+    if (otherModules.length > 0 || permissions!.length > 0) {
         return MANAGE_STATES.MISSING_PREREQUISITES;
     }
 
@@ -681,25 +696,33 @@ export const checkOverallManageState = (
 // Merges two manage readiness data objects, combining missing SQL permissions and modules
 export const mergeReadinessData = (
     manageReadinessData: ManageReadinessInterface,
-    partnerManageReadinessData: ManageReadinessInterface
+    partnerManageReadinessData: ManageReadinessInterface,
+    engineType: string
 ): ManageReadinessInterface => {
     const mergedData: any = {};
 
     Object.keys(manageReadinessData).forEach(key => {
         if (key !== 'missingSqlCmd') {
+            const basePermissions =
+                engineType === DBType.ORACLE
+                    ? manageReadinessData[key]?.missingPermissions || []
+                    : manageReadinessData[key]?.missingSqlPermissions || [];
+
+            const partnerPermissions =
+                engineType === DBType.ORACLE
+                    ? partnerManageReadinessData[key]?.missingPermissions || []
+                    : partnerManageReadinessData[key]?.missingSqlPermissions || [];
+
+            const mergedPermissions = Array.from(new Set([...basePermissions, ...partnerPermissions]));
+            const mergedModules = Array.from(
+                new Set([...manageReadinessData[key].missingModules, ...partnerManageReadinessData[key].missingModules])
+            );
+
             mergedData[key] = {
-                missingSqlPermissions: Array.from(
-                    new Set([
-                        ...manageReadinessData[key].missingSqlPermissions,
-                        ...partnerManageReadinessData[key].missingSqlPermissions
-                    ])
-                ),
-                missingModules: Array.from(
-                    new Set([
-                        ...manageReadinessData[key].missingModules,
-                        ...partnerManageReadinessData[key].missingModules
-                    ])
-                )
+                ...(engineType === DBType.ORACLE
+                    ? { missingPermissions: mergedPermissions }
+                    : { missingSqlPermissions: mergedPermissions }),
+                missingModules: mergedModules
             };
         } else {
             mergedData[key] = manageReadinessData[key] || partnerManageReadinessData[key];
@@ -734,7 +757,7 @@ const addCredentialsBasedOnEngineType = (
             // For Oracle: Only push if isDefaultAuthentication === true && oracleServerAuthentication === false
             if (
                 isDefaultAuthentication === true &&
-                oracleServerAuthentication === false &&
+                !oracleServerAuthentication &&
                 detectManageUserName &&
                 detectManagePassword
             ) {
@@ -879,7 +902,7 @@ export const updateDetectBulkResponse = (
     engineType: string
 ) => {
     const updatedInstances = newSelectedMultiDetectInstances?.map((instance: any) => {
-        const isAuthRequired = isAuthRequiredForInstance(instance, engineType);
+        const isAuthRequired = isAuthRequiredForInstance(instance?.data, engineType);
         const isFsxRegisterRequired = instance?.data?.fsxId && !instance?.data?.isFsxRegistered;
 
         const res = result?.data?.items?.find(
@@ -925,7 +948,11 @@ export const updateDetectBulkResponse = (
             const detail = res.registerDetails?.find(
                 (d: any) => isAuthRequired && d.resourceId === instance?.data?.databaseInstanceName
             );
-            manageReadiness = detail?.manageReadiness || null;
+            if (engineType === DBType.MSSQL) {
+                manageReadiness = detail?.manageReadiness || null;
+            } else if (engineType === DBType.ORACLE) {
+                manageReadiness = detail?.manageReadiness.oracle || null;
+            }
         }
 
         // Optionally update FSX registration if successful

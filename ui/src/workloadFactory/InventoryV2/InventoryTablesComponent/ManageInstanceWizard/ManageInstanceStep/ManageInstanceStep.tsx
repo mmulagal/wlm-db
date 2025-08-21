@@ -96,7 +96,8 @@ export const Content = () => {
     // Function to merge readiness data for any single instance
     const getMergedReadinessData = (
         instanceData: BulkDetectedInstance['data'],
-        discoveredHostDataL: BulkDetectedInstance[]
+        discoveredHostDataL: BulkDetectedInstance[],
+        engineType: string
     ) => {
         const { ec2InstanceId, credentialId, regionId, databaseInstanceName, hostRow, manageReadiness } =
             instanceData || {};
@@ -128,7 +129,7 @@ export const Content = () => {
 
         // Merge if both exist, else return primary
         return partnerReadiness && primaryReadiness
-            ? mergeReadinessData(primaryReadiness, partnerReadiness)
+            ? mergeReadinessData(primaryReadiness, partnerReadiness, engineType)
             : primaryReadiness;
     };
 
@@ -147,19 +148,23 @@ export const Content = () => {
             const isDefault = manageSingleInstanceData?.isDefaultAuthentication;
             const isOracleAuth = manageSingleInstanceData?.oracleServerAuthentication;
             if (isDefault === false) {
-                isNoAuth = !!manageSingleInstanceReadiness;
+                isNoAuth = false;
             } else if (isDefault === true) {
-                isNoAuth = isOracleAuth === true ? !!manageSingleInstanceReadiness : false;
+                isNoAuth = !isOracleAuth && !!manageSingleInstanceReadiness;
             }
         } else {
             // For MSSQL and others: no auth if all auth fields are falsy
-            isNoAuth = authFields.every(field => !manageSingleInstanceData?.[field]) && !!manageSingleInstanceReadiness;
+            isNoAuth =
+                !manageSingleInstanceData?.windowsAuthentication &&
+                !manageSingleInstanceData?.sqlServerAuthentication &&
+                !manageSingleInstanceData?.windowsDomainUserAuthentication &&
+                !!manageSingleInstanceReadiness;
         }
         if (isNoAuth) {
             manageReadinessData = manageSingleInstanceReadiness;
         } else {
             const discoveredData = getDiscoveredHostDataByType(hostType, discoveredHostData, discoveredOracleHostData);
-            manageReadinessData = getMergedReadinessData(manageSingleInstanceData, discoveredData);
+            manageReadinessData = getMergedReadinessData(manageSingleInstanceData, discoveredData, hostType);
         }
 
         if (manageReadinessData) {
