@@ -452,7 +452,7 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
 
     # Initialize result object if not already initialized
     if [ -z "$resultObject" ]; then
-        resultObject='{ "instances": [], "fsxResults": [], modulesInstallationResults: [] }'
+        resultObject='{ "instances": [], "fsxResults": [], modulesInstallationResults: [], "missingOracleUserPermissions": [] }'
     fi
 
     ${oracleUserAuthLoginCommand}
@@ -488,7 +488,7 @@ const validateOracleInstanceFsxConnectivity = (fsxnId: string, region: string) =
 
     # Initialize result object if not already initialized
     if [ -z "$resultObject" ]; then
-        resultObject='{ "instances": [], "fsxResults": [], modulesInstallationResults: [] }'
+        resultObject='{ "instances": [], "fsxResults": [], modulesInstallationResults: [], "missingOracleUserPermissions": [] }'
     fi
 
     ${ontapRestApi}
@@ -612,7 +612,7 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
 const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => `
 
         if [ -z "$resultObject" ]; then
-            resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [] }'
+            resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [], "missingOracleUserPermissions": [] }'
         fi
 
         ${checkOracleModuleAvailability}
@@ -744,6 +744,156 @@ EOF
     exit 0
   `;
 
+// Oracle User Permissions Detection Module
+// Required privileges with a user in oracle, Permissions 3rd and 4th are only required for CDB instances.
+// • CREATE SESSION — allows the user account to log in to sql shell.
+// • SELECT_CATALOG_ROLE or SELECT ANY DICTIONARY CONTAINER = ALL   — read-only access to all dictionary views in every container.
+// • SET CONTAINER CONTAINER = ALL       — enables ALTER SESSION SET CONTAINER = … for every PDB and the root.
+//
+//   Visibility setting (row filter for CDB views)
+// • SET CONTAINER_DATA = ALL CONTAINER = CURRENT — required to get storage details & protection details for PDBs
+
+const loadOracleUserPermissionsDetectionModule = `
+    is_create_session_granted() {
+        local result=$(sudo -i -u oracle bash <<EOF
+            set -e
+            export ORACLE_SID="$oracleSid"
+            $sqlplus_command
+            WHENEVER SQLERROR EXIT SQL.SQLCODE
+            SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+            SELECT 'OK' FROM dual;
+            EXIT;
+EOF
+        )
+
+        echo "$result" | grep -q "^OK" && echo "true" || echo "false"
+}
+
+    check_for_select_catalog_permission() {
+        local result=$(sudo -i -u oracle bash <<EOF
+            set -e
+            export ORACLE_SID="$oracleSid"
+            $sqlplus_command
+            WHENEVER SQLERROR EXIT SQL.SQLCODE
+            SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+            SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
+            FROM session_roles
+            WHERE role = 'SELECT_CATALOG_ROLE';
+            EXIT;
+EOF
+        )
+        echo "$result" | grep -q "true" && echo "true" || echo "false"
+    }
+
+    check_for_set_container_permission() {
+        local result=$(sudo -i -u oracle bash <<EOF
+            set -e
+            export ORACLE_SID="$oracleSid"
+            $sqlplus_command
+            WHENEVER SQLERROR EXIT SQL.SQLCODE
+            SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+            SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
+            FROM session_privs
+            WHERE privilege = 'SET CONTAINER';
+            EXIT;
+EOF
+        )
+        echo "$result" | grep -q "true" && echo "true" || echo "false"
+}
+
+    # returns true if the permission SET CONTAINER_DATA = ALL CONTAINER = CURRENT is granted to the user.
+    # this is used to check if the user has permission to access data in all containers (i.e pdbs) in a CDB instance.
+    check_for_container_data_permission() {
+        local result=$(sudo -i -u oracle bash <<EOF
+            set -e
+            export ORACLE_SID="$oracleSid"
+            $sqlplus_command
+            WHENEVER SQLERROR EXIT SQL.SQLCODE
+            SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+            SELECT CASE WHEN COUNT(DISTINCT con_id) > 1 THEN 'true' ELSE 'false' END
+            FROM cdb_objects;
+            EXIT;
+EOF
+    )
+        echo "$result" | grep -q "true" && echo "true" || echo "false"
+}
+
+    is_cdb_instance() {
+        local result=$(sudo -i -u oracle bash <<EOF
+                set -e
+                export ORACLE_SID="$oracleSid"
+                $sqlplus_command
+                WHENEVER SQLERROR EXIT SQL.SQLCODE
+                SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+                SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
+                FROM v\\$database
+                WHERE cdb = 'YES';
+                EXIT;
+EOF
+        )
+        echo "$result" | grep -q "true" && echo "true" || echo "false"
+    }
+`;
+
+const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string) => `
+    ec2InstanceId="${ec2InstanceId}"
+    oracleSid="${dbSid}"
+    oracleSid_temp="${dbSid}_temp"
+
+    # Initialize result object if not already initialized
+    if [ -z "$resultObject" ]; then
+        resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [], "missingOracleUserPermissions": [] }'
+    fi
+
+    ${oracleUserAuthLoginCommand}
+    ${loadOracleUserPermissionsDetectionModule}
+    result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
+    sqlplus_command=$(echo "$result" | cut -d'|' -f1)
+
+    # Extract username from sqlplus_command
+    username=$(sed -n 's/.* -S \\([^/]*\\)\\/.*/\\1/p' <<< "$sqlplus_command")
+    isCreateSessionRoleGranted=$(is_create_session_granted)
+
+    if [ "$username" == "sys" ]; then
+        # SYS user has all privileges, so we don't need to check for permissions.
+        missingPermissions="[]"
+    elif [ "$isCreateSessionRoleGranted" == "false" ]; then
+        missingPermissions="[\\"CREATE SESSION\\"]"
+    else
+        isSelectCatalogRoleGranted=$(check_for_select_catalog_permission)
+
+        isCDBInstance=$(is_cdb_instance)
+
+        if [ $isCDBInstance == "true" ]; then
+            # Perform actions specific to CDB instances
+            isSetContainerRoleGranted=$(check_for_set_container_permission)
+            isContainerDataPermissionGranted=$(check_for_container_data_permission)
+
+            missingPermissions="["
+            if [ "$isSetContainerRoleGranted" == "false" ]; then
+                missingPermissions="$missingPermissions\\"SET CONTAINER ROLE\\","
+            fi
+            if [ "$isContainerDataPermissionGranted" == "false" ]; then
+                missingPermissions="$missingPermissions\\"SET CONTAINER_DATA\\","
+            fi
+            if [ "$isSelectCatalogRoleGranted" == "false" ]; then
+                missingPermissions="$missingPermissions\\"SELECT CATALOG ROLE\\","
+            fi
+            # Remove trailing comma if any
+            missingPermissions="\${missingPermissions%,}]"
+        else
+            # Perform actions specific to non-CDB instances
+            if [ "$isSelectCatalogRoleGranted" == "false" ]; then
+                missingPermissions="[\\"SELECT CATALOG ROLE\\"]"
+            fi
+        fi
+    fi
+
+    missingOracleUserPermissions="{\\"instanceSid\\": \\"$oracleSid\\", \\"missingPermissions\\": $missingPermissions}"
+
+    resultObject=$(echo "$resultObject" | jq --argjson permissions "$missingOracleUserPermissions" '.missingOracleUserPermissions += [$permissions]')
+`;
+
 export {
     getOracleProtectionData,
     ORACLE_PERFORMANCE_METRICS,
@@ -757,5 +907,6 @@ export {
     ontapRestApi,
     checkCommandStatus,
     trendGraphCreateScriptForOracle,
-    getMappedOntapDataVolume
+    getMappedOntapDataVolume,
+    checkRequiredOracleUserPermissions
 };

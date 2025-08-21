@@ -137,7 +137,16 @@ describe('Manage operations', () => {
             [TEST_EC2_INSTANCE_ID]
         );
         expect(response).toEqual([
-            { resourceId: 'ordbsdl', databaseServerEdition: '19.0.0.0.0', resourceType: 'ORACLE' }
+            {
+                resourceId: 'ordbsdl',
+                databaseServerEdition: '19.0.0.0.0',
+                resourceType: 'ORACLE',
+                manageReadiness: {
+                    oracle: {
+                        missingPermissions: []
+                    }
+                }
+            }
         ]);
     });
 

@@ -206,14 +206,20 @@ const SingleRegisterCredentialsResponse = Type.Object({
     requiredModuleError: Type.Optional(Type.String()),
     manageReadiness: Type.Optional(
         Type.Object({
-            missingSqlCmd: Type.Boolean({
-                description: 'Is SQLCMD missing on the database host instance?'
-            }),
-            assessment: ManageReadinessObject,
-            remediation: ManageReadinessObject,
-            dbcreation: ManageReadinessObject,
-            sandbox: ManageReadinessObject
-            // logsanalyzer: Type.Optional(ManageReadinessObject)
+            missingSqlCmd: Type.Optional(
+                Type.Boolean({
+                    description: 'Is SQLCMD missing on the database host instance?'
+                })
+            ),
+            assessment: Type.Optional(ManageReadinessObject),
+            remediation: Type.Optional(ManageReadinessObject),
+            dbcreation: Type.Optional(ManageReadinessObject),
+            sandbox: Type.Optional(ManageReadinessObject),
+            oracle: Type.Optional(
+                Type.Object({
+                    missingPermissions: Type.Array(Type.String({ description: 'Missing Oracle user permissions' }))
+                })
+            )
         })
     )
 });

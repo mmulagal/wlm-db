@@ -87,6 +87,7 @@ import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import {
     checkAndInstallRequiredOracleDependentModules,
+    checkRequiredOracleUserPermissions,
     validateOracleInstanceConnectivity,
     validateOracleInstanceFsxConnectivity
 } from './workloads/oracle/oracle-ssm-script-utils';
@@ -2347,6 +2348,14 @@ async function validateOracleCredentials(
 
     if (checkManageReadiness) {
         command += `${checkAndInstallRequiredOracleDependentModules(signedUrls)}\n`;
+
+        if (oracleCredentials.length) {
+            command += oracleCredentials.reduce(
+                (acc: string, { resourceId }) =>
+                    `${acc}${checkRequiredOracleUserPermissions(instanceId, resourceId)}\n`,
+                ''
+            );
+        }
     }
 
     if (fsxCredentials) {
@@ -2389,10 +2398,19 @@ async function validateOracleCredentials(
     const paramsToDelete: string[] = [];
     const instancesToBeDeleted: string[] = [];
 
-    if (checkManageReadiness) {
-        const { modulesInstallationResults } = parsedResponse;
+    const instanceIdToMissingPermissionsMap = new Map<string, string[]>();
 
-        logger.debug('Modules installation results', { modulesInstallationResults });
+    if (checkManageReadiness) {
+        const { modulesInstallationResults, missingOracleUserPermissions } = parsedResponse;
+
+        logger.debug('Modules installation results', { modulesInstallationResults, missingOracleUserPermissions });
+
+        if (missingOracleUserPermissions && missingOracleUserPermissions.length) {
+            for (const permission of missingOracleUserPermissions) {
+                const { instanceSid, missingPermissions } = permission;
+                instanceIdToMissingPermissionsMap.set(instanceSid, missingPermissions);
+            }
+        }
 
         if (modulesInstallationResults && modulesInstallationResults.length) {
             let errString = '';
@@ -2446,10 +2464,16 @@ async function validateOracleCredentials(
                 });
             } else if (instance.oracleInstanceConnectivity === true) {
                 const { oracleInstanceName, oracleEdition } = instance;
+                const missingPermissions = instanceIdToMissingPermissionsMap.get(oracleInstanceName) || [];
                 response.push({
                     resourceId: oracleInstanceName,
                     resourceType: RESOURCESTYPE.ORACLE,
-                    databaseServerEdition: oracleEdition
+                    databaseServerEdition: oracleEdition,
+                    manageReadiness: {
+                        oracle: {
+                            missingPermissions
+                        }
+                    }
                 });
             }
         });
