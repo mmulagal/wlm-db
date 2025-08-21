@@ -1,0 +1,227 @@
+name: BE Build & Deploy Staging
+
+on:
+#  push:
+#    branches:
+#      - master
+#    paths:
+#      - server/**
+#  schedule:
+#    - cron: '20 3 * * *' # Every Day at 04:05AM (Cron is UTC)
+  workflow_dispatch:
+env:
+  ACCOUNT_ID: 718273455463
+  REGION: us-east-1 
+  STANDBYREGION: us-west-2
+  MODE: development 
+  SHORT_SHA: development-$(echo ${{ github.sha }} | cut -c1-7)  # Set the full commit SHA as an environment variable
+  IMAGE_NAME: wlmdb
+  GIT_HASH_SHORT: ${{ github.sha }} | cut -c1-7
+ 
+
+jobs:
+  build-and-push-region-1:
+    runs-on: wlmdb-runner
+    steps:
+    - name: Echo SHORT_SHA
+      run: echo ${{env.SHORT_SHA}}
+    - name: Echo GIT_HASH_SHORT
+      run: echo ${{env.GIT_HASH_SHORT}}      
+    - name: Generate GitHub App Token
+      id: generate-token
+      uses: tibdex/github-app-token@v2
+      with:
+        app_id: ${{ vars.APP_ID }}
+        private_key: ${{ secrets.GG_PEM }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
+          ref: master
+          token: ${{ steps.generate-token.outputs.token }}
+    - name: substitute environment variable
+      run: |
+         sudo apt-get update
+         sudo apt-get install gettext-base
+         export MODE=${{env.MODE}}
+         envsubst "$(printf '${%s} ' $(env | cut -d'=' -f1))" < ecr-lifecycle-policy.json > out.txt && mv out.txt /var/tmp/ecr-lifecycle-policy.json
+      working-directory: ./Devops/Ecr-Lifecycle-Policy
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+          aws-access-key-id: ${{  secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+    - name: Create ECR repo if necessary
+      uses: int128/create-ecr-repository-action@v1
+      with:
+          repository: ${{env.IMAGE_NAME}}
+          lifecycle-policy: /var/tmp/ecr-lifecycle-policy.json
+
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+          node-version: 24
+    - run: npx prisma generate
+      working-directory: ./server
+    - run: npm install
+      working-directory: ./server
+    - run: npm run build
+      working-directory: ./server
+
+    - name: Generate hash
+      id: gen-hash
+      run: echo "HASH=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+    - name: Generate tag
+      id: gen-tag
+      run: echo "TAG=${{env.MODE}}-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+    - uses: kciter/aws-ecr-action@v5
+      with:
+        path: ./server
+        dockerfile: ./server/Dockerfile
+        access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        account_id: 718273455463
+        repo: ${{env.IMAGE_NAME}}
+        region: us-east-1  # Replace with your second region
+        tags: ${{ env.MODE }},${{ steps.gen-tag.outputs.TAG }}
+        image_scanning_configuration: true
+        extra_build_args: "--build-arg ARG_WLM_DB_BUILD_GIT=${{steps.gen-hash.outputs.HASH}} --build-arg ARG_WLM_DB_BUILD_MODE=${{env.MODE}}"
+        #create_repo: true
+        #set_repo_policy: true
+        #repo_policy_file: ../Ecr-Lifecycle-Policy/ecr-lifecycle-policy.json
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+          aws-access-key-id: ${{  secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+    - name: Create Standby ECR repo if necessary
+      uses: int128/create-ecr-repository-action@v1
+      with:
+          repository: ${{env.IMAGE_NAME}}
+          lifecycle-policy: /var/tmp/ecr-lifecycle-policy.json
+    - name: Log in to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v1
+    - name: Docker Tag new Region 
+      id: docker_tag
+      run: |
+          docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}} ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}
+          docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }} ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }}
+          docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }}
+          docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}
+
+
+  update-version:
+    runs-on: wlmdb-runner
+    needs: [build-and-push-region-1]
+    steps:
+      - name: Echo SHORT_SHA
+        run: echo ${{env.SHORT_SHA}}
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.GG_PEM }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+          token: ${{ steps.generate-token.outputs.token }}
+      - name: List contents of the working directory
+        run: ls -la
+
+      - name: Set up environment variables
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.S3_REPO_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.S3_REPO_SECRET_KEY }}" >> $GITHUB_ENV
+          echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
+
+      - name: Update Chart Version
+        id: chart_version_update
+        working-directory: Devops/${{env.IMAGE_NAME}}
+        run: |
+          currentVer=$(grep version Chart.yaml | awk '{print $2}')
+          newVer=$(echo $currentVer | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}')
+          sed -i "s/$currentVer/$newVer/g" Chart.yaml
+          echo "new_version=$newVer" >> $GITHUB_ENV
+      
+      - name: Commit & Push changes
+        working-directory: Devops/${{env.IMAGE_NAME}}
+        run: |
+            git config --global user.name 'teamcityng[bot]'
+            git config --global user.email 'teamcityng[bot]@users.noreply.github.com'
+            git pull https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
+            git commit -m "update chart version to ${{ env.new_version }}" ./Chart.yaml || echo "No changes to commit"
+            git push https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
+  
+      - name: Update Image Version
+        id: image_version_update
+        working-directory: Devops/${{env.IMAGE_NAME}}
+        run: |
+           echo "The new Image Version is: ${{env.SHORT_SHA}}"
+           sed -i "s/^infraversion.*/infraversion: ${{env.SHORT_SHA}}/" values.yaml
+  
+      - name: Commit & Push Vaules changes
+        working-directory: Devops/${{env.IMAGE_NAME}}
+        run: |
+            git config --global user.name 'teamcityng[bot]'
+            git config --global user.email 'teamcityng[bot]@users.noreply.github.com'
+            git pull https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
+            git commit -m "update image version to ${{env.SHORT_SHA}}" ./values.yaml
+            git push https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
+
+      - name: Setup helm file
+        uses: mamezou-tech/setup-helmfile@v2.0.0
+        with:
+          install-kubectl: "yes"
+          install-helm: "yes"
+          install-helm-plugins: "yes"
+          helm-s3-plugin-version: "0.9.2"
+
+      - name: Package Helm Chart
+        working-directory: Devops/${{env.IMAGE_NAME}}
+        run: |
+          rm -f *.tgz
+          helm package .
+          if [ $? != 0 ]; then exit 1; fi
+            
+      - name: Push to S3 repository
+        working-directory: Devops/${{env.IMAGE_NAME}}
+        run: |
+          helm repo add netappawshelmcharts s3://aws-helm-charts-repository/charts
+          helm s3 push --force ./${{env.IMAGE_NAME}}-${{ env.new_version }}.tgz netappawshelmcharts
+          if [ $? != 0 ]; then exit 2; fi
+         
+      - name: Push to Standby S3 repository
+        working-directory: Devops/${{env.IMAGE_NAME}}
+        run: |
+          export AWS_REGION="us-west-2"
+          echo "Add netappawshelmchartsstandby repository"
+          helm repo add netappawshelmchartsstandby s3://aws-helm-charts-standby-repository/charts
+          helm s3 push --force ./${{env.IMAGE_NAME}}-${{ env.new_version }}.tgz netappawshelmchartsstandby
+          if [ $? != 0 ]; then exit 3; fi
+
+      - name: Display ImageID and Chart Version 
+        run: |
+          echo "The ImageID is: ${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}"
+          echo "The Chart Version is: ${{env.IMAGE_NAME}}-${{ env.new_version }}.tgz"
+
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.GG_PEM }}
+          owner: TLVDevOps
+
+      - name: Invoke workflow in another repo with inputs
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Upgrade_K8S_Service.yml
+          repo: TLVDevOps/eks-cluster-automation
+          inputs: '{"service_name": "wlmdb"}'
+    # Required when using the `repo` option. Either a PAT or a token generated from the GitHub app or CLI
+          token: "${{ steps.app-token.outputs.token }}"
