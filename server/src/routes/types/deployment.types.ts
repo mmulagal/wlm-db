@@ -26,18 +26,32 @@ const ADConfiguration = Type.Object({
     securityGroupId: Type.Optional(Type.String())
 });
 
-const FSXConfiguration = Type.Object({
-    fsxDeploymentMode: Type.String({ enum: ['SINGLE_AZ_1', 'MULTI_AZ_1'] }),
+const FSXConfigurationCommon = {
     fsxFileSystemId: Type.Optional(Type.String()),
     fsxUsername: Type.String(),
     fsxPassword: Type.String(),
     databaseSize: Type.Number(),
     ontapSgGroupId: Type.Array(Type.String()),
-    fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1024, 2048, 4096] }),
-    fsxIOPS: Type.Number(),
     encryptionKey: Type.Optional(Type.String()),
     snapshotPolicy: Type.String({ enum: ['none', 'daily_weekretention'], default: 'daily_weekretention' })
+};
+
+const FSXConfigurationGen1 = Type.Object({
+    fsxDeploymentMode: Type.String({ enum: ['SINGLE_AZ_1', 'MULTI_AZ_1'] }),
+    ...FSXConfigurationCommon,
+    fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1024, 2048, 4096] }),
+    fsxIOPS: Type.Number()
 });
+
+const FSXConfigurationGen2 = Type.Object({
+    fsxDeploymentMode: Type.String({ enum: ['SINGLE_AZ_2', 'MULTI_AZ_2'] }),
+    ...FSXConfigurationCommon,
+    fsxVolThroughput: Type.Number({ enum: [384, 768, 1536, 3072, 4608, 6144] }),
+    fsxIOPS: Type.Number()
+});
+
+// Union type for FSX Configuration
+const FSXConfiguration = Type.Union([FSXConfigurationGen1, FSXConfigurationGen2]);
 
 const SQLConfiguration = Type.Object({
     sqlDeploymentMode: Type.String({ enum: ['standalone', 'fci', 'ha'] }),
