@@ -373,7 +373,13 @@ async function fetchOracleDriftAssessment(
         {} as Record<string, unknown>
     );
 
-    const { storageDriftData, protocol } = assessmentFlags.storage
+    const mappedOntapVolumes = assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as Record<
+        string,
+        OracleMappedOntapVolumesResponse
+    >;
+    const storageProtocol = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.protocol : '';
+
+    const storageDriftData = assessmentFlags.storage
         ? calculateStorageDrift(
               accountId,
               credentialsId,
@@ -382,13 +388,10 @@ async function fetchOracleDriftAssessment(
               databaseInstanceId,
               databaseInstanceName,
               fileSystemId,
-              assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as Record<
-                  string,
-                  OracleMappedOntapVolumesResponse
-              >,
+              mappedOntapVolumes,
               assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
           )
-        : { storageDriftData: {}, protocol: '' };
+        : {};
 
     const driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
@@ -400,7 +403,7 @@ async function fetchOracleDriftAssessment(
             const creationTime = databaseInstanceConfigData[0]?.creation_time;
             return creationTime instanceof Date ? moment(creationTime).valueOf() : undefined;
         })(),
-        storageProtocol: protocol
+        storageProtocol
     };
 
     return driftAssessmentData;

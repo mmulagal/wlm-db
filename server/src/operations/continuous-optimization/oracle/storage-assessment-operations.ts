@@ -74,8 +74,7 @@ function getVolumeConfigDrift(
     databaseInstanceName: string,
     fsxFileSystem: string,
     mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
-    storageAssessmentData: StorageAssessment,
-    isLayoutViolated: boolean
+    storageAssessmentData: StorageAssessment
 ) {
     logger.info('Fetching volume configuration drift');
     const volumeTypeToNamesMap = mapVolumeTypesToIdsOrNames(
@@ -100,92 +99,76 @@ function getVolumeConfigDrift(
     }
 
     const tieringPolicyRecommendations = {
-        mixed: 'none',
-        'data-control-files': 'snapshot-only',
+        'data-control-files': 'snapshot_only',
         'log-files': 'none',
         'archive-log-files': 'auto'
     };
 
     const compressionRecommendations = {
-        mixed: 'none',
         'log-files': 'none',
-        'non-log-files': 'adaptive'
+        others: 'adaptive'
     };
 
     const deduplicationRecommendations = {
-        mixed: 'none',
         'log-files': 'none',
-        'non-log-files': 'inline'
+        others: 'inline'
     };
+
+    const controlDataFileVolumeNames = [...dataFileVolumeNames, ...controlFileVolumeNames];
+    const redoLogsTempLogsVolumeNames = [...redoLogVolumeNames, ...tempFileVolumeNames];
 
     return volumeConfigData.map(config => {
         const objectsInViolation: GenericViolationResponseType[] = [];
         const objectsInViolationNames: string[] = [];
-        const controlDataFileVolumeNames = [...dataFileVolumeNames, ...controlFileVolumeNames];
-        const redoLogsTempLogsVolumeNames = [...redoLogVolumeNames, ...tempFileVolumeNames];
         volumesData.forEach(volume => {
             const value = volume[config.parameter];
             const objectName = volume.name || '';
             let recommended = config.value.toString();
             let isViolated = false;
-            let dataCategory: string = '';
+            let dataCategory = '';
 
-            const isMixedViolation = isLayoutViolated && value !== 'none';
+            const isIn = (list: string[]) => list.includes(objectName);
+            const volumeMembership = [
+                controlDataFileVolumeNames,
+                redoLogsTempLogsVolumeNames,
+                archiveLogVolumeNames
+            ].filter(list => isIn(list)).length;
 
             switch (config.parameter) {
                 case 'compaction':
                     isViolated = value === 'none';
                     recommended = 'none';
                     break;
+
                 case 'tieringPolicy':
-                    if (isMixedViolation) {
-                        isViolated = true;
-                        recommended = tieringPolicyRecommendations.mixed;
-                        dataCategory = 'mixed';
-                    } else if (controlDataFileVolumeNames.includes(objectName)) {
-                        isViolated = value !== tieringPolicyRecommendations['data-control-files'];
-                        recommended = tieringPolicyRecommendations['data-control-files'];
-                        dataCategory = 'data-control-files';
-                    } else if (redoLogsTempLogsVolumeNames.includes(objectName)) {
-                        isViolated = value !== tieringPolicyRecommendations['log-files'];
+                    if (isIn(redoLogsTempLogsVolumeNames)) {
                         recommended = tieringPolicyRecommendations['log-files'];
-                        dataCategory = 'log-files';
-                    } else if (archiveLogVolumeNames.includes(objectName)) {
-                        isViolated = value !== tieringPolicyRecommendations['archive-log-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                    } else if (isIn(controlDataFileVolumeNames)) {
+                        recommended = tieringPolicyRecommendations['data-control-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'data-control-files';
+                    } else if (isIn(archiveLogVolumeNames)) {
                         recommended = tieringPolicyRecommendations['archive-log-files'];
                         dataCategory = 'archive-log-files';
                     }
+                    isViolated = value !== recommended;
                     break;
+
                 case 'compression':
-                    if (isMixedViolation) {
-                        isViolated = true;
-                        recommended = compressionRecommendations.mixed;
-                        dataCategory = 'mixed';
-                    } else if (redoLogsTempLogsVolumeNames.includes(objectName)) {
-                        isViolated = value !== compressionRecommendations['log-files'];
-                        recommended = compressionRecommendations['log-files'];
-                        dataCategory = 'log-files';
+                case 'deduplication': {
+                    const recommendations =
+                        config.parameter === 'compression' ? compressionRecommendations : deduplicationRecommendations;
+                    if (isIn(redoLogsTempLogsVolumeNames)) {
+                        recommended = recommendations['log-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
                     } else {
-                        isViolated = value !== compressionRecommendations['non-log-files'];
-                        recommended = compressionRecommendations['non-log-files'];
+                        recommended = recommendations.others;
                         dataCategory = 'non-log-files';
                     }
+                    isViolated = value !== recommended;
                     break;
-                case 'deduplication':
-                    if (isMixedViolation) {
-                        isViolated = true;
-                        recommended = deduplicationRecommendations.mixed;
-                        dataCategory = 'mixed';
-                    } else if (redoLogsTempLogsVolumeNames.includes(objectName)) {
-                        isViolated = value !== deduplicationRecommendations['log-files'];
-                        recommended = deduplicationRecommendations['log-files'];
-                        dataCategory = 'log-files';
-                    } else {
-                        isViolated = value !== deduplicationRecommendations['non-log-files'];
-                        recommended = deduplicationRecommendations['non-log-files'];
-                        dataCategory = 'non-log-files';
-                    }
-                    break;
+                }
+
                 default:
                     isViolated = value !== config.value;
                     recommended = config.value.toString();
@@ -367,19 +350,11 @@ function calculateStorageDrift(
 
     storageDriftData.layout = layoutAssessment;
 
-    const isLayoutViolated = layoutAssessment.some(
-        assessment =>
-            assessment.name !== 'oracle-binary-placement' &&
-            'status' in assessment &&
-            assessment.status === AssessmentStatus.NOT_OPTIMIZED
-    );
-
     storageDriftData.configuration.volumes = getVolumeConfigDrift(
         databaseInstanceName,
         fsxFileSystemId,
         mappedOntapVolumes,
-        storageAssessmentData,
-        isLayoutViolated
+        storageAssessmentData
     );
 
     const protocol = mappedOntapVolumes[fsxFileSystemId]?.protocol;
@@ -387,7 +362,7 @@ function calculateStorageDrift(
         storageDriftData.configuration.luns = getLunConfigDrift(storageAssessmentData);
     }
 
-    return { storageDriftData, protocol };
+    return storageDriftData;
 }
 
 async function initiateStorageAssessmentCollection(
