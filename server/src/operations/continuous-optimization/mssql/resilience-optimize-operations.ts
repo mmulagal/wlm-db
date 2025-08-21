@@ -31,10 +31,8 @@ import {
     SSM_COMMAND_CACHE_TYPE
 } from '../../../utils/consts';
 import { activeSqlNodeDetails } from '../../cont-opt-optimize-operations';
-import {
-    GET_CLUSTER_SNAPSHOT_POLICIES,
-    SET_VOLUME_SNAPSHOT_POLICY
-} from '../../workloads/mssql/continuous-optimization-scripts';
+import { GET_CLUSTER_SNAPSHOT_POLICIES } from '../../workloads/mssql/assessment-scripts';
+import { SET_VOLUME_SNAPSHOT_POLICY } from '../../workloads/mssql/optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import {
     getResourceNameFromTags,

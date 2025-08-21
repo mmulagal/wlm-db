@@ -1,0 +1,324 @@
+import { WorkloadInstance } from '../../../utils/common-types';
+import { ontapRestRequest } from './common-templates';
+
+const GET_NETWORK_FALLBACK_PORTS = `
+    function Get-NetworkFallbackPorts {
+        param(
+            [Parameter(Mandatory = $true)]
+            [array]$SqlProcesses
+        )
+        
+        $fallbackPorts = @()
+        $fallbackErrors = @()
+        
+        try {
+            $anyListeningPort = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
+                Where-Object { $_.OwningProcess -in $SqlProcesses.Id -and $_.LocalPort -ge 1024 } |
+                Select-Object -First 1 -ExpandProperty LocalPort
+            
+            if ($anyListeningPort) {
+                $fallbackPorts += $anyListeningPort.ToString()
+            }
+        } catch {
+            $fallbackErrors += "Network fallback failed: $($_.Exception.Message)"
+        }
+        
+        return @{
+            ports = $fallbackPorts
+            errors = $fallbackErrors
+        }
+    }
+`;
+
+const GET_SQL_SERVER_PORTS = `
+    function Get-SqlServerPorts {
+        param(
+            [Parameter(Mandatory = $true)]
+            [array]$SqlProcesses
+        )
+        
+        $sqlPorts = @()
+        $portErrors = @()
+        
+        # Get SQL Server instances from registry
+        $sqlInstances = Get-ItemProperty -Path "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL" -ErrorAction SilentlyContinue
+        
+        if ($sqlInstances) {
+            $sqlInstances.PSObject.Properties | Where-Object { 
+                $_.Name -notlike "PS*" 
+            } | ForEach-Object {
+                $tcpPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$($_.Value)\\MSSQLServer\\SuperSocketNetLib\\Tcp\\IPAll"
+                $tcpSettings = Get-ItemProperty -Path $tcpPath -ErrorAction SilentlyContinue
+                
+                if ($tcpSettings.TcpPort -and $tcpSettings.TcpPort -ne "") {
+                    # Static port configured
+                    $sqlPorts += $tcpSettings.TcpPort
+                } elseif ($tcpSettings.TcpDynamicPorts -ne "") {
+                    # Dynamic port - get current listening port using Get-NetTCPConnection
+                    $dynamicPort = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | 
+                        Where-Object { $_.OwningProcess -in $SqlProcesses.Id -and $_.LocalPort -ge 1024 } |
+                        Select-Object -First 1 -ExpandProperty LocalPort
+                    
+                    if ($dynamicPort) { $sqlPorts += $dynamicPort.ToString() }
+                }
+            }
+        }
+        
+        # Add SQL Browser port if service is running
+        $browserService = Get-Service -Name "SQLBrowser" -ErrorAction SilentlyContinue
+        if ($browserService.Status -eq "Running") { 
+            # SQL Browser typically runs on port 1434 UDP, but check for TCP connections
+            $browserProcess = Get-Process -Name "sqlbrowser" -ErrorAction SilentlyContinue
+            if ($browserProcess) {
+                $browserListeningPort = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
+                    Where-Object { $_.OwningProcess -in $browserProcess.Id } |
+                    Select-Object -First 1 -ExpandProperty LocalPort
+                
+                if ($browserListeningPort) { $sqlPorts += $browserListeningPort.ToString() }
+            }
+        }
+        
+        # If no ports found, try network fallback
+        if ($sqlPorts.Count -eq 0) { 
+            $networkResult = Get-NetworkFallbackPorts -SqlProcesses $SqlProcesses
+            $sqlPorts += $networkResult.ports
+            $portErrors += $networkResult.errors
+        }
+        
+        return @{
+            ports = ($sqlPorts | Select-Object -Unique)
+            errors = $portErrors
+        }
+    }
+`;
+
+const MAP_INTERFACES_TO_PORTS = `
+    function Get-InterfacePortMapping {
+        param(
+            [Parameter(Mandatory = $true)]
+            [array]$SqlProcesses
+        )
+        
+        $interfacePortMap = @{}
+        $sqlConnections = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | 
+            Where-Object { $_.OwningProcess -in $SqlProcesses.Id }
+        
+        foreach ($connection in $sqlConnections) {
+            $localAddress = $connection.LocalAddress
+            $localPort = $connection.LocalPort
+            
+            if ($localAddress -eq "0.0.0.0" -or $localAddress -eq "::") {
+                # SQL Server listening on all interfaces - get primary network interfaces
+                $primaryInterfaces = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue | 
+                    Select-Object -ExpandProperty InterfaceIndex
+                
+                foreach ($interfaceIndex in $primaryInterfaces) {
+                    if (-not $interfacePortMap.ContainsKey($interfaceIndex)) {
+                        $interfacePortMap[$interfaceIndex] = @()
+                    }
+                    $interfacePortMap[$interfaceIndex] += $localPort
+                }
+            } else {
+                # SQL Server bound to specific IP - find the interface
+                $interfaceWithIP = Get-NetIPAddress | Where-Object { 
+                    $_.IPAddress -eq $localAddress -and $_.AddressState -eq "Preferred"
+                } | Select-Object -First 1
+                
+                if ($interfaceWithIP) {
+                    $interfaceIndex = $interfaceWithIP.InterfaceIndex
+                    if (-not $interfacePortMap.ContainsKey($interfaceIndex)) {
+                        $interfacePortMap[$interfaceIndex] = @()
+                    }
+                    $interfacePortMap[$interfaceIndex] += $localPort
+                }
+            }
+        }
+        
+        return $interfacePortMap
+    }
+`;
+
+const GET_INTERFACE_IP_ADDRESSES = `
+    function Get-InterfaceIpAddresses {
+        param(
+            [Parameter(Mandatory = $true)]
+            [int]$InterfaceIndex
+        )
+        
+        $ipAddresses = @()
+        try {
+            $ipConfigs = Get-NetIPAddress -InterfaceIndex $InterfaceIndex -ErrorAction SilentlyContinue
+            foreach ($ipConfig in $ipConfigs) {
+                $familyString = ""
+                if ($ipConfig.AddressFamily -eq 2) {
+                    $familyString = "IPv4"
+                } elseif ($ipConfig.AddressFamily -eq 23) {
+                    $familyString = "IPv6"
+                }
+                
+                # Only add IP addresses with valid family types
+                if (-not [string]::IsNullOrEmpty($familyString)) {
+                    $ipAddresses += [PSCustomObject]@{
+                        address = $ipConfig.IPAddress
+                        family = $familyString
+                    }
+                }
+            }
+        }
+        catch {
+            # Continue without IP addresses if collection fails
+        }
+        
+        return $ipAddresses
+    }
+`;
+
+const BUILD_INTERFACE_OBJECTS = `
+    function Build-SqlInterfaceObjects {
+        param(
+            [Parameter(Mandatory = $true)]
+            [hashtable]$InterfacePortMap
+        )
+        
+        $sqlInterfaces = @()
+        
+        foreach ($interfaceIndex in $InterfacePortMap.Keys) {
+            try {
+                $adapter = Get-NetAdapter -InterfaceIndex $interfaceIndex -ErrorAction SilentlyContinue
+                if ($adapter -and $adapter.Status -eq "Up") {
+                    # Remove duplicate ports for this interface
+                    $interfacePorts = $InterfacePortMap[$interfaceIndex] | Select-Object -Unique
+                    
+                    # Get IP addresses for this interface
+                    $ipAddresses = Get-InterfaceIpAddresses -InterfaceIndex $interfaceIndex
+                    
+                    $sqlInterfaces += [PSCustomObject]@{
+                        name = $adapter.Name
+                        mtu = $adapter.MtuSize
+                        interfaceIndex = $adapter.InterfaceIndex
+                        ports = @($interfacePorts)
+                        ipAddresses = @($ipAddresses)
+                    }
+                }
+            } catch { 
+                continue 
+            }
+        }
+        
+        return $sqlInterfaces
+    }
+`;
+
+const FETCH_MSSQL_INSTANCE_MTU_DETAILS = `
+    #Get MSSQL Instance MTU Details
+
+    $WarningPreference = 'SilentlyContinue';
+    $responseObject = @{
+        sqlInterfaces = @()
+        error = $null
+    }
+
+    try {
+        # Get SQL Server processes
+        $sqlProcesses = Get-Process -Name "sqlservr" -ErrorAction SilentlyContinue
+        if (-not $sqlProcesses) {
+            $responseObject.error = "No SQL Server processes found"
+            $response = $responseObject | ConvertTo-Json -Depth 4 -Compress
+            return $response
+        }
+
+        ${GET_NETWORK_FALLBACK_PORTS}
+        ${GET_SQL_SERVER_PORTS}
+        ${MAP_INTERFACES_TO_PORTS}
+        ${GET_INTERFACE_IP_ADDRESSES}
+        ${BUILD_INTERFACE_OBJECTS}
+
+        # Get SQL Server ports
+        $sqlPortsResult = Get-SqlServerPorts -SqlProcesses $sqlProcesses
+
+        # Map interfaces to ports
+        $interfacePortMap = Get-InterfacePortMapping -SqlProcesses $sqlProcesses
+        
+        # Build interface objects with MTU details
+        $sqlInterfaces = Build-SqlInterfaceObjects -InterfacePortMap $interfacePortMap
+        $responseObject.sqlInterfaces = @($sqlInterfaces)
+
+        if ($responseObject.sqlInterfaces.Count -eq 0) {
+            $errorMessage = "No SQL Server network interfaces found"
+            if ($sqlPortsResult.errors.Count -gt 0) {
+                $errorMessage += ". Port discovery errors: " + ($sqlPortsResult.errors -join "; ")
+            }
+            $responseObject.error = $errorMessage
+        }
+
+    } catch {
+        $responseObject.error = $_.Exception.Message
+    }
+
+    $response = $responseObject | ConvertTo-Json -Depth 4 -Compress
+    if ([string]::IsNullOrEmpty($response)) {
+        $responseObject.error = "Failed to generate response"
+        $response = '{"sqlInterfaces":[],"error":"Failed to generate response"}'
+    }
+    return $response`;
+
+const FETCH_FSX_MTU_DETAILS = (instanceRecord: WorkloadInstance) => `
+    #Get FSx MTU Details
+
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = "${instanceRecord.fsxFileSystem}"
+    $FSxRegion = "${instanceRecord.region}"
+    ${ontapRestRequest}
+
+    $responseObject = @{
+        fsxInterfaces = @()
+        error = $null
+    }
+
+    try {
+        function Get-FSxNetworkInterfaces {
+            $fsxInterfaces = @()
+            
+            try {
+                # Get FSx ethernet ports - using correct endpoint
+                $ApiEndpoint = "/network/ethernet/ports"
+                $ApiQueryFields = "fields=name,mtu"
+                $Response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFields $ApiQueryFields
+            
+                foreach ($fsxInterface in $Response.records) {
+                    if ($fsxInterface.name -and $fsxInterface.mtu) {
+                        $fsxInterfaces += @{
+                            Name = $fsxInterface.name
+                            MTU = $fsxInterface.mtu
+                        }
+                    }
+                }
+                
+                return $fsxInterfaces
+                
+            } catch {
+                if ($_.Exception.Response.GetResponseStream) {
+                    $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                    $responseBody = $reader.ReadToEnd()
+                    Write-Information "Response Body: $responseBody"
+                    $reader.Close()
+                }
+                throw "Failed to get FSx IP interfaces: $($_.Exception.Message)"
+            }
+        }
+
+        $responseObject.fsxInterfaces = Get-FSxNetworkInterfaces
+
+    } catch {
+        if ($null -eq $responseObject) { $responseObject = @{} }
+        $responseObject['error'] = $_.Exception.Message
+    }
+
+    $response = $responseObject | ConvertTo-Json -Compress
+    if ([string]::IsNullOrEmpty($response)) {
+        throw "Failed to generate response because the response is either null or empty. $response"
+    }
+    return $response
+`;
+
+export { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS };

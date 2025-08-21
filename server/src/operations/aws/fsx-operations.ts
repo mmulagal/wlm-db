@@ -49,9 +49,9 @@ import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
-import { GET_SNAPSHOT_DETAILS, OntapRestRequestParams } from '../workloads/mssql/continuous-optimization-scripts';
 import { populateDbInstances } from '../database/database-operations';
 import { describeInstance, describeSubnets } from '../../lib/aws/ec2';
+import { OntapRestRequestParams, GET_SNAPSHOT_DETAILS } from '../workloads/mssql/assessment-scripts';
 
 const logger = getLogger();
 

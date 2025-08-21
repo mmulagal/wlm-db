@@ -12,7 +12,7 @@ import {
 import getLogger from '../../../utils/logger';
 import { isDemo, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { GET_RSS_CONFIG_DETAILS } from '../../workloads/mssql/continuous-optimization-scripts';
+import { GET_RSS_CONFIG_DETAILS } from '../../workloads/mssql/assessment-scripts';
 
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';

@@ -45,6 +45,7 @@ import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostO
 import { calculateLicenseDrift, managedHostsLicenseAssessment } from './license-assessment-operations';
 import { calculateMSSQLPatchDrift, managedHostMSSQLPatchAssessment } from './mssqlPatch-assessment-operations';
 import { calculateRssConfigDrift, managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
+import { assessMTUAlignment, calculateMTUAlignmentDrift } from '../mtu-assessment-operations';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
 import {
     createDatabaseInstanceConfigData,
@@ -71,6 +72,7 @@ import {
     LicenseDriftResponseType,
     HostOsPatchDriftResponseType,
     RssConfigDriftResponseType,
+    MtuAlignmentDriftResponseType,
     MSSQLPatchDriftResponseType,
     MSSQLDriftAssessmentResponseType,
     StorageParameterDriftResponseType,
@@ -107,6 +109,7 @@ function hostLevelDriftData(
         license: fieldsValues?.includes(AssessmentCategories.LICENSE.toLowerCase()),
         hostOsPatch: fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase()),
         rssConfig: fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLowerCase()),
+        mtuAlignment: fieldsValues?.includes(AssessmentCategories.MTU_ALIGNMENT.toLowerCase()),
         mssqlPatch: fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase()),
         highAvailability: fieldsValues?.includes(AssessmentCategories.HIGH_AVAILABILITY.toLowerCase())
     };
@@ -116,6 +119,7 @@ function hostLevelDriftData(
         licenseAssessmentResponse,
         hostOsPatchAssessmentResponse,
         rssConfigResponse,
+        mtuAlignmentResponse,
         mssqlPatchAssessmentResponse
     ] = [
         assessmentFlags.compute
@@ -151,6 +155,16 @@ function hostLevelDriftData(
                   hostLevelAssessmentData
               )
             : {},
+        assessmentFlags.mtuAlignment
+            ? calculateMTUAlignmentDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  metadata as Metadata,
+                  hostLevelAssessmentData
+              )
+            : {},
         assessmentFlags.mssqlPatch
             ? calculateMSSQLPatchDrift(accountId, credentialsId, region, databaseHostId, hostLevelAssessmentData)
             : {}
@@ -167,6 +181,9 @@ function hostLevelDriftData(
             ? (hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType)
             : undefined,
         rssConfig: !isEmpty(rssConfigResponse) ? (rssConfigResponse as RssConfigDriftResponseType) : undefined,
+        mtuAlignment: !isEmpty(mtuAlignmentResponse)
+            ? (mtuAlignmentResponse as MtuAlignmentDriftResponseType)
+            : undefined,
         mssqlPatch: !isEmpty(mssqlPatchAssessmentResponse)
             ? (mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType)
             : undefined
@@ -235,6 +252,7 @@ async function fetchMssqlDriftAssessment(
         license: fieldsValues.includes(AssessmentCategories.LICENSE.toLowerCase()),
         hostOsPatch: fieldsValues.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase()),
         rssConfig: fieldsValues.includes(AssessmentCategories.RSS_CONFIG.toLowerCase()),
+        mtuAlignment: fieldsValues.includes(AssessmentCategories.MTU_ALIGNMENT.toLowerCase()),
         maxDOP: fieldsValues.includes(AssessmentCategories.MAXDOP.toLowerCase()),
         mssqlPatch: fieldsValues.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase()),
         resilience: [
@@ -313,7 +331,8 @@ async function fetchMssqlDriftAssessment(
         assessmentFlags.license ||
         assessmentFlags.hostOsPatch ||
         assessmentFlags.mssqlPatch ||
-        assessmentFlags.rssConfig
+        assessmentFlags.rssConfig ||
+        assessmentFlags.mtuAlignment
             ? hostLevelDriftData(
                   accountId,
                   credentialsId,
@@ -586,6 +605,8 @@ async function initiateHostLevelAssessmentDataCollection(
     let hostOsPatchErrorMessage;
     let rssConfigAssessment;
     let rssConfigErrorMessage;
+    let mtuAlignmentAssessment;
+    let mtuAlignmentErrorMessage;
     let mssqlPatchAssessment;
     let mssqlPatchErrorMessage;
     let highAvailabilityAssessment;
@@ -672,6 +693,20 @@ async function initiateHostLevelAssessmentDataCollection(
                 metadata as unknown as Metadata
             )) || {});
     }
+    if (fields?.includes(AssessmentCategories.MTU_ALIGNMENT)) {
+        ({ mtuAlignmentAssessment, errorMessage: mtuAlignmentErrorMessage } =
+            (await assessMTUAlignment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                activeNodeInstanceId,
+                databaseInstanceId,
+                jobId,
+                metadata as unknown as Metadata,
+                resourceName
+            )) || {});
+    }
     if (fields?.includes(AssessmentCategories.MSSQL_PATCH)) {
         const isCluster = Boolean(node2InstanceId && node2InstanceId.trim() !== '');
         const sqlInstanceName = extractSqlInstanceName(instanceName);
@@ -713,7 +748,9 @@ async function initiateHostLevelAssessmentDataCollection(
         rssConfigErrorMessage,
         mssqlPatchAssessment,
         mssqlPatchErrorMessage,
-        highAvailabilityAssessment
+        highAvailabilityAssessment,
+        mtuAlignmentAssessment,
+        mtuAlignmentErrorMessage
     ].some(item => !isEmpty(item));
 
     if (hasAssessmentOrError) {
@@ -725,6 +762,9 @@ async function initiateHostLevelAssessmentDataCollection(
             hostOsPatch:
                 hostOsPatchAssessment || (!hostOsPatchErrorMessage ? existingAssessmentData?.hostOsPatch : undefined),
             rssConfig: rssConfigAssessment || (!rssConfigErrorMessage ? existingAssessmentData?.rssConfig : undefined),
+            mtuAlignment:
+                mtuAlignmentAssessment ||
+                (!mtuAlignmentErrorMessage ? existingAssessmentData?.mtuAlignment : undefined),
             mssqlPatch:
                 mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
             highAvailability: highAvailabilityAssessment,
@@ -739,6 +779,9 @@ async function initiateHostLevelAssessmentDataCollection(
                 rssConfig:
                     rssConfigErrorMessage ||
                     (!rssConfigAssessment ? existingAssessmentData?.errors?.rssConfig : undefined),
+                mtuAlignment:
+                    mtuAlignmentErrorMessage ||
+                    (!mtuAlignmentAssessment ? existingAssessmentData?.errors?.mtuAlignment : undefined),
                 mssqlPatch:
                     mssqlPatchErrorMessage ||
                     (!mssqlPatchAssessment ? existingAssessmentData?.errors?.mssqlPatch : undefined)
@@ -754,7 +797,7 @@ async function initiateHostLevelAssessmentDataCollection(
             region,
             databaseHostId,
             databaseInstanceId,
-            'license,compute,host-os-patch,rss-config,mssql-patch,high-availability',
+            'license,compute,host-os-patch,rss-config,mssql-patch,high-availability,mtu-alignment',
             { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
 
@@ -1101,7 +1144,8 @@ async function triggerMssqlAssessment(
                 AssessmentCategories.HOST_OS_PATCH,
                 AssessmentCategories.RSS_CONFIG,
                 AssessmentCategories.MSSQL_PATCH,
-                AssessmentCategories.HIGH_AVAILABILITY
+                AssessmentCategories.HIGH_AVAILABILITY,
+                AssessmentCategories.MTU_ALIGNMENT
             ].includes(field.toLowerCase() as AssessmentCategories)
         );
 

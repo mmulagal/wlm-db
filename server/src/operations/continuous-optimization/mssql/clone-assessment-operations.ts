@@ -25,7 +25,7 @@ import {
     SEVERITY
 } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { GET_SANDBOX_DETAILS } from '../../workloads/mssql/continuous-optimization-scripts';
+import { GET_SANDBOX_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { calculateDaysSince, sqlResponseParsing } from '../../../utils/utils';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';

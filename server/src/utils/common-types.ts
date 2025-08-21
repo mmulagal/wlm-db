@@ -205,6 +205,30 @@ interface CloneAssessment {
     oldCloneDatabaseNames?: string[];
 }
 
+interface MtuAlignmentAssessment {
+    fsxMTU?: {
+        error?: string | null;
+        fsxInterfaces?: Array<{
+            MTU: number;
+            Name: string;
+        }>;
+    };
+    sqlServerMTU?: {
+        error?: string | null;
+        sqlInterfaces?: Array<{
+            ips?: Array<{
+                family: string;
+                address: string;
+            }>;
+            mtu: number;
+            name: string;
+            ipCount?: number;
+            interfaceIndex: number;
+            listeningPorts?: string;
+        }>;
+    };
+}
+
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
@@ -213,6 +237,7 @@ interface ResourceAssessmentData {
     maxDOP?: MaxDOPAssesment;
     clone?: CloneAssessment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
+    mtuAlignment?: MtuAlignmentAssessment;
     highAvailability?: {
         heartbeat?: {
             status: string;
@@ -232,6 +257,7 @@ interface ResourceAssessmentData {
         rssConfig?: string;
         mssqlPatch?: string;
         license?: string;
+        mtuAlignment?: string;
     };
 }
 
@@ -759,6 +785,7 @@ interface DatabaseInstanceDismissConfigs {
     compute?: InstanceDismissParams;
     license?: InstanceDismissParams;
     hostOsPatch?: InstanceDismissParams;
+    mtuAlignment?: InstanceDismissParams;
 }
 
 interface MappedVolumeResponseForClone {

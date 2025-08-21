@@ -12,11 +12,10 @@ import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
-    CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_CLUSTER_NODE_NAMES,
-    GET_RUNNING_SQL_SERVERS,
-    MOVE_ALL_CLUSTER_GROUPS
-} from '../workloads/mssql/continuous-optimization-scripts';
+    GET_RUNNING_SQL_SERVERS
+} from '../workloads/mssql/assessment-scripts';
+import { CHECK_RUNNING_STATUS_WITH_RESTART, MOVE_ALL_CLUSTER_GROUPS } from '../workloads/mssql/optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { updateJobDetails } from '../database/job-operations';
 import {

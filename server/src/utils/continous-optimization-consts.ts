@@ -14,7 +14,8 @@ enum AssessmentCategories {
     SNAPSHOT_POLICY = 'snapshot-policy',
     AWS_BACKUP = 'aws-backup',
     CRR = 'crr',
-    HIGH_AVAILABILITY = 'high-availability'
+    HIGH_AVAILABILITY = 'high-availability',
+    MTU_ALIGNMENT = 'mtu-alignment'
 }
 
 enum AssessmentCategoriesOracle {
@@ -252,7 +253,8 @@ const ASSESSMENT_RESOURCE_TYPE = {
     INSTANCE: 'EC2 instance',
     NETWORK_ADAPTER: 'Network Adapter',
     LUN: 'Lun',
-    SQL_INSTANCE: 'SQL instance'
+    SQL_INSTANCE: 'SQL instance',
+    NETWORK_INTERFACE: 'Network Interface'
 };
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
@@ -288,7 +290,8 @@ const ASSESSMENT_CONFIGS = {
     snapshotPolicy: 'snapshot-policy',
     crr: 'crr',
     awsBackup: 'scheduled-fsx-for-ontap-backups',
-    clone: 'clone-management'
+    clone: 'clone-management',
+    mtuAlignment: 'mtu-alignment'
 };
 
 const DISMISS_STATUS = {
@@ -324,10 +327,13 @@ const HOST_LEVEL_CONFIGURATIONS = [
     'host-os-patch',
     'rss-config',
     'compute-rightsizing',
-    'scheduled-fsx-for-ontap-backups'
+    'scheduled-fsx-for-ontap-backups',
+    'mtu-alignment'
 ];
 
 const DEFAULT_MPIO_TIMEOUT = 60; // seconds
+
+const DEFAULT_FSX_MTU_VALUE = 9001;
 
 export {
     AssessmentCategories,
@@ -374,5 +380,6 @@ export {
     DISMISS_STATUS_ENUM,
     DEFAULT_MPIO_TIMEOUT,
     OptimizeHighAvailabilityParams,
-    AssessmentCategoriesOracle
+    AssessmentCategoriesOracle,
+    DEFAULT_FSX_MTU_VALUE
 };

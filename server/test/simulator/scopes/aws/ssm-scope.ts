@@ -94,15 +94,17 @@ import {
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import {
     GET_RUNNING_SQL_SERVERS,
-    CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_RSS_CONFIG_DETAILS,
-    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_MSSQL_VERSION,
     GET_INSTALLED_SQL_PATCHES,
-    GET_CLUSTER_SNAPSHOT_POLICIES,
+    GET_CLUSTER_SNAPSHOT_POLICIES
+} from '../../../../src/operations/workloads/mssql/assessment-scripts';
+import {
+    CHECK_RUNNING_STATUS_WITH_RESTART,
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     SET_MAXDOP
-} from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
+} from '../../../../src/operations/workloads/mssql/optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
 import {
@@ -613,6 +615,8 @@ const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
 const getVCPUAndMaxDopDetails = /#Get vCPU and MAXDOP Details/;
 const crrAssessmentDataRegex = /#Get CRR details/;
 const pgsqlProtectionRegex = /pgsql protection script/;
+const fetchMssqlInstanceMtuDetailsRegex = /#Get MSSQL Instance MTU Details/;
+const fetchFsxMtuDetailsRegex = /#Get FSx MTU Details/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -947,7 +951,15 @@ ssmMock
     .on(SendCommandCommand, params => {
         return /# Get SQL Server services/.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getSqlServerServicesCommand'));
+    .resolves(getSampleCommandResponse('getSqlServerServicesCommand'))
+    .on(SendCommandCommand, params => {
+        return fetchMssqlInstanceMtuDetailsRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('fetchMssqlInstanceMtuDetails'))
+    .on(SendCommandCommand, params => {
+        return fetchFsxMtuDetailsRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('fetchFsxMtuDetails'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1455,6 +1467,24 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'oracleDatabaseList',
             '{"database_details":{"name": "ordbsdl","status": "online"}, "is_cdb": "no", "root_db_size": 2.51}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-fetchMssqlInstanceMtuDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'fetchMssqlInstanceMtuDetails',
+            JSON.stringify(getCommandInvocationResponse.fetchMssqlInstanceMtuDetailsInvocationResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-fetchFsxMtuDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'fetchFsxMtuDetails',
+            JSON.stringify(getCommandInvocationResponse.fetchFsxMtuDetailsInvocationResponse)
         )
     )
     .on(GetCommandInvocationCommand, {

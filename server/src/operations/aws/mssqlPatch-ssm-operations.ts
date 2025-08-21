@@ -2,7 +2,7 @@ import getLogger from '../../utils/logger';
 import { callSsmExecution } from './ssm-operations';
 import { describeAvailablePatches } from '../../lib/aws/ssm';
 import { sqlResponseParsing } from '../../utils/utils';
-import { GET_INSTALLED_SQL_PATCHES } from '../workloads/mssql/continuous-optimization-scripts';
+import { GET_INSTALLED_SQL_PATCHES } from '../workloads/mssql/assessment-scripts';
 
 const logger = getLogger();
 

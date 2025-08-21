@@ -1,7 +1,7 @@
 import { WorkloadInstance } from '../../../utils/common-types';
 import { compressResponse, ontapRestRequest } from './common-templates';
 import { CRR_ASSESSMENT_LOG_PATH } from './const';
-import { JSON_CHECK } from './continuous-optimization-scripts';
+import { JSON_CHECK } from './assessment-scripts';
 
 const CLUSTER_PEER_DETAILS_SCRIPT = `
    

@@ -213,6 +213,20 @@ const AdditionalCloneParameterDriftResponse = Type.Optional(
     })
 );
 
+const AdditionalMtuAlignmentParameterDriftResponse = Type.Optional(
+    Type.Object({
+        ec2InterfacesToFix: Type.Array(
+            Type.Object({
+                ec2InstanceId: Type.Optional(Type.String()),
+                name: Type.String(),
+                currentMTU: Type.Number(),
+                recommendedMTU: Type.Number(),
+                interfaceIndex: Type.Number()
+            })
+        )
+    })
+);
+
 const AdditionalComputeParameterDriftResponse = Type.Optional(
     Type.Object({
         recommendationOptions: Type.Array(
@@ -253,6 +267,12 @@ type MSSQLPatchDriftResponseType = Static<typeof MSSQLPatchDriftResponse>;
 const CloneDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalCloneParameterDriftResponse]);
 type CloneDriftResponseType = Static<typeof CloneDriftResponse>;
 
+const MtuAlignmentDriftResponse = Type.Intersect([
+    ParameterDriftResponse,
+    AdditionalMtuAlignmentParameterDriftResponse
+]);
+type MtuAlignmentDriftResponseType = Static<typeof MtuAlignmentDriftResponse>;
+
 const MSSQLDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
@@ -265,6 +285,7 @@ const MSSQLDriftAssessmentResponse = Type.Object({
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
     maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
     mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse])),
+    mtuAlignment: Type.Optional(Type.Union([MtuAlignmentDriftResponse, ErrorResponse])),
     clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse])),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
@@ -591,6 +612,7 @@ export {
     LicenseDriftResponseType,
     HostOsPatchDriftResponseType,
     RssConfigDriftResponseType,
+    MtuAlignmentDriftResponseType,
     ParameterDriftResponse,
     ParameterDriftResponseType,
     StorageParameterDriftResponseType,

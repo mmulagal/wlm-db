@@ -30,7 +30,7 @@ import {
 } from '../../../utils/consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { STORAGE_CONFIGURATION_ASSESSMENT } from '../../workloads/mssql/continuous-optimization-scripts';
+import { STORAGE_CONFIGURATION_ASSESSMENT } from '../../workloads/mssql/storage-scripts';
 import { collectSnapshotCopyData } from './resilience-assessment-operation';
 import {
     SizingViolationResponseType,

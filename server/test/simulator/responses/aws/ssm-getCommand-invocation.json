@@ -3552,81 +3552,110 @@
             }
         ]
     },
-    "getOracleStorageAssessmentData": {
-    "volumes": {
-        "data": [
+    "fetchMssqlInstanceMtuDetailsInvocationResponse": {
+        "sqlInterfaces": [
             {
-                "name": "oracleredo2",
-                "uuid": "beac8c14-eee7-11ef-8fbb-837e18df6f7a",
-                "svmName": "wlmdb_sqlsvm_1735809893269",
-                "autosize": "off",
-                "compaction": "inline",
-                "compression": "inline",
-                "autosizeMode": "off",
-                "deduplication": "both",
-                "thinProvision": true,
-                "tieringPolicy": "none",
-                "efficiencyType": "efficient",
-                "snapshotPolicy": "default",
-                "spaceGuarantee": "none",
-                "compressionType": "adaptive",
-                "fractionalReserve": 100,
-                "snapshotAutodelete": false,
-                "snapshotCopyReserve": 5,
-                "tieringMinCoolingDays": null
+                "name": "Ethernet 3",
+                "mtu": 1500,
+                "interfaceIndex": 9,
+                "ports": ["1433"],
+                "ipAddresses": [
+                    { "address": "172.31.32.100", "family": "IPv4" },
+                    { "address": "fe80::a1b2:c3d4:e5f6:7890", "family": "IPv6" }
+                ]
             },
             {
-                "name": "oraclearch2",
-                "uuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a",
-                "svmName": "wlmdb_sqlsvm_1735809893269",
-                "autosize": "off",
-                "compaction": "inline",
-                "compression": "inline",
-                "autosizeMode": "off",
-                "deduplication": "both",
-                "thinProvision": true,
-                "tieringPolicy": "none",
-                "efficiencyType": "efficient",
-                "snapshotPolicy": "default",
-                "spaceGuarantee": "none",
-                "compressionType": "adaptive",
-                "fractionalReserve": 100,
-                "snapshotAutodelete": false,
-                "snapshotCopyReserve": 5,
-                "tieringMinCoolingDays": null
-            },
-            {
-                "name": "oracledata2",
-                "uuid": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
-                "svmName": "wlmdb_sqlsvm_1735809893269",
-                "autosize": "off",
-                "compaction": "inline",
-                "compression": "inline",
-                "autosizeMode": "off",
-                "deduplication": "both",
-                "thinProvision": true,
-                "tieringPolicy": "all",
-                "efficiencyType": "efficient",
-                "snapshotPolicy": "default",
-                "spaceGuarantee": "none",
-                "compressionType": "adaptive",
-                "fractionalReserve": 100,
-                "snapshotAutodelete": false,
-                "snapshotCopyReserve": 5,
-                "tieringMinCoolingDays": null
+                "name": "Ethernet 4",
+                "mtu": 9001,
+                "interfaceIndex": 10,
+                "ports": ["1434"],
+                "ipAddresses": [{ "address": "172.31.32.101", "family": "IPv4" }]
             }
         ],
-        "error": "",
-        "filesystemId": "fs-0d5efc3057c4f12cb"
+        "error": null
     },
-    "binaryVolumes": {
-        "data": [
-            {
-                "volumeId": "6264d520-3fb9-423f-8ab8-7a0a8e3d3562",
-                "volumeName": "root"
-            }
+    "fetchFsxMtuDetailsInvocationResponse": {
+        "fsxInterfaces": [
+            { "Name": "e0a", "MTU": 9001 },
+            { "Name": "e0b", "MTU": 9001 }
         ],
-        "error": ""
+        "error": null
+    },
+    "getOracleStorageAssessmentData": {
+        "volumes": {
+            "data": [
+                {
+                    "name": "oracleredo2",
+                    "uuid": "beac8c14-eee7-11ef-8fbb-837e18df6f7a",
+                    "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "autosize": "off",
+                    "compaction": "inline",
+                    "compression": "inline",
+                    "autosizeMode": "off",
+                    "deduplication": "both",
+                    "thinProvision": true,
+                    "tieringPolicy": "none",
+                    "efficiencyType": "efficient",
+                    "snapshotPolicy": "default",
+                    "spaceGuarantee": "none",
+                    "compressionType": "adaptive",
+                    "fractionalReserve": 100,
+                    "snapshotAutodelete": false,
+                    "snapshotCopyReserve": 5,
+                    "tieringMinCoolingDays": null
+                },
+                {
+                    "name": "oraclearch2",
+                    "uuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a",
+                    "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "autosize": "off",
+                    "compaction": "inline",
+                    "compression": "inline",
+                    "autosizeMode": "off",
+                    "deduplication": "both",
+                    "thinProvision": true,
+                    "tieringPolicy": "none",
+                    "efficiencyType": "efficient",
+                    "snapshotPolicy": "default",
+                    "spaceGuarantee": "none",
+                    "compressionType": "adaptive",
+                    "fractionalReserve": 100,
+                    "snapshotAutodelete": false,
+                    "snapshotCopyReserve": 5,
+                    "tieringMinCoolingDays": null
+                },
+                {
+                    "name": "oracledata2",
+                    "uuid": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
+                    "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "autosize": "off",
+                    "compaction": "inline",
+                    "compression": "inline",
+                    "autosizeMode": "off",
+                    "deduplication": "both",
+                    "thinProvision": true,
+                    "tieringPolicy": "all",
+                    "efficiencyType": "efficient",
+                    "snapshotPolicy": "default",
+                    "spaceGuarantee": "none",
+                    "compressionType": "adaptive",
+                    "fractionalReserve": 100,
+                    "snapshotAutodelete": false,
+                    "snapshotCopyReserve": 5,
+                    "tieringMinCoolingDays": null
+                }
+            ],
+            "error": "",
+            "filesystemId": "fs-0d5efc3057c4f12cb"
+        },
+        "binaryVolumes": {
+            "data": [
+                {
+                    "volumeId": "6264d520-3fb9-423f-8ab8-7a0a8e3d3562",
+                    "volumeName": "root"
+                }
+            ],
+            "error": ""
+        }
     }
-}
 }

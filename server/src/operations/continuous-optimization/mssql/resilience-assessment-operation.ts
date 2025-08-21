@@ -41,10 +41,8 @@ import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../
 import { getInstanceInfo } from '../../database/database-operations';
 import { describeFSx } from '../../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../../workloads/mssql/resiliency-scripts';
-import {
-    FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS,
-    GET_SNAPSHOT_DETAILS
-} from '../../workloads/mssql/continuous-optimization-scripts';
+import { FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS } from '../../workloads/mssql/storage-scripts';
+import { GET_SNAPSHOT_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { isFsxnAwsBackupEnabled, getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';

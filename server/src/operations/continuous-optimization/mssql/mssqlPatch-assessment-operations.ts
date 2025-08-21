@@ -21,7 +21,7 @@ import {
     sqlResponseParsing
 } from '../../../utils/utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
-import { GET_INSTALLED_MSSQL_VERSION } from '../../workloads/mssql/continuous-optimization-scripts';
+import { GET_INSTALLED_MSSQL_VERSION } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
 

@@ -28,12 +28,8 @@ import {
 } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
-import {
-    GET_ONTAP_LUN_DETAILS,
-    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
-    RESCAN_EXTEND_LUN,
-    SET_MAXDOP
-} from './workloads/mssql/continuous-optimization-scripts';
+import { GET_ONTAP_LUN_DETAILS, RESCAN_EXTEND_LUN } from './workloads/mssql/storage-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT, SET_MAXDOP } from './workloads/mssql/optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import {
