@@ -88,8 +88,8 @@ export const handleProtectionUtil = async (
         const scCredentialsRes = await getSCCrendentials({
             credentialID: rowData.credentialId,
             regionID: rowData.regionId,
-            instanceId: rowData.databaseInstanceId,
-            sqlServerInstance: rowData.ec2InstanceId
+            instanceId: rowData.ec2InstanceId,
+            sqlServerInstance: rowData.databaseInstanceName
         });
         if (isCancelled(key)) return;
 

@@ -1,4 +1,7 @@
 .oracleExportPDF {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     .downloadSection {
         display: flex;
         justify-content: space-between;

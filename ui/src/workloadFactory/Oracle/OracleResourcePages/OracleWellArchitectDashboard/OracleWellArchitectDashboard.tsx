@@ -49,14 +49,12 @@ const OracleWellArchitectDashboard = () => {
             </div>
 
             <div className={styles.sectionTwo}>
-                <div className={styles.downloadSectionHeader}>
-                    <OracleExportPDF
-                        optimizePrintState={optimizePrintState}
-                        setOptimizePrintState={setOptimizePrintState}
-                        loading={loading}
-                        isAssessmentAvailable={isAssessmentAvailable}
-                    />
-                </div>
+                <OracleExportPDF
+                    optimizePrintState={optimizePrintState}
+                    setOptimizePrintState={setOptimizePrintState}
+                    loading={loading}
+                    isAssessmentAvailable={isAssessmentAvailable}
+                />
 
                 <OracleFilterComponent setFilteredCardData={setFilteredCardData} />
             </div>
