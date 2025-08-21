@@ -676,7 +676,8 @@
                     "manage-database": "Manage database",
                     "database-dashboard": "Database dashboard",
                     "deregister": "Deregister"
-                }
+                },
+                "credentials-not-available": "Credentials are required to access this information"
             }
         },
         "host-table": {

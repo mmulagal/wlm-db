@@ -180,21 +180,14 @@ export function OracleHostTableColDefs({ t, hostTableRows }: { t: TFunction; hos
         {
             id: '7',
             Header: t('databases.host-table.oracle.headers.operating-system'),
-            accessor: 'operatingSystem',
+            accessor: 'platform',
             isSortable: true,
             width: '200px',
+            filterOptions: getFilterOptions(hostTableRows, 'platform'),
             renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
             id: '8',
-            Header: t('databases.host-table.oracle.headers.fsx-for-ontap'),
-            accessor: 'fsxForOntap',
-            isSortable: true,
-            width: '200px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
-        },
-        {
-            id: '9',
             Header: t('databases.host-table.headers.aws-credentials'),
             accessor: 'credentialName',
             isSortable: true,
@@ -203,7 +196,7 @@ export function OracleHostTableColDefs({ t, hostTableRows }: { t: TFunction; hos
             renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
-            id: '10',
+            id: '9',
             Header: t('databases.host-table.headers.aws-account'),
             accessor: 'accountId',
             isSortable: true,
@@ -212,7 +205,7 @@ export function OracleHostTableColDefs({ t, hostTableRows }: { t: TFunction; hos
             renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
-            id: '11',
+            id: '10',
             Header: t('databases.host-table.headers.region'),
             accessor: 'regionName',
             isSortable: true,

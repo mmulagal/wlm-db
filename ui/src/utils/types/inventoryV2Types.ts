@@ -140,12 +140,16 @@ export interface InventoryTableData {
     regionName?: string;
     accountId?: string;
     statusColText?: string;
+    platform?: string;
+    protocol?: string;
 }
 
 export interface InventoryTableInstanceDatInterface {
     databaseInstanceId?: string;
     databaseInstanceName?: string;
     status?: string;
+    instanceType?: string; // Oracle tenancy type: SINGLE_TENANT or MULTI_TENANT
+    protocol?: string; // Storage protocol used by the Oracle instance
     databaseCount?: number;
     isDetected?: boolean;
     isManaged?: boolean;
@@ -240,6 +244,15 @@ export interface DatabaseInstancesSummaryInterface {
     databaseInstanceId?: string;
     databaseInstanceName?: string;
     status?: string;
+    instanceType?: string; // Oracle tenancy type: SINGLE_TENANT or MULTI_TENANT
+    protocol?: string; // Storage protocol used by the Oracle instance
+    databases?: Array<{
+        // Databases property coming for Oracle having size and type property
+        name: string;
+        size: number;
+        status: string;
+        type: string;
+    }>;
     databaseCount?: number;
     statusColText?: string;
     databaseServer?: {
@@ -470,6 +483,7 @@ export interface DiscoverHostInterface {
 export interface DiscoverOracleHostInterface {
     ec2InstanceId: string;
     ec2InstanceType?: string;
+    platform?: string;
     ssmState?: string;
     ec2InstanceName?: string;
     ec2UsageOperation?: string;
@@ -536,6 +550,11 @@ export interface OracleInstancesDiscovered {
         deploymentType?: string;
         zones?: Array<string>;
         nfsMountPoint?: string;
+        mountDetails?: Array<{
+            mountIp: string;
+            mountPoint: string;
+            protocol: string;
+        }>;
     }>;
 }
 

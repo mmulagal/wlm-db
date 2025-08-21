@@ -20,6 +20,7 @@ import {
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
+    ORACLE_DATABASES_COMPONENTS,
     PARTNER_NODE,
     PREPARE_API_ENDPOINT,
     PROTECTION_TEXT_STATUS,
@@ -410,10 +411,22 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 (per: StatusObjInterface) => per?.name?.toLowerCase() === perRow?.databaseInstanceName?.toLowerCase()
             );
             let authFields = {};
+            let oracleSpecificFields = {};
             if (row?.hostType === DBType.ORACLE) {
                 authFields = {
                     oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
                     isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication
+                };
+                oracleSpecificFields = {
+                    instanceType:
+                        perRow?.databases?.[0]?.type === ORACLE_DATABASES_COMPONENTS.CDB
+                            ? ORACLE_DATABASES_COMPONENTS.MULTI_TENANT
+                            : ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT,
+                    protocol:
+                        Array.isArray(perRow?.storage?.[0]?.protocol) && perRow?.storage?.[0]?.protocol.length > 0
+                            ? perRow?.storage?.[0]?.protocol[0]
+                            : GENERAL.NOT_AVAILABLE,
+                    size: !perRow?.databases?.[0]?.size ? GENERAL.NOT_AVAILABLE : perRow?.databases?.[0]?.size
                 };
             } else {
                 authFields = {
@@ -427,7 +440,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 (perRow?.storage?.fsxw?.size || 0) +
                 (perRow?.storage?.ebs?.size || 0);
             if (perRow) {
-                return {
+                let rowDataObject = {
                     ...perRow,
                     databaseInstanceId: perRow?.databaseInstanceId || instRow?.databaseInstanceId,
                     databaseInstanceName: instRow?.databaseInstanceName,
@@ -452,6 +465,14 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
                     ...authFields
                 };
+                if (row?.hostType === DBType.ORACLE) {
+                    rowDataObject = {
+                        ...rowDataObject,
+                        ...oracleSpecificFields
+                    };
+                }
+
+                return rowDataObject;
             }
             return instRow;
         });
@@ -1101,12 +1122,16 @@ export const formatOracleDiscoveredRows = (
         id: discoveredRow?.ec2InstanceId,
         ec2InstanceId: discoveredRow?.ec2InstanceId,
         ec2InstanceName: discoveredRow?.ec2InstanceName,
+        platform: discoveredRow?.platform,
         name: discoveredRow?.ec2InstanceName,
         status: ssmState, // discover status will depends on ssmState only
         ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: 0,
         serverInstallationMode: installationMode,
+        protocol:
+            discoveredRow?.databaseInstanceDetails?.[0]?.storage?.[0]?.mountDetails?.[0]?.protocol ||
+            GENERAL.NOT_AVAILABLE,
         serverAllInstallationMode: [installationMode],
         vpcId: discoveredRow?.vpc?.id,
         vpcName: discoveredRow?.vpc?.name,
@@ -1657,6 +1682,8 @@ export const formatOracleDiscoverInstanceData = (
             databaseInstanceId: perRow?.instanceId,
             databaseInstanceName: perRow?.instanceName,
             status: instanceStatus,
+            instanceType: perRow?.instanceType, // Oracle tenancy type from discovery
+            protocol: perRow?.storage?.[0]?.mountDetails?.[0]?.protocol, // Oracle Protocol from storage details
             databaseCount: perRow?.databaseCount,
             statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
             fileSystemType: getDiscoverFileSystemType(perRow),

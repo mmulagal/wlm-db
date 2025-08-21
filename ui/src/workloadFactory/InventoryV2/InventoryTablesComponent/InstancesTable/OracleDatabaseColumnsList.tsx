@@ -11,6 +11,7 @@ import {
     INVENTORY_STATUS,
     INVENTORY_TABLE_STATUS,
     PROTECTION_COLUMN_TEXT_STATUS,
+    REGISTER_INSTANCE_STATE,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
@@ -105,10 +106,10 @@ export function getOracleDatabaseColumnsList({
         },
         {
             Header: t('databases.databases-table.oracle.headers.sid'),
-            accessor: 'sid',
+            accessor: 'databaseInstanceName',
             id: '2',
             width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'sid'),
+            filterOptions: getFilterOptions(updatedTableData, 'databaseInstanceName'),
             renderCell: (cellData: string) => (
                 <DsTypography
                     title={cellData || t('databases.general.not-available-table-columns')}
@@ -324,25 +325,47 @@ export function getOracleDatabaseColumnsList({
             id: '10',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'protocol'),
-            renderCell: (cellData: string) => (
+            renderCell: (cellData: string, rowData: any) => (
                 <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || t('databases.general.not-available-table-columns')}
+                    {cellData}
                 </DsTypography>
             )
         },
         {
             Header: t('databases.databases-table.oracle.headers.database-size'),
-            accessor: 'databaseSize',
+            accessor: 'sizeRange',
+            csvAccessor: t('databases.databases-table.oracle.headers.database-size'),
             id: '11',
             width: '200px',
-            filterOptions: [
-                { label: '0 - 100 MiB', value: '0 - 100 MiB' },
-                { label: '100 MiB - 1 GiB', value: '100 MiB - 1 GiB' },
-                { label: '1 GiB - 10 GiB', value: '1 GiB - 10 GiB' },
-                { label: '10 GiB - 5 TiB', value: '10 GiB - 5 TiB' },
-                { label: '5 TiB+', value: '5 TiB+' }
-            ],
-            renderCell: (cellData: any, rowData: any) => formatSize(rowData?.size)
+            filterOptions: getFilterOptions(updatedTableData, 'sizeRange'),
+            renderCell: (cellData: any, rowData: any) => (
+                <>
+                    {!rowData?.size && (
+                        <div className={styles.databaseSize}>
+                            <DsTooltipInfo
+                                className={`${styles.databaseSizeTooltipContainer} ${styles['tooltip-icon']}`}
+                                trigger="hover"
+                            >
+                                <div>
+                                    <DsTypography variant="Regular_13">
+                                        {t('databases.databases-table.oracle.credentials-not-available')}
+                                    </DsTypography>
+                                </div>
+                            </DsTooltipInfo>
+                            <div className={styles.colText}>
+                                <DsTypography variant="Regular_13">
+                                    {REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
+                                </DsTypography>
+                            </div>
+                        </div>
+                    )}
+                    {rowData?.size && (
+                        <DsTypography variant="Regular_13" className={styles.colText}>
+                            {formatSize(rowData?.size)}
+                        </DsTypography>
+                    )}
+                </>
+            )
         },
         {
             id: '12',

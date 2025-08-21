@@ -107,6 +107,9 @@ const InventoryV2 = () => {
                         ? inventoryTableData[key]?.serverAllInstallationMode.join(', ')
                         : inventoryTableData[key]?.serverInstallationMode
                 };
+                if (inventoryTableData[key]?.hostType === DBType.ORACLE) {
+                    rowData.platform = inventoryTableData[key]?.platform || GENERAL.NOT_AVAILABLE;
+                }
                 allHostTableRows.push(rowData);
 
                 // Instance table
@@ -208,7 +211,16 @@ const InventoryV2 = () => {
                             resourceId: perHost?.resourceId,
                             ec2InstanceId: perHost?.ec2InstanceId,
                             fileSystemName,
-                            managementStatus
+                            managementStatus,
+                            ...(perHost?.hostType === DBType.ORACLE && {
+                                protocol: perHost?.protocol || GENERAL.NOT_AVAILABLE,
+                                sizeRange: perRow?.databases?.[0]?.size
+                                    ? categorizeStorageSize(formatSize(perRow?.databases?.[0]?.size))
+                                    : GENERAL.NOT_AVAILABLE,
+                                'Database size': perRow?.databases?.[0]?.size
+                                    ? formatSize(perRow?.databases?.[0]?.size)
+                                    : GENERAL.NOT_AVAILABLE
+                            })
                         };
                         perInstanceData.push(perRowData);
                     });
