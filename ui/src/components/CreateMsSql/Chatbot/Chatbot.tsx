@@ -568,7 +568,8 @@ const Chatbot = () => {
                             throughput: selectedFsx?.ontapConfiguration?.throughputCapacity,
                             iops: selectedFsx?.ontapConfiguration?.diskIopsConfiguration?.iops,
                             preferredSubnetId: selectedFsx?.ontapConfiguration?.preferredSubnetId,
-                            kmsKeyId: selectedFsx?.kmsKeyId
+                            kmsKeyId: selectedFsx?.kmsKeyId,
+                            deploymentType: selectedFsx?.ontapConfiguration?.deploymentType,
                         };
                         const option = generateOptionType(val, val, '', false, '', data);
                         dispatch(setExistingFsxnName(value ? option : null));

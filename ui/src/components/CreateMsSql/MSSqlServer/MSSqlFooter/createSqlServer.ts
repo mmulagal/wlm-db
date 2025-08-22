@@ -108,6 +108,13 @@ const createMssqlPayload = (state: any) => {
     })();
 
     const fsxDeploymentMode = (() => {
+        const fsxnType = state.mssqlForm.fsxN?.fsxNType;
+        if (isFsxnExisting(fsxnType)) {
+            const fsxDeploymentType = state.mssqlForm.fsxN?.fsxNExistingName?.data?.deploymentType || '';
+            if (fsxDeploymentType) {
+                return fsxDeploymentType;
+            }
+        }
         const deploymentType = state.mssqlForm.dbDeploymentModel?.value;
         if (deploymentType === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             return FSX_DEPLOYMENT_MODE.SINGLE_AZ_1;
