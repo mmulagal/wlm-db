@@ -161,7 +161,7 @@ const FSxNSystem = ({ wizardType }: any) => {
                 iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops,
                 preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId,
                 kmsKeyId: val?.kmsKeyId,
-                deploymentType: val?.ontapConfiguration?.deploymentType,
+                deploymentType: val?.ontapConfiguration?.deploymentType
             };
             const disabledMsg = fsxCheck(val?.fileSystemId);
             const option = generateOptionType(value, value, '', disabledMsg !== '', disabledMsg, data);

@@ -359,6 +359,25 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
     return storageSavingsText;
 };
 
+const getOracleSpecificFields = (perRow: any) => {
+    const targetDatabase = perRow?.databases?.find(
+        (db: any) =>
+            db?.type === ORACLE_DATABASES_COMPONENTS.CDB ||
+            db?.type === ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT_DATABASE_API_RESPONSE
+    );
+    return {
+        instanceType:
+            targetDatabase?.type === ORACLE_DATABASES_COMPONENTS.CDB
+                ? ORACLE_DATABASES_COMPONENTS.MULTI_TENANT
+                : ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT,
+        protocol:
+            Array.isArray(perRow?.storage?.[0]?.protocol) && perRow?.storage?.[0]?.protocol.length > 0
+                ? perRow?.storage?.[0]?.protocol[0]
+                : GENERAL.NOT_AVAILABLE,
+        size: targetDatabase?.size ? targetDatabase?.size : GENERAL.NOT_AVAILABLE
+    };
+};
+
 export const formatInstanceData = (row: ManagedHostsRowInterface) => {
     const isAllManaged = row?.databaseInstanceDetails?.every(perRow => !!perRow?.isManaged);
 
@@ -422,17 +441,8 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
                     isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication
                 };
-                oracleSpecificFields = {
-                    instanceType:
-                        perRow?.databases?.[0]?.type === ORACLE_DATABASES_COMPONENTS.CDB
-                            ? ORACLE_DATABASES_COMPONENTS.MULTI_TENANT
-                            : ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT,
-                    protocol:
-                        Array.isArray(perRow?.storage?.[0]?.protocol) && perRow?.storage?.[0]?.protocol.length > 0
-                            ? perRow?.storage?.[0]?.protocol[0]
-                            : GENERAL.NOT_AVAILABLE,
-                    size: !perRow?.databases?.[0]?.size ? GENERAL.NOT_AVAILABLE : perRow?.databases?.[0]?.size
-                };
+                // Check for the item with type CDB/Single tenant (mostly it is 1st item but can be in the middle also)
+                oracleSpecificFields = getOracleSpecificFields(perRow);
             } else {
                 authFields = {
                     windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
@@ -488,10 +498,10 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
 
 export const getFsxIdsFromdiscover = (data: Array<DiscoverHostInterface>, engineType: string) => {
     const fsxIds: Array<string> = [];
-    data?.map((instances: DiscoverHostInterface) => {
+    data?.forEach((instances: DiscoverHostInterface) => {
         if (engineType === DBType.MSSQL) {
-            instances?.sqlServerInstances?.map((inst: SQLServerInstancesDiscovered) => {
-                inst?.storage?.map((storageObj: DiscoveredStorageObj) => {
+            instances?.sqlServerInstances?.forEach((inst: SQLServerInstancesDiscovered) => {
+                inst?.storage?.forEach((storageObj: DiscoveredStorageObj) => {
                     if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                         const fsxId = storageObj?.id || '';
                         if (!fsxIds.includes(fsxId)) {
@@ -501,8 +511,8 @@ export const getFsxIdsFromdiscover = (data: Array<DiscoverHostInterface>, engine
                 });
             });
         } else if (engineType === DBType.ORACLE) {
-            instances?.databaseInstanceDetails?.map((inst: OracleInstancesDiscovered) => {
-                inst?.storage?.map((storageObj: DiscoveredStorageObj) => {
+            instances?.databaseInstanceDetails?.forEach((inst: OracleInstancesDiscovered) => {
+                inst?.storage?.forEach((storageObj: DiscoveredStorageObj) => {
                     if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                         const fsxId = storageObj?.id || '';
                         if (!fsxIds.includes(fsxId)) {
@@ -1703,7 +1713,11 @@ export const formatOracleDiscoverInstanceData = (
             databaseInstanceId: perRow?.instanceId,
             databaseInstanceName: perRow?.instanceName,
             status: instanceStatus,
-            instanceType: perRow?.instanceType, // Oracle tenancy type from discovery
+            // Mapping the instanceType to constant variable to show in the UX required format
+            instanceType:
+                perRow?.instanceType === ORACLE_DATABASES_COMPONENTS.MULTI_TENANT_API_RESPONSE
+                    ? ORACLE_DATABASES_COMPONENTS.MULTI_TENANT
+                    : ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT, // Oracle tenancy type from discovery
             protocol: perRow?.storage?.[0]?.mountDetails?.[0]?.protocol, // Oracle Protocol from storage details
             databaseCount: perRow?.databaseCount,
             statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,

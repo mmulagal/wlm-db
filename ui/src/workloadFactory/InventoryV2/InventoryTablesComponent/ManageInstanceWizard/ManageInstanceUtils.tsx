@@ -657,7 +657,7 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
     const permissions =
         engineType === DBType.ORACLE ? readinessData?.missingPermissions : readinessData?.missingSqlPermissions;
 
-    if (otherModules.length > 0 || (permissions && permissions.length > 0)) {
+    if ((otherModules && otherModules.length > 0) || (permissions && permissions.length > 0)) {
         return MANAGE_STATES.MISSING_PREREQUISITES;
     }
 

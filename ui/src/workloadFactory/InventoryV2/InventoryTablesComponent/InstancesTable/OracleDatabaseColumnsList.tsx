@@ -325,11 +325,22 @@ export function getOracleDatabaseColumnsList({
             id: '10',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'protocol'),
-            renderCell: (cellData: string, rowData: any) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData}
-                </DsTypography>
-            )
+            renderCell: (cellData: string, rowData: any) => {
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
+                return (
+                    <>
+                        {loading && <DsFlashingDotsLoader />}
+                        {!loading && (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {cellData}
+                            </DsTypography>
+                        )}
+                    </>
+                );
+            }
         },
         {
             Header: t('databases.databases-table.oracle.headers.database-size'),
@@ -338,34 +349,41 @@ export function getOracleDatabaseColumnsList({
             id: '11',
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'sizeRange'),
-            renderCell: (cellData: any, rowData: any) => (
-                <>
-                    {!rowData?.size && (
-                        <div className={styles.databaseSize}>
-                            <DsTooltipInfo
-                                className={`${styles.databaseSizeTooltipContainer} ${styles['tooltip-icon']}`}
-                                trigger="hover"
-                            >
-                                <div>
+            renderCell: (cellData: any, rowData: any) => {
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
+                return (
+                    <>
+                        {loading && <DsFlashingDotsLoader />}
+                        {!loading && !rowData?.size && (
+                            <div className={styles.databaseSize}>
+                                <DsTooltipInfo
+                                    className={`${styles.databaseSizeTooltipContainer} ${styles['tooltip-icon']}`}
+                                    trigger="hover"
+                                >
+                                    <div>
+                                        <DsTypography variant="Regular_13">
+                                            {t('databases.databases-table.oracle.credentials-not-available')}
+                                        </DsTypography>
+                                    </div>
+                                </DsTooltipInfo>
+                                <div className={styles.colText}>
                                     <DsTypography variant="Regular_13">
-                                        {t('databases.databases-table.oracle.credentials-not-available')}
+                                        {REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
                                     </DsTypography>
                                 </div>
-                            </DsTooltipInfo>
-                            <div className={styles.colText}>
-                                <DsTypography variant="Regular_13">
-                                    {REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
-                                </DsTypography>
                             </div>
-                        </div>
-                    )}
-                    {rowData?.size && (
-                        <DsTypography variant="Regular_13" className={styles.colText}>
-                            {formatSize(rowData?.size)}
-                        </DsTypography>
-                    )}
-                </>
-            )
+                        )}
+                        {!loading && rowData?.size && (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {formatSize(rowData?.size)}
+                            </DsTypography>
+                        )}
+                    </>
+                );
+            }
         },
         {
             id: '12',

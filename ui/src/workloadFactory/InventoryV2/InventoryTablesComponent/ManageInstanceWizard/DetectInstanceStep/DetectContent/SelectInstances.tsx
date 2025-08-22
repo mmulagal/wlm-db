@@ -94,36 +94,42 @@ const SelectInstances = ({ engineType }: { engineType: string }) => {
 
     const options = useMemo(
         () =>
-            instanceTableRows?.flatMap((row: any) => {
-                const { colText, disableMsg } = manageActionCol(t, engineType, row);
-                if (shouldExcludeRow(engineType, colText, disableMsg)) return [];
+            instanceTableRows
+                ?.flatMap((row: any) => {
+                    const { colText, disableMsg } = manageActionCol(t, engineType, row);
+                    if (shouldExcludeRow(engineType, colText, disableMsg)) return [];
 
-                const isAlreadySelectedAndAuthorized = selectedMultiDetectInstances.some(
-                    (item: any) => item?.id === row?.id && item?.authorized
-                );
-                const isAuthorized = isAlreadySelectedAndAuthorized ? true : isAlreadyDetectedCheck(row);
+                    const isAlreadySelectedAndAuthorized = selectedMultiDetectInstances.some(
+                        (item: any) => item?.id === row?.id && item?.authorized
+                    );
+                    const isAuthorized = isAlreadySelectedAndAuthorized ? true : isAlreadyDetectedCheck(row);
 
-                const isSelected = selectedOptions.some(opt => opt.id === row.id);
+                    const isSelected = selectedOptions.some(opt => opt.id === row.id);
 
-                // Only disable unselected options of the other type
-                const isDisabled =
-                    !isSelected &&
-                    selectionType !== null &&
-                    ((selectionType === 'authorized' && !isAuthorized) ||
-                        (selectionType === 'unauthorized' && isAuthorized));
+                    // Only disable unselected options of the other type
+                    const isDisabled =
+                        !isSelected &&
+                        selectionType !== null &&
+                        ((selectionType === 'authorized' && !isAuthorized) ||
+                            (selectionType === 'unauthorized' && isAuthorized));
 
-                return {
-                    id: row.id,
-                    label: `${row.databaseInstanceName}, ${row.name}, ${
-                        isAuthorized ? 'Authenticated' : 'Unauthenticated'
-                    }`,
-                    value: row.name,
-                    data: row,
-                    authorized: isAuthorized,
-                    isDisabled,
-                    disabledReason: isDisabled ? t('databases.register-flow.drop_down_tooltip') : ''
-                };
-            }),
+                    return {
+                        id: row.id,
+                        label: `${row.databaseInstanceName}, ${row.name}, ${
+                            isAuthorized ? 'Authenticated' : 'Unauthenticated'
+                        }`,
+                        value: row.name,
+                        data: row,
+                        authorized: isAuthorized,
+                        isDisabled,
+                        disabledReason: isDisabled ? t('databases.register-flow.drop_down_tooltip') : ''
+                    };
+                })
+                .sort((a, b) => {
+                    // Sort authenticated (authorized) first, then unauthenticated
+                    if (a.authorized === b.authorized) return 0;
+                    return a.authorized ? -1 : 1;
+                }) || [],
         [instanceTableRows, selectionType, selectedOptions]
     );
 
