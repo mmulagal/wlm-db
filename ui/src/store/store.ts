@@ -107,7 +107,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
                 errorMsg?.includes("SyntaxError: Unexpected token 'U'")) ||
             (action?.meta?.arg?.endpointName === 'discoverExistingFsxN' &&
                 errorMsg?.includes('File system') &&
-                errorMsg?.includes('already exists'))
+                errorMsg?.includes('already exist'))
         ) {
             return;
         }
