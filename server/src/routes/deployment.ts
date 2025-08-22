@@ -33,13 +33,46 @@ const API_MSSQL_TERRAFORM_PREFIX_PATH = '/v1/mssql/terraform/setup';
 const API_PGSQL_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
 const API_PGSQL_TERRAFORM_PREFIX_PATH = '/v1/pgsql/terraform/setup';
 
+const fsxValidationHook = async (request: any, reply: any) => {
+    const { body: { fsxConfiguration: config } } = request;
+
+    if (config) {
+        const isGen1 = ['SINGLE_AZ_1', 'MULTI_AZ_1'].includes(config.fsxDeploymentMode);
+        const isGen2 = ['SINGLE_AZ_2', 'MULTI_AZ_2'].includes(config.fsxDeploymentMode);
+
+        if (isGen1) {
+            const validGen1Throughput = [128, 256, 512, 1024, 2048, 4096];
+            if (!validGen1Throughput.includes(config.fsxVolThroughput)) {
+                return reply.code(400).send({
+                    error: 'Invalid FSX Configuration',
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Valid values: ${validGen1Throughput.join(', ')}`
+                });
+            }
+            if (!config.fsxIOPS) {
+                return reply.code(400).send({
+                    error: 'Invalid FSX Configuration',
+                    message: `fsxIOPS is required for ${config.fsxDeploymentMode}`
+                });
+            }
+        } else if (isGen2) {
+            const validGen2Throughput = [384, 768, 1536, 3072, 4608, 6144];
+            if (!validGen2Throughput.includes(config.fsxVolThroughput)) {
+                return reply.code(400).send({
+                    error: 'Invalid FSX Configuration',
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Valid values: ${validGen2Throughput.join(', ')}`
+                });
+            }
+        }
+    }
+};
+
 export default function deploymentRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server
         .post(
             `${API_MSSQL_STATIC_TEMPLATE_PREFIX_PATH}`,
-            { schema: CloudFormationTemplateSchema },
+            { schema: CloudFormationTemplateSchema, preHandler: fsxValidationHook },
             async (request, reply) => {
                 const {
                     headers: { 'triggered-from': triggeredFrom },
@@ -74,7 +107,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${API_MSSQL_PREFIX_PATH}/cloudformation/deploy`,
-            { schema: DeployTemplateSchema },
+            { schema: DeployTemplateSchema, preHandler: fsxValidationHook },
             async (request, reply) => {
                 const {
                     params: { credentialsId, region },
