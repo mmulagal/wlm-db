@@ -456,28 +456,30 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
     fi
 
     ${oracleUserAuthLoginCommand}
-    result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
-    sqlplus_command=$(echo "$result" | cut -d'|' -f1)
+    if [ "$isAwsCliInstalled" == "true" ] && [ "$isJqInstalled" == "true" ]; then
+        result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
+        sqlplus_command=$(echo "$result" | cut -d'|' -f1)
 
-    get_instance_db_version() {
-        sudo -i -u oracle bash <<EOF
-            set -e
-            export ORACLE_SID="$oracleSid"
-            $sqlplus_command
-            WHENEVER SQLERROR EXIT SQL.SQLCODE
-            SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
-            SELECT version FROM v\\$instance;
+        get_instance_db_version() {
+            sudo -i -u oracle bash <<EOF
+                set -e
+                export ORACLE_SID="$oracleSid"
+                $sqlplus_command
+                WHENEVER SQLERROR EXIT SQL.SQLCODE
+                SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+                SELECT version FROM v\\$instance;
 EOF
-    }
+        }
 
-    dbVersion=$(get_instance_db_version)
-    if [ $? -ne 0 ]; then
-        result="{\\"oracleInstanceConnectivity\\": false, \\"oracleError\\": \\"Failed to connect to Oracle instance $oracleSid\\", \\"oracleInstanceName\\": \\"$oracleSid\\"}"
-    else
-        result="{\\"oracleInstanceConnectivity\\": true, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\"}"
+        dbVersion=$(get_instance_db_version)
+        if [ $? -ne 0 ]; then
+            result="{\\"oracleInstanceConnectivity\\": false, \\"oracleError\\": \\"Failed to connect to Oracle instance $oracleSid\\", \\"oracleInstanceName\\": \\"$oracleSid\\"}"
+        else
+            result="{\\"oracleInstanceConnectivity\\": true, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\"}"
+        fi
+        # Add result to instances array inside resultObject
+        resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$result" | jq '.')" '.instances += [$res]')
     fi
-    # Add result to instances array inside resultObject
-    resultObject=$(echo "$resultObject" | jq --argjson res "$result" '.instances += [$res]')
 `;
 
 const validateOracleInstanceFsxConnectivity = (fsxnId: string, region: string) => `
@@ -504,26 +506,40 @@ const validateOracleInstanceFsxConnectivity = (fsxnId: string, region: string) =
 `;
 
 const checkOracleModuleAvailability = `
+    is_module_installed() {
+        local module="$1"
+        local path
+        path=$(command -v "$module" 2>/dev/null)
+        if [ -n "$path" ] && [ -x "$path" ]; then
+            # If symlink, check target
+            if [ -L "$path" ]; then
+                local target
+                target=$(readlink -f "$path")
+                if [ ! -f "$target" ] || [ ! -x "$target" ]; then
+                    echo false
+                    return
+                fi
+            fi
+            # Try to run --version or -v
+            if "$module" --version >/dev/null 2>&1 || "$module" -v >/dev/null 2>&1; then
+                echo true
+                return
+            fi
+        fi
+        echo false
+    }
     check_oracle_module_availability() {
-        local isAwsCliInstalled="false"
-        local isJqInstalled="false"
-
-        if command -v aws >/dev/null 2>&1; then
-            isAwsCliInstalled="true"
-        fi
-
-        if command -v jq >/dev/null 2>&1; then
-            isJqInstalled="true"
-        fi
-
+        isJqInstalled=$(is_module_installed jq)
+        isAwsCliInstalled=$(is_module_installed aws)
         result="{\\"isAwsCliInstalled\\": \\"$isAwsCliInstalled\\", \\"isJqInstalled\\": \\"$isJqInstalled\\"}"
         echo $result
     }
 `;
 
 const installOracleDependentModules = (signedUrls: string[], modulesToInstall: string) => `
-
-    if [ -z "$signedUrls" ]; then
+    
+    signedUrlsLen=${signedUrls.length}
+    if [ $signedUrlsLen -eq 0 ]; then
         echo "Signed URL is empty. Cannot install $moduleName."
         exit 1
     fi
@@ -538,21 +554,22 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
     for moduleName in "\${moduleNames[@]}"; do
         if [ "$moduleName" == "AWS CLI" ]; then
             if [ "$isAwsCliInstalled" == "true" ]; then
-                successMsg="AWS CLI already installed"
+                successMsg="AWS CLI already installed."
             else
-                curl -sS -fSL "$awsCliSignedUrl" -o awscliv2.tar.gz
                 download_dir=$(pwd)
+                curl -sS -fSL "$awsCliSignedUrl" -o awscliv2.tar.gz
                 if [ $? -ne 0 ]; then
-                    errorMsg="Failed to download AWS CLI from $awsCliSignedUrl"
+                    errorMsg="Failed to download AWS CLI from $awsCliSignedUrl."
                 else
-                    tar -xzf awscliv2.tar.gz
-                    sudo ./aws/install
+                    tar -xzf awscliv2.tar.gz > /dev/null 2>&1
+                    sudo ./aws/install > /dev/null 2>&1
                     if [ $? -ne 0 ]; then
-                        errorMsg="Failed to install AWS CLI"
+                        errorMsg="Failed to install AWS CLI."
                         cd $download_dir
-                        rm -rf awscliv2.tar.gz aws
+                        sudo rm -rf awscliv2.tar.gz aws
                     else
-                        successMsg="AWS CLI installed"
+                        successMsg="AWS CLI installed."
+                        isAwsCliInstalled=true
                     fi
                 fi
             fi
@@ -561,38 +578,44 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
         elif [ "$moduleName" == "JQ" ]; then
 
             if [ "$isJqInstalled" == "true" ]; then
-                successMsg="JQ already installed"
+                successMsg="JQ already installed."
             else
-                curl -sS -fSL "$jqSignedUrl" -o jq-1.8.0.tar.gz
                 download_dir=$(pwd)
+                curl -sS -fSL "$jqSignedUrl" -o jq-1.8.0.tar.gz
                 if [ $? -ne 0 ]; then
-                    errorMsg="Failed to download JQ from $jqSignedUrl"
+                    errorMsg="Failed to download JQ from $jqSignedUrl."
                 else
-                    tar -xzf jq-1.8.0.tar.gz
-                    if ! command -v make >/dev/null 2>&1; then
+                    tar -xzf jq-1.8.0.tar.gz > /dev/null 2>&1
+                    isMakeInstalled=$(is_module_installed make)
+                    if [ "$isMakeInstalled" ]; then
                         curl -sS -fSL "$makeSignedUrl" -o make-4.4.1.tar.gz
-                        tar -xzf make-4.4.1.tar.gz
+                        tar -xzf make-4.4.1.tar.gz > /dev/null 2>&1
                         cd make-4.4.1/
-                        ./configure --disable-dependency-tracking
-                        sh build.sh
-                        sudo mv make /usr/local/bin/
+                        sudo ./configure --disable-dependency-tracking > /dev/null 2>&1
+                        sudo sh build.sh > /dev/null 2>&1
+                        if [ $? -ne 0 ]; then
+                            isMakeInstalled=false
+                        fi
+                        sudo mv make /usr/bin/
+                        isMakeInstalled=true
                         cd $download_dir
                     fi
                     cd jq-1.8.0/
-                    ./configure --disable-dependency-tracking
-                    make && sudo make install
+                    sudo ./configure --disable-dependency-tracking > /dev/null 2>&1
+                    (sudo make > /dev/null 2>&1) && (sudo make install > /dev/null 2>&1)
                     if [ $? -ne 0 ]; then
-                        errorMsg="Failed to install JQ"
+                        errorMsg="Failed to install JQ."
                         cd $download_dir
                         rm -rf jq-1.8.0.tar.gz jq-1.8.0
                     else
-                        successMsg="JQ installed"
+                        successMsg="JQ installed."
+                        isJqInstalled=true
                     fi
                 fi
             fi
             installationResults="$installationResults{\\"success\\": \\"$successMsg\\", \\"error\\": \\"$errorMsg\\"},"
         else
-            errorMsg="Unknown module: $moduleName"
+            errorMsg="Unknown module: $moduleName."
             installationResults="$installationResults{\\"success\\": \\"\\", \\"error\\": \\"$errorMsg\\"},"
         fi
     done
@@ -601,7 +624,7 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
     installationResults="\${installationResults%,}]"
 
     if [[ "$resultObject" =~ \\"modulesInstallationResults\\":\\ \\[\\] ]]; then
-        resultObject="\${resultObject/\\"modulesInstallationResults\\": \\[\\]/\\"modulesInstallationResults\\": \\$installationResults}"
+        resultObject="\${resultObject/\\"modulesInstallationResults\\": \\[\\]/\\"modulesInstallationResults\\": \\"$installationResults\\"}"
     else
         currentResults=$(echo "\\$resultObject" | grep -o '"modulesInstallationResults": \\[[^]]*' | sed 's/"modulesInstallationResults": \\[//')
         newResults="\${currentResults},\${installationResults:1:\${#installationResults}-2}" # remove [ and ] from installationResults
@@ -631,7 +654,7 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
         fi
         if [ \${#modulesToInstall[@]} -eq 0 ]; then
             installationResults="[{\\"success\\": \\"All required modules are already installed\\", \\"error\\": \\"\\"}]"
-            resultObject=$(echo "$resultObject" | jq --argjson res "$installationResults" '.modulesInstallationResults += $res')
+            resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$installationResults" | jq '.')" '.modulesInstallationResults += $res')
         else 
             ${installOracleDependentModules(signedUrls, 'modulesToInstall')}
         fi
