@@ -119,7 +119,13 @@ async function checkLogAnalyzerPreRequisites(
         response: { agreementAvailability, entitlementAvailability } = {}
     } = (await findFirstAvailableModel(accountId, credentialsId, region, LOGS_ANALYZER_MODEL_IDS)) || {};
 
-    if (!modelId || (response && isEmpty(response))) {
+    if (
+        !modelId ||
+        !response ||
+        isEmpty(response) ||
+        !agreementAvailability ||
+        entitlementAvailability === undefined
+    ) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             'Unable to continue with logs analysis, the AWS Bedrock model cannot be used in this region.'
@@ -935,7 +941,7 @@ async function handlePreReqCheck(
             response: { agreementAvailability, entitlementAvailability } = {}
         } = (await findFirstAvailableModel(accountId, credentialsId, region, LOGS_ANALYZER_MODEL_IDS)) || {};
 
-        if (!modelId || (response && isEmpty(response))) {
+        if (!modelId || !response || isEmpty(response)) {
             bedrockPreRequisites = {
                 ready: false,
                 message: PRE_REQ_MESSAGES.MODEL_NOT_AVAILABLE.replace(
