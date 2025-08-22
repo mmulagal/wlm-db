@@ -2495,11 +2495,16 @@ async function validateOracleCredentials(
     const instancesToBeDeleted: string[] = [];
 
     const instanceIdToMissingPermissionsMap = new Map<string, string[]>();
+    let missingModules: string[] = [];
 
     if (checkManageReadiness) {
         const { modulesInstallationResults, missingOracleUserPermissions } = parsedResponse;
-
-        logger.debug('Modules installation results', { modulesInstallationResults, missingOracleUserPermissions });
+        missingModules = parsedResponse?.missingModules || [];
+        logger.debug('Modules installation results', {
+            modulesInstallationResults,
+            missingOracleUserPermissions,
+            missingModules
+        });
 
         if (missingOracleUserPermissions && missingOracleUserPermissions.length) {
             for (const permission of missingOracleUserPermissions) {
@@ -2556,7 +2561,13 @@ async function validateOracleCredentials(
                 response.push({
                     resourceId: instance.oracleInstanceName,
                     resourceType: RESOURCESTYPE.ORACLE,
-                    databaseServerError: instance.oracleError
+                    databaseServerError: instance.oracleError,
+                    manageReadiness: {
+                        oracle: {
+                            missingPermissions: ['Invalid credentials provided'],
+                            missingModules
+                        }
+                    }
                 });
             } else if (instance.oracleInstanceConnectivity === true) {
                 const { oracleInstanceName, oracleEdition } = instance;
@@ -2567,7 +2578,8 @@ async function validateOracleCredentials(
                     databaseServerEdition: oracleEdition,
                     manageReadiness: {
                         oracle: {
-                            missingPermissions
+                            missingPermissions,
+                            missingModules
                         }
                     }
                 });

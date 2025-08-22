@@ -1735,7 +1735,8 @@ async function discoverOracleResources(
                             database_details: databaseDetails,
                             storage_details: instanceStorageDetails,
                             is_default_auth: isDefaultAuthentication,
-                            modules_availability: modulesAvailability
+                            modules_availability: modulesAvailability,
+                            missing_permissions: missingPermissions
                         } = dbInstance;
 
                         const { isAwsCliInstalled, isJqInstalled } = modulesAvailability || {};
@@ -1808,7 +1809,8 @@ async function discoverOracleResources(
                                 missingModules: [
                                     !isAwsCliInstalled ? 'awsCli' : null,
                                     !isJqInstalled ? 'jq' : null
-                                ].filter(Boolean) as string[]
+                                ].filter(Boolean) as string[],
+                                missingPermissions
                             }
                         });
                     }

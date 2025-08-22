@@ -445,16 +445,19 @@ EOF
     fi
 `;
 
+const initializeResultObject = `
+    # Initialize result object if not already initialized
+    if [ -z "$resultObject" ]; then
+        resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [], "missingOracleUserPermissions": [], "missingModules": [] }'
+    fi
+`;
+
 const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string) => `
     ec2InstanceId="${ec2InstanceId}"
     oracleSid="${dbSid}"
     oracleSid_temp="${dbSid}_temp"
 
-    # Initialize result object if not already initialized
-    if [ -z "$resultObject" ]; then
-        resultObject='{ "instances": [], "fsxResults": [], modulesInstallationResults: [], "missingOracleUserPermissions": [] }'
-    fi
-
+    ${initializeResultObject}
     ${oracleUserAuthLoginCommand}
     if [ "$isAwsCliInstalled" == "true" ] && [ "$isJqInstalled" == "true" ]; then
         result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
@@ -487,12 +490,7 @@ const validateOracleInstanceFsxConnectivity = (fsxnId: string, region: string) =
     region="${region}"
     
     ${checkCommandStatus}
-
-    # Initialize result object if not already initialized
-    if [ -z "$resultObject" ]; then
-        resultObject='{ "instances": [], "fsxResults": [], modulesInstallationResults: [], "missingOracleUserPermissions": [] }'
-    fi
-
+    ${initializeResultObject}
     ${ontapRestApi}
 
     result=$(ontap_request 'GET' '/cluster?fields=version')
@@ -634,9 +632,7 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
 
 const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => `
 
-        if [ -z "$resultObject" ]; then
-            resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [], "missingOracleUserPermissions": [] }'
-        fi
+        ${initializeResultObject}
 
         ${checkOracleModuleAvailability}
     
@@ -646,18 +642,26 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
         isJqInstalled=$(echo "$modulesAvailability" | grep -o '"isJqInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
         
         modulesToInstall=()
+        missingModules="["
         if [ "$isAwsCliInstalled" != "true" ]; then
             modulesToInstall+=("AWS CLI")
+            missingModules+="\\"AWS CLI\\","
         fi
         if [ "$isJqInstalled" != "true" ]; then
             modulesToInstall+=("JQ")
+            missingModules+="\\"JQ\\","
         fi
+        
         if [ \${#modulesToInstall[@]} -eq 0 ]; then
             installationResults="[{\\"success\\": \\"All required modules are already installed\\", \\"error\\": \\"\\"}]"
             resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$installationResults" | jq '.')" '.modulesInstallationResults += $res')
+            missingModules+="]"
         else 
             ${installOracleDependentModules(signedUrls, 'modulesToInstall')}
+            missingModules="\${missingModules%,}]" # remove trailing comma and close array
         fi
+
+        resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$missingModules" | jq '.')" '.missingModules = $res')
 `;
 
 const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) => `
@@ -898,11 +902,7 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
     oracleSid="${dbSid}"
     oracleSid_temp="${dbSid}_temp"
 
-    # Initialize result object if not already initialized
-    if [ -z "$resultObject" ]; then
-        resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [], "missingOracleUserPermissions": [] }'
-    fi
-
+    ${initializeResultObject}
     ${oracleUserAuthLoginCommand}
     ${loadOracleUserPermissionsDetectionModule}
     result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
@@ -1015,5 +1015,7 @@ export {
     getMappedOntapDataVolume,
     checkIfValidLinuxUser,
     checkRequiredOracleUserPermissions,
-    GET_ORACLE_SERVER_DETAILS
+    GET_ORACLE_SERVER_DETAILS,
+    oracleUserAuthLoginCommand,
+    loadOracleUserPermissionsDetectionModule
 };

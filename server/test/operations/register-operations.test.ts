@@ -144,7 +144,8 @@ describe('Manage operations', () => {
                 resourceType: 'ORACLE',
                 manageReadiness: {
                     oracle: {
-                        missingPermissions: []
+                        missingPermissions: [],
+                        missingModules: []
                     }
                 }
             }

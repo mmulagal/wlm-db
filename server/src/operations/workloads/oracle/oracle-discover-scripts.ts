@@ -1,7 +1,9 @@
 import {
     checkOracleModuleAvailability,
     getMappedOntapDataVolume,
-    getOracleDefaultOrUserAuthCommand
+    getOracleDefaultOrUserAuthCommand,
+    loadOracleUserPermissionsDetectionModule,
+    oracleUserAuthLoginCommand
 } from './oracle-ssm-script-utils';
 
 const loadStorageDetectionModules = `
@@ -686,6 +688,67 @@ EOF
     }
 `;
 
+const checkOraclePermissionsInDiscovery = `
+
+    token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+    ec2InstanceId=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
+    ${loadOracleUserPermissionsDetectionModule}
+    ${oracleUserAuthLoginCommand}
+
+    check_oracle_missing_permissions() {
+        local oracleSid="$1"
+        result=$(get_oracle_user_auth_login_command "$oracleSid" "$ec2InstanceId")
+        sqlplus_command=$(echo "$result" | cut -d'|' -f1)
+
+        # Extract username from sqlplus_command
+        username=$(sed -n 's/.* -S \\([^/]*\\)\\/.*/\\1/p' <<< "$sqlplus_command")
+
+        if [ -z "$username" ]; then
+            # credentials not available, so cannot check permissions.
+            missingPermissions="[\\"CREATE SESSION\\", \\"SELECT CATALOG ROLE\\", \\"SET CONTAINER ROLE\\", \\"SET CONTAINER_DATA\\"]"
+        else 
+            isCreateSessionRoleGranted=$(is_create_session_granted)
+
+            if [ "$username" == "sys" ]; then
+                # SYS user has all privileges, so we don't need to check for permissions.
+                missingPermissions="[]"
+            elif [ "$isCreateSessionRoleGranted" == "false" ]; then
+                missingPermissions="[\\"CREATE SESSION\\"]"
+            else
+                isSelectCatalogRoleGranted=$(check_for_select_catalog_permission)
+
+                isCDBInstance=$(is_cdb_instance)
+
+                if [ $isCDBInstance == "true" ]; then
+                    # Perform actions specific to CDB instances
+                    isSetContainerRoleGranted=$(check_for_set_container_permission)
+                    isContainerDataPermissionGranted=$(check_for_container_data_permission)
+
+                    missingPermissions="["
+                    if [ "$isSetContainerRoleGranted" == "false" ]; then
+                        missingPermissions="$missingPermissions\\"SET CONTAINER ROLE\\","
+                    fi
+                    if [ "$isContainerDataPermissionGranted" == "false" ]; then
+                        missingPermissions="$missingPermissions\\"SET CONTAINER_DATA\\","
+                    fi
+                    if [ "$isSelectCatalogRoleGranted" == "false" ]; then
+                        missingPermissions="$missingPermissions\\"SELECT CATALOG ROLE\\","
+                    fi
+                    # Remove trailing comma if any
+                    missingPermissions="\${missingPermissions%,}]"
+                else
+                    # Perform actions specific to non-CDB instances
+                    if [ "$isSelectCatalogRoleGranted" == "false" ]; then
+                        missingPermissions="[\\"SELECT CATALOG ROLE\\"]"
+                    fi
+                fi
+            fi
+        fi
+
+        echo "$missingPermissions"
+    }
+`;
+
 const discoverOracleHosts = `
     # Check if oratab exists
     if [ ! -f /etc/oratab ]; then
@@ -762,15 +825,19 @@ EOF
 
             if [ "$isDefaultAuth" == "true" ]; then
                 ${getInstanceStorageDetails}
+                # Default auth enabled means the user has sysdba privileges, so no missing permissions.
+                missingPermissions="[]"
             else
                 ${getStorageWithoutCreds}
+                ${checkOraclePermissionsInDiscovery}
+                missingPermissions=$(check_oracle_missing_permissions "$sid")
             fi
         } || {
             echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
             continue
         }
 
-        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability}"
+        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions}"
 
         # If not the first object, prepend a comma in the JSON array.
         if [ $FIRST -eq 1 ]; then
