@@ -134,6 +134,7 @@ describe('Manage operations', () => {
             TEST_EC2_INSTANCE_ID,
             fsxCredentials,
             oracleCredentials,
+            undefined,
             [TEST_EC2_INSTANCE_ID]
         );
         expect(response).toEqual([
@@ -148,6 +149,36 @@ describe('Manage operations', () => {
                 }
             }
         ]);
+    });
+
+    it('Validate Oracle ASM credentials', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const oracleAsmCredentials = [
+            {
+                resourceId: 'ordbsdl',
+                resourceType: 'ORACLE_ASM',
+                username: 'username',
+                password: 'password'
+            }
+        ];
+
+        const response = await validateOracleCredentials(
+            ACCOUNT_ID,
+            credentialsId,
+            TEST_REGION,
+            TEST_EC2_INSTANCE_ID,
+            undefined,
+            [],
+            oracleAsmCredentials,
+            [TEST_EC2_INSTANCE_ID]
+        );
+        expect(response).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    areAsmCredentialsValid: expect.any(Boolean)
+                })
+            ])
+        );
     });
 
     it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {

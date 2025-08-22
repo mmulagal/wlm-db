@@ -1381,7 +1381,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'validateOracleCredentials',
-            '{ "instances": [ { "oracleInstanceConnectivity": true, "oracleInstanceName": "ordbsdl", "oracleEdition": "19.0.0.0.0" } ], "fsxResults": [ { "ontapconnectivity": true, "fsxId": "fs-0d5efc3057c4f12cb" } ] }'
+            '{ "instances": [ { "oracleInstanceConnectivity": true, "oracleInstanceName": "ordbsdl", "oracleEdition": "19.0.0.0.0" } ], "fsxResults": [ { "ontapconnectivity": true, "fsxId": "fs-0d5efc3057c4f12cb" } ], "valid": true }'
         )
     )
     .on(GetCommandInvocationCommand, {

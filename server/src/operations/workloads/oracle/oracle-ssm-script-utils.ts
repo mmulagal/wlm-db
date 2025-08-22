@@ -767,6 +767,41 @@ EOF
     exit 0
   `;
 
+const checkIfValidLinuxUser = (ec2InstanceId: string) => `
+    ec2InstanceId="${ec2InstanceId}"
+
+    instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
+    asmCredList=$(echo "$instanceCreds" | jq -c '.asm')
+
+    result=""
+    if [ -z "$asmCredList" ] || [ "$asmCredList" == "null" ]; then
+        result="{ \\"valid\\": false, \\"error\\": \\"No ASM credentials found.\\" }"
+        echo $result
+        exit 1
+    fi
+
+    count=$(echo "$asmCredList" | jq 'length')
+    for i in $(seq 0 $((count - 1))); do
+        USERNAME=$(echo "$asmCredList" | jq -r ".[$i].username")
+        PASSWORD=$(echo "$asmCredList" | jq -r ".[$i].password")
+
+        if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+            result="{\\"username\\": \\"$USERNAME\\", \\"valid\\": false, \\"error\\": \\"Missing username or password\\"}"
+        else
+            echo "$PASSWORD" | su - "$USERNAME" -c "exit" >/dev/null 2>&1
+            if [ $? -eq 0 ]; then
+                result="{\\"username\\": \\"$USERNAME\\", \\"valid\\": true}"
+                break
+            else
+                result="{\\"username\\": \\"$USERNAME\\", \\"valid\\": false, \\"error\\": \\"Invalid credentials\\"}"
+            fi
+        fi
+    done
+
+    echo $result
+    exit 0
+`;
+
 // Oracle User Permissions Detection Module
 // Required privileges with a user in oracle, Permissions 3rd and 4th are only required for CDB instances.
 // • CREATE SESSION — allows the user account to log in to sql shell.
@@ -931,5 +966,6 @@ export {
     checkCommandStatus,
     trendGraphCreateScriptForOracle,
     getMappedOntapDataVolume,
+    checkIfValidLinuxUser,
     checkRequiredOracleUserPermissions
 };

@@ -128,7 +128,13 @@ const RegisterCredentials = Type.Object({
             'For types MSSQL and WINDOWS_USER, this is the sql instannce name. For FSX, this is the file system ID.'
     }),
     resourceType: Type.String({
-        enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL, RESOURCESTYPE.WINDOWS_USER, RESOURCESTYPE.ORACLE]
+        enum: [
+            RESOURCESTYPE.FSX,
+            RESOURCESTYPE.MSSQL,
+            RESOURCESTYPE.WINDOWS_USER,
+            RESOURCESTYPE.ORACLE,
+            RESOURCESTYPE.ORACLE_ASM
+        ]
     }),
     username: Type.String({
         minLength: 1,

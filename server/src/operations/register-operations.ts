@@ -87,6 +87,7 @@ import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import {
     checkAndInstallRequiredOracleDependentModules,
+    checkIfValidLinuxUser,
     checkRequiredOracleUserPermissions,
     validateOracleInstanceConnectivity,
     validateOracleInstanceFsxConnectivity
@@ -1699,20 +1700,67 @@ function prepareParametersToStore(instanceIds: string[], credentials: RegisterCr
                     password
                 });
             } else {
-                instanceIds.forEach(instanceId =>
-                    acc.push({
-                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                        value: {
-                            oracle: [
-                                {
-                                    oracleinstancename: resourceId,
-                                    username,
-                                    password
-                                }
-                            ]
-                        }
-                    })
-                );
+                instanceIds.forEach(instanceId => {
+                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                    if (instanceObject) {
+                        instanceObject.value.oracle = [
+                            {
+                                oracleinstancename: resourceId,
+                                username,
+                                password
+                            }
+                        ];
+                    } else {
+                        acc.push({
+                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                            value: {
+                                oracle: [
+                                    {
+                                        oracleinstancename: resourceId,
+                                        username,
+                                        password
+                                    }
+                                ]
+                            }
+                        });
+                    }
+                });
+            }
+        } else if (resourceType === RESOURCESTYPE.ORACLE_ASM) {
+            const oracleAsmItem = acc.find(el => el.value.asm);
+
+            if (oracleAsmItem && Array.isArray(oracleAsmItem.value.asm)) {
+                oracleAsmItem.value.asm.push({
+                    oracleinstancename: resourceId,
+                    username,
+                    password
+                });
+            } else {
+                instanceIds.forEach(instanceId => {
+                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                    if (instanceObject) {
+                        instanceObject.value.asm = [
+                            {
+                                oracleinstancename: resourceId,
+                                username,
+                                password
+                            }
+                        ];
+                    } else {
+                        acc.push({
+                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                            value: {
+                                asm: [
+                                    {
+                                        oracleinstancename: resourceId,
+                                        username,
+                                        password
+                                    }
+                                ]
+                            }
+                        });
+                    }
+                });
             }
         }
         return acc;
@@ -1818,11 +1866,13 @@ async function validateAndStoreDiscoveredParameters(
         const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
         const oracleCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
         const windowsUserCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.WINDOWS_USER);
+        const oracleAsmCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.ORACLE_ASM);
         if (
             isEmpty(fsxCredentials) &&
             isEmpty(sqlCredentials) &&
             isEmpty(windowsUserCredentials) &&
-            isEmpty(oracleCredentials)
+            isEmpty(oracleCredentials) &&
+            isEmpty(oracleAsmCredentials)
         ) {
             throw new Error('Credentials cannot be empty');
         }
@@ -1849,6 +1899,7 @@ async function validateAndStoreDiscoveredParameters(
             sqlCredentials,
             windowsUserCredentials,
             oracleCredentials,
+            oracleAsmCredentials,
             instanceIds,
             checkManageReadiness
         );
@@ -1892,7 +1943,9 @@ async function rewriteOrDeleteSSMParameter(
     sqlCredentials: RegisterCredentialsType[],
     windowsUserCredentials: RegisterCredentialsType[],
     allDatabaseCredentials: RegisterCredentialsType[] = [],
-    allWindowsUserCredentials: RegisterCredentialsType[] = []
+    allWindowsUserCredentials: RegisterCredentialsType[] = [],
+    oracleAsmCredentials: RegisterCredentialsType[] = [],
+    allOracleAsmCredentials: RegisterCredentialsType[] = []
 ) {
     logger.info('Calling rewriteOrDeleteSSMParameter', {
         credentialsId,
@@ -1902,7 +1955,8 @@ async function rewriteOrDeleteSSMParameter(
         instancesToBeDeleted,
         fsxCredentials,
         sqlCredentials,
-        windowsUserCredentials
+        windowsUserCredentials,
+        oracleAsmCredentials
     });
     if (
         (isEmpty(allWindowsUserCredentials) &&
@@ -1910,7 +1964,10 @@ async function rewriteOrDeleteSSMParameter(
             sqlCredentials.length === instancesToBeDeleted.length) ||
         (isEmpty(allDatabaseCredentials) &&
             !isEmpty(windowsUserCredentials) &&
-            windowsUserCredentials.length === instancesToBeDeleted.length)
+            windowsUserCredentials.length === instancesToBeDeleted.length) ||
+        (isEmpty(allOracleAsmCredentials) &&
+            !isEmpty(oracleAsmCredentials) &&
+            oracleAsmCredentials.length === instancesToBeDeleted.length)
     ) {
         // Delete the parameter store all credentials are invalid
         instanceIds.forEach(instanceId => paramsToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
@@ -1923,11 +1980,17 @@ async function rewriteOrDeleteSSMParameter(
         windowsUserCredentials,
         instancesToBeDeleted
     );
+    const latestOracleAsmCredentials = filterAndMapCredentials(
+        allOracleAsmCredentials,
+        oracleAsmCredentials,
+        instancesToBeDeleted
+    );
 
     const creds = prepareParametersToStore(instanceIds, [
         ...(fsxCredentials ? [fsxCredentials] : []),
         ...latestSqlCredentials,
-        ...latestWindowsUserCredentials
+        ...latestWindowsUserCredentials,
+        ...latestOracleAsmCredentials
     ]);
 
     if (!isEmpty(creds)) {
@@ -2022,6 +2085,7 @@ async function validateCredentials(
     sqlCredentials: RegisterCredentialsType[],
     windowsUserCredentials: RegisterCredentialsType[],
     oracleCredentials: RegisterCredentialsType[],
+    oracleAsmCredentials: RegisterCredentialsType[],
     instanceIds: string[],
     checkManageReadiness: boolean = false
 ) {
@@ -2031,6 +2095,8 @@ async function validateCredentials(
         sqlCredentials,
         instanceIds,
         windowsUserCredentials,
+        oracleCredentials,
+        oracleAsmCredentials,
         checkManageReadiness
     });
 
@@ -2051,17 +2117,20 @@ async function validateCredentials(
     const newSqlCredentials = cloneDeep(sqlCredentials);
     const newWindowsUserCredentials = cloneDeep(windowsUserCredentials);
     const newOracleCredentials = cloneDeep(oracleCredentials);
+    const newOracleAsmCredentials = cloneDeep(oracleAsmCredentials || []);
     const credentialsForValidation =
         (newSqlCredentials && newSqlCredentials.length) > 0 ? newSqlCredentials : newOracleCredentials;
-    const { allDatabaseCredentials, allWindowsUserCredentials } = await verifyAndCreateCredentials(
-        credentialsId,
-        region,
-        instanceId,
-        fsxCredentials,
-        credentialsForValidation,
-        windowsUserCredentials,
-        instanceIds
-    );
+    const { allDatabaseCredentials, allWindowsUserCredentials, allOracleAsmCredentials } =
+        await verifyAndCreateCredentials(
+            credentialsId,
+            region,
+            instanceId,
+            fsxCredentials,
+            credentialsForValidation,
+            windowsUserCredentials,
+            oracleAsmCredentials,
+            instanceIds
+        );
 
     try {
         let isLinuxHost = false;
@@ -2077,8 +2146,11 @@ async function validateCredentials(
             isLinuxHost = Platform?.toLowerCase() !== WINDOWS;
         }
         const isOracleInstance = newOracleCredentials.some(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
+        const isOracleAsmInstance = newOracleAsmCredentials.some(
+            cred => cred.resourceType === RESOURCESTYPE.ORACLE_ASM
+        );
         let response;
-        if (isLinuxHost || isOracleInstance) {
+        if (isLinuxHost || isOracleInstance || isOracleAsmInstance) {
             response = await validateOracleCredentials(
                 accountId,
                 credentialsId,
@@ -2086,8 +2158,10 @@ async function validateCredentials(
                 instanceId,
                 fsxCredentials,
                 newOracleCredentials,
+                newOracleAsmCredentials,
                 instanceIds,
                 allDatabaseCredentials,
+                allOracleAsmCredentials,
                 checkManageReadiness
             );
         } else {
@@ -2322,8 +2396,10 @@ async function validateOracleCredentials(
     instanceId: string,
     fsxCredentials: RegisterCredentialsType | undefined,
     oracleCredentials: RegisterCredentialsType[],
+    oracleAsmCredentials: RegisterCredentialsType[] | undefined,
     instanceIds: string[],
     allDatabaseCredentials: RegisterCredentialsType[] = [],
+    allOracleAsmCredentials: RegisterCredentialsType[] = [],
     checkManageReadiness: boolean = false
 ) {
     logger.info('Validate Oracle credentials', {
@@ -2332,8 +2408,10 @@ async function validateOracleCredentials(
         region,
         instanceId,
         oracleCredentialsLength: oracleCredentials.length,
+        oracleAsmCredentialsLength: oracleAsmCredentials?.length,
         checkManageReadiness,
         allDatabaseCredentialsLength: allDatabaseCredentials.length,
+        allOracleAsmCredentialsLength: allOracleAsmCredentials.length,
         instanceIds
     });
 
@@ -2367,6 +2445,10 @@ async function validateOracleCredentials(
             (acc: string, { resourceId }) => `${acc}${validateOracleInstanceConnectivity(instanceId, resourceId)}\n`,
             ''
         );
+    }
+
+    if (oracleAsmCredentials?.length) {
+        command += checkIfValidLinuxUser(instanceId);
     }
 
     command += 'echo $resultObject';
@@ -2479,6 +2561,16 @@ async function validateOracleCredentials(
         });
     }
 
+    if (oracleAsmCredentials?.length) {
+        const { error, valid } = parsedResponse;
+        response.push({
+            resourceId: instanceId,
+            resourceType: RESOURCESTYPE.ORACLE_ASM,
+            ...(error && { oracleAsmError: error }),
+            areAsmCredentialsValid: valid
+        });
+    }
+
     await rewriteOrDeleteSSMParameter(
         credentialsId,
         region,
@@ -2488,7 +2580,10 @@ async function validateOracleCredentials(
         fsxCredentials!,
         oracleCredentials,
         [],
-        allDatabaseCredentials
+        allDatabaseCredentials,
+        [],
+        oracleAsmCredentials,
+        allOracleAsmCredentials
     );
 
     return response;
@@ -2501,6 +2596,7 @@ async function verifyAndCreateCredentials(
     fsxCredentials: RegisterCredentialsType | undefined,
     databaseCredentials: RegisterCredentialsType[],
     windowsUserCredentials: RegisterCredentialsType[],
+    oracleAsmCredentials: RegisterCredentialsType[],
     instanceIds: string[]
 ) {
     logger.info('Verify and create credentials', { instanceId, databaseCredentialsLength: databaseCredentials.length });
@@ -2517,9 +2613,13 @@ async function verifyAndCreateCredentials(
         }
     }
 
-    if (databaseCredentials.length || windowsUserCredentials.length) {
+    if (databaseCredentials.length || windowsUserCredentials.length || oracleAsmCredentials.length) {
         databaseCredentials = databaseCredentials.map(e => ({ ...e, resourceId: `${e.resourceId}${TEMP}` }));
         windowsUserCredentials = windowsUserCredentials.map(e => ({
+            ...e,
+            resourceId: `${e.resourceId}${TEMP}`
+        }));
+        oracleAsmCredentials = oracleAsmCredentials.map(e => ({
             ...e,
             resourceId: `${e.resourceId}${TEMP}`
         }));
@@ -2528,7 +2628,7 @@ async function verifyAndCreateCredentials(
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
             setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), ...instanceIds]);
         } else {
-            const { sql, domain, oracle } = JSON.parse(existingParameters);
+            const { sql, domain, oracle, asm } = JSON.parse(existingParameters);
             if (sql) {
                 sql.forEach((e: SqlCredential) => {
                     const credToAdd = checkAndAddExistingSSMParameter(e, databaseCredentials, RESOURCESTYPE.MSSQL);
@@ -2557,18 +2657,35 @@ async function verifyAndCreateCredentials(
                     }
                 });
             }
+            if (asm) {
+                asm.forEach((e: OracleCredential) => {
+                    const credToAdd = checkAndAddExistingSSMParameter(
+                        e,
+                        oracleAsmCredentials,
+                        RESOURCESTYPE.ORACLE_ASM
+                    );
+                    if (credToAdd) {
+                        oracleAsmCredentials.push(credToAdd);
+                    }
+                });
+            }
         }
     }
 
     const creds = prepareParametersToStore(instanceIds, [
         ...(fsxCredentials ? [fsxCredentials] : []),
         ...databaseCredentials,
-        ...windowsUserCredentials
+        ...windowsUserCredentials,
+        ...oracleAsmCredentials
     ]);
 
     await ssmPutParameters(credentialsId, region, creds);
 
-    return { allDatabaseCredentials: databaseCredentials, allWindowsUserCredentials: windowsUserCredentials };
+    return {
+        allDatabaseCredentials: databaseCredentials,
+        allWindowsUserCredentials: windowsUserCredentials,
+        allOracleAsmCredentials: oracleAsmCredentials
+    };
 }
 
 function checkAndAddExistingSSMParameter(
