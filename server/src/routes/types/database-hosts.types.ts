@@ -490,7 +490,7 @@ const VolumeLunDetailsResponse = Type.Object({
 
 const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server', 'ORACLE'] }),
-    serverInstallationMode: Type.Union([Type.String({ enum: ['Standalone', 'FCI'] }), OracleDeploymentType]),
+    serverInstallationMode: Type.Union([Type.String({ enum: ['Standalone', 'FCI', 'HA'] }), OracleDeploymentType]),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows', NOT_AVAILABLE] }),
     fileSystemId: Type.Optional(Type.String()),
     fileSystemName: Type.Optional(Type.String()),
