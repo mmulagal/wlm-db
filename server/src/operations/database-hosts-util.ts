@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import numeral from 'numeral';
-import { DescribeVolumesResult, DescribeVpcsCommandInput, EC2ServiceException } from '@aws-sdk/client-ec2';
+import { DescribeVolumesResult, DescribeVpcsCommandInput, EC2ServiceException, Instance } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { StoragePerStorageTypeResponseType, TopologyResponseType } from '../routes/types/database-hosts.types';
 import { DatabaseInstance, Metadata, ResourceDetails } from '../utils/common-types';
@@ -249,6 +249,8 @@ async function getNodeTopology(
         let vpcName: string | undefined;
         let activeNodeStatus: string | undefined;
         let standbyNodeStatus: string | undefined;
+        let activeNode: Instance | undefined;
+        let standbyNode: Instance | undefined;
 
         if (!isEmpty(activeNodeInstanceId)) {
             // fetch instance details only if there is atleast one active node
@@ -262,7 +264,7 @@ async function getNodeTopology(
                 const node1 = ec2InstanceDetails.Reservations?.[0]?.Instances?.[0];
                 const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
                 if (node1) {
-                    const [activeNode, standbyNode] =
+                    [activeNode, standbyNode] =
                         node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
                     if (!isEmpty(activeNode)) {
                         keyPairName = activeNode.KeyName;
@@ -342,8 +344,8 @@ async function getNodeTopology(
                         ...(activeNodeStatus && { nodeStatus: activeNodeStatus })
                     }
                 ],
-                fqdn,
-                nodeIpAddress: ipAddress
+                fqdn: fqdn ?? activeNode?.PrivateDnsName ?? '',
+                nodeIpAddress: ipAddress ?? activeNode?.PublicIpAddress ?? ''
             }),
             ...(activeDirectoryDetails && { activeDirectoryDetails })
         };

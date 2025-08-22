@@ -16,8 +16,7 @@ import {
     waitForInstanceToBeStopped,
     instanceTypeChangePreReqs,
     getAmazonLinux2023AmiList,
-    validateVpcEndpoints,
-    getInstanceIPAndFQDN
+    validateVpcEndpoints
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -166,11 +165,5 @@ describe('EC2 Operations', () => {
         const amiList = await getAmazonLinux2023AmiList(credentialsId, DEFAULT_AWS_REGION);
         expect(Array.isArray(amiList)).toBeTruthy();
         expect(amiList).toBeDefined();
-    });
-    it('getInstanceIPAndFQDN', async () => {
-        const response = await getInstanceIPAndFQDN(credentialsId, 'ap-southeast-1', 'i-03325779d5dfa1649');
-        expect(response.fqdn).toBeDefined();
-        expect(response.privateIp).toBeDefined();
-        expect(response.publicIp).toBeDefined();
     });
 });

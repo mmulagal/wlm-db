@@ -41,7 +41,6 @@ import { AssessmentCategories } from '../../../utils/continous-optimization-cons
 import { OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getStorageData, getNodeTopology } from '../../database-hosts-util';
-import { getInstanceIPAndFQDN } from '../../aws/ec2-operations';
 
 const logger = getLogger();
 
@@ -647,19 +646,13 @@ async function getOracleDatabaseInstancesSummary(
                             : [Promise.resolve()]),
                         ...(getDbNodeTopology
                             ? [
-                                  getInstanceIPAndFQDN(activeNodeInstanceId, region, credentialsId).then(
-                                      ({ publicIp, fqdn }) => {
-                                          getNodeTopology(
-                                              accountId,
-                                              region,
-                                              resourceDetails?.resource_id || databaseInstance?.resource?.resource_id,
-                                              databaseInstance?.resource,
-                                              activeNodeInstanceId,
-                                              standbyNodeInstanceId,
-                                              fqdn,
-                                              publicIp
-                                          );
-                                      }
+                                  getNodeTopology(
+                                      accountId,
+                                      region,
+                                      resourceDetails?.resource_id || databaseInstance?.resource?.resource_id,
+                                      databaseInstance?.resource,
+                                      activeNodeInstanceId,
+                                      standbyNodeInstanceId
                                   )
                               ]
                             : [Promise.resolve()])
