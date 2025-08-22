@@ -119,13 +119,7 @@ async function checkLogAnalyzerPreRequisites(
         response: { agreementAvailability, entitlementAvailability } = {}
     } = (await findFirstAvailableModel(accountId, credentialsId, region, LOGS_ANALYZER_MODEL_IDS)) || {};
 
-    if (
-        !modelId ||
-        !response ||
-        isEmpty(response) ||
-        !agreementAvailability ||
-        entitlementAvailability === undefined
-    ) {
+    if (!modelId || !response || isEmpty(response) || !agreementAvailability || entitlementAvailability === undefined) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             'Unable to continue with logs analysis, the AWS Bedrock model cannot be used in this region.'
@@ -965,8 +959,10 @@ async function handlePreReqCheck(
                 ).replace('%sregion%s', region)
             };
         }
-        bedrockPreRequisites = READY_TRUE;
-        credentialsPreRequisites = READY_TRUE;
+        if (isEmpty(bedrockPreRequisites)) {
+            bedrockPreRequisites = READY_TRUE;
+            credentialsPreRequisites = READY_TRUE;
+        }
     } catch (error) {
         if (error instanceof Error && error.message.includes('not authorized to perform')) {
             credentialsPreRequisites = {
