@@ -8,6 +8,7 @@ import {
     escapeBackslash,
     generateSqlResourceId,
     getArtifactsRegionBucketName,
+    getEc2Hostname,
     getServerNameWithHostname,
     isDemo,
     retryWithDelay
@@ -1318,8 +1319,16 @@ async function registerOracleInstancesData(
         status: ''
     };
 
-    let { resourceId, dbInst, oracleServerInstances, node1InstanceId, hostJobId, awsAccountId, isResourceTobeCreated } =
-        oracleInstanceConfig;
+    let {
+        resourceId,
+        dbInst,
+        oracleServerInstances,
+        node1InstanceId,
+        hostJobId,
+        awsAccountId,
+        isResourceTobeCreated,
+        ec2HostName
+    } = oracleInstanceConfig;
 
     let instanceJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
     let instanceErrorMessage = '';
@@ -1380,7 +1389,7 @@ async function registerOracleInstancesData(
                     resourceId,
                     credentialsId,
                     storageType: STORAGE_TYPE.FSXN,
-                    resourceName: oracleInstanceInfo.instanceName,
+                    resourceName: ec2HostName,
                     cloudProviderAccountId: awsAccountId!,
                     cloudProviderName: CloudProviders.AWS,
                     resourceType: RESOURCESTYPE.ORACLE,
@@ -1507,6 +1516,10 @@ async function registerOracleInstance(
         const { awsAccountId } =
             derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn || '') || {};
 
+        const ec2InstanceTags = ec2Details?.Reservations?.[0]?.Instances?.[0].Tags;
+
+        const ec2HostName = getEc2Hostname(DatabaseTypes.ORACLE, ec2InstanceTags);
+
         const [{ databaseInstanceDetails: oracleServerInstances } = {}] = discoverDetails.items || [];
         resourceId = isDemoFlow && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
 
@@ -1539,7 +1552,8 @@ async function registerOracleInstance(
                         node1InstanceId,
                         hostJobId,
                         awsAccountId,
-                        isResourceTobeCreated
+                        isResourceTobeCreated,
+                        ec2HostName
                     };
                     return registerOracleInstancesData(
                         accountId,
