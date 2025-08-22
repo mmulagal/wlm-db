@@ -31,6 +31,7 @@ import {
     useGetConnectorsMutation,
     useGetDiscoverHostResultMutation,
     useGetFsxDetailsMutation,
+    useGetOrganizationIdsMutation,
     useGetRBACPrivilegesMutation,
     useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
@@ -86,6 +87,7 @@ const DatabasesTable = () => {
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
     const [getSCCrendentials] = useGetSCCrendentialsMutation();
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
+    const [getOrganizationIds] = useGetOrganizationIdsMutation();
 
     // Function to check if protect option should be disabled
     const isProtectDisabled = (rowData: any): boolean =>
@@ -326,7 +328,8 @@ const DatabasesTable = () => {
             getRBACPrivileges,
             isDemoMode,
             getSCCrendentials,
-            scAuthDialog
+            scAuthDialog,
+            getOrganizationIds
         });
     };
 

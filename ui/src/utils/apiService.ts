@@ -77,7 +77,8 @@ const isBluexpExternalApiCall = (endpoint: string): boolean => {
         'deleteHostSc',
         'configureDirectory',
         'listAllDirectories',
-        'getDiscoverHostResult'
+        'getDiscoverHostResult',
+        'getOrganizationIds'
     ];
 
     return bluexpEndpoints.includes(endpoint);
@@ -550,6 +551,11 @@ export const snapcenterAPI = createApi({
     baseQuery: dynamicBaseQuery,
     refetchOnMountOrArgChange: true,
     endpoints: builder => ({
+        getOrganizationIds: builder.mutation({
+            query: () => ({
+                url: `v1/management/organizations?limit=1000`
+            })
+        }),
         getSCCrendentials: builder.mutation({
             query: ({ credentialID, regionID, instanceId, sqlServerInstance }) => ({
                 url: `v1/mssql/credentials/${credentialID}/regions/${regionID}/instances/${instanceId}/credentials/exists?resourceId=${sqlServerInstance}`
@@ -1444,6 +1450,7 @@ export const {
 
 export const {
     useGetSCCrendentialsMutation,
+    useGetOrganizationIdsMutation,
     useGetConnectorsMutation,
     useGetFsxDetailsMutation,
     useAssignRBACPrivilegesMutation,

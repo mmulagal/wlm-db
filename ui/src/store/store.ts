@@ -104,7 +104,10 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             action?.meta?.arg?.endpointName === 'manageMssqlInstance' ||
             (action?.meta?.arg?.endpointName === 'listExistingHosts' && errorMsg?.includes('Unauthorized')) ||
             (action?.meta?.arg?.endpointName === 'listAllDirectories' &&
-                errorMsg?.includes("SyntaxError: Unexpected token 'U'"))
+                errorMsg?.includes("SyntaxError: Unexpected token 'U'")) ||
+            (action?.meta?.arg?.endpointName === 'discoverExistingFsxN' &&
+                errorMsg?.includes('File system') &&
+                errorMsg?.includes('already exists'))
         ) {
             return;
         }

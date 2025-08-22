@@ -1,3 +1,4 @@
+import { updateOrgId } from '../../store/authSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { setDataForRow, setWorkSpaceData } from '../../store/workloadFactory/snapcenterSlice';
@@ -69,7 +70,8 @@ export const handleProtectionUtil = async (
         getRBACPrivileges,
         isDemoMode,
         getSCCrendentials,
-        scAuthDialog
+        scAuthDialog,
+        getOrganizationIds
     }: any
 ) => {
     if (isDemoMode) {
@@ -80,6 +82,26 @@ export const handleProtectionUtil = async (
     const existingData = store.getState().snapCenter.dataMap[key] || {};
 
     dispatch(setDataForRow({ key, stepData: { cancelled: false } }));
+
+    const isWorkloadFactory = store.getState().auth.isWorkloadFactory;
+
+    if (isWorkloadFactory && store.getState().auth.orgId === undefined) {
+        const orgRes = await getOrganizationIds();
+        if (orgRes?.data?.items?.length) {
+            const orgId = orgRes?.data?.items.find(
+                (item: any) => item.legacyId === store.getState().auth.accountId
+            )?.ownerOrganizationId;
+            store.dispatch(updateOrgId(orgId));
+        } else {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: 'No organizations found for the user.'
+                })
+            );
+            return;
+        }
+    }
 
     fetchDialog(key);
 

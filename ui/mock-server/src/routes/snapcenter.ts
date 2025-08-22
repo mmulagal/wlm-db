@@ -19,6 +19,68 @@ router.get('/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts', a
     }, 500);
 });
 
+router.get('v1/management/organizations', async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            continue: '8e5da794-7f36-11f0-8d12-a2501b99603f',
+            count: 3,
+            items: [
+                {
+                    id: 'bd234f89-fa36-40ea-af7f-e19fd1e557f4',
+                    isSystem: 'false',
+                    legacyId: 'account-7vtgzuqC',
+                    links: [],
+                    name: 'Pepsi',
+                    ownerOrganizationId: 'bd234f89-fa36-40ea-af7f-e19fd1e557f4',
+                    resourceClass: 'hierarchy',
+                    resourceType: 'organization',
+                    tags: [
+                        {
+                            'internal:bxp:organizationId': 'bd234f89-fa36-40ea-af7f-e19fd1e557f4'
+                        }
+                    ],
+                    type: 'application/vnd.netapp.bxp.resource',
+                    version: '1.0'
+                },
+                {
+                    id: '331ce875-f61c-4c9d-a66b-da7983e80ec9',
+                    isSystem: 'false',
+                    legacyId: 'account-LFMeoEkf',
+                    links: [],
+                    name: 'coke',
+                    ownerOrganizationId: '331ce875-f61c-4c9d-a66b-da7983e80ec9',
+                    resourceClass: 'hierarchy',
+                    resourceType: 'organization',
+                    tags: [
+                        {
+                            'internal:bxp:organizationId': '331ce875-f61c-4c9d-a66b-da7983e80ec9'
+                        }
+                    ],
+                    type: 'application/vnd.netapp.bxp.resource',
+                    version: '1.0'
+                },
+                {
+                    id: '2ec075d0-508a-402d-9ea2-f5f6b129d49b',
+                    isSystem: 'false',
+                    legacyId: 'account-hlEG9ik1',
+                    links: [],
+                    name: 'juliad',
+                    ownerOrganizationId: '2ec075d0-508a-402d-9ea2-f5f6b129d49b',
+                    resourceClass: 'hierarchy',
+                    resourceType: 'organization',
+                    tags: [
+                        {
+                            'internal:bxp:organizationId': '2ec075d0-508a-402d-9ea2-f5f6b129d49b'
+                        }
+                    ],
+                    type: 'application/vnd.netapp.bxp.resource',
+                    version: '1.0'
+                }
+            ]
+        });
+    }, 500);
+});
+
 router.get('/fsx-ontap/working-environments/:accountID', async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, [

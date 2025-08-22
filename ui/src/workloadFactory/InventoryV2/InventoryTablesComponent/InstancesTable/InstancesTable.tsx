@@ -15,6 +15,7 @@ import {
     useGetConnectorsMutation,
     useGetDiscoverHostResultMutation,
     useGetFsxDetailsMutation,
+    useGetOrganizationIdsMutation,
     useGetRBACPrivilegesMutation,
     useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
@@ -133,6 +134,7 @@ const InstancesTable = () => {
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
     const [getSCCrendentials] = useGetSCCrendentialsMutation();
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
+    const [getOrganizationIds] = useGetOrganizationIdsMutation();
 
     const { title, exportToCsvFileName, buttonText } = getInstableTableTopMenuOptions(selectedHostType, t);
 
@@ -481,7 +483,8 @@ const InstancesTable = () => {
             getRBACPrivileges,
             isDemoMode,
             getSCCrendentials,
-            scAuthDialog
+            scAuthDialog,
+            getOrganizationIds
         });
     };
 
