@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
-import { ButtonWithDropdown, useDialog } from '@netapp/design-system';
+import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
+import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
@@ -21,15 +22,21 @@ import {
 } from '../../GetWell/WellArchitectDashboard/FSXPasswordContent/FSXPasswordContent';
 import {
     resetOracleResourceVisitedTabs,
-    setOracleResourceVisitedTabs
+    setOracleRefreshTimes,
+    setOracleResourceDetails,
+    setOracleResourceVisitedTabs,
+    setRefreshOracleOverview
 } from '../../../store/workloadFactory/oracleSlice';
 import { handleFSXAdminApply } from '../../../utils/resourceUtils';
+import { getCurrentDateTime } from '../../../utils/utilityFunctions';
 
 const OracleResourcePages = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
-    const { selectedOracleInnerPageTab, visitedTabs, resourceDetails } = useAppSelector(state => state.oracleSlice);
+    const { selectedOracleInnerPageTab, visitedTabs, resourceDetails, refreshTimes } = useAppSelector(
+        state => state.oracleSlice
+    );
     const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
@@ -88,6 +95,21 @@ const OracleResourcePages = () => {
             dispatch(setOracleResourceVisitedTabs(selectedOracleInnerPageTab));
         }
     }, [selectedOracleInnerPageTab, visitedTabs, dispatch]);
+
+    //refresh time on hover
+    const setRefreshTimeOnIcon = () => {
+        if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW) {
+            return refreshTimes.overviewRefreshTime;
+        }
+    };
+
+    const handleOracleRefresh = () => {
+        if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW) {
+            dispatch(setOracleResourceDetails({}));
+            dispatch(setRefreshOracleOverview(true));
+            dispatch(setOracleRefreshTimes({ overviewRefreshTime: getCurrentDateTime() }));
+        }
+    };
     return (
         <div className={styles['oracle-inner-pages']}>
             <div className={`${commonStyles.commonBreadCrumb} ${styles.breadCrumb}`} style={{ left: '0%' }}>
@@ -109,6 +131,16 @@ const OracleResourcePages = () => {
                     ]}
                 />
                 <div className={styles.rightSection}>
+                    <Popover
+                        popoverClass={styles['copy-popover']}
+                        children={`Last update: ${setRefreshTimeOnIcon()}`}
+                        trigger="hover"
+                        container={
+                            <div className={styles.refreshIcon} onClick={handleOracleRefresh}>
+                                <RefreshIcon />
+                            </div>
+                        }
+                    />
                     {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW && (
                         <div className={styles.buttonContainer}>
                             <ButtonWithDropdown

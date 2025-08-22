@@ -5,4 +5,9 @@ export interface OracleEntities {
     resourceLoading: boolean;
     oracleDefaultFilterOptions: {} | any;
     oracleOptimizeFilterTags: [] | any;
+    refreshOverview: boolean;
+    refreshTimes: {
+        overviewRefreshTime: string;
+        optimizeRefreshTime: string;
+    };
 }

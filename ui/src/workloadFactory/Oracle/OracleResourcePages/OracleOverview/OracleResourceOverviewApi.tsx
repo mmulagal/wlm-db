@@ -3,7 +3,13 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useGetOracleOverviewDetailsMutation } from '../../../../utils/apiService';
 
-import { setOracleResourceDetails, setOracleResourceLoading } from '../../../../store/workloadFactory/oracleSlice';
+import {
+    setOracleRefreshTimes,
+    setOracleResourceDetails,
+    setOracleResourceLoading,
+    setRefreshOracleOverview
+} from '../../../../store/workloadFactory/oracleSlice';
+import { getCurrentDateTime } from '../../../../utils/utilityFunctions';
 
 const useOracleResourceOverview = () => {
     const dispatch = useDispatch();
@@ -17,12 +23,13 @@ const useOracleResourceOverview = () => {
         selectedDatabaseInstance: getWellSelectedDatabaseInstance
     } = useAppSelector(state => state.getWellOptimize);
 
-    const { visitedTabs } = useAppSelector(state => state.oracleSlice);
+    const { visitedTabs, refreshOverview } = useAppSelector(state => state.oracleSlice);
 
     const [getOracleOverviewDetails] = useGetOracleOverviewDetailsMutation();
 
     useEffect(() => {
         if (!visitedTabs.Overview) {
+            dispatch(setOracleRefreshTimes({ overviewRefreshTime: getCurrentDateTime() }));
             viewResourceAction();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -30,12 +37,12 @@ const useOracleResourceOverview = () => {
 
     // To do enable when refresh enable
 
-    // useEffect(() => {
-    //     if (isResourceRefresh) {
-    //         viewResourceAction();
-    //         dispatch(setIsResourceRefresh(false));
-    //     }
-    // }, [isResourceRefresh]);
+    useEffect(() => {
+        if (refreshOverview) {
+            viewResourceAction();
+            dispatch(setRefreshOracleOverview(false));
+        }
+    }, [refreshOverview]);
 
     const runResourceDetailsApi = async () => {
         try {

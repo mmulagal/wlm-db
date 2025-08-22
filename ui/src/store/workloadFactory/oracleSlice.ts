@@ -8,13 +8,28 @@ export const initialOracleState: OracleEntities = {
     resourceDetails: {},
     resourceLoading: true,
     oracleOptimizeFilterTags: [],
-    oracleDefaultFilterOptions: {}
+    oracleDefaultFilterOptions: {},
+    refreshOverview: false,
+    refreshTimes: {
+        overviewRefreshTime: '',
+        optimizeRefreshTime: ''
+    }
 };
 
 const oracleSlice = createSlice({
     name: 'oracleSlice',
     initialState: initialOracleState,
     reducers: {
+        setOracleRefreshTimes: (
+            state,
+            action: PayloadAction<{ overviewRefreshTime?: string; optimizeRefreshTime?: string }>
+        ) => {
+            state.refreshTimes = { ...state.refreshTimes, ...action.payload };
+        },
+        setRefreshOracleOverview: (state, action: PayloadAction<boolean>) => {
+            state.refreshOverview = action.payload;
+        },
+
         setSelectedOracleInnerPageTab: (state, action: PayloadAction<string>) => {
             state.selectedOracleInnerPageTab = action.payload;
         },
@@ -46,7 +61,9 @@ export const {
     setOracleResourceDetails,
     setOracleResourceLoading,
     setOracleDefaultFilterOptions,
-    setOracleOptimizeFilterTags
+    setOracleOptimizeFilterTags,
+    setRefreshOracleOverview,
+    setOracleRefreshTimes
 } = oracleSlice.actions;
 
 export default oracleSlice;
