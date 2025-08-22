@@ -636,8 +636,7 @@ async function getOracleDatabaseInstancesSummary(
                                       region,
                                       credentialsId,
                                       activeNodeInstanceId,
-                                      [dbInstanceSid],
-                                      DatabaseTypes.ORACLE
+                                      [dbInstanceSid]
                                   )
                               ]
                             : [Promise.resolve()]),
@@ -725,6 +724,10 @@ async function getOracleDatabaseInstancesSummary(
                             write: instanceResourceTrendsData.writeThroughput
                         }
                     }
+                };
+
+                databaseInstanceDetails.resourceUtilization = {
+                    cpu: resourceTrendsData?.[dbInstanceSid].cpuUsed
                 };
             }
 

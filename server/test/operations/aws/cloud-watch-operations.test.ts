@@ -11,7 +11,6 @@ import {
     getSqlInstanceUtilizationAndPerformance
 } from '../../../src/operations/aws/cloud-watch-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
-import { DatabaseTypes } from '../../../src/utils/consts';
 
 describe('Cloud watch operations', () => {
     it('Calculate FSXn storage efficiency', async () => {
@@ -48,8 +47,7 @@ describe('getSqlInstanceUtilizationAndPerformance', () => {
             region,
             credentialsId,
             databaseHostId,
-            databaseInstances as any,
-            DatabaseTypes.MS_SQL_SERVER
+            databaseInstances as any
         );
         expect(result).toBeDefined();
         expect(Object.keys(result)).toEqual(['db1', 'db2']);

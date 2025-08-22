@@ -742,20 +742,14 @@ EOF
         numCores=1
     fi
 
-    cpuUtilPct=$(echo "scale=4; \${maxCpuSec} / \${numCores}" * 100 | bc -l)
+    cpuUtilPct=$(echo "scale=2; \${maxCpuSec} / \${numCores}" | bc -l)
 
     namespace="netapp/wlmdb/performance"
     metricArgs=()
-    addMetric(){
-        local name=\\$1 val=\\$2 unit=\\$3
-        metricArgs+=( --metric-data
-            "MetricName=\${name},Value=\${val},Unit=\${unit},Dimensions=[{Name=databaseHostId,Value=${ec2InstanceId}}]"
-        )
-    }
 
     addMetric(){
         local name=$1 val=$2 unit=$3
-        metricData+=("MetricName=\${name},Value=\${val},Unit=\${unit},Dimensions=[{Name=databaseHostId,Value=\${ec2InstanceId}}]")
+        metricArgs+=( "MetricName=\${name},Value=\${val},Unit=\${unit},Dimensions=[{Name=databaseHostId,Value=${ec2InstanceId}},{Name=sqlInstanceName,Value=${dbSid}}]" )
     }
 
     addMetric "cpuUsed"         "$(printf "%.2f" "\${cpuUtilPct}")"    "Percent"
@@ -766,7 +760,7 @@ EOF
     addMetric "readLatency"     "$(printf "%.2f" "\${avgReadLatMs}")"  "Milliseconds"
     addMetric "writeLatency"    "$(printf "%.2f" "\${avgWriteLatMs}")" "Milliseconds"
     
-    aws cloudwatch put-metric-data --namespace "\${namespace}" --metric-data "\${metricData[@]}"
+    aws cloudwatch put-metric-data --namespace "\${namespace}" --metric-data "\${metricArgs[@]}"
 
     exit 0
   `;

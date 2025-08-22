@@ -1156,7 +1156,7 @@ function assessMssqlServerPerformance(serverIOlatencyTrend: Array<{ value: numbe
     return { serverIoLatency, assessment };
 }
 
-function getSqlInstanceMetricDataQueries(databaseHostId: string, instanceName?: string) {
+function getSqlInstanceMetricDataQueries(databaseHostId: string, instanceName: string) {
     logger.debug('Generating SQL instance metric data queries', { databaseHostId, instanceName });
     const metricDataQueries = CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES.map(metricName => ({
         Id: metricName,
@@ -1169,7 +1169,10 @@ function getSqlInstanceMetricDataQueries(databaseHostId: string, instanceName?: 
                         Name: 'databaseHostId',
                         Value: databaseHostId
                     },
-                    ...(instanceName ? [{ Name: 'sqlInstanceName', Value: instanceName }] : [])
+                    {
+                        Name: 'sqlInstanceName',
+                        Value: instanceName
+                    }
                 ]
             },
             Period: 3600 * 24, // 24 hours

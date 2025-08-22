@@ -1755,8 +1755,7 @@ async function getDatabaseInstancesSummary(
                               region,
                               credentialsId,
                               databaseHostId,
-                              databaseInstances.map(instance => instance.database_instance_name),
-                              DatabaseTypes.MS_SQL_SERVER
+                              databaseInstances.map(instance => instance.database_instance_name)
                           )
                       ]
                     : [Promise.resolve()])
@@ -2122,10 +2121,10 @@ async function processResourcesBatch(
 
                 try {
                     await processResourceNodes(
-                        accountId!,
-                        credentialsId!,
+                        accountId,
+                        credentialsId,
                         region!,
-                        databaseHostId!,
+                        databaseHostId,
                         metadata,
                         batchNumber,
                         resourceType as RESOURCESTYPE,
@@ -2191,20 +2190,20 @@ async function processResourceNodes(
                                 batchNumber
                             });
 
-                            let command;
+                            let command: string[] = [];
                             if (resourceType === RESOURCESTYPE.MSSQL) {
-                                command = trendGraphCreateScriptForMssql(databaseHostId, nodeId);
+                                command = [trendGraphCreateScriptForMssql(databaseHostId, nodeId)];
                             } else {
-                                // Any one oracle db sid is needed
-                                const [dbSid] = dbInstanceNames;
-                                command = trendGraphCreateScriptForOracle(dbSid, nodeId);
+                                dbInstanceNames.forEach(dbSid =>
+                                    command.push(trendGraphCreateScriptForOracle(dbSid, nodeId))
+                                );
                             }
                             const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
 
                             await callSsmExecution(
                                 credentialsId,
                                 region,
-                                [command],
+                                command,
                                 nodeId,
                                 ssmComment,
                                 accountId,
