@@ -37,10 +37,10 @@ async function listRegisteredUbrCredentials({ ...params }) {
     // Since list credentials API doesn't support service token, we are using user token here.
     const token = getAsyncLocalStorageResource(USER_TOKEN);
 
-    const { accountId, workspaceId, connectorId, resourceId, username } = params;
+    const { accountId, workspaceId, connectorId, organizationId, resourceId, username } = params;
 
     const response = await gotInstanceForInternalRequest
-        .get(`backup-recovery/organizations/${accountId}/v1/workloads/sql/credentials`, {
+        .get(`backup-recovery/organizations/${organizationId ?? workspaceId}/v1/workloads/sql/credentials`, {
             prefixUrl: CLOUD_MANAGER_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: token as string,
@@ -65,10 +65,11 @@ async function registerUbrCredentials({ ...params }) {
     // Since list credentials API doesn't support service token, we are using user token here.
     const token = getAsyncLocalStorageResource(USER_TOKEN);
 
-    const { accountId, workspaceId, connectorId, sqlInstanceName, username, password, resourceId } = params;
+    const { accountId, workspaceId, connectorId, organizationId, sqlInstanceName, username, password, resourceId } =
+        params;
 
     const response = await gotInstanceForInternalRequest
-        .post(`backup-recovery/organizations/${accountId}/v1/workloads/sql/credentials`, {
+        .post(`backup-recovery/organizations/${organizationId ?? workspaceId}/v1/workloads/sql/credentials`, {
             prefixUrl: CLOUD_MANAGER_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: token as string,

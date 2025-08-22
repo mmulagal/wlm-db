@@ -51,7 +51,7 @@ async function generateUbrCredentials({
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
-    const { workspaceId, connectorId, resourceId } = rest;
+    const { workspaceId, connectorId, resourceId, organizationId } = rest;
 
     try {
         const {
@@ -60,6 +60,7 @@ async function generateUbrCredentials({
             accountId,
             workspaceId,
             connectorId,
+            organizationId,
             username,
             resourceId: resourceId || generateSqlResourceId(ec2InstanceIds[0], ec2InstanceIds[1])
         });
@@ -76,6 +77,7 @@ async function generateUbrCredentials({
             accountId,
             workspaceId,
             connectorId,
+            organizationId,
             sqlInstanceName: sqlInstanceName || DEFAULT_INSTANCE_NAME,
             username,
             password,
