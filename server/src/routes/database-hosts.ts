@@ -24,6 +24,7 @@ import {
 import { DatabaseTypes } from '../utils/consts';
 import castRequest from './utils';
 import getDiagramOfDatabaseHost from '../operations/diagrams/diagram-operations';
+import { getOracleDatabaseHostInstanceSummary } from '../operations/workloads/oracle/oracle-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const PGSQL_API_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
@@ -270,6 +271,25 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     fsxId,
                     pageSize,
                     DatabaseTypes.ORACLE
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${ORACLE_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId`,
+            { schema: DatabaseHostInstanceDetailsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    query: { fields }
+                } = castRequest(request);
+                const response = await getOracleDatabaseHostInstanceSummary(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    fields
                 );
                 return reply.send(response);
             }

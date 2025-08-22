@@ -39,7 +39,6 @@ const FSXConfiguration = Type.Object({
     snapshotPolicy: Type.String({ enum: ['none', 'daily_weekretention'], default: 'daily_weekretention' })
 });
 
-
 const SQLConfiguration = Type.Object({
     sqlDeploymentMode: Type.String({ enum: ['standalone', 'fci', 'ha'] }),
     sqlAmiId: Type.String(),

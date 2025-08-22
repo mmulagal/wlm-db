@@ -2,6 +2,7 @@ import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
 import { GetCommandInvocationCommandOutput } from '@aws-sdk/client-ssm';
+import { OracleDeploymentTenacy } from '../operations/workloads/oracle/consts';
 
 interface LicenseAssessment {
     licenseFinding: string;
@@ -280,6 +281,7 @@ interface Metadata {
     creationDate?: string;
     fsxSvmId?: string;
     fsxDataVolumeName?: string;
+    oracleDeploymentType?: OracleDeploymentTenacy;
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;

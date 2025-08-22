@@ -34,7 +34,9 @@ const API_PGSQL_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:reg
 const API_PGSQL_TERRAFORM_PREFIX_PATH = '/v1/pgsql/terraform/setup';
 
 const fsxValidationHook = async (request: any, reply: any) => {
-    const { body: { fsxConfiguration: config } } = request;
+    const {
+        body: { fsxConfiguration: config }
+    } = request;
 
     if (config) {
         const isGen1 = ['SINGLE_AZ_1', 'MULTI_AZ_1'].includes(config.fsxDeploymentMode);
@@ -45,7 +47,9 @@ const fsxValidationHook = async (request: any, reply: any) => {
             if (!validGen1Throughput.includes(config.fsxVolThroughput)) {
                 return reply.code(400).send({
                     error: 'Invalid FSX Configuration',
-                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Valid values: ${validGen1Throughput.join(', ')}`
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${
+                        config.fsxDeploymentMode
+                    }. Valid values: ${validGen1Throughput.join(', ')}`
                 });
             }
             if (!config.fsxIOPS) {
@@ -59,7 +63,9 @@ const fsxValidationHook = async (request: any, reply: any) => {
             if (!validGen2Throughput.includes(config.fsxVolThroughput)) {
                 return reply.code(400).send({
                     error: 'Invalid FSX Configuration',
-                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Valid values: ${validGen2Throughput.join(', ')}`
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${
+                        config.fsxDeploymentMode
+                    }. Valid values: ${validGen2Throughput.join(', ')}`
                 });
             }
         }

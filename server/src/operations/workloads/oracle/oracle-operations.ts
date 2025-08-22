@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, omit } from 'lodash-es';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import {
     DatabaseHostsQueryFields,
@@ -12,12 +12,20 @@ import {
     ServerState
 } from '../../../utils/consts';
 import getLogger from '../../../utils/logger';
-import { callSsmExecution } from '../../aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './consts';
-import { isDemo, sqlResponseParsing } from '../../../utils/utils';
-import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
+import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
+import {
+    DatabaseHostInstanceSummaryResponseType,
+    NodeTopologyResponseType
+} from '../../../routes/types/database-hosts.types';
 import { DatabaseInstance, Metadata, OracleInstanceDetails, ResourceDetails } from '../../../utils/common-types';
-import { getOracleInstanceData, getOracleProtectionData, ORACLE_PERFORMANCE_METRICS } from './oracle-ssm-script-utils';
+import {
+    GET_ORACLE_SERVER_DETAILS,
+    getOracleInstanceData,
+    getOracleProtectionData,
+    ORACLE_PERFORMANCE_METRICS
+} from './oracle-ssm-script-utils';
 import getDatabaseInstanceTopology from '../../../utils/sql-utils';
 import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 import {
@@ -31,6 +39,9 @@ import { listResources } from '../../../lib/database/db';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { AssessmentCategories } from '../../../utils/continous-optimization-consts';
 import { OracleInstanceMountpointResponse } from './common-types';
+import { getPaginatedDatabaseInstances } from '../../database/database-operations';
+import { getStorageData, getNodeTopology } from '../../database-hosts-util';
+import { getInstanceIPAndFQDN } from '../../aws/ec2-operations';
 
 const logger = getLogger();
 
@@ -38,11 +49,16 @@ async function getOracleInstanceDetails(
     accountId: string,
     credentialId: string,
     region: string,
-    node1InstanceId: string
+    node1InstanceId: string,
+    options: { fetchServerDetails?: boolean; oracleSid?: string } = { fetchServerDetails: false, oracleSid: '' }
 ) {
     logger.info('Fetching Oracle instance details', { accountId, credentialId, region, node1InstanceId });
-    const ssmResponse = await getOracleInstanceInfo(accountId, credentialId, region, [node1InstanceId]);
-    const parsedResponse = sqlResponseParsing(ssmResponse || '[]');
+    const { fetchServerDetails = false, oracleSid = '' } = options;
+    const ssmResponse = await getOracleInstanceInfo(accountId, credentialId, region, [node1InstanceId], {
+        fetchServerDetails,
+        oracleSid
+    });
+    const [parsedResponse, activeNodeDetails] = parseMultipleCommandResponse(ssmResponse || '[]');
 
     const instanceDetails = [];
     for (const dbInstance of parsedResponse) {
@@ -64,13 +80,24 @@ async function getOracleInstanceDetails(
         activeNodeInstanceId: node1InstanceId,
         standbyNodeInstanceId: undefined,
         ssmConnectionStatus: ConnectionStatus.CONNECTED,
-        instancesDetails: instanceDetails
+        instancesDetails: instanceDetails,
+        activeNodeDetails
     };
 }
 
-async function getOracleInstanceInfo(accountId: string, credentialsId: string, region: string, nodeIds: string[]) {
+async function getOracleInstanceInfo(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    nodeIds: string[],
+    options: { fetchServerDetails?: boolean; oracleSid?: string } = { fetchServerDetails: false, oracleSid: '' }
+) {
     logger.info('Fetching oracle instance info', { accountId, nodeIds });
+    const { fetchServerDetails = false, oracleSid = '' } = options;
     const commands = [getOracleInstanceData(nodeIds[0])];
+    if (fetchServerDetails) {
+        commands.push(GET_ORACLE_SERVER_DETAILS(oracleSid, nodeIds[0]));
+    }
     const comment = 'oracle instance info';
     let response;
     try {
@@ -487,6 +514,8 @@ async function getOracleDatabaseInstancesSummary(
     const getProtectionStatus = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION.toLowerCase());
     const getDatabasesWithoutProtection = fieldsValues?.includes(DatabaseHostsQueryFields.DATABASES.toLowerCase());
     const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLowerCase());
+    const getStorage = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLowerCase());
+    const getDbNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
 
     // Run for all instances
     const results = await Promise.all(
@@ -497,6 +526,8 @@ async function getOracleDatabaseInstancesSummary(
             let databasesCount: any;
             let databases: any;
             let resourceTrendsData: any;
+            let storage: any;
+            let nodeTopology: any;
             const errormessages: { [index: string]: string } = {};
             const dbInstanceSid = databaseInstance.database_instance_name; // In Oracle database instance name is same as sid
             const metadata = databaseInstance?.metadata as
@@ -526,6 +557,7 @@ async function getOracleDatabaseInstancesSummary(
             if (protocol === 'iSCSI') {
                 mountPoint = encodeURIComponent(mountPoint!); // mount point in case of iscsi is serial number of lun, it can have special characters (like ], [ ) which needs to be encoded
             }
+
             try {
                 [
                     databaseInstancetopologyData,
@@ -533,7 +565,9 @@ async function getOracleDatabaseInstancesSummary(
                     protectionData,
                     databasesCount,
                     databases,
-                    resourceTrendsData
+                    resourceTrendsData,
+                    storage,
+                    nodeTopology
                 ] = await Promise.all(
                     [
                         ...(shouldQueryDatabaseTopology
@@ -543,7 +577,8 @@ async function getOracleDatabaseInstancesSummary(
                                       credentialsId,
                                       region,
                                       activeNodeInstanceId,
-                                      databaseInstance
+                                      databaseInstance,
+                                      DatabaseTypes.ORACLE
                                   )
                               ]
                             : [Promise.resolve()]),
@@ -602,7 +637,29 @@ async function getOracleDatabaseInstancesSummary(
                                       region,
                                       credentialsId,
                                       activeNodeInstanceId,
-                                      [dbInstanceSid]
+                                      [dbInstanceSid],
+                                      DatabaseTypes.ORACLE
+                                  )
+                              ]
+                            : [Promise.resolve()]),
+                        ...(getStorage
+                            ? [getStorageData(databaseInstance.resource, databaseInstance)]
+                            : [Promise.resolve()]),
+                        ...(getDbNodeTopology
+                            ? [
+                                  getInstanceIPAndFQDN(activeNodeInstanceId, region, credentialsId).then(
+                                      ({ publicIp, fqdn }) => {
+                                          getNodeTopology(
+                                              accountId,
+                                              region,
+                                              resourceDetails?.resource_id || databaseInstance?.resource?.resource_id,
+                                              databaseInstance?.resource,
+                                              activeNodeInstanceId,
+                                              standbyNodeInstanceId,
+                                              fqdn,
+                                              publicIp
+                                          );
+                                      }
                                   )
                               ]
                             : [Promise.resolve()])
@@ -660,29 +717,32 @@ async function getOracleDatabaseInstancesSummary(
 
             if (resourceTrendsData?.[dbInstanceSid] && getPerformanceMetrics) {
                 const instanceResourceTrendsData = resourceTrendsData?.[dbInstanceSid] || {};
-                if (instanceResourceTrendsData.serverIOLatency.length > 0) {
-                    // const { serverIoLatency, assessment } = assessMssqlServerPerformance(
-                    //     instanceResourceTrendsData.serverIOLatency
-                    // );
-                    databaseInstanceDetails.performance = {
-                        // assessment,
-                        rwMetrics: {
-                            latency: {
-                                read: instanceResourceTrendsData.readLatency,
-                                write: instanceResourceTrendsData.writeLatency,
-                                serverIo: 0 // serverIoLatency
-                            },
-                            iops: {
-                                read: instanceResourceTrendsData.readIops,
-                                write: instanceResourceTrendsData.writeIops
-                            },
-                            throughput: {
-                                read: instanceResourceTrendsData.readThroughput,
-                                write: instanceResourceTrendsData.writeThroughput
-                            }
+                databaseInstanceDetails.performance = {
+                    rwMetrics: {
+                        latency: {
+                            read: instanceResourceTrendsData.readLatency,
+                            write: instanceResourceTrendsData.writeLatency
+                        },
+                        iops: {
+                            read: instanceResourceTrendsData.readIops,
+                            write: instanceResourceTrendsData.writeIops
+                        },
+                        throughput: {
+                            read: instanceResourceTrendsData.readThroughput,
+                            write: instanceResourceTrendsData.writeThroughput
                         }
-                    };
-                }
+                    }
+                };
+            }
+
+            if (getStorage && storage) {
+                databaseInstanceDetails.storage = storage;
+            }
+
+            if (getDbNodeTopology && nodeTopology) {
+                databaseInstanceDetails.nodeTopology = omit(nodeTopology, [
+                    'activeDirectoryDetails'
+                ]) as NodeTopologyResponseType;
             }
 
             return databaseInstanceDetails;
@@ -690,6 +750,71 @@ async function getOracleDatabaseInstancesSummary(
     );
 
     return results;
+}
+
+async function getOracleDatabaseHostInstanceSummary(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    fields?: string
+): Promise<DatabaseHostInstanceSummaryResponseType> {
+    logger.info('Fetching details about a database host instance ', accountId, databaseHostId, databaseInstanceId);
+
+    const instanceResult = await getPaginatedDatabaseInstances(accountId, {
+        resourceId: databaseHostId,
+        credentialsId,
+        databaseInstanceId,
+        region,
+        shouldIncludeResource: true
+    });
+    const [databaseInstance] = instanceResult.items as DatabaseInstance[];
+    const resourceDetails = databaseInstance.resource;
+    const activeNodeInstanceId = (resourceDetails?.metadata as Metadata)?.node1InstanceId;
+    let databaseInstanceSummary: DatabaseHostInstanceSummaryResponseType;
+    try {
+        const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId, accountId);
+        if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+            const errorMessage = `SSM connection is not available for node ${activeNodeInstanceId} in account ${accountId}.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+        const { activeNodeDetails } = await getOracleInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            { fetchServerDetails: true, oracleSid: databaseInstance.database_instance_name }
+        );
+        [databaseInstanceSummary] = await getOracleDatabaseInstancesSummary(
+            accountId,
+            credentialsId,
+            activeNodeInstanceId,
+            region,
+            [databaseInstance],
+            fields,
+            resourceDetails
+        );
+        databaseInstanceSummary.databaseServer = {
+            operatingSystem:
+                activeNodeDetails?.prettyName ?? `${activeNodeDetails?.name} ${activeNodeDetails?.version}`,
+            serverEdition: `Oracle ${activeNodeDetails?.serverEdition}`,
+            serverVersion: activeNodeDetails?.serverVersion,
+            activeNode: activeNodeDetails?.activeNode,
+            nodeNames: [activeNodeDetails?.nodeNames],
+            activeConnections: activeNodeDetails?.activeConnections,
+            creationDate: activeNodeDetails?.creationDate
+        };
+        return {
+            tenancy: (resourceDetails?.metadata as Metadata)?.oracleDeploymentType,
+            ...databaseInstanceSummary
+        };
+    } catch (error) {
+        const errorMessage = `Error while fetching database host instance details for host ${databaseHostId} and instance ${databaseInstanceId} in account ${accountId}, ${error}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
 }
 
 async function getOracleDatabaseMappedVolumes(
@@ -826,5 +951,6 @@ export {
     getOracleDatabaseInstancesDetails,
     getOraclePerformanceMetrics,
     getOracleProtectionStatus,
-    getOracleDatabaseMappedVolumes
+    getOracleDatabaseMappedVolumes,
+    getOracleDatabaseHostInstanceSummary
 };

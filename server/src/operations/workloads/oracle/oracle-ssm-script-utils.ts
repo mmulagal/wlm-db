@@ -952,6 +952,53 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
     resultObject=$(echo "$resultObject" | jq --argjson permissions "$missingOracleUserPermissions" '.missingOracleUserPermissions += [$permissions]')
 `;
 
+const GET_ORACLE_SERVER_DETAILS = (oracleSid: string, ec2InstanceId: string) => `
+${getOracleDefaultOrUserAuthCommand(ec2InstanceId, oracleSid)}
+isDefaultAuth=$(is_default_auth ${oracleSid})
+
+prettyName=$(grep PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
+osName=$(grep ^NAME= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
+osVersion=$(grep ^VERSION= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
+
+# Execute all SQL queries in a single connection
+sqlResults=$(sudo -i -u oracle bash <<EOF 2>/dev/null
+export ORACLE_SID="$oracleSid"
+$sqlplus_command <<'EOSQL'
+SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+SELECT REGEXP_SUBSTR(BANNER, '(Standard|Enterprise) Edition') AS edition, 
+    REGEXP_SUBSTR(BANNER, '[0-9]{2}c') AS version 
+FROM v\\$version 
+WHERE BANNER LIKE 'Oracle%';
+SELECT COUNT(*) FROM v\\$session WHERE status = 'ACTIVE';
+SELECT to_char(created, 'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') FROM v\\$database;
+EXIT
+EOSQL
+EOF
+)
+
+serverEdition=$(echo "$sqlResults" | sed -n '1p' | xargs 2>/dev/null || echo "")
+serverVersion=$(echo "$sqlResults" | sed -n '2p' | xargs 2>/dev/null || echo "")
+activeConnections=$(echo "$sqlResults" | sed -n '4p' | xargs 2>/dev/null || echo "0")
+creationDate=$(echo "$sqlResults" | sed -n '5p' | xargs 2>/dev/null || echo "")
+activeNode=$ec2InstanceId
+
+if ! [[ "$activeConnections" =~ ^[0-9]+$ ]]; then
+    activeConnections="0"
+fi
+
+jq -n     --arg prettyName "$prettyName"     --arg name "$osName"     --arg version "$osVersion"     --arg serverEdition "$serverEdition"     --arg serverVersion "$serverVersion"     --arg activeNode "$activeNode"     --arg activeConnections "$activeConnections"     --arg creationDate "$creationDate"     '{
+    prettyName: $prettyName,
+    name: $name,
+    version: $version,
+    serverEdition: $serverEdition,
+    serverVersion: $serverVersion,
+    activeNode: $activeNode,
+    nodeNames: $activeNode,
+    activeConnections: ($activeConnections | tonumber),
+    creationDate: $creationDate
+}'
+`;
+
 export {
     getOracleProtectionData,
     ORACLE_PERFORMANCE_METRICS,
@@ -967,5 +1014,6 @@ export {
     trendGraphCreateScriptForOracle,
     getMappedOntapDataVolume,
     checkIfValidLinuxUser,
-    checkRequiredOracleUserPermissions
+    checkRequiredOracleUserPermissions,
+    GET_ORACLE_SERVER_DETAILS
 };

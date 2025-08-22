@@ -95,6 +95,7 @@ import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types
 import { copyScriptsToHost } from './resource-operations';
 import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
 import { discoverOracleHosts } from './workloads/oracle/oracle-discover-scripts';
+import { OracleDeploymentTenacy } from './workloads/oracle/consts';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -1791,7 +1792,9 @@ async function discoverOracleResources(
                             instanceName,
                             version,
                             instanceState,
-                            instanceType: isContainerDbInstance ? 'MULTI_TENANT' : 'SINGLE_TENANT',
+                            instanceType: isContainerDbInstance
+                                ? OracleDeploymentTenacy.MULTI_TENANT
+                                : OracleDeploymentTenacy.SINGLE_TENANT,
                             databaseCount: isContainerDbInstance ? pluggableDatabases.length : 1,
                             databaseDetails: databaseInfo,
                             ...(isContainerDbInstance && {

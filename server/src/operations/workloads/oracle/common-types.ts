@@ -1,3 +1,6 @@
+import { Type } from '@fastify/type-provider-typebox';
+import { OracleDeployment, OracleDeploymentTenacy } from './consts';
+
 interface OracleInstanceMountpointResponse {
     isCDB?: boolean;
     isASMManaged?: boolean;
@@ -23,16 +26,22 @@ interface OracleVolumeRecord {
     volumeName: string;
     svmUuid: string;
     svmName: string;
+    lunName: string;
+    lunId: string;
 }
 interface OracleMappedOntapVolumeRecord {
     isCDB?: boolean;
-    ontapVolumes?: Record<string, OracleVolumeRecord[]>;
+    ontapVolumes?: Record<string, OracleVolumeRecord[]> | Record<string, Record<string, OracleVolumeRecord[]>>;
 }
 interface OracleMappedOntapVolumesResponse {
     isASMManaged?: boolean;
     protocol?: string;
+    lunRecords?: any[];
     volumeMappings?: [Record<string, OracleMappedOntapVolumeRecord>];
 }
+
+const OracleDeploymentType = Type.Enum(OracleDeployment);
+const OracleDeploymentTenacyType = Type.Enum(OracleDeploymentTenacy);
 
 export {
     OracleInstanceMountpointResponse,
@@ -40,5 +49,7 @@ export {
     OracleSysFileTypes,
     OracleMappedOntapVolumesResponse,
     OracleMappedOntapVolumeRecord,
-    OracleVolumeRecord
+    OracleVolumeRecord,
+    OracleDeploymentType,
+    OracleDeploymentTenacyType
 };

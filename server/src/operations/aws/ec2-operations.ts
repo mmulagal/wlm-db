@@ -1185,6 +1185,19 @@ async function getAmazonLinux2023AmiList(credentialsId: string, region: string):
     return (amisList || []).map(image => image.ImageId);
 }
 
+async function getInstanceIPAndFQDN(ec2Id: string, region: string, credentialsId: string) {
+    logger.info('Get instance IP and FQDN', { ec2Id, region, credentialsId });
+    const { Reservations = [] } = await describeInstance(credentialsId, region, {
+        InstanceIds: [ec2Id]
+    });
+    const instance = Reservations?.[0]?.Instances?.[0];
+    return {
+        privateIp: instance?.PrivateIpAddress,
+        publicIp: instance?.PublicIpAddress,
+        fqdn: instance?.PrivateDnsName
+    };
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -1207,5 +1220,6 @@ export {
     determineSmallerInstance,
     waitForInstanceToBeStopped,
     instanceTypeChangePreReqs,
-    getAmazonLinux2023AmiList
+    getAmazonLinux2023AmiList,
+    getInstanceIPAndFQDN
 };

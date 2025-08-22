@@ -2,11 +2,12 @@ import { isEmpty } from 'lodash-es';
 import { STORAGE_TYPE } from '@prisma/client';
 import { describeSubnets } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
-import { FileSystemTypes, NOT_AVAILABLE } from './consts';
+import { DatabaseTypes, FileSystemTypes, NOT_AVAILABLE } from './consts';
 import getLogger from './logger';
 import { DatabaseInstance, MappedOnTapVolumeResponse } from './common-types';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { AssessmentCategories } from './continous-optimization-consts';
+import { OracleMappedOntapVolumesResponse, OracleVolumeRecord } from '../operations/workloads/oracle/common-types';
 
 const logger = getLogger();
 
@@ -15,7 +16,8 @@ async function getDatabaseInstanceTopology(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    databaseInstances: DatabaseInstance
+    databaseInstances: DatabaseInstance,
+    dbEngine: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
     logger.info(
         'Fetching database topology data',
@@ -107,22 +109,11 @@ async function getDatabaseInstanceTopology(
             databaseInstanceId,
             configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
         })) || [{}];
-
-        const extractRecords = (records: Array<{ uuid: string; name: string }> = []) =>
-            records.map(({ uuid, name }) => ({ id: uuid, name }));
-
-        const mappedDetails = Object.values(mappedStorageDetails as MappedOnTapVolumeResponse) || [];
-        const volumes = mappedDetails.flatMap(i => extractRecords(i?.volumeRecords));
-        const luns = mappedDetails.flatMap(i => extractRecords(i?.lunRecords));
-        const combinedOntapVolumes = volumes.map(volume => ({
-            ...volume,
-            luns: luns
-                .filter(lun => lun.name.includes(volume.name))
-                .map(lun => ({
-                    ...lun,
-                    name: lun.name.split('/').pop() // Extract the last part of the lun name
-                }))
-        }));
+        const { combinedOntapVolumes, luns } = parseMappedVolumeData(
+            mappedStorageDetails,
+            fileSystemId || '',
+            dbEngine
+        );
 
         topologyData = {
             ...topologyData,
@@ -136,7 +127,7 @@ async function getDatabaseInstanceTopology(
             ...(!isEmpty(combinedOntapVolumes) && {
                 storageSummary: {
                     volumes: combinedOntapVolumes,
-                    totalVolumes: volumes?.length || 0,
+                    totalVolumes: combinedOntapVolumes?.length || 0,
                     totalLuns: luns?.length || 0
                 }
             })
@@ -144,6 +135,78 @@ async function getDatabaseInstanceTopology(
     }
 
     return topologyData;
+}
+
+function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER) {
+    let combinedOntapVolumes: any[] = [];
+    let luns: any[] = [];
+
+    switch (dbType) {
+        case DatabaseTypes.ORACLE: {
+            const storageDetails: OracleMappedOntapVolumesResponse = configData?.[fsxId];
+            if (!storageDetails) {
+                return { combinedOntapVolumes, luns };
+            }
+            luns = storageDetails?.lunRecords ?? [];
+            const processVolumeRecords = (fileType: string, volumeRecords: OracleVolumeRecord[], tenancy: string) => {
+                volumeRecords.forEach((record: OracleVolumeRecord) => {
+                    if (!combinedOntapVolumes.some(v => v.id === record.volumeId)) {
+                        combinedOntapVolumes.push({
+                            id: record.volumeId,
+                            name: record.volumeName,
+                            luns
+                        });
+                    }
+                });
+                logger.debug(`${tenancy}, File Type: ${fileType}`);
+            };
+            storageDetails?.volumeMappings?.forEach(volumeMapping => {
+                Object.entries(volumeMapping).forEach(([sid, sidMappedOntapVolumeRecord]) => {
+                    const { ontapVolumes, isCDB } = sidMappedOntapVolumeRecord || {};
+                    if (!ontapVolumes) {
+                        return;
+                    }
+                    if (isCDB) {
+                        Object.entries(ontapVolumes).forEach(([pdb, pdbMappedOntapVolumeRecord]) => {
+                            if (!pdbMappedOntapVolumeRecord) {
+                                return;
+                            }
+                            Object.entries(pdbMappedOntapVolumeRecord).forEach(([fileType, volumeRecord]) => {
+                                processVolumeRecords(fileType, volumeRecord as OracleVolumeRecord[], pdb);
+                            });
+                        });
+                    } else {
+                        Object.entries(ontapVolumes).forEach(([fileType, volumeRecord]) => {
+                            processVolumeRecords(fileType, volumeRecord, sid);
+                        });
+                    }
+                });
+            });
+            break;
+        }
+        case DatabaseTypes.MS_SQL_SERVER:
+        default: {
+            const extractRecords = (records: Array<{ uuid: string; name: string }> = []) =>
+                records.map(({ uuid, name }) => ({ id: uuid, name }));
+
+            const mappedDetails = Object.values(configData as MappedOnTapVolumeResponse) || [];
+            const volumes = mappedDetails.flatMap(i => extractRecords(i?.volumeRecords));
+            luns = mappedDetails.flatMap(i => extractRecords(i?.lunRecords));
+            combinedOntapVolumes = volumes.map(volume => ({
+                ...volume,
+                luns: luns
+                    .filter(lun => lun.name.includes(volume.name))
+                    .map(lun => ({
+                        ...lun,
+                        name: lun.name.split('/').pop() // Extract the last part of the lun name
+                    }))
+            }));
+        }
+    }
+    return {
+        combinedOntapVolumes,
+        luns
+    };
 }
 
 export default getDatabaseInstanceTopology;

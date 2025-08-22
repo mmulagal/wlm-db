@@ -13,6 +13,7 @@ import {
 } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 import { API_DESCRIPTION, API_DESCRIPTION_EXAMPLES } from '../../utils/schema-description-consts';
+import { OracleDeploymentTenacyType, OracleDeploymentType } from '../../operations/workloads/oracle/common-types';
 
 const allowedFields = Object.values(DatabaseHostsQueryFields);
 const DatabaseHostObjectParams = Type.Object({
@@ -179,7 +180,7 @@ const RWPerformanceResponse = Type.Object({
 
 const LatencyResponse = Type.Composite([
     RWPerformanceResponse,
-    Type.Object({ serverIo: Type.Number({ description: 'Database server IO performance for latency' }) })
+    Type.Object({ serverIo: Type.Optional(Type.Number({ description: 'Database server IO performance for latency' })) })
 ]);
 
 type RWPerformanceResponseType = Static<typeof RWPerformanceResponse>;
@@ -261,7 +262,7 @@ const DatabaseServerMetadataResponse = Type.Object({
     nodeNames: Type.Array(Type.String()),
     activeConnections: Type.Number(),
     creationDate: Type.String({ minLength: 1 }),
-    collation: Type.String({ minLength: 1 })
+    collation: Type.Optional(Type.String({ minLength: 1 }))
 });
 type DatabaseServerMetadataResponseType = Static<typeof DatabaseServerMetadataResponse>;
 
@@ -472,6 +473,7 @@ const NodeTopologyResponse = Type.Object({
     fqdn: Type.Optional(Type.String({ description: 'FQDN of the active node' })),
     nodeIpAddress: Type.Optional(Type.String({ description: 'IP address of the active node' }))
 });
+type NodeTopologyResponseType = Static<typeof NodeTopologyResponse>;
 
 const VolumeLunDetailsResponse = Type.Object({
     id: Type.Optional(Type.String({ description: 'ONTAP volume identifier' })),
@@ -487,8 +489,8 @@ const VolumeLunDetailsResponse = Type.Object({
 });
 
 const DatabaseInstanceTopology = Type.Object({
-    serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
-    serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
+    serverType: Type.String({ enum: ['Microsoft SQL Server', 'ORACLE'] }),
+    serverInstallationMode: Type.Union([Type.String({ enum: ['Standalone', 'FCI'] }), OracleDeploymentType]),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows', NOT_AVAILABLE] }),
     fileSystemId: Type.Optional(Type.String()),
     fileSystemName: Type.Optional(Type.String()),
@@ -512,6 +514,7 @@ const DatabaseInstanceTopology = Type.Object({
 type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;
 
 const DatabaseHostInstanceSummaryResponse = Type.Object({
+    tenancy: Type.Optional(OracleDeploymentTenacyType),
     databaseInstanceId: Type.String(),
     databaseInstanceName: Type.String(),
     status: Type.String({ enum: [ServerState.UP, ServerState.DOWN, NOT_AVAILABLE] }),
@@ -523,7 +526,7 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
     performance: Type.Optional(PerformanceResponse),
     storage: Type.Optional(StoragePerStorageTypeResponse),
     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
-    sqlServerDeploymentType: Type.Optional(Type.String()),
+    sqlServerDeploymentType: Type.Optional(Type.Union([Type.String(), OracleDeploymentType])),
     databases: Type.Optional(Type.Array(DatabasesResponse)),
     errors: Type.Optional(Type.Any())
 });
@@ -669,5 +672,7 @@ export {
     PgSqlDbHostsSummaryResponse,
     PgSqlDbHostSummaryListResponse,
     OracleDbHostSummaryListResponse,
-    OracleDbHostsSummaryResponse
+    OracleDbHostsSummaryResponse,
+    NodeTopologyResponseType,
+    NodeTopologyResponse
 };

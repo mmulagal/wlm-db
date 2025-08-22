@@ -60,7 +60,9 @@ function mapVolumeTypesToIdsOrNames(
                   Array.isArray(volumes) ? volumes.map(vol => ({ type, volume: vol })) : []
               )
           )
-        : Object.entries(volumeRecords).flatMap(([type, volumes]) => volumes?.map(volume => ({ type, volume })) || []);
+        : Object.entries(volumeRecords).flatMap(
+              ([type, volumes]) => volumes?.map((volume: any) => ({ type, volume })) || []
+          );
 
     return Object.values(OracleSysFileTypes).reduce((acc, type) => {
         acc[type] = flattenedRecords

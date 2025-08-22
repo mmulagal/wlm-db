@@ -2,7 +2,11 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/fsx-scope';
+import '../../simulator/scopes/aws/ec2-scope';
+
+import { isEmpty } from 'lodash-es';
 import {
+    getOracleDatabaseHostInstanceSummary,
     getOracleDatabaseMappedVolumes,
     getOraclePerformanceMetrics,
     getOracleProtectionStatus
@@ -41,7 +45,7 @@ beforeAll(async () => {
         credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
         region: DEFAULT_AWS_REGION,
         resourceId: '6cbdabbfe3fb147e',
-        databaseInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+        databaseInstanceId: dbInstanceSid,
         databaseInstanceName: 'MSSQLSERVER',
         isDefault: true,
         source: 'deployment',
@@ -108,5 +112,16 @@ describe('Oracle Database Operations', () => {
     it('should return oracle volume-DB mappings', async () => {
         const result = await getOracleDatabaseMappedVolumes(accountId, credentialsId, region, '6cbdabbfe3fb147e');
         expect(result?.size).toBeGreaterThan(0);
+    });
+
+    it('should return instance summary', async () => {
+        const result = await getOracleDatabaseHostInstanceSummary(
+            accountId,
+            credentialsId,
+            region,
+            '6cbdabbfe3fb147e',
+            dbInstanceSid
+        );
+        expect(!isEmpty(result)).toBeTruthy();
     });
 });
