@@ -82,7 +82,7 @@ export const getEffectiveManageReadinessData = (
     const hostType = instance?.data?.hostType || '';
     const discoveredData = getDiscoveredHostDataByType(hostType, discoveredHostData, discoveredOracleHostData);
     if (hostType === DBType.ORACLE) {
-        if (instance?.data?.isDefaultAuthentication === true && !instance?.data?.oracleServerAuthentication) {
+        if (instance?.data?.isDefaultAuthentication === false && !instance?.data?.oracleServerAuthentication) {
             return instance?.manageReadiness;
         }
 

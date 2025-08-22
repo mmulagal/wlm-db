@@ -147,9 +147,9 @@ export const Content = () => {
         if (hostType === DBType.ORACLE) {
             const isDefault = manageSingleInstanceData?.isDefaultAuthentication;
             const isOracleAuth = manageSingleInstanceData?.oracleServerAuthentication;
-            if (isDefault === false) {
+            if (isDefault === true) {
                 isNoAuth = false;
-            } else if (isDefault === true) {
+            } else if (isDefault === false) {
                 isNoAuth = !isOracleAuth && !!manageSingleInstanceReadiness;
             }
         } else {

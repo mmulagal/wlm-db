@@ -177,15 +177,20 @@ export const formatManagedRows = (
     return result;
 };
 
-export const getInstanceStatusForMixedCase = (managedHostRow: any) => {
+export const getInstanceStatusForMixedCase = (managedHostRow: any, engineType: string | undefined) => {
     const state = store.getState();
-    const discoveredHostData = state?.inventoryV2?.discoveredHosts?.discoveredHostData;
+    const discoveredHostData =
+        engineType === DBType.ORACLE
+            ? state?.inventoryV2?.discoveredOracleHosts?.discoveredOracleHostData
+            : state?.inventoryV2?.discoveredHosts?.discoveredHostData;
     const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id || managedHostRow?.ec2InstanceId;
     if (ec2Id && discoveredHostData) {
         const selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
         if (selectedEc2 && selectedEc2?.length > 0) {
             const ssmState = getDiscoverSsmState(selectedEc2[0]);
-            return getDiscoveredPerInstanceStatus(selectedEc2[0], ssmState);
+            return engineType === DBType.ORACLE
+                ? getOracleDiscoverPerInstanceStatus(selectedEc2[0], ssmState)
+                : getDiscoveredPerInstanceStatus(selectedEc2[0], ssmState);
         }
     }
     return [];
@@ -359,7 +364,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
 
     let nonManagedStatus: any = [];
     if (!isAllManaged) {
-        nonManagedStatus = getInstanceStatusForMixedCase(row);
+        nonManagedStatus = getInstanceStatusForMixedCase(row, row?.hostType);
         // to call data for mixed case. use in statusColText for unmanaged case
     }
 
@@ -481,19 +486,32 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
     return instanceRows;
 };
 
-export const getFsxIdsFromdiscover = (data: Array<DiscoverHostInterface>) => {
+export const getFsxIdsFromdiscover = (data: Array<DiscoverHostInterface>, engineType: string) => {
     const fsxIds: Array<string> = [];
     data?.map((instances: DiscoverHostInterface) => {
-        instances?.sqlServerInstances?.map((inst: SQLServerInstancesDiscovered) => {
-            inst?.storage?.map((storageObj: DiscoveredStorageObj) => {
-                if (storageObj.type === DETECT_HOST_VAR.FSXN) {
-                    const fsxId = storageObj?.id || '';
-                    if (!fsxIds.includes(fsxId)) {
-                        fsxIds.push(fsxId);
+        if (engineType === DBType.MSSQL) {
+            instances?.sqlServerInstances?.map((inst: SQLServerInstancesDiscovered) => {
+                inst?.storage?.map((storageObj: DiscoveredStorageObj) => {
+                    if (storageObj.type === DETECT_HOST_VAR.FSXN) {
+                        const fsxId = storageObj?.id || '';
+                        if (!fsxIds.includes(fsxId)) {
+                            fsxIds.push(fsxId);
+                        }
                     }
-                }
+                });
             });
-        });
+        } else if (engineType === DBType.ORACLE) {
+            instances?.databaseInstanceDetails?.map((inst: OracleInstancesDiscovered) => {
+                inst?.storage?.map((storageObj: DiscoveredStorageObj) => {
+                    if (storageObj.type === DETECT_HOST_VAR.FSXN) {
+                        const fsxId = storageObj?.id || '';
+                        if (!fsxIds.includes(fsxId)) {
+                            fsxIds.push(fsxId);
+                        }
+                    }
+                });
+            });
+        }
     });
     return fsxIds;
 };
@@ -1364,7 +1382,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
 
                 if (
                     ssmState !== INVENTORY_STATUS.ONLINE ||
-                    (isDefaultAuthentication && !oracleServerAuthentication) ||
+                    (!isDefaultAuthentication && !oracleServerAuthentication) ||
                     fsxCredentialValidationFailed ||
                     !storageTypeCheck
                 ) {
@@ -1494,8 +1512,11 @@ export const getDetectOptionForInstance = (
         auth = perRow?.defaultAuth;
     }
     if (type === GENERAL.ORACLE_TYPE) {
-        // For Oracle: If isDefaultAuthentication is false, no default authentication is added and no auth check is needed. If true, check auth using oracleServerAuthentication.
-        auth = perRow?.oracleServerAuthentication || !perRow?.isDefaultAuthentication;
+        if (perRow?.isDefaultAuthentication) {
+            auth = true;
+        } else {
+            auth = perRow?.oracleServerAuthentication;
+        }
     }
     const isSqlRunning = state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN;
     if (ssmState?.toLowerCase() !== INVENTORY_STATUS.SSM_CONNECTED) {
@@ -2399,7 +2420,7 @@ export const updateSqlServerInstancesForUnmanaged = (
         if (isManagedHost) {
             const isAllManaged = instanceData?.databaseInstanceDetails?.every(perRow => !!perRow?.isManaged);
             if (!isAllManaged) {
-                nonManagedStatus = getInstanceStatusForMixedCase(instanceData);
+                nonManagedStatus = getInstanceStatusForMixedCase(instanceData, existingInstanceRow?.hostType);
                 // to call data for mixed case. use in statusColText for unmanaged case
             }
         }
@@ -2485,7 +2506,7 @@ export const updateSqlServerInstancesForUnmanaged = (
         if (isManagedHost) {
             const isAllManaged = instanceRows?.every(perRow => perRow?.statusColText === INVENTORY_STATUS.MANAGED);
             if (!isAllManaged) {
-                nonManagedStatus = getInstanceStatusForMixedCase(existingInstanceRow);
+                nonManagedStatus = getInstanceStatusForMixedCase(existingInstanceRow, existingInstanceRow?.hostType);
                 // to call data for mixed case. use in statusColText for unmanaged case
             }
             instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
@@ -2831,15 +2852,15 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
             const isOracleAuth = entryData?.oracleServerAuthentication;
             const needsFsx = entryData?.fsxId && !entryData?.isFsxRegistered;
 
-            // In Oracle if isDefaultAuthentication is false then no need to check for Oracle auth
-            if (isDefault === false) {
+            // In Oracle if isDefaultAuthentication is true then no need to check for Oracle auth
+            if (isDefault === true) {
                 // Only FSx registration matters
                 if (needsFsx) {
                     return isFsxAuthValid();
                 }
                 return true;
             }
-            if (isDefault === true) {
+            if (isDefault === false) {
                 // 1. Need both Oracle Auth and FSx
                 if (!isOracleAuth && needsFsx) {
                     return isAuthValid() && isFsxAuthValid();

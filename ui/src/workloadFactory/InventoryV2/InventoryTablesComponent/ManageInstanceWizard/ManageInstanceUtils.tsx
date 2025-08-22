@@ -656,7 +656,7 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
     const permissions =
         engineType === DBType.ORACLE ? readinessData?.missingPermissions : readinessData?.missingSqlPermissions;
 
-    if (otherModules.length > 0 || permissions!.length > 0) {
+    if (otherModules.length > 0 || (permissions && permissions.length > 0)) {
         return MANAGE_STATES.MISSING_PREREQUISITES;
     }
 
@@ -754,9 +754,9 @@ const addCredentialsBasedOnEngineType = (
     switch (engineType) {
         case DBType.ORACLE: {
             const { isDefaultAuthentication, oracleServerAuthentication } = instance?.data || {};
-            // For Oracle: Only push if isDefaultAuthentication === true && oracleServerAuthentication === false
+            // For Oracle: Only push if isDefaultAuthentication === false && oracleServerAuthentication === false/undefined
             if (
-                isDefaultAuthentication === true &&
+                isDefaultAuthentication === false &&
                 !oracleServerAuthentication &&
                 detectManageUserName &&
                 detectManagePassword
@@ -975,12 +975,12 @@ export const isAlreadyDetectedCheck = (data: any) => {
     if (!data) return false;
 
     if (data.hostType === DBType.ORACLE) {
-        if (data.isDefaultAuthentication === false) {
+        if (data.isDefaultAuthentication === true) {
             // If not default authentication, only check FSx registration
             return !data.fsxId || (data.fsxId && data.isFsxRegistered);
         }
-        if (data.isDefaultAuthentication === true) {
-            // If default authentication, check FSx registration and oracleServerAuthentication must be true
+        if (data.isDefaultAuthentication === false) {
+            // If default authentication is false, check FSx registration and oracleServerAuthentication must be true
             return (!data.fsxId || (data.fsxId && data.isFsxRegistered)) && data.oracleServerAuthentication === true;
         }
         // If isDefaultAuthentication is undefined/null, treat as not detected

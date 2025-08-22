@@ -815,7 +815,7 @@ const InventoryApisV3 = () => {
                             }
                         });
                         // call fsx id cred status API is fsxids are found
-                        const fsxIds = getFsxIdsFromdiscover(result?.data?.items);
+                        const fsxIds = getFsxIdsFromdiscover(result?.data?.items, DBType.MSSQL);
                         if (fsxIds && fsxIds.length > 0) {
                             dispatch(setFsxCredentialStatusLoading(true));
                             getFsxCredentialStatusList(fsxIds, runningCredId, runningRegionId, DBType.MSSQL);
@@ -881,7 +881,7 @@ const InventoryApisV3 = () => {
                             }
                         });
                         // call fsx id cred status API is fsxids are found
-                        const fsxIds = getFsxIdsFromdiscover(result?.data?.items);
+                        const fsxIds = getFsxIdsFromdiscover(result?.data?.items, DBType.ORACLE);
                         if (fsxIds && fsxIds.length > 0) {
                             dispatch(setFsxCredentialStatusLoadingOracle(true));
                             getFsxCredentialStatusList(fsxIds, runningCredId, runningRegionId, DBType.ORACLE);
@@ -2096,7 +2096,7 @@ const InventoryApisV3 = () => {
                 dispatch(setInventoryTableData(updatedResult));
             }
         }
-    }, [discoveredOracleHostData, managedHostListLoading]);
+    }, [discoveredOracleHostData, fsxCredentialStatusObj, managedHostListLoading]);
 
     useEffect(() => {
         const state = store.getState();

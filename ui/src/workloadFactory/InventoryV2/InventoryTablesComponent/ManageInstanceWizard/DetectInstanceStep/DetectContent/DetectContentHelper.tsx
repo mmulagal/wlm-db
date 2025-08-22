@@ -5,11 +5,11 @@ export const isAuthRequiredForInstance = (instanceData: any, hostType: string) =
     if (hostType === DBType.ORACLE) {
         const isDefault = instanceData?.isDefaultAuthentication;
         const isOracleAuth = instanceData?.oracleServerAuthentication;
-        if (isDefault === false) {
-            return false; // Auth is not required for non-default Oracle instances
-        }
         if (isDefault === true) {
-            // If isDefaultAuthentication is set to true, authentication is required only if oracleServerAuthentication is false
+            return false; // Auth is not required for default Oracle instances
+        }
+        if (isDefault === false) {
+            // If isDefaultAuthentication is set to false, authentication is required only if oracleServerAuthentication is false
             return !isOracleAuth;
         }
     } else {
