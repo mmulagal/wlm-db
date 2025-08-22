@@ -169,20 +169,12 @@ const ResourceHeader = ({
                         <DsTypography
                             variant="Semibold_14"
                             className={styles.titleText}
-                            title={resourceDetails?.topology?.serverInstallationMode}
+                            title={resourceDetails?.tenancy}
                         >
-                            {resourceLoading ? (
-                                <DsFlashingDotsLoader />
-                            ) : (
-                                resourceDetails?.topology?.serverInstallationMode
-                            )}
+                            {resourceLoading ? <DsFlashingDotsLoader /> : resourceDetails?.tenancy}
                         </DsTypography>
 
-                        <DsTypography
-                            variant="Regular_14"
-                            className={styles.label}
-                            title={GENERAL.RESOURCE_DEPLOYMENT_MODEL}
-                        >
+                        <DsTypography variant="Regular_14" className={styles.label}>
                             {t('databases.oracle-inner-page.tenancy')}
                         </DsTypography>
                     </div>
@@ -216,7 +208,11 @@ const ResourceHeader = ({
                             {resourceLoading ? <DsFlashingDotsLoader /> : resourceDetails.databaseCount}
                         </DsTypography>
 
-                        <DsTypography variant="Regular_14" className={styles.label} title={GENERAL.NO_OF_DBS}>
+                        <DsTypography
+                            variant="Regular_14"
+                            className={styles.label}
+                            title={t('databases.oracle-inner-page.number-of-pdbs')}
+                        >
                             {t('databases.oracle-inner-page.number-of-pdbs')}
                         </DsTypography>
                     </div>

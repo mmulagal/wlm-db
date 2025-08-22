@@ -125,9 +125,7 @@ const OracleServer = ({ handleToggle, openKey }: oracleServer) => {
                 </Typography>
                 <Typography variant="Regular_14" className={commonStyles.valueCSS}>
                     {resourceDetails?.databaseServer?.creationDate
-                        ? moment(Number(resourceDetails?.databaseServer?.creationDate)).format(
-                              'MMMM DD, YYYY, HH:mm:ss'
-                          )
+                        ? moment(resourceDetails?.databaseServer?.creationDate).format('MMMM DD, YYYY, hh:mm:ss A')
                         : ''}
                 </Typography>
             </div>
