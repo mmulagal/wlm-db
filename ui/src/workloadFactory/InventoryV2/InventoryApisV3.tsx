@@ -2096,7 +2096,7 @@ const InventoryApisV3 = () => {
                 dispatch(setInventoryTableData(updatedResult));
             }
         }
-    }, [discoveredOracleHostData, fsxCredentialStatusObj, managedHostListLoading]);
+    }, [discoveredOracleHostData, managedHostListLoading]);
 
     useEffect(() => {
         const state = store.getState();

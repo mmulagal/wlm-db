@@ -30,7 +30,7 @@ const OracleResourcePages = () => {
     const { setDialog, closeDialog } = useDialog();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
     const { selectedOracleInnerPageTab, visitedTabs, resourceDetails } = useAppSelector(state => state.oracleSlice);
-    const { selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
+    const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     // Reset visited tabs when leaving the dashboard
@@ -104,7 +104,7 @@ const OracleResourcePages = () => {
                             }
                         },
                         {
-                            title: 'Host name'
+                            title: `${selectedHostname}/${selectedDatabaseInstanceName}` || 'Host name/instance name'
                         }
                     ]}
                 />
