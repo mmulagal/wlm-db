@@ -1,5 +1,45 @@
 import { WorkloadInstance } from '../../../utils/common-types';
-import { checkCommandStatus, ontapRestApi } from './oracle-ssm-script-utils';
+import { checkCommandStatus, getOracleDefaultOrUserAuthCommand, ontapRestApi } from './oracle-ssm-script-utils';
+
+const CHECK_ORACLE_FRA_RMAN_STATUS = (ec2InstanceId: string, dbSid: string) => `
+    check_oracle_fra_rman_status() {
+        local ec2InstanceId="$1"
+        local oracleSid="$2"
+
+        ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+        local fra_rman_result
+        fra_rman_result=$(sudo -i -u oracle bash <<EOF
+        set -e
+        export ORACLE_SID="$oracleSid"
+        $sqlplus_command <<'EOSQL'
+        SET HEADING OFF
+        SET LINESIZE 500
+        SET FEEDBACK OFF
+        SET TERMOUT OFF
+        SET PAGESIZE 0
+        SET TRIMSPOOL ON
+        WHENEVER SQLERROR EXIT SQL.SQLCODE
+        SELECT 
+            CASE
+                WHEN (SELECT value FROM v\\$parameter WHERE name = 'db_recovery_file_dest') IS NOT NULL
+                    AND (SELECT value FROM v\\$parameter WHERE name = 'db_recovery_file_dest') != ''
+                THEN 'yes' ELSE 'no' END || '|' ||
+            CASE
+                WHEN EXISTS (
+                    SELECT 1 FROM v\\$rman_configuration
+                    WHERE (name LIKE '%COMPRESSION%' AND value != 'OFF')
+                        OR (name LIKE '%BACKUP TYPE%' AND value LIKE '%COMPRESSED%')
+                ) THEN 'yes' ELSE 'no' END
+        as fra_rman_result FROM dual;
+        EXIT;
+EOSQL
+EOF
+)
+
+        echo "$fra_rman_result"
+
+}
+`;
 
 const VOLUME_LUN_CONFIGURATION = (instanceRecord: WorkloadInstance) =>
     `
@@ -12,6 +52,7 @@ filesystemid="${instanceRecord.fsxFileSystem}"
 region="${instanceRecord.region}"
 ontapSvmUuid="${instanceRecord.svmOntapUuid}"
 storageProtocol="${instanceRecord.storageProtocol}"
+ec2InstanceId="${instanceRecord.activeNodeInstanceid}"
 IFS=',' read -r -a mappedOntapVolumeNames <<< "${instanceRecord.mappedVolumeNames}"
 IFS=',' read -r -a mappedOntapVolumeUuids <<< "${instanceRecord.mappedVolumesUuids}"
 
@@ -45,6 +86,9 @@ fi
 
 volumeEndpoint="storage/volumes?uuid=$(IFS='|'; echo "\${mappedOntapVolumeUuids[*]}")&fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee,efficiency"
 response=$(ontap_request 'GET' $volumeEndpoint)
+
+volumePrivateCliEndpoint="private/cli/volume?volume=$(IFS='|'; echo "\${mappedOntapVolumeNames[*]}")&fields=space-mgmt-try-first"
+privateVolumeResponse=$(ontap_request 'GET' $volumePrivateCliEndpoint)
 
 # Check if response is valid
 if [ -z "$response" ] || ! echo "$response" | jq -e '.records' > /dev/null 2>&1; then
@@ -107,6 +151,19 @@ volumesData=$(echo "$response" | jq '[.records[] | {
     efficiencyType: .efficiency.storage_efficiency_mode
 }]')
 
+# Add spaceMgmtTryFirst field to volumesData with error handling
+if echo "$privateVolumeResponse" | jq -e '.records' > /dev/null 2>&1; then
+    spaceMgmtLookup=$(echo "$privateVolumeResponse" | jq 'reduce .records[] as $item ({}; .[$item.volume] = $item.space_mgmt_try_first)')
+    
+    volumesData=$(echo "$volumesData" | jq --argjson lookup "$spaceMgmtLookup" '
+        map(. + {
+            spaceMgmtTryFirst: ($lookup[.name] // null)
+        })
+    ')
+else
+    volumesData=$(echo "$volumesData" | jq 'map(. + {spaceMgmtTryFirst: null})')
+fi
+
 volumes=$(jq -n \
     --arg error "$error" \
     --arg filesystemId "$filesystemid" \
@@ -155,13 +212,22 @@ binaryVolumes=$(jq -n \
         data: $binaryVolumesData
     }')
 
+${CHECK_ORACLE_FRA_RMAN_STATUS(instanceRecord.activeNodeInstanceid, instanceRecord.id)}
+fra_rman_result=$(check_oracle_fra_rman_status "${instanceRecord.activeNodeInstanceid}" "${instanceRecord.id}")
+# Parse the pipe-delimited result
+IFS='|' read -r fra_enabled rman_compression_enabled <<< "$fra_rman_result"
+
 # Create result with valid JSON
 if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; then
  result=$(jq -n \
+        --arg fra "$fra_enabled" \\
+        --arg rman "$rman_compression_enabled" \\
         --argjson volumes "$volumes" \
         --argjson luns "$luns" \
         --argjson binaryVolumes "$binaryVolumes" \
         '{
+            fraEnabled: $fra,
+            rmanCompressionEnabled: $rman,
             volumes: $volumes,
             luns: $luns,
             binaryVolumes: $binaryVolumes
@@ -169,9 +235,13 @@ if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; 
 
 else
     result=$(jq -n \
+        --arg fra "$fra_enabled" \\
+        --arg rman "$rman_compression_enabled" \\
         --argjson volumes "$volumes" \
         --argjson binaryVolumes "$binaryVolumes" \
         '{
+            fraEnabled: $fra,
+            rmanCompressionEnabled: $rman,
             volumes: $volumes,
             binaryVolumes: $binaryVolumes
         }')

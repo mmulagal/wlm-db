@@ -7,7 +7,7 @@ const GOLDEN_CONFIG = {
                 parameter: 'thinProvision',
                 name: 'thin-provision',
                 value: true,
-                severity: SEVERITY.CRITICAL,
+                severity: SEVERITY.WARNING,
                 recommendation:
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
@@ -56,10 +56,23 @@ const GOLDEN_CONFIG = {
                 ]
             },
             {
+                parameter: 'snapshotPolicy',
+                name: 'snapshot-policy',
+                value: 'none',
+                severity: SEVERITY.WARNING,
+                recommendation:
+                    'Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for Oracle databases to save space and lower costs. Oracle snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.',
+                tags: [
+                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            },
+            {
                 parameter: 'snapshotCopyReserve',
                 name: 'snapshot-copy-reserve',
                 value: 0,
-                severity: SEVERITY.CRITICAL,
+                severity: SEVERITY.WARNING,
                 recommendation:
                     'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
                 tags: [
@@ -82,7 +95,7 @@ const GOLDEN_CONFIG = {
                 ]
             },
             {
-                parameter: 'space-mgmt-try-first',
+                parameter: 'spaceMgmtTryFirst',
                 name: 'space-mgmt-try-first',
                 value: 'volume_grow',
                 severity: SEVERITY.WARNING,
@@ -110,7 +123,7 @@ const GOLDEN_CONFIG = {
             {
                 parameter: 'tieringMinCoolingDays',
                 name: 'tiering-min-cooling-days',
-                value: 7,
+                value: '',
                 severity: SEVERITY.CRITICAL,
                 recommendation:
                     'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
@@ -121,7 +134,7 @@ const GOLDEN_CONFIG = {
                 ]
             },
             {
-                parameter: 'compression',
+                parameter: 'compressionType',
                 name: 'compression',
                 value: '',
                 severity: SEVERITY.CRITICAL,
@@ -147,7 +160,7 @@ const GOLDEN_CONFIG = {
             {
                 parameter: 'compaction',
                 name: 'compaction',
-                value: '',
+                value: 'enabled',
                 severity: SEVERITY.CRITICAL,
                 recommendation: '',
                 tags: [

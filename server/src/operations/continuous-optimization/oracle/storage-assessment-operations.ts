@@ -26,6 +26,8 @@ const volumeConfigData = storageGoldenConfigData.configuration.volume;
 const lunConfigData = storageGoldenConfigData.configuration.lun;
 
 interface StorageAssessment {
+    fraEnabled?: string;
+    rmanCompressionEnabled?: string;
     volumes: {
         error: string;
         data: Record<string, any>[];
@@ -93,7 +95,7 @@ function getVolumeConfigDrift(
         TEMP_FILES: tempFileVolumeNames
     } = volumeTypeToNamesMap;
 
-    const { volumes } = storageAssessmentData;
+    const { volumes, fraEnabled, rmanCompressionEnabled } = storageAssessmentData;
     const { data: volumesData, error } = volumes;
 
     if (error) {
@@ -118,49 +120,64 @@ function getVolumeConfigDrift(
 
     const controlDataFileVolumeNames = [...dataFileVolumeNames, ...controlFileVolumeNames];
     const redoLogsTempLogsVolumeNames = [...redoLogVolumeNames, ...tempFileVolumeNames];
+    const isIn = (list: string[], objectName: string) => list.includes(objectName);
 
     return volumeConfigData.map(config => {
         const objectsInViolation: GenericViolationResponseType[] = [];
         const objectsInViolationNames: string[] = [];
         volumesData.forEach(volume => {
-            const value = volume[config.parameter];
+            const value = (volume[config.parameter] ?? '').toString();
             const objectName = volume.name || '';
             let recommended = config.value.toString();
             let isViolated = false;
             let dataCategory = '';
 
-            const isIn = (list: string[]) => list.includes(objectName);
             const volumeMembership = [
                 controlDataFileVolumeNames,
                 redoLogsTempLogsVolumeNames,
                 archiveLogVolumeNames
-            ].filter(list => isIn(list)).length;
+            ].filter(list => isIn(list, objectName)).length;
 
             switch (config.parameter) {
                 case 'compaction':
                     isViolated = value === 'none';
-                    recommended = 'none';
+                    recommended = 'enabled';
+                    break;
+
+                case 'tieringMinCoolingDays':
+                    if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
+                        return;
+                    }
+                    recommended =
+                        isIn(archiveLogVolumeNames, objectName) &&
+                        fraEnabled === 'yes' &&
+                        rmanCompressionEnabled === 'no'
+                            ? '14'
+                            : '2';
+                    isViolated = value !== recommended;
                     break;
 
                 case 'tieringPolicy':
-                    if (isIn(redoLogsTempLogsVolumeNames)) {
+                    if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
                         recommended = tieringPolicyRecommendations['log-files'];
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                    } else if (isIn(controlDataFileVolumeNames)) {
+                    } else if (isIn(controlDataFileVolumeNames, objectName)) {
                         recommended = tieringPolicyRecommendations['data-control-files'];
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'data-control-files';
-                    } else if (isIn(archiveLogVolumeNames)) {
+                    } else if (isIn(archiveLogVolumeNames, objectName)) {
                         recommended = tieringPolicyRecommendations['archive-log-files'];
                         dataCategory = 'archive-log-files';
                     }
                     isViolated = value !== recommended;
                     break;
 
-                case 'compression':
+                case 'compressionType':
                 case 'deduplication': {
                     const recommendations =
-                        config.parameter === 'compression' ? compressionRecommendations : deduplicationRecommendations;
-                    if (isIn(redoLogsTempLogsVolumeNames)) {
+                        config.parameter === 'compressionType'
+                            ? compressionRecommendations
+                            : deduplicationRecommendations;
+                    if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
                         recommended = recommendations['log-files'];
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
                     } else {

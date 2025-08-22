@@ -102,8 +102,8 @@ async function initiateInstanceLevelAssessmentDataCollection(
                   volumes.map((vol: any) => ({ id: vol.volumeId, name: vol.volumeName }))
               );
 
-        databaseInstanceRecord.mappedVolumesUuids = volumeData.map(vol => vol.id);
-        databaseInstanceRecord.mappedVolumeNames = volumeData.map(vol => vol.name);
+        databaseInstanceRecord.mappedVolumesUuids = [...new Set(volumeData.map(vol => vol.id))];
+        databaseInstanceRecord.mappedVolumeNames = [...new Set(volumeData.map(vol => vol.name))];
         databaseInstanceRecord.storageProtocol = protocol;
 
         if (protocol === 'iSCSI') {
