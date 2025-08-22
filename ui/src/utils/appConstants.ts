@@ -36,11 +36,19 @@ export const GENERAL = {
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
     UPDATE: 'Update',
     UPDATE_FSX_ADMIN_PASSWORD: 'Update fsxadmin password',
+    ORACLE_FSX_PASSWORD_CONTENT:
+        'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Oracle Server instance.',
     FSX_PASSWORD_CONTENT:
         'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.',
     SQL_PASSWORD_CONTENT:
         'The password for your Windows login might have changed. Update credentials to register this Microsoft SQL Server instance.',
+    ORACLE_PASSWORD_CONTENT:
+        'The password for your Oracle login might have changed. Update credentials to register this  Oracle Server instance.',
+    ORACLE_ASM_PASSWORD_CONTENT:
+        'The password for your Oracle ASM login might have changed. Update credentials to register this  Oracle ASM instance.',
     UPDATE_SQL_SERVER_PASSWORD: 'Update Microsoft SQL Server password',
+    UPDATE_ORACLE_SERVER_PASSWORD: 'Update Oracle Server password',
+    UPDATE_ORACLE_ASM_PASSWORD: 'Update Oracle ASM password',
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
     INVENTORY_CARD_TEXT1:
@@ -70,6 +78,7 @@ export const GENERAL = {
     MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
     POSTGRESQL_TYPE: 'PostgreSQL',
     ORACLE_TYPE: 'Oracle',
+    ORACLE_ASM_TYPE: 'Oracle ASM',
     USER_DATABASE: 'User Database',
     SYSTEM_DATABASE: 'System Database',
     MULTIPLE_VALUES: 'Multiple values',

@@ -1,3 +1,8 @@
+import store from '../store/store';
+import { addNotification, NOTIFICATION_TYPES } from '../store/notificationSlice';
+import { DETECT_HOST_VAR, RESET_PASSWORD_TYPE } from './consts';
+import { resetAllPasswords, setPasswordResetLoading } from '../store/workloadFactory/workloadFactoryResourceSlice';
+
 interface Dispatch {
     (action: any): void;
 }
@@ -107,4 +112,116 @@ export const mapDismissedValues = (data: any, itemName: string | any) => {
         }
     }
     return null;
+};
+
+export const createOraclePayLoad = (value: string, selectedDatabaseInstanceName: string) => {
+    const state = store.getState();
+    const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
+    const { password } = sqlServerPasswords;
+    const credList = [];
+    credList.push({
+        resourceId: selectedDatabaseInstanceName,
+        resourceType: value === RESET_PASSWORD_TYPE.ORACLESERVER ? DETECT_HOST_VAR.ORACLE : DETECT_HOST_VAR.ORACLE_ASM,
+        username: sqlServerUserName,
+        password
+    });
+
+    return { credentials: credList };
+};
+
+export const createPayload = (resourceDetails: any) => {
+    const state = store.getState();
+    const { fsxAdminPasswords } = state.workloadFactoryResource;
+    const { password } = fsxAdminPasswords;
+    const credList = [];
+    credList.push({
+        resourceId: resourceDetails?.topology?.fileSystemId, // need to implementfrom GetWell
+        resourceType: DETECT_HOST_VAR.FSX,
+        username: 'fsxadmin',
+        password
+    });
+
+    return { credentials: credList };
+};
+
+export const handleFSXAdminApply = async (
+    value: string,
+    selectedDatabaseInstanceName: string,
+    resourceDetails: any,
+    selectedResourceCredId: string,
+    selectedResourceRegionId: string,
+    registerResourceCredBulk: any,
+    dispatch: any,
+    closeDialog: () => void
+) => {
+    dispatch(setPasswordResetLoading(true));
+    try {
+        let credList =
+            value === RESET_PASSWORD_TYPE.ORACLESERVER
+                ? createOraclePayLoad(RESET_PASSWORD_TYPE.ORACLESERVER, selectedDatabaseInstanceName)
+                : createOraclePayLoad(RESET_PASSWORD_TYPE.ORACLEASM, selectedDatabaseInstanceName);
+        if (value === RESET_PASSWORD_TYPE.FSXADMIN) {
+            credList = createPayload(resourceDetails);
+        }
+        const getPasswordTypeLabel = (type: string) => {
+            if (type === RESET_PASSWORD_TYPE.FSXADMIN) return 'fsxadmin';
+            if (type === RESET_PASSWORD_TYPE.ORACLESERVER) return 'Oracle Server';
+            return 'Oracle ASM';
+        };
+        const payload = {
+            items: [
+                {
+                    ...credList,
+                    ec2InstanceId: resourceDetails?.nodeTopology?.ec2Details[0]?.id,
+                    region: selectedResourceRegionId,
+                    credentialsId: selectedResourceCredId
+                }
+            ]
+        };
+        const result = await registerResourceCredBulk({ payload });
+        if (result && !result?.error && result?.data) {
+            if (
+                result?.data?.items?.length > 0 &&
+                !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
+                !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
+            ) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: `${getPasswordTypeLabel(value)} password updated successfully`
+                    })
+                );
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message:
+                            result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
+                            result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
+                            `Failed to update ${getPasswordTypeLabel(value)} password. `
+                    })
+                );
+            }
+        } else {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message:
+                        // @ts-ignore
+                        result?.error?.data?.message || `Failed to update ${getPasswordTypeLabel(value)} password. `
+                })
+            );
+        }
+    } catch (error) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: error || 'Failed to update fsxadmin password. '
+            })
+        );
+    } finally {
+        dispatch(resetAllPasswords());
+        dispatch(setPasswordResetLoading(false));
+        closeDialog();
+    }
 };

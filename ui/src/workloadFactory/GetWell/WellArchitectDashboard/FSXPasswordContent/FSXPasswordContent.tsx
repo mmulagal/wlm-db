@@ -1,12 +1,10 @@
-import { DsTypography, PasswordField, Popover, TextField } from '@netapp/design-system';
+import { DsTypography, PasswordField, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import { DsRadioButton } from '@tlveng/wlm-ds';
 import styles from './FSXPasswordContent.module.scss';
-import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { GENERAL } from '../../../../utils/appConstants';
-import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import {
     setFsxAdminConfirmPassword,
     setFsxAdminPassword,
@@ -19,17 +17,26 @@ import {
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { isValidSqlUsername } from '../../../../utils/utilityFunctions';
-import { AUTHENTICATION_TYPE } from '../../../../utils/consts';
+import { AUTHENTICATION_TYPE, RESET_PASSWORD_TYPE } from '../../../../utils/consts';
 import { AppDispatch } from '../../../../store/store';
 
 interface PasswordContentProps {
-    type: 'fsx' | 'sql';
+    type: string;
     password: string;
     confirmPassword: string;
     setPassword: (value: string) => void;
     setConfirmPassword: (value: string) => void;
     description: string;
     username: string;
+}
+
+interface FSXPasswordContentProps {
+    type: string;
+    engine: string;
+}
+
+interface ORACLEPasswordContentProps {
+    type: string;
 }
 
 const PasswordContent = ({
@@ -57,13 +64,13 @@ const PasswordContent = ({
                 {description}
             </DsTypography>
 
-            {type === 'sql' && authModeRadio()}
+            {type === RESET_PASSWORD_TYPE.SQLSERVER && authModeRadio()}
 
             <div className={styles.textArea}>
-                {type === 'fsx' && (
+                {type === RESET_PASSWORD_TYPE.FSXADMIN && (
                     <TextField label={GENERAL.USER_NAME} value={username} className={styles.textField} isDisabled />
                 )}
-                {type === 'sql' && (
+                {(type === RESET_PASSWORD_TYPE.SQLSERVER || type === RESET_PASSWORD_TYPE.ORACLESERVER) && (
                     <TextField
                         label={GENERAL.USER_NAME}
                         value={username}
@@ -103,19 +110,47 @@ const PasswordContent = ({
     );
 };
 
-const FSXPasswordContent = () => {
+const FSXPasswordContent = ({ type, engine }: FSXPasswordContentProps) => {
     const dispatch = useDispatch();
     const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
 
     return (
         <PasswordContent
-            type="fsx"
+            type={type}
             password={password}
             confirmPassword={confirmPassword}
             setPassword={(value: string) => dispatch(setFsxAdminPassword(value))}
             setConfirmPassword={(value: string) => dispatch(setFsxAdminConfirmPassword(value))}
-            description={GENERAL.FSX_PASSWORD_CONTENT}
+            description={
+                engine === RESET_PASSWORD_TYPE.ORACLESERVER
+                    ? GENERAL.ORACLE_FSX_PASSWORD_CONTENT
+                    : GENERAL.FSX_PASSWORD_CONTENT
+            }
             username="fsxadmin"
+        />
+    );
+};
+
+const OracleServerPasswordContent = ({ type }: ORACLEPasswordContentProps) => {
+    const dispatch = useDispatch();
+    const { password: sqlPassword, confirmPassword: sqlConfirmPassword } = useAppSelector(
+        state => state.workloadFactoryResource.sqlServerPasswords
+    );
+    const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
+
+    return (
+        <PasswordContent
+            type={RESET_PASSWORD_TYPE.ORACLESERVER}
+            password={sqlPassword}
+            confirmPassword={sqlConfirmPassword}
+            setPassword={(value: string) => dispatch(setSqlServerPassword(value))}
+            setConfirmPassword={(value: string) => dispatch(setSqlServerConfirmPassword(value))}
+            description={
+                type === RESET_PASSWORD_TYPE.ORACLESERVER
+                    ? GENERAL.ORACLE_PASSWORD_CONTENT
+                    : GENERAL.ORACLE_ASM_PASSWORD_CONTENT
+            }
+            username={sqlServerUserName}
         />
     );
 };
@@ -129,7 +164,7 @@ const SQLServerPasswordContent = () => {
 
     return (
         <PasswordContent
-            type="sql"
+            type={RESET_PASSWORD_TYPE.SQLSERVER}
             password={sqlPassword}
             confirmPassword={sqlConfirmPassword}
             setPassword={(value: string) => dispatch(setSqlServerPassword(value))}
@@ -183,5 +218,5 @@ const authModeRadio = () => {
     );
 };
 
-export { FSXPasswordContent, SQLServerPasswordContent };
+export { FSXPasswordContent, SQLServerPasswordContent, OracleServerPasswordContent };
 export default PasswordContent;

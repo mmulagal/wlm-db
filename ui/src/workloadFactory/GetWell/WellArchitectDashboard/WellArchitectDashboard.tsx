@@ -259,7 +259,16 @@ const WellArchitectDashboard = () => {
                         ? GENERAL.UPDATE_FSX_ADMIN_PASSWORD
                         : GENERAL.UPDATE_SQL_SERVER_PASSWORD
                 }
-                content={type === RESET_PASSWORD_TYPE.FSXADMIN ? <FSXPasswordContent /> : <SQLServerPasswordContent />}
+                content={
+                    type === RESET_PASSWORD_TYPE.FSXADMIN ? (
+                        <FSXPasswordContent
+                            type={RESET_PASSWORD_TYPE.FSXADMIN}
+                            engine={RESET_PASSWORD_TYPE.SQLSERVER}
+                        />
+                    ) : (
+                        <SQLServerPasswordContent />
+                    )
+                }
                 primaryButton={GENERAL.UPDATE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {

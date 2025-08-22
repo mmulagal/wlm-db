@@ -123,6 +123,8 @@ export const FROM_DIALOG = {
     OPTIMIZE: 'optimize',
     FSXADMIN: 'fsxadmin',
     SQLSERVER: 'sqlserver',
+    ORACLEASM: 'oracleasm',
+    ORACLESERVER: 'oracleserver',
     SINGLE_AGENT: 'single_agent',
     LOADER: '',
     EXPLORE_SAVINGS: 'explore_savings',
@@ -494,6 +496,7 @@ export const DETECT_HOST_VAR = {
     MSSQL: 'MSSQL',
     ORACLE: 'ORACLE',
     WINDOWS: 'WINDOWS_USER',
+    ORACLE_ASM: 'ORACLE_ASM',
     RUNNING: 'Running',
     DISABLE: 'disable',
     SHOW: 'show',
@@ -502,7 +505,9 @@ export const DETECT_HOST_VAR = {
 
 export const RESET_PASSWORD_TYPE = {
     FSXADMIN: 'fsxadmin',
-    SQLSERVER: 'sqlserver'
+    SQLSERVER: 'sqlserver',
+    ORACLESERVER: 'oracleserver',
+    ORACLEASM: 'oracleasm'
 };
 
 export const DB_VERSIONS = [
