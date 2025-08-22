@@ -233,7 +233,8 @@ const permissionMissing = (engineType: string, manageSingleInstanceChecks: Manag
                 manageSingleInstanceChecks?.assessment === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
                 manageSingleInstanceChecks?.remediation === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
                 manageSingleInstanceChecks?.dbcreation === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
-                manageSingleInstanceChecks?.sandbox === REGISTER_INSTANCE_STATE.NOT_AVAILABLE
+                manageSingleInstanceChecks?.sandbox === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
+                manageSingleInstanceChecks?.errorInvestigation === REGISTER_INSTANCE_STATE.NOT_AVAILABLE
             );
         default:
             return false;

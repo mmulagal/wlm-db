@@ -106,7 +106,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs
                 message: "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
             }
     }]});
-    }, 700);
+    }, 2000);
 });
 
 router.get(`${BASE_URL}/v1/pricing/region/:region/logs-analysis`, async (req: express.Request, res: any) => {

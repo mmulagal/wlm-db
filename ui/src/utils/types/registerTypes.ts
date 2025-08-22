@@ -17,6 +17,7 @@ export interface ManageStates {
     remediation: string;
     dbcreation: string;
     sandbox: string;
+    errorInvestigation: string;
     ec2InstanceId: string;
     region: string;
     credentialsId: string;

@@ -53,43 +53,6 @@ const OnboardingAccordions = () => {
             )
         },
         {
-            id: '2',
-            title: t('databases.log-analyzer.onboarding-accordion-2-title'),
-            subtitle: t('databases.log-analyzer.prerequisites'),
-            readinessStatus: !data?.networkingPreRequisites?.ready
-                ? t('databases.log-analyzer.readiness-status-missing')
-                : t('databases.log-analyzer.readiness-status-ready'),
-            missingPermission: !data?.networkingPreRequisites?.ready,
-            image: !data?.networkingPreRequisites?.ready ? <NetworkingDisabled /> : <Networking />,
-            content: (
-                <PermissionContent
-                    title={t('databases.log-analyzer.prerequisites-list')}
-                    infoBlock={t('databases.log-analyzer.onboarding-accordion-2-info')}
-                    blocks={[
-                        {
-                            label: t('databases.log-analyzer.onboarding-accordion-2-label'),
-                            values: [t('databases.log-analyzer.onboarding-accordion-2-value-1')],
-                            showCopy: false,
-                            viewPolicy: {
-                                value: false,
-                                withTabs: false
-                            }
-                        },
-                        {
-                            label: t('databases.log-analyzer.onboarding-accordion-2-label'),
-                            values: [t('databases.log-analyzer.onboarding-accordion-2-value-2')],
-                            showCopy: false,
-                            viewPolicy: {
-                                value: false,
-                                withTabs: false
-                            }
-                        }
-                    ]}
-                    policies={{}}
-                />
-            )
-        },
-        {
             id: '3',
             title: t('databases.log-analyzer.onboarding-accordion-3-title'),
             subtitle: t('databases.log-analyzer.prerequisites'),
@@ -134,6 +97,34 @@ const OnboardingAccordions = () => {
                         {
                             label: t('databases.log-analyzer.onboarding-accordion-4-label'),
                             values: [t('databases.log-analyzer.onboarding-accordion-4-value-1')],
+                            showCopy: false,
+                            viewPolicy: {
+                                value: false,
+                                withTabs: false
+                            }
+                        }
+                    ]}
+                    policies={{}}
+                />
+            )
+        },
+        {
+            id: '2',
+            title: t('databases.log-analyzer.onboarding-accordion-2-title'),
+            subtitle: t('databases.log-analyzer.prerequisites'),
+            readinessStatus: !data?.networkingPreRequisites?.ready
+                ? t('databases.log-analyzer.readiness-status-missing')
+                : t('databases.log-analyzer.readiness-status-ready'),
+            missingPermission: !data?.networkingPreRequisites?.ready,
+            image: !data?.networkingPreRequisites?.ready ? <NetworkingDisabled /> : <Networking />,
+            content: (
+                <PermissionContent
+                    title={t('databases.log-analyzer.prerequisites-list')}
+                    infoBlock={t('databases.log-analyzer.onboarding-accordion-2-info')}
+                    blocks={[
+                        {
+                            label: t('databases.log-analyzer.onboarding-accordion-2-label'),
+                            values: [t('databases.log-analyzer.onboarding-accordion-2-value-2')],
                             showCopy: false,
                             viewPolicy: {
                                 value: false,

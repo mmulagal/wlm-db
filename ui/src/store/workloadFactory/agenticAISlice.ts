@@ -37,6 +37,10 @@ export const initialSandboxState: AgenticAIEntities = {
     logAnalyzerPricing: {
         data: null,
         loading: false
+    },
+    agenticRegisterFlowChecks: {
+        data: null,
+        loading: false
     }
 };
 
@@ -133,6 +137,12 @@ const agenticAISlice = createSlice({
         },
         setLogAnalyzerPricingLoading: (state, action: PayloadAction<boolean>) => {
             state.logAnalyzerPricing.loading = action.payload;
+        },
+        setAgenticRegisterFlowData: (state, action: PayloadAction<any>) => {
+            state.agenticRegisterFlowChecks.data = action.payload;
+        },
+        setAgenticRegisterFlowLoading: (state, action: PayloadAction<boolean>) => {
+            state.agenticRegisterFlowChecks.loading = action.payload;
         }
     }
 });
@@ -158,7 +168,9 @@ export const {
     setLogAnalyzerPreReqData,
     setLogAnalyzerPreReqLoading,
     setLogAnalyzerPricingData,
-    setLogAnalyzerPricingLoading
+    setLogAnalyzerPricingLoading,
+    setAgenticRegisterFlowData,
+    setAgenticRegisterFlowLoading
 } = agenticAISlice.actions;
 
 export default agenticAISlice;

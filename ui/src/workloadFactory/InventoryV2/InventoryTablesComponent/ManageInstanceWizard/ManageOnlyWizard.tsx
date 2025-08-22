@@ -2,6 +2,7 @@ import {
     BlueXPListeners,
     Button,
     Header,
+    Spinner,
     StepLayout,
     WizardContent,
     WizardFooter,
@@ -33,6 +34,7 @@ const ManageOnlyWizard = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
+    const { loading } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
     const engineTypeRaw = useAppSelector(
         state => state.inventoryV2.manageSingleInstanceData?.hostType
     ) as keyof typeof manageBulkMuttionApi;
@@ -59,6 +61,14 @@ const ManageOnlyWizard = () => {
     };
     return (
         <StepLayout>
+            {loading && (
+                <>
+                    <div className={styles.loaderOverlay} />
+                    <div className={styles.spinnerPlacement}>
+                        <Spinner isLarge />
+                    </div>
+                </>
+            )}
             <Header
                 className={styles['manage-instance-wizard']}
                 title={t('databases.register-flow.register-instance')}

@@ -36,7 +36,8 @@ const LogAnalyzerOnboardingAPI = () => {
             const result: { data?: any; error?: any } = await getLogAnalyzerPreReqApi({
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                databaseHostId: selectedResourceId
+                type: 'databaseHostId',
+                typeId: selectedResourceId
             });
             if (result && !result?.error && result?.data?.items?.length > 0 && !result?.data?.items[0]?.errorMessage) {
                 dispatch(setLogAnalyzerPreReqData(result?.data?.items[0]));

@@ -12,6 +12,8 @@ import { ReactComponent as ReviewDisabled } from '../../../../../../assets/Revie
 import { ReactComponent as FixDisabled } from '../../../../../../assets/Fix-disabled.svg';
 import { ReactComponent as DatabaseDisabled } from '../../../../../../assets/Database-disabled.svg';
 import { ReactComponent as SandboxImageDisabled } from '../../../../../../assets/Sandbox-disabled.svg';
+import { ReactComponent as BedrockDisabled } from '../../../../../../assets/Bedrock-disabled.svg';
+import { ReactComponent as Bedrock } from '../../../../../../assets/Bedrock.svg';
 
 export const PermissionListComponentItems = (
     t: TFunction,
@@ -299,6 +301,43 @@ export const PermissionListComponentItems = (
                         {
                             label: t('databases.register-flow.powershell-modules'),
                             values: ['AWS.Tools.SimpleSystemsManagement', 'NetApp.ONTAP']
+                        }
+                    ]}
+                    policies={policiesList}
+                />
+            )
+        },
+        {
+            id: '5',
+            title: t('databases.register-flow.error-investigation'),
+            subtitle: t('databases.register-flow.capability'),
+            readinessStatus: manageChecks?.errorInvestigation,
+            missingPermission: manageChecks?.errorInvestigation !== MANAGE_STATES.READY,
+            image:
+                wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.errorInvestigation !== MANAGE_STATES.READY ? (
+                    <BedrockDisabled />
+                ) : (
+                    <Bedrock />
+                ),
+            content: (
+                <PermissionContent
+                    title={t('databases.register-flow.prerequisites-list')}
+                    blocks={[
+                        {
+                            label: t('databases.register-flow.amazon-bedrock-model-activation'),
+                            values: ['anthropic.claude-sonnet-4-20250514']
+                        },
+                        {
+                            label: t('databases.register-flow.private-endpoint-for-bedrock'),
+                            values: [t('databases.register-flow.private-endpoint-for-bedrock-text')]
+                        },
+                        {
+                            label: t('databases.register-flow.aws-iam-permissions'),
+                            values: [
+                                'bedrock:InvokeModel',
+                                'bedrock:GetFoundationModelAvailability',
+                                'bedrock:ListInferenceProfiles'
+                            ]
                         }
                     ]}
                     policies={policiesList}

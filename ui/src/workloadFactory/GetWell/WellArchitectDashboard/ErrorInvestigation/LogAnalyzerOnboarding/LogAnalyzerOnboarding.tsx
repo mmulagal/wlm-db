@@ -95,7 +95,8 @@ const LogAnalyzerOnboarding = () => {
             const result: { data?: any; error?: any } = await getLogAnalyzerPreReqApi({
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                databaseHostId: selectedResourceId
+                type: 'databaseHostId',
+                typeId: selectedResourceId
             });
             if (result && !result?.error && result?.data?.items?.length > 0 && !result?.data?.items[0]?.errorMessage) {
                 dispatch(setLogAnalyzerPreReqData(result?.data?.items[0]));
@@ -154,9 +155,7 @@ const LogAnalyzerOnboarding = () => {
                             <div className={styles.sections}>
                                 <DsTypography variant="Semibold_14">{t('databases.log-analyzer.cost')}</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    {t('databases.log-analyzer.cost-content1')}
-                                    {loading ? <DsFlashingDotsLoader /> : data?.costPerError || '2'}
-                                    {t('databases.log-analyzer.cost-content2')}
+                                    {t('databases.log-analyzer.cost-content')}
                                 </DsTypography>
                             </div>
 

@@ -1,5 +1,5 @@
 import { TFunction } from 'i18next';
-import { DBType, MANAGE_STATES, REGISTER_INSTANCE_STATE } from '../../../../../utils/consts';
+import { ACTION_TYPE, DBType, MANAGE_STATES, REGISTER_INSTANCE_STATE } from '../../../../../utils/consts';
 import {
     BulkDetectedInstance,
     ExtendedManageStates,
@@ -7,6 +7,9 @@ import {
     ManageStates
 } from '../../../../../utils/types/registerTypes';
 import { checkOverallManageState, getPermissionState } from '../ManageInstanceUtils';
+import { setAgenticRegisterFlowLoading } from '../../../../../store/workloadFactory/agenticAISlice';
+import { GENERAL } from '../../../../../utils/appConstants';
+import { setManageSingleInstanceChecks } from '../../../../../store/workloadFactory/inventoryV2Slice';
 
 // Map engine types to required checks
 export const ENGINE_TYPE_CHECKS: Record<string, string[]> = {
@@ -117,6 +120,7 @@ export const getManageCheckObjInitial = (hostType: string) => {
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.dbcreation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.sandbox = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
+        manageCheckObj.errorInvestigation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
     }
 
     return manageCheckObj;
@@ -149,7 +153,8 @@ export function getManageCheckObjFinal(
         assessment: getPermissionState('assessment', manageReadinessData, DBType.MSSQL),
         remediation: getPermissionState('remediation', manageReadinessData, DBType.MSSQL),
         dbcreation: getPermissionState('dbcreation', manageReadinessData, DBType.MSSQL),
-        sandbox: getPermissionState('sandbox', manageReadinessData, DBType.MSSQL)
+        sandbox: getPermissionState('sandbox', manageReadinessData, DBType.MSSQL),
+        errorInvestigation: getPermissionState('errorInvestigation', manageReadinessData, DBType.MSSQL)
     };
 }
 
@@ -194,6 +199,10 @@ export const getManageCheckObjMultiInitial = (hostType: string, t: TFunction) =>
             {
                 key: t('databases.register-flow.create-database-copies-sandbox'),
                 value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
+            },
+            {
+                key: t('databases.register-flow.error-investigation'),
+                value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
             }
         ];
     }
@@ -235,6 +244,8 @@ export function getManageCheckObjMultiFinal(
     const remediation = getPermissionState('remediation', manageReadinessData, DBType.MSSQL);
     const dbcreation = getPermissionState('dbcreation', manageReadinessData, DBType.MSSQL);
     const sandbox = getPermissionState('sandbox', manageReadinessData, DBType.MSSQL);
+    const errorInvestigation = getPermissionState('errorInvestigation', manageReadinessData, DBType.MSSQL);
+
     const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
     let readyCount = 0;
     const perRowState = [
@@ -253,6 +264,10 @@ export function getManageCheckObjMultiFinal(
         {
             key: t('databases.register-flow.create-database-copies-sandbox'),
             value: sandbox
+        },
+        {
+            key: t('databases.register-flow.error-investigation'),
+            value: errorInvestigation
         }
     ];
     if (assessment === MANAGE_STATES.READY) {
@@ -267,12 +282,16 @@ export function getManageCheckObjMultiFinal(
     if (sandbox === MANAGE_STATES.READY) {
         readyCount += 1;
     }
+    if (errorInvestigation === MANAGE_STATES.READY) {
+        readyCount += 1;
+    }
     return {
         ...manageCheckObj,
         assessment,
         remediation,
         dbcreation,
         sandbox,
+        errorInvestigation,
         ec2InstanceId: manageInstanceData?.data?.ec2InstanceId,
         region: manageInstanceData?.data?.regionId,
         credentialsId: manageInstanceData?.data?.credentialId,
@@ -282,3 +301,94 @@ export function getManageCheckObjMultiFinal(
         perRowState
     };
 }
+
+export const fetchErrorInvestigationState = async (
+    manageCheckObj: Partial<ManageStates>,
+    getLogAnalyzerPreReqApi: any,
+    dispatch: any,
+    manageSingleInstanceData: any
+) => {
+    if (manageCheckObj && manageSingleInstanceData) {
+        try {
+            const agenticPreReqChk = await getAgenticPreReqData(
+                getLogAnalyzerPreReqApi,
+                dispatch,
+                manageSingleInstanceData
+            );
+            const missingSqlPermissionsList: string[] = [];
+            if (agenticPreReqChk === MANAGE_STATES.MISSING_PREREQUISITES) {
+                missingSqlPermissionsList.push('bedrockPreRequisites');
+            }
+
+            // Update the Redux store with the new errorInvestigation state
+            dispatch(
+                setManageSingleInstanceChecks({
+                    ...manageCheckObj,
+                    manageReadinessData: {
+                        ...manageCheckObj.manageReadinessData,
+                        errorInvestigation: {
+                            missingModules: [],
+                            missingSqlPermissions: missingSqlPermissionsList
+                        }
+                    },
+                    errorInvestigation: agenticPreReqChk
+                })
+            );
+        } catch (error) {
+            // Fallback to missing prerequisites state
+            dispatch(
+                setManageSingleInstanceChecks({
+                    ...manageCheckObj,
+                    errorInvestigation: GENERAL.NOT_AVAILABLE
+                })
+            );
+        }
+    }
+};
+
+export const getAgenticPreReqData = async (
+    getLogAnalyzerPreReqApi: any,
+    dispatch: any,
+    manageSingleInstanceData: any
+) => {
+    let result = GENERAL.NOT_AVAILABLE;
+    const { ec2InstanceId, credentialId, regionId, hostRow } = manageSingleInstanceData || {};
+
+    // Find partner instance (if any)
+    const partnerInstance = hostRow?.ec2Details?.find((inst: { id?: string }) => inst.id !== ec2InstanceId);
+
+    try {
+        dispatch(setAgenticRegisterFlowLoading(true));
+        const apiResult: { data?: any; error?: any } = await getLogAnalyzerPreReqApi({
+            credentialId,
+            regionId,
+            type: 'ec2InstanceId',
+            typeId: ec2InstanceId + (partnerInstance ? `,${partnerInstance?.id}` : '')
+        });
+
+        if (apiResult && !apiResult?.error && apiResult?.data?.items) {
+            // Check if all prerequisites are ready for all items
+            const allItemsReady = apiResult.data.items?.every((item: any) => {
+                const prerequisites = [
+                    item.bedrockPreRequisites?.ready,
+                    item.instanceProfilePreRequisites?.ready,
+                    item.credentialsPreRequisites?.ready,
+                    item.networkingPreRequisites?.ready
+                ];
+
+                // All 4 prerequisites must be true for this item to be ready
+                return prerequisites.every(prereq => prereq === true);
+            });
+
+            result = allItemsReady ? MANAGE_STATES.READY : MANAGE_STATES.MISSING_PREREQUISITES;
+        } else {
+            result = MANAGE_STATES.MISSING_PREREQUISITES;
+        }
+    } catch (error) {
+        result = MANAGE_STATES.MISSING_PREREQUISITES;
+    } finally {
+        dispatch(setAgenticRegisterFlowLoading(false));
+    }
+
+    return result;
+};

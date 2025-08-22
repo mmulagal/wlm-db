@@ -1,4 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, Spinner } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -22,7 +22,7 @@ import {
     mergeReadinessData,
     missingModules
 } from '../ManageInstanceUtils';
-import { useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
+import { useGetLogAnalyzerPreReqMutation, useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
 import {
     BulkDetectedInstance,
     ExtendedManageStates,
@@ -33,6 +33,7 @@ import {
     ENGINE_AUTH_FIELDS,
     ENGINE_TYPE_CHECKS,
     ENGINE_TYPE_CONTENT_KEYS,
+    fetchErrorInvestigationState,
     getDiscoveredHostDataByType,
     getEffectiveManageReadinessData,
     getManageCheckObjFinal,
@@ -45,11 +46,16 @@ import {
 export const Content = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const [getLogAnalyzerPreReqApi] = useGetLogAnalyzerPreReqMutation();
+
     const [manageMultiChecks, setManageMultiChecks] = useState<Partial<ManageStates>>({});
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
-    const { manageSingleInstanceData, manageSingleInstanceReadiness, selectedMultiDetectInstances } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const {
+        manageSingleInstanceData,
+        manageSingleInstanceReadiness,
+        selectedMultiDetectInstances,
+        manageSingleInstanceChecks: manageChecks
+    } = useAppSelector(state => state.inventoryV2);
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
 
@@ -134,10 +140,11 @@ export const Content = () => {
     };
 
     // Manage checks for single instance
-    const manageChecks = useMemo(() => {
+    useEffect(() => {
         if (wizardOperationType !== ACTION_TYPE.SINGLE) {
             return;
         }
+
         let manageCheckObj: Partial<ManageStates> = getManageCheckObjInitial(hostType);
 
         let manageReadinessData: ManageReadinessData | null = null;
@@ -192,9 +199,18 @@ export const Content = () => {
                 manageCheckObj
             );
             dispatch(setManageSingleInstanceChecks(manageCheckObj));
-            return manageCheckObj;
+
+            // Fetch agentic pre-requisites if available
+            if (hostType === DBType.MSSQL && wizardOperationType === ACTION_TYPE.SINGLE) {
+                fetchErrorInvestigationState(
+                    manageCheckObj,
+                    getLogAnalyzerPreReqApi,
+                    dispatch,
+                    manageSingleInstanceData
+                );
+            }
         }
-        return manageCheckObj;
+        dispatch(setManageSingleInstanceChecks(manageCheckObj));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [manageSingleInstanceData, manageSingleInstanceReadiness, hostType]);
 
@@ -265,7 +281,7 @@ export const Content = () => {
                 }
             });
             // Build manageStates for this row, only including relevant checks
-            const rowManageStates: Record<string, any> = { ...manageStates };
+            const rowManageStates: any = { ...manageStates };
             engineChecks.forEach(check => {
                 rowManageStates[check] = (manageStates as any)?.[check] ?? false;
                 // If you have associated lists (like installMissingAWSList), add them here as needed
@@ -291,7 +307,7 @@ export const Content = () => {
                 hostName: item?.data?.name,
                 readinessStatus: item?.authorized ? manageStates?.overallState : MANAGE_STATES.NOT_READY,
                 readyCount: manageStates?.readyCount,
-                totalCount: 4,
+                totalCount: 5,
                 perRowState: manageStates?.perRowState || [],
                 manageStates: rowManageStates
             });

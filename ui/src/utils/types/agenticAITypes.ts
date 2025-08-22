@@ -63,6 +63,9 @@ export interface AgenticAIEntities {
         } | null;
         loading: boolean;
     };
+    agenticRegisterFlowChecks: {
+        [key: string]: any;
+    };
 }
 
 export interface ErrorInvestigationInstance {

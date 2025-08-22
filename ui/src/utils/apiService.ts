@@ -1351,8 +1351,8 @@ export const errorInvestigationApi = createApi({
             }
         }),
         getLogAnalyzerPreReq: builder.mutation({
-            query: ({ credentialId, regionId, databaseHostId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/logs-analysis/pre-requisites?databaseHostId=${databaseHostId}`
+            query: ({ credentialId, regionId, type, typeId }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/logs-analysis/pre-requisites?${type}=${typeId}`
             })
         }),
         getLogAnalyzerPricing: builder.mutation({
