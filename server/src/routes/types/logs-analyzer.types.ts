@@ -107,7 +107,7 @@ const AnalyzePreRequisitesQuery = Type.Object({
             description: 'EC2 Instance ID of unmanaged database host instances',
             minLength: 8,
             maxLength: 200,
-            pattern: '^i-[0-9a-f]{8,17}(?:,i-[0-9a-f]{8,17}){0,4}$'
+            pattern: '^i-[0-9a-z]{8,17}(?:,i-[0-9a-z]{8,17}){0,4}$'
         })
     )
 });
