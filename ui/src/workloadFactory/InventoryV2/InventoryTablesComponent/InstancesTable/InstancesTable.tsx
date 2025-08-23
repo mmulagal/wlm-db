@@ -552,7 +552,7 @@ const InstancesTable = () => {
                         rowData={rowData}
                     />
                 }
-                primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.start')}
+                primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.continue')}
                 secondaryButton={t('databases.inventory.cancel')}
                 closeCallback={() => {
                     closeDialog();

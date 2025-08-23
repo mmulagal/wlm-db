@@ -12,6 +12,9 @@ const WindowsAuthDialog = () => {
     const { username, password } = useAppSelector(state => state.snapCenter.credentials);
     return (
         <div className={styles.windowsAuthDialog}>
+            <DsTypography variant="Regular_14" className={styles.text}>
+                {t('databases.inventory.windows-auth-text')}
+            </DsTypography>
             <DsTypography variant="Semibold_14" className={styles.authHeader}>
                 {t('databases.inventory.windows-authentication')}
             </DsTypography>

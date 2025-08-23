@@ -50,7 +50,7 @@
             "install-note": "Installing missing PowerShell module 7 requires a system reboot at your convenience. Select 'Register' to authorize Workload Factory to automatically install PowerShell 7.",
             "view-policy": "View policy",
             "create-database-copies-sandbox": "Create sandbox (database clone)",
-            "error-investigation":"Error investigation",
+            "error-investigation": "Error investigation",
             "create-database": "Create database",
             "ec2-iam-instance-profile-permissions": "EC2 IAM instance profile permissions",
             "capability": "Capability",
@@ -389,6 +389,7 @@
             "ssd-capacity": "SSD capacity"
         },
         "inventory": {
+            "windows-auth-text": "Registering Microsoft SQL Server hosts in BlueXP backup and recovery requires Windows credentials with administrative access.",
             "enter-windows-username": "Enter Windows user name",
             "enter-password": "Enter password",
             "windows-authentication": "Windows authentication",
@@ -403,7 +404,7 @@
             "top-section-text": "To protect the SQL Server instance, you will be redirected to BlueXP backup and recovery to configure protection.",
             "top-section-text-database": "To protect the SQL Server database, you will be redirected to BlueXP backup and recovery to configure protection.",
             "agent-req": "Connector requirement",
-            "agent-req-text": "You must have an active Connector to use SQL Server protection.",
+            "agent-req-text": "You must have an active Connector to protect SQL Server with BlueXP backup and recovery.",
             "steps-to-follow": "Steps",
             "click-redirect": "Select Redirect",
             "point-1-text": "You will be redirected to BlueXP backup and recovery.",
