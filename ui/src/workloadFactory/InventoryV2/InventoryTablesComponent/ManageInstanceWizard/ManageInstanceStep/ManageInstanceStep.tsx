@@ -34,13 +34,16 @@ import {
     ENGINE_TYPE_CHECKS,
     ENGINE_TYPE_CONTENT_KEYS,
     fetchErrorInvestigationState,
+    fetchErrorInvestigationStateBulk,
     getDiscoveredHostDataByType,
     getEffectiveManageReadinessData,
     getManageCheckObjFinal,
     getManageCheckObjInitial,
     getManageCheckObjMultiFinal,
     getManageCheckObjMultiInitial,
-    getManageReadinessFromInstance
+    getManageReadinessFromInstance,
+    isEc2InstanceAgenticReady,
+    updateItemWithAgenticData
 } from './ManageInstanceStepHelper';
 
 export const Content = () => {
@@ -58,6 +61,7 @@ export const Content = () => {
     } = useAppSelector(state => state.inventoryV2);
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
+    const { data: agenticPreReqData } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
 
     const isAlreadyDetected = useMemo(
         () => isAlreadyDetectedCheck(manageSingleInstanceData),
@@ -273,6 +277,10 @@ export const Content = () => {
         });
 
         selectedMultiDetectInstances?.forEach((item: BulkDetectedInstance) => {
+            if (hostType === DBType.MSSQL) {
+                item = updateItemWithAgenticData(item);
+            }
+
             const manageStates = manageCheck(item);
             // For each check, update checksAll if any instance is missing it
             engineChecks.forEach(check => {
@@ -309,7 +317,8 @@ export const Content = () => {
                 readyCount: manageStates?.readyCount,
                 totalCount: 5,
                 perRowState: manageStates?.perRowState || [],
-                manageStates: rowManageStates
+                manageStates: rowManageStates,
+                manageReadiness: item?.manageReadiness
             });
         });
         const multiChecks: Record<string, boolean> = {};
@@ -319,6 +328,13 @@ export const Content = () => {
         setManageMultiChecks(multiChecks);
         dispatch(setBulkDetectedInstanceList(newTableData));
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedMultiDetectInstances, agenticPreReqData]);
+
+    useEffect(() => {
+        if (wizardOperationType !== ACTION_TYPE.BULK || hostType !== DBType.MSSQL) {
+            return;
+        }
+        fetchErrorInvestigationStateBulk(selectedMultiDetectInstances, getLogAnalyzerPreReqApi, dispatch);
     }, [selectedMultiDetectInstances]);
 
     return (

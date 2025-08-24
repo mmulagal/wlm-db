@@ -553,7 +553,7 @@ export const snapcenterAPI = createApi({
     endpoints: builder => ({
         getOrganizationIds: builder.mutation({
             query: () => ({
-                url: `v1/management/organizations?limit=1000`
+                url: 'v1/management/organizations?limit=1000'
             })
         }),
         getSCCrendentials: builder.mutation({

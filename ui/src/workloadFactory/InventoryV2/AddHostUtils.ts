@@ -83,7 +83,7 @@ export const handleProtectionUtil = async (
 
     dispatch(setDataForRow({ key, stepData: { cancelled: false } }));
 
-    const isWorkloadFactory = store.getState().auth.isWorkloadFactory;
+    const { isWorkloadFactory } = store.getState().auth;
 
     if (isWorkloadFactory && store.getState().auth.orgId === undefined) {
         const orgRes = await getOrganizationIds();

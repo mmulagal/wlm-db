@@ -143,6 +143,10 @@ const agenticAISlice = createSlice({
         },
         setAgenticRegisterFlowLoading: (state, action: PayloadAction<boolean>) => {
             state.agenticRegisterFlowChecks.loading = action.payload;
+        },
+        resetAgenticPreCheckData: state => {
+            state.agenticRegisterFlowChecks.data = null;
+            state.agenticRegisterFlowChecks.loading = false;
         }
     }
 });
@@ -170,7 +174,8 @@ export const {
     setLogAnalyzerPricingData,
     setLogAnalyzerPricingLoading,
     setAgenticRegisterFlowData,
-    setAgenticRegisterFlowLoading
+    setAgenticRegisterFlowLoading,
+    resetAgenticPreCheckData
 } = agenticAISlice.actions;
 
 export default agenticAISlice;

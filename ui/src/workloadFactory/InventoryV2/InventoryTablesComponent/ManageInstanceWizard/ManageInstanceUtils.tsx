@@ -677,15 +677,20 @@ export const checkOverallManageState = (
     assessment: string,
     remediation: string,
     dbcreation: string,
-    sandbox: string
+    sandbox: string,
+    errorInvestigation: string
 ) => {
     let overallState = '';
 
-    if ([assessment, remediation, dbcreation, sandbox].includes(MANAGE_STATES.READY)) {
+    if ([assessment, remediation, dbcreation, sandbox, errorInvestigation].includes(MANAGE_STATES.READY)) {
         overallState = MANAGE_STATES.READY;
-    } else if ([assessment, remediation, dbcreation, sandbox].includes(MANAGE_STATES.MISSING_PREREQUISITES)) {
+    } else if (
+        [assessment, remediation, dbcreation, sandbox, errorInvestigation].includes(MANAGE_STATES.MISSING_PREREQUISITES)
+    ) {
         overallState = MANAGE_STATES.MISSING_PREREQUISITES;
-    } else if ([assessment, remediation, dbcreation, sandbox].includes(MANAGE_STATES.MISSING_POWERSHELL)) {
+    } else if (
+        [assessment, remediation, dbcreation, sandbox, errorInvestigation].includes(MANAGE_STATES.MISSING_POWERSHELL)
+    ) {
         overallState = MANAGE_STATES.MISSING_POWERSHELL;
     } else {
         overallState = MANAGE_STATES.NOT_READY;

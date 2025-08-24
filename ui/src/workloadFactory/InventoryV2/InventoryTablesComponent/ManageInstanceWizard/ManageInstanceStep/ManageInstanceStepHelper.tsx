@@ -7,9 +7,13 @@ import {
     ManageStates
 } from '../../../../../utils/types/registerTypes';
 import { checkOverallManageState, getPermissionState } from '../ManageInstanceUtils';
-import { setAgenticRegisterFlowLoading } from '../../../../../store/workloadFactory/agenticAISlice';
+import {
+    setAgenticRegisterFlowLoading,
+    setAgenticRegisterFlowData
+} from '../../../../../store/workloadFactory/agenticAISlice';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { setManageSingleInstanceChecks } from '../../../../../store/workloadFactory/inventoryV2Slice';
+import store from '../../../../../store/store';
 
 // Map engine types to required checks
 export const ENGINE_TYPE_CHECKS: Record<string, string[]> = {
@@ -183,6 +187,7 @@ export const getManageCheckObjMultiInitial = (hostType: string, t: TFunction) =>
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.dbcreation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.sandbox = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
+        manageCheckObj.errorInvestigation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.perRowState = [
             {
                 key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
@@ -246,8 +251,10 @@ export function getManageCheckObjMultiFinal(
     const sandbox = getPermissionState('sandbox', manageReadinessData, DBType.MSSQL);
     const errorInvestigation = getPermissionState('errorInvestigation', manageReadinessData, DBType.MSSQL);
 
-    const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
-    let readyCount = 0;
+    const states = [assessment, remediation, dbcreation, sandbox, errorInvestigation];
+    const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox, errorInvestigation);
+    const readyCount = states.filter(state => state === MANAGE_STATES.READY).length;
+
     const perRowState = [
         {
             key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
@@ -270,21 +277,6 @@ export function getManageCheckObjMultiFinal(
             value: errorInvestigation
         }
     ];
-    if (assessment === MANAGE_STATES.READY) {
-        readyCount += 1;
-    }
-    if (remediation === MANAGE_STATES.READY) {
-        readyCount += 1;
-    }
-    if (dbcreation === MANAGE_STATES.READY) {
-        readyCount += 1;
-    }
-    if (sandbox === MANAGE_STATES.READY) {
-        readyCount += 1;
-    }
-    if (errorInvestigation === MANAGE_STATES.READY) {
-        readyCount += 1;
-    }
     return {
         ...manageCheckObj,
         assessment,
@@ -391,4 +383,205 @@ export const getAgenticPreReqData = async (
     }
 
     return result;
+};
+
+export const fetchErrorInvestigationStateBulk = async (
+    selectedMultiDetectInstances: BulkDetectedInstance[],
+    getLogAnalyzerPreReqApi: any,
+    dispatch: any
+) => {
+    if (!selectedMultiDetectInstances || selectedMultiDetectInstances.length === 0) {
+        return;
+    }
+
+    // Helper function to create default prerequisite data
+    const createDefaultPrereqData = (ec2InstanceId: string, databaseHostId: string = '') => ({
+        databaseHostId,
+        ec2InstanceId,
+        bedrockPreRequisites: { ready: false, message: '' },
+        instanceProfilePreRequisites: { ready: false, message: '' },
+        credentialsPreRequisites: { ready: false, message: '' },
+        networkingPreRequisites: { ready: false, message: '' }
+    });
+
+    try {
+        dispatch(setAgenticRegisterFlowLoading(true));
+
+        // Get current state data
+        const state = store.getState();
+        const existingData = state.agenticAI.agenticRegisterFlowChecks.data || {};
+
+        // Collect all unique EC2 instance IDs including partner instances
+        const ec2InstanceMap = new Map<string, { credentialId: string; regionId: string; databaseHostId: string }>();
+        const keysToFetch = new Set<string>(); // Only keys that need API calls
+
+        selectedMultiDetectInstances.forEach((instance: BulkDetectedInstance) => {
+            const { ec2InstanceId, credentialId, regionId, hostRow, databaseHostId } = instance.data || {};
+
+            if (ec2InstanceId && credentialId && regionId) {
+                const key = `${credentialId}_${regionId}_${ec2InstanceId}`;
+                ec2InstanceMap.set(key, {
+                    credentialId,
+                    regionId,
+                    databaseHostId: databaseHostId || ''
+                });
+
+                // Check if key exists in state, if not add to fetch list
+                if (!existingData[key]) {
+                    keysToFetch.add(key);
+                }
+
+                // Add partner instance if it exists
+                const partnerInstance = hostRow?.ec2Details?.find((inst: { id?: string }) => inst.id !== ec2InstanceId);
+                if (partnerInstance?.id) {
+                    const partnerKey = `${credentialId}_${regionId}_${partnerInstance.id}`;
+                    ec2InstanceMap.set(partnerKey, {
+                        credentialId,
+                        regionId,
+                        databaseHostId: databaseHostId || ''
+                    });
+
+                    // Check if partner key exists in state, if not add to fetch list
+                    if (!existingData[partnerKey]) {
+                        keysToFetch.add(partnerKey);
+                    }
+                }
+            }
+        });
+
+        // If all data already exists, no need to make API calls
+        if (keysToFetch.size === 0) {
+            dispatch(setAgenticRegisterFlowLoading(false));
+            return;
+        }
+
+        // Group instances that need fetching by credential and region for batching
+        const groupedInstances = new Map<string, string[]>();
+        keysToFetch.forEach(key => {
+            const [credentialId, regionId, ec2InstanceId] = key.split('_');
+            const groupKey = `${credentialId}_${regionId}`;
+            if (!groupedInstances.has(groupKey)) {
+                groupedInstances.set(groupKey, []);
+            }
+            groupedInstances.get(groupKey)!.push(ec2InstanceId);
+        });
+
+        // Process instances in batches of 5 per credential/region combination
+        const batchSize = 5;
+        const newResults: Record<string, any> = {};
+
+        for (const [groupKey, instanceIds] of groupedInstances) {
+            const [credentialId, regionId] = groupKey.split('_');
+
+            // Process in batches
+            for (let i = 0; i < instanceIds.length; i += batchSize) {
+                const batch = instanceIds.slice(i, i + batchSize);
+                const batchEc2Ids = batch.join(',');
+
+                try {
+                    const apiResult: { data?: any; error?: any } = await getLogAnalyzerPreReqApi({
+                        credentialId,
+                        regionId,
+                        type: 'ec2InstanceId',
+                        typeId: batchEc2Ids
+                    });
+
+                    if (apiResult && !apiResult?.error && apiResult?.data?.items) {
+                        // Process each item in the batch response
+                        apiResult.data.items.forEach((item: any) => {
+                            const key = `${credentialId}_${regionId}_${item.ec2InstanceId}`;
+                            newResults[key] = item;
+                        });
+                    } else {
+                        // Handle failed batch - set default values for all instances in batch
+                        batch.forEach(ec2InstanceId => {
+                            const key = `${credentialId}_${regionId}_${ec2InstanceId}`;
+                            const instanceInfo = ec2InstanceMap.get(key);
+                            newResults[key] = createDefaultPrereqData(ec2InstanceId, instanceInfo?.databaseHostId);
+                        });
+                    }
+                } catch (batchError) {
+                    // Set default values for failed batch
+                    batch.forEach(ec2InstanceId => {
+                        const key = `${credentialId}_${regionId}_${ec2InstanceId}`;
+                        const instanceInfo = ec2InstanceMap.get(key);
+                        newResults[key] = createDefaultPrereqData(ec2InstanceId, instanceInfo?.databaseHostId);
+                    });
+                }
+            }
+        }
+
+        // Update Redux store with new results only (existing data is preserved)
+        if (Object.keys(newResults).length > 0) {
+            dispatch(
+                setAgenticRegisterFlowData({
+                    ...existingData,
+                    ...newResults
+                })
+            );
+        }
+    } catch (error) {
+        // Handle overall fetch error
+    } finally {
+        dispatch(setAgenticRegisterFlowLoading(false));
+    }
+};
+
+export const isEc2InstanceAgenticReady = (instanceData: any) => {
+    const itemEc2InstanceId = instanceData?.data?.ec2InstanceId || '';
+    const partnerInstanceId = instanceData?.ec2Details?.find((inst: { id?: string }) => inst.id !== itemEc2InstanceId);
+    const state = store.getState();
+    const agenticPreReqData = state.agenticAI.agenticRegisterFlowChecks.data;
+    const key1 = `${instanceData?.data?.credentialId}_${instanceData?.data?.regionId}_${itemEc2InstanceId}`;
+    const key2 = partnerInstanceId
+        ? `${instanceData?.data?.credentialId}_${instanceData?.data?.regionId}_${partnerInstanceId.id}`
+        : null;
+
+    if (!agenticPreReqData?.[key1]) {
+        return '';
+    }
+    const itemsData = [agenticPreReqData[key1]];
+    if (key2 && agenticPreReqData?.[key2]) {
+        itemsData.push(agenticPreReqData[key2]);
+    }
+    const allItemsReady = itemsData?.every((item: any) => {
+        const prerequisites = [
+            item.bedrockPreRequisites?.ready,
+            item.instanceProfilePreRequisites?.ready,
+            item.credentialsPreRequisites?.ready,
+            item.networkingPreRequisites?.ready
+        ];
+
+        // All 4 prerequisites must be true for this item to be ready
+        return prerequisites.every(prereq => prereq === true);
+    });
+    return allItemsReady ? MANAGE_STATES.READY : MANAGE_STATES.MISSING_PREREQUISITES;
+};
+
+export const updateItemWithAgenticData = (item: any) => {
+    const isAgenticReady = isEc2InstanceAgenticReady(item);
+
+    // Early return if no agentic state
+    if (!isAgenticReady) {
+        return item;
+    }
+
+    // Determine missing permissions based on state
+    const missingSqlPermissions =
+        isAgenticReady === MANAGE_STATES.MISSING_PREREQUISITES ? ['bedrockPreRequisites'] : [];
+
+    // Create updated item with error investigation data
+    return {
+        ...item,
+        data: {
+            ...item.data,
+            manageReadiness: {
+                ...item?.data?.manageReadiness,
+                errorInvestigation: {
+                    missingSqlPermissions,
+                    missingModules: []
+                }
+            }
+        }
+    };
 };

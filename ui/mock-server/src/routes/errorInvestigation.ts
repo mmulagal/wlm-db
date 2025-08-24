@@ -3,6 +3,7 @@ import express from 'express';
 import { BASE_URL, generateResponse } from '../utils/appUtils';
 import ErrorInvestigationData from '../data/errorInvestigationGet.json';
 import ErrCountAcc from '../data/errorCountAcc.json';
+import AgenticPreReq from '../data/agenticPreReq.json';
 
 const router = express.Router();
 
@@ -86,26 +87,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs
 
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs-analysis/pre-requisites`, async (req: express.Request, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, {items: [{
-            databaseHostId: '1124',
-            ec2InstanceId: 'i-0a1b2c3d4e5f6g7h8',
-            bedrockPreRequisites: {
-                ready: true,
-                message: 'Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment.'
-            },
-            instanceProfilePreRequisites: {
-                ready: true,
-                message: 'Ensure that the instance profile has the required permissions to access Bedrock Runtime Interface.'
-            },
-            credentialsPreRequisites: {
-                ready: true,
-                message: 'Ensure that the credentials used have the necessary permissions to access Bedrock Runtime Interface.'
-            },
-            networkingPreRequisites: {
-                ready: true,
-                message: "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
-            }
-    }]});
+        generateResponse(res, 200, AgenticPreReq);
     }, 2000);
 });
 

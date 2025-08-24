@@ -68,7 +68,11 @@ import {
     setAuthVerification,
     setDataForRow
 } from '../../../../store/workloadFactory/snapcenterSlice';
-import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
+import {
+    resetAgenticPreCheckData,
+    resetEiData,
+    setLogAnalyzerState
+} from '../../../../store/workloadFactory/agenticAISlice';
 import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
 import { getInstanceTableColumns } from './InstanceTableColumns';
@@ -860,6 +864,7 @@ const InstancesTable = () => {
     const handleManageBulk = () => {
         dispatch(setSelectedMultiDetectInstances([]));
         dispatch(setWizardOperationType('bulk'));
+        dispatch(resetAgenticPreCheckData());
         if (isWorkloadFactory) {
             navigate('../register-bulk-wizard');
         } else {

@@ -34,6 +34,7 @@ import {
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { manageActionCol } from '../../InventoryUtilsV2';
+import { resetAgenticPreCheckData } from '../../../../store/workloadFactory/agenticAISlice';
 
 export function getMssqlInstanceTableColumns({
     t,
@@ -505,6 +506,7 @@ export function getMssqlInstanceTableColumns({
                                             dispatch(setManageSingleInstanceData(rowData));
                                             dispatch(setWizardOperationType('single'));
                                             navigate('../register-wizard');
+                                            dispatch(resetAgenticPreCheckData());
                                             postBlueXPMessage({
                                                 type: BlueXPListeners.navigate,
                                                 payload: {
