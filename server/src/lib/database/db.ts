@@ -898,6 +898,52 @@ async function countDatabaseInstances(
     });
 }
 
+async function weeklyDemoDatabaseCleanup() {
+    const cleanupTime = new Date();
+    logger.info('Starting demo database cleanup', { cleanupTime: cleanupTime.toISOString() });
+
+    try {
+        if (isDemoFlow) {
+            const cleanupResults = await Promise.allSettled([
+                // Delete child tables first (to avoid cascade conflicts)
+                prisma.client.database_instance_config_data.deleteMany({}),
+                prisma.client.database_instances.deleteMany({}),
+                prisma.client.event.deleteMany({}),
+
+                // Then parent tables
+                prisma.client.deployment.deleteMany({}),
+                prisma.client.resource.deleteMany({}),
+
+                // Independent tables (no FK constraints)
+                prisma.client.job.deleteMany({}),
+                prisma.client.tracked_ec2.deleteMany({}),
+                prisma.client.config.deleteMany({}),
+                prisma.client.onprem_tco_reports.deleteMany({}),
+                prisma.client.logs_analysis_reports.deleteMany({})
+            ]);
+
+            const successfulCleanups = cleanupResults.filter(result => result.status === 'fulfilled');
+            const failedCleanups = cleanupResults.filter(result => result.status === 'rejected');
+
+            logger.info(
+                `Demo database cleanup complete: ${successfulCleanups.length} tables cleaned, ${failedCleanups.length} failed`
+            );
+
+            if (failedCleanups.length > 0) {
+                logger.info(
+                    'Some table cleanups failed:',
+                    failedCleanups.map(f => f.reason?.message || 'Unknown error')
+                );
+            }
+        } else {
+            logger.warn('Database cleanup is not allowed in non demo environment!');
+        }
+    } catch (error) {
+        const errorTime = new Date();
+        logger.error('Error during demo database cleanup:', { error, errorTime: errorTime.toISOString() });
+    }
+}
+
 export {
     listDeployments,
     createDeployment,
@@ -929,5 +975,6 @@ export {
     updateTrackedEc2Record,
     deleteOlderDeployments,
     countDatabaseInstances,
-    countTrackedEc2
+    countTrackedEc2,
+    weeklyDemoDatabaseCleanup
 };

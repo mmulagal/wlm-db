@@ -11,12 +11,12 @@ import {
     triggerMssqlAssessment,
     updateAssessmentResultsInInstanceMetadata
 } from './continuous-optimization/mssql/assessment-operations';
-import { formatDuration, sleep } from '../utils/utils';
+import { formatDuration, isDemo, sleep } from '../utils/utils';
 import { INSTANCE_DEFAULT_SELECT_FIELDS } from '../utils/database-consts';
 import { triggerOracleAssessment } from './continuous-optimization/oracle/assessment-operations';
 
 const logger = getLogger();
-
+const isDemoFlow = isDemo();
 interface AccountJobInfo {
     parentJobId: string;
     totalInstances: number;
@@ -203,8 +203,11 @@ async function processAccountInstancesBatch(
         logger.info(
             `Updating metadata for ${instances.length} instances in account ${accountId}, batch ${batchNumber}`
         );
-        await Promise.all(instances.map(throat(3, instance => updateAssessmentResultsInInstanceMetadata(instance))));
-
+        if (!isDemoFlow) {
+            await Promise.all(
+                instances.map(throat(3, instance => updateAssessmentResultsInInstanceMetadata(instance)))
+            );
+        }
         logger.info(
             `Completed processing and metadata update for ${instances.length} instances in account ${accountId}, batch ${batchNumber}`
         );

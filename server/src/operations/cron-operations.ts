@@ -25,7 +25,8 @@ import {
     deleteOlderDeployments,
     deleteResource,
     removeTrackedEc2Record,
-    updateTrackedEc2Record
+    updateTrackedEc2Record,
+    weeklyDemoDatabaseCleanup
 } from '../lib/database/db';
 import { getHostAndSqlServerInfo } from './discover-operations';
 import {
@@ -319,6 +320,46 @@ function purgeOlderDeployments() {
     deleteOlderDeployments(Date.now() - Number(purgeAfter));
 }
 
+function scheduleDemoCleanupWithTimeout() {
+    const runCleanup = async () => {
+        try {
+            logger.info('Executing weekly demo database cleanup');
+            await weeklyDemoDatabaseCleanup();
+            logger.info('Demo cleanup completed successfully');
+        } catch (error) {
+            logger.error('Demo cleanup error:', error);
+        }
+    };
+
+    const now = new Date();
+    const nextSaturday = new Date();
+
+    // Calculate next Saturday 4 AM GMT
+    const daysUntilSaturday = (6 - now.getUTCDay() + 7) % 7 || 7;
+    nextSaturday.setUTCDate(now.getUTCDate() + daysUntilSaturday);
+    nextSaturday.setUTCHours(4, 0, 0, 0);
+
+    // If it's already past Saturday 4 AM this week, schedule for next week
+    if (nextSaturday <= now) {
+        nextSaturday.setUTCDate(nextSaturday.getUTCDate() + 7);
+    }
+
+    const timeUntilNext = nextSaturday.getTime() - now.getTime();
+    const hoursUntil = Math.round(timeUntilNext / (1000 * 60 * 60));
+
+    logger.info(`Scheduling demo cleanup for ${nextSaturday.toISOString()} (in ${hoursUntil} hours), then weekly`);
+
+    setTimeout(async () => {
+        // Run the first cleanup
+        await runCleanup();
+
+        // Set up weekly interval starting from this point
+        setInterval(async () => {
+            await runCleanup();
+        }, ms('1 week'));
+    }, timeUntilNext);
+}
+
 function scheduleCronJob({ queueName, jobName, cronPattern, workerProcessor, onJobErrorMessage }: CronJobOptions) {
     let redisConnection: IORedis;
     try {
@@ -377,6 +418,9 @@ async function initiateCronOperations() {
         await sleep(5 * 60 * 1000); // Wait for 5 minutes before starting the cron jobs to ensure all services are up and running
         purgeOlderJobs();
         purgeAssessmentData();
+        if (isDemoFlow) {
+            scheduleDemoCleanupWithTimeout();
+        }
         if (!isDemoFlow) {
             failLongRunningDeploymentJobs();
             failLongRunningResourcePrepareJobs();

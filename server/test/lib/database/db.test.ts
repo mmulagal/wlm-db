@@ -20,14 +20,18 @@ import {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    updateResource
+    updateResource,
+    weeklyDemoDatabaseCleanup
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import { DatabaseInstanceRecord, PaginatedDatabaseInstancesResponse } from '../../../src/lib/database/db-types';
 import { ResourceDetails } from '../../../src/utils/common-types';
+import { prisma } from '../../../src/utils/prisma-utils';
 
 // Helper function to extract items from listDatabaseInstances response
-function getInstancesArray(result: any[] | PaginatedDatabaseInstancesResponse): Record<string, any>[] {
+function getInstancesArray(
+    result: Record<string, unknown>[] | PaginatedDatabaseInstancesResponse
+): Record<string, unknown>[] {
     if (Array.isArray(result)) {
         return result;
     }
@@ -1205,6 +1209,187 @@ describe('Enhanced Database Functions - New Features Tests', () => {
                 'no-include-resource-instance'
             ]);
             await deleteResource(ACCOUNT_ID, testResource.resource_id);
+        });
+    });
+});
+
+describe('weeklyDemoDatabaseCleanup', () => {
+    it('should clean all demo tables (insert one entry per table, cleanup, verify empty)', async () => {
+        const accountId = ACCOUNT_ID;
+        const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
+        const region = DEFAULT_AWS_REGION;
+
+        // Insert one entry into each table that gets cleaned
+
+        // Insert into parent tables first to maintain foreign key relationships
+        await prisma.client.deployment.create({
+            data: {
+                account_id: accountId,
+                deployment_id: 'test_deployment',
+                deployment_name: 'test_deployment_name',
+                credentials_id: credentialsId,
+                deployment_status: 'CREATE_IN_PROGRESS',
+                start_time: new Date(),
+                region
+            }
+        });
+
+        await prisma.client.resource.create({
+            data: {
+                account_id: accountId,
+                resource_id: 'test_resource',
+                credentials_id: credentialsId,
+                storage_type: 'FSXN',
+                resource_name: 'test_resource_name',
+                resource_type: 'MSSQL',
+                region
+            }
+        });
+
+        await prisma.client.job.create({
+            data: {
+                id: 'test_job',
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                type: 'DEPLOYMENT',
+                status: 'IN_PROGRESS',
+                resource_name: 'test_resource',
+                name: 'test_job_name',
+                start_time: new Date(),
+                initiator: 'test_user'
+            }
+        });
+
+        // Insert into child tables (depend on parent tables)
+        await prisma.client.database_instances.create({
+            data: {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: 'test_resource',
+                database_instance_id: 'test_instance',
+                database_instance_name: 'TEST_INSTANCE',
+                is_default: true,
+                source: 'deployment',
+                database_type: 'MS_SQL_SERVER',
+                database_deployment_type: 'Standalone',
+                fsxn_ids: 'fsx-test',
+                fsx_svm_id: { 'fs-test': 'svm-test' }
+            }
+        });
+
+        await prisma.client.event.create({
+            data: {
+                event_id: 'test_event',
+                account_id: accountId,
+                deployment_id: 'test_deployment',
+                deployment_name: 'test_deployment_name',
+                event_status: 'CREATE_IN_PROGRESS',
+                event_status_reason: '',
+                resource_type: 'CloudFormation:Stack',
+                time: new Date()
+            }
+        });
+
+        await prisma.client.database_instance_config_data.create({
+            data: {
+                id: 'test_config_data',
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: 'test_resource',
+                database_instance_id: 'test_instance',
+                config_data_type: 'CONFIG'
+            }
+        });
+
+        await prisma.client.logs_analysis_reports.create({
+            data: {
+                id: 'test_logs_report',
+                account_id: accountId,
+                credentials_id: credentialsId,
+                resource_id: 'test_resource',
+                database_instance_id: 'test_instance',
+                job_id: 'test_job',
+                database_type: 'mssql',
+                version: '1.0'
+            }
+        });
+
+        // Insert into independent tables (no FK constraints)
+        await prisma.client.tracked_ec2.create({
+            data: {
+                account_id: accountId,
+                region,
+                credentials_id: credentialsId,
+                instance_id: 'test_instance_id',
+                feature: 'TCO',
+                cloud_provider_account_id: '123456789012'
+            }
+        });
+
+        await prisma.client.config.create({
+            data: {
+                account_id: accountId,
+                user: 'testuser',
+                name: 'testconfig',
+                creation_time: new Date(),
+                data: {},
+                database_type: 'mssql'
+            }
+        });
+
+        await prisma.client.onprem_tco_reports.create({
+            data: {
+                id: 'test_tco_report',
+                account_id: accountId,
+                resource_id: 'test_resource',
+                database_type: 'mssql',
+                database_deployment_type: 'Standalone',
+                version: '1.0'
+            }
+        });
+
+        // Verify data exists before cleanup
+        const beforeCounts = {
+            database_instance_config_data: await prisma.client.database_instance_config_data.count(),
+            database_instances: await prisma.client.database_instances.count(),
+            event: await prisma.client.event.count(),
+            deployment: await prisma.client.deployment.count(),
+            resource: await prisma.client.resource.count(),
+            job: await prisma.client.job.count(),
+            tracked_ec2: await prisma.client.tracked_ec2.count(),
+            config: await prisma.client.config.count(),
+            onprem_tco_reports: await prisma.client.onprem_tco_reports.count(),
+            logs_analysis_reports: await prisma.client.logs_analysis_reports.count()
+        };
+
+        // Verify at least one entry exists in each table
+        Object.values(beforeCounts).forEach(count => {
+            expect(count).toBeGreaterThan(0);
+        });
+
+        // Run the cleanup function
+        await weeklyDemoDatabaseCleanup();
+
+        // Verify all tables are empty after cleanup
+        const afterCounts = {
+            database_instance_config_data: await prisma.client.database_instance_config_data.count(),
+            database_instances: await prisma.client.database_instances.count(),
+            event: await prisma.client.event.count(),
+            deployment: await prisma.client.deployment.count(),
+            resource: await prisma.client.resource.count(),
+            job: await prisma.client.job.count(),
+            tracked_ec2: await prisma.client.tracked_ec2.count(),
+            config: await prisma.client.config.count(),
+            onprem_tco_reports: await prisma.client.onprem_tco_reports.count(),
+            logs_analysis_reports: await prisma.client.logs_analysis_reports.count()
+        };
+
+        // Assert all tables are empty
+        Object.values(afterCounts).forEach(count => {
+            expect(count).toBe(0);
         });
     });
 });

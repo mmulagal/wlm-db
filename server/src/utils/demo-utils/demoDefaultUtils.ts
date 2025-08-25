@@ -5,7 +5,6 @@ import {
     DatabaseTypes,
     DEFAULT_INSTANCE_NAME,
     DEMO_AWS_ACCOUNT_ID,
-    DEMO_DEFAULT_REGION,
     RESOURCE_SOURCE,
     STORAGE_PROTOCOLS,
     USER_TOKEN
@@ -171,7 +170,7 @@ async function createDemoResourcesPerRegion(
                 encryptionKey: randomize('a0', 10),
                 snapshotPolicy: 'daily_weekretention'
             };
-            createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
+            await createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
         }
     }
 
@@ -384,8 +383,9 @@ async function createDemoResourcesPerRegion(
             region
         );
         await createJobs(accountId, assessmentJobMockData);
-        return { message: 'Demo Data created' };
+        return { message: 'Default Demo Data created' };
     }
+    return { message: 'Default Demo Data exists' };
 }
 
 async function creadteDemoDBData(accountId: string, credentialsList: any) {
@@ -423,8 +423,6 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         logger.info('Creating demo and templates');
 
         createConfigurations(accountId, DEMO_AWS_ACCOUNT_ID, credentialsId);
-
-        createDemoResourcesPerRegion(accountId, credentialsId, DEMO_DEFAULT_REGION, DEMO_AWS_ACCOUNT_ID);
     }
 }
 
@@ -486,18 +484,22 @@ async function createDatabaseInstances(
         databaseType: DatabaseTypes.MS_SQL_SERVER,
         configurations
     };
-
-    await upsertDatabaseInstance(accountId, instanceRecord);
-
-    await createAssessmentData(
-        accountId,
-        credentialsId,
-        region,
-        resourceId,
-        databaseInstanceId,
-        databaseInstanceName,
-        deploymentType
-    );
+    try {
+        await upsertDatabaseInstance(accountId, instanceRecord);
+        await createAssessmentData(
+            accountId,
+            credentialsId,
+            region,
+            resourceId,
+            databaseInstanceId,
+            databaseInstanceName,
+            deploymentType
+        );
+    } catch (error) {
+        const errorMsg = `Failed to create Assessment Data for region ${region}, databaseInstanceName ${databaseInstanceName}, error: ${error}`;
+        logger.info(errorMsg);
+        throw new Error(errorMsg);
+    }
 
     return databaseInstanceId;
 }

@@ -800,15 +800,16 @@ async function initiateHostLevelAssessmentDataCollection(
             'license,compute,host-os-patch,rss-config,mssql-patch,high-availability,mtu-alignment',
             { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
-
-        await updateDatabaseHostAssessmentResults(accountId, credentialsId, region, databaseHostId, {
-            license: assessmentResults.license,
-            compute: assessmentResults.compute,
-            hostOsPatch: assessmentResults.hostOsPatch,
-            rssConfig: assessmentResults.rssConfig,
-            mssqlPatch: assessmentResults.mssqlPatch,
-            highAvailability: assessmentResults.highAvailability
-        });
+        if (!isDemoFlow) {
+            await updateDatabaseHostAssessmentResults(accountId, credentialsId, region, databaseHostId, {
+                license: assessmentResults.license,
+                compute: assessmentResults.compute,
+                hostOsPatch: assessmentResults.hostOsPatch,
+                rssConfig: assessmentResults.rssConfig,
+                mssqlPatch: assessmentResults.mssqlPatch,
+                highAvailability: assessmentResults.highAvailability
+            });
+        }
     }
 }
 
@@ -1190,7 +1191,9 @@ async function triggerMssqlAssessment(
                 );
             }
         }
-        await updateAssessmentResultsInInstanceMetadata(managedInstance);
+        if (!isDemoFlow) {
+            await updateAssessmentResultsInInstanceMetadata(managedInstance);
+        }
     }
 }
 
