@@ -149,8 +149,7 @@ const LogAnalyzerOnboarding = () => {
                 </div>
                 <div className={styles.legalNoticeSection}>
                     <div className={styles.legalNoticeHeading} />
-                    <div className={styles.legalNotice}>
-                        <div style={{ height: '24px' }} />
+                    <div className={styles.legalNoticeBlock}>
                         <div className={styles.legalContentSection}>
                             <div className={styles.sections}>
                                 <DsTypography variant="Semibold_14">{t('databases.log-analyzer.cost')}</DsTypography>
@@ -158,7 +157,8 @@ const LogAnalyzerOnboarding = () => {
                                     {t('databases.log-analyzer.cost-content')}
                                 </DsTypography>
                             </div>
-
+                        </div>
+                        <div className={styles.legalContentSection}>
                             <div className={styles.sections}>
                                 <DsTypography variant="Semibold_14">
                                     {t('databases.log-analyzer.legal-notice')}

@@ -283,6 +283,12 @@ const getHighestSeverity = (hasCritical: boolean, hasWarning: boolean): string =
 
 // Helper function to process volume item
 const processOntapItem = (item: PerConfigInterface, optimizingData: Record<string, string>, type: 'volume' | 'lun') => {
+    if (item?.name === 'snapshot-policy') {
+        item = {
+            ...item,
+            name: 'snapshot-policy-vol'
+        };
+    }
     const status = optimizingData?.[item?.name || ''] || item?.status || '';
     return {
         ...item,

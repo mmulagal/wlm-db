@@ -23,14 +23,23 @@ const OnboardingAccordions = () => {
 
     const { data, loading } = useAppSelector(state => state.agenticAI.logAnalyzerPreReq);
 
+    const readinessString = (preReq: any) => {
+        if (!preReq || typeof preReq.ready === 'undefined') {
+            return t('databases.log-analyzer.n/a');
+        }
+
+        if (preReq.ready === true) {
+            return t('databases.log-analyzer.readiness-status-ready');
+        }
+        return t('databases.log-analyzer.readiness-status-missing');
+    };
+
     const items: AccordionItem[] = [
         {
             id: '1',
             title: t('databases.log-analyzer.amazon-bedrock'),
             subtitle: t('databases.log-analyzer.prerequisites'),
-            readinessStatus: !data?.bedrockPreRequisites?.ready
-                ? t('databases.log-analyzer.readiness-status-missing')
-                : t('databases.log-analyzer.readiness-status-ready'),
+            readinessStatus: readinessString(data?.bedrockPreRequisites),
             missingPermission: !data?.bedrockPreRequisites?.ready,
             image: !data?.bedrockPreRequisites?.ready ? <BedrockDisabled /> : <Bedrock />,
             content: (
@@ -56,9 +65,7 @@ const OnboardingAccordions = () => {
             id: '3',
             title: t('databases.log-analyzer.onboarding-accordion-3-title'),
             subtitle: t('databases.log-analyzer.prerequisites'),
-            readinessStatus: !data?.instanceProfilePreRequisites?.ready
-                ? t('databases.log-analyzer.readiness-status-missing')
-                : t('databases.log-analyzer.readiness-status-ready'),
+            readinessStatus: readinessString(data?.instanceProfilePreRequisites),
             missingPermission: !data?.instanceProfilePreRequisites?.ready,
             image: !data?.instanceProfilePreRequisites?.ready ? <EC2InstanceDisabled /> : <EC2Instance />,
             content: (
@@ -84,9 +91,7 @@ const OnboardingAccordions = () => {
             id: '4',
             title: t('databases.log-analyzer.onboarding-accordion-4-title'),
             subtitle: t('databases.log-analyzer.prerequisites'),
-            readinessStatus: !data?.credentialsPreRequisites?.ready
-                ? t('databases.log-analyzer.readiness-status-missing')
-                : t('databases.log-analyzer.readiness-status-ready'),
+            readinessStatus: readinessString(data?.credentialsPreRequisites),
             missingPermission: !data?.credentialsPreRequisites?.ready,
             image: !data?.credentialsPreRequisites?.ready ? <CredentialAssociatedDisabled /> : <CredentialAssociated />,
             content: (
@@ -112,9 +117,7 @@ const OnboardingAccordions = () => {
             id: '2',
             title: t('databases.log-analyzer.onboarding-accordion-2-title'),
             subtitle: t('databases.log-analyzer.prerequisites'),
-            readinessStatus: !data?.networkingPreRequisites?.ready
-                ? t('databases.log-analyzer.readiness-status-missing')
-                : t('databases.log-analyzer.readiness-status-ready'),
+            readinessStatus: readinessString(data?.networkingPreRequisites),
             missingPermission: !data?.networkingPreRequisites?.ready,
             image: !data?.networkingPreRequisites?.ready ? <NetworkingDisabled /> : <Networking />,
             content: (

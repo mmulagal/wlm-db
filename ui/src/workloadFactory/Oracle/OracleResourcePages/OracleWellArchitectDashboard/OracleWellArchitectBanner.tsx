@@ -36,7 +36,7 @@ const OracleWellArchitectBanner = () => {
 
     useEffect(() => {
         dispatch(setGwAdhocError(''));
-    }, [dispatch]);
+    }, []);
 
     const createNotificationMessage = (handleJobMonitoringClick: () => void) => (
         <div>

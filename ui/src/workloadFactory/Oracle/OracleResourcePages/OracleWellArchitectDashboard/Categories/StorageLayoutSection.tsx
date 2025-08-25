@@ -31,6 +31,96 @@ const StorageLayoutSection = ({
             </div>
 
             <div className={styles.accordionGroups}>
+                {oracleCardData?.oracle_binary_placement && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.oracle_binary_placement} />
+                        <DsAccordion
+                            id="4"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('4', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('4', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('4')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.oracle_binary_placement?.tags?.map(
+                                        (perTag: string, index: number) => (
+                                            <div key={index}>
+                                                <Tag text={perTag} />
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={
+                                <RecommendationText data={oracleCardData?.oracle_binary_placement?.recommendation} />
+                            }
+                        />
+                    </div>
+                )}
+
+                {oracleCardData?.datafiles_controlfiles_placement && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.datafiles_controlfiles_placement} />
+                        <DsAccordion
+                            id="3"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('3', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('3', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('3')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.datafiles_controlfiles_placement?.tags?.map(
+                                        (perTag: string, index: number) => (
+                                            <div key={index}>
+                                                <Tag text={perTag} />
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={
+                                <RecommendationText
+                                    data={oracleCardData?.datafiles_controlfiles_placement?.recommendation}
+                                />
+                            }
+                        />
+                    </div>
+                )}
+
                 {oracleCardData?.redologs_temp_placement && (
                     <div>
                         <OracleCardComponent cardData={oracleCardData.redologs_temp_placement} />
@@ -111,96 +201,6 @@ const StorageLayoutSection = ({
                                 </div>
                             ]}
                             children={<RecommendationText data={oracleCardData?.archive_placement?.recommendation} />}
-                        />
-                    </div>
-                )}
-
-                {oracleCardData?.datafiles_controlfiles_placement && (
-                    <div>
-                        <OracleCardComponent cardData={oracleCardData.datafiles_controlfiles_placement} />
-                        <DsAccordion
-                            id="3"
-                            variant="Default"
-                            isDisabled={false} // Todo add condition
-                            isExpanded={isAccordionExpanded('3', optimizePrintState)}
-                            onExpandChange={isExpanded => {
-                                handleAccordionExpanded('3', isExpanded);
-                            }}
-                            onClick={() => setClickedAccordionId('3')}
-                            title={
-                                <div className={styles.tagPlacement}>
-                                    {oracleCardData.datafiles_controlfiles_placement?.tags?.map(
-                                        (perTag: string, index: number) => (
-                                            <div key={index}>
-                                                <Tag text={perTag} />
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            }
-                            headerActions={[
-                                <div className={styles.headerAction}>
-                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
-                                    </div>
-                                    <div
-                                        style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                        }}
-                                    >
-                                        {t('databases.oracle-inner-page.view-recommendation')}
-                                    </div>
-                                </div>
-                            ]}
-                            children={
-                                <RecommendationText
-                                    data={oracleCardData?.datafiles_controlfiles_placement?.recommendation}
-                                />
-                            }
-                        />
-                    </div>
-                )}
-
-                {oracleCardData?.oracle_binary_placement && (
-                    <div>
-                        <OracleCardComponent cardData={oracleCardData.oracle_binary_placement} />
-                        <DsAccordion
-                            id="4"
-                            variant="Default"
-                            isDisabled={false} // Todo add condition
-                            isExpanded={isAccordionExpanded('4', optimizePrintState)}
-                            onExpandChange={isExpanded => {
-                                handleAccordionExpanded('4', isExpanded);
-                            }}
-                            onClick={() => setClickedAccordionId('4')}
-                            title={
-                                <div className={styles.tagPlacement}>
-                                    {oracleCardData.oracle_binary_placement?.tags?.map(
-                                        (perTag: string, index: number) => (
-                                            <div key={index}>
-                                                <Tag text={perTag} />
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            }
-                            headerActions={[
-                                <div className={styles.headerAction}>
-                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
-                                    </div>
-                                    <div
-                                        style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
-                                        }}
-                                    >
-                                        {t('databases.oracle-inner-page.view-recommendation')}
-                                    </div>
-                                </div>
-                            ]}
-                            children={
-                                <RecommendationText data={oracleCardData?.oracle_binary_placement?.recommendation} />
-                            }
                         />
                     </div>
                 )}

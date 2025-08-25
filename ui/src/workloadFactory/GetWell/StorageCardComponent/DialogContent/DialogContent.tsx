@@ -123,7 +123,7 @@ const DialogContent = ({
     const ontapConfigTextSet = () => {
         if (engineType === DBType.ORACLE) {
             switch (type) {
-                case 'Snapshot policy':
+                case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
                     return 'Snapshot policy = none';
                 case 'Tiering policy':
                     return 'Tiering-policy (data)= snapshot-only, Tiering-policy (redo log)= none, Tiering-policy (archive) = auto';
@@ -393,6 +393,7 @@ const DialogContent = ({
             case ASSESSMENT_CONFIG_NAMES.COMPACTION:
             case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
             case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
+            case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
             case 'Tiering minimum cooling days':
                 return createStandardDialog(
                     t,

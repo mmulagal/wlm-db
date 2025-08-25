@@ -824,6 +824,7 @@ export const GETWELL_CONFIG: any = {
     'mpio-load-balance-policy': 'Multipath I/O Policy',
     'ntfs-allocation-size': 'NTFS allocation unit size',
     'ntfs-allocation-unit-size': 'NTFS allocation unit size',
+    'snapshot-policy-vol': 'Snapshot policy',
     compression: 'Compression',
     deduplication: 'Deduplication',
     compaction: 'Compaction',
@@ -908,7 +909,8 @@ export const ASSESSMENT_CONFIG_NAMES = {
     ORACLE_BINARY_PLACEMENT: 'Oracle Binary Placement',
     COMPRESSION: 'Compression',
     DEDUPLICATION: 'Deduplication',
-    COMPACTION: 'Compaction'
+    COMPACTION: 'Compaction',
+    SNAPSHOT_POLICY: 'Snapshot policy'
 };
 
 export const CONFIG_STATES = {

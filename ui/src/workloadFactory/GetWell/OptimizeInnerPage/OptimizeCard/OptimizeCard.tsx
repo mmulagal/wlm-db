@@ -107,6 +107,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
             case ASSESSMENT_CONFIG_NAMES.COMPACTION:
             case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
             case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
+            case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
             case 'Tiering policy':
             case 'Tiering minimum cooling days':
                 return {

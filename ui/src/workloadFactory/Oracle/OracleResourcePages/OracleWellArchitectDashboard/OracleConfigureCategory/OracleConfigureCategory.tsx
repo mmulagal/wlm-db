@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { ReactComponent as Storage } from '../../../../../assets/Storage.svg';
 import { ReactComponent as Applications } from '../../../../../assets/Application.svg';
@@ -12,6 +13,7 @@ import { GENERAL } from '../../../../../utils/appConstants';
 import OptimizeComponent from '../../../../GetWell/OptimizeComponent/OptimizeComponent';
 
 const OracleConfigureCategory = () => {
+    const { t } = useTranslation();
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const optimizationBreakDown = useAppSelector(state => state.getWellOptimize.optimizationBreakDown);
 
@@ -36,7 +38,7 @@ const OracleConfigureCategory = () => {
                     <OptimizeComponent value={<ComingSoon />} text="Compute" image={<Compute />} isComingSoon />
                     <OptimizeComponent
                         value={<ComingSoon />}
-                        text={GENERAL.APPLICATION}
+                        text={t('databases.well-architect.application-oracle-server')}
                         image={<Applications />}
                         isComingSoon
                     />

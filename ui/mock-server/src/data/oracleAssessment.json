@@ -131,6 +131,49 @@
                "resourceType":"Volume"
             },
             {
+                    "name": "snapshot-policy",
+                    "status": "not-optimized",
+                    "recommended": "none",
+                    "severity": "warning",
+                    "recommendation": "Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for Oracle databases to save space and lower costs. Oracle snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.",
+                    "tags": [
+                        "Cost optimization",
+                        "Operational excellence",
+                        "Performance efficiency"
+                    ],
+                    "objectsInViolation": [
+                        "oracleredo2",
+                        "oraclearch2",
+                        "oracledata2"
+                    ],
+                    "violationDetails": [
+                        {
+                            "objectName": "oracleredo2",
+                            "value": "default",
+                            "objectType": "Volume",
+                            "recommended": "none",
+                            "dataCategory": ""
+                        },
+                        {
+                            "objectName": "oraclearch2",
+                            "value": "default",
+                            "objectType": "Volume",
+                            "recommended": "none",
+                            "dataCategory": ""
+                        },
+                        {
+                            "objectName": "oracledata2",
+                            "value": "default",
+                            "objectType": "Volume",
+                            "recommended": "none",
+                            "dataCategory": ""
+                        }
+                    ],
+                    "totalObjectsAssessed": 3,
+                    "totalObjectsInViolation": 3,
+                    "resourceType": "Volume"
+                },
+            {
                "name":"snapshot-copy-reserve",
                "status":"not-optimized",
                "recommended":"0",

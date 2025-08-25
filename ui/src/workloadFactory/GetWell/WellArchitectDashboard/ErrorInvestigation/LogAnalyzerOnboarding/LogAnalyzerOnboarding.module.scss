@@ -55,11 +55,10 @@
                 height: 32px;
             }
 
-            .legalNotice {
-                height: 420px;
-                background: var(--content-background);
-                box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, var(--border));
-
+            .legalNoticeBlock {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
                 .legalContentSection {
                     width: calc(100% - 20px);
                     padding: 24px 20px 24px 40px;
@@ -68,16 +67,17 @@
                     gap: 24px;
                     max-height: 396px;
                     overflow-y: scroll;
+                    background: var(--content-background);
+                    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, var(--border));
 
                     .sections {
                         display: flex;
                         flex-direction: column;
                         gap: 8px;
                     }
-                }
-
-                ::-webkit-scrollbar {
-                    width: 4px;
+                    ::-webkit-scrollbar {
+                        width: 4px;
+                    }
                 }
             }
         }

@@ -357,7 +357,8 @@
                 "aws-account": "AWS account",
                 "region": "Region"
             },
-            "unavailable": "Unavailable"
+            "unavailable": "Unavailable",
+            "application-oracle-server": "Application (Oracle Server)"
         },
         "update-credentials": {
             "password-info-heading": "The password must be:",
