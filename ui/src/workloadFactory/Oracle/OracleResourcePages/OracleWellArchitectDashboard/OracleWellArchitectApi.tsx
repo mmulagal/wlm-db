@@ -11,6 +11,8 @@ import {
     setLandingFromInnerPage,
     setOptimizePageLoading
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { setRefreshOracleWellArchitect, setOracleRefreshTimes } from '../../../../store/workloadFactory/oracleSlice';
+import { getCurrentDateTime } from '../../../../utils/utilityFunctions';
 
 const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
@@ -25,7 +27,7 @@ const useOracleWellArchitectApi = () => {
         landingFromInnerPage
     } = useAppSelector(state => state.getWellOptimize);
 
-    const { visitedTabs } = useAppSelector(state => state.oracleSlice);
+    const { visitedTabs, refreshWellArchitect } = useAppSelector(state => state.oracleSlice);
 
     const [getOracleAssessmentDataApi] = useGetOracleAssessmentDataMutation();
 
@@ -33,7 +35,7 @@ const useOracleWellArchitectApi = () => {
         try {
             dispatch(setOptimizePageLoading(true));
             dispatch(setCardData(oracleCardData));
-            const result: any = await getOracleAssessmentDataApi({
+            const result = await getOracleAssessmentDataApi({
                 credentialId: selectedResourceCredId || credIdFromJM,
                 regionId: selectedResourceRegionId || regionFromJM,
                 databaseHostId: selectedResourceId || getWellResourceId,
@@ -62,13 +64,24 @@ const useOracleWellArchitectApi = () => {
     };
 
     useEffect(() => {
-        // On page load, call the API to get the assessment details
+        // On page load, call the API to get the assessment details and set initial refresh time
         if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
+            dispatch(setOracleRefreshTimes({ optimizeRefreshTime: getCurrentDateTime() }));
             viewResourceAction();
         } else {
             dispatch(setLandingFromInnerPage(false));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        // Handle Oracle-specific refresh
+        if (refreshWellArchitect) {
+            viewResourceAction();
+            dispatch(setRefreshOracleWellArchitect(false));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshWellArchitect]);
 };
 
 export default useOracleWellArchitectApi;

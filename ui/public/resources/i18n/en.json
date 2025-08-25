@@ -38,7 +38,11 @@
             "not-available": "N/A",
             "not-available-table-columns": "n/a",
             "mssql-high-availability": "Microsoft SQL Server High Availability",
-            "mtu": "MTU Alignment"
+            "mtu": "MTU Alignment",
+            "no-analysis-performed": "No analysis performed",
+            "assessment-performed": "Automatic daily analysis",
+            "last-update": "Last update:",
+            "assess-now": "Analyze now"
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "No instances are eligible for registration at this time.",
@@ -181,6 +185,11 @@
             "well-architect-state": "Well-architected",
             "total": "Total",
             "export-pdf": "Export PDF",
+            "assessment-track-in-progress": "Assessment process initiated. Track progress in ",
+            "assessment-completed": "Assessment completed",
+            "assessment-failed": "Assessment failed",
+            "assessment-completed-with-warnings": "Assessment completed with warnings",
+            "error-in-triggering-assessment": "Error in triggering assessment",
             "well-architected-score": "Well-architected score",
             "well-architected-issue": "There are no issues. Your instance is analyzed every 24 hours for configuration issues.",
             "well-architected-instance": "This instance is well-architected!",

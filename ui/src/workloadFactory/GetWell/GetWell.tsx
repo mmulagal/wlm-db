@@ -4,13 +4,12 @@ import {
     DsTypography,
     Spinner,
     DsButton,
+    Button,
     useDialog,
-    TooltipInfo,
-    Button
+    TooltipInfo
 } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { useState, useEffect, useMemo } from 'react';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
@@ -25,26 +24,13 @@ import { ReactComponent as Error } from '../../assets/error-icon.svg';
 import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
-import { clearNotifications } from '../../store/notificationSlice';
 
-import {
-    ASSESSMENT_CONFIG_NAMES,
-    CONFIG_STATES,
-    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
-    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
-    JOB_MONITORING_STATUS,
-    OPTIMIZE_POLLING_INTERVAL,
-    WLF_TABS
-} from '../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
 import { generateDate, applyFilter, resetGwValuesOnRefresh } from './GetWellUtils';
-import {
-    setDefaultFilterOptions,
-    setOptimizeFilterTags,
-    setSelectedHeaderTab
-} from '../../store/workloadFactory/inventoryV2Slice';
+import { setDefaultFilterOptions, setOptimizeFilterTags } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
 import GetWellApi from './GetWellApi';
 import {
@@ -56,13 +42,20 @@ import {
 // import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
+
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
 import downloadPdf from '../../common/pdfGenerator';
 import { useLazyGetSubTaskListQuery, useTriggerInstanceAssessmentMutation } from '../../utils/apiService';
-import AssessmentContainer from './AssessmentContainer/AssessmentContainer';
+import AssessmentContainer from '../../common/AssessmentContainer/AssessmentContainer';
 import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
-import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../utils/resourceUtils';
+import {
+    handleSelectForFilter,
+    removeEntry,
+    removeObjectFromArray,
+    handleTriggerAssessment,
+    useWellArchitectRefresh
+} from '../../utils/resourceUtils';
 
 const GetWell = () => {
     const { t } = useTranslation();
@@ -84,6 +77,7 @@ const GetWell = () => {
         selectedDatabaseStorageType,
         isInnerPageOptimize,
         gwTimestamp,
+        gwAdhocError,
         optimizationBreakDown
     } = useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
@@ -131,99 +125,30 @@ const GetWell = () => {
         dispatch(setDefaultFilterOptions(defaultFilterRemove));
     };
 
-    const handleTriggerAssessment = () => {
-        setTriggerAssessmentInProgress(true);
-        triggerAssessmentApi({
+    const createNotificationMessage = (handleJobMonitoringClick: () => void) => (
+        <div>
+            {t('databases.well-architect.assessment-track-in-progress')}{' '}
+            <Button Component="button" variant="text" onClick={handleJobMonitoringClick}>
+                {GENERAL.JOB_MONITORING}.
+            </Button>
+        </div>
+    );
+
+    const triggerAssessmentHandler = () => {
+        handleTriggerAssessment({
+            setTriggerAssessmentInProgress,
+            triggerAssessmentApi,
             credentialId: selectedGwInstanceCredId,
             regionId: selectedGwInstanceRegionId,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance
-        }).then((res: any) => {
-            const jobId = res?.data?.jobId;
-            if (jobId) {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.INFO,
-                        message: (
-                            <div>
-                                {'Assessment process initiated. Track progress in '}
-                                <Button
-                                    Component="button"
-                                    variant="text"
-                                    onClick={() => {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                        const path = isWorkloadFactory
-                                            ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                            : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
-
-                                        postBlueXPMessage({
-                                            type: BlueXPListeners.navigate,
-                                            payload: { pathname: path, replace: true }
-                                        });
-                                        dispatch(clearNotifications());
-                                    }}
-                                >
-                                    {GENERAL.JOB_MONITORING}.
-                                </Button>
-                            </div>
-                        )
-                    })
-                );
-                const jobInterval = setInterval(() => {
-                    getJobDetailApi({
-                        id: jobId
-                    }).then((jobRes: any) => {
-                        const status = jobRes?.data?.status;
-                        if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                            setTriggerAssessmentInProgress(false);
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                    message: 'Assessment completed'
-                                })
-                            );
-                            refreshGetWellPage();
-                            clearInterval(jobInterval);
-                        } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                            setTriggerAssessmentInProgress(false);
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.ERROR,
-                                    message: 'Assessment failed'
-                                })
-                            );
-                            refreshGetWellPage();
-                            dispatch(setGwAdhocError(jobRes?.data?.error));
-                            clearInterval(jobInterval);
-                        } else if (status === JOB_MONITORING_STATUS.WARNING) {
-                            setTriggerAssessmentInProgress(false);
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.WARNING,
-                                    message: 'Assessment completed with warnings'
-                                })
-                            );
-                            refreshGetWellPage();
-                            jobRes?.data?.subJobs?.forEach((job: { error?: string }) => {
-                                const errorMessage = job?.error;
-                                if (errorMessage) {
-                                    dispatch(setGwAdhocError(errorMessage));
-                                }
-                            });
-                            clearInterval(jobInterval);
-                        }
-                    });
-                }, OPTIMIZE_POLLING_INTERVAL);
-            } else {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: 'Error in triggering assessment'
-                    })
-                );
-                setTriggerAssessmentInProgress(false);
-                dispatch(setGwAdhocError(res?.error?.data?.message));
-            }
+            selectedResourceId,
+            selectedDatabaseInstance,
+            dispatch,
+            isWorkloadFactory,
+            getJobDetailApi,
+            refreshGetWellPage,
+            setGwAdhocError,
+            t,
+            createNotificationMessage
         });
     };
 
@@ -257,23 +182,24 @@ const GetWell = () => {
         setConfigCount(configCount);
     }, [cardData, optimizeFilterTags, ontapConfigTableData, osConfigTableData, selectedDatabaseStorageType]);
 
-    const refreshGetWellPage = () => {
-        handleFilterClearAll();
-        resetGwValuesOnRefresh(dispatch);
-        dispatch(setGwRefreshPage(true));
-    };
+    const handleFilterClearAll = useCallback(() => {
+        dispatch(setOptimizeFilterTags([]));
+        dispatch(setDefaultFilterOptions({}));
+    }, []);
+
+    const refreshGetWellPage = useWellArchitectRefresh({
+        dispatch,
+        resetGwValuesOnRefresh,
+        setGwRefreshPage,
+        handleFilterClearAll
+    });
 
     useEffect(() => {
         if (isInnerPageOptimize) {
             refreshGetWellPage();
             dispatch(setIsInnerPageOptimize(false));
         }
-    }, [isInnerPageOptimize]);
-
-    const handleFilterClearAll = () => {
-        dispatch(setOptimizeFilterTags([]));
-        dispatch(setDefaultFilterOptions({}));
-    };
+    }, [isInnerPageOptimize, dispatch, refreshGetWellPage]);
 
     const generateSubCategoryOptions = useMemo(() => {
         const selectedCategories = optimizeFilterTags
@@ -469,7 +395,13 @@ const GetWell = () => {
                 {cardData?.compute_rightsizing?.errorMessage?.includes('not authorized') && <PartialDataContainer />}
 
                 {/* Assessment Section here */}
-                <AssessmentContainer onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress} />
+                <AssessmentContainer
+                    onClick={triggerAssessmentHandler}
+                    isLoading={triggerAssessmentInProgress}
+                    gwTimestamp={gwTimestamp || ''}
+                    gwAdhocError={gwAdhocError || ''}
+                    optimizePageLoading={loading || false}
+                />
                 {showChartArea && (
                     <>
                         <div className={styles.getWellSecondLevel}>

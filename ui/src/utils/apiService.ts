@@ -1206,6 +1206,12 @@ export const getWellApi = createApi({
                 url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
             })
         }),
+        triggerOracleInstanceAssessment: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`,
+                method: 'POST'
+            })
+        }),
         getMssqlAssessmentDataForHost: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment`
@@ -1520,6 +1526,7 @@ export const {
 export const {
     useGetMssqlAssessmentDataMutation,
     useGetOracleAssessmentDataMutation,
+    useTriggerOracleInstanceAssessmentMutation,
     useGetMssqlAssessmentDataForHostMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeComputeConfigMutation,

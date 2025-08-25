@@ -65,6 +65,15 @@ router.get(
 );
 
 router.post(
+    `${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, { jobId: '1234' });
+        }, 20);
+    }
+);
+
+router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-configuration`,
     async (req: {}, res: any) => {
         setTimeout(() => {
@@ -173,22 +182,16 @@ router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/resiliency/aws-backup`
     }, 20);
 });
 
-router.post(
-    `${BASE_URL}/v1/mssql/database-hosts/optimize/clone`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 202, { jobId: '1234' });
-        }, 20);
-    }
-);
+router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/clone`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, { jobId: '1234' });
+    }, 20);
+});
 
-router.post(
-    `${BASE_URL}/v1/mssql/database-hosts/optimize/:configurationName`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 202, { jobId: '1234' });
-        }, 20);
-    }
-);
+router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/:configurationName`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, { jobId: '1234' });
+    }, 20);
+});
 
 export default router;

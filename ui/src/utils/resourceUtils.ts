@@ -1,7 +1,19 @@
+import { useCallback } from 'react';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import store from '../store/store';
-import { addNotification, NOTIFICATION_TYPES } from '../store/notificationSlice';
-import { DETECT_HOST_VAR, RESET_PASSWORD_TYPE } from './consts';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../store/notificationSlice';
+import { setSelectedHeaderTab } from '../store/workloadFactory/inventoryV2Slice';
 import { resetAllPasswords, setPasswordResetLoading } from '../store/workloadFactory/workloadFactoryResourceSlice';
+import { GENERAL } from './appConstants';
+import {
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    WLF_TABS,
+    JOB_MONITORING_STATUS,
+    OPTIMIZE_POLLING_INTERVAL,
+    DETECT_HOST_VAR,
+    RESET_PASSWORD_TYPE
+} from './consts';
 
 interface Dispatch {
     (action: any): void;
@@ -224,4 +236,134 @@ export const handleFSXAdminApply = async (
         dispatch(setPasswordResetLoading(false));
         closeDialog();
     }
+};
+
+// Function to handle trigger assessment for both MSSQL and Oracle
+export const handleTriggerAssessment = ({
+    setTriggerAssessmentInProgress,
+    triggerAssessmentApi,
+    credentialId,
+    regionId,
+    selectedResourceId,
+    selectedDatabaseInstance,
+    dispatch,
+    isWorkloadFactory,
+    getJobDetailApi,
+    refreshGetWellPage,
+    setGwAdhocError,
+    t,
+    createNotificationMessage
+}: any) => {
+    setTriggerAssessmentInProgress(true);
+    triggerAssessmentApi({
+        credentialId,
+        regionId,
+        databaseHostId: selectedResourceId,
+        instanceId: selectedDatabaseInstance
+    }).then((res: any) => {
+        const jobId = res?.data?.jobId;
+        if (jobId) {
+            const handleJobMonitoringClick = () => {
+                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                const path = isWorkloadFactory ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: path, replace: true }
+                });
+                dispatch(clearNotifications());
+            };
+
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: createNotificationMessage(handleJobMonitoringClick, GENERAL)
+                })
+            );
+            const jobInterval = setInterval(() => {
+                getJobDetailApi({
+                    id: jobId
+                }).then((jobRes: any) => {
+                    const status = jobRes?.data?.status;
+                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                        setTriggerAssessmentInProgress(false);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                message: t('databases.well-architect.assessment-completed')
+                            })
+                        );
+                        refreshGetWellPage();
+                        clearInterval(jobInterval);
+                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                        setTriggerAssessmentInProgress(false);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: t('databases.well-architect.assessment-failed')
+                            })
+                        );
+                        refreshGetWellPage();
+                        dispatch(setGwAdhocError(jobRes?.data?.error));
+                        clearInterval(jobInterval);
+                    } else if (status === JOB_MONITORING_STATUS.WARNING) {
+                        setTriggerAssessmentInProgress(false);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.WARNING,
+                                message: t('databases.well-architect.assessment-completed-with-warnings')
+                            })
+                        );
+                        refreshGetWellPage();
+                        jobRes?.data?.subJobs?.forEach((job: { error?: string }) => {
+                            const errorMessage = job?.error;
+                            if (errorMessage) {
+                                dispatch(setGwAdhocError(errorMessage));
+                            }
+                        });
+                        clearInterval(jobInterval);
+                    }
+                });
+            }, OPTIMIZE_POLLING_INTERVAL);
+        } else {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.well-architect.error-triggering-assessment')
+                })
+            );
+            setTriggerAssessmentInProgress(false);
+            dispatch(setGwAdhocError(res?.error?.data?.message));
+        }
+    });
+};
+
+// Common refresh function for well architect pages (MSSQL and Oracle)
+export const handleWellArchitectRefresh = (
+    dispatch: Dispatch,
+    resetGwValuesOnRefresh: (dispatchFn: Dispatch) => void,
+    setGwRefreshPage: (value: boolean) => unknown,
+    handleFilterClearAll?: () => void
+) => {
+    if (handleFilterClearAll) {
+        handleFilterClearAll();
+    }
+    resetGwValuesOnRefresh(dispatch);
+    dispatch(setGwRefreshPage(true));
+};
+
+/** Common hook to create refresh function for well architect pages (MSSQL and Oracle) */
+export const useWellArchitectRefresh = (props: {
+    dispatch: Dispatch;
+    resetGwValuesOnRefresh: (dispatchFn: Dispatch) => void;
+    setGwRefreshPage: (value: boolean) => unknown;
+    handleFilterClearAll?: () => void;
+}) => {
+    const { dispatch, resetGwValuesOnRefresh, setGwRefreshPage, handleFilterClearAll } = props;
+
+    const refreshPage = useCallback(() => {
+        handleWellArchitectRefresh(dispatch, resetGwValuesOnRefresh, setGwRefreshPage, handleFilterClearAll);
+    }, [dispatch, resetGwValuesOnRefresh, setGwRefreshPage, handleFilterClearAll]);
+
+    return refreshPage;
 };

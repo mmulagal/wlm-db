@@ -6,6 +6,7 @@ export interface OracleEntities {
     oracleDefaultFilterOptions: {} | any;
     oracleOptimizeFilterTags: [] | any;
     refreshOverview: boolean;
+    refreshWellArchitect: boolean;
     refreshTimes: {
         overviewRefreshTime: string;
         optimizeRefreshTime: string;

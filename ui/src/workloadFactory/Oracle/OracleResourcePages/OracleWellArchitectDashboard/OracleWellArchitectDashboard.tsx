@@ -8,6 +8,7 @@ import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
+import OracleWellArchitectBanner from './OracleWellArchitectBanner';
 
 const OracleWellArchitectDashboard = () => {
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -39,6 +40,8 @@ const OracleWellArchitectDashboard = () => {
 
     return (
         <div className={styles['well-architected']} id="export-oracle-optimize-pdf">
+            <OracleWellArchitectBanner />
+
             <div className={styles.cards}>
                 <TotalOptimizationScore
                     loading={loading}

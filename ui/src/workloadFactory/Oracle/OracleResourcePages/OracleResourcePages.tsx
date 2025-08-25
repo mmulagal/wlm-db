@@ -25,7 +25,8 @@ import {
     setOracleRefreshTimes,
     setOracleResourceDetails,
     setOracleResourceVisitedTabs,
-    setRefreshOracleOverview
+    setRefreshOracleOverview,
+    setRefreshOracleWellArchitect
 } from '../../../store/workloadFactory/oracleSlice';
 import { handleFSXAdminApply } from '../../../utils/resourceUtils';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
@@ -40,6 +41,7 @@ const OracleResourcePages = () => {
     const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
+
     // Reset visited tabs when leaving the dashboard
     useEffect(
         () => () => {
@@ -101,6 +103,10 @@ const OracleResourcePages = () => {
         if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW) {
             return refreshTimes.overviewRefreshTime;
         }
+        if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
+            return refreshTimes.optimizeRefreshTime;
+        }
+        return '';
     };
 
     const handleOracleRefresh = () => {
@@ -108,6 +114,9 @@ const OracleResourcePages = () => {
             dispatch(setOracleResourceDetails({}));
             dispatch(setRefreshOracleOverview(true));
             dispatch(setOracleRefreshTimes({ overviewRefreshTime: getCurrentDateTime() }));
+        } else if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
+            dispatch(setRefreshOracleWellArchitect(true));
+            dispatch(setOracleRefreshTimes({ optimizeRefreshTime: getCurrentDateTime() }));
         }
     };
     return (
