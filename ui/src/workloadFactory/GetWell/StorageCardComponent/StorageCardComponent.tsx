@@ -58,6 +58,7 @@ import {
     useLazyGetSubTaskListQuery,
     useOptimizeAwsBackupMutation,
     useOptimizeComputeConfigMutation,
+    useOptimizeMTUConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
@@ -94,6 +95,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
+    const [optimizeMTUConfigForBulk] = useOptimizeMTUConfigForBulkMutation();
     const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
@@ -596,6 +598,24 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     }
                 ]
             };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.MTU) {
+            apiCall = optimizeMTUConfigForBulk;
+            payload = {
+                hostsToOptimize: [
+                    {
+                        configurationName: 'mtu-alignment',
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                sqlServerInstances: [selectedDatabaseInstance],
+                                credentialsId: selectedGwInstanceCredId,
+                                region: selectedGwInstanceRegionId,
+                                interfaceNames: cardData?.objectsInViolation
+                            }
+                        ]
+                    }
+                ]
+            };
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
             apiCall = optimizeAwsBackup;
             const state = store.getState();
@@ -685,7 +705,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         );
 
         let apiCallObj = {};
-        if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+        if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP || type === ASSESSMENT_CONFIG_NAMES.MTU) {
             apiCallObj = {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,

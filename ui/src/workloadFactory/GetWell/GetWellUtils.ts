@@ -477,7 +477,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'Not Optimized Configurations',
+            type: 'Impacted network interfaces',
             value: '',
             smallFont: true
         },
@@ -3179,6 +3179,15 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                             }
                         };
                     }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MTU) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                mtuAlignment: { ...instance.assessments.mtuAlignment, status: 'optimized' }
+                            }
+                        };
+                    }
                     if (storageConfigurationMap[rowData?.id]) {
                         const key = storageConfigurationMap[rowData?.id];
                         return {
@@ -3989,6 +3998,8 @@ export const nameToIdConfigMapping = (name: string) =>
         ? 'performance-tier'
         : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
         ? 'compute-rightsizing'
+        : name === ASSESSMENT_CONFIG_NAMES.MTU
+        ? 'mtu-alignment'
         : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
         ? 'max-dop'
         : name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT

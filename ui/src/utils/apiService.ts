@@ -1286,6 +1286,13 @@ export const getWellApi = createApi({
                 body: payload
             })
         }),
+        optimizeMTUConfigForBulk: builder.mutation({
+            query: ({ payload }) => ({
+                url: 'v1/mssql/database-hosts/optimize/mtu-alignment',
+                method: 'POST',
+                body: payload
+            })
+        }),
         optimizeMaxdopConfigForBulk: builder.mutation({
             query: ({ payload }) => ({
                 url: 'v1/mssql/database-hosts/optimize/max-dop',
@@ -1537,6 +1544,7 @@ export const {
     useOptimizeStorageTierForBulkMutation,
     useTriggerInstanceAssessmentMutation,
     useOptimizeComputeConfigForBulkMutation,
+    useOptimizeMTUConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
     useOptimizeResiliencyMutation,

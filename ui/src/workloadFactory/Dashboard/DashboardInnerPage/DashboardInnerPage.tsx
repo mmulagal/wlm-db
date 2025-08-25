@@ -50,6 +50,7 @@ import {
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
     useOptimizeComputeConfigForBulkMutation,
+    useOptimizeMTUConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeResiliencyMutation,
     useOptimizeAwsBackupMutation
@@ -119,6 +120,7 @@ const DashboardInnerPage = () => {
     const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
     const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
     const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
+    const [optimizeMTUConfigForBulk] = useOptimizeMTUConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const callOptimizeApi = (type: any, rowData?: any, operation?: string) => {
@@ -500,6 +502,80 @@ const DashboardInnerPage = () => {
                     ]
                 };
             }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.MTU) {
+            apiCall = optimizeMTUConfigForBulk;
+            if (operation === 'bulk') {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'mtu-alignment',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<
+                                            string,
+                                            {
+                                                id: string;
+                                                credentialsId: string;
+                                                region: string;
+                                                sqlServerInstances: string[];
+                                                interfaceNames: string[];
+                                            }
+                                        >,
+                                        {
+                                            databaseHostId,
+                                            instanceId,
+                                            credentialId,
+                                            regionId,
+                                            objectsInViolation
+                                        }: {
+                                            databaseHostId: string;
+                                            instanceId: string;
+                                            credentialId: string;
+                                            regionId: string;
+                                            objectsInViolation: string[];
+                                        }
+                                    ) => {
+                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        if (!acc[uniqueRow]) {
+                                            acc[uniqueRow] = {
+                                                id: databaseHostId,
+                                                sqlServerInstances: [],
+                                                credentialsId: credentialId,
+                                                region: regionId,
+                                                interfaceNames: []
+                                            };
+                                        }
+                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
+                                        if (objectsInViolation) {
+                                            acc[uniqueRow].interfaceNames.push(...objectsInViolation);
+                                        }
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'mtu-alignment',
+                            databaseHosts: [
+                                {
+                                    id: rowData?.databaseHostId,
+                                    sqlServerInstances: [rowData?.instanceId],
+                                    credentialsId: rowData?.credentialId,
+                                    region: rowData?.regionId,
+                                    interfaceNames: rowData?.objectsInViolation || []
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -601,6 +677,12 @@ const DashboardInnerPage = () => {
                 payload
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+            apiData = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                payload
+            };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.MTU) {
             apiData = {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,

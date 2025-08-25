@@ -188,6 +188,12 @@ router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/clone`, async (req: {}
     }, 20);
 });
 
+router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/mtu-alignment`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, { jobId: '1234' });
+    }, 20);
+});
+
 router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/:configurationName`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 202, { jobId: '1234' });
