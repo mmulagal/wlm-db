@@ -1,17 +1,18 @@
-import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import { WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useGetOracleOverviewDetailsMutation } from '../../../../utils/apiService';
-
+import { useGetOracleAssessmentDataMutation } from '../../../../utils/apiService';
+import { formatOracleWellArchitectedData, oracleCardData } from './OracleWellArchitectedUtils';
 import {
-    setOracleRefreshTimes,
-    setOracleResourceDetails,
-    setOracleResourceLoading,
-    setRefreshOracleOverview
-} from '../../../../store/workloadFactory/oracleSlice';
-import { getCurrentDateTime } from '../../../../utils/utilityFunctions';
+    setCardData,
+    setDriftAssessmentData,
+    setIsAssessmentAvailable,
+    setLandingFromInnerPage,
+    setOptimizePageLoading
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
-const useOracleResourceOverview = () => {
+const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
     const { selectedResourceId, selectedDatabaseInstance, selectedResourceCredId, selectedResourceRegionId } =
         useAppSelector(state => state.workloadFactoryResource);
@@ -20,60 +21,54 @@ const useOracleResourceOverview = () => {
         credIdFromJM,
         regionFromJM,
         selectedResourceId: getWellResourceId,
-        selectedDatabaseInstance: getWellSelectedDatabaseInstance
+        selectedDatabaseInstance: getWellSelectedDatabaseInstance,
+        landingFromInnerPage
     } = useAppSelector(state => state.getWellOptimize);
 
-    const { visitedTabs, refreshOverview } = useAppSelector(state => state.oracleSlice);
+    const { visitedTabs } = useAppSelector(state => state.oracleSlice);
 
-    const [getOracleOverviewDetails] = useGetOracleOverviewDetailsMutation();
+    const [getOracleAssessmentDataApi] = useGetOracleAssessmentDataMutation();
 
-    useEffect(() => {
-        if (!visitedTabs.Overview) {
-            dispatch(setOracleRefreshTimes({ overviewRefreshTime: getCurrentDateTime() }));
-            viewResourceAction();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [visitedTabs]);
-
-    // To do enable when refresh enable
-
-    useEffect(() => {
-        if (refreshOverview) {
-            viewResourceAction();
-            dispatch(setRefreshOracleOverview(false));
-        }
-    }, [refreshOverview]);
-
-    const runResourceDetailsApi = async () => {
+    const runAssessmentDetailsApi = async () => {
         try {
-            const result: any = await getOracleOverviewDetails({
+            dispatch(setOptimizePageLoading(true));
+            dispatch(setCardData(oracleCardData));
+            const result: any = await getOracleAssessmentDataApi({
                 credentialId: selectedResourceCredId || credIdFromJM,
-                region: selectedResourceRegionId || regionFromJM,
-                id: selectedResourceId || getWellResourceId,
-                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance
+                regionId: selectedResourceRegionId || regionFromJM,
+                databaseHostId: selectedResourceId || getWellResourceId,
+                instanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance
             });
 
-            if (result && !result?.error) {
-                const resourceData = {
-                    ...result?.data,
-                    topology: {
-                        ...result?.data?.databaseInstanceTopology,
-                        ...result?.data?.nodeTopology
-                    }
-                };
-                dispatch(setOracleResourceDetails(resourceData));
+            if (result && !result?.error && result?.data) {
+                dispatch(setDriftAssessmentData(result.data));
+                formatOracleWellArchitectedData(dispatch, result.data);
+                dispatch(setOptimizePageLoading(false));
+                dispatch(setIsAssessmentAvailable(true));
+            } else {
+                dispatch(setOptimizePageLoading(false));
+                dispatch(setIsAssessmentAvailable(false));
             }
-            dispatch(setOracleResourceLoading(false));
         } catch (error) {
-            dispatch(setOracleResourceLoading(false));
+            dispatch(setOptimizePageLoading(false));
+            dispatch(setIsAssessmentAvailable(false));
         }
     };
 
     const viewResourceAction = () => {
-        dispatch(setOracleResourceDetails({}));
-        dispatch(setOracleResourceLoading(true));
-        runResourceDetailsApi();
+        dispatch(setDriftAssessmentData({}));
+        dispatch(setOptimizePageLoading(true));
+        runAssessmentDetailsApi();
     };
+
+    useEffect(() => {
+        // On page load, call the API to get the assessment details
+        if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
+            viewResourceAction();
+        } else {
+            dispatch(setLandingFromInnerPage(false));
+        }
+    }, []);
 };
 
-export default useOracleResourceOverview;
+export default useOracleWellArchitectApi;

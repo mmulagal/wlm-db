@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { DsSpinner } from '@tlveng/wlm-ds';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
@@ -17,10 +18,19 @@ const Wizard = () => {
     const { stepsMap, currentStep }: any = useWizard();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { loading } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
 
     const { Footer: StepFooter, Content: StepContent } = stepsMap[currentStep];
     return (
         <StepLayout>
+            {loading && (
+                <>
+                    <div className={styles.loaderOverlay} />
+                    <div className={styles.spinnerPlacement}>
+                        <DsSpinner isLarge />
+                    </div>
+                </>
+            )}
             <WizardHeader
                 className={styles['manage-instance-wizard']}
                 title={t('databases.register-flow.register-instance')}

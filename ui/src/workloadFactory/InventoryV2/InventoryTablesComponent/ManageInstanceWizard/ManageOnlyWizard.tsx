@@ -2,7 +2,6 @@ import {
     BlueXPListeners,
     Button,
     Header,
-    Spinner,
     StepLayout,
     WizardContent,
     WizardFooter,
@@ -11,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { DsSpinner } from '@tlveng/wlm-ds';
 import { Content } from './ManageInstanceStep/ManageInstanceStep';
 import styles from './ManageInstanceWizard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -65,7 +65,7 @@ const ManageOnlyWizard = () => {
                 <>
                     <div className={styles.loaderOverlay} />
                     <div className={styles.spinnerPlacement}>
-                        <Spinner isLarge />
+                        <DsSpinner isLarge />
                     </div>
                 </>
             )}
