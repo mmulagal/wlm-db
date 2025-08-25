@@ -12,7 +12,12 @@
         "signoz": "http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces",
         "workload-factory": "https://staging.api.workloads.netapp.com",
         "wlm-db-redirect-url": "https://staging.cloudmanager.netapp.com",
-        "workload-factory-console": "https://staging.console.workloads.netapp.com"
+        "workload-factory-console": "https://staging.console.workloads.netapp.com",
+        "local-auth": {
+            "audience": "https://api.workloads.netapp.com",
+            "endpoint": "https://staging.api.workloads.netapp.com/auth/v1",
+            "issuer": "https://staging.identity.workloads.netapp.com"
+        }
     },
     "got": {
         "internal": {
@@ -53,7 +58,15 @@
         "region": "us-east-1"
     },
     "ec2": {
-        "vcpu-filter": ["2", "4", "8", "16", "32", "64", "72"]
+        "vcpu-filter": [
+            "2",
+            "4",
+            "8",
+            "16",
+            "32",
+            "64",
+            "72"
+        ]
     },
     "ssm": {
         "poll-interval": "1s",

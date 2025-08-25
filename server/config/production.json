@@ -6,7 +6,11 @@
         "credentials": "https://api.bluexp.netapp.com",
         "workload-factory": "https://api.workloads.netapp.com",
         "wlm-db-redirect-url": "https://cloudmanager.netapp.com",
-        "workload-factory-console": "https://console.workloads.netapp.com"
+        "workload-factory-console": "https://console.workloads.netapp.com",
+        "local-auth": {
+            "endpoint": "https://api.workloads.netapp.com/auth/v1",
+            "issuer": "https://identity.workloads.netapp.com"
+        }
     },
     "kinesis": {
         "stream-name": "audit-service-prod-stream"
@@ -17,7 +21,14 @@
         "region": "us-east-1"
     },
     "ec2": {
-        "vcpu-filter": ["4", "8", "16", "32", "64", "72"]
+        "vcpu-filter": [
+            "4",
+            "8",
+            "16",
+            "32",
+            "64",
+            "72"
+        ]
     },
     "db": {
         "tco": {

@@ -2,34 +2,48 @@ import jwksRsa from 'jwks-rsa';
 import { isEmpty } from 'lodash-es';
 import jsonwebtoken, { JwtPayload } from 'jsonwebtoken';
 import createError from 'http-errors';
-import { AUTH0_SERVER_ADDRESS, AUTH0_AUDIENCE, USER_TENANCY_CACHE_TYPE, ADMIN_ROLE, USER_ROLE } from './consts';
+import {
+    AUTH0_SERVER_ADDRESS,
+    AUTH0_AUDIENCE,
+    USER_TENANCY_CACHE_TYPE,
+    ADMIN_ROLE,
+    USER_ROLE,
+    LOCAL_AUTH
+} from './consts';
 import getLogger from './logger';
 import { getPermissionsForUser, getTenancyAccounts, Account } from '../lib/cloud-manager/tenancy';
 import { hasCache, readFromCacheByKey, writeToCache } from './cache';
 
 const logger = getLogger();
 
-const CLIENT = jwksRsa({
-    cache: true,
-    cacheMaxEntries: 60,
-    rateLimit: true,
-    jwksRequestsPerMinute: 30,
-    jwksUri: `${AUTH0_SERVER_ADDRESS}/.well-known/jwks.json`
-});
+const CLIENT = (jwksuri: string) =>
+    jwksRsa({
+        cache: true,
+        cacheMaxEntries: 60,
+        rateLimit: true,
+        jwksRequestsPerMinute: 30,
+        jwksUri: `${jwksuri}/.well-known/jwks.json`,
+        requestHeaders: { 'User-Agent': 'WLMDB' }
+    });
 
 async function verifyToken(token: string) {
     logger.debug('Verify token', token);
     const jwt = jsonwebtoken.decode(token, { complete: true });
     if (jwt) {
-        const signingKey = await CLIENT.getSigningKey(jwt.header.kid);
+        // Determine JWKS URI based on token subject - Auth0 is user, else service token.
+        const isUserAuth = (jwt.payload.sub as string)?.includes('auth0');
+        const jwksuri = isUserAuth ? AUTH0_SERVER_ADDRESS : LOCAL_AUTH.ENDPOINT;
+        const issuer = isUserAuth ? `${AUTH0_SERVER_ADDRESS}/` : LOCAL_AUTH.ISSUER;
+        const audience = isUserAuth ? AUTH0_AUDIENCE : LOCAL_AUTH.AUDIENCE;
+        const signingKey = await CLIENT(jwksuri).getSigningKey(jwt.header.kid);
 
         return new Promise<string | jsonwebtoken.JwtPayload>((resolve, reject) => {
             jsonwebtoken.verify(
                 token,
                 signingKey.getPublicKey(),
                 {
-                    audience: AUTH0_AUDIENCE,
-                    issuer: `${AUTH0_SERVER_ADDRESS}/`,
+                    audience,
+                    issuer,
                     algorithms: ['RS256']
                 },
                 (error, payload) => (error || !payload ? reject(error) : resolve(payload))
@@ -67,8 +81,9 @@ async function getTenancyUserPermissions(
 async function authorizeJwt(authToken: string, decodedToken: JwtPayload | string, accountId: string) {
     logger.debug('Authorize JWT:', { authToken, decodedToken, accountId });
     const tokenSub = decodedToken?.sub as string;
+    const isUserAuth = tokenSub?.includes('auth0');
 
-    if (tokenSub && !isEmpty(tokenSub) && !tokenSub?.endsWith('@clients')) {
+    if (isUserAuth && tokenSub && !isEmpty(tokenSub) && !tokenSub?.endsWith('@clients')) {
         // service token ends with @clients, we cant get user permissions using service token so skipping auth for service token requests
         const unauthorizedErrorMessage = 'You do not have permission to access this resource';
 

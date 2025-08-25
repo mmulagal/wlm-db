@@ -39,6 +39,18 @@ const AUTH0_SERVER_ADDRESS = process.env.AUTH0_ENDPOINT
     ? `https://${process.env.AUTH0_ENDPOINT}`
     : config.get<string>('urls.auth0');
 
+const LOCAL_AUTH = {
+    ENDPOINT: process.env.LOCAL_AUTH_ENDPOINT
+        ? `https://${process.env.LOCAL_AUTH_ENDPOINT}`
+        : config.get<string>('urls.local-auth.endpoint'),
+    AUDIENCE: process.env.LOCAL_AUTH_AUDIENCE
+        ? `https://${process.env.LOCAL_AUTH_AUDIENCE}`
+        : config.get<string>('urls.local-auth.audience'),
+    ISSUER: process.env.LOCAL_AUTH_ISSUER
+        ? `https://${process.env.LOCAL_AUTH_ISSUER}`
+        : config.get<string>('urls.local-auth.issuer')
+};
+
 enum HEADERS {
     AUTHORIZATION = 'authorization',
     REQUEST_ID_HEADER = 'x-request-id',
@@ -2177,5 +2189,6 @@ export {
     AWS_CLI_LINUX_RELATIVE_PATH,
     JQ_LINUX_RELATIVE_PATH,
     MAKE_LINUX_RELATIVE_PATH,
-    JOB_MONITORING_ENDPOINT
+    JOB_MONITORING_ENDPOINT,
+    LOCAL_AUTH
 };
