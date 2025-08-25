@@ -947,6 +947,7 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
 `;
 
 const GET_ORACLE_SERVER_DETAILS = (oracleSid: string, ec2InstanceId: string) => `
+# Get Oracle server details
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, oracleSid)}
 isDefaultAuth=$(is_default_auth ${oracleSid})
 

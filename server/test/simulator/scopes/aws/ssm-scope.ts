@@ -959,7 +959,12 @@ ssmMock
     .on(SendCommandCommand, params => {
         return fetchFsxMtuDetailsRegex.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('fetchFsxMtuDetails'));
+    .resolves(getSampleCommandResponse('fetchFsxMtuDetails'))
+    .on(SendCommandCommand, params => {
+        const commentString = /# Get Oracle server details/;
+        return commentString.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getOracleServerDetails'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1494,6 +1499,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'oracleStorageAssessment',
             JSON.stringify(getCommandInvocationResponse.getOracleStorageAssessmentData)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getOracleServerDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getOracleServerDetails',
+            JSON.stringify(getCommandInvocationResponse.getOracleServerDetailsResponse)
         )
     );
 

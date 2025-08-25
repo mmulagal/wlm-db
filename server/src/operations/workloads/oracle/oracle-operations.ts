@@ -41,8 +41,10 @@ import { AssessmentCategories } from '../../../utils/continous-optimization-cons
 import { OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getStorageData, getNodeTopology } from '../../database-hosts-util';
+import { MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 async function getOracleInstanceDetails(
     accountId: string,
@@ -115,6 +117,9 @@ async function getOracleInstanceInfo(
                 SSM_RUN_SHELL_SCRIPT_DOC_VERSION
             );
             if (response) {
+                if (isDemoFlow) {
+                    response += JSON.stringify(MockOracleServerDetails);
+                }
                 return response;
             }
         }
@@ -144,7 +149,7 @@ async function getOracleDatabaseInstancesDetails(
     const managedInstancesName = instancesManaged.map((item: DatabaseInstance) => ({
         instanceName: item.database_instance_name,
         isDefault: item.is_default,
-        instanceState: isDemo() ? ServerState.UP : ServerState.DOWN,
+        instanceState: isDemoFlow ? ServerState.UP : ServerState.DOWN,
         isManaged: true,
         databaseInstanceId: item.database_instance_id
     }));
@@ -538,7 +543,7 @@ async function getOracleDatabaseInstancesSummary(
                 mountPoint: '/oradata',
                 protocol: 'iSCSI'
             };
-            let mountPointDetails = isDemo() ? demoMountPointDetails : metadata?.mountPointDetails;
+            let mountPointDetails = isDemoFlow ? demoMountPointDetails : metadata?.mountPointDetails;
 
             // Get the storage & mount point details for registered Oracle database instances
             if (!mountPointDetails && (getProtectionStatus || getDatabasesWithProtection)) {
