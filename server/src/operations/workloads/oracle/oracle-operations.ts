@@ -689,9 +689,10 @@ async function getOracleDatabaseInstancesSummary(
             databaseInstanceDetails.status = ServerState.UP;
 
             if (getPerformanceMetrics && performanceData) {
-                databaseInstanceDetails.performance = getPerformanceMetrics
-                    ? { assessment: performanceData?.assessment, rwMetrics: performanceData! }
-                    : {};
+                databaseInstanceDetails.performance = {
+                    assessment: performanceData?.assessment,
+                    rwMetrics: performanceData!
+                };
             }
             if (shouldQueryDatabaseTopology && databaseInstancetopologyData) {
                 databaseInstanceDetails.databaseInstanceTopology = databaseInstancetopologyData;
@@ -715,6 +716,7 @@ async function getOracleDatabaseInstancesSummary(
             if (resourceTrendsData?.[dbInstanceSid] && getPerformanceMetrics) {
                 const instanceResourceTrendsData = resourceTrendsData?.[dbInstanceSid] || {};
                 databaseInstanceDetails.performance = {
+                    assessment: performanceData?.assessment,
                     rwMetrics: {
                         latency: {
                             read: instanceResourceTrendsData.readLatency,
