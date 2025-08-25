@@ -2339,7 +2339,12 @@
                     "mountPoint": "/ORADATA1",
                     "protocol": "NFS"
                 }
-            ]
+            ],
+            "modules_availability": {
+                "isAwsCliInstalled": true,
+                "isJqInstalled": true
+            },
+            "missing_permissions": []
         },
         {
             "sid": "oracleasm",
@@ -2376,7 +2381,12 @@
                     "mountPoint": "/ORADATA2",
                     "protocol": "NFS"
                 }
-            ]
+            ],
+            "modules_availability": {
+                "isAwsCliInstalled": true,
+                "isJqInstalled": true
+            },
+            "missing_permissions": []
         }
     ],
     "getInstalledSqlVersion": [
