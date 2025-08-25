@@ -489,8 +489,8 @@ async function getEc2SqlParameters(credentialsId: string, region: string, ec2Ins
     try {
         const response = await getParameter(credentialsId, region, `/netapp/wlmdb/${ec2InstanceId}`);
         if (response) {
-            const { sql = [], domain = [], oracle = [] } = JSON.parse(response);
-            return { sql, domain, oracle };
+            const { sql = [], domain = [], oracle = [], asm = [] } = JSON.parse(response);
+            return { sql, domain, oracle, asm };
         }
     } catch (error) {
         logger.error(`Failed to get SQL Server SSM parameter for instance ${ec2InstanceId}. Reason: ${error}`);

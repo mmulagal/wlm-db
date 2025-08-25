@@ -330,6 +330,11 @@ const oracleDatabaseInstance = Type.Object({
     isDefaultAuthentication: Type.Boolean({
         description: 'Is default / OS auth possible for Oracle instance?'
     }),
+    asmAuthentication: Type.Optional(
+        Type.Boolean({
+            description: 'Is ASM auth possible for Oracle instance?'
+        })
+    ),
     storage: Type.Optional(
         Type.Array(
             Type.Object({
@@ -343,6 +348,7 @@ const oracleDatabaseInstance = Type.Object({
                 fileSystemStorageType: Type.Optional(
                     Type.String({ description: 'File system storage type, SSD or HDD' })
                 ),
+                fileSystemName: Type.Optional(Type.String({ description: 'File system name' })),
                 deploymentType: Type.Optional(Type.String({ description: 'Deployment type of storage' })),
                 zones: Type.Optional(
                     Type.Array(Type.Optional(Type.String({ description: 'Availability zones of storage' })))

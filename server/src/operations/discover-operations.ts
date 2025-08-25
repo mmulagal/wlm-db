@@ -29,7 +29,8 @@ import {
     retryWithDelay,
     sqlResponseParsing,
     isValidProp,
-    getEc2Hostname
+    getEc2Hostname,
+    getFsxNameFromTags
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -119,6 +120,7 @@ interface FsxServerConfig {
     deploymentType: string | undefined;
     subnetIds: string[] | undefined;
     fileSystemStorageType?: string;
+    fileSystemName?: string;
 }
 
 interface FSxInfo {
@@ -1593,7 +1595,8 @@ function getDiscoveredOracleInstancesStorageDetails(
         const fsxInfo = endPointIpWithFsxInfo.get(mountIP);
         if (fsxInfo) {
             const { fsxId, svmId } = fsxInfo;
-            const { deploymentType, subnetIds, fileSystemStorageType } = fsIdWithFsxInfo.get(fsxId!) || {};
+            const { deploymentType, subnetIds, fileSystemStorageType, fileSystemName } =
+                fsIdWithFsxInfo.get(fsxId!) || {};
             const uniqueMountDetails = mountDetails
                 .reduce((acc: any[], current: any) => {
                     const currentItem = JSON.stringify(current);
@@ -1609,6 +1612,7 @@ function getDiscoveredOracleInstancesStorageDetails(
                 id: fsxId!,
                 svmId,
                 fileSystemStorageType,
+                fileSystemName,
                 deploymentType,
                 zones: compact(subnetIds?.map((subnetId: string) => subnetListMap.get(subnetId))),
                 subnetIdString: subnetIds?.join(),
@@ -1716,7 +1720,7 @@ async function discoverOracleResources(
                         oracleServerDeploymentType: 'standalone'
                     };
 
-                    const { oracle: ec2OracleParameters } = await getEc2SqlParameters(
+                    const { oracle: ec2OracleParameters, asm: ec2AsmParameters } = await getEc2SqlParameters(
                         credentialsId,
                         region,
                         ec2Instance.ec2InstanceId
@@ -1741,10 +1745,17 @@ async function discoverOracleResources(
 
                         const { isAwsCliInstalled, isJqInstalled } = modulesAvailability || {};
 
-                        const isOracleAuth = ec2OracleParameters.some(
-                            (obj: { oracleinstancename: string; username: string; password: string }) =>
-                                obj.oracleinstancename === instanceName
-                        );
+                        const isOracleAuth =
+                            ec2OracleParameters?.some(
+                                (obj: { oracleinstancename: string; username: string; password: string }) =>
+                                    obj.oracleinstancename === instanceName
+                            ) || false;
+
+                        const isAsmAuth =
+                            ec2AsmParameters?.some(
+                                (obj: { oracleinstancename: string; username: string; password: string }) =>
+                                    obj.oracleinstancename === instanceName
+                            ) || false;
 
                         let databaseInfo: {
                             databaseId?: string;
@@ -1779,7 +1790,7 @@ async function discoverOracleResources(
                         const isInstanceStorageAsmManaged = flattenedInstanceStorageDetails.some(
                             (storage: { isAsmManaged: string }) => storage.isAsmManaged === 'true'
                         );
-                        const storageDetails = getDiscoveredOracleInstancesStorageDetails(
+                        let storageDetails = getDiscoveredOracleInstancesStorageDetails(
                             ec2Instance.ebsVolumeIDs!,
                             endPointIpWithFsxInfo,
                             fsIdWithFsxInfo,
@@ -1787,6 +1798,27 @@ async function discoverOracleResources(
                             ebsVolumeToAvailabilityZoneMap,
                             flattenedInstanceStorageDetails
                         );
+
+                        if (isDemoFlow) {
+                            storageDetails = [
+                                {
+                                    type: 'FSXN',
+                                    id: 'fs-0d5efc3057c4f12cb',
+                                    svmId: 'svm-0a333def9bfd29537',
+                                    fileSystemStorageType: 'SSD',
+                                    fileSystemName: 'demo-fsx',
+                                    deploymentType: 'MULTI_AZ_1',
+                                    zones: ['ap-southeast-1c', 'ap-southeast-1b'],
+                                    mountDetails: [
+                                        {
+                                            mountPoint: 'lWB23]VAYAWk',
+                                            protocol: 'iSCSI',
+                                            mountIp: '172.31.6.100'
+                                        }
+                                    ]
+                                }
+                            ];
+                        }
 
                         databaseInstanceDetails.push({
                             instanceId,
@@ -1805,6 +1837,7 @@ async function discoverOracleResources(
                             isInstanceStorageAsmManaged,
                             isDefaultAuthentication,
                             oracleServerAuthentication: isOracleAuth,
+                            asmAuthentication: isAsmAuth,
                             manageReadiness: {
                                 missingModules: [
                                     !isAwsCliInstalled ? 'awsCli' : null,
@@ -1886,11 +1919,13 @@ async function fetchFsxResourceMappings(
     const fsIdWithFsxInfo = new Map<string, FsxServerConfig>();
 
     fsxList?.forEach(fsx => {
-        const { FileSystemId, StorageType, OntapConfiguration, SubnetIds } = fsx;
+        const { FileSystemId, StorageType, OntapConfiguration, SubnetIds, Tags: fileSystemTags } = fsx;
+        const fileSystemName = getFsxNameFromTags(fileSystemTags);
         const fsxInfo = {
             fileSystemStorageType: StorageType,
             subnetIds: SubnetIds,
-            deploymentType: OntapConfiguration?.DeploymentType
+            deploymentType: OntapConfiguration?.DeploymentType,
+            fileSystemName
         };
         if (FileSystemId) {
             fsIdWithFsxInfo.set(FileSystemId, fsxInfo);

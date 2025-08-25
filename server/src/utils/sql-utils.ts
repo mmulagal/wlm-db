@@ -8,6 +8,7 @@ import { DatabaseInstance, MappedOnTapVolumeResponse } from './common-types';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { AssessmentCategories } from './continous-optimization-consts';
 import { OracleMappedOntapVolumesResponse, OracleVolumeRecord } from '../operations/workloads/oracle/common-types';
+import { getFsxNameFromTags } from './utils';
 
 const logger = getLogger();
 
@@ -85,7 +86,7 @@ async function getDatabaseInstanceTopology(
                     StorageType: fileSystemStorageType
                 } = fileSystem);
 
-                fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
+                fileSystemName = getFsxNameFromTags(fileSystemTags);
 
                 const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
                     SubnetIds: subnetIds

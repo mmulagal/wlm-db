@@ -1298,6 +1298,10 @@ function determineStorageType(instance: DatabaseInstance) {
     );
 }
 
+function getFsxNameFromTags(tags?: Tag[]) {
+    return tags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1374,5 +1378,6 @@ export {
     formatDuration,
     addIncludeSelect,
     buildSelectFields,
-    determineStorageType
+    determineStorageType,
+    getFsxNameFromTags
 };
