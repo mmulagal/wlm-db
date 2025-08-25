@@ -13,6 +13,7 @@ export interface ManageStates {
     installMissingAWSList: string[];
     installMissingPowershell?: boolean;
     installMissingJQ?: boolean;
+    installMissingPython?: boolean;
     assessment: string;
     remediation: string;
     dbcreation: string;
@@ -99,6 +100,7 @@ export interface WizardState {
     installMissingAWSList?: string[];
     installMissingPowershell?: boolean;
     installMissingJQ?: boolean;
+    installMissingPython?: boolean;
 }
 
 export interface UseWizardReturn {

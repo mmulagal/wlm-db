@@ -44,7 +44,7 @@ import {
 // Checks if the manage readiness data allows for management actions based on missing permissions and modules
 export const isAllowManage = (manageReadinessData: ManageReadinessInterface, engineType: string) => {
     const state = store.getState();
-    const { installMissingAWS, installMissingPowershell, installMissingJQ } =
+    const { installMissingAWS, installMissingPowershell, installMissingJQ, installMissingPython } =
         state.inventoryV2.manageInstanceInstallAction;
 
     let anyListEmpty = false;
@@ -60,7 +60,8 @@ export const isAllowManage = (manageReadinessData: ManageReadinessInterface, eng
                 : manageReadinessData[key]?.missingSqlPermissions || [];
         const missingModules = manageReadinessData[key]?.missingModules || [];
         const otherMissingModules = missingModules.filter(
-            (module: string) => module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ
+            (module: string) =>
+                module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ && module !== MANAGE_STATES.PYTHON
         );
         if (missingPermissions.length === 0 && missingModules.length === 0) {
             anyListEmpty = true;
@@ -72,6 +73,9 @@ export const isAllowManage = (manageReadinessData: ManageReadinessInterface, eng
                 // JQ check
                 (missingModules.includes(MANAGE_STATES.JQ) && installMissingJQ) ||
                     !missingModules.includes(MANAGE_STATES.JQ),
+                // Python check
+                (missingModules.includes(MANAGE_STATES.PYTHON) && installMissingPython) ||
+                    !missingModules.includes(MANAGE_STATES.PYTHON),
                 // Other modules check
                 otherMissingModules.length === 0 || (otherMissingModules.length > 0 && installMissingAWS)
             ];
@@ -135,7 +139,7 @@ export const callManageSingleInstanceApi = async (
     navigate: ReturnType<typeof useNavigate>
 ) => {
     const state = store.getState();
-    const { installMissingAWS, installMissingPowershell, installMissingJQ } =
+    const { installMissingAWS, installMissingPowershell, installMissingJQ, installMissingPython } =
         state.inventoryV2.manageInstanceInstallAction;
     const installModules: Array<string> = [
         ...(manageSingleInstanceChecks?.installMissingAWS && installMissingAWS
@@ -144,7 +148,8 @@ export const callManageSingleInstanceApi = async (
         ...(manageSingleInstanceChecks?.installMissingPowershell && installMissingPowershell
             ? [MANAGE_STATES.POWERSHELL7]
             : []),
-        ...(manageSingleInstanceChecks?.installMissingJQ && installMissingJQ ? [MANAGE_STATES.JQ] : [])
+        ...(manageSingleInstanceChecks?.installMissingJQ && installMissingJQ ? [MANAGE_STATES.JQ] : []),
+        ...(manageSingleInstanceChecks?.installMissingPython && installMissingPython ? [MANAGE_STATES.PYTHON] : [])
     ];
     const payload = {
         items: [
@@ -431,7 +436,7 @@ export const callManageMultiInstanceApi = async (
     engineType: string
 ) => {
     const state = store.getState();
-    const { installMissingAWS, installMissingPowershell, installMissingJQ } =
+    const { installMissingAWS, installMissingPowershell, installMissingJQ, installMissingPython } =
         state.inventoryV2.manageInstanceInstallAction;
 
     // Build payload for each instance, grouping by ec2InstanceId, region, credentialsId
@@ -450,7 +455,8 @@ export const callManageMultiInstanceApi = async (
                 ...(instance?.manageStates?.installMissingPowershell && installMissingPowershell
                     ? [MANAGE_STATES.POWERSHELL7]
                     : []),
-                ...(instance?.manageStates?.installMissingJQ && installMissingJQ ? [MANAGE_STATES.JQ] : [])
+                ...(instance?.manageStates?.installMissingJQ && installMissingJQ ? [MANAGE_STATES.JQ] : []),
+                ...(instance?.manageStates?.installMissingPython && installMissingPython ? [MANAGE_STATES.PYTHON] : [])
             ];
 
             const ec2InstanceId: string = instance?.ec2InstanceId || instance?.data?.ec2InstanceId || '';
@@ -619,6 +625,14 @@ export const hasMissingJQ = (manageReadinessData: any) => {
     );
 };
 
+// Check if the manage readiness data has missing Python modules
+export const hasMissingPython = (manageReadinessData: any) => {
+    if (!manageReadinessData) return false;
+    return Object.keys(manageReadinessData).some(key =>
+        (manageReadinessData[key]?.missingModules || []).includes(MANAGE_STATES.PYTHON)
+    );
+};
+
 // Filters and returns a list of unique missing modules from the manage readiness data, excluding PowerShell 7 and JQ
 export const missingModules = (manageReadinessData: ManageReadinessInterface) => {
     if (!manageReadinessData) return [];
@@ -629,7 +643,12 @@ export const missingModules = (manageReadinessData: ManageReadinessInterface) =>
     readinessKeys.forEach(key => {
         const missingModulesList = manageReadinessData[key]?.missingModules || [];
         missingModulesList
-            .filter((module: string) => module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ)
+            .filter(
+                (module: string) =>
+                    module !== MANAGE_STATES.POWERSHELL7 &&
+                    module !== MANAGE_STATES.JQ &&
+                    module !== MANAGE_STATES.PYTHON
+            )
             .forEach((module: string) => filteredModulesSet.add(module));
     });
 
@@ -652,6 +671,7 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
     const missingModulesList = readinessData?.missingModules || [];
     const hasPowershell7 = missingModulesList.includes(MANAGE_STATES.POWERSHELL7);
     const hasJQ = missingModulesList.includes(MANAGE_STATES.JQ);
+    const hasPython = missingModulesList.includes(MANAGE_STATES.PYTHON);
     const otherModules = missingModulesList.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
 
     const permissions =
@@ -667,6 +687,10 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
 
     if (hasJQ) {
         return MANAGE_STATES.MISSING_JQ;
+    }
+
+    if (hasPython) {
+        return MANAGE_STATES.MISSING_PYTHON;
     }
 
     return MANAGE_STATES.READY;

@@ -116,7 +116,8 @@ const initialInventoryV2State: InventorySliceData = {
     manageInstanceInstallAction: {
         installMissingAWS: false,
         installMissingPowershell: false,
-        installMissingJQ: false
+        installMissingJQ: false,
+        installMissingPython: false
     },
     manageSingleInstanceReadiness: null,
     manageSingleInstanceChecks: null,

@@ -17,7 +17,7 @@ import store from '../../../../../store/store';
 
 // Map engine types to required checks
 export const ENGINE_TYPE_CHECKS: Record<string, string[]> = {
-    [DBType.ORACLE]: ['installMissingAWS', 'installMissingJQ'],
+    [DBType.ORACLE]: ['installMissingAWS', 'installMissingJQ', 'installMissingPython'],
     [DBType.MSSQL]: ['installMissingAWS', 'installMissingPowershell']
 };
 
@@ -42,6 +42,9 @@ export const CHECK_LABELS: Record<string, Record<string, string>> = {
     },
     installMissingJQ: {
         [DBType.ORACLE]: 'databases.register-flow.missing-jq-title'
+    },
+    installMissingPython: {
+        [DBType.ORACLE]: 'databases.register-flow.missing-python-title'
     }
 };
 

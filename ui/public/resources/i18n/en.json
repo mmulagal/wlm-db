@@ -76,6 +76,7 @@
             "all-modules-installed": "AWS and NetApp powershell modules are already installed",
             "missing-powershell-title": "Install missing PowerShell 7",
             "missing-jq-title": "Install missing JQ module",
+            "missing-python-title": "Install missing Python module",
             "missing-modules-title": "Install missing AWS and NetApp PowerShell modules",
             "missing-aws-title": "Install missing AWS module",
             "instances": "Instances",

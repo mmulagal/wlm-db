@@ -18,6 +18,7 @@ import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanc
 import {
     hasMissingJQ,
     hasMissingPowershell7,
+    hasMissingPython,
     isAlreadyDetectedCheck,
     mergeReadinessData,
     missingModules
@@ -193,6 +194,9 @@ export const Content = () => {
                 if (check === 'installMissingJQ') {
                     manageCheckObj.installMissingJQ = hasMissingJQ(manageReadinessData);
                 }
+                if (check === 'installMissingPython') {
+                    manageCheckObj.installMissingPython = hasMissingPython(manageReadinessData);
+                }
             });
 
             manageCheckObj = getManageCheckObjFinal(
@@ -255,6 +259,9 @@ export const Content = () => {
             if (engineChecks.includes('installMissingJQ')) {
                 manageCheckObj.installMissingJQ = hasMissingJQ(manageReadinessData);
             }
+            if (engineChecks.includes('installMissingPython')) {
+                manageCheckObj.installMissingPython = hasMissingPython(manageReadinessData);
+            }
             return manageCheckObj;
         }
         return manageCheckObj;
@@ -301,6 +308,9 @@ export const Content = () => {
                 }
                 if (check === 'installMissingJQ') {
                     rowManageStates.installMissingJQ = manageStates?.installMissingJQ ?? false;
+                }
+                if (check === 'installMissingPython') {
+                    rowManageStates.installMissingPython = manageStates?.installMissingPython ?? false;
                 }
             });
 

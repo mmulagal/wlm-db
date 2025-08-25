@@ -991,9 +991,11 @@ export const MANAGE_STATES = {
     NOT_READY: 'Not ready',
     MISSING_POWERSHELL: 'Missing PowerShell modules',
     MISSING_JQ: 'Missing JQ modules',
+    MISSING_PYTHON: 'Missing Python modules',
     MISSING_PREREQUISITES: 'Missing prerequisites',
     POWERSHELL7: 'Powershell 7',
-    JQ: 'jq'
+    JQ: 'jq',
+    PYTHON: 'Python'
 };
 
 export const ACTION_CTA = {
