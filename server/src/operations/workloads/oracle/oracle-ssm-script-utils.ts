@@ -645,11 +645,11 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
         missingModules="["
         if [ "$isAwsCliInstalled" != "true" ]; then
             modulesToInstall+=("AWS CLI")
-            missingModules+="\\"AWS CLI\\","
+            missingModules+="\\"awsCli\\","
         fi
         if [ "$isJqInstalled" != "true" ]; then
             modulesToInstall+=("JQ")
-            missingModules+="\\"JQ\\","
+            missingModules+="\\"jq\\","
         fi
         
         if [ \${#modulesToInstall[@]} -eq 0 ]; then
@@ -937,13 +937,15 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
             # Perform actions specific to non-CDB instances
             if [ "$isSelectCatalogRoleGranted" == "false" ]; then
                 missingPermissions="[\\"SELECT CATALOG ROLE\\"]"
+            else
+                missingPermissions="[]"
             fi
         fi
     fi
 
     missingOracleUserPermissions="{\\"instanceSid\\": \\"$oracleSid\\", \\"missingPermissions\\": $missingPermissions}"
 
-    resultObject=$(echo "$resultObject" | jq --argjson permissions "$missingOracleUserPermissions" '.missingOracleUserPermissions += [$permissions]')
+    resultObject=$(echo "$resultObject" | jq --argjson permissions "$(echo "$missingOracleUserPermissions" | jq '.')" '.missingOracleUserPermissions += [$permissions]')
 `;
 
 const GET_ORACLE_SERVER_DETAILS = (oracleSid: string, ec2InstanceId: string) => `

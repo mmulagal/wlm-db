@@ -304,6 +304,15 @@ get_data_directories_without_creds() {
             export ORACLE_SID="$ORACLE_SID"
             export ORACLE_HOME="$ORACLE_HOME"
             spFilePath="\\$ORACLE_HOME/dbs/spfile\\$ORACLE_SID.ora"
+
+            # For Oracle 21c, spfile will be located in ORACLE_BASE/dbs.
+            if [ ! -f "\\$spFilePath" ]; then
+                spFilePath="\\$ORACLE_BASE/dbs/spfile\\$ORACLE_SID.ora"
+                if [ ! -f "\\$spFilePath" ]; then
+                    echo "SPFILE not found"
+                    return 1
+                fi
+            fi
             controlFilesPath=\\$(strings "\\$spFilePath" | grep -i control_files | sed "s/.*=//;s/'//g" | tr ',' '\n' | sed '/^$/d')
 
             # Get the first control file path from the list, not all control files need to be checked as control files are usually exact copies of each other for an instance.
