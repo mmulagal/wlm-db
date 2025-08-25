@@ -24,15 +24,9 @@ const OracleServer = ({ handleToggle, openKey }: oracleServer) => {
                 <Typography
                     variant="Regular_14"
                     className={commonStyles.valueCSS}
-                    title={
-                        resourceDetails?.topology?.serverInstallationMode === 'Standalone'
-                            ? 'Standalone Instance'
-                            : 'Always On Failover Cluster Instance'
-                    }
+                    title={resourceDetails?.topology?.serverInstallationMode}
                 >
-                    {resourceDetails?.topology?.serverInstallationMode === 'Standalone'
-                        ? 'Standalone Instance'
-                        : 'Always On Failover Cluster Instance'}
+                    {resourceDetails?.topology?.serverInstallationMode}
                 </Typography>
             </div>
 

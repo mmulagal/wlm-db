@@ -1,8 +1,7 @@
 import { Typography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
-
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 
 type accordionType = {
@@ -13,6 +12,7 @@ type accordionType = {
 };
 
 const Location = ({ handleToggle, openKey, resourceDetails, resourceLoading }: accordionType) => {
+    const { t } = useTranslation();
     const contentArea = () => (
         <>
             <div className={commonStyles.row}>
@@ -45,7 +45,9 @@ const Location = ({ handleToggle, openKey, resourceDetails, resourceLoading }: a
                 <>
                     <div className={commonStyles.row}>
                         <Typography variant="Semibold_14" className={commonStyles.heading}>
-                            {GENERAL.AZ_INFO_1}
+                            {resourceDetails?.topology?.ec2Details?.length === 1
+                                ? t('databases.resource-overview.availability-zone')
+                                : t('databases.resource-overview.availability-zone-1')}
                         </Typography>
                         <Typography
                             variant="Regular_14"
@@ -58,7 +60,9 @@ const Location = ({ handleToggle, openKey, resourceDetails, resourceLoading }: a
 
                     <div className={commonStyles.row}>
                         <Typography variant="Semibold_14" className={commonStyles.heading}>
-                            {GENERAL.SUBNET_INFO_1}
+                            {resourceDetails?.topology?.ec2Details?.length === 1
+                                ? t('databases.resource-overview.subnet')
+                                : t('databases.resource-overview.subnet-1')}
                         </Typography>
                         <Typography
                             variant="Regular_14"
