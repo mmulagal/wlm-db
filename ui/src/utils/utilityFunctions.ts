@@ -1681,6 +1681,7 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword,
+        detectAsmAuthentication,
         authenticationType
     } = state?.inventoryV2;
     const credList = [];
@@ -1720,6 +1721,16 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
             resourceType: DETECT_HOST_VAR.FSX,
             username: detectOntapUsername,
             password: detectOntapPassword
+        });
+    }
+
+    // Add Oracle ASM credentials to the credential list (optional)
+    if (rowData?.hostType === DBType.ORACLE && detectAsmAuthentication?.username && detectAsmAuthentication?.password) {
+        credList.push({
+            resourceId: sqlServerInstance,
+            resourceType: DETECT_HOST_VAR.ORACLE_ASM,
+            username: detectAsmAuthentication.username,
+            password: detectAsmAuthentication.password
         });
     }
 

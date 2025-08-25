@@ -39,6 +39,22 @@
             margin-bottom: 0 !important;
         }
     }
+
+    .optionalSectionContainer {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+
+        .optionalSection {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .optionalText {
+            color: var(--text-secondary);
+        }
+    }
 }
 
 .detectFormatOption {

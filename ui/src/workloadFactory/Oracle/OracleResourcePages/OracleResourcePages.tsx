@@ -96,7 +96,7 @@ const OracleResourcePages = () => {
         }
     }, [selectedOracleInnerPageTab, visitedTabs, dispatch]);
 
-    //refresh time on hover
+    // refresh time on hover
     const setRefreshTimeOnIcon = () => {
         if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW) {
             return refreshTimes.overviewRefreshTime;

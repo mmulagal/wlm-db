@@ -52,9 +52,12 @@ export interface InventorySliceData {
         discoveredPgsqlHostData: any;
         discoverPgsqlHostLoading: boolean;
     };
-    fsxCredentialStatusObj: any;
+    fsxCredentialStatusObj: any; // For MSSQL
+    fsxCredentialStatusObjOracle: any; // For Oracle
+    fsxCredentialStatusObjPgsql: any; // For PostgreSQL
     fsxCredentialStatusLoading: boolean;
     fsxCredentialStatusLoadingOracle: boolean;
+    fsxCredentialStatusLoadingPgsql: boolean;
     mssqlInstancesData: any;
     pgsqlInstancesData: any;
     oracleInstancesData: Record<string, OracleInstanceData> | null;
@@ -65,6 +68,10 @@ export interface InventorySliceData {
     detectOntapUsername: string;
     detectOntapPassword: string;
     detectWindowsAuthentication: {
+        username: string;
+        password: string;
+    };
+    detectAsmAuthentication: {
         username: string;
         password: string;
     };
@@ -201,6 +208,8 @@ export interface InventoryTableInstanceDatInterface {
     isFsxRegistered?: boolean;
     isDefaultAuthentication?: boolean;
     oracleServerAuthentication?: boolean;
+    isAsmManaged?: boolean;
+    asmAuthentication?: boolean;
     windowsAuthentication?: boolean;
     sqlServerAuthentication?: boolean;
     windowsDomainUserAuthentication?: boolean;
@@ -528,6 +537,8 @@ export interface OracleInstancesDiscovered {
     version?: string;
     isDefaultAuthentication?: boolean;
     oracleServerAuthentication?: boolean;
+    isAsmManaged?: boolean;
+    asmAuthentication?: boolean;
     instanceType?: string;
     databaseCount?: number;
     databaseDetails?: {

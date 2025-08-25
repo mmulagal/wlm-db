@@ -42,9 +42,12 @@ const initialInventoryV2State: InventorySliceData = {
         discoveredPgsqlHostData: null,
         discoverPgsqlHostLoading: false
     },
-    fsxCredentialStatusObj: {},
+    fsxCredentialStatusObj: {}, // For MSSQL
+    fsxCredentialStatusObjOracle: {}, // For Oracle
+    fsxCredentialStatusObjPgsql: {}, // For PostgreSQL
     fsxCredentialStatusLoading: false,
     fsxCredentialStatusLoadingOracle: false,
+    fsxCredentialStatusLoadingPgsql: false,
     mssqlInstancesData: null,
     pgsqlInstancesData: null,
     oracleInstancesData: null,
@@ -55,6 +58,10 @@ const initialInventoryV2State: InventorySliceData = {
     detectOntapUsername: '',
     detectOntapPassword: '',
     detectWindowsAuthentication: {
+        username: '',
+        password: ''
+    },
+    detectAsmAuthentication: {
         username: '',
         password: ''
     },
@@ -229,11 +236,20 @@ const inventoryV2Slice = createSlice({
         setFsxCredentialStatus: (state, action: PayloadAction<any>) => {
             state.fsxCredentialStatusObj = action.payload;
         },
+        setFsxCredentialStatusOracle: (state, action: PayloadAction<any>) => {
+            state.fsxCredentialStatusObjOracle = action.payload;
+        },
+        setFsxCredentialStatusPgsql: (state, action: PayloadAction<any>) => {
+            state.fsxCredentialStatusObjPgsql = action.payload;
+        },
         setFsxCredentialStatusLoading: (state, action: PayloadAction<any>) => {
             state.fsxCredentialStatusLoading = action.payload;
         },
         setFsxCredentialStatusLoadingOracle: (state, action: PayloadAction<any>) => {
             state.fsxCredentialStatusLoadingOracle = action.payload;
+        },
+        setFsxCredentialStatusLoadingPgsql: (state, action: PayloadAction<any>) => {
+            state.fsxCredentialStatusLoadingPgsql = action.payload;
         },
         setMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.mssqlInstancesData = action.payload;
@@ -268,6 +284,12 @@ const inventoryV2Slice = createSlice({
         ) => {
             state.detectWindowsAuthentication = {
                 ...state.detectWindowsAuthentication,
+                ...action.payload
+            };
+        },
+        setDetectAsmAuthentication: (state, action: PayloadAction<Partial<typeof state.detectAsmAuthentication>>) => {
+            state.detectAsmAuthentication = {
+                ...state.detectAsmAuthentication,
                 ...action.payload
             };
         },
@@ -480,12 +502,16 @@ export const {
     setIsDiscoveredPgsqlHostData,
     setIsDiscoverPgsqlHostLoading,
     setFsxCredentialStatus,
+    setFsxCredentialStatusOracle,
+    setFsxCredentialStatusPgsql,
     setFsxCredentialStatusLoading,
     setFsxCredentialStatusLoadingOracle,
+    setFsxCredentialStatusLoadingPgsql,
     setMssqlInstancesData,
     setPgsqlInstancesData,
     setOracleInstancesData,
     setDetectWindowsAuthentication,
+    setDetectAsmAuthentication,
     setPerfMssqlInstancesData,
     setInProgressInstances,
     setDetectManageUserName,

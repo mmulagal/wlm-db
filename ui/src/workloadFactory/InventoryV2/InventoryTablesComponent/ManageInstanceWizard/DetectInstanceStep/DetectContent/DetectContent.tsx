@@ -1,23 +1,24 @@
-import { DsTypography, PasswordField, Popover, RadioButton, TextField, useWizard } from '@netapp/design-system';
+import { DsTooltipInfo, DsTypography, PasswordField, RadioButton, TextField, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import styles from './DetectContent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { ACTION_TYPE, AUTHENTICATION_TYPE, DBType } from '../../../../../../utils/consts';
+import { ACTION_TYPE, AUTHENTICATION_TYPE, DBType, DETECT_HOST_VAR } from '../../../../../../utils/consts';
 import {
     setAuthenticationType,
     setDetectManagePassword,
     setDetectManageUserName,
     setDetectONTAPPassword,
     setDetectONTAPUserName,
-    setDetectWindowsAuthentication
+    setDetectWindowsAuthentication,
+    setDetectAsmAuthentication
 } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { getBulkDetectChecks } from '../../ManageInstanceUtils';
 import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 import { authenticationFieldsTexts } from '../DetectInstanceHelper';
-import { isAuthRequiredForInstance } from './DetectContentHelper';
+import { isAuthRequiredForInstance, isAsmAuthRequired } from './DetectContentHelper';
 
 const DetectContent = () => {
     const { t } = useTranslation();
@@ -31,6 +32,8 @@ const DetectContent = () => {
         mssqlPasswordFromWizard,
         windowsAuthenticationUsernameFromWizard,
         windowsAuthenticationPasswordFromWizard,
+        asmUserNameFromWizard,
+        asmPasswordFromWizard,
         authenticationTypeSelected,
         hitNext
     } = state;
@@ -57,11 +60,15 @@ const DetectContent = () => {
     const [ontapPasswordSearch, setOntapPasswordSearch] = useSearchDebounce(100);
     const [detectUserNameSearch, setDetectUserNameSearch] = useSearchDebounce(100);
     const [detectPasswordSearch, setDetectPasswordSearch] = useSearchDebounce(100);
+    const [asmUserNameSearch, setAsmUserNameSearch] = useState('');
+    const [asmPasswordSearch, setAsmPasswordSearch] = useState('');
 
     const [ontapUserName, setOntapUserName] = useState(ontapUserNameFromWizard || '');
     const [ontapPassword, setOntapPassword] = useState(ontapPasswordFromWizard || '');
     const [detectUserName, setDetectUserName] = useState(mssqlUserNameFromWizard || '');
     const [detectPassword, setDetectPassword] = useState(mssqlPasswordFromWizard || '');
+    const [asmUserName, setAsmUserName] = useState(asmUserNameFromWizard || '');
+    const [asmPassword, setAsmPassword] = useState(asmPasswordFromWizard || '');
     const [windowsAuthenticationUsername, setWindowsAuthenticationUsername] = useState(
         windowsAuthenticationUsernameFromWizard || ''
     );
@@ -119,6 +126,22 @@ const DetectContent = () => {
     useEffect(() => {
         dispatch(setDetectWindowsAuthentication({ password: windowsAuthenticationPassword }));
     }, [windowsAuthenticationPassword]);
+
+    useEffect(() => {
+        setAsmUserNameSearch(asmUserName);
+    }, [asmUserName]);
+
+    useEffect(() => {
+        dispatch(setDetectAsmAuthentication({ username: asmUserNameSearch }));
+    }, [asmUserNameSearch]);
+
+    useEffect(() => {
+        setAsmPasswordSearch(asmPassword);
+    }, [asmPassword]);
+
+    useEffect(() => {
+        dispatch(setDetectAsmAuthentication({ password: asmPasswordSearch }));
+    }, [asmPasswordSearch]);
 
     const authModeRadio = () => (
         <div className={styles['radio-container']}>
@@ -256,6 +279,52 @@ const DetectContent = () => {
         </div>
     );
 
+    const oracleASM = () => {
+        const config = authenticationFieldsTexts[DETECT_HOST_VAR.ORACLE_ASM];
+        return (
+            <div className={styles.secondSection}>
+                <div className={styles.optionalSectionContainer}>
+                    <DsTypography variant="Semibold_14">{t(config.heading)}</DsTypography>
+                    <div className={styles.optionalSection}>
+                        <DsTypography variant="Semibold_14" className={styles.optionalText}>
+                            {t('databases.register-flow.optional-credentials')}
+                        </DsTypography>
+                        <DsTooltipInfo trigger="hover">
+                            <div>
+                                <DsTypography variant="Regular_13">
+                                    {t('databases.register-flow.detect-oracle-asm-optionalCredentialTooltipText')}
+                                </DsTypography>
+                            </div>
+                        </DsTooltipInfo>
+                    </div>
+                </div>
+                <div className={styles.textFieldContainer}>
+                    <TextField
+                        label={t(config.usernameLabel)}
+                        value={asmUserName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            setAsmUserName(e.target.value);
+                            setState({ asmUserNameFromWizard: e.target.value });
+                        }}
+                        className={styles.textFieldStyle}
+                        placeholder={`${t('databases.general.enter')} ${t(config.usernameLabel)}`}
+                    />
+
+                    <PasswordField
+                        label={t(config.passwordLabel)}
+                        value={asmPassword}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            setAsmPassword(e.target.value);
+                            setState({ asmPasswordFromWizard: e.target.value });
+                        }}
+                        className={styles.textFieldStyle}
+                        placeholder={`${t('databases.general.enter')} ${t(config.passwordLabel)}`}
+                    />
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className={styles.detectContent}>
             {wizardOperationType === ACTION_TYPE.SINGLE && (
@@ -274,6 +343,8 @@ const DetectContent = () => {
                         windowsAuthInputFields()}
 
                     {manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered && fsxInputFields()}
+
+                    {isAsmAuthRequired(manageSingleInstanceData, manageSingleInstanceData?.hostType) && oracleASM()}
                 </>
             )}
 
@@ -293,6 +364,8 @@ const DetectContent = () => {
                         windowsAuthInputFields()}
 
                     {bulkInstanceData?.fsxId && !bulkInstanceData?.isFsxRegistered && fsxInputFields()}
+
+                    {isAsmAuthRequired(bulkInstanceData, bulkInstanceData?.hostType) && oracleASM()}
                 </>
             )}
         </div>

@@ -19,8 +19,11 @@ import {
     setDashSandboxSavings,
     setDashSandboxSavingsLoading,
     setFsxCredentialStatus,
+    setFsxCredentialStatusOracle,
+    setFsxCredentialStatusPgsql,
     setFsxCredentialStatusLoading,
     setFsxCredentialStatusLoadingOracle,
+    setFsxCredentialStatusLoadingPgsql,
     setInventoryChartData,
     setInventoryTableData,
     setIsDatabaseHostsLoading,
@@ -132,7 +135,9 @@ const InventoryApisV3 = () => {
     const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
     const { discoveredPgsqlHostData } = useAppSelector(state => state.inventoryV2.discoveredPgsqlHosts);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
-    const fsxCredentialStatusObj = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObj);
+    const fsxCredentialStatusObj = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObj); // MSSQL
+    const fsxCredentialStatusObjOracle = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObjOracle);
+    const fsxCredentialStatusObjPgsql = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObjPgsql);
     const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
     const pgsqlInstancesData = useAppSelector(state => state.inventoryV2.pgsqlInstancesData);
     const oracleInstancesData = useAppSelector(state => state.inventoryV2.oracleInstancesData);
@@ -223,7 +228,9 @@ const InventoryApisV3 = () => {
     // create resource API call
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
-    const fsxCredentialStatusObjRef: any = useRef(null);
+    const fsxCredentialStatusObjRef: any = useRef(null); // MSSQL
+    const fsxCredentialStatusObjOracleRef: any = useRef(null);
+    const fsxCredentialStatusObjPgsqlRef: any = useRef(null);
     const mssqlInstancesDataRef: any = useRef(null);
     const pgsqlInstancesDataRef: any = useRef(null);
     const oracleInstancesDataRef: any = useRef(null);
@@ -264,6 +271,14 @@ const InventoryApisV3 = () => {
     }, [fsxCredentialStatusObj]);
 
     useEffect(() => {
+        fsxCredentialStatusObjOracleRef.current = fsxCredentialStatusObjOracle;
+    }, [fsxCredentialStatusObjOracle]);
+
+    useEffect(() => {
+        fsxCredentialStatusObjPgsqlRef.current = fsxCredentialStatusObjPgsql;
+    }, [fsxCredentialStatusObjPgsql]);
+
+    useEffect(() => {
         mssqlInstancesDataRef.current = mssqlInstancesData;
     }, [mssqlInstancesData]);
 
@@ -300,14 +315,22 @@ const InventoryApisV3 = () => {
         switch (engineType) {
             case DBType.ORACLE:
                 return {
-                    setStatus: setFsxCredentialStatus,
-                    setLoading: setFsxCredentialStatusLoadingOracle
+                    setStatus: setFsxCredentialStatusOracle,
+                    setLoading: setFsxCredentialStatusLoadingOracle,
+                    statusObjRef: fsxCredentialStatusObjOracleRef
+                };
+            case DBType.POSTGRESQL:
+                return {
+                    setStatus: setFsxCredentialStatusPgsql,
+                    setLoading: setFsxCredentialStatusLoadingPgsql,
+                    statusObjRef: fsxCredentialStatusObjPgsqlRef
                 };
             case DBType.MSSQL:
             default:
                 return {
                     setStatus: setFsxCredentialStatus,
-                    setLoading: setFsxCredentialStatusLoading
+                    setLoading: setFsxCredentialStatusLoading,
+                    statusObjRef: fsxCredentialStatusObjRef
                 };
         }
     };
@@ -323,7 +346,7 @@ const InventoryApisV3 = () => {
             headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
             headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
-            const { setStatus, setLoading } = getFsxCredentialStatusActions(engineType);
+            const { setStatus, setLoading, statusObjRef } = getFsxCredentialStatusActions(engineType);
             try {
                 const result: any = await getFsxCredentialStatusListApi({
                     credentialsId: credId,
@@ -341,16 +364,14 @@ const InventoryApisV3 = () => {
                             result?.data?.fileSystems?.map((item: any) => {
                                 fsxCredStatusObj[item.id] = item.isRegistered;
                             });
-                            if (fsxCredentialStatusObjRef.current) {
-                                dispatch(
-                                    setStatus({
-                                        ...fsxCredentialStatusObjRef.current,
-                                        ...fsxCredStatusObj
-                                    })
-                                );
-                            } else {
-                                dispatch(setStatus(fsxCredStatusObj));
-                            }
+
+                            // Use engine-specific status object and ref
+                            const currentFsxObj = statusObjRef.current || {};
+                            const updatedFsxObj = {
+                                ...currentFsxObj,
+                                ...fsxCredStatusObj
+                            };
+                            dispatch(setStatus(updatedFsxObj));
                         }
                     }
                 }
@@ -2096,7 +2117,7 @@ const InventoryApisV3 = () => {
                 dispatch(setInventoryTableData(updatedResult));
             }
         }
-    }, [discoveredOracleHostData, managedHostListLoading]);
+    }, [discoveredOracleHostData, fsxCredentialStatusObjOracle, managedHostListLoading]);
 
     useEffect(() => {
         const state = store.getState();
@@ -2145,7 +2166,7 @@ const InventoryApisV3 = () => {
                 dispatch(setInventoryTableData(updatedResult));
             }
         }
-    }, [discoveredPgsqlHostData, managedHostListLoading]);
+    }, [discoveredPgsqlHostData, fsxCredentialStatusObjPgsql, managedHostListLoading]);
 
     // This data is coming from database-hosts API
     useEffect(() => {

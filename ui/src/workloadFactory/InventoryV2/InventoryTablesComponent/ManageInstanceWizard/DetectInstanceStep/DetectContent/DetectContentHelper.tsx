@@ -22,6 +22,14 @@ export const isAuthRequiredForInstance = (instanceData: any, hostType: string) =
     }
 };
 
+// Utility function to check if ASM authentication is required
+export const isAsmAuthRequired = (instanceData: any, hostType: string) => {
+    if (hostType === DBType.ORACLE) {
+        return instanceData?.isAsmManaged === true && instanceData?.asmAuthentication === false;
+    }
+    return false;
+};
+
 export const getBulkDetectChecksHelper = (instances: any[], hostType: string) => {
     let fsxId = false;
     let isFsxRegistered = true;
@@ -37,6 +45,9 @@ export const getBulkDetectChecksHelper = (instances: any[], hostType: string) =>
     if (hostType === DBType.ORACLE) {
         let oracleServerAuthentication = true;
         let isDefaultAuthentication = true;
+        // Setting by default as false as ASM is required only when it is true so will be set accordingly below
+        let isAsmManaged = false;
+        let asmAuthentication = true;
         instances?.forEach(item => {
             if (!item?.data?.oracleServerAuthentication) {
                 oracleServerAuthentication = false;
@@ -44,10 +55,18 @@ export const getBulkDetectChecksHelper = (instances: any[], hostType: string) =>
             if (!item?.data?.isDefaultAuthentication) {
                 isDefaultAuthentication = false;
             }
+            if (item?.data?.isAsmManaged === true) {
+                isAsmManaged = true;
+            }
+            if (item?.data?.asmAuthentication === false) {
+                asmAuthentication = false;
+            }
         });
         return {
             oracleServerAuthentication,
             isDefaultAuthentication,
+            isAsmManaged,
+            asmAuthentication,
             fsxId,
             isFsxRegistered,
             hostType: DBType.ORACLE

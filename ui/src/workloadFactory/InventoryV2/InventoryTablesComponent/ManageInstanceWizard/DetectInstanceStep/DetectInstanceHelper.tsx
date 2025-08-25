@@ -1,5 +1,5 @@
 import { TFunction } from 'i18next';
-import { DBType } from '../../../../../utils/consts';
+import { DBType, DETECT_HOST_VAR } from '../../../../../utils/consts';
 import { ReactComponent as InstanceName } from '../../../../../assets/instance-name.svg';
 import { ReactComponent as Database } from '../../../../../assets/Database.svg';
 
@@ -39,5 +39,10 @@ export const authenticationFieldsTexts = {
         heading: 'databases.register-flow.detect-oracle-heading',
         usernameLabel: 'databases.register-flow.detect-oracle-username',
         passwordLabel: 'databases.register-flow.detect-oracle-password'
+    },
+    [DETECT_HOST_VAR.ORACLE_ASM]: {
+        heading: 'databases.register-flow.detect-oracle-asm-heading',
+        usernameLabel: 'databases.register-flow.detect-oracle-asm-username',
+        passwordLabel: 'databases.register-flow.detect-oracle-asm-password'
     }
 };

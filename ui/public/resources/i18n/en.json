@@ -130,6 +130,10 @@
             "detect-oracle-heading": "Oracle",
             "detect-oracle-username": "Oracle user name",
             "detect-oracle-password": "Oracle password",
+            "detect-oracle-asm-heading": "Oracle ASM",
+            "detect-oracle-asm-username": "ASM grid user",
+            "detect-oracle-asm-password": "ASM password",
+            "detect-oracle-asm-optionalCredentialTooltipText": "Add the ASM grid user credentials to enable Workload Factory to remediate misconfigured ASM disk groups, ensuring compliance with Oracle storage layout best practices.",
             "authenticated-page-content1": "All the selected instances are authenticated",
             "authenticated-page-content2": "Continue to the next step",
             "multiinstance-header-dialog-heading": "Instance authentication and preparation status",
@@ -146,7 +150,8 @@
             "manage-min-permissions-requirement-content2-oracle": " At least one capability must meet the minimum prerequisites and be in \"Ready\" status before proceeding. To register this Oracle database, please address the necessary prerequisites and try again.",
             "sql-server-instance-down": "SQL Server instance is down.",
             "oracle-server-instance-down": "Oracle Server instance is down.",
-            "non-mssql-assessment-na": "Well-architected analysis is only available for Microsoft SQL Server and Oracle registered instances."
+            "non-mssql-assessment-na": "Well-architected analysis is only available for Microsoft SQL Server and Oracle registered instances.",
+            "optional-credentials": "(Optional)"
         },
         "deregister-flow": {
             "content-part1": "Are you sure you want to deregister the ",

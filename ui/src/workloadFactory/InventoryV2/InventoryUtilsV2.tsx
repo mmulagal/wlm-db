@@ -5,6 +5,8 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../s
 import store from '../../store/store';
 import {
     setFsxCredentialStatus,
+    setFsxCredentialStatusOracle,
+    setFsxCredentialStatusPgsql,
     setManagedAssessmentHostIdsList,
     setSelectedHeaderTab,
     setUnManagedPerfInstanceIdsList
@@ -400,7 +402,9 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             if (row?.hostType === DBType.ORACLE) {
                 authFields = {
                     oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
-                    isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication
+                    isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication,
+                    isAsmManaged: statusObj?.[0]?.isAsmManaged,
+                    asmAuthentication: statusObj?.[0]?.asmAuthentication
                 };
             } else {
                 authFields = {
@@ -439,7 +443,9 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             if (row?.hostType === DBType.ORACLE) {
                 authFields = {
                     oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
-                    isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication
+                    isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication,
+                    isAsmManaged: statusObj?.[0]?.isAsmManaged,
+                    asmAuthentication: statusObj?.[0]?.asmAuthentication
                 };
                 // Check for the item with type CDB/Single tenant (mostly it is 1st item but can be in the middle also)
                 oracleSpecificFields = getOracleSpecificFields(perRow);
@@ -1289,7 +1295,7 @@ export const getAllDiscoverInstallationMode = (row: DiscoverHostInterface) => {
 export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmState: string) => {
     let result: Array<StatusObjInterface> = [];
     const state = store.getState();
-    const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
+    const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj || {}; // MSSQL state
     if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
         row?.sqlServerInstances?.map((perRow: SQLServerInstancesDiscovered) => {
             let statusObj = {};
@@ -1365,13 +1371,15 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
 export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterface, ssmState: string) => {
     let result: Array<StatusObjInterface> = [];
     const state = store.getState();
-    const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
+    const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObjOracle || {}; // Oracle state
     if (row?.databaseInstanceDetails && row?.databaseInstanceDetails?.length > 0) {
         row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
             let statusObj = {};
             if (perRow?.instanceName) {
                 const isDefaultAuthentication = perRow?.isDefaultAuthentication;
                 const oracleServerAuthentication = perRow?.oracleServerAuthentication;
+                const isAsmManaged = perRow?.isAsmManaged;
+                const asmAuthentication = perRow?.asmAuthentication;
                 let fsxCredentialValidationFailed;
                 let storageTypeCheck;
                 const fsxIdObject = perRow?.storage?.find(
@@ -1411,7 +1419,9 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         fsxId: fsxIdObject?.id,
                         isFsxRegistered: !fsxCredentialValidationFailed,
                         isDefaultAuthentication,
-                        oracleServerAuthentication
+                        oracleServerAuthentication,
+                        isAsmManaged,
+                        asmAuthentication
                     };
                 } else {
                     statusObj = {
@@ -1421,7 +1431,9 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         fsxId: fsxIdObject?.id,
                         isFsxRegistered: !fsxCredentialValidationFailed,
                         isDefaultAuthentication,
-                        oracleServerAuthentication
+                        oracleServerAuthentication,
+                        isAsmManaged,
+                        asmAuthentication
                     };
                 }
                 result = [...result, ...[statusObj]];
@@ -1434,7 +1446,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
 export const getPgsqlPerInstanceStatus = (row: DiscoverPgsqlHostInterface, ssmState: string) => {
     let result: Array<StatusObjInterface> = [];
     const state = store.getState();
-    const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
+    const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObjPgsql || {}; // PostgreSQL state
     if (row?.pgsqlServerInstances && row?.pgsqlServerInstances?.length > 0) {
         row?.pgsqlServerInstances?.map((perRow: PgsqlInstancesDiscovered) => {
             let statusObj = {};
@@ -1727,6 +1739,8 @@ export const formatOracleDiscoverInstanceData = (
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
             oracleServerAuthentication: perRow?.oracleServerAuthentication,
             isDefaultAuthentication: perRow?.isDefaultAuthentication,
+            isAsmManaged: perRow?.isAsmManaged,
+            asmAuthentication: perRow?.asmAuthentication,
             defaultAuth: perRow?.defaultAuth,
             detectOption: statusObj?.[0]?.detectOption,
             detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
@@ -2467,7 +2481,9 @@ export const updateSqlServerInstancesForUnmanaged = (
                         oracleServerAuthentication:
                             instRow?.oracleServerAuthentication || statusObj?.[0]?.oracleServerAuthentication,
                         isDefaultAuthentication:
-                            instRow?.isDefaultAuthentication || statusObj?.[0]?.isDefaultAuthentication
+                            instRow?.isDefaultAuthentication || statusObj?.[0]?.isDefaultAuthentication,
+                        isAsmManaged: instRow?.isAsmManaged || statusObj?.[0]?.isAsmManaged,
+                        asmAuthentication: instRow?.asmAuthentication || statusObj?.[0]?.asmAuthentication
                     };
                 } else {
                     authFields = {
@@ -2534,7 +2550,9 @@ export const updateSqlServerInstancesForUnmanaged = (
                     if (existingInstanceRow?.hostType === DBType.ORACLE) {
                         authFields = {
                             oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
-                            isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication
+                            isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication,
+                            isAsmManaged: statusObj?.[0]?.isAsmManaged,
+                            asmAuthentication: statusObj?.[0]?.asmAuthentication
                         };
                     } else {
                         authFields = {
@@ -2957,16 +2975,40 @@ export const getDiscoveredHostDeploymentV2 = (host: any) => {
     return type;
 };
 
-export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any) => {
+export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any, engineType: string = 'mssql') => {
     const state = store.getState();
-    const { fsxCredentialStatusObj, detectOntapUsername, detectOntapPassword } = state?.inventoryV2;
+    const {
+        fsxCredentialStatusObj,
+        fsxCredentialStatusObjOracle,
+        fsxCredentialStatusObjPgsql,
+        detectOntapUsername,
+        detectOntapPassword
+    } = state?.inventoryV2;
     if (detectOntapUsername && detectOntapPassword && fsxId) {
-        dispatch(
-            setFsxCredentialStatus({
-                ...fsxCredentialStatusObj,
-                [fsxId]: true
-            })
-        );
+        let currentFsxObj: any;
+        let setStatusAction: any;
+
+        switch (engineType) {
+            case 'oracle':
+                currentFsxObj = fsxCredentialStatusObjOracle || {};
+                setStatusAction = setFsxCredentialStatusOracle;
+                break;
+            case 'pgsql':
+                currentFsxObj = fsxCredentialStatusObjPgsql || {};
+                setStatusAction = setFsxCredentialStatusPgsql;
+                break;
+            case 'mssql':
+            default:
+                currentFsxObj = fsxCredentialStatusObj || {};
+                setStatusAction = setFsxCredentialStatus;
+                break;
+        }
+
+        const updatedFsxObj = {
+            ...currentFsxObj,
+            [fsxId]: true
+        };
+        dispatch(setStatusAction(updatedFsxObj));
         return true;
     }
     return false;

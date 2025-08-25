@@ -752,6 +752,7 @@ const addCredentialsBasedOnEngineType = (
     detectWindowsAuthentication: any,
     detectOntapUsername: string,
     detectOntapPassword: string,
+    detectAsmAuthentication: any,
     authenticationType: string,
     engineType: string
 ) => {
@@ -824,6 +825,16 @@ const addCredentialsBasedOnEngineType = (
             password: detectOntapPassword
         });
     }
+
+    // Add Oracle ASM credentials to the credential list (optional)
+    if (engineType === DBType.ORACLE && detectAsmAuthentication?.username && detectAsmAuthentication?.password) {
+        credentials.push({
+            resourceId: sqlServerInstance,
+            resourceType: DETECT_HOST_VAR.ORACLE_ASM,
+            username: detectAsmAuthentication.username,
+            password: detectAsmAuthentication.password
+        });
+    }
 };
 
 export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDetectedInstance[]) => {
@@ -837,6 +848,7 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
         detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword,
+        detectAsmAuthentication,
         authenticationType
     } = state?.inventoryV2 || {};
 
@@ -857,6 +869,7 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
             detectWindowsAuthentication,
             detectOntapUsername,
             detectOntapPassword,
+            detectAsmAuthentication,
             authenticationType,
             instance?.data?.hostType
         );
@@ -981,13 +994,20 @@ export const isAlreadyDetectedCheck = (data: any) => {
     if (!data) return false;
 
     if (data.hostType === DBType.ORACLE) {
+        // Check if ASM authentication is required but not provided
+        const isAsmAuthRequired = data.isAsmManaged === true && data.asmAuthentication === false;
+
         if (data.isDefaultAuthentication === true) {
-            // If not default authentication, only check FSx registration
-            return !data.fsxId || (data.fsxId && data.isFsxRegistered);
+            // If default authentication is true, only check FSx registration and ASM auth
+            const fsxCheck = !data.fsxId || (data.fsxId && data.isFsxRegistered);
+            // used !isAsmAuthRequired as if isAsmManaged is false we do not need to check asmAuthentication
+            return fsxCheck && !isAsmAuthRequired;
         }
         if (data.isDefaultAuthentication === false) {
-            // If default authentication is false, check FSx registration and oracleServerAuthentication must be true
-            return (!data.fsxId || (data.fsxId && data.isFsxRegistered)) && data.oracleServerAuthentication === true;
+            // If default authentication is false, check FSx registration, oracleServerAuthentication, and ASM auth
+            const fsxCheck = !data.fsxId || (data.fsxId && data.isFsxRegistered);
+            const oracleAuthCheck = data.oracleServerAuthentication === true;
+            return fsxCheck && oracleAuthCheck && !isAsmAuthRequired;
         }
         // If isDefaultAuthentication is undefined/null, treat as not detected
         return false;

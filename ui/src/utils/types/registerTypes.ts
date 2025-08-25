@@ -91,6 +91,8 @@ export interface WizardState {
     mssqlPasswordFromWizard?: string;
     windowsAuthenticationUsernameFromWizard?: string;
     windowsAuthenticationPasswordFromWizard?: string;
+    asmUserNameFromWizard?: string;
+    asmPasswordFromWizard?: string;
     authenticationTypeSelected?: string;
     hitNext?: boolean;
     installMissingAWS?: boolean;
