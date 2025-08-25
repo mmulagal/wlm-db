@@ -34,6 +34,7 @@ import {
     createStandardNotesSection
 } from './DialogContentHelper';
 import StorageLayoutOracleDialog from './StorageLayoutOracleDialog';
+import StorageConfigOracleDialog from './StorageConfigOracleDialog';
 
 interface SavingsOpportunity {
     savingsOpportunityPercentage?: number;
@@ -123,12 +124,26 @@ const DialogContent = ({
     const ontapConfigTextSet = () => {
         if (engineType === DBType.ORACLE) {
             switch (type) {
+                case 'Thin provisioning':
+                    return 'Thin provisioninig (-space-guarantee = none)';
+                case 'Autosize':
+                    return 'Autosize on';
+                case 'Autosize-mode':
+                    return 'Autosize-mode = grow';
+                case 'Fractional reserve':
+                    return 'Fractional reserve = 0%';
+                case 'Snapshot copy reserve':
+                    return 'Snapshot copy reserve = 0%';
+                case 'Snapshot autodelete':
+                    return 'Snapshot autodelete (Volume/oldest first)';
+                case 'Space management':
+                    return 'Space-mgmt-try-first = volume_grow';
                 case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
                     return 'Snapshot policy = none';
                 case 'Tiering policy':
-                    return 'Tiering-policy (data)= snapshot-only, Tiering-policy (redo log)= none, Tiering-policy (archive) = auto';
+                    return "Data Volumes (tiering policy='snapshot-only'), Redo Log Volumes (tiering policy='none'), Archive/FRA Volumes (tiering policy='auto')";
                 case 'Tiering minimum cooling days':
-                    return 'Tiering-minimum-cooling-days (Archive - non FRA)= two days, Tiering-minimum-cooling-days (FRA)= two days if RMAN backup compression is being used.14 days if RMAN compression is not used​, Tiering-minimum-cooling-days (data)= 7​';
+                    return 'Data Volumes (tiering-minimum-cooling-days=2), Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups))​';
                 case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
                     return 'Compression(log vol)= disabled, Compression=Inline, adaptive, 8KB block size';
                 case ASSESSMENT_CONFIG_NAMES.COMPACTION:
@@ -136,7 +151,11 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
                     return 'Deduplication (log)= disabled, Deduplication = Inline, enabled';
                 case 'OS type':
-                    return 'OS type =linux ( for linux OS) ';
+                    return 'OS type = linux';
+                case 'Space reservation':
+                    return 'Space reservation enabled ';
+                case 'Space allocation':
+                    return 'Space allocation enabled';
             }
         }
         switch (type) {
@@ -217,12 +236,35 @@ const DialogContent = ({
         );
 
     const setContent = () => {
+        if (engineType === DBType.ORACLE) {
+            switch (type) {
+                case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+                    return <StorageLayoutOracleDialog type={type} />;
+                case 'Thin provisioning':
+                case 'Autosize':
+                case 'Autosize-mode':
+                case 'Fractional reserve':
+                case 'Snapshot copy reserve':
+                case 'Snapshot autodelete':
+                case 'Space management':
+                case 'Tiering policy':
+                case ASSESSMENT_CONFIG_NAMES.COMPACTION:
+                case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
+                case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
+                case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
+                case 'Tiering minimum cooling days':
+                case 'OS type':
+                case 'Space reservation':
+                case 'Space allocation':
+                    return (
+                        <StorageConfigOracleDialog type={type} createONTAPConfigSection={createONTAPConfigSection} />
+                    );
+            }
+        }
         switch (type) {
-            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT:
-            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
-            case ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT:
-            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
-                return <StorageLayoutOracleDialog type={type} />;
             case GENERAL.CLONE_MANAGEMENT_REFRESH:
                 return createStandardDialog(
                     t,

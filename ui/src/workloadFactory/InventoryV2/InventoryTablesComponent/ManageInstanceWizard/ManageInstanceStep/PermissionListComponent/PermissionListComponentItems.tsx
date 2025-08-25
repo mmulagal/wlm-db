@@ -1,5 +1,4 @@
 import { TFunction } from 'i18next';
-import { values } from 'lodash';
 import { ACTION_TYPE, MANAGE_STATES } from '../../../../../../utils/consts';
 import { AccordionItem } from '../ManageInstanceAccordion/ManageInstanceAccordion';
 import { PermissionContent } from './PermissionContent/PermissionContent';
@@ -51,7 +50,7 @@ export const PermissionListComponentItems = (
         },
         {
             label: t('databases.register-flow.powershell-modules'),
-            values: ['AWS.Tools.SimpleSystemsManagement', 'AWS.Tools.CloudWatch', 'AWS.Tools.BedrockRuntime']
+            values: ['AWS.Tools.SimpleSystemsManagement', 'AWS.Tools.CloudWatch']
         }
     ];
 
@@ -338,6 +337,10 @@ export const PermissionListComponentItems = (
                                 'bedrock:GetFoundationModelAvailability',
                                 'bedrock:ListInferenceProfiles'
                             ]
+                        },
+                        {
+                            label: t('databases.register-flow.powershell-modules'),
+                            values: ['AWS.Tools.BedrockRuntime']
                         }
                     ]}
                     policies={policiesList}

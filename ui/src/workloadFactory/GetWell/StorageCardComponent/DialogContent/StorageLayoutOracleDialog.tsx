@@ -30,15 +30,11 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                         ])}
                         {createActionOptionSection(t('databases.well-architect.archive-placement-step2'), [
                             t('databases.well-architect.archive-placement-step2-options1'),
-                            t('databases.well-architect.archive-placement-step2-options2')
-                        ])}
-                        {createActionOptionSection(t('databases.well-architect.archive-placement-step3'), [
-                            t('databases.well-architect.archive-placement-step3-options1'),
-                            t('databases.well-architect.archive-placement-step3-options2'),
-                            t('databases.well-architect.archive-placement-step3-options3'),
-                            t('databases.well-architect.archive-placement-step3-options4'),
-                            t('databases.well-architect.archive-placement-step3-options5'),
-                            t('databases.well-architect.archive-placement-step3-options6')
+                            t('databases.well-architect.archive-placement-step2-options2'),
+                            t('databases.well-architect.archive-placement-step2-options3'),
+                            t('databases.well-architect.archive-placement-step2-options4'),
+                            t('databases.well-architect.archive-placement-step2-options5'),
+                            t('databases.well-architect.archive-placement-step2-options6')
                         ])}
                     </>
                 );
@@ -54,26 +50,9 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                             createContentWithBullets([t('databases.well-architect.oracle-storagelayout-note1')]),
                             { width: '712px' }
                         )}
-                        {createSection(
-                            t('databases.well-architect.optimization-steps'),
-                            t('databases.well-architect.oracle-storage-layout-optimization-step1')
-                        )}
-                        {createActionOptionSection(t('databases.well-architect.archive-placement-step1'), [
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.archive-placement-step1-options1'),
-                            t('databases.well-architect.archive-placement-step1-options2'),
-                            t('databases.well-architect.archive-placement-step1-options3')
-                        ])}
-                        {createActionOptionSection(t('databases.well-architect.archive-placement-step2'), [
-                            t('databases.well-architect.archive-placement-step2-options1'),
-                            t('databases.well-architect.archive-placement-step2-options2')
-                        ])}
-                        {createActionOptionSection(t('databases.well-architect.archive-placement-step3'), [
-                            t('databases.well-architect.archive-placement-step3-options1'),
-                            t('databases.well-architect.archive-placement-step3-options2'),
-                            t('databases.well-architect.archive-placement-step3-options3'),
-                            t('databases.well-architect.archive-placement-step3-options4'),
-                            t('databases.well-architect.archive-placement-step3-options5'),
-                            t('databases.well-architect.archive-placement-step3-options6')
+                            t('databases.well-architect.archive-placement-step1-options2')
                         ])}
                     </>
                 );
