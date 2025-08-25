@@ -5,6 +5,11 @@ export const isAuthRequiredForInstance = (instanceData: any, hostType: string) =
     if (hostType === DBType.ORACLE) {
         const isDefault = instanceData?.isDefaultAuthentication;
         const isOracleAuth = instanceData?.oracleServerAuthentication;
+
+        // For Oracle instances:
+        // - If isDefaultAuthentication is true, no auth is required
+        // - If isDefaultAuthentication is false, check oracleServerAuthentication
+        // - If both are undefined/null, conservatively require authentication
         if (isDefault === true) {
             return false; // Auth is not required for default Oracle instances
         }
@@ -12,14 +17,15 @@ export const isAuthRequiredForInstance = (instanceData: any, hostType: string) =
             // If isDefaultAuthentication is set to false, authentication is required only if oracleServerAuthentication is false
             return !isOracleAuth;
         }
-    } else {
-        // For MSSQL and others: no auth if all auth fields are falsy
-        return (
-            !instanceData?.sqlServerAuthentication &&
-            !instanceData?.windowsAuthentication &&
-            !instanceData?.windowsDomainUserAuthentication
-        );
+        // Handle undefined/null cases - require authentication if oracleServerAuthentication is not explicitly true
+        return !isOracleAuth;
     }
+    // For MSSQL and others: no auth if all auth fields are falsy
+    return (
+        !instanceData?.sqlServerAuthentication &&
+        !instanceData?.windowsAuthentication &&
+        !instanceData?.windowsDomainUserAuthentication
+    );
 };
 
 // Utility function to check if ASM authentication is required

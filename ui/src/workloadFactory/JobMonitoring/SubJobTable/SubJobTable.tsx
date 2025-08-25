@@ -13,6 +13,7 @@ import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import {
     CREATE_RESOURCE,
+    DBType,
     JOB_MONITORING_STATUS,
     JOB_MONITORING_TYPE,
     WELL_ARCHITECTED_TABS,
@@ -35,6 +36,7 @@ import {
     setRegionFromJM,
     setSelectedWellArchitectTab
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/oracleSlice';
 import useResize from '../../../common/hooks/useResize';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
@@ -71,9 +73,15 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         const sqlServerDeploymentType = jsonObject?.sqlServerDeploymentType;
         const hostName = jsonObject?.hostName;
 
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        if (sqlServerDeploymentType.toLowerCase() === DBType.ORACLE.toLowerCase()) {
+            dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+            dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        } else {
+            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+            dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        }
+
         if (subJobsData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
             dispatch(setCredIdFromJM(rowData?.credentialsId));
             dispatch(setRegionFromJM(rowData?.region?.code));

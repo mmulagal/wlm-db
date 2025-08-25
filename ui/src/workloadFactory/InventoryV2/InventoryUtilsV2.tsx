@@ -145,7 +145,12 @@ export const formatManagedRows = (
         ec2InstanceId: managedRow?.nodeTopology?.ec2Details?.[0]?.id,
         ec2InstanceName: managedRow?.nodeTopology?.ec2Details?.[0]?.name,
         resourceId: managedRow?.id,
-        name: managedRow?.name,
+        // For Oracle hosts, use EC2 instance name (hostname) instead of resource name
+        // to prevent showing database name in the host table
+        name:
+            managedRow?.hostType === DBType.ORACLE
+                ? managedRow?.nodeTopology?.ec2Details?.[0]?.name || managedRow?.name
+                : managedRow?.name,
         status: getNodeStatus(managedRow),
         ssmState,
         totalInstance: totalInstanceCount,
@@ -155,6 +160,7 @@ export const formatManagedRows = (
         vpcId: managedRow?.nodeTopology?.vpcId,
         vpcName: managedRow?.nodeTopology?.vpcName,
         vpcCidr: managedRow?.nodeTopology?.vpcCidr,
+        platform: getPlatformForManagedHost(managedRow, managedRow?.hostType),
         fqdn: managedRow?.nodeTopology?.fqdn,
         nodeIpAddress: managedRow?.nodeTopology?.nodeIpAddress,
         action: ssmState === INVENTORY_STATUS.ONLINE && totalInstanceCount > 0 ? INVENTORY_ACTIONS.MANAGE : '', // This is default for managed rows,
@@ -186,16 +192,44 @@ export const getInstanceStatusForMixedCase = (managedHostRow: any, engineType: s
             ? state?.inventoryV2?.discoveredOracleHosts?.discoveredOracleHostData
             : state?.inventoryV2?.discoveredHosts?.discoveredHostData;
     const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id || managedHostRow?.ec2InstanceId;
+
     if (ec2Id && discoveredHostData) {
         const selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
+
         if (selectedEc2 && selectedEc2?.length > 0) {
             const ssmState = getDiscoverSsmState(selectedEc2[0]);
-            return engineType === DBType.ORACLE
-                ? getOracleDiscoverPerInstanceStatus(selectedEc2[0], ssmState)
-                : getDiscoveredPerInstanceStatus(selectedEc2[0], ssmState);
+            const result =
+                engineType === DBType.ORACLE
+                    ? getOracleDiscoverPerInstanceStatus(selectedEc2[0], ssmState)
+                    : getDiscoveredPerInstanceStatus(selectedEc2[0], ssmState);
+
+            return result;
         }
     }
     return [];
+};
+
+export const getPlatformForManagedHost = (managedHostRow: any, engineType: string | undefined) => {
+    // try to get platform from nodeTopology
+    if (managedHostRow?.nodeTopology?.platform) {
+        return managedHostRow.nodeTopology.platform;
+    }
+
+    // try to get platform from discovered data
+    if (engineType === DBType.ORACLE) {
+        const state = store.getState();
+        const discoveredHostData = state?.inventoryV2?.discoveredOracleHosts?.discoveredOracleHostData;
+        const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id || managedHostRow?.ec2InstanceId;
+
+        if (ec2Id && discoveredHostData) {
+            const selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
+            if (selectedEc2 && selectedEc2?.length > 0 && selectedEc2[0]?.platform) {
+                return selectedEc2[0].platform;
+            }
+        }
+    }
+
+    return undefined;
 };
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
@@ -376,7 +410,8 @@ const getOracleSpecificFields = (perRow: any) => {
             Array.isArray(perRow?.storage?.[0]?.protocol) && perRow?.storage?.[0]?.protocol.length > 0
                 ? perRow?.storage?.[0]?.protocol[0]
                 : GENERAL.NOT_AVAILABLE,
-        size: targetDatabase?.size ? targetDatabase?.size : GENERAL.NOT_AVAILABLE
+        size: targetDatabase?.size ? targetDatabase?.size : GENERAL.NOT_AVAILABLE,
+        platform: targetDatabase?.platform ? targetDatabase?.platform : GENERAL.NOT_AVAILABLE
     };
 };
 
@@ -386,7 +421,6 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
     let nonManagedStatus: any = [];
     if (!isAllManaged) {
         nonManagedStatus = getInstanceStatusForMixedCase(row, row?.hostType);
-        // to call data for mixed case. use in statusColText for unmanaged case
     }
 
     let instanceRows;
@@ -398,14 +432,38 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
             const statusObj = nonManagedStatus?.filter(
                 (per: StatusObjInterface) => per?.name?.toLowerCase() === perRow?.instanceName?.toLowerCase()
             );
+
             let authFields = {};
             if (row?.hostType === DBType.ORACLE) {
+                const oracleAuth = statusObj?.[0]?.oracleServerAuthentication;
+                const defaultAuth = statusObj?.[0]?.isDefaultAuthentication;
+                const isThisInstanceManaged = isManagedRow?.[0]?.isManaged;
+
                 authFields = {
-                    oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
-                    isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication,
+                    oracleServerAuthentication: oracleAuth,
+                    isDefaultAuthentication: defaultAuth,
                     isAsmManaged: statusObj?.[0]?.isAsmManaged,
                     asmAuthentication: statusObj?.[0]?.asmAuthentication
                 };
+
+                // Only apply defaults for Oracle instances that are truly missing discovery data
+                if (row?.hostType === DBType.ORACLE && oracleAuth === undefined && defaultAuth === undefined) {
+                    if (isThisInstanceManaged) {
+                        // Managed instances don't have discovery status by design - assume authenticated
+                        authFields = {
+                            ...authFields,
+                            oracleServerAuthentication: true,
+                            isDefaultAuthentication: true
+                        };
+                    } else {
+                        // Unmanaged instances should have discovery data, but if missing, be conservative
+                        authFields = {
+                            ...authFields,
+                            oracleServerAuthentication: false,
+                            isDefaultAuthentication: false
+                        };
+                    }
+                }
             } else {
                 authFields = {
                     windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
@@ -1007,7 +1065,10 @@ export const formatDiscoveredPgsqlInventoryData = (
     return result;
 };
 
-export const formatDiscoveredOracleInventoryData = (discoveredData: Array<DiscoverOracleHostInterface>) => {
+export const formatDiscoveredOracleInventoryData = (
+    discoveredData: Array<DiscoverOracleHostInterface>,
+    removeRows: Array<string> = []
+) => {
     let result = {};
     if (!discoveredData) {
         return result;
@@ -1015,6 +1076,11 @@ export const formatDiscoveredOracleInventoryData = (discoveredData: Array<Discov
     const state = store.getState();
     const { credentialMapping, regionMapping } = state?.headers;
     discoveredData?.map((perRow: DiscoverHostInterface) => {
+        if (
+            removeRows.includes(uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || ''))
+        ) {
+            return;
+        }
         result = {
             ...result,
             ...{
@@ -1999,8 +2065,9 @@ export const getUnmanagedOracleHostInstances = (
             return;
         }
         if (
-            databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
-            databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE
+            (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
+                databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE) ||
+            databaseHostsData[key]?.isDetected
         ) {
             instanceList.push(
                 uniqueHostRow(
@@ -2477,13 +2544,15 @@ export const updateSqlServerInstancesForUnmanaged = (
                 // Add authentication fields based on hostType
                 let authFields = {};
                 if (existingInstanceRow?.hostType === DBType.ORACLE) {
+                    // Use nullish coalescing to preserve explicit false values but provide defaults for undefined/null
+                    const oracleAuth =
+                        instRow?.oracleServerAuthentication ?? statusObj?.[0]?.oracleServerAuthentication;
+                    const defaultAuth = instRow?.isDefaultAuthentication ?? statusObj?.[0]?.isDefaultAuthentication;
                     authFields = {
-                        oracleServerAuthentication:
-                            instRow?.oracleServerAuthentication || statusObj?.[0]?.oracleServerAuthentication,
-                        isDefaultAuthentication:
-                            instRow?.isDefaultAuthentication || statusObj?.[0]?.isDefaultAuthentication,
-                        isAsmManaged: instRow?.isAsmManaged || statusObj?.[0]?.isAsmManaged,
-                        asmAuthentication: instRow?.asmAuthentication || statusObj?.[0]?.asmAuthentication
+                        oracleServerAuthentication: oracleAuth,
+                        isDefaultAuthentication: defaultAuth,
+                        isAsmManaged: instRow?.isAsmManaged ?? statusObj?.[0]?.isAsmManaged,
+                        asmAuthentication: instRow?.asmAuthentication ?? statusObj?.[0]?.asmAuthentication
                     };
                 } else {
                     authFields = {
@@ -2548,12 +2617,35 @@ export const updateSqlServerInstancesForUnmanaged = (
                     // Add authentication fields based on hostType
                     let authFields = {};
                     if (existingInstanceRow?.hostType === DBType.ORACLE) {
+                        const oracleAuth =
+                            statusObj?.[0]?.oracleServerAuthentication ?? instRow?.oracleServerAuthentication;
+                        const defaultAuth = statusObj?.[0]?.isDefaultAuthentication ?? instRow?.isDefaultAuthentication;
+
                         authFields = {
-                            oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
-                            isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication,
-                            isAsmManaged: statusObj?.[0]?.isAsmManaged,
-                            asmAuthentication: statusObj?.[0]?.asmAuthentication
+                            oracleServerAuthentication: oracleAuth,
+                            isDefaultAuthentication: defaultAuth,
+                            isAsmManaged: statusObj?.[0]?.isAsmManaged ?? instRow?.isAsmManaged,
+                            asmAuthentication: statusObj?.[0]?.asmAuthentication ?? instRow?.asmAuthentication
                         };
+
+                        // If authentication fields are still undefined for Oracle in mixed case, provide reasonable defaults
+                        if (oracleAuth === undefined && defaultAuth === undefined) {
+                            // For mixed case, if the instance is managed, assume it's authenticated
+                            if (instRow?.statusColText === INVENTORY_STATUS.MANAGED) {
+                                authFields = {
+                                    ...authFields,
+                                    oracleServerAuthentication: true,
+                                    isDefaultAuthentication: true
+                                };
+                            } else {
+                                // For unmanaged instances in mixed case, be conservative
+                                authFields = {
+                                    ...authFields,
+                                    oracleServerAuthentication: false,
+                                    isDefaultAuthentication: false
+                                };
+                            }
+                        }
                     } else {
                         authFields = {
                             windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
@@ -4091,7 +4183,7 @@ export const getOptimizationStatusData = (rowData: any, t: any) => {
     const cellData = rowData.optimizationStatus;
 
     const getDisableMessage = () => {
-        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
             return t('databases.register-flow.non-mssql-assessment-na');
         }
         if (

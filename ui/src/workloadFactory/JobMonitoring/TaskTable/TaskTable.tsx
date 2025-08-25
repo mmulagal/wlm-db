@@ -6,7 +6,13 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { JOB_MONITORING_STATUS, JOB_MONITORING_TYPE, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
+import {
+    DBType,
+    JOB_MONITORING_STATUS,
+    JOB_MONITORING_TYPE,
+    WELL_ARCHITECTED_TABS,
+    WLF_TABS
+} from '../../../utils/consts';
 import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { GENERAL } from '../../../utils/appConstants';
@@ -19,6 +25,7 @@ import {
     setRegionFromJM,
     setSelectedWellArchitectTab
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/oracleSlice';
 
 const TaskTable = ({ taskList = [] }: any) => {
     const dispatch = useDispatch();
@@ -38,9 +45,15 @@ const TaskTable = ({ taskList = [] }: any) => {
         const sqlServerDeploymentType = jsonObject?.sqlServerDeploymentType;
         const hostName = jsonObject?.hostName;
 
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        if (sqlServerDeploymentType.toLowerCase() === DBType.ORACLE.toLowerCase()) {
+            dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+            dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        } else {
+            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+            dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        }
+
         if (rowData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
             dispatch(setCredIdFromJM(rowData?.credentialsId));
             dispatch(setRegionFromJM(rowData?.region?.code));

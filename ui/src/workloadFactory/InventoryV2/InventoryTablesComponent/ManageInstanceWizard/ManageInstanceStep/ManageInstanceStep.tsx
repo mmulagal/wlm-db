@@ -42,7 +42,6 @@ import {
     getManageCheckObjMultiFinal,
     getManageCheckObjMultiInitial,
     getManageReadinessFromInstance,
-    isEc2InstanceAgenticReady,
     updateItemWithAgenticData
 } from './ManageInstanceStepHelper';
 

@@ -108,7 +108,7 @@ import {
     setPotentialSavingsValues
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
-import { OracleInstanceData } from '../../utils/types/inventoryV2Types';
+import { OracleInstanceData, DiscoverOracleHostInterface } from '../../utils/types/inventoryV2Types';
 
 // Limit the number of concurrent API calls to avoid overloading the backend or hitting rate limits.
 // storageSavingsApiLimit: Used specifically for storage savings API calls, allowing up to 10 concurrent requests.
@@ -2090,10 +2090,25 @@ const InventoryApisV3 = () => {
             discoveredOracleHostData &&
             discoveredOracleHostData.length
         ) {
-            // Grouping logic is not required here as oracle is just supporting standalone for now
-            // Grouing logic will be required if they support cluster in future
-            const formattedDiscoveredOracleInventoryTableData =
-                formatDiscoveredOracleInventoryData(discoveredOracleHostData);
+            // Calculate removeRows for Oracle instances that are now managed
+            const removeRows: any[] = [];
+            discoveredOracleHostData?.forEach((perRow: DiscoverOracleHostInterface) => {
+                const uniqueId = uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '');
+                // If this discovered instance is now managed, add it to removeRows
+                if (managedHostList.includes(perRow?.ec2InstanceId)) {
+                    removeRows.push(uniqueId);
+                }
+            });
+
+            const formattedDiscoveredOracleInventoryTableData = formatDiscoveredOracleInventoryData(
+                discoveredOracleHostData,
+                removeRows
+            );
+
+            const state = store.getState();
+            const { removeSecNodeDiscoveredList } = state.inventoryV2;
+            dispatch(setRemoveSecNodeDiscoveredList([...removeSecNodeDiscoveredList, ...removeRows]));
+
             // To Avoid overriding
             const updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredOracleInventoryTableData };
 
