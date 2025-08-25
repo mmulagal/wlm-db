@@ -1,7 +1,7 @@
 import {
     calculateMTUAlignmentDrift,
     assessMTUAlignment
-} from '../../../../src/operations/continuous-optimization/mtu-assessment-operations';
+} from '../../../../src/operations/continuous-optimization/mssql/mtu-assessment-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
@@ -95,7 +95,7 @@ describe('calculateMTUAlignmentDrift', () => {
         );
 
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        expect(result.objectsInViolation).toEqual(['9']); // Only Ethernet 3 has misaligned MTU
+        expect(result.objectsInViolation).toEqual(['Ethernet 3']); // Only Ethernet 3 has misaligned MTU
         expect(result.totalObjectsAssessed).toBe(2);
         expect(result.totalObjectsInViolation).toBe(1);
         expect(result.ec2InterfacesToFix).toHaveLength(1);

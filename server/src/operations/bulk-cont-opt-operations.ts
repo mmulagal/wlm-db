@@ -33,7 +33,7 @@ import {
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
 import { handleOptimizeRssOptimization } from './continuous-optimization/mssql/rssConfig-optimize-operations';
-
+import { handleOptimizeMTUAlignment } from './continuous-optimization/mssql/mtu-optimize-operations';
 import { handleBulkCloneOptimization } from './continuous-optimization/mssql/clone-optimization-operations';
 import {
     handleSharedStorageOptimize,
@@ -102,6 +102,8 @@ async function bulkOptimization(
             ? 'Fix storage tier'
             : optimizationCategory === OPTIMIZATION_CATEGORIES.MAXDOP
             ? 'Fix maxdop configuration'
+            : optimizationCategory === OPTIMIZATION_CATEGORIES.MTU_ALIGNMENT
+            ? 'Fix MTU alignment configuration'
             : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP
             ? 'Fix AWS FSx for ONTAP automatic backup configuration'
             : optimizationCategory === OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS
@@ -202,6 +204,32 @@ async function bulkHostLevelOptimization(
                         masterOptimizeParentId
                     );
                 }
+
+                if (optimizationCategory === OPTIMIZATION_CATEGORIES.MTU_ALIGNMENT) {
+                    return Promise.all(
+                        databaseHosts.map(
+                            async (host: { id: string; sqlServerInstances: string[]; interfaceNames?: string[] }) => {
+                                const { id: databaseHostId, sqlServerInstances, interfaceNames } = host;
+
+                                if (sqlServerInstances && sqlServerInstances.length > 0) {
+                                    const interfaces = (interfaceNames || []).map((name: string) => ({
+                                        interfaceName: name
+                                    }));
+
+                                    await handleOptimizeMTUAlignment(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        databaseHostId,
+                                        sqlServerInstances[0],
+                                        interfaces,
+                                        masterOptimizeParentId
+                                    );
+                                }
+                            }
+                        )
+                    );
+                }
             })
         );
     } catch (error: any) {
@@ -226,7 +254,10 @@ async function handleBulkOptimization(
         `Handle bulk optimizing : ${accountId}, ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeParentId}`
     );
 
-    if (optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
+    if (
+        optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP ||
+        optimizationCategory === OPTIMIZATION_CATEGORIES.MTU_ALIGNMENT
+    ) {
         return bulkHostLevelOptimization(accountId, optimizationCategory, hostsToOptimize, masterOptimizeParentId);
     }
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;

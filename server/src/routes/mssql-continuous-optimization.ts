@@ -30,7 +30,8 @@ import {
     BulkOptimizeSharedStorageSchema,
     BulkOptimizeSQLServerServiceSchema,
     BulkOptimizeClusterQuorumSchema,
-    BulkOptimizeHeartbeatSchema
+    BulkOptimizeHeartbeatSchema,
+    BulkOptimizeMTUAlignmentSchema
 } from './schemas/mssql-continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -466,6 +467,23 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                 const response = await bulkOptimization(
                     accountId,
                     OptimizeHighAvailabilityParams.SQLSERVER_SERVICE,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/mtu-alignment`,
+            { schema: BulkOptimizeMTUAlignmentSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    OPTIMIZATION_CATEGORIES.MTU_ALIGNMENT,
                     hostsToOptimize
                 );
                 return reply.send(response);

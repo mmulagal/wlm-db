@@ -138,7 +138,8 @@ enum OPTIMIZATION_CATEGORIES {
     COMPUTE = 'compute',
     MAXDOP = 'max-dop',
     RSS_CONFIG = 'rss-config',
-    CLONE = 'clone'
+    CLONE = 'clone',
+    MTU_ALIGNMENT = 'mtu-alignment'
 }
 
 enum DISMISS_STATUS_ENUM {

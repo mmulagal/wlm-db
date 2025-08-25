@@ -1,18 +1,18 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import getLogger from '../../utils/logger';
+import getLogger from '../../../utils/logger';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     DEFAULT_FSX_MTU_VALUE,
     SEVERITY
-} from '../../utils/continous-optimization-consts';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
-import { Metadata, ResourceAssessmentData, WorkloadInstance } from '../../utils/common-types';
-import { registerJob, updateJobDetails } from '../database/job-operations';
-import { getInstanceInfo } from '../database/database-operations';
-import { callSsmExecution } from '../aws/ssm-operations';
-import { FETCH_FSX_MTU_DETAILS, FETCH_MSSQL_INSTANCE_MTU_DETAILS } from '../workloads/mssql/mtu-scripts';
+} from '../../../utils/continous-optimization-consts';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
+import { Metadata, ResourceAssessmentData, WorkloadInstance } from '../../../utils/common-types';
+import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { getInstanceInfo } from '../../database/database-operations';
+import { callSsmExecution } from '../../aws/ssm-operations';
+import { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS } from '../../workloads/mssql/mtu-scripts';
 
 const logger = getLogger();
 
@@ -179,7 +179,7 @@ function calculateMTUAlignmentDrift(
                 if (currentMTU !== fsxMtuValue) {
                     allOptimized = false;
 
-                    objectsInViolation.push(sqlInterface.interfaceIndex.toString());
+                    objectsInViolation.push(sqlInterface.name.toString());
 
                     const interfaceToFix = {
                         ec2InstanceId: metadata?.node1InstanceId,

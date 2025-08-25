@@ -318,7 +318,87 @@ const FETCH_FSX_MTU_DETAILS = (instanceRecord: WorkloadInstance) => `
     if ([string]::IsNullOrEmpty($response)) {
         throw "Failed to generate response because the response is either null or empty. $response"
     }
-    return $response
+    $response
 `;
 
-export { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS };
+const OPTIMIZE_NETWORK_INTERFACE_MTU = (targetMTU: number, interfaceNames: string[]) => `
+    #Optimize Network Interface MTU Settings
+
+    $WarningPreference = 'SilentlyContinue';
+    $targetMTU = ${targetMTU}
+    $interfaceNames = @(${interfaceNames.map(name => `"${name}"`).join(', ')})
+    
+    
+    $responseObject = @{
+    optimizedInterfaces = @()
+    errors = @()
+    success = $true
+}
+
+foreach ($interfaceName in $interfaceNames) {
+    try {
+        # Check if adapter exists
+        $adapter = Get-NetAdapter -Name $interfaceName -ErrorAction SilentlyContinue
+        if (-not $adapter) {
+            $responseObject.errors += "Adapter '$interfaceName' not found"
+            $responseObject.success = $false
+            continue
+        }
+
+        # Find Jumbo Frame property and its valid values
+        $jumboProp = Get-NetAdapterAdvancedProperty -Name $interfaceName | Where-Object { $_.DisplayName -like "*Jumbo*" } | Select-Object -First 1
+        if (-not $jumboProp) {
+            $responseObject.errors += "Jumbo frame property not found for '$interfaceName'"
+            $responseObject.success = $false
+            continue
+        }
+        $validValues = $jumboProp.ValidDisplayValues
+
+        # Select the highest non-disabled value
+        $maxJumboValue = ($validValues | Where-Object { $_ -ne "Disabled" } | Sort-Object {[int]$_} -Descending | Select-Object -First 1)
+
+        # Check if target MTU is larger than the maximum valid jumbo value
+        if ([int]$targetMTU -gt [int]$maxJumboValue) {
+            $responseObject.errors += "Target MTU '$targetMTU' is larger than the maximum supported jumbo frame value '$maxJumboValue' for '$interfaceName'."
+            $responseObject.success = $false
+            continue
+        }
+
+        # Set jumbo value only if not already set
+        if ($jumboProp.DisplayValue -ne "$maxJumboValue") {
+            Set-NetAdapterAdvancedProperty -Name $interfaceName -DisplayName $jumboProp.DisplayName -DisplayValue "$maxJumboValue"
+            Start-Sleep -Seconds 2 # Give time for the change to apply
+
+            # Verify change
+            $jumboPropAfter = Get-NetAdapterAdvancedProperty -Name $interfaceName | Where-Object { $_.DisplayName -like "*Jumbo*" } | Select-Object -First 1
+            if ($jumboPropAfter.DisplayValue -ne "$maxJumboValue") {
+                $responseObject.errors += "Failed to enable jumbo frames for '$interfaceName'"
+                $responseObject.success = $false
+                continue
+            }
+        }
+
+        $netshResult = & netsh interface ipv4 set subinterface "$interfaceName" mtu=$targetMTU store=persistent 2>&1
+
+        if ($netshResult -match "The parameter is incorrect") {
+            $responseObject.errors += "Failed to set MTU for '$interfaceName': $netshResult"
+            $responseObject.success = $false
+            continue
+        }
+
+        $responseObject.optimizedInterfaces += @{
+            name = $interfaceName
+            status = "MTU update successful"
+            jumboValue = $maxJumboValue
+        }
+    } catch {
+        $responseObject.errors += "Error processing '$interfaceName': $($_.Exception.Message)"
+        $responseObject.success = $false
+    }
+}
+
+$response = $responseObject | ConvertTo-Json -Depth 4 -Compress
+return $response
+`;
+
+export { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS, OPTIMIZE_NETWORK_INTERFACE_MTU };

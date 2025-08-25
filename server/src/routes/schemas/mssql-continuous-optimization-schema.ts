@@ -19,6 +19,7 @@ import {
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerAccount,
     BulkOptimizeGeneralRequestBody,
+    BulkOptimizeMTURequestBody,
     AvailableSnapshotPoliciesResponse,
     OptimizeResiliencyBody,
     OptimizeGenericRequestBody,
@@ -26,7 +27,8 @@ import {
     BulkOptimizeCloneBody,
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
-    BulkOptimizeHASharedStorageBody
+    BulkOptimizeHASharedStorageBody,
+    BulkOptimizeBackupRequestBody
 } from '../types/mssql-continuous-optimisation.types';
 import { resourceRequest } from './database-hosts-schemas';
 
@@ -230,9 +232,17 @@ const BulkOptimizeMaxDopSchema = {
 };
 
 const BulkOptimizeAwsBackupSchema = {
-    ...BulkOptimizeGeneralSchema,
+    ...resourceRequest,
     summary: 'Enable scheduled AWS FSx for ONTAP backups',
-    description: 'Enable scheduled AWS FSx for ONTAP backups.'
+    description: 'Enable scheduled AWS FSx for ONTAP backups.',
+    params: AccountIdParams,
+    tags: [RouteTags.MSSQL_ASSESSMENT],
+    body: BulkOptimizeBackupRequestBody,
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
 };
 
 const BulkDismissConfigurationSchema = {
@@ -291,6 +301,13 @@ const BulkOptimizeSQLServerServiceSchema = {
     description: 'Fix sql server service parameters as per the best practice for selected database instances.'
 };
 
+const BulkOptimizeMTUAlignmentSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Optimize MTU alignment settings',
+    description: 'Optimize MTU alignment settings to match FSx file system MTU for improved network performance.',
+    body: BulkOptimizeMTURequestBody
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -314,5 +331,6 @@ export {
     BulkOptimizeSharedStorageSchema,
     BulkOptimizeHeartbeatSchema,
     BulkOptimizeClusterQuorumSchema,
-    BulkOptimizeSQLServerServiceSchema
+    BulkOptimizeSQLServerServiceSchema,
+    BulkOptimizeMTUAlignmentSchema
 };

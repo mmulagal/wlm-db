@@ -413,19 +413,38 @@ const UpdateFSxNBackupRequestBody = Type.Object({
     )
 });
 
-const OptimizePerHostRequestBody = Type.Intersect([
+const BaseOptimizePerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+    credentialsId: Type.String(),
+    region: Type.String(),
+    instanceType: Type.Optional(Type.String()),
+    networkAdapters: Type.Optional(Type.Array(Type.String()))
+});
+
+// For MTU optimization - only requires interfaceNames, no FSx/backup fields
+const MTUOptimizePerHostRequestBody = Type.Intersect([
+    Type.Omit(BaseOptimizePerHostRequestBody, ['networkAdapters']),
     Type.Object({
-        id: Type.String({ minLength: 1 }),
-        sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-        credentialsId: Type.String(),
-        region: Type.String(),
-        instanceType: Type.Optional(Type.String()),
-        networkAdapters: Type.Optional(Type.Array(Type.String()))
+        interfaceNames: Type.Array(Type.String())
+    })
+]);
+
+// For AWS backup optimization - requires FSx/backup fields, no interfaceNames
+const BackupOptimizePerHostRequestBody = Type.Intersect([BaseOptimizePerHostRequestBody, UpdateFSxNBackupRequestBody]);
+
+// General type for other optimizations - includes all optional fields
+const OptimizePerHostRequestBody = Type.Intersect([
+    BaseOptimizePerHostRequestBody,
+    Type.Object({
+        interfaceNames: Type.Optional(Type.Array(Type.String()))
     }),
     UpdateFSxNBackupRequestBody
 ]);
 
 type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
+type MTUOptimizePerHostRequestBodyType = Static<typeof MTUOptimizePerHostRequestBody>;
+type BackupOptimizePerHostRequestBodyType = Static<typeof BackupOptimizePerHostRequestBody>;
 
 const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
@@ -458,13 +477,35 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
 
+const BulkOptimizeMTUPerHostRequestBody = Type.Object({
+    configurationName: Type.Literal('mtu-alignment'),
+    databaseHosts: Type.Array(MTUOptimizePerHostRequestBody)
+});
+
+const BulkOptimizeBackupPerHostRequestBody = Type.Object({
+    configurationName: Type.Literal('aws-backup'),
+    databaseHosts: Type.Array(BackupOptimizePerHostRequestBody)
+});
+
 type BulkOptimizeGeneralPerHostRequestBodyType = Static<typeof BulkOptimizeGeneralPerHostRequestBody>;
+type BulkOptimizeMTUPerHostRequestBodyType = Static<typeof BulkOptimizeMTUPerHostRequestBody>;
+type BulkOptimizeBackupPerHostRequestBodyType = Static<typeof BulkOptimizeBackupPerHostRequestBody>;
 
 const BulkOptimizeGeneralRequestBody = Type.Object({
     hostsToOptimize: Type.Array(BulkOptimizeGeneralPerHostRequestBody)
 });
 
+const BulkOptimizeMTURequestBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeMTUPerHostRequestBody)
+});
+
+const BulkOptimizeBackupRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeBackupPerHostRequestBody)
+});
+
 type BulkOptimizeGeneralRequestBodyType = Static<typeof BulkOptimizeGeneralRequestBody>;
+type BulkOptimizeMTURequestBodyType = Static<typeof BulkOptimizeMTURequestBody>;
+type BulkOptimizeBackupRequestBodyType = Static<typeof BulkOptimizeBackupRequestBody>;
 
 const BulkOptimizeSnapshotPolicyParams = Type.Object({
     fsxId: Type.String(),
@@ -642,6 +683,14 @@ export {
     BulkOptimizePerHostRequestBodyType,
     BulkOptimizeGeneralRequestBody,
     BulkOptimizeGeneralRequestBodyType,
+    BulkOptimizeMTURequestBody,
+    BulkOptimizeMTURequestBodyType,
+    BulkOptimizeBackupRequestBody,
+    BulkOptimizeBackupRequestBodyType,
+    MTUOptimizePerHostRequestBody,
+    MTUOptimizePerHostRequestBodyType,
+    BackupOptimizePerHostRequestBody,
+    BackupOptimizePerHostRequestBodyType,
     OptimizePerHostRequestBody,
     OptimizePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType,
@@ -671,5 +720,7 @@ export {
     BulkOptimizeHASharedStorageBodyType,
     OptimizeHASharedStorageRequestBodyType,
     OptimizeHASharedStorageRequestBody,
-    BulkOptimizeHASharedStorageRequestBodyType
+    BulkOptimizeHASharedStorageRequestBodyType,
+    BulkOptimizeMTUPerHostRequestBodyType,
+    BulkOptimizeBackupPerHostRequestBodyType
 };

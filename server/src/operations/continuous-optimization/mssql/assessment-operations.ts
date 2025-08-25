@@ -45,7 +45,7 @@ import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostO
 import { calculateLicenseDrift, managedHostsLicenseAssessment } from './license-assessment-operations';
 import { calculateMSSQLPatchDrift, managedHostMSSQLPatchAssessment } from './mssqlPatch-assessment-operations';
 import { calculateRssConfigDrift, managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
-import { assessMTUAlignment, calculateMTUAlignmentDrift } from '../mtu-assessment-operations';
+import { assessMTUAlignment, calculateMTUAlignmentDrift } from './mtu-assessment-operations';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
 import {
     createDatabaseInstanceConfigData,
