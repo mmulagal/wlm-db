@@ -1,5 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
+import { FastifyRequest } from 'fastify/types/request';
+import { FastifyReply } from 'fastify/types/reply';
 import {
     deployPgSql,
     deployStackOrCreateTemplateURL,
@@ -33,23 +35,41 @@ const API_MSSQL_TERRAFORM_PREFIX_PATH = '/v1/mssql/terraform/setup';
 const API_PGSQL_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
 const API_PGSQL_TERRAFORM_PREFIX_PATH = '/v1/pgsql/terraform/setup';
 
-const fsxValidationHook = async (request: any, reply: any) => {
-    const {
-        body: { fsxConfiguration: config }
-    } = request;
+// FSX Throughput Constants
+const FSX_GEN1_THROUGHPUT = [128, 256, 512, 1024, 2048, 4096];
+const FSX_GEN2_MULTI_AZ_THROUGHPUT = [384, 768, 1536, 3072, 4608, 6144];
+
+// SAZ Gen2 validation using mathematical pattern instead of 26 hardcoded values
+const validateSAZGen2Throughput = (value: number): boolean => {
+    const baseUnit = 384;
+    const min = 384;
+    const max = 73728;
+    if (value < min || value > max || value % baseUnit !== 0) {
+        return false;
+    }
+    const multiplier = value / baseUnit;
+    return (
+        [1, 2, 4, 8].includes(multiplier) || // Powers of 2
+        (multiplier >= 12 && multiplier <= 48 && multiplier % 4 === 0) || // 12-48 in steps of 4
+        (multiplier >= 56 && multiplier <= 96 && multiplier % 8 === 0) || // 56-96 in steps of 8
+        (multiplier >= 112 && multiplier <= 192 && multiplier % 16 === 0) // 112-192 in steps of 16
+    );
+};
+
+const fsxValidationHook = async (request: FastifyRequest, reply: FastifyReply) => {
+    const body = request.body as any;
+    const config = body?.fsxConfiguration;
 
     if (config) {
         const isGen1 = ['SINGLE_AZ_1', 'MULTI_AZ_1'].includes(config.fsxDeploymentMode);
-        const isGen2 = ['SINGLE_AZ_2', 'MULTI_AZ_2'].includes(config.fsxDeploymentMode);
+        const isMAZGen2 = ['MULTI_AZ_2'].includes(config.fsxDeploymentMode);
+        const isSAZGen2 = ['SINGLE_AZ_2'].includes(config.fsxDeploymentMode);
 
         if (isGen1) {
-            const validGen1Throughput = [128, 256, 512, 1024, 2048, 4096];
-            if (!validGen1Throughput.includes(config.fsxVolThroughput)) {
+            if (!FSX_GEN1_THROUGHPUT.includes(config.fsxVolThroughput)) {
                 return reply.code(400).send({
                     error: 'Invalid FSX Configuration',
-                    message: `Invalid throughput ${config.fsxVolThroughput} for ${
-                        config.fsxDeploymentMode
-                    }. Valid values: ${validGen1Throughput.join(', ')}`
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Valid values: ${FSX_GEN1_THROUGHPUT.join(', ')}`
                 });
             }
             if (!config.fsxIOPS) {
@@ -58,14 +78,18 @@ const fsxValidationHook = async (request: any, reply: any) => {
                     message: `fsxIOPS is required for ${config.fsxDeploymentMode}`
                 });
             }
-        } else if (isGen2) {
-            const validGen2Throughput = [384, 768, 1536, 3072, 4608, 6144];
-            if (!validGen2Throughput.includes(config.fsxVolThroughput)) {
+        } else if (isMAZGen2) {
+            if (!FSX_GEN2_MULTI_AZ_THROUGHPUT.includes(config.fsxVolThroughput)) {
                 return reply.code(400).send({
                     error: 'Invalid FSX Configuration',
-                    message: `Invalid throughput ${config.fsxVolThroughput} for ${
-                        config.fsxDeploymentMode
-                    }. Valid values: ${validGen2Throughput.join(', ')}`
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Valid values: ${FSX_GEN2_MULTI_AZ_THROUGHPUT.join(', ')}`
+                });
+            }
+        } else if (isSAZGen2) {
+            if (!validateSAZGen2Throughput(config.fsxVolThroughput)) {
+                return reply.code(400).send({
+                    error: 'Invalid FSX Configuration',
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Must be a valid multiple of 384 (range: 384-73728)`
                 });
             }
         }
