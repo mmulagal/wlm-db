@@ -482,7 +482,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'MTU Alignment recommendation',
+            title: 'MTU alignment recommendation',
             description:
                 'Workload Factory recommends aligning the MTU (Maximum Transmission Unit) settings on your EC2 instances with your FSX for ONTAP file system. \nProper MTU alignment helps prevent network fragmentation and ensures optimal performance and reliability for your SQL Server workloads. \nIt is recommended to configure MTU consistently across all nodes and network paths.'
         },

@@ -893,7 +893,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     ONTAP: 'ontap',
     OS: 'os',
     RSS_CONFIGURATION: 'Network adapter settings',
-    MTU: 'MTU Alignment',
+    MTU: 'MTU alignment',
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     MSSQL_HIGH_AVAILABILITY: 'Microsoft SQL Server High Availability',
     CLONE_MANAGEMENT: 'Clone cleanup',

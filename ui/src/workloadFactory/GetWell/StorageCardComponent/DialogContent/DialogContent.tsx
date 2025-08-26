@@ -776,27 +776,41 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         {createSection(
-                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.mtu-alignment-action-summary-heading'),
                             t('databases.well-architect.mtu-alignment-action-summary')
                         )}
 
                         {createSection(
-                            t('databases.well-architect.what-will-happen'),
-                            createContentWithBullets([
-                                t('databases.well-architect.mtu-alignment-what-will-happen1'),
-                                t('databases.well-architect.mtu-alignment-what-will-happen2')
-                            ]),
+                            t('databases.well-architect.mtu-alignment-what-will-happen-heading'),
+                            <>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.mtu-alignment-what-will-happen1')}
+                                </DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.mtu-alignment-what-will-happen2')}
+                                </DsTypography>
+                            </>,
                             { width: '712px' }
                         )}
 
                         {createSection(
                             GENERAL.NOTE,
                             createContentWithBullets([
-                                t('databases.well-architect.mtu-alignment-note1'),
-                                t('databases.well-architect.mtu-alignment-note2'),
-                                t('databases.well-architect.mtu-alignment-note3'),
-                                t('databases.well-architect.mtu-alignment-note4')
+                                <DsTypography variant="Regular_14" style={{ whiteSpace: 'pre-line' }}>
+                                    {`${t('databases.well-architect.mtu-alignment-note1')}\n${t(
+                                        'databases.well-architect.mtu-alignment-note1-additional'
+                                    )}\n${t('databases.well-architect.mtu-alignment-note1-final')}`}
+                                </DsTypography>,
+                                t('databases.well-architect.mtu-alignment-note2')
                             ]),
+                            { width: '712px' }
+                        )}
+
+                        {createSection(
+                            '',
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.mtu-alignment-note3')}
+                            </DsTypography>,
                             { width: '712px' }
                         )}
                     </div>

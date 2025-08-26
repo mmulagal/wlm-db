@@ -1318,7 +1318,7 @@ export const GENERAL = {
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     CRR: 'Cross-Region Replication (CRR)',
     MSSQL_HIGH_AVAILABILITY: 'Microsoft SQL Server High Availability',
-    MTU: 'MTU Alignment',
+    MTU: 'MTU alignment',
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
