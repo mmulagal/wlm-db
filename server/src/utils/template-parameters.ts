@@ -311,7 +311,8 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             description: 'Throughput capacity for the FSx for ONTAP volume.',
             type: 'Number',
             default: 128,
-            allowedValues: [128, 256, 512, 1024, 2048, 4096]
+            allowedValues: [128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 4608, 6144, 7680, 9216, 10752, 12288, 13824, 15360,
+            16896, 18432, 21504, 24576, 27648, 30720, 33792, 36864, 43008, 49152, 55296, 61440, 67584, 73728]
         },
         {
             name: 'FileSystemEncryptionKeyId',
