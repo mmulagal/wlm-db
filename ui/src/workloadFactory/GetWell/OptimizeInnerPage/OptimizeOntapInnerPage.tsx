@@ -404,6 +404,19 @@ const OptimizeOntapInnerPage = () => {
     };
 
     const renderTable = () => {
+        if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
+            // Default we have ontap config which has inner page so directly returning it.
+            // Once we have cases with more inner page than add switch cases.
+            return (
+                <OntapTableWithData
+                    type={selectedOptimizeConfig?.type}
+                    data={selectedOptimizeConfig?.data}
+                    lastColDetails={lastColDetails}
+                    handleBulkAction={handleBulkAction}
+                    engineType={selectedOptimizeConfig?.engineType}
+                />
+            );
+        }
         switch (selectedOptimizeConfig?.type) {
             case 'Multipath I/O Policy':
                 return (

@@ -731,21 +731,24 @@ export const mergeReadinessData = (
 ): ManageReadinessInterface => {
     const mergedData: any = {};
 
-    Object.keys(manageReadinessData).forEach(key => {
+    Object.keys(manageReadinessData)?.forEach(key => {
         if (key !== 'missingSqlCmd') {
             const basePermissions =
                 engineType === DBType.ORACLE
-                    ? manageReadinessData[key]?.missingPermissions || []
-                    : manageReadinessData[key]?.missingSqlPermissions || [];
+                    ? manageReadinessData?.[key]?.missingPermissions || []
+                    : manageReadinessData?.[key]?.missingSqlPermissions || [];
 
             const partnerPermissions =
                 engineType === DBType.ORACLE
-                    ? partnerManageReadinessData[key]?.missingPermissions || []
-                    : partnerManageReadinessData[key]?.missingSqlPermissions || [];
+                    ? partnerManageReadinessData?.[key]?.missingPermissions || []
+                    : partnerManageReadinessData?.[key]?.missingSqlPermissions || [];
 
             const mergedPermissions = Array.from(new Set([...basePermissions, ...partnerPermissions]));
             const mergedModules = Array.from(
-                new Set([...manageReadinessData[key].missingModules, ...partnerManageReadinessData[key].missingModules])
+                new Set([
+                    ...manageReadinessData?.[key]?.missingModules,
+                    ...(partnerManageReadinessData?.[key]?.missingModules || [])
+                ])
             );
 
             mergedData[key] = {
@@ -755,7 +758,7 @@ export const mergeReadinessData = (
                 missingModules: mergedModules
             };
         } else {
-            mergedData[key] = manageReadinessData[key] || partnerManageReadinessData[key];
+            mergedData[key] = manageReadinessData?.[key] || partnerManageReadinessData?.[key];
         }
     });
 
