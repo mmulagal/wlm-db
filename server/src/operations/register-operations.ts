@@ -2589,11 +2589,11 @@ async function validateOracleCredentials(
 
     if (oracleAsmCredentials?.length) {
         const { error, valid } = parsedResponse;
+        const oracleAsmError = error || !valid ? 'Invalid credentials provided' : undefined;
         response.push({
             resourceId: instanceId,
             resourceType: RESOURCESTYPE.ORACLE_ASM,
-            ...(error && { oracleAsmError: error }),
-            areAsmCredentialsValid: valid
+            ...(oracleAsmError && { oracleAsmError })
         });
     }
 

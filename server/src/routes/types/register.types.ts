@@ -209,6 +209,7 @@ const SingleRegisterCredentialsResponse = Type.Object({
     databaseServerEdition: Type.Optional(Type.String()),
     databaseServerError: Type.Optional(Type.String()),
     fsxnError: Type.Optional(Type.String()),
+    oracleAsmError: Type.Optional(Type.String()),
     requiredModuleError: Type.Optional(Type.String()),
     manageReadiness: Type.Optional(
         Type.Object({

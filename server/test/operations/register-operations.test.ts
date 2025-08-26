@@ -176,7 +176,7 @@ describe('Manage operations', () => {
         expect(response).toEqual(
             expect.arrayContaining([
                 expect.objectContaining({
-                    areAsmCredentialsValid: expect.any(Boolean)
+                    resourceType: 'ORACLE_ASM'
                 })
             ])
         );
