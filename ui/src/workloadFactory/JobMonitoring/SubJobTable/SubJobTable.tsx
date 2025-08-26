@@ -38,9 +38,11 @@ import {
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/oracleSlice';
 import useResize from '../../../common/hooks/useResize';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
     const [subTaskList, setSubTaskList] = useState<any>({});
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const windowSize = useResize();
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const subJobsDataLoading = useAppSelector(state => state.jobMonitoring.subJobsDataLoading);
@@ -54,6 +56,26 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         }
         setSubTaskList(sortedSubTaskList);
     }, [subJobsData, isDemoMode]);
+
+    const navigateToInventory = () => {
+        if (isWorkloadFactory) {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: '../databases/inventory',
+                    replace: true
+                }
+            });
+        } else {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: '../fsxdb/inventory',
+                    replace: true
+                }
+            });
+        }
+    };
 
     const ExpandedRow = useCallback(({ rowData }: any) => <TaskTable taskList={rowData?.subJobs || []} />, []);
 
@@ -76,10 +98,12 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         if (sqlServerDeploymentType.toLowerCase() === DBType.ORACLE.toLowerCase()) {
             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
             dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+            navigateToInventory();
         } else {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
             dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+            navigateToInventory();
         }
 
         if (subJobsData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
