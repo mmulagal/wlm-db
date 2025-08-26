@@ -7,7 +7,8 @@ import {
     setBreadCrumbSelectedFrom,
     setSelectedFilterValue,
     setSelectedHeaderTab,
-    setSelectedInventoryTab
+    setSelectedInventoryTab,
+    setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { updateResourceId } from '../../../../store/authSlice';
@@ -145,6 +146,8 @@ export const handleInstanceMenuSelection = ({
     handleDialog,
     optimizeAction
 }: InstanceMenuSelectionParams) => {
+    // resetting wizard operation type to single once out of bulk
+    dispatch(setWizardOperationType('single'));
     switch (rowData.hostType) {
         case DBType.MSSQL:
             switch (menuId) {

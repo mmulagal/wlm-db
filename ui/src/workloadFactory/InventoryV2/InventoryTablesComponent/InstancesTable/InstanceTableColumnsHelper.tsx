@@ -1,7 +1,11 @@
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
 import { useDispatch } from 'react-redux';
 import { DBType, INVENTORY_STATUS, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
-import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
+    setBreadCrumbSelectedFrom,
+    setSelectedHeaderTab,
+    setWizardOperationType
+} from '../../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import {
     setFSXId,
@@ -94,6 +98,8 @@ export const optimizeAction = (rowData: any, dispatch: any) => {
     );
     dispatch(resetEiData({}));
     dispatch(setLogAnalyzerState(rowData?.logAnalyzer?.status));
+    // resetting wizard operation type to single once out of bulk
+    dispatch(setWizardOperationType('single'));
 };
 
 export const protectionTooltipText = (data: any) => (
