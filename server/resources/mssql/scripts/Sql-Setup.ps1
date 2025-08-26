@@ -530,7 +530,7 @@ try {
             @{Command = "C:\\cfn\\scripts\\common\\Enable-CredSSP.ps1"; UseExecutionPolicy = $true },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Update-DNSServers.ps1 -DNSIpAddresses '${AdDnsIpAddresses}' -Stackname '$DeploymentName' -ResourceID '$NodeType'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Join-Domain.ps1 -DomainDNSName '$DomainDnsName' -DCName '$DCName' -OUPath '$OUPath' -Parentstackname '$DeploymentName' -DomainAdminUser '$DomainAdminUser'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\OpenWSFCPorts.ps1"; UseExecutionPolicy = $true },
             @{Command = "C:\\cfn\\scripts\\common\\Update-SecurityGroup.ps1 -SGID '$WorkloadSecurityGroupId'"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$DomainAdminUser' -GroupName 'Administrators'"; UseExecutionPolicy = $true },
@@ -545,8 +545,8 @@ try {
         Write-Output "Starting instance prep continuation"
         $UserName = if ($IsStandalone -eq $true) { "$DomainDnsName\\$SqlAdminAccounts" } else { "$SqlAdminAccounts" }
         $IntancePreparationContinueCommands = @(
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Create-ADServiceAccount.ps1 -DomainAdminUser '$DomainAdminUser' -DomainDNSName '$DomainDnsName' -ServiceAccountUser '$SqlAdminAccounts' -Parentstackname '$DeploymentName'"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\common\\Test-ADUser.ps1 -UserName '$SqlAdminAccounts' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"; UseExecutionPolicy = $true }, # this has timeout of 30 minutes and runs in interval of 1 minute
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Create-ADServiceAccount.ps1 -DomainAdminUser '$DomainAdminUser' -DomainDNSName '$DomainDnsName' -DCName '$DCName' -ServiceAccountUser '$SqlAdminAccounts' -Parentstackname '$DeploymentName'"; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\Test-ADUser.ps1 -UserName '$SqlAdminAccounts' -DCName '$DCName' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"; UseExecutionPolicy = $true }, # this has timeout of 30 minutes and runs in interval of 1 minute
             @{Command = "C:\\cfn\\scripts\\common\\AddUserToGroup.ps1 -UserName '$UserName' -GroupName 'Administrators'"; UseExecutionPolicy = $true }
         )
         Invoke-RemoteCommands -commands $IntancePreparationContinueCommands -logFile "C:\cfn\tflogs\IntancePreparationContinueCommands.log" -Credential $LoginCredential
@@ -648,7 +648,7 @@ try {
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Node1AddCluster.ps1 -DomainDNSName `"$DomainDNSName`" -Parentstackname `"$DeploymentName`" -FileSystemId `"$FsxFileSystemId`" -DomainAdminUser `"$DomainAdminUser`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Restart-Computer.ps1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlontap\\Node1ONTAPClusterConfig.ps1 -DomainDNSName `"$DomainDNSName`" -WSFCNode1PrivateIP2 `"$NetworkInterface1FirstPrivateIp`" -ClusterName `"$SqlFsxWsFcName`" -Parentstackname `"$DeploymentName`" -DomainAdminUser `"$DomainAdminUser`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false },
-            @{Command = "C:\\cfn\\scripts\\sqlfci\\Configure-MAD-Permissions.ps1 -DomainAdminUser `"$DomainAdminUser`" -wsfcName `"$SqlFsxWsFcName`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false }
+            @{Command = "C:\\cfn\\scripts\\sqlfci\\Configure-MAD-Permissions.ps1 -DomainAdminUser `"$DomainAdminUser`" -DCName `"$DCName`" -wsfcName `"$SqlFsxWsFcName`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false }
         )
         Invoke-RemoteCommands -commands $ConfigureInstance -logFile "C:\\cfn\\tflogs\\ConfigureInstance.log" -Credential $LoginCredential
         Write-Output "Completed configure instance for FCI Primary Node"

@@ -793,6 +793,8 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -DomainDNSName '"
                                   - !Ref 'DomainDNSName'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'                                  
                                   - "' -ServiceAccountUser '"
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -Parentstackname '"
@@ -807,7 +809,9 @@ Resources:
                                   - -Command "
                                   - C:\cfn\scripts\common\Test-ADUser.ps1 -UserName '
                                   - !Ref 'SQLAdminAccounts'
-                                  - ''' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'
+                                  - "' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"'
                             waitAfterCompletion: '0'
                         k-add-sqlservice-user-to-group:
                             command: !Join
@@ -863,6 +867,8 @@ Resources:
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Configure-MAD-Permissions.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'
                                   - "' -wsfcName '"
                                   - !Ref 'SqlFSxWSFCName'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"

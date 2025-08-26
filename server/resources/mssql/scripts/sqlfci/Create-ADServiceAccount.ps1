@@ -7,6 +7,9 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$DomainDNSName,
 
+    [Parameter(Mandatory = $false)]
+    [string]$DCName,
+
     [Parameter(Mandatory=$true)]
     [string]$ServiceAccountUser,
 
@@ -17,6 +20,11 @@ param(
     [string]$ADServerNetBIOSName=$env:COMPUTERNAME
 
 )
+
+if($DCName -eq "default" -or $DCName -eq "no-value") {
+        $DCName = ''
+}
+
     try {
         Start-Transcript -Path C:\cfn\log\Create-ADServiceAccount.ps1.txt -Append
         $ErrorActionPreference = "Stop"
@@ -31,18 +39,43 @@ param(
         $ServiceAccountPassword = $SsmParameter.sql[0].password
         $ServiceAccountSecurePassword = ConvertTo-SecureString $ServiceAccountPassword -AsPlainText -Force
         $UserPrincipalName = $ServiceAccountUser + "@" + $DomainDNSName
+
        $createUserSB = {
             $ErrorActionPreference = "Stop"
             if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
                 Install-WindowsFeature RSAT-AD-PowerShell -ErrorAction SilentlyContinue *>$null
             }
             Write-Host "Searching for user $Using:ServiceAccountUser"
-            if (Get-ADUser -Filter {sAMAccountName -eq $Using:ServiceAccountUser}) {
+            $adUserParams = @{
+                Filter = {sAMAccountName -eq $Using:ServiceAccountUser}
+            }
+            if (-not [string]::IsNullOrEmpty($Using:DCName)) {
+                $adUserParams.Server = $Using:DCName
+            }
+
+            $userExists = Get-ADUser @adUserParams -ErrorAction SilentlyContinue
+
+            if ($userExists) {
                 Write-Host "User already exists."
-                }
-            else {
+            } else {
                 Write-Host "Creating user $Using:ServiceAccountUser"
-                New-ADUser -Name $Using:ServiceAccountUser -UserPrincipalName $Using:UserPrincipalName -AccountPassword $Using:ServiceAccountSecurePassword -Enabled $true -PasswordNeverExpires $true
+                $newUserParams = @{
+                    Name               = $Using:ServiceAccountUser
+                    UserPrincipalName  = $Using:UserPrincipalName
+                    AccountPassword    = $Using:ServiceAccountSecurePassword
+                    Enabled            = $true
+                    PasswordNeverExpires = $true
+                }
+                if (-not [string]::IsNullOrEmpty($Using:DCName)) {
+                    try {
+                        New-ADUser -Server $Using:DCName @newUserParams
+                    } catch {
+                        Write-Host "Failed to create user $Using:ServiceAccountUser with $Using:DCName. Falling back to default DC."
+                        New-ADUser @newUserParams
+                    }
+                } else {
+                    New-ADUser @newUserParams
+                }
             }
         }
         Write-Host "Invoking command on $ADServerNetBIOSName"

@@ -1,8 +1,8 @@
 locals {
   fsx_is_provision_mode_automatic = var.fsx_disk_iops == 3 ? true : false
   fsx_is_kms_key_id_empty         = var.fsx_kms_key_id == "" ? true : false
-  fsx_is_single_zone_deployment   = var.deployment_mode == "SINGLE_AZ_1" ? true : false
-  fsx_is_multi_zone_deployment    = var.deployment_mode == "MULTI_AZ_1" ? true : false
+  fsx_is_single_zone_deployment   = (var.deployment_mode == "SINGLE_AZ_1" || var.deployment_mode == "SINGLE_AZ_2") ? true : false
+  fsx_is_multi_zone_deployment    = (var.deployment_mode == "MULTI_AZ_1" || var.deployment_mode == "MULTI_AZ_2")  ? true : false
   fsx_is_existing                 = var.fsx_file_system_id != "" ? true : false
   is_route_table_ids_same         = var.preferred_route_table_id == var.standby_route_table_id
   sg_cidr_blocks                  = local.fsx_is_single_zone_deployment ? [var.preferred_subnet_cidrblock] : [var.preferred_subnet_cidrblock, var.standby_subnet_cidrblock]

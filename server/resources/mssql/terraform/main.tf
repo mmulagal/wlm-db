@@ -15,7 +15,7 @@ locals {
   new_ontap_fsx                  = var.fsx_file_system_id == "" ? true : false
   existing_ontap_fsx             = local.new_ontap_fsx ? false : true
   is_standalone                  = var.sql_deployment_mode == "standalone" ? true : false
-  fsx_is_single_zone_deployment  = var.deployment_mode == "SINGLE_AZ_1" ? true : false
+  fsx_is_single_zone_deployment  = var.deployment_mode == "SINGLE_AZ_1" || var.deployment_mode == "SINGLE_AZ_2" ? true : false
   is_windows                     = length(regexall("^[a-z]:", lower(abspath(path.root)))) > 0
   operating_system               = local.is_windows ? "Windows" : "Linux"
   ad_dns_ip_addresses            = element(split(",", var.dns_ip_addresses), 0)

@@ -7,6 +7,9 @@ param(
 	[Parameter(Mandatory = $true)]
 	[string]$wsfcName,
 
+	[Parameter(Mandatory = $false)]
+	[string]$DCName,
+
 	[Parameter(Mandatory = $true)]
 	[string]$ResourceID,   
 
@@ -24,6 +27,9 @@ param(
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
+if($DCName -eq "default" -or $DCName -eq "no-value") {
+        $DCName = ''
+    }
 
 try {
 	Start-Transcript -Path C:\cfn\log\configuremadpermissions.ps1.txt -Append
@@ -38,7 +44,11 @@ try {
 	$Credentials = (New-Object PSCredential($ClusterAdminUser, (ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 	$wsfcCN = $wsfcName
 	Invoke-Command -scriptblock {
+		if([string]::IsNullOrEmpty($Using:DCName)) {
 		$computer = get-adcomputer $Using:wsfcCN
+		} else {
+			$computer = get-adcomputer $Using:wsfcCN -Server $Using:DCName
+		}
 		$discard, $OU = $computer -split ',', 2
 		$acl = get-acl "ad:$OU"
 		$acl.access #to get access right of the OU

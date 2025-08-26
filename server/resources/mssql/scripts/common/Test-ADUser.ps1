@@ -4,6 +4,9 @@ param(
     [string]$Username,
 
     [Parameter(Mandatory=$false)]
+    [string]$DCName,
+
+    [Parameter(Mandatory=$false)]
     [switch]$Wait,
 
     [Parameter(Mandatory=$false)]
@@ -13,7 +16,11 @@ param(
     [int]$IntervalMinutes=1
 )
 
-try {
+if($DCName -eq "default" -or $DCName -eq "no-value") {
+        $DCName = ''
+    }
+
+try {    
     Start-Transcript -Path C:\cfn\log\Test-ADUser.ps1.txt -Append
     $ErrorActionPreference = "Stop"
 
@@ -30,9 +37,16 @@ try {
     }
 
     do {
-        if (Get-ADUser -Filter {sAMAccountName -eq $Username}){
-            $userFound = $true
-            break
+        if (-not [string]::IsNullOrEmpty($DCName)) {
+            if (Get-ADUser -Filter {sAMAccountName -eq $Username} -Server $DCName) {
+                $userFound = $true
+                break
+            }
+        } else {
+            if (Get-ADUser -Filter {sAMAccountName -eq $Username}) {
+                $userFound = $true
+                break
+            }
         }
         Start-Sleep -Seconds $($IntervalMinutes * 60)
         $elapsedMinutes = ($(Get-Date) - $startTime).TotalMinutes

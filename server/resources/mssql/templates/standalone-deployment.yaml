@@ -725,7 +725,9 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -DomainDNSName '"
                                   - !Ref 'DomainDNSName'
-                                  - "' -ServiceAccountUser '"
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'                                  
+                                  - "' -ServiceAccountUser '"                                  
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
@@ -739,6 +741,8 @@ Resources:
                                   - -Command "
                                   - C:\cfn\scripts\common\Test-ADUser.ps1 -UserName '
                                   - !Ref 'SQLAdminAccounts'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'                                   
                                   - ''' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"'
                             waitAfterCompletion: '0'
                         i-add-sqlservice-user-to-group:

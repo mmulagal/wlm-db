@@ -36,7 +36,7 @@ Parameters:
         Description: The deployment mode for the FSx for ONTAP file system.
         Type: String
         Default: MULTI_AZ_1
-        AllowedValues: [SINGLE_AZ_1, MULTI_AZ_1]
+        AllowedValues: [SINGLE_AZ_1, MULTI_AZ_1, SINGLE_AZ_2, MULTI_AZ_2]
 
     FSxFileSystemId:
         Description: ID of the FSx for ONTAP file system.
@@ -76,7 +76,9 @@ Parameters:
             - 'standalone'
 
 Conditions:
-    FSxIsMultiZoneDeployment: !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
+    FSxIsMultiZoneDeployment: !Or
+      - !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
+      - !Equals [!Ref DeploymentMode, 'MULTI_AZ_2']
     IsHACluster: !Equals [!Ref 'SQLDeploymentMode', 'ha']
 
 Resources:

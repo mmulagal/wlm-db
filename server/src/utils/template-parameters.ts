@@ -12,7 +12,7 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             description: 'Deployment mode for the FSx for ONTAP file system',
             type: 'String',
             default: 'MULTI_AZ_1',
-            allowedValues: ['SINGLE_AZ_1', 'MULTI_AZ_1']
+            allowedValues: ['SINGLE_AZ_1', 'MULTI_AZ_1', 'SINGLE_AZ_2', 'MULTI_AZ_2']
         },
         {
             name: 'SqlVersion',
