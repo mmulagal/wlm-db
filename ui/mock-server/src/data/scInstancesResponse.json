@@ -1,0 +1,26 @@
+{
+    "instances": [
+        {
+            "id": "12345-instance-id-1",
+            "name": "dec04std1",
+            "host": "DEC04STD1.WLM.COM"
+        },
+        {
+            "id": "12345-instance-id-2", 
+            "name": "dec04std2\\INSTANCEJUN_9",
+            "host": "DEC04STD2.WLM.COM"
+        },
+        {
+            "id": "12345-instance-id-3",
+            "name": "testhost1",
+            "host": "TESTHOST1.WLM.COM"
+        },
+        {
+            "id": "12345-instance-id-3",
+            "name": "Database hostname 1",
+            "host": "stvyqg.wlmqaauto.com"
+        }
+    ],
+    "totalCount": 3,
+    "errorMessage": ""
+}

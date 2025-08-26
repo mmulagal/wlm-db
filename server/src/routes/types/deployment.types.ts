@@ -32,13 +32,17 @@ const FSXConfiguration = Type.Object({
     fsxUsername: Type.String(),
     fsxPassword: Type.String(),
     databaseSize: Type.Number(),
-    fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1024, 2048, 4096, 384, 768, 1536, 3072, 4608, 6144, 7680, 9216, 10752, 12288, 13824, 15360, 16896, 18432, 21504, 24576, 27648, 30720, 33792, 36864, 43008, 49152, 55296, 61440, 67584, 73728] }),
+    fsxVolThroughput: Type.Number({
+        enum: [
+            128, 256, 512, 1024, 2048, 4096, 384, 768, 1536, 3072, 4608, 6144, 7680, 9216, 10752, 12288, 13824, 15360,
+            16896, 18432, 21504, 24576, 27648, 30720, 33792, 36864, 43008, 49152, 55296, 61440, 67584, 73728
+        ]
+    }),
     fsxIOPS: Type.Number(),
     ontapSgGroupId: Type.Array(Type.String()),
     encryptionKey: Type.Optional(Type.String()),
     snapshotPolicy: Type.String({ enum: ['none', 'daily_weekretention'], default: 'daily_weekretention' })
 });
-
 
 const SQLConfiguration = Type.Object({
     sqlDeploymentMode: Type.String({ enum: ['standalone', 'fci', 'ha'] }),

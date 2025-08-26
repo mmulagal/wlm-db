@@ -14,6 +14,7 @@ import {
     useGenerateCredentialIDMutation,
     useGetConnectorsMutation,
     useGetDiscoverHostResultMutation,
+    useGetDiscoverInstanceResultMutation,
     useGetFsxDetailsMutation,
     useGetOrganizationIdsMutation,
     useGetRBACPrivilegesMutation,
@@ -136,6 +137,7 @@ const InstancesTable = () => {
     const [configureDirectory] = useConfigureDirectoryMutation();
     const [listAllDirectories] = useListAllDirectoriesMutation();
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
+    const [getDiscoverInstanceResult] = useGetDiscoverInstanceResultMutation();
     const [getSCCrendentials] = useGetSCCrendentialsMutation();
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [getOrganizationIds] = useGetOrganizationIdsMutation();
@@ -554,6 +556,7 @@ const InstancesTable = () => {
                         dialogKey={dialogKeyValue}
                         extraStep={extraStep}
                         rowData={rowData}
+                        dialogType="instance"
                     />
                 }
                 primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.continue')}
@@ -563,7 +566,7 @@ const InstancesTable = () => {
                 }}
                 callback={() => {
                     if (hostExists) {
-                        bxpRedirect(isWorkloadFactory, rowData);
+                        bxpRedirect(isWorkloadFactory, rowData, 'instance', getDiscoverInstanceResult);
                     } else {
                         addHostHandlerSc(
                             rowData,

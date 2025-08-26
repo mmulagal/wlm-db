@@ -409,7 +409,7 @@ const DatabasesTable = () => {
                 }}
                 callback={() => {
                     if (hostExists) {
-                        bxpRedirect(isWorkloadFactory, rowData);
+                        bxpRedirect(isWorkloadFactory, rowData, 'database', getDiscoverHostResult);
                     } else {
                         addHostHandlerSc(
                             rowData,

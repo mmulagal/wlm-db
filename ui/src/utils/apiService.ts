@@ -78,6 +78,7 @@ const isBluexpExternalApiCall = (endpoint: string): boolean => {
         'configureDirectory',
         'listAllDirectories',
         'getDiscoverHostResult',
+        'getDiscoverInstanceResult',
         'getOrganizationIds'
     ];
 
@@ -668,6 +669,16 @@ export const snapcenterAPI = createApi({
         addHostJobSc: builder.mutation({
             query: ({ accountID, jobID }) => ({
                 url: `cbs-backend/api/account/${accountID}/v1/jobs/${jobID}`
+            })
+        }),
+        getDiscoverInstanceResult: builder.mutation({
+            query: ({ accountID, name, agentID, workspaceID }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/instances?search=${name}`,
+                headers: {
+                    'x-account-id': accountID,
+                    'x-agent-id': agentID,
+                    'x-netapp-workspace-id': workspaceID
+                }
             })
         })
     })
@@ -1477,7 +1488,8 @@ export const {
     useAddHostJobScMutation,
     useConfigureDirectoryMutation,
     useListAllDirectoriesMutation,
-    useGetDiscoverHostResultMutation
+    useGetDiscoverHostResultMutation,
+    useGetDiscoverInstanceResultMutation
 } = snapcenterAPI;
 
 export const {

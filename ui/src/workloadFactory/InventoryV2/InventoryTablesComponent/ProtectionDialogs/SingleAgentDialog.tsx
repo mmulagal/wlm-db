@@ -19,6 +19,8 @@ import StepTwoDialog from './StepTwoDialog';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
 import { resetProtectionProcess, setSelectedAgent } from '../../../../store/workloadFactory/snapcenterSlice';
 import { SNAPCENTER_STATUS } from '../../../../utils/consts';
+import { useGetDiscoverInstanceResultMutation, useGetDiscoverHostResultMutation } from '../../../../utils/apiService';
+import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
 
 const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType, extraStep, rowData }: any) => {
     const { t } = useTranslation();
@@ -26,11 +28,27 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType, extraSte
     const { setDialog, closeDialog } = useDialog();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { selectedAgent } = useAppSelector(state => state.snapCenter);
+    const [getDiscoverInstanceResult] = useGetDiscoverInstanceResultMutation();
+    const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
+
     const dispatch = useDispatch();
 
     const isMultiConnector = agents && agents.length > 1;
 
     const protectionState = useAppSelector(state => state.snapCenter.protectionProcessState[dialogKey]);
+
+    const handleRedirectWithValidation = async () => {
+        dispatch(setActionsDisabled(true));
+
+        try {
+            await bxpRedirect(isWorkloadFactory, rowData, dialogType, getDiscoverInstanceResult, getDiscoverHostResult);
+            closeDialog();
+        } catch (error) {
+            bxpRedirect(isWorkloadFactory);
+        } finally {
+            dispatch(setActionsDisabled(false));
+        }
+    };
 
     useEffect(() => {
         if (!protectionState) {
@@ -67,9 +85,7 @@ const SingleAgentDialog = ({ agents, hostExists, dialogKey, dialogType, extraSte
                         closeCallback={() => {
                             closeDialog();
                         }}
-                        callback={() => {
-                            bxpRedirect(isWorkloadFactory, rowData);
-                        }}
+                        callback={handleRedirectWithValidation}
                     />
                 );
             }, 0);

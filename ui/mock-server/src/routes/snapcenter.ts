@@ -4,6 +4,7 @@ import listHosts from '../data/listExistingHosts.json';
 import RBACList from '../data/rbacList.json';
 import WorkSpaceID from '../data/workSpaceID.json';
 import ScJobResponse from '../data/scJobResponse.json';
+import ScInstancesResponse from '../data/scInstancesResponse.json';
 
 const router = require('express').Router();
 
@@ -147,6 +148,12 @@ router.get('/backup-recovery/organizations/:accountID/v1/workloads/sql/databases
             totalCount: 2,
             errorMessage: ''
         });
+    }, 10);
+});
+
+router.get('/backup-recovery/organizations/:accountID/v1/workloads/sql/instances', async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, ScInstancesResponse);
     }, 10);
 });
 

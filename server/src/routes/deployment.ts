@@ -69,7 +69,9 @@ const fsxValidationHook = async (request: FastifyRequest, reply: FastifyReply) =
             if (!FSX_GEN1_THROUGHPUT.includes(config.fsxVolThroughput)) {
                 return reply.code(400).send({
                     error: 'Invalid FSX Configuration',
-                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Valid values: ${FSX_GEN1_THROUGHPUT.join(', ')}`
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${
+                        config.fsxDeploymentMode
+                    }. Valid values: ${FSX_GEN1_THROUGHPUT.join(', ')}`
                 });
             }
             if (!config.fsxIOPS) {
@@ -82,7 +84,9 @@ const fsxValidationHook = async (request: FastifyRequest, reply: FastifyReply) =
             if (!FSX_GEN2_MULTI_AZ_THROUGHPUT.includes(config.fsxVolThroughput)) {
                 return reply.code(400).send({
                     error: 'Invalid FSX Configuration',
-                    message: `Invalid throughput ${config.fsxVolThroughput} for ${config.fsxDeploymentMode}. Valid values: ${FSX_GEN2_MULTI_AZ_THROUGHPUT.join(', ')}`
+                    message: `Invalid throughput ${config.fsxVolThroughput} for ${
+                        config.fsxDeploymentMode
+                    }. Valid values: ${FSX_GEN2_MULTI_AZ_THROUGHPUT.join(', ')}`
                 });
             }
         } else if (isSAZGen2) {

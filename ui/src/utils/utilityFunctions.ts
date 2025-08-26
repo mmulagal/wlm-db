@@ -170,42 +170,222 @@ const openNewTabWithPayload = (url: string, payload: {}) => {
     return newTab;
 };
 
-export const bxpRedirect = (isWorkloadFactory: boolean, rowData?: any) => {
+export const bxpRedirect = async (
+    isWorkloadFactory: boolean,
+    rowData?: any,
+    from?: 'instance' | 'database',
+    getDiscoverInstanceResult?: any,
+    getDiscoverHostResult?: any
+) => {
     const stageURL = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
     const prodURL = 'https://console.bluexp.netapp.com/unified-backup-restore';
-    let url = '';
+    const { selectedAgent } = store.getState().snapCenter;
+
+    let baseUrl = '';
     if (import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION) {
-        url = prodURL;
+        baseUrl = prodURL;
     } else {
-        url = stageURL;
+        baseUrl = stageURL;
     }
 
-    const wlmdbParams = {
-        from: 'wlmdb',
-        directProtect: true,
-        hostName: rowData?.hostRow?.name || '',
-        instanceName: rowData?.databaseInstanceName || '',
-        databaseName: rowData?.name || '',
-        instanceId: rowData?.databaseInstanceId || '',
-        databaseId: rowData?.id || ''
-    };
+    // Check if we have the required API for the specific type
+    const missingRequiredApi =
+        (from === 'instance' && !getDiscoverInstanceResult) || (from === 'database' && !getDiscoverHostResult);
 
-    if (isWorkloadFactory) {
-        openNewTabWithPayload(url, JSON.stringify(wlmdbParams));
-    } else {
-        // Keep existing postMessage for non-workload factory
-        window.parent.postMessage(
-            {
-                type: 'SERVICE:NAVIGATE',
-                payload: {
-                    pathname: '/unified-backup-restore',
-                    state: {
-                        wlmdbParams: JSON.stringify(wlmdbParams)
-                    }
+    // Case 1: Default behavior (no additional params)
+    if (!rowData || !from || !selectedAgent || missingRequiredApi) {
+        if (isWorkloadFactory) {
+            window.open(baseUrl, '_blank', 'noopener,noreferrer');
+        } else if (window.top) {
+            window.top.location.href = baseUrl;
+        }
+        return;
+    }
+
+    // Case 2: Dynamic URL building with rowData
+    try {
+        if (rowData && from === 'instance') {
+            // Extract instance information from rowData
+            const instanceName = rowData?.databaseInstanceName; // "MSSQLSERVER" or "INSTANCEJUN_9"
+            const hostName = rowData?.name; // "dec04std2"
+            const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
+            const accountID = rowData?.accountId || rowData?.account_id;
+            const agentID = selectedAgent?.[0]?.id;
+            const workspaceID = rowData?.workspaceId || rowData?.workspace_id;
+
+            if (!instanceName || !hostName || !fqdn || !accountID || !agentID || !workspaceID) {
+                return;
+            }
+
+            // Determine search parameter based on instance type
+            // For default instance (MSSQLSERVER), search with hostname
+            // For named instances, search with instance name
+            const searchParam = instanceName === 'MSSQLSERVER' ? hostName : instanceName;
+
+            const searchResult = await getDiscoverInstanceResult({
+                accountID,
+                name: searchParam, // Use hostname for default instance, instance name for named instances
+                agentID,
+                workspaceID
+            }).unwrap();
+
+            // Check for API errors
+            if (searchResult.errorMessage || !searchResult.instances || searchResult.instances.length === 0) {
+                return;
+            }
+
+            // Find matching instance with proper name and host validation
+            const matchingInstance = searchResult.instances.find((instance: any) => {
+                const apiInstanceName = instance.name;
+                const apiHostName = instance.host;
+
+                // Host validation - compare FQDN with API host (case insensitive)
+                const hostMatches = fqdn.toLowerCase() === apiHostName.toLowerCase();
+
+                // Instance name validation - handle different formats
+                let nameMatches = false;
+
+                if (instanceName === 'MSSQLSERVER') {
+                    // For default instance (MSSQLSERVER), API returns just hostname
+                    // e.g., "dec04std1" vs "dec04std1"
+                    nameMatches = apiInstanceName.toLowerCase() === hostName.toLowerCase();
+                } else {
+                    // For named instances, API returns hostname\instancename
+                    // e.g., "dec04std1\INSTANCEJUN_9" vs "INSTANCEJUN_9"
+                    const expectedFullName = `${hostName}\\${instanceName}`.toLowerCase();
+                    nameMatches = apiInstanceName.toLowerCase() === expectedFullName.toLowerCase();
                 }
-            },
-            '*'
-        );
+
+                return hostMatches && nameMatches;
+            });
+
+            if (matchingInstance) {
+                // Create wlmdbParams object for instance
+                const wlmdbParams = {
+                    source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
+                    redirectToWorkloadFactory: true,
+                    hostName: fqdn,
+                    instanceName: instanceName === 'MSSQLSERVER' ? hostName : `${hostName}-${instanceName}`,
+                    instanceId: matchingInstance.id
+                };
+
+                if (isWorkloadFactory) {
+                    openNewTabWithPayload(baseUrl, JSON.stringify(wlmdbParams));
+                } else {
+                    // Keep existing postMessage for non-workload factory
+                    window.parent.postMessage(
+                        {
+                            type: 'SERVICE:NAVIGATE',
+                            payload: {
+                                pathname: '/unified-backup-restore',
+                                state: {
+                                    wlmdbParams: JSON.stringify(wlmdbParams)
+                                }
+                            }
+                        },
+                        '*'
+                    );
+                }
+                return;
+            }
+        } else if (rowData && from === 'database') {
+            // Database logic
+            const databaseName = rowData?.name; // "DB22"
+            const instanceName = rowData?.databaseInstanceName; // "INSTANCE2"
+            const hostName = rowData?.hostName; // "dec04std2"
+            const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
+            const accountID = rowData?.accountId || rowData?.account_id;
+            const agentID = selectedAgent?.[0]?.id;
+            const workspaceID = rowData?.workspaceId || rowData?.workspace_id;
+
+            if (!databaseName || !instanceName || !hostName || !fqdn || !accountID || !agentID || !workspaceID) {
+                return;
+            }
+
+            const searchResult = await getDiscoverHostResult({
+                accountID,
+                name: databaseName,
+                agentID,
+                workspaceID
+            }).unwrap();
+
+            // Check for API errors
+            if (searchResult.errorMessage || !searchResult.databases || searchResult.databases.length === 0) {
+                return;
+            }
+
+            // Find matching database with proper name, instance and host validation
+            const matchingDatabase = searchResult.databases.find((database: any) => {
+                const apiDatabaseName = database.name;
+                const apiInstanceName = database.instance;
+                const apiHostName = database.host;
+
+                // Database name validation
+                const databaseMatches = apiDatabaseName.toLowerCase() === databaseName.toLowerCase();
+
+                // Host validation - compare FQDN with API host (case insensitive)
+                const hostMatches = fqdn.toLowerCase() === apiHostName.toLowerCase();
+
+                // Instance name validation - handle different formats
+                let instanceMatches = false;
+
+                if (instanceName === 'MSSQLSERVER') {
+                    // For default instance (MSSQLSERVER), API returns just hostname
+                    // e.g., "dec04std1" vs "dec04std1"
+                    instanceMatches = apiInstanceName.toLowerCase() === hostName.toLowerCase();
+                } else {
+                    // For named instances, API might return hostname\instancename or just instancename
+                    const expectedFullName = `${hostName}\\${instanceName}`.toLowerCase();
+                    instanceMatches =
+                        apiInstanceName.toLowerCase() === expectedFullName.toLowerCase() ||
+                        apiInstanceName.toLowerCase() === instanceName.toLowerCase();
+                }
+
+                return databaseMatches && hostMatches && instanceMatches;
+            });
+
+            if (matchingDatabase) {
+                // Create wlmdbParams object for database
+                const wlmdbParams = {
+                    source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
+                    redirectToWorkloadFactory: true,
+                    hostName: fqdn,
+                    instanceName: instanceName === 'MSSQLSERVER' ? hostName : `${hostName}-${instanceName}`,
+                    instanceId: matchingDatabase.instanceId || 'unknown',
+                    databaseName: matchingDatabase.name,
+                    databaseId: matchingDatabase.id
+                };
+
+                if (isWorkloadFactory) {
+                    openNewTabWithPayload(baseUrl, JSON.stringify(wlmdbParams));
+                } else {
+                    // Keep existing postMessage for non-workload factory
+                    window.parent.postMessage(
+                        {
+                            type: 'SERVICE:NAVIGATE',
+                            payload: {
+                                pathname: '/unified-backup-restore',
+                                state: {
+                                    wlmdbParams: JSON.stringify(wlmdbParams)
+                                }
+                            }
+                        },
+                        '*'
+                    );
+                }
+                return;
+            }
+        }
+    } catch (error) {
+        // Fallback to base URL on error - use console.warn instead of console.error for better practices
+        // console.warn('Error in bxpRedirect:', error);
+    }
+
+    // Fallback to base URL
+    if (isWorkloadFactory) {
+        window.open(baseUrl, '_blank', 'noopener,noreferrer');
+    } else if (window.top) {
+        window.top.location.href = baseUrl;
     }
 };
 
