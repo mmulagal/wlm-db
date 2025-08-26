@@ -23,18 +23,18 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                             t('databases.well-architect.optimization-steps'),
                             t('databases.well-architect.oracle-storage-layout-optimization-step1')
                         )}
-                        {createActionOptionSection(t('databases.well-architect.archive-placement-step1'), [
-                            t('databases.well-architect.archive-placement-step1-options1'),
-                            t('databases.well-architect.archive-placement-step1-options2'),
-                            t('databases.well-architect.archive-placement-step1-options3')
+                        {createActionOptionSection(t('databases.well-architect.redo-logs-temp-placement-step1'), [
+                            t('databases.well-architect.redo-logs-temp-placement-step1-options1'),
+                            t('databases.well-architect.redo-logs-temp-placement-step1-options2'),
+                            t('databases.well-architect.redo-logs-temp-placement-step1-options3')
                         ])}
-                        {createActionOptionSection(t('databases.well-architect.archive-placement-step2'), [
-                            t('databases.well-architect.archive-placement-step2-options1'),
-                            t('databases.well-architect.archive-placement-step2-options2'),
-                            t('databases.well-architect.archive-placement-step2-options3'),
-                            t('databases.well-architect.archive-placement-step2-options4'),
-                            t('databases.well-architect.archive-placement-step2-options5'),
-                            t('databases.well-architect.archive-placement-step2-options6')
+                        {createActionOptionSection(t('databases.well-architect.redo-logs-temp-placement-step2'), [
+                            t('databases.well-architect.redo-logs-temp-placement-step2-options1'),
+                            t('databases.well-architect.redo-logs-temp-placement-step2-options2'),
+                            t('databases.well-architect.redo-logs-temp-placement-step2-options3'),
+                            t('databases.well-architect.redo-logs-temp-placement-step2-options4'),
+                            t('databases.well-architect.redo-logs-temp-placement-step2-options5'),
+                            t('databases.well-architect.redo-logs-temp-placement-step2-options6')
                         ])}
                     </>
                 );
