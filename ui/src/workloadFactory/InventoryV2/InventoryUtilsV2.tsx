@@ -4105,7 +4105,7 @@ export const addHostHandlerSc = async (
         ec2InstanceIds: [rowData.ec2InstanceId],
         sqlInstanceName: rowData.databaseInstanceName,
         resourceId: rowData.resourceId,
-        workspaceId: state?.workSpaceData?.id
+        organizationId: state?.workSpaceData?.id
     };
     try {
         const credIdResponse = await generateCredentialID({

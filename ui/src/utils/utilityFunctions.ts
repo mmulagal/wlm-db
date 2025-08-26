@@ -2202,6 +2202,9 @@ export const formatString = (s: string | undefined) => {
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
     switch (tab) {
         case WLF_TABS.INVENTORY:
+            if (selectedHeaderTab === WLF_TABS.OPTIMIZE || selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED) {
+                return selectedHeaderTab;
+            }
             return WLF_TABS.INVENTORY;
         case WLF_TABS.EXPLORE_SAVINGS_EBS:
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
