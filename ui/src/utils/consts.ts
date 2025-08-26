@@ -995,7 +995,7 @@ export const MANAGE_STATES = {
     MISSING_PREREQUISITES: 'Missing prerequisites',
     POWERSHELL7: 'Powershell 7',
     JQ: 'jq',
-    PYTHON: 'Python'
+    PYTHON: 'python'
 };
 
 export const ACTION_CTA = {

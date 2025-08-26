@@ -195,7 +195,8 @@ export const handleFSXAdminApply = async (
             if (
                 result?.data?.items?.length > 0 &&
                 !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
-                !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
+                !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError &&
+                !result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError
             ) {
                 dispatch(
                     addNotification({
@@ -210,6 +211,7 @@ export const handleFSXAdminApply = async (
                         message:
                             result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
                             result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
+                            result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError ||
                             `Failed to update ${getPasswordTypeLabel(value)} password. `
                     })
                 );

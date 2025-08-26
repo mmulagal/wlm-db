@@ -2,6 +2,7 @@ import { Button, FlashingDotsLoader, Popover, Table, Typography, useTable } from
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import styles from './SubJobTable.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
@@ -38,7 +39,6 @@ import {
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/oracleSlice';
 import useResize from '../../../common/hooks/useResize';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
     const [subTaskList, setSubTaskList] = useState<any>({});

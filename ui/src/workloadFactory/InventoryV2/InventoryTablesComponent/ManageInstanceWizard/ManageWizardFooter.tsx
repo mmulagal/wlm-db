@@ -163,11 +163,13 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             if (result && !result?.error && result?.data) {
                 if (
                     result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
-                    result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
+                    result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
+                    result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError
                 ) {
                     const error = [];
                     error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError || '');
                     error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError || '');
+                    error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError || '');
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
@@ -184,19 +186,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     );
                     dispatch(setInventoryTableData(updatedInventoryTableData));
                     if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
-                        if (engineType === DBType.MSSQL) {
-                            dispatch(
-                                setManageSingleInstanceReadiness(
-                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
-                                )
-                            );
-                        } else if (engineType === DBType.ORACLE) {
-                            dispatch(
-                                setManageSingleInstanceReadiness(
-                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness.oracle
-                                )
-                            );
-                        }
+                        dispatch(
+                            setManageSingleInstanceReadiness(
+                                result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
+                            )
+                        );
                     }
                     goToNextStep();
                 }

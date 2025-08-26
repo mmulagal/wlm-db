@@ -65,7 +65,7 @@ export const isAllowManage = (manageReadinessData: ManageReadinessInterface, eng
         );
         if (missingPermissions.length === 0 && missingModules.length === 0) {
             anyListEmpty = true;
-        } else if (missingPermissions.length === 0 || missingModules.length > 0) {
+        } else if (missingPermissions.length === 0 && missingModules.length > 0) {
             const checks = [
                 // PowerShell7 check
                 (missingModules.includes(MANAGE_STATES.POWERSHELL7) && installMissingPowershell) ||
@@ -659,12 +659,7 @@ export const missingModules = (manageReadinessData: ManageReadinessInterface) =>
 
 // Returns the permission state based on the type and manage readiness data
 export const getPermissionState = (type: string, manageReadinessData: ManageReadinessInterface, engineType: string) => {
-    let readinessData: any;
-    if (type === '') {
-        readinessData = manageReadinessData;
-    } else {
-        readinessData = manageReadinessData?.[type];
-    }
+    const readinessData = manageReadinessData?.[type];
 
     if (!readinessData) return GENERAL.NOT_AVAILABLE;
 
@@ -672,7 +667,10 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
     const hasPowershell7 = missingModulesList.includes(MANAGE_STATES.POWERSHELL7);
     const hasJQ = missingModulesList.includes(MANAGE_STATES.JQ);
     const hasPython = missingModulesList.includes(MANAGE_STATES.PYTHON);
-    const otherModules = missingModulesList.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
+    const otherModules = missingModulesList.filter(
+        (module: string) =>
+            module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ && module !== MANAGE_STATES.PYTHON
+    );
 
     const permissions =
         engineType === DBType.ORACLE ? readinessData?.missingPermissions : readinessData?.missingSqlPermissions;

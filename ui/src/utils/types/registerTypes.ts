@@ -128,6 +128,7 @@ export interface RegisterDetail {
     databaseCount: string;
     databaseServerEdition: string;
     databaseServerError: string;
+    oracleAsmError?: string;
     fsxnError: string;
     requiredModuleError: string;
     manageReadiness: ManageReadinessData; // Adjust type if you have a specific structure

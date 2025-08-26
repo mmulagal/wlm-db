@@ -152,7 +152,7 @@ export function getManageCheckObjFinal(
     if (hostType === DBType.ORACLE) {
         return {
             ...baseObj,
-            assessment: getPermissionState('', manageReadinessData, DBType.ORACLE)
+            assessment: getPermissionState('oracle', manageReadinessData, DBType.ORACLE)
         };
     }
     return {
@@ -226,7 +226,7 @@ export function getManageCheckObjMultiFinal(
     t: TFunction
 ): Partial<ExtendedManageStates> {
     if (hostType === DBType.ORACLE) {
-        const assessment = getPermissionState('', manageReadinessData, DBType.ORACLE);
+        const assessment = getPermissionState('oracle', manageReadinessData, DBType.ORACLE);
         const overallState = assessment;
         const readyCount = assessment === MANAGE_STATES.READY ? 1 : 0;
         const perRowState = [
