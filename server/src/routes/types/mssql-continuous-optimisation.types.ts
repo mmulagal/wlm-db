@@ -424,7 +424,7 @@ const BaseOptimizePerHostRequestBody = Type.Object({
 
 // For MTU optimization - only requires interfaceNames, no FSx/backup fields
 const MTUOptimizePerHostRequestBody = Type.Intersect([
-    Type.Omit(BaseOptimizePerHostRequestBody, ['networkAdapters']),
+    Type.Omit(BaseOptimizePerHostRequestBody, ['networkAdapters', 'instanceType']),
     Type.Object({
         interfaceNames: Type.Array(Type.String())
     })

@@ -617,6 +617,7 @@ const crrAssessmentDataRegex = /#Get CRR details/;
 const pgsqlProtectionRegex = /pgsql protection script/;
 const fetchMssqlInstanceMtuDetailsRegex = /#Get MSSQL Instance MTU Details/;
 const fetchFsxMtuDetailsRegex = /#Get FSx MTU Details/;
+const optimizeMtuRegex = /#Optimize Network Interface MTU Settings/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -960,6 +961,10 @@ ssmMock
         return fetchFsxMtuDetailsRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(getSampleCommandResponse('fetchFsxMtuDetails'))
+    .on(SendCommandCommand, params => {
+        return optimizeMtuRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('optimizeMtu'))
     .on(SendCommandCommand, params => {
         const commentString = /# Get Oracle server details/;
         return commentString.test(params.Parameters.commands?.[0]);
@@ -1499,6 +1504,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'oracleStorageAssessment',
             JSON.stringify(getCommandInvocationResponse.getOracleStorageAssessmentData)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeMtu'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeMtu',
+            JSON.stringify(getCommandInvocationResponse.getoptimizeMtuResponse)
         )
     )
     .on(GetCommandInvocationCommand, {

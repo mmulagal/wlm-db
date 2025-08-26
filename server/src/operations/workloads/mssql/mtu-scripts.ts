@@ -357,6 +357,13 @@ foreach ($interfaceName in $interfaceNames) {
         # Select the highest non-disabled value
         $maxJumboValue = ($validValues | Where-Object { $_ -ne "Disabled" } | Sort-Object {[int]$_} -Descending | Select-Object -First 1)
 
+        # Check if any valid jumbo values were found
+        if (-not $maxJumboValue) {
+            $responseObject.errors += "No valid jumbo frame values found for '$interfaceName' (all values may be disabled)"
+            $responseObject.success = $false
+            continue
+        }
+
         # Check if target MTU is larger than the maximum valid jumbo value
         if ([int]$targetMTU -gt [int]$maxJumboValue) {
             $responseObject.errors += "Target MTU '$targetMTU' is larger than the maximum supported jumbo frame value '$maxJumboValue' for '$interfaceName'."

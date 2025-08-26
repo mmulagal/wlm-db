@@ -13,8 +13,11 @@ import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getInstanceInfo } from '../../database/database-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS } from '../../workloads/mssql/mtu-scripts';
+import { isDemo } from '../../../utils/utils';
 
 const logger = getLogger();
+
+const isDemoFlow = isDemo();
 
 interface SqlInterface {
     name: string;
@@ -163,11 +166,10 @@ function calculateMTUAlignmentDrift(
                 ? Math.min(...fsxMTU.fsxInterfaces.map((iface: FsxInterface) => iface.MTU))
                 : DEFAULT_FSX_MTU_VALUE;
 
-        const ec2InterfacesToFix: Ec2InterfaceToFix[] = [];
-        const objectsInViolation: string[] = [];
-        const violationDetails: Array<{ objectName: string; value: string; objectType: string; recommended: string }> =
+        let ec2InterfacesToFix: Ec2InterfaceToFix[] = [];
+        let objectsInViolation: string[] = [];
+        let violationDetails: Array<{ objectName: string; value: string; objectType: string; recommended: string }> =
             [];
-        let allOptimized = true;
 
         if (
             sqlServerMTU.sqlInterfaces &&
@@ -177,8 +179,6 @@ function calculateMTUAlignmentDrift(
             sqlServerMTU.sqlInterfaces.forEach((sqlInterface: SqlInterface) => {
                 const currentMTU = sqlInterface.mtu;
                 if (currentMTU !== fsxMtuValue) {
-                    allOptimized = false;
-
                     objectsInViolation.push(sqlInterface.name.toString());
 
                     const interfaceToFix = {
@@ -199,7 +199,22 @@ function calculateMTUAlignmentDrift(
             });
         }
 
-        const status = allOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+        if (isDemoFlow) {
+            const { optimizedMtus } = metadata;
+            if (optimizedMtus && optimizedMtus.length > 0) {
+                // Filter out optimized interfaces from all violation arrays
+                const optimizedSet = new Set(optimizedMtus);
+
+                objectsInViolation = objectsInViolation.filter(name => !optimizedSet.has(name));
+
+                ec2InterfacesToFix = ec2InterfacesToFix.filter(iface => !optimizedSet.has(iface.name));
+
+                violationDetails = violationDetails.filter(detail => !optimizedSet.has(detail.objectName));
+            }
+        }
+
+        const status = objectsInViolation.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+
         const recommendation =
             'Workload Factory recommends aligning the MTU (Maximum Transmission Unit) settings on your SQL Server network interfaces with your FSx for ONTAP file system. Proper MTU alignment prevents network fragmentation and ensures optimal performance for your SQL Server workloads. Update the MTU on the identified network interfaces to match your FSx MTU configuration.';
 
@@ -247,8 +262,8 @@ async function assessMTUAlignment(
     });
 
     const { id: mtuAlignmentAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL Server MTU alignment assessment for hostname ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL Server MTU alignment assessment for hostname ${resourceName}`,
+        name: `Microsoft SQL Server MTU alignment assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server MTU alignment assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,

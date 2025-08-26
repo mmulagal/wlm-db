@@ -478,7 +478,44 @@ const mockResourceAssessmentData = {
                 }
             }
         },
-        lastAssessedDate: '1740495336926'
+        mtuAlignment: {
+            fsxMTU: {
+                error: null,
+                fsxInterfaces: [
+                    {
+                        MTU: 9001,
+                        Name: 'e0e'
+                    },
+                    {
+                        MTU: 9001,
+                        Name: 'e0e'
+                    }
+                ]
+            },
+            sqlServerMTU: {
+                error: null,
+                sqlInterfaces: [
+                    {
+                        name: 'Ethernet 3',
+                        mtu: 1500,
+                        interfaceIndex: 9,
+                        ports: ['1433'],
+                        ipAddresses: [
+                            { address: '172.31.32.100', family: 'IPv4' },
+                            { address: 'fe80::a1b2:c3d4:e5f6:7890', family: 'IPv6' }
+                        ]
+                    },
+                    {
+                        name: 'Ethernet 4',
+                        mtu: 9001,
+                        interfaceIndex: 10,
+                        ports: ['1434'],
+                        ipAddresses: [{ address: '172.31.32.101', family: 'IPv4' }]
+                    }
+                ]
+            }
+        },
+        lastAssessedDate: new Date().getTime().toString()
     }
 };
 
@@ -638,7 +675,46 @@ const mockResourceAssessmentDataAllOptimized = {
                 securityNonCompliantCount: 0
             }
         ],
-        lastAssessedDate: '1740495336926'
+        mtuAlignment: {
+            fsxMTU: {
+                error: null,
+                fsxInterfaces: [
+                    {
+                        MTU: 9001,
+                        Name: 'e0e'
+                    },
+                    {
+                        MTU: 9001,
+                        Name: 'e0e'
+                    }
+                ]
+            },
+            sqlServerMTU: {
+                error: null,
+                sqlInterfaces: [
+                    {
+                        mtu: 9001,
+                        name: 'Ethernet 3',
+                        ports: [
+                            59628, 59587, 57948, 57910, 57769, 57271, 55251, 55082, 54977, 54876, 54568, 54512, 54466,
+                            54414, 54377, 54344, 54281, 54246, 53950, 53917, 50052, 1433
+                        ],
+                        ipAddresses: [
+                            {
+                                family: 'IPv6',
+                                address: 'fe80::841:f19d:c148:aa0%9'
+                            },
+                            {
+                                family: 'IPv4',
+                                address: '172.31.48.15'
+                            }
+                        ],
+                        interfaceIndex: 9
+                    }
+                ]
+            }
+        },
+        lastAssessedDate: new Date().getTime().toString()
     }
 };
 

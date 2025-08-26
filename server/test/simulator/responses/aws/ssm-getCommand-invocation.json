@@ -3668,6 +3668,11 @@
             "error": ""
         }
     },
+
+    "getoptimizeMtuResponse": {
+        "optimizedInterfaces": [{ "jumboValue": "9015", "status": "MTU update successful", "name": "Ethernet 3" }],
+        "success": true
+    },
     "getOracleServerDetailsResponse": {
         "prettyName": "Red Hat Enterprise Linux 8.10 (Ootpa)",
         "name": "Red Hat Enterprise Linux",

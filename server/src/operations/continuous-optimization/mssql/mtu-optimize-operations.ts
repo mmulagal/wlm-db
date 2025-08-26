@@ -1,16 +1,16 @@
-import { isEmpty, isUndefined } from 'lodash-es';
+import { cloneDeep, isEmpty, isUndefined } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { listResources } from '../../../lib/database/db';
 import getLogger from '../../../utils/logger';
 import { Metadata, WorkloadInstance } from '../../../utils/common-types';
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import { AssessmentCategories, AssessmentTriggeredBy } from '../../../utils/continous-optimization-consts';
-import { getServerNameWithHostname, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
+import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { FETCH_FSX_MTU_DETAILS, OPTIMIZE_NETWORK_INTERFACE_MTU } from '../../workloads/mssql/mtu-scripts';
 import { updateJobDetails } from '../../database/job-operations';
-import { getInstanceInfo } from '../../database/database-operations';
+import { getInstanceInfo, updateResourceMetaData } from '../../database/database-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { AuditStatus, SSM_COMMAND_CACHE_TYPE } from '../../../utils/consts';
 import { resetCache } from '../../../utils/cache';
@@ -18,6 +18,7 @@ import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
 
 const logger = getLogger();
 
+const isDemoFlow = isDemo();
 interface MTUOptimizationInterface {
     interfaceName: string;
 }
@@ -30,7 +31,6 @@ interface MTUOptimizationRequest {
     databaseInstanceId: string;
     interfaces: MTUOptimizationInterface[];
     parentJobId?: string;
-    masterOptimizeJobParentId?: string;
 }
 
 async function optimizeMTUAlignment(
@@ -144,10 +144,28 @@ async function handleOptimizeMTUAlignment(
     databaseHostId: string,
     databaseInstanceId: string,
     interfaces: MTUOptimizationInterface[],
-    parentJobId?: string | undefined,
-    masterOptimizeJobParentId?: string | undefined
+    parentJobId?: string | undefined
 ) {
     logger.info('Optimizing MTU alignment for:', { databaseHostId, databaseInstanceId, credentialsId, region });
+
+    const validationRequest: MTUOptimizationRequest = {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        interfaces,
+        parentJobId
+    };
+
+    try {
+        await validateMTUOptimizationRequest(validationRequest);
+        logger.debug('MTU optimization request validation passed');
+    } catch (error) {
+        const errMsg = `MTU optimization request validation failed: ${(error as Error).message}`;
+        logger.error(errMsg);
+        throw new Error(errMsg);
+    }
 
     let formattedInstanceName = '';
     let isAnySubjobFailed = false;
@@ -239,6 +257,14 @@ async function handleOptimizeMTUAlignment(
             interfaceNames
         );
 
+        if (isDemoFlow) {
+            const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
+            updatedMetadata.optimizedMtus = !updatedMetadata.optimizedMtus
+                ? [...interfaceNames]
+                : [...updatedMetadata.optimizedMtus, ...interfaceNames];
+            await updateResourceMetaData(accountId, credentialsId, databaseHostId, updatedMetadata);
+        }
+
         logger.info('MTU optimization completed', {
             databaseHostId,
             optimizedInterfaces: optimizationResult?.optimizedInterfaces?.length || 0,
@@ -260,7 +286,7 @@ async function handleOptimizeMTUAlignment(
             databaseInstanceId,
             AssessmentTriggeredBy.SYSTEM,
             AssessmentCategories.MTU_ALIGNMENT,
-            masterOptimizeJobParentId
+            parentJobId
         );
     } catch (error) {
         errorMessage = (error as Error).message;

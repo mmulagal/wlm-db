@@ -295,6 +295,7 @@ interface Metadata {
     isRssConfigOptimized?: string[];
     isHeartBeatOptimized?: boolean;
     isClusterQuorumOptimized?: boolean;
+    optimizedMtus?: string[];
 }
 
 interface DatabaseInstanceMetadata {

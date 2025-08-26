@@ -2322,6 +2322,7 @@ function assessmentJobData(
     region: string,
     parentJobId: string
 ) {
+    accountId = checkAccount(accountId);
     const jobs = [];
     jobs.push({
         id: parentJobId,
