@@ -1,8 +1,9 @@
 import { DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import styles from './LunsDialogContent.module.scss';
+import { DBType } from '../../../../../utils/consts';
 
-const LunsDialogContent = ({ resourceDetails }: any) => {
+const LunsDialogContent = ({ resourceDetails, engineType }: any) => {
     const { t } = useTranslation();
 
     const volumes = resourceDetails?.databaseInstanceTopology?.storageSummary?.volumes || [];
@@ -31,9 +32,12 @@ const LunsDialogContent = ({ resourceDetails }: any) => {
                 <DsTypography variant="Semibold_14" className={styles.tableCell}>
                     {t('databases.resource-overview.associated_volumes')}
                 </DsTypography>
-                <DsTypography variant="Semibold_14" className={styles.tableCell}>
-                    {t('databases.resource-overview.associated_lun')}
-                </DsTypography>
+
+                {!(engineType === DBType.ORACLE && resourceDetails?.storage?.fsxn?.protocol?.[0] !== 'iSCSI') && (
+                    <DsTypography variant="Semibold_14" className={styles.tableCell}>
+                        {t('databases.resource-overview.associated_lun')}
+                    </DsTypography>
+                )}
             </div>
             {data.map((item: any) => (
                 <div key={item.volume} className={styles.tableRow}>
@@ -43,9 +47,11 @@ const LunsDialogContent = ({ resourceDetails }: any) => {
                     <DsTypography variant="Regular_14" className={styles.tableCell} title={item.volume}>
                         {item.volume}
                     </DsTypography>
-                    <DsTypography variant="Regular_14" className={styles.tableCell} title={item.lun}>
-                        {item.lun}
-                    </DsTypography>
+                    {!(engineType === DBType.ORACLE && resourceDetails?.storage?.fsxn?.protocol?.[0] !== 'iSCSI') && (
+                        <DsTypography variant="Regular_14" className={styles.tableCell} title={item.lun}>
+                            {item.lun}
+                        </DsTypography>
+                    )}
                 </div>
             ))}
         </div>

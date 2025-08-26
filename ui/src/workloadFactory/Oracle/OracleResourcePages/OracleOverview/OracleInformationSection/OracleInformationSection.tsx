@@ -7,6 +7,7 @@ import ISConnectivity from '../../../../ResourcePage/InformationSection/ISConnec
 import styles from './OracleInformationSection.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 import OracleServer from '../../../../ResourcePage/InformationSection/SQLServer/OracleServer';
+import { DBType } from '../../../../../utils/consts';
 
 const OracleInformationSection = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.oracleSlice);
@@ -40,6 +41,7 @@ const OracleInformationSection = () => {
                     openKey={openKey}
                     resourceDetails={resourceDetails}
                     resourceLoading={resourceLoading}
+                    engineType={DBType.ORACLE}
                 />
                 <ISConnectivity
                     handleToggle={handleToggle}

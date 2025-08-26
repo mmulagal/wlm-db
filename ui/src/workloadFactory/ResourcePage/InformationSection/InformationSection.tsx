@@ -10,6 +10,7 @@ import styles from './InformationSection.module.scss';
 import ISConnectivity from './ISConnectivity/ISConnectivity';
 import ISActiveDirectory from './ISActiveDirectory/ISActiveDirectory';
 import { useAppSelector } from '../../../store/storeHooks';
+import { DBType } from '../../../utils/consts';
 
 const InformationSection = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
@@ -43,6 +44,7 @@ const InformationSection = () => {
                     openKey={openKey}
                     resourceDetails={resourceDetails}
                     resourceLoading={resourceLoading}
+                    engineType={DBType.MSSQL}
                 />
                 <ISConnectivity
                     handleToggle={handleToggle}

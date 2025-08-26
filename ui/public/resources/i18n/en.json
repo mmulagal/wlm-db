@@ -430,6 +430,7 @@
             "associated_volumes": "Associated volume",
             "associated_lun": "Associated LUN",
             "associated_luns": "Associated LUNs",
+            "associated_volumes_2": "Associated Volumes",
             "fsx-for-ontap:": "FSx for ONTAP",
             "latency": "Latency",
             "iops": "IOPS",
