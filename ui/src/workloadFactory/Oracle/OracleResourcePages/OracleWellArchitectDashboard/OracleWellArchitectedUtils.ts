@@ -52,7 +52,7 @@ export const oracleCardData: any = {
         recommendation: {
             title: 'Redo Logs and Temp Placement Recommendation',
             description:
-                'Placing redo logs and temp files on a dedicated volume enhances performance and recovery processes. \nThis isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.'
+                'Placing redo logs and temp files on a dedicated volume, either on the same volume or each on separate dedicated volumes,\nenhances performance by isolating their high I/O demands from other operations, preventing interference with data file transactions.\nRedo logs and temp tablespaces undergo frequent changes and require performance-optimized settings for high-speed writes,\nnecessitating customized efficiency mechanisms, tiering configurations, and snapshot strategies for optimal database performance and cost efficiency.'
         },
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
     },
@@ -85,7 +85,7 @@ export const oracleCardData: any = {
         recommendation: {
             title: 'Archive Placement Recommendation',
             description:
-                'Placing archive logs on a dedicated volume enhances performance and recovery processes. \nThis isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.'
+                'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting\nthe performance of redo logs, data files, or control files.'
         },
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
     },
@@ -117,7 +117,7 @@ export const oracleCardData: any = {
         recommendation: {
             title: 'Data Files and Control Files Placement Recommendation',
             description:
-                'Data files and control files should reside on a dedicated volume to optimize performance and maintain data integrity. \nIsolating these files allows for efficient read/write operations and ensures critical control file accessibility, reducing the risk of corruption and enhancing database robustness.'
+                'Placing data files and control files on a dedicated volume enhances performance by isolating their random I/O operations from other database activities, reducing contention from redo or archive log writes.\nThis separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.'
         },
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
     },
@@ -149,7 +149,7 @@ export const oracleCardData: any = {
         recommendation: {
             title: 'Oracle Binary Placement Recommendation',
             description:
-                'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. \nThis separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.'
+                'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files.\nThis separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.'
         },
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
     },
