@@ -502,6 +502,7 @@
             "pgsql": "PostgreSQL"
         },
         "log-analyzer": {
+            "this-process-takes-30-minutes": "This process can take up to 30 minutes",
             "error-investigation": "Error investigation",
             "ai-tag": "AI",
             "ai-investigation": "AI-generated analysis",
@@ -614,7 +615,7 @@
             "detected-errors2": " unique errors",
             "no-errors": "No errors",
             "status-investigating": "Status: Investigating",
-            "running-status": "(This process can take upto x minutes)"
+            "running-status": "(This process can take upto 30 minutes)"
         },
         "dashboard": {
             "no-credentials": "No credentials",

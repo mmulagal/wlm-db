@@ -161,42 +161,42 @@ export function getOracleDatabaseColumnsList({
                 return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
             }
         },
-        {
-            Header: t('databases.databases-table.oracle.headers.well-architected-status'),
-            accessor: 'optimizationStatus',
-            id: '5',
-            width: '240px',
-            filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
-            renderCell: (cellData: string, rowData: any) => {
-                // If the computed display value is "Not analyzed", show with tooltip
-                if (cellData === INVENTORY_TABLE_STATUS.NOT_ANALYZED) {
-                    return (
-                        <div className={styles.naContainer}>
-                            <Popover
-                                popoverClass=""
-                                trigger="hover"
-                                isAppendedToBody
-                                placement="bottom"
-                                container={<TooltipIcon />}
-                            >
-                                <DsTypography variant="Regular_14">{rowData.optimizationDisableMsg}</DsTypography>
-                            </Popover>
-                            <DsTypography variant="Regular_14">
-                                {t('databases.instance-table.not-analyzed')}
-                            </DsTypography>
-                        </div>
-                    );
-                }
-                if (rowData?.optimizationStatusLoading) {
-                    return <DsFlashingDotsLoader />;
-                }
-                return (
-                    <div className={styles.statusCol}>
-                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                    </div>
-                );
-            }
-        },
+        // {
+        //     Header: t('databases.databases-table.oracle.headers.well-architected-status'),
+        //     accessor: 'optimizationStatus',
+        //     id: '5',
+        //     width: '240px',
+        //     filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
+        //     renderCell: (cellData: string, rowData: any) => {
+        //         // If the computed display value is "Not analyzed", show with tooltip
+        //         if (cellData === INVENTORY_TABLE_STATUS.NOT_ANALYZED) {
+        //             return (
+        //                 <div className={styles.naContainer}>
+        //                     <Popover
+        //                         popoverClass=""
+        //                         trigger="hover"
+        //                         isAppendedToBody
+        //                         placement="bottom"
+        //                         container={<TooltipIcon />}
+        //                     >
+        //                         <DsTypography variant="Regular_14">{rowData.optimizationDisableMsg}</DsTypography>
+        //                     </Popover>
+        //                     <DsTypography variant="Regular_14">
+        //                         {t('databases.instance-table.not-analyzed')}
+        //                     </DsTypography>
+        //                 </div>
+        //             );
+        //         }
+        //         if (rowData?.optimizationStatusLoading) {
+        //             return <DsFlashingDotsLoader />;
+        //         }
+        //         return (
+        //             <div className={styles.statusCol}>
+        //                 <DsTypography variant="Regular_14">{cellData}</DsTypography>
+        //             </div>
+        //         );
+        //     }
+        // },
         {
             Header: t('databases.databases-table.oracle.headers.protection-status'),
             accessor: 'protectionText',

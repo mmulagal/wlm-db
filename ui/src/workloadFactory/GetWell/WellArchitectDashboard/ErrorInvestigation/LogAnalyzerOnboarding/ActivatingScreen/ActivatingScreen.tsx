@@ -18,7 +18,7 @@ const ActivatingScreen = () => {
                         {t('databases.log-analyzer.scan-in-progress')}
                     </DsTypography>
                     <DsTypography variant="Regular_14" className={styles.textContent}>
-                        This process can take up to X hours
+                        {t('databases.log-analyzer.this-process-takes-30-minutes')}
                     </DsTypography>
                     <DsBarLoader style={{ width: '600px' }} />
                 </div>
