@@ -811,7 +811,7 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DCName '"
                                   - !Ref 'PreferredDomainController'
-                                  - "' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"'
+                                  - ''' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"'
                             waitAfterCompletion: '0'
                         k-add-sqlservice-user-to-group:
                             command: !Join
