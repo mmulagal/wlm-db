@@ -1743,7 +1743,7 @@ async function discoverOracleResources(
                             missing_permissions: missingPermissions
                         } = dbInstance;
 
-                        const { isAwsCliInstalled, isJqInstalled } = modulesAvailability || {};
+                        const { isAwsCliInstalled, isJqInstalled, isPythonInstalled } = modulesAvailability || {};
 
                         const isOracleAuth =
                             ec2OracleParameters?.some(
@@ -1841,8 +1841,9 @@ async function discoverOracleResources(
                             manageReadiness: {
                                 oracle: {
                                     missingModules: [
-                                        !isAwsCliInstalled ? 'awsCli' : null,
-                                        !isJqInstalled ? 'jq' : null
+                                        isAwsCliInstalled === 'false' ? 'awsCli' : null,
+                                        isJqInstalled === 'false' ? 'jq' : null,
+                                        isPythonInstalled === 'false' ? 'python' : null
                                     ].filter(Boolean) as string[],
                                     missingPermissions
                                 }

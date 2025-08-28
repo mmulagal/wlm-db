@@ -553,10 +553,54 @@ const checkOracleModuleAvailability = `
         fi
         echo false
     }
+
+    check_python_module_availability() {
+        # echo "true"  if the *lowest* Python on $PATH is 3.6 or newer, "false" otherwise.
+
+        declare -A versions          # set of version strings we discover
+
+        # 1. Collect every Python interpreter in $PATH
+        IFS=: read -ra path_dirs <<< "$PATH"
+        for dir in "\${path_dirs[@]}"; do
+            [[ -d $dir ]] || continue
+            for exe in "$dir"/python*; do
+                [[ -e $exe ]] || continue                     # glob may not match
+                [[ -x $exe && ! -d $exe && $exe != *config ]] || continue
+                ver=$("$exe" -V 2>/dev/null | awk '{print $2}')   # "Python 3.x.y" → 3.x.y
+                [[ -n $ver ]] && versions["$ver"]=1
+            done
+        done
+
+        # 2. Abort early if we found nothing
+        (( \${#versions[@]} == 0 )) && { echo false; exit; }
+
+        # 3. Determine the *smallest* version string
+        min_version=$(printf '%s\n' "\${!versions[@]}" | sort -V | head -n1)
+
+        # 4. Compare that minimum with 3.6
+        if [[ $min_version =~ ^([0-9]+)\\.([0-9]+) ]]; then
+            major=\${BASH_REMATCH[1]}
+            minor=\${BASH_REMATCH[2]}
+
+            if (( major > 3 )); then
+                echo true
+            elif (( major == 3 && minor >= 6 )); then
+                echo true
+            else
+                echo false
+            fi
+        else
+            # could not parse the version string
+            echo false
+        fi
+
+    }
+
     check_oracle_module_availability() {
         isJqInstalled=$(is_module_installed jq)
         isAwsCliInstalled=$(is_module_installed aws)
-        result="{\\"isAwsCliInstalled\\": \\"$isAwsCliInstalled\\", \\"isJqInstalled\\": \\"$isJqInstalled\\"}"
+        isPythonInstalled=$(check_python_module_availability)
+        result="{\\"isAwsCliInstalled\\": \\"$isAwsCliInstalled\\", \\"isJqInstalled\\": \\"$isJqInstalled\\", \\"isPythonInstalled\\": \\"$isPythonInstalled\\"}"
         echo $result
     }
 `;
@@ -667,7 +711,8 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
     
         isAwsCliInstalled=$(echo "$modulesAvailability" | grep -o '"isAwsCliInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
         isJqInstalled=$(echo "$modulesAvailability" | grep -o '"isJqInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
-        
+        isPythonInstalled=$(echo "$modulesAvailability" | grep -o '"isPythonInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
+
         modulesToInstall=()
         missingModules="["
         if [ "$isAwsCliInstalled" != "true" ]; then
@@ -678,7 +723,11 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
             modulesToInstall+=("JQ")
             missingModules+="\\"jq\\","
         fi
-        
+
+        if [ "$isPythonInstalled" != "true" ]; then
+            missingModules+="\\"python\\","
+        fi
+
         if [ \${#modulesToInstall[@]} -eq 0 ]; then
             installationResults="[{\\"success\\": \\"All required modules are already installed\\", \\"error\\": \\"\\"}]"
             resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$installationResults" | jq '.')" '.modulesInstallationResults += $res')
@@ -689,6 +738,25 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
         fi
 
         resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$missingModules" | jq '.')" '.missingModules = $res')
+`;
+
+const installPythonOnLinuxHost = `
+    ${checkOracleModuleAvailability}    
+    modulesAvailability=$(check_oracle_module_availability)
+    isPythonInstalled=$(echo "$modulesAvailability" | grep -o '"isPythonInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
+
+    if [ "$isPythonInstalled" == "true" ]; then
+        installationSucessful=true
+    else
+        sudo yum install -y python3.12 > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            installationSucessful=false
+        else
+            installationSucessful=true
+        fi
+    fi
+    results="{\\"installationSuccessful\\": \\"$installationSucessful\\"}"
+    echo $results
 `;
 
 const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) => `
@@ -1041,5 +1109,6 @@ export {
     checkRequiredOracleUserPermissions,
     GET_ORACLE_SERVER_DETAILS,
     oracleUserAuthLoginCommand,
-    loadOracleUserPermissionsDetectionModule
+    loadOracleUserPermissionsDetectionModule,
+    installPythonOnLinuxHost
 };

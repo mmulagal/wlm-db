@@ -90,6 +90,7 @@ import {
     checkAndInstallRequiredOracleDependentModules,
     checkIfValidLinuxUser,
     checkRequiredOracleUserPermissions,
+    installPythonOnLinuxHost,
     validateOracleInstanceConnectivity,
     validateOracleInstanceFsxConnectivity
 } from './workloads/oracle/oracle-ssm-script-utils';
@@ -1561,6 +1562,8 @@ async function registerOracleInstance(
             }
         }
 
+        await installPythonModules(accountId, region, credentialsId, ec2InstanceId, hostJobId);
+
         instanceManagementStatus = await Promise.all(
             databaseInstanceNames.map(
                 throat(1, async dbInst => {
@@ -1615,6 +1618,77 @@ async function registerOracleInstance(
             resourceId
         };
         await updateParentJobStatus(accountId, hostJobId, false, errorMessage, jobMetadata);
+    }
+}
+
+async function installPythonModules(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    instanceId: string,
+    parentJobId: string
+) {
+    logger.info('Install Python modules', { accountId, region, credentialsId, instanceId });
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.REGISTER_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: accountId,
+        parentJobId,
+        name: `Check and install python on instance ${instanceId}`,
+        startTime: Date.now(),
+        description: `Check and install python on instance ${instanceId}`
+    });
+    let errorMessage = '';
+    let status = '';
+
+    try {
+        let parsedResponse;
+        const ssmresponse = await callSsmExecution(
+            credentialsId,
+            region,
+            [installPythonOnLinuxHost],
+            instanceId,
+            'Install python on linux host',
+            accountId,
+            undefined,
+            undefined,
+            undefined,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        );
+
+        const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
+        parsedResponse = attempt(JSON.parse, cleanResponse);
+
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+
+        if (!parsedResponse) {
+            throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
+        }
+
+        const isSuccessfulInstallation = parsedResponse?.installationSuccessful;
+
+        if (isSuccessfulInstallation !== 'true') {
+            throw new Error('Failed to install Python.');
+        }
+        status = JOBSTATUS.COMPLETED;
+    } catch (error: any) {
+        logger.error('Error while installing Python modules', {
+            accountId,
+            region,
+            credentialsId,
+            instanceId,
+            error: error.message
+        });
+        errorMessage = error.message;
+        status = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, childJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        });
     }
 }
 
