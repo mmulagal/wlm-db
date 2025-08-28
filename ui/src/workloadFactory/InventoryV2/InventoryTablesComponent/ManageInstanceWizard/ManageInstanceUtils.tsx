@@ -1003,7 +1003,7 @@ export const updateDetectBulkResponse = (
             if (engineType === DBType.MSSQL) {
                 manageReadiness = detail?.manageReadiness || null;
             } else if (engineType === DBType.ORACLE) {
-                manageReadiness = detail?.manageReadiness.oracle || null;
+                manageReadiness = detail?.manageReadiness || null;
             }
         }
 
