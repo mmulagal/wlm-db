@@ -44,14 +44,14 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             .filter((tag: any) => tag && tag.type === 'all-catagories')
             .map((tag: any) => tag.value);
         const options = [
+            // {
+            //     id: 0,
+            //     label: 'Storage layout',
+            //     value: 'Storage layout',
+            //     category: 'Storage'
+            // },
             {
                 id: 0,
-                label: 'Storage layout',
-                value: 'Storage layout',
-                category: 'Storage'
-            },
-            {
-                id: 2,
                 label: 'Storage configuration',
                 value: 'Storage configuration',
                 category: 'Storage'
@@ -361,15 +361,20 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             }
             placeholder="Placeholder text"
             options={[
-                {
-                    id: 0,
-                    label: 'Database',
-                    value: 'Database'
-                },
+                // {
+                //     id: 0,
+                //     label: 'Database',
+                //     value: 'Database'
+                // },
                 {
                     id: 1,
                     label: 'Volume',
                     value: 'Volume'
+                },
+                {
+                    id: 2,
+                    label: 'LUN path',
+                    value: 'LUN path'
                 }
             ]}
             selectionType="multi"

@@ -23,136 +23,136 @@ import {
 import { isOptimized } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
 export const oracleCardData: any = {
-    redologs_temp_placement: {
-        id: 'redologs-temp-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
+    // redologs_temp_placement: {
+    //     id: 'redologs-temp-placement',
+    //     mapName: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT,
+    //     category: 'storage',
+    //     block_one: {
+    //         value: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT,
+    //         type: 'Storage layout'
+    //     },
+    //     block_two: {
+    //         type: 'Status',
+    //         value: ''
+    //     },
 
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Database'
-        },
-        block_six: {
-            type: 'Impacted databases',
-            value: '',
-            smallFont: true
-        },
-        recommendation: {
-            title: 'Redo Logs and Temp Placement Recommendation',
-            description:
-                'Placing redo logs and temp files on a dedicated volume, either on the same volume or each on separate dedicated volumes,\nenhances performance by isolating their high I/O demands from other operations, preventing interference with data file transactions.\nRedo logs and temp tablespaces undergo frequent changes and require performance-optimized settings for high-speed writes,\nnecessitating customized efficiency mechanisms, tiering configurations, and snapshot strategies for optimal database performance and cost efficiency.'
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
-    },
-    archive_placement: {
-        id: 'archive-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
+    //     block_four: {
+    //         type: 'Severity',
+    //         value: ''
+    //     },
+    //     block_five: {
+    //         type: 'Resource type',
+    //         value: 'Database'
+    //     },
+    //     block_six: {
+    //         type: 'Impacted databases',
+    //         value: '',
+    //         smallFont: true
+    //     },
+    //     recommendation: {
+    //         title: 'Redo Logs and Temp Placement Recommendation',
+    //         description:
+    //             'Placing redo logs and temp files on a dedicated volume, either on the same volume or each on separate dedicated volumes,\nenhances performance by isolating their high I/O demands from other operations, preventing interference with data file transactions.\nRedo logs and temp tablespaces undergo frequent changes and require performance-optimized settings for high-speed writes,\nnecessitating customized efficiency mechanisms, tiering configurations, and snapshot strategies for optimal database performance and cost efficiency.'
+    //     },
+    //     tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+    // },
+    // archive_placement: {
+    //     id: 'archive-placement',
+    //     mapName: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
+    //     category: 'storage',
+    //     block_one: {
+    //         value: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
+    //         type: 'Storage layout'
+    //     },
+    //     block_two: {
+    //         type: 'Status',
+    //         value: ''
+    //     },
 
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Database'
-        },
-        block_six: {
-            type: 'Impacted databases',
-            value: '',
-            smallFont: true
-        },
-        recommendation: {
-            title: 'Archive Placement Recommendation',
-            description:
-                'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting\nthe performance of redo logs, data files, or control files.'
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
-    },
-    datafiles_controlfiles_placement: {
-        id: 'datafiles-controlfiles-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
+    //     block_four: {
+    //         type: 'Severity',
+    //         value: ''
+    //     },
+    //     block_five: {
+    //         type: 'Resource type',
+    //         value: 'Database'
+    //     },
+    //     block_six: {
+    //         type: 'Impacted databases',
+    //         value: '',
+    //         smallFont: true
+    //     },
+    //     recommendation: {
+    //         title: 'Archive Placement Recommendation',
+    //         description:
+    //             'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting\nthe performance of redo logs, data files, or control files.'
+    //     },
+    //     tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+    // },
+    // datafiles_controlfiles_placement: {
+    //     id: 'datafiles-controlfiles-placement',
+    //     mapName: ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT,
+    //     category: 'storage',
+    //     block_one: {
+    //         value: ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT,
+    //         type: 'Storage layout'
+    //     },
+    //     block_two: {
+    //         type: 'Status',
+    //         value: ''
+    //     },
 
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Database'
-        },
-        block_six: {
-            type: 'Impacted databases',
-            value: ''
-        },
-        recommendation: {
-            title: 'Data Files and Control Files Placement Recommendation',
-            description:
-                'Placing data files and control files on a dedicated volume enhances performance by isolating their random I/O operations from other database activities, reducing contention from redo or archive log writes.\nThis separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.'
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
-    },
-    oracle_binary_placement: {
-        id: 'oracle-binary-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
+    //     block_four: {
+    //         type: 'Severity',
+    //         value: ''
+    //     },
+    //     block_five: {
+    //         type: 'Resource type',
+    //         value: 'Database'
+    //     },
+    //     block_six: {
+    //         type: 'Impacted databases',
+    //         value: ''
+    //     },
+    //     recommendation: {
+    //         title: 'Data Files and Control Files Placement Recommendation',
+    //         description:
+    //             'Placing data files and control files on a dedicated volume enhances performance by isolating their random I/O operations from other database activities, reducing contention from redo or archive log writes.\nThis separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.'
+    //     },
+    //     tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+    // },
+    // oracle_binary_placement: {
+    //     id: 'oracle-binary-placement',
+    //     mapName: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+    //     category: 'storage',
+    //     block_one: {
+    //         value: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+    //         type: 'Storage layout'
+    //     },
+    //     block_two: {
+    //         type: 'Status',
+    //         value: ''
+    //     },
 
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Database'
-        },
-        block_six: {
-            type: 'Impacted databases',
-            value: ''
-        },
-        recommendation: {
-            title: 'Oracle Binary Placement Recommendation',
-            description:
-                'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files.\nThis separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.'
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
-    },
+    //     block_four: {
+    //         type: 'Severity',
+    //         value: ''
+    //     },
+    //     block_five: {
+    //         type: 'Resource type',
+    //         value: 'Database'
+    //     },
+    //     block_six: {
+    //         type: 'Impacted databases',
+    //         value: ''
+    //     },
+    //     recommendation: {
+    //         title: 'Oracle Binary Placement Recommendation',
+    //         description:
+    //             'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files.\nThis separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.'
+    //     },
+    //     tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+    // },
     ontap_configuration: {
         id: 'ontap',
         category: 'storage',
@@ -405,7 +405,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
     } = formatOntapConfig(data, optimizingData);
 
     const cardsData = {
-        ...formatIndividualCardMainConfig(data, optimizingData),
+        // Commenting storage layout configs for now
+        // ...formatIndividualCardMainConfig(data, optimizingData),
         deploymentType: data?.deploymentType || '',
         ontap_configuration: createOntapConfigurationBlock(
             ontapOptimizedConfig,

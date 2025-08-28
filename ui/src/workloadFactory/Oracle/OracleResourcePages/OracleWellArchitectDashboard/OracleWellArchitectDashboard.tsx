@@ -3,7 +3,7 @@ import TotalOptimizationScore from '../../../GetWell/TotalOptimizationScore/Tota
 import OracleConfigureCategory from './OracleConfigureCategory/OracleConfigureCategory';
 import styles from './OracleWellArchitectDashboard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import StorageLayoutSection from './Categories/StorageLayoutSection';
+// import StorageLayoutSection from './Categories/StorageLayoutSection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
@@ -20,7 +20,7 @@ const OracleWellArchitectDashboard = () => {
     const {
         optimizationBreakDown,
         isAssessmentAvailable,
-        cardData,
+        // cardData,
         optimizePageLoading: loading,
         gwTimestamp
     } = useAppSelector(state => state.getWellOptimize);
@@ -75,7 +75,7 @@ const OracleWellArchitectDashboard = () => {
                         <OracleFilterComponent setFilteredCardData={setFilteredCardData} />
                     </div>
 
-                    {(filteredCardData?.redologs_temp_placement ||
+                    {/* {(filteredCardData?.redologs_temp_placement ||
                         filteredCardData?.archive_placement ||
                         filteredCardData?.datafiles_controlfiles_placement ||
                         filteredCardData?.oracle_binary_placement) && (
@@ -93,7 +93,7 @@ const OracleWellArchitectDashboard = () => {
                                 />
                             </div>
                         </div>
-                    )}
+                    )} */}
 
                     {filteredCardData?.ontap_configuration && (
                         <div className={styles.sectionTwo}>
