@@ -1201,11 +1201,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     </div>
                 ) : (
                     <>
-                        {(!(
-                            isWorkloadFactory ||
-                            (!isWorkloadFactory && import.meta.env.VITE_APP_ENVIRONMENT === STAGING)
-                        ) ||
-                            import.meta.env.VITE_APP_ENVIRONMENT === LOCAL) && (
+                        {import.meta.env.VITE_APP_ENVIRONMENT !== STAGING && (
                             <div className={styles.firstSection}>
                                 <div className={styles.withWorkLoad}>
                                     <div className={styles.firstRow}>
@@ -1395,9 +1391,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     </>
                 )}
 
-                {!(isWorkloadFactory || (!isWorkloadFactory && import.meta.env.VITE_APP_ENVIRONMENT === STAGING)) && (
-                    <div className={styles.extraSpace} />
-                )}
+                {import.meta.env.VITE_APP_ENVIRONMENT !== STAGING && <div className={styles.extraSpace} />}
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
