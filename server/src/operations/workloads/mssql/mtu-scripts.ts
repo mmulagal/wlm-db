@@ -93,6 +93,77 @@ const GET_SQL_SERVER_PORTS = `
 `;
 
 const MAP_INTERFACES_TO_PORTS = `
+    # Network address patterns for easier maintenance
+    $WILDCARD_PATTERN = "^(0\\.0\\.0\\.0|::)$|^$"
+    $LOOPBACK_PATTERN = "^(127\\.0\\.0\\.1|::1)$"
+    $SPECIAL_ADDRESSES_PATTERN = "^(0\\.0\\.0\\.0|::|127\\.0\\.0\\.1|::1|169\\.254\\.\\d+\\.\\d+|fe80:)"
+
+    function Get-BestConnectionForPort {
+        param($connectionsForPort)
+        
+        # Find the best connection - prefer specific IPs over wildcards/loopbacks
+        $bestConnection = $connectionsForPort | Where-Object { 
+            $_.LocalAddress -notmatch $SPECIAL_ADDRESSES_PATTERN -and
+            -not [string]::IsNullOrEmpty($_.LocalAddress)
+        } | Select-Object -First 1
+        
+        # If no specific IP, use any connection (wildcard or loopback)
+        if (-not $bestConnection) {
+            $bestConnection = $connectionsForPort | Select-Object -First 1
+        }
+        
+        return $bestConnection
+    }
+
+    function Get-TargetInterfacesForAddress {
+        param($localAddress)
+        
+        $targetInterfaces = @()
+        
+        switch -Regex ($localAddress) {
+            $WILDCARD_PATTERN {
+                # Wildcard or empty - all primary interfaces
+                $targetInterfaces = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue | 
+                    Select-Object -ExpandProperty InterfaceIndex
+            }
+            $LOOPBACK_PATTERN {
+                # Loopback - map to primary network interface (exclude loopback interfaces)
+                $loopbackIndexes = Get-NetAdapter | Where-Object { $_.InterfaceType -eq 24 } | Select-Object -ExpandProperty InterfaceIndex
+                $targetInterfaces = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue | 
+                    Where-Object { $loopbackIndexes -notcontains $_.InterfaceIndex } |
+                    Sort-Object RouteMetric | 
+                    Select-Object -First 1 -ExpandProperty InterfaceIndex
+            }
+            default {
+                # Specific IP - find its interface
+                $interfaceWithIP = Get-NetIPAddress | Where-Object { 
+                    $_.IPAddress -eq $localAddress -and $_.AddressState -eq "Preferred"
+                } | Select-Object -First 1
+                
+                if ($interfaceWithIP) {
+                    $targetInterfaces = @($interfaceWithIP.InterfaceIndex)
+                }
+            }
+        }
+        
+        return $targetInterfaces
+    }
+
+    function Add-PortToInterfaces {
+        param(
+            $interfacePortMap,
+            $targetInterfaces,
+            [int]$localPort
+        )
+        
+        foreach ($interfaceIndex in $targetInterfaces) {
+            if (-not $interfacePortMap.ContainsKey($interfaceIndex)) {
+                $interfacePortMap[$interfaceIndex] = @()
+            }
+            $interfacePortMap[$interfaceIndex] += $localPort
+        }
+    }
+
     function Get-InterfacePortMapping {
         param(
             [Parameter(Mandatory = $true)]
@@ -103,35 +174,30 @@ const MAP_INTERFACES_TO_PORTS = `
         $sqlConnections = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | 
             Where-Object { $_.OwningProcess -in $SqlProcesses.Id }
         
-        foreach ($connection in $sqlConnections) {
-            $localAddress = $connection.LocalAddress
-            $localPort = $connection.LocalPort
+        # Get unique ports first to avoid duplicates
+        $uniquePorts = $sqlConnections | Select-Object LocalPort -Unique
+        
+        foreach ($portInfo in $uniquePorts) {
+            $localPort = $portInfo.LocalPort
             
-            if ($localAddress -eq "0.0.0.0" -or $localAddress -eq "::") {
-                # SQL Server listening on all interfaces - get primary network interfaces
-                $primaryInterfaces = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue | 
-                    Select-Object -ExpandProperty InterfaceIndex
+            # Get all connections for this port
+            $connectionsForPort = $sqlConnections | Where-Object { $_.LocalPort -eq $localPort }
+            
+            # Find the best connection for this port
+            $bestConnection = Get-BestConnectionForPort -connectionsForPort $connectionsForPort
+            
+            if ($bestConnection) {
+                # Get target interfaces for this address
+                $targetInterfaces = Get-TargetInterfacesForAddress -localAddress $bestConnection.LocalAddress
                 
-                foreach ($interfaceIndex in $primaryInterfaces) {
-                    if (-not $interfacePortMap.ContainsKey($interfaceIndex)) {
-                        $interfacePortMap[$interfaceIndex] = @()
-                    }
-                    $interfacePortMap[$interfaceIndex] += $localPort
-                }
-            } else {
-                # SQL Server bound to specific IP - find the interface
-                $interfaceWithIP = Get-NetIPAddress | Where-Object { 
-                    $_.IPAddress -eq $localAddress -and $_.AddressState -eq "Preferred"
-                } | Select-Object -First 1
-                
-                if ($interfaceWithIP) {
-                    $interfaceIndex = $interfaceWithIP.InterfaceIndex
-                    if (-not $interfacePortMap.ContainsKey($interfaceIndex)) {
-                        $interfacePortMap[$interfaceIndex] = @()
-                    }
-                    $interfacePortMap[$interfaceIndex] += $localPort
-                }
+                # Add port to target interfaces
+                Add-PortToInterfaces -interfacePortMap $interfacePortMap -targetInterfaces $targetInterfaces -localPort $localPort
             }
+        }
+        
+        $interfaceKeys = @($interfacePortMap.Keys)
+        foreach ($interfaceIndex in $interfaceKeys) {
+            $interfacePortMap[$interfaceIndex] = $interfacePortMap[$interfaceIndex] | Select-Object -Unique
         }
         
         return $interfacePortMap
@@ -311,7 +377,7 @@ const FETCH_FSX_MTU_DETAILS = (instanceRecord: WorkloadInstance) => `
 
     } catch {
         if ($null -eq $responseObject) { $responseObject = @{} }
-        $responseObject['error'] = $_.Exception.Message
+        $responseObject.error = $_.Exception.Message
     }
 
     $response = $responseObject | ConvertTo-Json -Compress

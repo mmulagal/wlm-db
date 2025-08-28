@@ -247,7 +247,7 @@ const GOLDEN_CONFIG = {
         recommended: AssessmentStatus.OPTIMIZED,
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'Workload Factory recommends aligning the MTU (Maximum Transmission Unit) settings on your SQL Server network interfaces with your FSx for ONTAP file system. Proper MTU alignment prevents network fragmentation and ensures optimal performance for your SQL Server workloads. Update the MTU on the identified network interfaces to match your FSx MTU configuration.',
+            'Workload Factory recommends aligning EC2 instance Maximum Transmission Unit (MTU) settings with your FSX for ONTAP file system to prevent network fragmentation and optimize SQL Server performance. Fixing MTU misalignment ensures consistent MTU configuration across all nodes and network paths.',
         tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_INTERFACE
     },

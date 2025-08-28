@@ -37,7 +37,8 @@ import { handleOptimizeMTUAlignment } from './continuous-optimization/mssql/mtu-
 import { handleBulkCloneOptimization } from './continuous-optimization/mssql/clone-optimization-operations';
 import {
     handleSharedStorageOptimize,
-    optimizeSqlServerService
+    optimizeSqlServerService,
+    optimizeHighAvailabilityConfiguration
 } from './continuous-optimization/mssql/resilience-optimize-operations';
 
 const logger = getLogger();
@@ -230,6 +231,29 @@ async function bulkHostLevelOptimization(
                         )
                     );
                 }
+
+                if (
+                    optimizationCategory === OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS ||
+                    optimizationCategory === OptimizeHighAvailabilityParams.CLUSTER_QUORUM
+                ) {
+                    return Promise.all(
+                        databaseHosts.map(async (host: { id: string; sqlServerInstances: string[] }) => {
+                            const { id: databaseHostId, sqlServerInstances } = host;
+
+                            if (sqlServerInstances && sqlServerInstances.length > 0) {
+                                await optimizeHighAvailabilityConfiguration(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    databaseHostId,
+                                    sqlServerInstances,
+                                    optimizationCategory,
+                                    masterOptimizeParentId
+                                );
+                            }
+                        })
+                    );
+                }
             })
         );
     } catch (error: any) {
@@ -256,7 +280,9 @@ async function handleBulkOptimization(
 
     if (
         optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP ||
-        optimizationCategory === OPTIMIZATION_CATEGORIES.MTU_ALIGNMENT
+        optimizationCategory === OPTIMIZATION_CATEGORIES.MTU_ALIGNMENT ||
+        optimizationCategory === OptimizeHighAvailabilityParams.HEARTBEAT_SETTINGS ||
+        optimizationCategory === OptimizeHighAvailabilityParams.CLUSTER_QUORUM
     ) {
         return bulkHostLevelOptimization(accountId, optimizationCategory, hostsToOptimize, masterOptimizeParentId);
     }

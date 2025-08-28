@@ -207,7 +207,7 @@ async function handleOptimizeMTUAlignment(
 
         // Get instance details for FSx MTU lookup
         const instanceInfo = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-        const { fsxn_ids: fileSystemId } = instanceInfo;
+        const { fsxn_ids: fileSystemId, database_instance_name: instanceName } = instanceInfo;
 
         if (!fileSystemId) {
             throw new Error('FSx file system ID not found for MTU optimization');
@@ -228,7 +228,7 @@ async function handleOptimizeMTUAlignment(
         // Get FSx MTU value
         const targetMTU = await getFSxMTUValue(credentialsId, region, instanceRecord, accountId);
 
-        formattedInstanceName = getServerNameWithHostname(resourceName, databaseInstanceId);
+        formattedInstanceName = getServerNameWithHostname(resourceName, instanceName);
 
         const optimizeJobId = await handleOptimizeJobCreation(
             accountId,
