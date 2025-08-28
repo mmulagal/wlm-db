@@ -213,7 +213,7 @@ const InventoryV2 = () => {
                             fileSystemName,
                             managementStatus,
                             ...(perHost?.hostType === DBType.ORACLE && {
-                                protocol: perHost?.protocol || GENERAL.NOT_AVAILABLE,
+                                protocol: perHost?.sqlServerInstances?.[0]?.protocol || GENERAL.NOT_AVAILABLE,
                                 sizeRange: perRow?.databases?.[0]?.size
                                     ? categorizeStorageSize(formatSize(perRow?.databases?.[0]?.size))
                                     : GENERAL.NOT_AVAILABLE,

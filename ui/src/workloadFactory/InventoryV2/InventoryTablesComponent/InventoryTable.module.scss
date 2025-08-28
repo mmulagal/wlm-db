@@ -160,9 +160,12 @@
         overflow: hidden;
     }
     .textClass {
+        display: block;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        width: 100%;
+        min-width: 0;
     }
 
     .firstColText {
@@ -226,10 +229,12 @@
     .colText {
         // display: flex;
         gap: 16px;
+        display: block;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 220px;
+        width: 100%;
+        min-width: 0;
     }
 
     .colTextProtection {

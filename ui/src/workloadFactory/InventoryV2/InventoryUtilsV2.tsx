@@ -407,8 +407,8 @@ const getOracleSpecificFields = (perRow: any) => {
                 ? ORACLE_DATABASES_COMPONENTS.MULTI_TENANT
                 : ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT,
         protocol:
-            Array.isArray(perRow?.storage?.[0]?.protocol) && perRow?.storage?.[0]?.protocol.length > 0
-                ? perRow?.storage?.[0]?.protocol[0]
+            Array.isArray(perRow?.storage?.fsxn?.protocol) && perRow?.storage?.fsxn?.protocol.length > 0
+                ? perRow?.storage?.fsxn?.protocol[0]
                 : GENERAL.NOT_AVAILABLE,
         size: targetDatabase?.size ? targetDatabase?.size : GENERAL.NOT_AVAILABLE,
         platform: targetDatabase?.platform ? targetDatabase?.platform : GENERAL.NOT_AVAILABLE

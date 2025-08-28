@@ -779,8 +779,9 @@ const addCredentialsBasedOnEngineType = (
     detectOntapPassword: string,
     detectAsmAuthentication: any,
     authenticationType: string,
-    engineType: string
-) => {
+    engineType: string,
+    checkManageReadiness: boolean
+): boolean => {
     const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
 
     switch (engineType) {
@@ -799,6 +800,7 @@ const addCredentialsBasedOnEngineType = (
                     username: detectManageUserName,
                     password: detectManagePassword
                 });
+                checkManageReadiness = true;
             }
             break;
         }
@@ -819,6 +821,7 @@ const addCredentialsBasedOnEngineType = (
                     username: detectManageUserName,
                     password: detectManagePassword
                 });
+                checkManageReadiness = true;
             }
 
             // Add Windows credential if not already registered
@@ -836,6 +839,7 @@ const addCredentialsBasedOnEngineType = (
                     username: detectWindowsAuthentication.username,
                     password: detectWindowsAuthentication.password
                 });
+                checkManageReadiness = true;
             }
             break;
         }
@@ -859,7 +863,10 @@ const addCredentialsBasedOnEngineType = (
             username: detectAsmAuthentication.username,
             password: detectAsmAuthentication.password
         });
+        checkManageReadiness = true;
     }
+
+    return checkManageReadiness;
 };
 
 export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDetectedInstance[]) => {
@@ -883,10 +890,10 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
 
         // Build credentials array for this instance
         const credentials: any[] = [];
-        const checkManageReadiness = false;
+        let checkManageReadiness = false;
 
         // Add credentials if not already registered
-        addCredentialsBasedOnEngineType(
+        checkManageReadiness = addCredentialsBasedOnEngineType(
             instance,
             credentials,
             detectManageUserName,
@@ -896,7 +903,8 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
             detectOntapPassword,
             detectAsmAuthentication,
             authenticationType,
-            instance?.data?.hostType
+            instance?.data?.hostType,
+            checkManageReadiness
         );
 
         // If already present, merge credentials arrays
