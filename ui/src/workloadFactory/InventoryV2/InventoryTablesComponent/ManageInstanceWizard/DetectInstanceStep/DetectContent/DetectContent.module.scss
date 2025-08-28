@@ -84,4 +84,8 @@
     [class*='dsCheckbox'] {
         gap: 16px !important;
     }
+
+    [class*='itemsContainer'] {
+        max-height: 350px !important;
+    }
 }
