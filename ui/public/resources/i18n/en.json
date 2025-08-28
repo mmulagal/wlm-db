@@ -582,7 +582,7 @@
             "readiness-status-ready": "Ready",
             "readiness-status-missing": "Missing prerequisites",
             "prerequisites-list": "Prerequisites list",
-            "accordion-1-info": "The Well-Architected feature continuously analyzes your Oracle databases on FSx for ONTAP to ensure database configurations are Well-Architected, aligning with industry and vendor best practices. It identifies misalignments, delivers comprehensive reports with insights, and provides actionable recommendations. Users can choose to apply our automation to fix issues like storage or security misconfigurations, or follow provided guidance to address them manually.",
+            "accordion-1-info": "Workload factory continuously analyzes your Microsoft SQL Server databases with FSx for ONTAP storage to ensure configurations are well architected, aligning with industry and vendor best practices. The analysis identifies misalignments, delivers comprehensive reports with insights, and provides actionable recommendations. You can resolve issues automatically from the console or follow the guidance to resolve issues manually.",
             "bedrock-model-activation": "Bedrock model activation",
             "bedrock-model-activation-content": "Enable the following model in the AWS account: anthropic.claude-sonnet-4-20250514. Ensure the model is accessible from the region where the SQL node is hosted.",
 

@@ -10,7 +10,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { DsSpinner } from '@tlveng/wlm-ds';
 import { Content } from './ManageInstanceStep/ManageInstanceStep';
 import styles from './ManageInstanceWizard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -34,7 +33,6 @@ const ManageOnlyWizard = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
-    const { loading } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
     const engineTypeRaw = useAppSelector(
         state => state.inventoryV2.manageSingleInstanceData?.hostType
     ) as keyof typeof manageBulkMuttionApi;
@@ -61,14 +59,6 @@ const ManageOnlyWizard = () => {
     };
     return (
         <StepLayout>
-            {loading && (
-                <>
-                    <div className={styles.loaderOverlay} />
-                    <div className={styles.spinnerPlacement}>
-                        <DsSpinner isLarge />
-                    </div>
-                </>
-            )}
             <Header
                 className={styles['manage-instance-wizard']}
                 title={t('databases.register-flow.register-instance')}

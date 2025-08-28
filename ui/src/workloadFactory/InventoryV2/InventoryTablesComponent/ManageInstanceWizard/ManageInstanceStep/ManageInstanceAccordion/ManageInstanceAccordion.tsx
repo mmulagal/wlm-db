@@ -25,6 +25,7 @@ type AccordionProps = {
     setExpandedId: any;
     disableAll?: boolean;
     loading?: boolean;
+    errorInvestigationLoading?: boolean;
 };
 
 export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
@@ -32,7 +33,8 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     expandedId,
     setExpandedId,
     disableAll = false,
-    loading = false
+    loading = false,
+    errorInvestigationLoading = false
 }) => {
     const { t } = useTranslation();
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
@@ -64,8 +66,11 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
                                 <div className={styles.readinessSection}>
                                     <div className={styles.valueSection}>
-                                        {loading ? (
-                                            <DsFlashingDotsLoader />
+                                        {loading ||
+                                        (errorInvestigationLoading && item?.title === 'Error investigation') ? (
+                                            <div className={styles.loadingSection}>
+                                                <DsFlashingDotsLoader />
+                                            </div>
                                         ) : (
                                             <div className={styles.statusSection}>
                                                 {!item?.missingPermission && <Success />}
@@ -95,7 +100,12 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                     <div className={styles.imageContainer}>{item.image}</div>
 
                                     <div className={styles.valueSection}>
-                                        <DsTypography variant="Semibold_14">{item.title}</DsTypography>
+                                        <div className={styles.nameSection}>
+                                            <DsTypography variant="Semibold_14">{item.title}</DsTypography>
+                                            {errorInvestigationLoading && item?.title === 'Error investigation' && (
+                                                <DsFlashingDotsLoader />
+                                            )}
+                                        </div>
                                         <DsTypography variant="Regular_14">{item.subtitle}</DsTypography>
                                     </div>
                                 </div>

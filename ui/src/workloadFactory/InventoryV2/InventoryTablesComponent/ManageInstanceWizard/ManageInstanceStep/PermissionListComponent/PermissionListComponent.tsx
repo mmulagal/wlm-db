@@ -11,6 +11,7 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll] = useState(false);
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
+    const { loading } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
 
     const items: AccordionItem[] = PermissionListComponentItems(
         t,
@@ -30,6 +31,7 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
                     expandedId={expandedId}
                     setExpandedId={setExpandedId}
                     disableAll={disableAll}
+                    errorInvestigationLoading={loading}
                 />
             </div>
         </div>
