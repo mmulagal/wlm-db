@@ -6,7 +6,7 @@ import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg'
 import styles from './ResourceHeader.module.scss';
 
 import { GENERAL } from '../../../../../utils/appConstants';
-import { DBType, INVENTORY_STATUS } from '../../../../../utils/consts';
+import { DBType, INVENTORY_STATUS, TENANCY } from '../../../../../utils/consts';
 
 type ResourceHeaderProps = {
     selectedHostname: string;
@@ -203,19 +203,21 @@ const ResourceHeader = ({
                     </div>
 
                     {/* section 4 */}
-                    <div className={`${styles.column}`} style={{ borderRight: 'none' }}>
-                        <DsTypography variant="Semibold_14" className={styles.titleText}>
-                            {resourceLoading ? <DsFlashingDotsLoader /> : resourceDetails.databaseCount}
-                        </DsTypography>
+                    {resourceDetails?.tenancy !== TENANCY.SINGLE_TENANT && (
+                        <div className={`${styles.column}`} style={{ borderRight: 'none' }}>
+                            <DsTypography variant="Semibold_14" className={styles.titleText}>
+                                {resourceLoading ? <DsFlashingDotsLoader /> : resourceDetails.databaseCount}
+                            </DsTypography>
 
-                        <DsTypography
-                            variant="Regular_14"
-                            className={styles.label}
-                            title={t('databases.oracle-inner-page.number-of-pdbs')}
-                        >
-                            {t('databases.oracle-inner-page.number-of-pdbs')}
-                        </DsTypography>
-                    </div>
+                            <DsTypography
+                                variant="Regular_14"
+                                className={styles.label}
+                                title={t('databases.oracle-inner-page.number-of-pdbs')}
+                            >
+                                {t('databases.oracle-inner-page.number-of-pdbs')}
+                            </DsTypography>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

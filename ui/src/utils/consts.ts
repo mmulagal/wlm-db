@@ -167,6 +167,10 @@ export const SQL_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_VALUE_CAPS: 'FCI'
 };
 
+export const TENANCY = {
+    SINGLE_TENANT: 'SINGLE_TENANT'
+};
+
 export const API_ERRORS = {
     DUPLICATE_CONFIG_NAME: 'An unique key constraint violated uk_wlmdb_config_account_id_name_user',
     RATE_EXCEEDED: 'rate exceeded',
