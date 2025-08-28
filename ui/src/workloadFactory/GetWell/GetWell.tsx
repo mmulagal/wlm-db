@@ -859,6 +859,11 @@ const GetWell = () => {
                                                                     id: 9,
                                                                     label: 'Network Adapter',
                                                                     value: 'Network Adapter'
+                                                                },
+                                                                {
+                                                                    id: 10,
+                                                                    label: 'Network Interface',
+                                                                    value: 'Network Interface'
                                                                 }
                                                             ]}
                                                             selectionType="multi"

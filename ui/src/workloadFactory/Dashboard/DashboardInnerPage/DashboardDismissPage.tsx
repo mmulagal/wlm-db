@@ -115,6 +115,9 @@ const DashboardDismissPage = () => {
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
                 type = 'clone-management';
                 break;
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                type = 'mtu-alignment';
+                break;
             default:
                 break;
         }
@@ -688,6 +691,8 @@ const DashboardDismissPage = () => {
                 return instanceData?.assessments?.dismissedConfigurations?.clone;
             case ASSESSMENT_CONFIG_NAMES.CRR:
                 return instanceData?.assessments?.dismissedConfigurations?.crr;
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                return instanceData?.assessments?.dismissedConfigurations?.mtuAlignment;
             default:
         }
     };

@@ -3570,6 +3570,7 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         maxdop: 'maxDOP',
         'clone-management': 'clone',
         'rss-config': 'rssConfig',
+        'mtu-alignment': 'mtuAlignment',
         'snapshot-policy': 'snapshotPolicy',
         'scheduled-fsx-for-ontap-backups': 'awsBackup',
         'mssql-patch': 'mssqlPatch',
