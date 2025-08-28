@@ -10,7 +10,8 @@ import {
     ERROR_ANALYZER_STATUS,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
-    PROTECTION_TEXT_STATUS
+    PROTECTION_TEXT_STATUS,
+    STAGING
 } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
@@ -340,7 +341,13 @@ const InventoryV2 = () => {
     }, [selectedHostType, fullHostTableRows, fullInstanceTableRows, fullDatabaseTableRows]);
 
     return (
-        <div className={styles.inventory}>
+        <div
+            className={
+                import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
+                    ? `${styles.inventory} ${styles.tempClass}`
+                    : styles.inventory
+            }
+        >
             <InventoryCards />
             <EngineTypeSelector />
             <InventoryTab />

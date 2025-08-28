@@ -8,6 +8,7 @@ import JobDistribution from './JobDistribution/JobDistribution';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import JobMonitoringApi from './JobMonitoringApi';
+import { STAGING } from '../../utils/consts';
 
 const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownValue }: any) => {
     const dispatch = useAppDispatch();
@@ -34,7 +35,13 @@ const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownV
     }, [refreshTimeJobMonitor]);
 
     return (
-        <div className={styles.jobMonitoring}>
+        <div
+            className={
+                import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
+                    ? `${styles.jobMonitoring} ${styles.tempClass}`
+                    : styles.jobMonitoring
+            }
+        >
             <div className={styles.chartContainer}>
                 <div className={styles.chartSection}>
                     <JobDistribution />

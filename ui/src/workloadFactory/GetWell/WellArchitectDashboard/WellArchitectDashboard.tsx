@@ -11,6 +11,7 @@ import {
     DETECT_HOST_VAR,
     FROM_DIALOG,
     RESET_PASSWORD_TYPE,
+    STAGING,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../utils/consts';
@@ -284,7 +285,13 @@ const WellArchitectDashboard = () => {
     };
 
     return (
-        <div className={styles['well-architect-dashboard']}>
+        <div
+            className={
+                import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
+                    ? `${styles['well-architect-dashboard']} ${styles.tempClass}`
+                    : styles['well-architect-dashboard']
+            }
+        >
             <div className={`${commonStyles.commonBreadCrumb} ${styles.breadCrumb}`} style={{ left: '0%' }}>
                 <BreadCrumbs
                     items={[

@@ -1486,7 +1486,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (
                         <>
                             <div className={styles.inventoryHeaderSection}>
-                                <div className={styles.contentArea}>
+                                <div
+                                    className={
+                                        import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
+                                            ? `${styles.contentArea} ${styles.tempClass}`
+                                            : styles.contentArea
+                                    }
+                                >
                                     {selectMultipleComponents()}
                                     <div className={styles.content}>{refreshComponent()}</div>
                                 </div>
@@ -1505,7 +1511,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {selectedHeaderTab === WLF_TABS.JOB_MONITORING && (
                         <>
                             <div className={styles.inventoryHeaderSection}>
-                                <div className={styles.contentArea}>
+                                <div
+                                    className={
+                                        import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
+                                            ? `${styles.contentArea} ${styles.tempClass}`
+                                            : styles.contentArea
+                                    }
+                                >
                                     {showNA && <DummySelect fromJM />}
                                     {!showNA && <div />}
                                     <div className={styles.content}>
@@ -1567,7 +1579,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>
                             <div className={styles.sandboxSection}>
-                                <div className={styles.contentArea}>
+                                <div
+                                    className={
+                                        import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
+                                            ? `${styles.contentArea} ${styles.tempClass}`
+                                            : styles.contentArea
+                                    }
+                                >
                                     {!showNA && selectSandboxComponents()}
                                     {showNA && <DummySelect fromJM={false} />}
                                     <div className={styles.content}>{refreshComponentSandbox()}</div>
@@ -1590,7 +1608,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) && (
                         <>
                             <div className={styles.exploreSavingSection}>
-                                <div className={styles.contentArea}>
+                                <div
+                                    className={
+                                        import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
+                                            ? `${styles.contentArea} ${styles.tempClass}`
+                                            : styles.contentArea
+                                    }
+                                >
                                     {selectMultipleComponents()}
                                     <div className={styles.content}>{refreshComponent()}</div>
                                 </div>
