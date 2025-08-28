@@ -255,7 +255,7 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             name: 'FSxQuorumVolumeName',
             description: 'The name of the volume for cluster quorum.',
             type: 'String',
-            default: 'wlmdb-quorum'
+            default: 'wlmdb_quorum'
         },
         {
             name: 'FSxQuorumVolumeSize',
