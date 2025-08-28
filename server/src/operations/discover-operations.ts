@@ -1717,7 +1717,7 @@ async function discoverOracleResources(
                     }
                     ec2Instance = {
                         ...ec2Instance,
-                        oracleServerDeploymentType: 'standalone'
+                        oracleServerDeploymentType: 'Standalone'
                     };
 
                     const { oracle: ec2OracleParameters, asm: ec2AsmParameters } = await getEc2SqlParameters(
@@ -1839,11 +1839,13 @@ async function discoverOracleResources(
                             oracleServerAuthentication: isOracleAuth,
                             asmAuthentication: isAsmAuth,
                             manageReadiness: {
-                                missingModules: [
-                                    !isAwsCliInstalled ? 'awsCli' : null,
-                                    !isJqInstalled ? 'jq' : null
-                                ].filter(Boolean) as string[],
-                                missingPermissions
+                                oracle: {
+                                    missingModules: [
+                                        !isAwsCliInstalled ? 'awsCli' : null,
+                                        !isJqInstalled ? 'jq' : null
+                                    ].filter(Boolean) as string[],
+                                    missingPermissions
+                                }
                             }
                         });
                     }

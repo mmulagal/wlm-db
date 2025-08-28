@@ -463,6 +463,16 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
         result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
         sqlplus_command=$(echo "$result" | cut -d'|' -f1)
 
+        is_instance_connectivity_possible() {
+            local cmd="\${sqlplus_command/sqlplus -S/sqlplus -S -L}"
+            sudo -i -u oracle bash <<EOF
+                set -e
+                export ORACLE_SID="$oracleSid"
+                $cmd
+EOF
+        }
+
+
         get_instance_db_version() {
             sudo -i -u oracle bash <<EOF
                 set -e
@@ -474,11 +484,27 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
 EOF
         }
 
-        dbVersion=$(get_instance_db_version)
-        if [ $? -ne 0 ]; then
-            result="{\\"oracleInstanceConnectivity\\": false, \\"oracleError\\": \\"Failed to connect to Oracle instance $oracleSid\\", \\"oracleInstanceName\\": \\"$oracleSid\\"}"
+        oracleError="null"
+        dbVersion="null"
+        if is_instance_connectivity_possible >/dev/null 2>&1; then
+            isInstanceConnectivityPossible="true"
         else
-            result="{\\"oracleInstanceConnectivity\\": true, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\"}"
+            isInstanceConnectivityPossible="false"
+            oracleError="Failed to connect to Oracle instance, please ensure that the credentials are correct and the Oracle instance is running."
+        fi
+
+        if [ "$isInstanceConnectivityPossible" == "true" ]; then
+            dbVersion=$(get_instance_db_version)
+            if [ $? -ne 0 ]; then
+                dbVersion="null"
+                oracleError="Failed to fetch db version from Oracle instance"
+            fi
+        fi
+        
+        if [ "$isInstanceConnectivityPossible" == "false" ]; then
+            result="{\\"oracleInstanceConnectivity\\": false, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\", \\"oracleError\\": \\"$oracleError\\"}"
+        else
+            result="{\\"oracleInstanceConnectivity\\": true, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\", \\"oracleError\\": \\"$oracleError\\"}"
         fi
         # Add result to instances array inside resultObject
         resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$result" | jq '.')" '.instances += [$res]')

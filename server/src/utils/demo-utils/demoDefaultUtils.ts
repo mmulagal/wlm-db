@@ -96,8 +96,7 @@ async function createDemoResources(
             deploymentType,
             fsxFilSystemId,
             awsAccountId,
-            serverName || `oracledatabase${randomize('a', 4)}`,
-            DatabaseTypes.ORACLE
+            serverName || `oracledatabase${randomize('a', 4)}`
         );
     }
 }

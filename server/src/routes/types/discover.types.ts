@@ -369,12 +369,14 @@ const oracleDatabaseInstance = Type.Object({
     ),
     manageReadiness: Type.Optional(
         Type.Object({
-            missingModules: Type.Optional(
-                Type.Array(Type.String({ description: 'List of missing modules on the instance' }))
-            ),
-            missingPermissions: Type.Optional(
-                Type.Array(Type.String({ description: 'List of missing permissions on the instance' }))
-            )
+            oracle: Type.Object({
+                missingModules: Type.Optional(
+                    Type.Array(Type.String({ description: 'List of missing modules on the instance' }))
+                ),
+                missingPermissions: Type.Optional(
+                    Type.Array(Type.String({ description: 'List of missing permissions on the instance' }))
+                )
+            })
         })
     )
 });
