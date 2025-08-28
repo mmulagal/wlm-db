@@ -126,7 +126,7 @@ function getVolumeConfigDrift(
         const objectsInViolation: GenericViolationResponseType[] = [];
         const objectsInViolationNames: string[] = [];
         volumesData.forEach(volume => {
-            const value = (volume[config.parameter] ?? '').toString();
+            let value = (volume[config.parameter] ?? '').toString();
             const objectName = volume.name || '';
             let recommended = config.value.toString();
             let isViolated = false;
@@ -171,12 +171,23 @@ function getVolumeConfigDrift(
                     isViolated = value !== recommended;
                     break;
 
-                case 'compressionType':
+                case 'compressionType': {
+                    const currentCompression = (volume.compression ?? '').toString();
+                    const recommendations = compressionRecommendations;
+                    if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
+                        value = currentCompression === 'none' ? 'none' : value;
+                        recommended = recommendations['log-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                    } else {
+                        recommended = recommendations.others;
+                        dataCategory = 'non-log-files';
+                    }
+                    isViolated = value !== recommended;
+                    break;
+                }
+
                 case 'deduplication': {
-                    const recommendations =
-                        config.parameter === 'compressionType'
-                            ? compressionRecommendations
-                            : deduplicationRecommendations;
+                    const recommendations = deduplicationRecommendations;
                     if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
                         recommended = recommendations['log-files'];
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
@@ -189,8 +200,7 @@ function getVolumeConfigDrift(
                 }
 
                 default:
-                    isViolated = value !== config.value;
-                    recommended = config.value.toString();
+                    isViolated = value !== recommended;
                     break;
             }
 
