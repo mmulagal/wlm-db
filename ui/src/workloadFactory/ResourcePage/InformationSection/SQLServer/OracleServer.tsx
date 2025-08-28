@@ -82,7 +82,7 @@ const OracleServer = ({ handleToggle, openKey }: oracleServer) => {
                 </Typography>
             </div>
 
-            <div className={commonStyles.row}>
+            {/* <div className={commonStyles.row}>
                 <Typography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.ACTIVE_NODE}
                 </Typography>
@@ -93,7 +93,7 @@ const OracleServer = ({ handleToggle, openKey }: oracleServer) => {
                 >
                     {resourceDetails?.databaseServer?.activeNode || ''}
                 </Typography>
-            </div>
+            </div> */}
 
             <div className={commonStyles.row}>
                 <Typography variant="Semibold_14" className={commonStyles.heading}>

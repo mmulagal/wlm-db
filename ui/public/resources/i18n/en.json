@@ -1,6 +1,8 @@
 {
     "databases": {
         "general": {
+            "instance-well-architected-dashboard": "instance well-architected dashboard",
+            "database-well-architected-dashboard-for-oracle": "instance well-architected dashboard for oracle",
             "manage-instances-well-architected-score": "Registered instances well-architected score",
             "well_architected_status": "Well-architected status",
             "update": "Update",

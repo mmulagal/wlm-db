@@ -1,5 +1,6 @@
 import { Button, Popover, Typography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './TaskTable.module.scss';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
@@ -28,6 +29,7 @@ import {
 import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/oracleSlice';
 
 const TaskTable = ({ taskList = [] }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const navigateToContinuosOptimization = (message: string, rowData: any) => {
         const splitMessage = message.split(';');
@@ -98,7 +100,9 @@ const TaskTable = ({ taskList = [] }: any) => {
                                 navigateToContinuosOptimization(desc, rowData);
                             }}
                         >
-                            instance well-architected dashboard
+                            {desc.includes('Oracle assessment')
+                                ? t('databases.general.database-well-architected-dashboard-for-oracle')
+                                : t('databases.general.instance-well-architected-dashboard')}
                         </Button>
                     </span>
                 </div>

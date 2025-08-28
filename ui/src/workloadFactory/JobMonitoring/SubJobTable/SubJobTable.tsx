@@ -1,5 +1,6 @@
 import { Button, FlashingDotsLoader, Popover, Table, Typography, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
@@ -41,6 +42,7 @@ import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/or
 import useResize from '../../../common/hooks/useResize';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
+    const { t } = useTranslation();
     const [subTaskList, setSubTaskList] = useState<any>({});
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const windowSize = useResize();
@@ -189,7 +191,9 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                                         navigateToContinuosOptimization(cellData, rowData);
                                     }}
                                 >
-                                    instance well-architected dashboard
+                                    {cellData.includes('Oracle assessment')
+                                        ? t('databases.general.database-well-architected-dashboard-for-oracle')
+                                        : t('databases.general.instance-well-architected-dashboard')}
                                 </Button>
                             </span>
                         </div>

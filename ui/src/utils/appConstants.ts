@@ -37,13 +37,13 @@ export const GENERAL = {
     UPDATE: 'Update',
     UPDATE_FSX_ADMIN_PASSWORD: 'Update fsxadmin password',
     ORACLE_FSX_PASSWORD_CONTENT:
-        'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Oracle Server instance.',
+        'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Oracle Server database.',
     FSX_PASSWORD_CONTENT:
         'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.',
     SQL_PASSWORD_CONTENT:
         'The password for your Windows login might have changed. Update credentials to register this Microsoft SQL Server instance.',
     ORACLE_PASSWORD_CONTENT:
-        'The password for your Oracle login might have changed. Update credentials to register this  Oracle Server instance.',
+        'The password for your Oracle login might have changed. Update credentials to register this  Oracle Server database.',
     ORACLE_ASM_PASSWORD_CONTENT:
         'The password for your Oracle ASM login might have changed. Update credentials to register this  Oracle ASM instance.',
     UPDATE_SQL_SERVER_PASSWORD: 'Update Microsoft SQL Server password',

@@ -1482,21 +1482,21 @@ export const jobMonitoringStatusMapping = (val: string) => {
 export const jobMonitoringTypeMapping = (val: string, t: any) => {
     let typeValue = val;
     if (val === JOB_MONITORING_TYPE.DEPLOYMENT) {
-        typeValue = t('databases.job-monitor.jm-type-deployment');
+        typeValue = 'Deployment';
     } else if (val === JOB_MONITORING_TYPE.CREATE_RESOURCE || val === JOB_MONITORING_TYPE.CREATE_DATABASE) {
-        typeValue = t('databases.job-monitor.jm-type-create-resource');
+        typeValue = 'Create database';
     } else if (val === JOB_MONITORING_TYPE.PREPARE_RESOURCE) {
-        typeValue = t('databases.job-monitor.jm-type-prepare-resource');
+        typeValue = 'Prepare resource';
     } else if (val === JOB_MONITORING_TYPE.SANDBOX) {
-        typeValue = t('databases.job-monitor.jm-type-sandbox');
+        typeValue = 'Sandbox';
     } else if (val === JOB_MONITORING_TYPE.ASSESSMENT) {
-        typeValue = t('databases.job-monitor.jm-type-assessment');
+        typeValue = 'Assessment';
     } else if (val === JOB_MONITORING_TYPE.OPTIMIZE || val === JOB_MONITORING_TYPE.WELL_ARCHITECTED) {
-        typeValue = t('databases.job-monitor.jm-type-optimize');
+        typeValue = 'Well-architected';
     } else if (val === JOB_MONITORING_TYPE.REGISTER_RESOURCE) {
-        typeValue = t('databases.job-monitor.jm-type-register-resource');
+        typeValue = 'Register resource';
     } else if (val === JOB_MONITORING_TYPE.LOGS_ANALYSIS) {
-        typeValue = t('databases.job-monitor.jm-type-logs-analysis');
+        typeValue = 'Logs analysis';
     }
     return typeValue;
 };
