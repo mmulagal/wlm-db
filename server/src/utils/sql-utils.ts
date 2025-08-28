@@ -141,21 +141,22 @@ async function getDatabaseInstanceTopology(
 function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER) {
     let combinedOntapVolumes: any[] = [];
     let luns: any[] = [];
-
     switch (dbType) {
         case DatabaseTypes.ORACLE: {
             const storageDetails: OracleMappedOntapVolumesResponse = configData?.[fsxId];
             if (!storageDetails) {
                 return { combinedOntapVolumes, luns };
             }
-            luns = storageDetails?.lunRecords ?? [];
             const processVolumeRecords = (fileType: string, volumeRecords: OracleVolumeRecord[], tenancy: string) => {
                 volumeRecords.forEach((record: OracleVolumeRecord) => {
                     if (!combinedOntapVolumes.some(v => v.id === record.volumeId)) {
+                        luns = luns.some(lun => lun.id === record.lunId)
+                            ? luns
+                            : [...luns, { id: record.lunId, name: record.lunName }];
                         combinedOntapVolumes.push({
                             id: record.volumeId,
                             name: record.volumeName,
-                            luns
+                            luns: [{ id: record.lunId, name: record.lunName }]
                         });
                     }
                 });

@@ -19,7 +19,13 @@ import {
     DatabaseHostInstanceSummaryResponseType,
     NodeTopologyResponseType
 } from '../../../routes/types/database-hosts.types';
-import { DatabaseInstance, Metadata, OracleInstanceDetails, ResourceDetails } from '../../../utils/common-types';
+import {
+    DatabaseInstance,
+    DatabaseInstanceMetadata,
+    Metadata,
+    OracleInstanceDetails,
+    ResourceDetails
+} from '../../../utils/common-types';
 import {
     GET_ORACLE_SERVER_DETAILS,
     getOracleInstanceData,
@@ -544,6 +550,7 @@ async function getOracleDatabaseInstancesSummary(
                 protocol: 'iSCSI'
             };
             let mountPointDetails = isDemoFlow ? demoMountPointDetails : metadata?.mountPointDetails;
+            databaseInstance.storage_type = resourceDetails?.storage_type;
 
             // Get the storage & mount point details for registered Oracle database instances
             if (!mountPointDetails && (getProtectionStatus || getDatabasesWithProtection)) {
@@ -557,10 +564,7 @@ async function getOracleDatabaseInstancesSummary(
                 );
             }
 
-            let { mountIp, mountPoint, protocol } = mountPointDetails || {};
-            if (protocol === 'iSCSI') {
-                mountPoint = encodeURIComponent(mountPoint!); // mount point in case of iscsi is serial number of lun, it can have special characters (like ], [ ) which needs to be encoded
-            }
+            const { mountIp, mountPoint, protocol } = mountPointDetails || {};
 
             try {
                 [
@@ -810,7 +814,7 @@ async function getOracleDatabaseHostInstanceSummary(
             creationDate: activeNodeDetails?.creationDate
         };
         return {
-            tenancy: (resourceDetails?.metadata as Metadata)?.oracleDeploymentType,
+            tenancy: (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType,
             ...databaseInstanceSummary
         };
     } catch (error) {

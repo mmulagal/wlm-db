@@ -644,7 +644,7 @@ EOF
             SET HEADING OFF
             SET LINESIZE 500
             SELECT JSON_OBJECTAGG(
-                    p.PDB_NAME VALUE ROUND(SUM(df.BYTES)/1024/1024/1024, 2)
+                    p.PDB_NAME VALUE ROUND(SUM(df.BYTES), 2)
                 ) AS pdb_sizes_json
             FROM V\\$DATAFILE df
             JOIN DBA_PDBS p ON df.CON_ID = p.CON_ID
@@ -659,7 +659,7 @@ EOF
             $sqlplus_command
             SET HEADING OFF
             SET LINESIZE 500
-            SELECT ROUND(SUM(BYTES)/1024/1024/1024, 2) AS db_size_gb
+            SELECT ROUND(SUM(BYTES), 2) AS db_size_gb
             FROM   DBA_DATA_FILES;
 EOF
     }
@@ -1168,7 +1168,7 @@ const getMappedOntapDataVolumeForInstance = (
         
         if [ "$mountProtocol" == "iSCSI" ]; then
             # For iSCSI, extract LUN details
-            lunName=$(echo "$response" | jq -r '.records[0].name' | sed 's|.*/||')
+            lunName=$(echo "$response" | jq -r '.records[0].name')
             volumeEntry="{\\"volumeName\\": \\"$volumeName\\",\\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\", \\"svmId\\": \\"$svmId\\", \\"lunName\\": \\"$lunName\\", \\"lunId\\": \\"$lunId\\"}"
 
             lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')

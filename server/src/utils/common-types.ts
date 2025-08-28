@@ -303,6 +303,7 @@ interface DatabaseInstanceMetadata {
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
     configsOptimized?: any;
+    oracleDeploymentType?: OracleDeploymentTenacy;
 }
 
 interface DatabaseInstanceConfigurations {

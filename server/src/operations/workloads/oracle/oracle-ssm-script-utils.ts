@@ -32,11 +32,12 @@ const getMappedOntapDataVolume = (
 
     if [ "$storageProtocol" == "iSCSI" ]; then
         encodedJunctionPath=$(printf '%s' "$junctionPath" | jq -sRr @uri)
-        lunEndpoint="storage/luns?serial_number=$encodedJunctionPath&fields=uuid,svm.name,svm.uuid,location.volume.name,location.volume.uuid"
+        lunEndpoint="storage/luns?serial_number=$encodedJunctionPath&fields=uuid,name,svm.name,svm.uuid,location.volume.name,location.volume.uuid"
         response=$(ontap_request 'GET' $lunEndpoint)
         check_status "Failed to fetch LUN endpoint data"
 
         lunId=$(echo "$response" | jq -r '.records[0].uuid')
+        lunName=$(echo "$response" | jq -r '.records[0].name')
         svmName=$(echo "$response" | jq -r '.records[0].svm.name')
         svmId=$(echo "$response" | jq -r '.records[0].svm.uuid')
 

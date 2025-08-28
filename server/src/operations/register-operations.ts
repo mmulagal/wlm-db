@@ -93,6 +93,7 @@ import {
     validateOracleInstanceConnectivity,
     validateOracleInstanceFsxConnectivity
 } from './workloads/oracle/oracle-ssm-script-utils';
+import { getOracleDatabaseMappedVolumes } from './workloads/oracle/oracle-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -1423,7 +1424,10 @@ async function registerOracleInstancesData(
                 sqlDeploymentType: 'Standalone',
                 fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
                 storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                databaseType: DatabaseTypes.ORACLE
+                databaseType: DatabaseTypes.ORACLE,
+                metaData: {
+                    oracleDeploymentType: oracleInstanceInfo.instanceType
+                }
             });
 
             instanceManagementStatus = {
@@ -1433,6 +1437,21 @@ async function registerOracleInstancesData(
             };
 
             instanceJobStatus = JOBSTATUS.COMPLETED;
+            // detect mapped vols for registered oracle instance
+            if (instanceJobStatus === JOBSTATUS.COMPLETED && !isDemoFlow) {
+                try {
+                    getOracleDatabaseMappedVolumes(accountId, credentialsId, region, resourceId, instanceId);
+                } catch (error) {
+                    logger.error('Error while detecting mapped volumes for Oracle instance', {
+                        accountId,
+                        credentialsId,
+                        region,
+                        resourceId,
+                        instanceId,
+                        error: (error as Error).message
+                    });
+                }
+            }
 
             if (isDemoFlow) {
                 await createAssessmentDataForOracle(accountId, credentialsId, region, resourceId, instanceId);
