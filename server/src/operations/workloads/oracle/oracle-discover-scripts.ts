@@ -711,7 +711,7 @@ const checkOraclePermissionsInDiscovery = `
 
         # Extract username from sqlplus_command
         username=$(sed -n 's/.* -S \\([^/]*\\)\\/.*/\\1/p' <<< "$sqlplus_command")
-
+        missingPermissions="[]"
         if [ -z "$username" ]; then
             # credentials not available, so cannot check permissions.
             missingPermissions="[\\"CREATE SESSION\\", \\"SELECT CATALOG ROLE\\", \\"SET CONTAINER ROLE\\", \\"SET CONTAINER_DATA\\"]"
@@ -839,7 +839,13 @@ EOF
             else
                 ${getStorageWithoutCreds}
                 ${checkOraclePermissionsInDiscovery}
-                missingPermissions=$(check_oracle_missing_permissions "$sid")
+                isAwsCliInstalled=$(echo "$modulesAvailability" | grep -o '"isAwsCliInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
+                isJqInstalled=$(echo "$modulesAvailability" | grep -o '"isJqInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
+                if [[ "$isAwsCliInstalled" == "true"  && "$isJqInstalled" == "true" ]]; then
+                    missingPermissions=$(check_oracle_missing_permissions "$sid")
+                else
+                    missingPermissions="[\\"na\\"]"
+                fi
             fi
         } || {
             echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
