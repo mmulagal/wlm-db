@@ -141,15 +141,23 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
                     return 'Snapshot policy = none';
                 case 'Tiering policy':
-                    return "Data Volumes (tiering policy='snapshot-only'), Redo Log Volumes (tiering policy='none'), Archive/FRA Volumes (tiering policy='auto')";
+                    return [
+                        "[Data] tiering policy='snapshot-only'",
+                        "[Redo Log] tiering policy='none'",
+                        "[Archive] tiering policy='auto'"
+                    ];
                 case 'Tiering minimum cooling days':
-                    return 'Data Volumes (tiering-minimum-cooling-days=2), Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups))​';
+                    return [
+                        '[Data] tiering-minimum-cooling-days=2',
+                        '[Archive,RMAN-compressed] tiering-minimum-cooling-days=2',
+                        '[Archive, RMAN uncompressed] tiering-minimum-cooling-days=14'
+                    ];
                 case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
-                    return 'Compression(log vol)= disabled, Compression=Inline, adaptive, 8KB block size';
+                    return ['[Log] Compression= disabled', '[Data, Archive] Compression=Inline, adaptive'];
                 case ASSESSMENT_CONFIG_NAMES.COMPACTION:
                     return 'Compaction = enabled';
                 case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
-                    return 'Deduplication (log)= disabled, Deduplication = Inline, enabled';
+                    return ['[Log] Deduplication = disabled', '[Data, Archive] Deduplication = Inline'];
                 case 'OS type':
                     return 'OS type = linux';
                 case 'Space reservation':

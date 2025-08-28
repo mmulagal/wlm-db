@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
-import { createActionOptionSection, createContentWithBullets, createSection } from './DialogContentHelper';
+import { createActionOptionSection, createSection } from './DialogContentHelper';
 
 const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
     const { t } = useTranslation();
@@ -16,8 +16,7 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                         )}
                         {createSection(
                             t('databases.well-architect.notes'),
-                            createContentWithBullets([t('databases.well-architect.oracle-storagelayout-note1')]),
-                            { width: '712px' }
+                            t('databases.well-architect.oracle-storagelayout-note1')
                         )}
                         {createSection(
                             t('databases.well-architect.optimization-steps'),
@@ -47,8 +46,7 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                         )}
                         {createSection(
                             t('databases.well-architect.notes'),
-                            createContentWithBullets([t('databases.well-architect.oracle-storagelayout-note1')]),
-                            { width: '712px' }
+                            t('databases.well-architect.oracle-storagelayout-note1')
                         )}
                         {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.archive-placement-step1-options1'),
@@ -65,8 +63,7 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                         )}
                         {createSection(
                             t('databases.well-architect.notes'),
-                            createContentWithBullets([t('databases.well-architect.oracle-storagelayout-note1')]),
-                            { width: '712px' }
+                            t('databases.well-architect.oracle-storagelayout-note1')
                         )}
                         {createSection(
                             t('databases.well-architect.optimization-steps'),
@@ -97,24 +94,19 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                         )}
                         {createSection(
                             t('databases.well-architect.notes'),
-                            createContentWithBullets([t('databases.well-architect.oracle-storagelayout-note1')]),
-                            { width: '712px' }
+                            t('databases.well-architect.oracle-storagelayout-note1')
                         )}
-                        {createSection(
-                            t('databases.well-architect.optimization-steps'),
-                            createContentWithBullets([
-                                t('databases.well-architect.oracle-binary-optimization-step1'),
-                                t('databases.well-architect.oracle-binary-optimization-step2'),
-                                t('databases.well-architect.oracle-binary-optimization-step3'),
-                                t('databases.well-architect.oracle-binary-optimization-step4'),
-                                t('databases.well-architect.oracle-binary-optimization-step5'),
-                                t('databases.well-architect.oracle-binary-optimization-step6'),
-                                t('databases.well-architect.oracle-binary-optimization-step7'),
-                                t('databases.well-architect.oracle-binary-optimization-step8'),
-                                t('databases.well-architect.oracle-binary-optimization-step9')
-                            ]),
-                            { width: '712px' }
-                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-binary-optimization-step1'),
+                            t('databases.well-architect.oracle-binary-optimization-step2'),
+                            t('databases.well-architect.oracle-binary-optimization-step3'),
+                            t('databases.well-architect.oracle-binary-optimization-step4'),
+                            t('databases.well-architect.oracle-binary-optimization-step5'),
+                            t('databases.well-architect.oracle-binary-optimization-step6'),
+                            t('databases.well-architect.oracle-binary-optimization-step7'),
+                            t('databases.well-architect.oracle-binary-optimization-step8'),
+                            t('databases.well-architect.oracle-binary-optimization-step9')
+                        ])}
                     </>
                 );
         }
