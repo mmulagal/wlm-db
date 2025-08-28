@@ -19,18 +19,17 @@ const CHECK_ORACLE_FRA_RMAN_STATUS = (ec2InstanceId: string, dbSid: string) => `
         SET PAGESIZE 0
         SET TRIMSPOOL ON
         WHENEVER SQLERROR EXIT SQL.SQLCODE
-        SELECT 
-            CASE
-                WHEN (SELECT value FROM v\\$parameter WHERE name = 'db_recovery_file_dest') IS NOT NULL
-                    AND (SELECT value FROM v\\$parameter WHERE name = 'db_recovery_file_dest') != ''
-                THEN 'yes' ELSE 'no' END || '|' ||
-            CASE
-                WHEN EXISTS (
-                    SELECT 1 FROM v\\$rman_configuration
-                    WHERE (name LIKE '%COMPRESSION%' AND value != 'OFF')
-                        OR (name LIKE '%BACKUP TYPE%' AND value LIKE '%COMPRESSED%')
-                ) THEN 'yes' ELSE 'no' END
-        as fra_rman_result FROM dual;
+        SELECT CASE 
+            WHEN value IS NOT NULL AND value != '' THEN 'yes'
+            ELSE 'no'
+        END
+        FROM v\\$parameter WHERE name = 'db_recovery_file_dest';
+        SELECT CASE
+            WHEN COUNT(*) > 0 THEN 'yes'
+            ELSE 'no'
+        END
+        FROM v\\$rman_configuration 
+        WHERE name LIKE '%BACKUP TYPE TO COMPRESSED%';
         EXIT;
 EOSQL
 EOF
@@ -215,7 +214,8 @@ binaryVolumes=$(jq -n \
 ${CHECK_ORACLE_FRA_RMAN_STATUS(instanceRecord.activeNodeInstanceid, instanceRecord.id)}
 fra_rman_result=$(check_oracle_fra_rman_status "${instanceRecord.activeNodeInstanceid}" "${instanceRecord.id}")
 # Parse the pipe-delimited result
-IFS='|' read -r fra_enabled rman_compression_enabled <<< "$fra_rman_result"
+fra_enabled=$(echo "$fra_rman_result" | sed -n '1p' | tr -d '[:space:]')
+rman_compression_enabled=$(echo "$fra_rman_result" | sed -n '2p' | tr -d '[:space:]')
 
 # Create result with valid JSON
 if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; then

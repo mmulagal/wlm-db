@@ -523,14 +523,14 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = {
                                 svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
                                 svmName: 'wlmdb_sqlsvm_1735809893269',
                                 volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
-                                volumeName: 'oracledata2'
+                                volumeName: 'oracleredo2'
                             }
                         ],
                         DATA_FILES: [
                             {
                                 svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
                                 svmName: 'wlmdb_sqlsvm_1735809893269',
-                                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                                volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                                 volumeName: 'oracledata2'
                             }
                         ],
@@ -539,7 +539,7 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = {
                                 svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
                                 svmName: 'wlmdb_sqlsvm_1735809893269',
                                 volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
-                                volumeName: 'oracledata2'
+                                volumeName: 'oracleredo2'
                             }
                         ],
                         ARCHIVE_LOGS: [
@@ -554,14 +554,8 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = {
                             {
                                 svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
                                 svmName: 'wlmdb_sqlsvm_1735809893269',
-                                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                                volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                                 volumeName: 'oracledata2'
-                            },
-                            {
-                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
-                                svmName: 'wlmdb_sqlsvm_1735809893269',
-                                volumeId: 'beac8c14-eee7-11ef-8fbb-837e18df6f7a',
-                                volumeName: 'oracleredo2'
                             }
                         ]
                     }
@@ -2720,7 +2714,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 fractionalReserve: 100,
                 snapshotAutodelete: false,
                 snapshotCopyReserve: 5,
-                tieringMinCoolingDays: null
+                tieringMinCoolingDays: 4,
+                spaceMgmtTryFirst: 'volume_grow'
             },
             {
                 name: 'oraclearch2',
@@ -2740,7 +2735,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 fractionalReserve: 100,
                 snapshotAutodelete: false,
                 snapshotCopyReserve: 5,
-                tieringMinCoolingDays: null
+                tieringMinCoolingDays: 4,
+                spaceMgmtTryFirst: 'volume_grow'
             },
             {
                 name: 'oracledata2',
@@ -2760,7 +2756,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 fractionalReserve: 100,
                 snapshotAutodelete: false,
                 snapshotCopyReserve: 5,
-                tieringMinCoolingDays: null
+                tieringMinCoolingDays: 4,
+                spaceMgmtTryFirst: 'volume_grow'
             }
         ],
         error: '',

@@ -1,16 +1,15 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
-import { HttpErrorCodes, ASSESSMENT_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
+import { ASSESSMENT_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus
 } from '../../../utils/continous-optimization-consts';
-import { sqlResponseParsing } from '../../../utils/utils';
+import { isDemo, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob } from '../../database/job-operations';
 import { VOLUME_LUN_CONFIGURATION } from '../../workloads/oracle/storage-assessment-scripts';
@@ -21,6 +20,7 @@ import { StorageParameterDriftResponseType } from '../../../routes/types/oracle-
 import { OracleMappedOntapVolumesResponse, OracleSysFileTypes } from '../../workloads/oracle/common-types';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 const volumeConfigData = storageGoldenConfigData.configuration.volume;
 const lunConfigData = storageGoldenConfigData.configuration.lun;
@@ -49,9 +49,17 @@ function mapVolumeTypesToIdsOrNames(
     mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
     mapByName: boolean
 ) {
-    const instanceVolumeMappings = mappedOntapVolumes[fsxFileSystem]?.volumeMappings?.find(mapping =>
-        mapping.hasOwnProperty(databaseInstanceName)
-    )?.[databaseInstanceName];
+    let instanceVolumeMappings;
+    if (isDemoFlow) {
+        instanceVolumeMappings = Object.values(mappedOntapVolumes)
+            .flatMap(volumeResponse => volumeResponse.volumeMappings || [])
+            .flatMap(volumeMapping => Object.values(volumeMapping))
+            .find(mapping => Object.keys(mapping).length > 0);
+    } else {
+        instanceVolumeMappings = mappedOntapVolumes[fsxFileSystem]?.volumeMappings?.find(mapping =>
+            mapping.hasOwnProperty(databaseInstanceName)
+        )?.[databaseInstanceName];
+    }
 
     const isCDB = instanceVolumeMappings?.isCDB || false;
     const volumeRecords = instanceVolumeMappings?.ontapVolumes || {};
@@ -168,6 +176,7 @@ function getVolumeConfigDrift(
                         recommended = tieringPolicyRecommendations['archive-log-files'];
                         dataCategory = 'archive-log-files';
                     }
+
                     isViolated = value !== recommended;
                     break;
 
@@ -424,13 +433,36 @@ async function initiateStorageAssessmentCollection(
         fsxFileSystem
     } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    try {
-        if (isEmpty(mappedVolumesUuids)) {
-            errorMessage = `Found no FSx for ONTAP volumes for the instance ${databaseInstanceName}.`;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-        }
 
+    if (isEmpty(mappedVolumesUuids)) {
+        errorMessage = `Found no FSx for ONTAP volumes for the instance ${databaseInstanceName}.`;
+        logger.error(errorMessage);
+        jobStatus = JOBSTATUS.FAILED;
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage configuration assessment',
+            description: 'Storage configuration assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: jobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId,
+            error: errorMessage
+        });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage layout assessment',
+            description: 'Storage layout assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: jobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId,
+            error: errorMessage
+        });
+        return;
+    }
+    try {
         const command = [VOLUME_LUN_CONFIGURATION(instanceRecord)];
         const ssmComment = 'Get Storage Configuration Assessment for Oracle instance';
 
