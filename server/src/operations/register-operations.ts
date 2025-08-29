@@ -815,7 +815,8 @@ async function installAndRegisterDatabaseServerInstances(
                     databaseInstanceNames,
                     modulesToInstall
                 } = resource;
-                const jobName = `Register instance(s) ${databaseInstanceNames} in ${ec2InstanceId}`;
+                const dbOrInstance = databaseType === DatabaseTypes.ORACLE ? 'database' : 'instance';
+                const jobName = `Register ${dbOrInstance}(s) ${databaseInstanceNames} in ${ec2InstanceId}`;
                 const { id: jobId } = await registerJob(accountId, credentialsId, region, {
                     type: JOBTYPE.REGISTER_RESOURCE,
                     status: JOBSTATUS.IN_PROGRESS,
@@ -1285,10 +1286,11 @@ async function registerDatabaseServerInstances(
         resourcesToBeManagedLength: resourcesToBeManaged.length
     });
 
+    const dbOrInstances = databaseType === DatabaseTypes.ORACLE ? 'databases' : 'instances';
     if (!resourcesToBeManaged?.length) {
-        throw new Error(`No ${databaseType} server instances to be registered`);
+        throw new Error(`No ${databaseType} server ${dbOrInstances} to be registered`);
     }
-    const jobName = `Register ${databaseType} server instances for account ${accountId}`;
+    const jobName = `Register ${databaseType} server ${dbOrInstances} for account ${accountId}`;
     const { id: jobId } = await registerJob(accountId, '', '', {
         type: JOBTYPE.REGISTER_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
@@ -1480,9 +1482,9 @@ async function registerOracleInstancesData(
             status: instanceJobStatus,
             resourceName: accountId,
             parentJobId: hostJobId,
-            name: `Register instance ${dbInst}`,
+            name: `Register database ${dbInst}`,
             startTime: Date.now(),
-            description: `Register instance ${dbInst}`,
+            description: `Register database ${dbInst}`,
             error: instanceErrorMessage,
             endTime: Date.now()
         });

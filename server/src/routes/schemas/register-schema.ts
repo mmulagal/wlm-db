@@ -52,8 +52,8 @@ const OracleRegisterInstancesSchema = {
     ...RegisterBaseRequest,
     params: AccountIdParams,
     body: MultiInstanceRegisterOracleRequestBody,
-    summary: 'Register Oracle instances',
-    description: 'Register Oracle instances',
+    summary: 'Register Oracle databases',
+    description: 'Register Oracle databases',
     response: {
         200: JobBasedManageResponseBody
     }

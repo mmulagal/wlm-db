@@ -922,6 +922,8 @@ ssmMock
     .resolves(getSampleCommandResponse('getPS7CheckDetails'))
     .on(SendCommandCommand, params => params.Comment === 'Validate Oracle Credentials')
     .resolves(getSampleCommandResponse('validateOracleCredentials'))
+    .on(SendCommandCommand, params => params.Comment === 'Install python on linux host')
+    .resolves(getSampleCommandResponse('installPythonOnLinuxHost'))
     .on(SendCommandCommand, params => params.Comment === 'Get mapped volume details for Oracle db')
     .resolves(getSampleCommandResponse('oracleMappedVolumeDetails'))
     .on(SendCommandCommand, params => {
@@ -1523,7 +1525,11 @@ ssmMock
             'getOracleServerDetails',
             JSON.stringify(getCommandInvocationResponse.getOracleServerDetailsResponse)
         )
-    );
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installPythonOnLinuxHost'
+    })
+    .resolves(getSampleCommandResponseWithOutput('installPythonOnLinuxHost', '{ "installationSuccessful": "true" }'));
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
