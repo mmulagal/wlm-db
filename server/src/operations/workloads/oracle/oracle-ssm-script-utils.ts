@@ -728,13 +728,12 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
             missingModules+="\\"python\\","
         fi
 
+        missingModules="\${missingModules%,}]" # remove trailing comma and close array
         if [ \${#modulesToInstall[@]} -eq 0 ]; then
             installationResults="[{\\"success\\": \\"All required modules are already installed\\", \\"error\\": \\"\\"}]"
             resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$installationResults" | jq '.')" '.modulesInstallationResults += $res')
-            missingModules+="]"
         else 
             ${installOracleDependentModules(signedUrls, 'modulesToInstall')}
-            missingModules="\${missingModules%,}]" # remove trailing comma and close array
         fi
 
         resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$missingModules" | jq '.')" '.missingModules = $res')
