@@ -139,7 +139,7 @@ export const formatManagedRows = (
     const ssmState = getSsmState(managedRow);
     const allocatedCapacity = getAllocatedCapacity(managedRow);
 
-    const result = {
+    let result: any = {
         hostType: managedRow?.hostType,
         id: managedRow?.id,
         ec2InstanceId: managedRow?.nodeTopology?.ec2Details?.[0]?.id,
@@ -182,6 +182,13 @@ export const formatManagedRows = (
         accountId: credentialMapping?.[keys?.[1]]?.providerAccountId,
         regionName: regionMapping?.[keys?.[2]]?.regionName
     };
+
+    if (managedRow?.hostType === DBType.ORACLE) {
+        result = {
+            ...result,
+            isInstanceStorageAsmManaged: oracleSpecificProperties(managedRow)
+        };
+    }
     return result;
 };
 
@@ -209,6 +216,19 @@ export const getInstanceStatusForMixedCase = (managedHostRow: any, engineType: s
     return [];
 };
 
+const getMappedDiscoveredData = (managedHostRow: any) => {
+    const state = store.getState();
+    const discoveredHostData = state?.inventoryV2?.discoveredOracleHosts?.discoveredOracleHostData;
+    const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id || managedHostRow?.ec2InstanceId;
+
+    if (ec2Id && discoveredHostData) {
+        const selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
+        if (selectedEc2 && selectedEc2?.length > 0) {
+            return selectedEc2[0];
+        }
+    }
+};
+
 export const getPlatformForManagedHost = (managedHostRow: any, engineType: string | undefined) => {
     // try to get platform from nodeTopology
     if (managedHostRow?.nodeTopology?.platform) {
@@ -217,20 +237,13 @@ export const getPlatformForManagedHost = (managedHostRow: any, engineType: strin
 
     // try to get platform from discovered data
     if (engineType === DBType.ORACLE) {
-        const state = store.getState();
-        const discoveredHostData = state?.inventoryV2?.discoveredOracleHosts?.discoveredOracleHostData;
-        const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id || managedHostRow?.ec2InstanceId;
-
-        if (ec2Id && discoveredHostData) {
-            const selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
-            if (selectedEc2 && selectedEc2?.length > 0 && selectedEc2[0]?.platform) {
-                return selectedEc2[0].platform;
-            }
-        }
+        return getMappedDiscoveredData(managedHostRow)?.platform;
     }
 
     return undefined;
 };
+
+const oracleSpecificProperties = (managedHostRow: any) => getMappedDiscoveredData(managedHostRow)?.databaseInstanceDetails?.[0]?.isInstanceStorageAsmManaged;
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
     if (row?.databaseHostStatus && row?.databaseHostStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
@@ -442,7 +455,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 authFields = {
                     oracleServerAuthentication: oracleAuth,
                     isDefaultAuthentication: defaultAuth,
-                    isAsmManaged: statusObj?.[0]?.isAsmManaged,
+                    isInstanceStorageAsmManaged: statusObj?.[0]?.isInstanceStorageAsmManaged,
                     asmAuthentication: statusObj?.[0]?.asmAuthentication
                 };
 
@@ -502,7 +515,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 authFields = {
                     oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
                     isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication,
-                    isAsmManaged: statusObj?.[0]?.isAsmManaged,
+                    isInstanceStorageAsmManaged: statusObj?.[0]?.isInstanceStorageAsmManaged,
                     asmAuthentication: statusObj?.[0]?.asmAuthentication
                 };
                 // Check for the item with type CDB/Single tenant (mostly it is 1st item but can be in the middle also)
@@ -1444,7 +1457,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
             if (perRow?.instanceName) {
                 const isDefaultAuthentication = perRow?.isDefaultAuthentication;
                 const oracleServerAuthentication = perRow?.oracleServerAuthentication;
-                const isAsmManaged = perRow?.isAsmManaged;
+                const isInstanceStorageAsmManaged = perRow?.isInstanceStorageAsmManaged;
                 const asmAuthentication = perRow?.asmAuthentication;
                 let fsxCredentialValidationFailed;
                 let storageTypeCheck;
@@ -1486,7 +1499,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         isFsxRegistered: !fsxCredentialValidationFailed,
                         isDefaultAuthentication,
                         oracleServerAuthentication,
-                        isAsmManaged,
+                        isInstanceStorageAsmManaged,
                         asmAuthentication
                     };
                 } else {
@@ -1498,7 +1511,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         isFsxRegistered: !fsxCredentialValidationFailed,
                         isDefaultAuthentication,
                         oracleServerAuthentication,
-                        isAsmManaged,
+                        isInstanceStorageAsmManaged,
                         asmAuthentication
                     };
                 }
@@ -1805,7 +1818,7 @@ export const formatOracleDiscoverInstanceData = (
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
             oracleServerAuthentication: perRow?.oracleServerAuthentication,
             isDefaultAuthentication: perRow?.isDefaultAuthentication,
-            isAsmManaged: perRow?.isAsmManaged,
+            isInstanceStorageAsmManaged: perRow?.isInstanceStorageAsmManaged,
             asmAuthentication: perRow?.asmAuthentication,
             defaultAuth: perRow?.defaultAuth,
             detectOption: statusObj?.[0]?.detectOption,
@@ -2551,7 +2564,8 @@ export const updateSqlServerInstancesForUnmanaged = (
                     authFields = {
                         oracleServerAuthentication: oracleAuth,
                         isDefaultAuthentication: defaultAuth,
-                        isAsmManaged: instRow?.isAsmManaged ?? statusObj?.[0]?.isAsmManaged,
+                        isInstanceStorageAsmManaged:
+                            instRow?.isInstanceStorageAsmManaged ?? statusObj?.[0]?.isInstanceStorageAsmManaged,
                         asmAuthentication: instRow?.asmAuthentication ?? statusObj?.[0]?.asmAuthentication
                     };
                 } else {
@@ -2624,7 +2638,8 @@ export const updateSqlServerInstancesForUnmanaged = (
                         authFields = {
                             oracleServerAuthentication: oracleAuth,
                             isDefaultAuthentication: defaultAuth,
-                            isAsmManaged: statusObj?.[0]?.isAsmManaged ?? instRow?.isAsmManaged,
+                            isInstanceStorageAsmManaged:
+                                statusObj?.[0]?.isInstanceStorageAsmManaged ?? instRow?.isInstanceStorageAsmManaged,
                             asmAuthentication: statusObj?.[0]?.asmAuthentication ?? instRow?.asmAuthentication
                         };
 

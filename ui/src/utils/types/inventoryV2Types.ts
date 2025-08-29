@@ -149,6 +149,7 @@ export interface InventoryTableData {
     statusColText?: string;
     platform?: string;
     protocol?: string;
+    isInstanceStorageAsmManaged?: boolean;
 }
 
 export interface InventoryTableInstanceDatInterface {
@@ -208,7 +209,7 @@ export interface InventoryTableInstanceDatInterface {
     isFsxRegistered?: boolean;
     isDefaultAuthentication?: boolean;
     oracleServerAuthentication?: boolean;
-    isAsmManaged?: boolean;
+    isInstanceStorageAsmManaged?: boolean;
     asmAuthentication?: boolean;
     windowsAuthentication?: boolean;
     sqlServerAuthentication?: boolean;
@@ -537,7 +538,7 @@ export interface OracleInstancesDiscovered {
     version?: string;
     isDefaultAuthentication?: boolean;
     oracleServerAuthentication?: boolean;
-    isAsmManaged?: boolean;
+    isInstanceStorageAsmManaged?: boolean;
     asmAuthentication?: boolean;
     instanceType?: string;
     databaseCount?: number;

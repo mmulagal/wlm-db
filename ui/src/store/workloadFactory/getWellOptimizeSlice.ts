@@ -52,9 +52,10 @@ const initialState: GetWellSliceInterface = {
     inProgressStateData: {},
     selectedWellArchitectTab: WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS,
     visitedTabs: {},
-    resetDetails: {
+    innerPageDetails: {
         fsxId: '',
-        ec2InstanceId: ''
+        ec2InstanceId: '',
+        isInstanceStorageAsmManaged: false
     }
 };
 
@@ -63,7 +64,7 @@ const getWellOptimizeSlice = createSlice({
     initialState,
     reducers: {
         setFSXId: (state, action: PayloadAction<any>) => {
-            state.resetDetails = action.payload;
+            state.innerPageDetails = action.payload;
         },
 
         setTabVisited: (state, action: PayloadAction<any>) => {

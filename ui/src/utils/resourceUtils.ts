@@ -141,13 +141,13 @@ export const createOraclePayLoad = (value: string, selectedDatabaseInstanceName:
     return { credentials: credList };
 };
 
-export const createPayload = (resourceDetails: any, resetDetails: any) => {
+export const createPayload = (resourceDetails: any, innerPageDetails: any) => {
     const state = store.getState();
     const { fsxAdminPasswords } = state.workloadFactoryResource;
     const { password } = fsxAdminPasswords;
     const credList = [];
     credList.push({
-        resourceId: resourceDetails?.topology?.fileSystemId || resetDetails?.fsxId,
+        resourceId: resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
         resourceType: DETECT_HOST_VAR.FSX,
         username: 'fsxadmin',
         password
@@ -160,7 +160,7 @@ export const handleFSXAdminApply = async (
     value: string,
     selectedDatabaseInstanceName: string,
     resourceDetails: any,
-    resetDetails: any,
+    innerPageDetails: any,
     selectedResourceCredId: string,
     selectedResourceRegionId: string,
     registerResourceCredBulk: any,
@@ -174,7 +174,7 @@ export const handleFSXAdminApply = async (
                 ? createOraclePayLoad(RESET_PASSWORD_TYPE.ORACLESERVER, selectedDatabaseInstanceName)
                 : createOraclePayLoad(RESET_PASSWORD_TYPE.ORACLEASM, selectedDatabaseInstanceName);
         if (value === RESET_PASSWORD_TYPE.FSXADMIN) {
-            credList = createPayload(resourceDetails, resetDetails);
+            credList = createPayload(resourceDetails, innerPageDetails);
         }
         const getPasswordTypeLabel = (type: string) => {
             if (type === RESET_PASSWORD_TYPE.FSXADMIN) return 'fsxadmin';
@@ -185,7 +185,7 @@ export const handleFSXAdminApply = async (
             items: [
                 {
                     ...credList,
-                    ec2InstanceId: resourceDetails?.nodeTopology?.ec2Details[0]?.id || resetDetails.ec2InstanceId,
+                    ec2InstanceId: resourceDetails?.nodeTopology?.ec2Details[0]?.id || innerPageDetails.ec2InstanceId,
                     region: selectedResourceRegionId,
                     credentialsId: selectedResourceCredId
                 }

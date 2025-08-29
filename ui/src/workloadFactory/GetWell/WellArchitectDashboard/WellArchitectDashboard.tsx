@@ -66,7 +66,7 @@ const WellArchitectDashboard = () => {
         selectedWellArchitectTab,
         visitedTabs,
         gwRefreshTimestamp,
-        resetDetails
+        innerPageDetails
     } = useAppSelector(state => state.getWellOptimize);
 
     const { refreshTime } = useAppSelector(state => state.headers);
@@ -149,7 +149,7 @@ const WellArchitectDashboard = () => {
         const { password } = fsxAdminPasswords;
         const credList = [];
         credList.push({
-            resourceId: fsxId || resourceDetails?.topology?.fileSystemId || resetDetails?.fsxId,
+            resourceId: fsxId || resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
             resourceType: DETECT_HOST_VAR.FSX,
             username: 'fsxadmin',
             password
@@ -191,7 +191,7 @@ const WellArchitectDashboard = () => {
                         ec2InstanceId:
                             ec2InstanceId ||
                             resourceDetails?.nodeTopology?.ec2Details[0]?.id ||
-                            resetDetails?.ec2InstanceId,
+                            innerPageDetails?.ec2InstanceId,
                         region: selectedResourceRegionId,
                         credentialsId: selectedResourceCredId
                     }

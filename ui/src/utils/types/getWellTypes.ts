@@ -1,6 +1,7 @@
-export interface ResetDetailsInterface {
+export interface InnerPageDetailsInterface {
     fsxId: string;
     ec2InstanceId: string;
+    isInstanceStorageAsmManaged?: boolean;
 }
 
 interface CountBreakDown {
@@ -199,7 +200,7 @@ export interface GwSqlServerInstanceInterface {
 }
 
 export interface GetWellSliceInterface {
-    resetDetails: ResetDetailsInterface;
+    innerPageDetails: InnerPageDetailsInterface;
     visitedTabs: any;
     selectedWellArchitectTab: string;
     selectedCloneTab: string;

@@ -228,7 +228,13 @@ export const handleInstanceMenuSelection = ({
                     dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
                     dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
                     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-                    dispatch(setFSXId({ fsxId: rowData?.fsxId, ec2InstanceId: rowData?.ec2InstanceId }));
+                    dispatch(
+                        setFSXId({
+                            fsxId: rowData?.fsxId,
+                            ec2InstanceId: rowData?.ec2InstanceId,
+                            isInstanceStorageAsmManaged: rowData?.hostRow?.isInstanceStorageAsmManaged
+                        })
+                    );
                     optimizeAction(rowData);
                     break;
                 case 'unManage':
@@ -238,7 +244,13 @@ export const handleInstanceMenuSelection = ({
                     dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
                     dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.OVERVIEW));
                     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-                    dispatch(setFSXId({ fsxId: rowData?.fsxId, ec2InstanceId: rowData?.ec2InstanceId }));
+                    dispatch(
+                        setFSXId({
+                            fsxId: rowData?.fsxId,
+                            ec2InstanceId: rowData?.ec2InstanceId,
+                            isInstanceStorageAsmManaged: rowData?.hostRow?.isInstanceStorageAsmManaged
+                        })
+                    );
                     optimizeAction(rowData);
                     break;
                 default:

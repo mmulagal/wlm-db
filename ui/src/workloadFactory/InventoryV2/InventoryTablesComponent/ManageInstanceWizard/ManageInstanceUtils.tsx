@@ -1028,12 +1028,12 @@ export const isAlreadyDetectedCheck = (data: any) => {
 
     if (data.hostType === DBType.ORACLE) {
         // Check if ASM authentication is required but not provided
-        const isAsmAuthRequired = data.isAsmManaged === true && data.asmAuthentication === false;
+        const isAsmAuthRequired = data.isInstanceStorageAsmManaged === true && data.asmAuthentication === false;
 
         if (data.isDefaultAuthentication === true) {
             // If default authentication is true, only check FSx registration and ASM auth
             const fsxCheck = !data.fsxId || (data.fsxId && data.isFsxRegistered);
-            // used !isAsmAuthRequired as if isAsmManaged is false we do not need to check asmAuthentication
+            // used !isAsmAuthRequired as if isInstanceStorageAsmManaged is false we do not need to check asmAuthentication
             return fsxCheck && !isAsmAuthRequired;
         }
         if (data.isDefaultAuthentication === false) {

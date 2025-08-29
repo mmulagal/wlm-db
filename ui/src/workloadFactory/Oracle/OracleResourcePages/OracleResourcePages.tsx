@@ -38,7 +38,7 @@ const OracleResourcePages = () => {
     const { selectedOracleInnerPageTab, visitedTabs, resourceDetails, refreshTimes } = useAppSelector(
         state => state.oracleSlice
     );
-    const { selectedHostname, selectedDatabaseInstanceName, resetDetails } = useAppSelector(
+    const { selectedHostname, selectedDatabaseInstanceName, innerPageDetails } = useAppSelector(
         state => state.getWellOptimize
     );
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
@@ -77,7 +77,7 @@ const OracleResourcePages = () => {
                         type,
                         selectedDatabaseInstanceName,
                         resourceDetails,
-                        resetDetails,
+                        innerPageDetails,
                         selectedResourceCredId,
                         selectedResourceRegionId,
                         registerResourceCredBulk,
@@ -181,14 +181,18 @@ const OracleResourcePages = () => {
                                         handleUpdatePassword(RESET_PASSWORD_TYPE.FSXADMIN);
                                     }
                                 },
-                                {
-                                    id: 'updateOracleASMPassword',
-                                    children: GENERAL.UPDATE_ORACLE_ASM_PASSWORD,
+                                ...(innerPageDetails.isInstanceStorageAsmManaged
+                                    ? [
+                                          {
+                                              id: 'updateOracleASMPassword',
+                                              children: GENERAL.UPDATE_ORACLE_ASM_PASSWORD,
 
-                                    onClick: () => {
-                                        handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLEASM);
-                                    }
-                                }
+                                              onClick: () => {
+                                                  handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLEASM);
+                                              }
+                                          }
+                                      ]
+                                    : [])
                             ]}
                         >
                             <MenuIcon />

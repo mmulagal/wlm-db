@@ -45,18 +45,25 @@ export const resourceScreenNavigation = (rowData: any, dispatch: any, engineType
     if (engineType === DBType.ORACLE) {
         dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
         dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+        dispatch(
+            setFSXId({
+                fsxId: rowData?.fsxId,
+                ec2InstanceId: rowData?.ec2InstanceId,
+                isInstanceStorageAsmManaged: rowData?.hostRow?.isInstanceStorageAsmManaged
+            })
+        );
     } else if (engineType === DBType.MSSQL) {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
         dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+        dispatch(
+            setFSXId({
+                fsxId: rowData?.fsxId,
+                ec2InstanceId: rowData?.ec2InstanceId
+            })
+        );
     }
     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-    dispatch(
-        setFSXId({
-            fsxId: rowData?.fsxId,
-            ec2InstanceId: rowData?.ec2InstanceId
-        })
-    );
     optimizeAction(rowData, dispatch);
 };
 
