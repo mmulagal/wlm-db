@@ -298,30 +298,31 @@ export const handleTriggerAssessment = ({
                         );
                         refreshGetWellPage();
                         clearInterval(jobInterval);
-                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                    } else if (status === JOB_MONITORING_STATUS.FAILED || status === JOB_MONITORING_STATUS.WARNING) {
                         setTriggerAssessmentInProgress(false);
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                message: t('databases.well-architect.assessment-failed')
-                            })
-                        );
-                        refreshGetWellPage();
-                        dispatch(setGwAdhocError(jobRes?.data?.error));
-                        clearInterval(jobInterval);
-                    } else if (status === JOB_MONITORING_STATUS.WARNING) {
-                        setTriggerAssessmentInProgress(false);
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.WARNING,
-                                message: t('databases.well-architect.assessment-completed-with-warnings')
-                            })
-                        );
+                        if (status === JOB_MONITORING_STATUS.FAILED) {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: t('databases.well-architect.assessment-failed')
+                                })
+                            );
+                        } else {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.WARNING,
+                                    message: t('databases.well-architect.assessment-completed-with-warnings')
+                                })
+                            );
+                        }
+
                         refreshGetWellPage();
                         jobRes?.data?.subJobs?.forEach((job: { error?: string }) => {
                             const errorMessage = job?.error;
                             if (errorMessage) {
                                 dispatch(setGwAdhocError(errorMessage));
+                            } else {
+                                dispatch(setGwAdhocError(jobRes?.data?.error));
                             }
                         });
                         clearInterval(jobInterval);
