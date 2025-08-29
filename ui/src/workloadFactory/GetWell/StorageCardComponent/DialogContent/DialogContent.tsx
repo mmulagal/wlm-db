@@ -403,12 +403,10 @@ const DialogContent = ({
                 ) : (
                     createStandardDialog(
                         t,
-                        'Workload Factory recommends increasing the FSx for ONTAP file system capacity to maintain the right headroom.',
-                        createBulletRow(
-                            `Storage capacity update: The capacity of your FSx for ONTAP file system will be increased${
-                                recommendedSizeInGib ? ` to ${recommendedSizeInGib} GiB.` : '.'
-                            }`
-                        ),
+                        t('databases.well-architect.file-system-headroom-with-permission'),
+                        `${t('databases.well-architect.file-system-headroom-with-permission-content')}${
+                            recommendedSizeInGib ? ` to ${recommendedSizeInGib} GiB.` : '.'
+                        }`,
                         createStandardNotesSection()
                     )
                 );

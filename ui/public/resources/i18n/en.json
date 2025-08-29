@@ -260,6 +260,8 @@
             "file-system-headroom-option2-content3": "Choose File systems.",
             "file-system-headroom-option2-content4": "Select the FSx for ONTAP file system that you want to update SSD storage capacity.",
             "file-system-headroom-option2-content5": "Update storage capacity to the desired capacity.",
+            "file-system-headroom-with-permission": "Workload Factory recommends increasing the FSx for ONTAP file system capacity to maintain the right headroom.",
+            "file-system-headroom-with-permission-content": "Storage capacity update: The capacity of your FSx for ONTAP file system will be increased",
             "failover-cluster-action-summary": "Workload Factory recommends updating the failover cluster instance (FCI) configuration of Microsoft SQL Server to ensure high availability and reduce downtime.",
             "shared-storage-action-summary": "All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.",
             "shared-storage-what-will-happen": "The iSCSI LUN will be mounted to both nodes.",
