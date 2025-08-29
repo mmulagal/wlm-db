@@ -179,7 +179,7 @@ export const bxpRedirect = async (
 ) => {
     const stageURL = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
     const prodURL = 'https://console.bluexp.netapp.com/unified-backup-restore';
-    const { selectedAgent } = store.getState().snapCenter;
+    const { selectedAgent, alreadyExistAgentId, workSpaceData } = store.getState().snapCenter;
 
     let baseUrl = '';
     if (import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION) {
@@ -210,8 +210,8 @@ export const bxpRedirect = async (
             const hostName = rowData?.name; // "dec04std2"
             const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
             const accountID = rowData?.accountId || rowData?.account_id;
-            const agentID = selectedAgent?.[0]?.id;
-            const workspaceID = rowData?.workspaceId || rowData?.workspace_id;
+            const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
+            const workspaceID = rowData?.workspaceId || rowData?.workspace_id || workSpaceData?.id;
 
             if (!instanceName || !hostName || !fqdn || !accountID || !agentID || !workspaceID) {
                 return;
@@ -295,8 +295,8 @@ export const bxpRedirect = async (
             const hostName = rowData?.hostName; // "dec04std2"
             const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
             const accountID = rowData?.accountId || rowData?.account_id;
-            const agentID = selectedAgent?.[0]?.id;
-            const workspaceID = rowData?.workspaceId || rowData?.workspace_id;
+            const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
+            const workspaceID = rowData?.workspaceId || rowData?.workspace_id || workSpaceData?.id;
 
             if (!databaseName || !instanceName || !hostName || !fqdn || !accountID || !agentID || !workspaceID) {
                 return;

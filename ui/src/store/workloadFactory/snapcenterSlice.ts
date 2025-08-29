@@ -19,13 +19,17 @@ export const initialSandboxState: SnapCenterEntities = {
         username: '',
         password: ''
     },
-    authVerification: false
+    authVerification: false,
+    alreadyExistAgentId: ''
 };
 
 const snapCenterSlice = createSlice({
     name: 'snapCenter',
     initialState: initialSandboxState,
     reducers: {
+        setAlreadyExistAgentId: (state, action: PayloadAction<any>) => {
+            state.alreadyExistAgentId = action.payload;
+        },
         setAuthVerification: (state, action: PayloadAction<any>) => {
             state.authVerification = action.payload;
         },
@@ -94,6 +98,7 @@ const snapCenterSlice = createSlice({
 });
 
 export const {
+    setAlreadyExistAgentId,
     setAuthVerification,
     setWorkSpaceData,
     setSelectedAgent,

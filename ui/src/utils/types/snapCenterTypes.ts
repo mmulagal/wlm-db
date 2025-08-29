@@ -6,6 +6,7 @@ export interface UserCredentials {
 }
 
 export interface SnapCenterEntities {
+    alreadyExistAgentId: string;
     selectedAgent: any;
     dataMap: any;
     workSpaceData: any;

@@ -1,7 +1,7 @@
 import { updateOrgId } from '../../store/authSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setDataForRow, setWorkSpaceData } from '../../store/workloadFactory/snapcenterSlice';
+import { setAlreadyExistAgentId, setDataForRow, setWorkSpaceData } from '../../store/workloadFactory/snapcenterSlice';
 import { PRODUCTION, RBAC_PROD_ROLE_ID, RBAC_STAGE_ROLE_ID } from '../../utils/consts';
 
 export const isCancelled = (key: any) => store.getState().snapCenter.dataMap[key]?.cancelled;
@@ -148,6 +148,7 @@ export const handleProtectionUtil = async (
             });
 
             if (foundHost && foundHost?.overallStatus !== 'NoPlugins' && foundHost?.overallStatus !== 'Stopped') {
+                dispatch(setAlreadyExistAgentId(foundHost?.connectorId));
                 hostExists = true;
             }
         }
