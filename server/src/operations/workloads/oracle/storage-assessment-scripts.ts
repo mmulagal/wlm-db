@@ -83,7 +83,7 @@ if [ -z "\${mappedOntapVolumeUuids[*]}" ]; then
     exit 1
 fi
 
-volumeEndpoint="storage/volumes?uuid=$(IFS='|'; echo "\${mappedOntapVolumeUuids[*]}")&fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee,efficiency"
+volumeEndpoint="storage/volumes?uuid=$(IFS='|'; echo "\${mappedOntapVolumeUuids[*]}")&fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,space.snapshot.autodelete.delete_order,snapshot_policy,tiering,guarantee,efficiency"
 response=$(ontap_request 'GET' $volumeEndpoint)
 
 volumePrivateCliEndpoint="private/cli/volume?volume=$(IFS='|'; echo "\${mappedOntapVolumeNames[*]}")&fields=space-mgmt-try-first"
@@ -147,7 +147,8 @@ volumesData=$(echo "$response" | jq '[.records[] | {
     compressionType: .efficiency.compression_type,
     compaction: .efficiency.compaction,
     deduplication: .efficiency.dedupe,
-    efficiencyType: .efficiency.storage_efficiency_mode
+    efficiencyType: .efficiency.storage_efficiency_mode,
+    snapshotDeleteOrder: .space.snapshot.autodelete.delete_order
 }]')
 
 # Add spaceMgmtTryFirst field to volumesData with error handling

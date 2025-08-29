@@ -208,6 +208,13 @@ function getVolumeConfigDrift(
                     break;
                 }
 
+                case 'snapshotAutodelete':
+                    // Determine snapshot autodelete status and order
+                    recommended = value === 'true' ? 'oldest_first' : 'enabled';
+                    value = value === 'true' ? (volume.snapshotDeleteOrder ?? '').toString() : 'disabled';
+                    isViolated = value !== recommended;
+                    break;
+
                 default:
                     isViolated = value !== recommended;
                     break;
