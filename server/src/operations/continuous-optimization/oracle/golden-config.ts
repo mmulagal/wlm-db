@@ -126,7 +126,7 @@ const GOLDEN_CONFIG = {
                 value: '',
                 severity: SEVERITY.CRITICAL,
                 recommendation:
-                    'Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Tailored settings for each volume type—data, redo log, and archive (FRA)—ensure efficient resource utilization. Data Volumes (tiering-minimum-cooling-days=2) Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups)).',
+                    'Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups)).',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,

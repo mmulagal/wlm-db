@@ -133,6 +133,7 @@ function getVolumeConfigDrift(
     return volumeConfigData.map(config => {
         const objectsInViolation: GenericViolationResponseType[] = [];
         const objectsInViolationNames: string[] = [];
+        let totalObjectsAssessed = volumesData.length;
         volumesData.forEach(volume => {
             let value = (volume[config.parameter] ?? '').toString();
             const objectName = volume.name || '';
@@ -153,7 +154,8 @@ function getVolumeConfigDrift(
                     break;
 
                 case 'tieringMinCoolingDays':
-                    if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
+                    totalObjectsAssessed = archiveLogVolumeNames.length;
+                    if (isIn(redoLogsTempLogsVolumeNames, objectName) || isIn(controlDataFileVolumeNames, objectName)) {
                         return;
                     }
                     recommended =
@@ -237,7 +239,7 @@ function getVolumeConfigDrift(
             recommended: config.value.toString(),
             status: objectsInViolation.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
             objectsInViolation: [...new Set(objectsInViolationNames)],
-            totalObjectsAssessed: volumesData.length,
+            totalObjectsAssessed,
             totalObjectsInViolation: objectsInViolation.length,
             resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             violationDetails: objectsInViolation
