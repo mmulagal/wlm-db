@@ -90,6 +90,7 @@ import {
     checkAndInstallRequiredOracleDependentModules,
     checkIfValidLinuxUser,
     checkRequiredOracleUserPermissions,
+    initializeResultObject,
     installPythonOnLinuxHost,
     validateOracleInstanceConnectivity,
     validateOracleInstanceFsxConnectivity
@@ -1899,7 +1900,7 @@ async function registerResourceCredentials(
     await Promise.all(
         credentialsTobeValidated.map(
             throat(3, async resource => {
-                const { credentialsId, region, ec2InstanceId, credentials } = resource;
+                const { credentialsId, region, ec2InstanceId, credentials, checkManageReadiness } = resource;
                 const registerResponse = await validateAndStoreDiscoveredParameters(
                     accountId,
                     credentialsId,
@@ -1907,7 +1908,7 @@ async function registerResourceCredentials(
                     ec2InstanceId,
                     credentials,
                     undefined,
-                    true
+                    checkManageReadiness
                 );
 
                 response.items.push({
@@ -2075,6 +2076,9 @@ async function rewriteOrDeleteSSMParameter(
             !isEmpty(windowsUserCredentials) &&
             windowsUserCredentials.length === instancesToBeDeleted.length) ||
         (isEmpty(allOracleAsmCredentials) &&
+            !isEmpty(sqlCredentials) &&
+            sqlCredentials.length === instancesToBeDeleted.length) ||
+        (isEmpty(allDatabaseCredentials) &&
             !isEmpty(oracleAsmCredentials) &&
             oracleAsmCredentials.length === instancesToBeDeleted.length)
     ) {
@@ -2175,7 +2179,7 @@ function filterAndMapCredentials(
             creds =>
                 !(
                     instancesToBeDeleted.includes(creds.resourceId) ||
-                    instancesToBeDeleted.find(r => r.includes(creds.resourceId))
+                    instancesToBeDeleted.find(r => r.includes('fs') && r.includes(creds.resourceId))
                 )
         )
         .map(creds => ({ ...creds, resourceId: creds.resourceId.replace(TEMP, '') }));
@@ -2542,6 +2546,7 @@ async function validateOracleCredentials(
     const makeSignedUrl = await getPreSignedUrl(region, bucketname, MAKE_LINUX_RELATIVE_PATH);
     const signedUrls = [awsCliSignedUrl, jqSignedUrl, makeSignedUrl];
 
+    command += `${initializeResultObject}\n`;
     if (checkManageReadiness) {
         command += `${checkAndInstallRequiredOracleDependentModules(signedUrls)}\n`;
 
@@ -2552,6 +2557,8 @@ async function validateOracleCredentials(
                 ''
             );
         }
+    } else {
+        command += 'isAwsCliInstalled=true\nisJqInstalled=true\n';
     }
 
     if (fsxCredentials) {
@@ -2692,8 +2699,12 @@ async function validateOracleCredentials(
     }
 
     if (oracleAsmCredentials?.length) {
-        const { error, valid } = parsedResponse;
+        const { asmResult: { error, valid } = {} } = parsedResponse;
         const oracleAsmError = error || !valid ? 'Invalid credentials provided' : undefined;
+        if (valid === false) {
+            instancesToBeDeleted.push(...oracleAsmCredentials.map(({ resourceId }) => `${resourceId}${TEMP}`));
+        }
+
         response.push({
             resourceId: instanceId,
             resourceType: RESOURCESTYPE.ORACLE_ASM,
@@ -2833,7 +2844,7 @@ function checkAndAddExistingSSMParameter(
     // Check if the object already exists in databaseCredentials
     const isDuplicate = allCreds.some(
         cred =>
-            cred.resourceId?.replace(TEMP, '') === instanceName?.replace(TEMP, '') &&
+            cred.resourceId === instanceName &&
             cred.username === currentCred.username &&
             cred.password === currentCred.password
     );

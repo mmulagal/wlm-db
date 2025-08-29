@@ -449,7 +449,7 @@ EOF
 const initializeResultObject = `
     # Initialize result object if not already initialized
     if [ -z "$resultObject" ]; then
-        resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [], "missingOracleUserPermissions": [], "missingModules": [] }'
+        resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [], "missingOracleUserPermissions": [], "missingModules": [], "asmResult": "" }'
     fi
 `;
 
@@ -458,7 +458,6 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
     oracleSid="${dbSid}"
     oracleSid_temp="${dbSid}_temp"
 
-    ${initializeResultObject}
     ${oracleUserAuthLoginCommand}
     if [ "$isAwsCliInstalled" == "true" ] && [ "$isJqInstalled" == "true" ]; then
         result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
@@ -503,7 +502,7 @@ EOF
         fi
         
         if [ "$isInstanceConnectivityPossible" == "false" ]; then
-            result="{\\"oracleInstanceConnectivity\\": false, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\", \\"oracleError\\": \\"$oracleError\\"}"
+            result="{\\"oracleInstanceConnectivity\\": false, \\"oracleInstanceName\\": \\"$oracleSid_temp\\", \\"oracleEdition\\": \\"$dbVersion\\", \\"oracleError\\": \\"$oracleError\\"}"
         else
             result="{\\"oracleInstanceConnectivity\\": true, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\", \\"oracleError\\": \\"$oracleError\\"}"
         fi
@@ -702,9 +701,6 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
 `;
 
 const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => `
-
-        ${initializeResultObject}
-
         ${checkOracleModuleAvailability}
     
         modulesAvailability=$(check_oracle_module_availability)
@@ -865,10 +861,10 @@ const checkIfValidLinuxUser = (ec2InstanceId: string) => `
     instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
     asmCredList=$(echo "$instanceCreds" | jq -c '.asm')
 
-    result=""
+    asmresult="{\\"valid\\": false}"
     if [ -z "$asmCredList" ] || [ "$asmCredList" == "null" ]; then
-        result="{ \\"valid\\": false, \\"error\\": \\"No ASM credentials found.\\" }"
-        echo $result
+        asmresult="{ \\"valid\\": false, \\"error\\": \\"No ASM credentials found.\\" }"
+        echo $asmresult
         exit 1
     fi
 
@@ -876,22 +872,58 @@ const checkIfValidLinuxUser = (ec2InstanceId: string) => `
     for i in $(seq 0 $((count - 1))); do
         USERNAME=$(echo "$asmCredList" | jq -r ".[$i].username")
         PASSWORD=$(echo "$asmCredList" | jq -r ".[$i].password")
+        INSTANCENAME=$(echo "$asmCredList" | jq -r ".[$i].oracleinstancename")
 
+        if [[ "$INSTANCENAME" != *temp* ]]; then
+            continue
+        fi
         if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
-            result="{\\"username\\": \\"$USERNAME\\", \\"valid\\": false, \\"error\\": \\"Missing username or password\\"}"
+            asmresult="{\\"valid\\": false, \\"error\\": \\"Missing username or password\\"}"
         else
-            echo "$PASSWORD" | su - "$USERNAME" -c "exit" >/dev/null 2>&1
-            if [ $? -eq 0 ]; then
-                result="{\\"username\\": \\"$USERNAME\\", \\"valid\\": true}"
-                break
+            if command -v python3 >/dev/null 2>&1; then
+                py_output=$(python3 -c "$(cat <<EOF
+import warnings
+warnings.filterwarnings('ignore', category=DeprecationWarning)
+
+import spwd
+import crypt
+import sys
+
+def check_password(username, password):
+    try:
+        shadow_entry = spwd.getspnam(username)
+    except KeyError:
+        print('{\\"valid\\": false, \\"error\\": \\"User not found.\\"}')
+        return
+
+    hashed_password = shadow_entry.sp_pwdp
+    if hashed_password in ['*', '!', 'x']:
+        print('{\\"valid\\": false, \\"error\\": \\"Account is locked or no password set.\\"}')
+        return
+
+    if crypt.crypt(password, hashed_password) == hashed_password:
+        print('{\\"valid\\": true}')
+    else:
+        print('{\\"valid\\": false, \\"error\\": \\"Invalid password.\\"}')
+
+if __name__ == '__main__':
+    check_password(sys.argv[1], sys.argv[2])
+EOF
+)" "$USERNAME" "$PASSWORD")
+                asmresult=$py_output
             else
-                result="{\\"username\\": \\"$USERNAME\\", \\"valid\\": false, \\"error\\": \\"Invalid credentials\\"}"
+                # Python3 is not available, assuming the credentials are valid
+                asmresult="{\\"valid\\": true}"
             fi
         fi
-    done
 
-    echo $result
-    exit 0
+        # Check if valid is true, break the flow
+        is_valid=$(echo "$asmresult" | jq -r '.valid')
+        if [ "$is_valid" == "true" ]; then
+            break
+        fi
+    done
+    resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$asmresult" | jq '.')" '.asmResult = $res')
 `;
 
 // Oracle User Permissions Detection Module
@@ -1109,5 +1141,6 @@ export {
     GET_ORACLE_SERVER_DETAILS,
     oracleUserAuthLoginCommand,
     loadOracleUserPermissionsDetectionModule,
-    installPythonOnLinuxHost
+    installPythonOnLinuxHost,
+    initializeResultObject
 };
