@@ -449,17 +449,17 @@ async function initiateStorageAssessmentCollection(
             parentJobId,
             error: errorMessage
         });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage layout assessment',
-            description: 'Storage layout assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: jobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId,
-            error: errorMessage
-        });
+        // await registerJob(accountId, credentialsId, region, {
+        //     name: 'Storage layout assessment',
+        //     description: 'Storage layout assessment',
+        //     resourceName: resourceWithInstanceName,
+        //     startTime: Date.now(),
+        //     endTime: Date.now(),
+        //     status: jobStatus,
+        //     type: JOBTYPE.ASSESSMENT,
+        //     parentJobId,
+        //     error: errorMessage
+        // });
         return;
     }
     try {
@@ -505,16 +505,16 @@ async function initiateStorageAssessmentCollection(
             type: JOBTYPE.ASSESSMENT,
             parentJobId
         });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage layout assessment',
-            description: 'Storage layout assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: jobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId
-        });
+        // await registerJob(accountId, credentialsId, region, {
+        //     name: 'Storage layout assessment',
+        //     description: 'Storage layout assessment',
+        //     resourceName: resourceWithInstanceName,
+        //     startTime: Date.now(),
+        //     endTime: Date.now(),
+        //     status: jobStatus,
+        //     type: JOBTYPE.ASSESSMENT,
+        //     parentJobId
+        // });
     } catch (error) {
         logger.error('Error while initiating storage assessment collection', {
             accountId,
