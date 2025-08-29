@@ -2712,7 +2712,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 spaceGuarantee: 'none',
                 compressionType: 'adaptive',
                 fractionalReserve: 100,
-                snapshotAutodelete: false,
+                snapshotAutodelete: true,
+                snapshotDeleteOrder: 'newest_first',
                 snapshotCopyReserve: 5,
                 tieringMinCoolingDays: 4,
                 spaceMgmtTryFirst: 'volume_grow'
@@ -2733,7 +2734,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 spaceGuarantee: 'none',
                 compressionType: 'adaptive',
                 fractionalReserve: 100,
-                snapshotAutodelete: false,
+                snapshotAutodelete: true,
+                snapshotDeleteOrder: 'newest_first',
                 snapshotCopyReserve: 5,
                 tieringMinCoolingDays: 4,
                 spaceMgmtTryFirst: 'volume_grow'
@@ -2754,7 +2756,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 spaceGuarantee: 'none',
                 compressionType: 'adaptive',
                 fractionalReserve: 100,
-                snapshotAutodelete: false,
+                snapshotAutodelete: true,
+                snapshotDeleteOrder: 'newest_first',
                 snapshotCopyReserve: 5,
                 tieringMinCoolingDays: 4,
                 spaceMgmtTryFirst: 'volume_grow'
