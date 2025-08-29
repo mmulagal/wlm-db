@@ -78,7 +78,7 @@ export const PermissionListComponentItems = (
         },
         {
             label: t('databases.register-flow.dependent-modules'),
-            values: ['AWS-CLI', 'JQ'],
+            values: ['AWS-CLI', 'JQ', 'PYTHON'],
             showCopy: false
         },
         {

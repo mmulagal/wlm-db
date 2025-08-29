@@ -22,17 +22,18 @@ import {
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
+import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 
 export const instanceNameHyperLink = (rowData: any, name: string, dispatch: any) => {
     if (
         name &&
-        rowData?.hostType === DBType.MSSQL &&
+        (rowData?.hostType === DBType.MSSQL || rowData?.hostType === DBType.ORACLE) &&
         rowData?.managementStatus === INVENTORY_STATUS.REGISTERED &&
         (rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
             rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP)
     ) {
         return (
-            <DsButton onClick={() => resourceScreenNavigation(rowData, dispatch)} type="text">
+            <DsButton onClick={() => resourceScreenNavigation(rowData, dispatch, rowData?.hostType)} type="text">
                 {name}
             </DsButton>
         );
@@ -40,11 +41,16 @@ export const instanceNameHyperLink = (rowData: any, name: string, dispatch: any)
     return name;
 };
 
-export const resourceScreenNavigation = (rowData: any, dispatch: any) => {
-    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-    dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+export const resourceScreenNavigation = (rowData: any, dispatch: any, engineType: string) => {
+    if (engineType === DBType.ORACLE) {
+        dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+        dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+    } else if (engineType === DBType.MSSQL) {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+    }
     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-    dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
     dispatch(
         setFSXId({
             fsxId: rowData?.fsxId,
