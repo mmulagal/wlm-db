@@ -142,7 +142,7 @@ const DialogContent = ({
                     return 'Snapshot policy = none';
                 case 'Tiering policy':
                     return [
-                        "[Data] tiering policy='snapshot-only'",
+                        "[Data] tiering policy='none'",
                         "[Redo Log] tiering policy='none'",
                         "[Archive] tiering policy='auto'"
                     ];
