@@ -38,7 +38,9 @@ const OracleResourcePages = () => {
     const { selectedOracleInnerPageTab, visitedTabs, resourceDetails, refreshTimes } = useAppSelector(
         state => state.oracleSlice
     );
-    const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
+    const { selectedHostname, selectedDatabaseInstanceName, resetDetails } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
 
@@ -50,7 +52,7 @@ const OracleResourcePages = () => {
         [dispatch]
     );
 
-    const handleFsxPassword = (type: string) => {
+    const handleUpdatePassword = (type: string) => {
         let header = GENERAL.UPDATE_FSX_ADMIN_PASSWORD;
         let content = (
             <FSXPasswordContent type={RESET_PASSWORD_TYPE.FSXADMIN} engine={RESET_PASSWORD_TYPE.ORACLESERVER} />
@@ -75,6 +77,7 @@ const OracleResourcePages = () => {
                         type,
                         selectedDatabaseInstanceName,
                         resourceDetails,
+                        resetDetails,
                         selectedResourceCredId,
                         selectedResourceRegionId,
                         registerResourceCredBulk,
@@ -156,42 +159,41 @@ const OracleResourcePages = () => {
                             </div>
                         }
                     />
-                    {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW && (
-                        <div className={styles.buttonContainer}>
-                            <ButtonWithDropdown
-                                variant="icon"
-                                className={styles.buttonWithDropdownContainer}
-                                items={[
-                                    {
-                                        id: 'updateOracleServerPassword',
-                                        children: GENERAL.UPDATE_ORACLE_SERVER_PASSWORD,
 
-                                        onClick: () => {
-                                            handleFsxPassword(RESET_PASSWORD_TYPE.ORACLESERVER);
-                                        }
-                                    },
-                                    {
-                                        id: 'updateFsxAdminPassword',
-                                        children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
+                    <div className={styles.buttonContainer}>
+                        <ButtonWithDropdown
+                            variant="icon"
+                            className={styles.buttonWithDropdownContainer}
+                            items={[
+                                {
+                                    id: 'updateOracleServerPassword',
+                                    children: GENERAL.UPDATE_ORACLE_SERVER_PASSWORD,
 
-                                        onClick: () => {
-                                            handleFsxPassword(RESET_PASSWORD_TYPE.FSXADMIN);
-                                        }
-                                    },
-                                    {
-                                        id: 'updateOracleASMPassword',
-                                        children: GENERAL.UPDATE_ORACLE_ASM_PASSWORD,
-
-                                        onClick: () => {
-                                            handleFsxPassword(RESET_PASSWORD_TYPE.ORACLEASM);
-                                        }
+                                    onClick: () => {
+                                        handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLESERVER);
                                     }
-                                ]}
-                            >
-                                <MenuIcon />
-                            </ButtonWithDropdown>
-                        </div>
-                    )}
+                                },
+                                {
+                                    id: 'updateFsxAdminPassword',
+                                    children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
+
+                                    onClick: () => {
+                                        handleUpdatePassword(RESET_PASSWORD_TYPE.FSXADMIN);
+                                    }
+                                },
+                                {
+                                    id: 'updateOracleASMPassword',
+                                    children: GENERAL.UPDATE_ORACLE_ASM_PASSWORD,
+
+                                    onClick: () => {
+                                        handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLEASM);
+                                    }
+                                }
+                            ]}
+                        >
+                            <MenuIcon />
+                        </ButtonWithDropdown>
+                    </div>
                 </div>
             </div>
 
