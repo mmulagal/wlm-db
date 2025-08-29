@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as Warning } from '../../../../../assets/warning.svg';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './ResourceMSSQLPartailContainer.module.scss';
+import { DBType } from '../../../../../utils/consts';
 
 const ResourceMSSQLPartialContainer = ({ resourceType }: { resourceType: string }) => {
     const { t } = useTranslation();
@@ -16,7 +17,7 @@ const ResourceMSSQLPartialContainer = ({ resourceType }: { resourceType: string 
             </div>
             <DsTypography variant="Regular_14" className={styles.secondSegment}>
                 <div className={styles.list}>
-                    {resourceType !== 'Oracle' && (
+                    {resourceType !== DBType.ORACLE && (
                         <div className={styles.listItem}>
                             <Bullet />
                             <DsTypography variant="Regular_13">
