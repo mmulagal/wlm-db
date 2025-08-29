@@ -94,7 +94,8 @@ const DismissedConfigurationsResponse = Type.Object({
     crr: Type.Optional(InstanceDismissResponse),
     clone: Type.Optional(InstanceDismissResponse),
     snapshotPolicy: Type.Optional(InstanceDismissResponse),
-    awsBackup: Type.Optional(InstanceDismissResponse)
+    awsBackup: Type.Optional(InstanceDismissResponse),
+    mtuAlignment: Type.Optional(InstanceDismissResponse)
 });
 type DismissedConfigurationsResponseType = Static<typeof DismissedConfigurationsResponse>;
 

@@ -1,7 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import {
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
     DISMISS_STATUS_ENUM,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
@@ -18,73 +16,9 @@ import {
     ErrorResponse,
     GenericAssessmentResponse,
     GenericParameterDriftResponse,
-    GenericViolationResponse,
     OntapVolume
 } from './continuous-optimization.types';
 import { CLONE_ACTION } from '../../utils/consts';
-
-const SizingViolationResponse = Type.Object({
-    databases: Type.Optional(Type.Array(Type.String())),
-    dataAccessPath: Type.Optional(Type.Array(Type.String())),
-    dataDriveTotalSizeMB: Type.Optional(Type.Number()),
-    logAccessPath: Type.Optional(Type.String()),
-    logDriveTotalSizeMB: Type.Optional(Type.Number()),
-    svmName: Type.Optional(Type.String()),
-    ontapVolumeName: Type.Optional(Type.String()),
-    ontapVolumeUuid: Type.Optional(Type.String()),
-    lunUuid: Type.Optional(Type.String()),
-    tempdbAccessPath: Type.Optional(Type.String()),
-    tempdbDriveTotalSizeMB: Type.Optional(Type.Number()),
-    diskSerialNumber: Type.Optional(Type.String()),
-    sizePercentToDataDrive: Type.Optional(Type.Number())
-});
-type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
-
-const ParameterDriftResponse = Type.Union([
-    GenericParameterDriftResponse,
-    Type.Object({
-        name: Type.String(),
-        status: Type.Enum(AssessmentStatus),
-        recommended: Type.String(),
-        severity: Type.String(),
-        recommendation: Type.String(),
-        objectsInViolation: Type.Optional(Type.Array(Type.Union([Type.String(), OntapVolume]))),
-        sizingViolations: Type.Optional(
-            Type.Object({
-                overProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
-                underProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
-                ignoredDrives: Type.Optional(Type.Array(SizingViolationResponse))
-            })
-        ),
-        violationDetails: Type.Optional(Type.Array(GenericViolationResponse)),
-        tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars)),
-        missingPermissions: Type.Optional(Type.Array(Type.String())),
-        recommendedSizeInGib: Type.Optional(Type.Number()),
-        current: Type.Optional(Type.String()),
-        totalObjectsAssessed: Type.Optional(Type.Number()),
-        totalObjectsInViolation: Type.Optional(Type.Number()),
-        resourceType: Type.Optional(Type.String())
-    })
-]);
-type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
-
-const StorageParameterErrorResponse = Type.Object({
-    name: Type.String(),
-    errorMessage: Type.String()
-});
-
-const StorageParameterDriftResponse = Type.Object({
-    configuration: Type.Object({
-        volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
-        luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
-        os: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
-    }),
-    sizing: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
-    layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
-    fileSystems: Type.Array(Type.String())
-});
-
-type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
 const CloneDetails = Type.Object({
     databaseHostName: Type.String(),
@@ -112,23 +46,130 @@ const CloneDetails = Type.Object({
     )
 });
 
-const AdditionalLicenseParameterDriftResponse = Type.Optional(
+const SizingViolationResponse = Type.Object({
+    databases: Type.Optional(Type.Array(Type.String())),
+    dataAccessPath: Type.Optional(Type.Array(Type.String())),
+    dataDriveTotalSizeMB: Type.Optional(Type.Number()),
+    logAccessPath: Type.Optional(Type.String()),
+    logDriveTotalSizeMB: Type.Optional(Type.Number()),
+    svmName: Type.Optional(Type.String()),
+    ontapVolumeName: Type.Optional(Type.String()),
+    ontapVolumeUuid: Type.Optional(Type.String()),
+    lunUuid: Type.Optional(Type.String()),
+    tempdbAccessPath: Type.Optional(Type.String()),
+    tempdbDriveTotalSizeMB: Type.Optional(Type.Number()),
+    diskSerialNumber: Type.Optional(Type.String()),
+    sizePercentToDataDrive: Type.Optional(Type.Number())
+});
+type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
+
+const ParameterDriftResponse = Type.Intersect([
+    GenericParameterDriftResponse,
     Type.Object({
-        sqlServerInstances: Type.Array(
+        sizingViolations: Type.Optional(
             Type.Object({
-                sqlServerInstance: Type.String(),
-                sqlServerState: Type.String(),
-                sqlServerVersion: Type.Optional(Type.String()),
-                sqlServerProductYear: Type.Optional(Type.Number()),
-                sqlServerEdition: Type.Optional(Type.String()),
-                sqlServerEngineEdition: Type.Optional(Type.Number()),
-                sqlServerName: Type.Optional(Type.String())
+                overProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
+                underProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
+                ignoredDrives: Type.Optional(Type.Array(SizingViolationResponse))
             })
         )
     })
-);
+]);
+type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
-const AdditionalHostOsParameterDriftResponse = Type.Optional(
+const StorageParameterErrorResponse = Type.Object({
+    name: Type.String(),
+    errorMessage: Type.String()
+});
+
+const StorageParameterDriftResponse = Type.Object({
+    configuration: Type.Object({
+        volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
+        luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
+        os: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
+    }),
+    sizing: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
+    layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
+    fileSystems: Type.Array(Type.String())
+});
+
+type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
+
+const RssConfigDriftResponse = Type.Intersect([
+    GenericParameterDriftResponse,
+    Type.Object({
+        rssAdapters: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    adapterName: Type.String(),
+                    rssEnabled: Type.Boolean(),
+                    rssProfile: Type.String(),
+                    baseProcessorNumber: Type.Number({ nullable: true }),
+                    numberOfReceiveQueues: Type.Number()
+                })
+            )
+        ),
+        recommendedAdapterSettings: Type.Optional(
+            Type.Object({
+                recommendedRssProfile: Type.String(),
+                recommendedBaseProcessorNumber: Type.Number(),
+                recommendedReceiveQueues: Type.Number()
+            })
+        ),
+        tcpOffloadState: Type.Optional(Type.String())
+    })
+]);
+
+type RssConfigDriftResponseType = Static<typeof RssConfigDriftResponse>;
+
+const ComputeDriftResponse = Type.Intersect([
+    GenericParameterDriftResponse,
+    Type.Object({
+        recommendationOptions: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    instanceType: Type.String(),
+                    rank: Type.Number(),
+                    savingsOpportunity: Type.Optional(
+                        Type.Object({
+                            savingsOpportunityPercentage: Type.Optional(Type.Number()),
+                            estimatedMonthlySavings: Type.Optional(
+                                Type.Object({
+                                    currency: Type.Optional(Type.String()),
+                                    value: Type.Optional(Type.Number())
+                                })
+                            )
+                        })
+                    )
+                })
+            )
+        )
+    })
+]);
+type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
+
+const LicenseDriftResponse = Type.Intersect([
+    GenericParameterDriftResponse,
+    Type.Object({
+        sqlServerInstances: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    sqlServerInstance: Type.String(),
+                    sqlServerState: Type.String(),
+                    sqlServerVersion: Type.Optional(Type.String()),
+                    sqlServerProductYear: Type.Optional(Type.Number()),
+                    sqlServerEdition: Type.Optional(Type.String()),
+                    sqlServerEngineEdition: Type.Optional(Type.Number()),
+                    sqlServerName: Type.Optional(Type.String())
+                })
+            )
+        )
+    })
+]);
+type LicenseDriftResponseType = Static<typeof LicenseDriftResponse>;
+
+const HostOsPatchDriftResponse = Type.Intersect([
+    GenericParameterDriftResponse,
     Type.Object({
         ec2InstancesToPatch: Type.Optional(
             Type.Array(
@@ -156,9 +197,11 @@ const AdditionalHostOsParameterDriftResponse = Type.Optional(
             )
         )
     })
-);
+]);
+type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
 
-const AdditionalMSSQLPatchParameterDriftResponse = Type.Optional(
+const MSSQLPatchDriftResponse = Type.Intersect([
+    GenericParameterDriftResponse,
     Type.Object({
         missingPatchesInEc2Instances: Type.Optional(
             Type.Array(
@@ -181,95 +224,34 @@ const AdditionalMSSQLPatchParameterDriftResponse = Type.Optional(
             )
         )
     })
-);
+]);
+type MSSQLPatchDriftResponseType = Static<typeof MSSQLPatchDriftResponse>;
 
-const AdditionalRssConfigParameterDriftResponse = Type.Optional(
-    Type.Object({
-        rssAdapters: Type.Array(
-            Type.Object({
-                adapterName: Type.String(),
-                rssEnabled: Type.Boolean(),
-                rssProfile: Type.String(),
-                baseProcessorNumber: Type.Number({ nullable: true }),
-                numberOfReceiveQueues: Type.Number()
-            })
-        ),
-        recommendedAdapterSettings: Type.Optional(
-            Type.Object({
-                recommendedRssProfile: Type.String(),
-                recommendedBaseProcessorNumber: Type.Number(),
-                recommendedReceiveQueues: Type.Number()
-            })
-        ),
-        tcpOffloadState: Type.String()
-    })
-);
-
-const AdditionalCloneParameterDriftResponse = Type.Optional(
+const CloneDriftResponse = Type.Intersect([
+    GenericParameterDriftResponse,
     Type.Object({
         cloneDetails: Type.Optional(Type.Array(CloneDetails)),
         oldCloneDetails: Type.Optional(Type.Array(CloneDetails)),
         cloneDriftMessage: Type.Optional(Type.String())
     })
-);
-
-const AdditionalMtuAlignmentParameterDriftResponse = Type.Optional(
-    Type.Object({
-        ec2InterfacesToFix: Type.Array(
-            Type.Object({
-                ec2InstanceId: Type.Optional(Type.String()),
-                name: Type.String(),
-                currentMTU: Type.Number(),
-                recommendedMTU: Type.Number(),
-                interfaceIndex: Type.Number()
-            })
-        )
-    })
-);
-
-const AdditionalComputeParameterDriftResponse = Type.Optional(
-    Type.Object({
-        recommendationOptions: Type.Array(
-            Type.Object({
-                instanceType: Type.String(),
-                rank: Type.Number(),
-                savingsOpportunity: Type.Optional(
-                    Type.Object({
-                        savingsOpportunityPercentage: Type.Optional(Type.Number()),
-                        estimatedMonthlySavings: Type.Optional(
-                            Type.Object({
-                                currency: Type.Optional(Type.String()),
-                                value: Type.Optional(Type.Number())
-                            })
-                        )
-                    })
-                )
-            })
-        )
-    })
-);
-
-const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalComputeParameterDriftResponse]);
-type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
-
-const LicenseDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalLicenseParameterDriftResponse]);
-type LicenseDriftResponseType = Static<typeof LicenseDriftResponse>;
-
-const HostOsPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalHostOsParameterDriftResponse]);
-type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
-
-const RssConfigDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalRssConfigParameterDriftResponse]);
-type RssConfigDriftResponseType = Static<typeof RssConfigDriftResponse>;
-
-const MSSQLPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalMSSQLPatchParameterDriftResponse]);
-type MSSQLPatchDriftResponseType = Static<typeof MSSQLPatchDriftResponse>;
-
-const CloneDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalCloneParameterDriftResponse]);
+]);
 type CloneDriftResponseType = Static<typeof CloneDriftResponse>;
 
 const MtuAlignmentDriftResponse = Type.Intersect([
-    ParameterDriftResponse,
-    AdditionalMtuAlignmentParameterDriftResponse
+    GenericParameterDriftResponse,
+    Type.Object({
+        ec2InterfacesToFix: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    ec2InstanceId: Type.String(),
+                    name: Type.String(),
+                    currentMTU: Type.Number(),
+                    recommendedMTU: Type.Number(),
+                    interfaceIndex: Type.Number()
+                })
+            )
+        )
+    })
 ]);
 type MtuAlignmentDriftResponseType = Static<typeof MtuAlignmentDriftResponse>;
 
