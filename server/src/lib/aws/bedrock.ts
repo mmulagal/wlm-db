@@ -128,6 +128,12 @@ async function getModelAvailability(accountId: string, credentialsId: string, re
             entitlementAvailability: MODEL_AVAILABILITY_STATUS.NOT_AVAILABLE
         };
     }
+
+    if (statusCode === 403) {
+        const errorMessage = `Access forbidden to model ${modelId} - not authorized to perform this operation`;
+        logger.error(errorMessage);
+        throw createError(403, errorMessage);
+    }
     throw createError(statusCode, `AWS Bedrock Model availablity check failed ${reason}`);
 }
 

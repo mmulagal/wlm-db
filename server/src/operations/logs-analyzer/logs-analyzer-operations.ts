@@ -95,7 +95,9 @@ async function findFirstAvailableModel(accountId: string, credentialsId: string,
                 return { modelId, response };
             }
         } catch (error) {
-            logger.error(`Failed to retrieve AWS Bedrock model ${modelId} not available. Error: ${error}`);
+            const errorMessage = `Failed to retrieve AWS Bedrock model ${modelId} may not be not available. Error: ${error}`;
+            logger.error(errorMessage);
+            throw error;
         }
     }
 }
@@ -969,6 +971,11 @@ async function handlePreReqCheck(
                 ready: false,
                 message: PRE_REQ_MESSAGES.WLMDB_CREDENTIALS
             };
+        } else {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Unable to continue with logs analysis ${error}. Make sure all the prerequisites are met.`
+            );
         }
     }
 
@@ -1015,10 +1022,13 @@ async function handlePreReqCheck(
                 } else {
                     instanceProfilePreRequisites = READY_TRUE;
                 }
-                networkingPreRequisites = {
-                    ready: false,
-                    message: PRE_REQ_MESSAGES.BEDROCK_NW_CONFIGURATION
-                };
+                // Set networking as default not ready when other checks are ready
+                if (bedrockPreRequisites.ready && instanceProfilePreRequisites.ready) {
+                    networkingPreRequisites = {
+                        ready: false,
+                        message: PRE_REQ_MESSAGES.BEDROCK_NW_CONFIGURATION
+                    };
+                }
             } else {
                 bedrockPreRequisites = READY_TRUE;
                 instanceProfilePreRequisites = READY_TRUE;
