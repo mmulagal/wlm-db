@@ -317,14 +317,17 @@ export const handleTriggerAssessment = ({
                         }
 
                         refreshGetWellPage();
-                        jobRes?.data?.subJobs?.forEach((job: { error?: string }) => {
-                            const errorMessage = job?.error;
-                            if (errorMessage) {
-                                dispatch(setGwAdhocError(errorMessage));
+                        let gwErrMsg = jobRes?.data?.error;
+                        if (jobRes?.data?.subJobs && jobRes?.data?.subJobs.length > 0) {
+                            if (jobRes?.data?.subJobs?.[0]?.subJobs && jobRes?.data?.subJobs?.[0]?.subJobs.length > 0) {
+                                gwErrMsg = jobRes?.data?.subJobs[0]?.subJobs[0]?.error;
                             } else {
-                                dispatch(setGwAdhocError(jobRes?.data?.error));
+                                gwErrMsg = jobRes?.data?.subJobs[0]?.error;
                             }
-                        });
+                        }
+                        if (gwErrMsg) {
+                            dispatch(setGwAdhocError(gwErrMsg));
+                        }
                         clearInterval(jobInterval);
                     }
                 });
