@@ -20,7 +20,7 @@ const CHECK_ORACLE_FRA_RMAN_STATUS = (ec2InstanceId: string, dbSid: string) => `
         SET TRIMSPOOL ON
         WHENEVER SQLERROR EXIT SQL.SQLCODE
         SELECT CASE 
-            WHEN value IS NOT NULL AND value != '' THEN 'yes'
+            WHEN value IS NOT NULL THEN 'yes'
             ELSE 'no'
         END
         FROM v\\$parameter WHERE name = 'db_recovery_file_dest';
@@ -29,7 +29,7 @@ const CHECK_ORACLE_FRA_RMAN_STATUS = (ec2InstanceId: string, dbSid: string) => `
             ELSE 'no'
         END
         FROM v\\$rman_configuration 
-        WHERE name LIKE '%BACKUP TYPE TO COMPRESSED%';
+        WHERE value LIKE '%BACKUP TYPE TO COMPRESSED%';
         EXIT;
 EOSQL
 EOF
