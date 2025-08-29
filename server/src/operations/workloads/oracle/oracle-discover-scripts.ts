@@ -282,7 +282,7 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF;
             SET FEEDBACK OFF;
             SET VERIFY OFF;
@@ -294,6 +294,7 @@ EOF
             FROM dba_data_files
             WHERE file_name LIKE '+%';
             EXIT;
+EOSQL
 EOF
 }
 
@@ -1081,8 +1082,10 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
 
             if [ "$is_cdb" == "YES" ]; then
                 PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
-                #pdb_names will be array of pdb names: pdb1 pdb2
+                # pdb_names will be array of pdb names: pdb1 pdb2
                 pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
+                # Remove PDB$SEED as it is not a user created PDB
+                pdb_names=$(echo "$pdb_names" | tr ' ' '\\n' | grep -v '^PDB\\$SEED$' | tr '\\n' ' ')
             else
                 PDB_DATABASE_DETAILS="null"
             fi
