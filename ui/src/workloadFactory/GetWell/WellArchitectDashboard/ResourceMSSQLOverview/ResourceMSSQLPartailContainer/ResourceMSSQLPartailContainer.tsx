@@ -4,7 +4,7 @@ import { ReactComponent as Warning } from '../../../../../assets/warning.svg';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './ResourceMSSQLPartailContainer.module.scss';
 
-const ResourceMSSQLPartialContainer = () => {
+const ResourceMSSQLPartialContainer = ({ resourceType }: { resourceType: string }) => {
     const { t } = useTranslation();
     return (
         <div className={styles.partialData}>
@@ -16,12 +16,14 @@ const ResourceMSSQLPartialContainer = () => {
             </div>
             <DsTypography variant="Regular_14" className={styles.secondSegment}>
                 <div className={styles.list}>
-                    <div className={styles.listItem}>
-                        <Bullet />
-                        <DsTypography variant="Regular_13">
-                            {t('databases.resource-overview.missing-modules-content-1')}
-                        </DsTypography>
-                    </div>
+                    {resourceType !== 'Oracle' && (
+                        <div className={styles.listItem}>
+                            <Bullet />
+                            <DsTypography variant="Regular_13">
+                                {t('databases.resource-overview.missing-modules-content-1')}
+                            </DsTypography>
+                        </div>
+                    )}
                     <div className={styles.listItem}>
                         <Bullet />
                         <DsTypography variant="Regular_13">

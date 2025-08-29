@@ -10,6 +10,7 @@ import styles from './OracleOverview.module.scss';
 import { DBType, MS_PER_HOUR } from '../../../../utils/consts';
 import { isPartialData } from '../../../../utils/utilityFunctions';
 import ResourceMSSQLPartialContainer from '../../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ResourceMSSQLPartailContainer/ResourceMSSQLPartailContainer';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const PARTIAL_DATA_THRESHOLD = 6 * MS_PER_HOUR; // 6 hours in milliseconds
 
@@ -27,7 +28,7 @@ const OracleOverview = () => {
                     PARTIAL_DATA_THRESHOLD &&
                 !resourceLoading && (
                     <div className={styles['resource-Oracle-overview-partialDataContainer']}>
-                        <ResourceMSSQLPartialContainer />
+                        <ResourceMSSQLPartialContainer resourceType={DBType.ORACLE} />
                     </div>
                 )}
             <div className={styles.oracleOverview}>

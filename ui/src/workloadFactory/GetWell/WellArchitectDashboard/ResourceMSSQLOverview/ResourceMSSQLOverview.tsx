@@ -29,7 +29,7 @@ const ResourceMSSQLOverview = () => {
                 Date.now() - Number(resourceDetails?.databaseServer?.creationDate) > PARTIAL_DATA_THRESHOLD &&
                 !resourceLoading && (
                     <div className={styles['resource-mssql-overview-partialDataContainer']}>
-                        <ResourceMSSQLPartialContainer />
+                        <ResourceMSSQLPartialContainer resourceType={DBType.MSSQL} />
                     </div>
                 )}
             <div className={styles['resource-mssql-overview']}>
