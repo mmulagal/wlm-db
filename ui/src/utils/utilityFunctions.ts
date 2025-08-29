@@ -275,13 +275,13 @@ export const bxpRedirect = async (
             }
 
             // Determine search parameter based on instance type
-            // For default instance (MSSQLSERVER), search with hostname
+            // For default instance (MSSQLSERVER), search with fqdn
             // For named instances, search with instance name
-            const searchParam = instanceName === 'MSSQLSERVER' ? hostName : instanceName;
+            const searchParam = instanceName === 'MSSQLSERVER' ? fqdn : instanceName;
 
             const searchResult = await getDiscoverInstanceResult({
-                orgId,
-                name: searchParam, // Use hostname for default instance, instance name for named instances
+                accountID: orgId,
+                name: searchParam, // Use fqdn for default instance, instance name for named instances
                 agentID,
                 workspaceID
             }).unwrap();
@@ -343,8 +343,8 @@ export const bxpRedirect = async (
             }
 
             const searchResult = await getDiscoverHostResult({
-                orgId,
-                name: databaseName,
+                accountID: orgId,
+                hostName: databaseName,
                 agentID,
                 workspaceID
             }).unwrap();
