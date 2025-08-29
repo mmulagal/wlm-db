@@ -4,45 +4,19 @@
          "volumes": [
                 {
                     "name": "thin-provision",
-                    "status": "not-optimized",
-                    "recommended": "true",
+                    "status": "optimized",
+                    "recommended": "none",
                     "severity": "warning",
-                    "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                    "recommendation": "Workload Factory recommends configuring thin provisioning for FSx for ONTAP volumes hosting Oracle databases. This approach optimizes storage efficiency and cost-effectiveness by allowing more logical data to be stored than physically available.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
                         "Performance efficiency"
                     ],
-                    "objectsInViolation": [
-                        "oracleredo2",
-                        "oraclearch2",
-                        "oracledata2"
-                    ],
-                    "violationDetails": [
-                        {
-                            "objectName": "oracleredo2",
-                            "value": "true",
-                            "objectType": "Volume",
-                            "recommended": "true",
-                            "dataCategory": ""
-                        },
-                        {
-                            "objectName": "oraclearch2",
-                            "value": "true",
-                            "objectType": "Volume",
-                            "recommended": "true",
-                            "dataCategory": ""
-                        },
-                        {
-                            "objectName": "oracledata2",
-                            "value": "true",
-                            "objectType": "Volume",
-                            "recommended": "true",
-                            "dataCategory": ""
-                        }
-                    ],
+                    "objectsInViolation": [],
+                    "violationDetails": [],
                     "totalObjectsAssessed": 3,
-                    "totalObjectsInViolation": 3,
+                    "totalObjectsInViolation": 0,
                     "resourceType": "Volume"
                 },
                 {
@@ -50,7 +24,7 @@
                     "status": "not-optimized",
                     "recommended": "on",
                     "severity": "critical",
-                    "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                    "recommendation": "Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility, availability, and scalability for Oracle databases by allowing volumes to grow dynamically to accommodate unexpected data growth, preventing space shortages and avoiding downtime if a volume runs out of space. Volume autogrow is essential when using thin provisioning.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
@@ -93,7 +67,7 @@
                     "status": "not-optimized",
                     "recommended": "grow",
                     "severity": "critical",
-                    "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                    "recommendation": "Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility and availability by allowing volumes to grow dynamically to accommodate unexpected data growth. This prevents space shortages and helps avoid downtime if a volume runs out of space, ensuring seamless scalability for Oracle databases. Volume autogrow is essential when using thin provisioning.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
@@ -136,7 +110,7 @@
                     "status": "not-optimized",
                     "recommended": "0",
                     "severity": "critical",
-                    "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                    "recommendation": "Workload Factory recommends disabling fractional reserve to eliminate unnecessary space reservation for overwrites thereby optimizing space utilization and cost-effectiveness for thin-provisioned FSx for ONTAP volumes. This configuration is essential when using thin provisioning with Oracle databases.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
@@ -222,7 +196,7 @@
                     "status": "not-optimized",
                     "recommended": "0",
                     "severity": "warning",
-                    "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                    "recommendation": "Workload Factory recommends that capacity isnt reserved for snapshots on FSx for ONTAP volumes used by databases, making the entire volume capacity available for active data and any snapshots that are created.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
@@ -265,7 +239,7 @@
                     "status": "not-optimized",
                     "recommended": "true",
                     "severity": "warning",
-                    "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                    "recommendation": "Workload Factory recommends configuring the snapshot autodelete feature in FSx for ONTAP for Oracle databases to delete older snapshots first. This feature is designed to automatically manage snapshot storage by deleting the oldest snapshots when a volume approaches its capacity limit. This configuration helps in thin-provisioned environments, where more logical storage is allocated than physically available.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
@@ -305,139 +279,10 @@
                 },
                 {
                     "name": "space-mgmt-try-first",
-                    "status": "not-optimized",
+                    "status": "optimized",
                     "recommended": "volume_grow",
                     "severity": "warning",
-                    "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-                    "tags": [
-                        "Cost optimization",
-                        "Operational excellence",
-                        "Performance efficiency"
-                    ],
-                    "objectsInViolation": [
-                        "oracleredo2",
-                        "oraclearch2",
-                        "oracledata2"
-                    ],
-                    "violationDetails": [
-                        {
-                            "objectName": "oracleredo2",
-                            "value": "",
-                            "objectType": "Volume",
-                            "recommended": "volume_grow",
-                            "dataCategory": ""
-                        },
-                        {
-                            "objectName": "oraclearch2",
-                            "value": "",
-                            "objectType": "Volume",
-                            "recommended": "volume_grow",
-                            "dataCategory": ""
-                        },
-                        {
-                            "objectName": "oracledata2",
-                            "value": "",
-                            "objectType": "Volume",
-                            "recommended": "volume_grow",
-                            "dataCategory": ""
-                        }
-                    ],
-                    "totalObjectsAssessed": 3,
-                    "totalObjectsInViolation": 3,
-                    "resourceType": "Volume"
-                },
-                {
-                    "name": "tiering-policy",
-                    "status": "not-optimized",
-                    "recommended": "snapshot_only",
-                    "severity": "critical",
-                    "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
-                    "tags": [
-                        "Cost optimization",
-                        "Operational excellence",
-                        "Performance efficiency"
-                    ],
-                    "objectsInViolation": [
-                        "oracleredo2",
-                        "oraclearch2",
-                        "oracledata2"
-                    ],
-                    "violationDetails": [
-                        {
-                            "objectName": "oracleredo2",
-                            "value": "none",
-                            "objectType": "Volume",
-                            "recommended": "snapshot_only",
-                            "dataCategory": ""
-                        },
-                        {
-                            "objectName": "oraclearch2",
-                            "value": "none",
-                            "objectType": "Volume",
-                            "recommended": "snapshot_only",
-                            "dataCategory": ""
-                        },
-                        {
-                            "objectName": "oracledata2",
-                            "value": "all",
-                            "objectType": "Volume",
-                            "recommended": "snapshot_only",
-                            "dataCategory": ""
-                        }
-                    ],
-                    "totalObjectsAssessed": 3,
-                    "totalObjectsInViolation": 3,
-                    "resourceType": "Volume"
-                },
-                {
-                    "name": "tiering-min-cooling-days",
-                    "status": "not-optimized",
-                    "recommended": "",
-                    "severity": "critical",
-                    "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
-                    "tags": [
-                        "Cost optimization",
-                        "Operational excellence",
-                        "Performance efficiency"
-                    ],
-                    "objectsInViolation": [
-                        "oracleredo2",
-                        "oraclearch2",
-                        "oracledata2"
-                    ],
-                    "violationDetails": [
-                        {
-                            "objectName": "oracleredo2",
-                            "value": "",
-                            "objectType": "Volume",
-                            "recommended": "2",
-                            "dataCategory": ""
-                        },
-                        {
-                            "objectName": "oraclearch2",
-                            "value": "",
-                            "objectType": "Volume",
-                            "recommended": "2",
-                            "dataCategory": ""
-                        },
-                        {
-                            "objectName": "oracledata2",
-                            "value": "",
-                            "objectType": "Volume",
-                            "recommended": "2",
-                            "dataCategory": ""
-                        }
-                    ],
-                    "totalObjectsAssessed": 3,
-                    "totalObjectsInViolation": 3,
-                    "resourceType": "Volume"
-                },
-                {
-                    "name": "compression",
-                    "status": "optimized",
-                    "recommended": "",
-                    "severity": "critical",
-                    "recommendation": "",
+                    "recommendation": "Workload Factory recommends configuring space management to prioritize volume expansion over snapshot deletion for thin-provisioned FSx for ONTAP volumes with volume autogrow enabled.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
@@ -450,11 +295,108 @@
                     "resourceType": "Volume"
                 },
                 {
+                    "name": "tiering-policy",
+                    "status": "not-optimized",
+                    "recommended": "snapshot_only",
+                    "severity": "critical",
+                    "recommendation": "Workload Factory recommends tiering FSx for ONTAP volumes used by databases when applicable. Tiering optimizes storage utilization by automatically moving less frequently accessed data such as snapshots or archived logs to cost-effective capacity tiers while keeping active data and redo logs on the high-performance primary storage tier. Tiering reduces overall storage costs, enhances performance for critical workloads, and simplifies management through automated data placement. For different Oracle files—data, redo log, and archive —distinct tiering policies ensure tailored efficiency.",
+                    "tags": [
+                        "Cost optimization",
+                        "Operational excellence",
+                        "Performance efficiency"
+                    ],
+                    "objectsInViolation": [
+                        "oraclearch2",
+                        "oracledata2"
+                    ],
+                    "violationDetails": [
+                        {
+                            "objectName": "oraclearch2",
+                            "value": "none",
+                            "objectType": "Volume",
+                            "recommended": "auto",
+                            "dataCategory": "archive-log-files"
+                        },
+                        {
+                            "objectName": "oracledata2",
+                            "value": "all",
+                            "objectType": "Volume",
+                            "recommended": "none",
+                            "dataCategory": "data-control-files"
+                        }
+                    ],
+                    "totalObjectsAssessed": 3,
+                    "totalObjectsInViolation": 2,
+                    "resourceType": "Volume"
+                },
+                {
+                    "name": "tiering-min-cooling-days",
+                    "status": "not-optimized",
+                    "recommended": "",
+                    "severity": "critical",
+                    "recommendation": "Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Tailored settings for each volume type—data, redo log, and archive (FRA)—ensure efficient resource utilization. Data Volumes (tiering-minimum-cooling-days=2) Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups)).",
+                    "tags": [
+                        "Cost optimization",
+                        "Operational excellence",
+                        "Performance efficiency"
+                    ],
+                    "objectsInViolation": [
+                        "oraclearch2",
+                        "oracledata2"
+                    ],
+                    "violationDetails": [
+                        {
+                            "objectName": "oraclearch2",
+                            "value": "4",
+                            "objectType": "Volume",
+                            "recommended": "2",
+                            "dataCategory": ""
+                        },
+                        {
+                            "objectName": "oracledata2",
+                            "value": "4",
+                            "objectType": "Volume",
+                            "recommended": "2",
+                            "dataCategory": ""
+                        }
+                    ],
+                    "totalObjectsAssessed": 3,
+                    "totalObjectsInViolation": 2,
+                    "resourceType": "Volume"
+                },
+                {
+                    "name": "compression",
+                    "status": "not-optimized",
+                    "recommended": "",
+                    "severity": "critical",
+                    "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
+                    "tags": [
+                        "Cost optimization",
+                        "Operational excellence",
+                        "Performance efficiency"
+                    ],
+                    "objectsInViolation": [
+                        "oracleredo2"
+                    ],
+                    "violationDetails": [
+                        {
+                            "objectName": "oracleredo2",
+                            "value": "adaptive",
+                            "objectType": "Volume",
+                            "recommended": "none",
+                            "dataCategory": "log-files"
+                        }
+                    ],
+                    "totalObjectsAssessed": 3,
+                    "totalObjectsInViolation": 1,
+                    "resourceType": "Volume"
+                },
+                {
                     "name": "deduplication",
                     "status": "not-optimized",
                     "recommended": "",
                     "severity": "critical",
-                    "recommendation": "",
+                    "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
@@ -470,8 +412,8 @@
                             "objectName": "oracleredo2",
                             "value": "both",
                             "objectType": "Volume",
-                            "recommended": "inline",
-                            "dataCategory": "non-log-files"
+                            "recommended": "none",
+                            "dataCategory": "log-files"
                         },
                         {
                             "objectName": "oraclearch2",
@@ -497,7 +439,7 @@
                     "status": "optimized",
                     "recommended": "enabled",
                     "severity": "critical",
-                    "recommendation": "",
+                    "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
                     "tags": [
                         "Cost optimization",
                         "Operational excellence",
@@ -516,7 +458,7 @@
                "status":"not-optimized",
                "recommended":"linux",
                "severity":"critical",
-               "recommendation":"ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
+               "recommendation":"Workload Factory recommends ensuring that the ONTAP LUN operating system (OS) type value matches the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration might reduce performance.",
                "tags":[
                   "Cost optimization",
                   "Operational excellence",
@@ -536,7 +478,7 @@
                "status":"not-optimized",
                "recommended":"true",
                "severity":"critical",
-               "recommendation":"When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.",
+               "recommendation":"Workload Factory recommends enabling space reservation on LUNs used by Oracle databases to reserve enough space in the volume so that writes to those LUNs don't fail.",
                "tags":[
                   "Cost optimization",
                   "Operational excellence",
@@ -556,7 +498,7 @@
                "status":"not-optimized",
                "recommended":"true",
                "severity":"critical",
-               "recommendation":"This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.",
+               "recommendation":"Workload Factory recommends enabling space allocation on LUNs used by Oracle databases to avoid write failures and inefficient space utilization. Space allocation ensures that FSx for ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also lets FSx for ONTAP  automatically reclaim space when the Oracle database on the EC2 host deletes data.",
                "tags":[
                   "Cost optimization",
                   "Operational excellence",

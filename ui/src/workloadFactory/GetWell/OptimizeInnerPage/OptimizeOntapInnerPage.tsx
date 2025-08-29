@@ -77,21 +77,23 @@ const OptimizeOntapInnerPage = () => {
     useEffect(() => {
         if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
             switch (selectedOptimizeConfig?.type) {
-                case ASSESSMENT_CONFIG_NAMES.COMPACTION:
-                case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
-                case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
-                case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
-                case 'Tiering policy':
-                case 'Tiering minimum cooling days':
+                case 'Thin provisioning':
+                case 'Snapshot copy reserve':
+                case 'Fractional reserve':
+                case 'Snapshot policy':
+                case 'Space management':
+                case 'OS type':
+                case 'Space reservation':
+                case 'Space allocation':
                     setCardHeight({
-                        recommendationSection: '210px',
-                        tagSection: '306px'
+                        recommendationSection: '160px',
+                        tagSection: '256px'
                     });
                     break;
                 default:
                     setCardHeight({
-                        recommendationSection: '280px',
-                        tagSection: '376px'
+                        recommendationSection: '210px',
+                        tagSection: '306px'
                     });
                     break;
             }
