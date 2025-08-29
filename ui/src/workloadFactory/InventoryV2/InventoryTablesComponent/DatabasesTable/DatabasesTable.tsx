@@ -51,6 +51,7 @@ import { mssqlPgsqlDatabaseColumnFilterMap } from './MssqlPgsqlDatabaseTableColu
 import { oraclePDBColumnFilterMap } from './OraclePDBTableColumns';
 import { getInitialDatabaseTableColState } from '../../../../utils/manageColumnUtils';
 import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 
 const DatabasesTable = () => {
     const { t } = useTranslation();
@@ -279,25 +280,37 @@ const DatabasesTable = () => {
                         };
                         const result = await registerResourceCredBulk({ payload });
                         if (result && !result?.error && result?.data) {
-                            // Mark authentication as completed for this row
-                            dispatch(
-                                setDataForRow({
-                                    key,
-                                    stepData: {
-                                        scCredentialsChecked: true,
-                                        scCredentialsValid: true
-                                    }
-                                })
-                            );
-
-                            if (dialogToOpen === 'openNoAgent') {
-                                setTimeout(() => {
-                                    showNoAgentDialog(true);
-                                }, 10);
+                            if (result?.data?.items[0]?.registerDetails[0]?.databaseServerError) {
+                                dispatch(setAuthVerification(false));
+                                dispatch(
+                                    addNotification({
+                                        notificationType: NOTIFICATION_TYPES.ERROR,
+                                        message:
+                                            result?.data?.items[0]?.registerDetails[0]?.databaseServerError ||
+                                            'Authentication failed. Please check the credentials and try again.'
+                                    })
+                                );
                             } else {
-                                setTimeout(() => {
-                                    showSingleAgentDialog(activeAgents, boolValue, rowData, true);
-                                }, 10);
+                                // Mark authentication as completed for this row
+                                dispatch(
+                                    setDataForRow({
+                                        key,
+                                        stepData: {
+                                            scCredentialsChecked: true,
+                                            scCredentialsValid: true
+                                        }
+                                    })
+                                );
+
+                                if (dialogToOpen === 'openNoAgent') {
+                                    setTimeout(() => {
+                                        showNoAgentDialog(true);
+                                    }, 10);
+                                } else {
+                                    setTimeout(() => {
+                                        showSingleAgentDialog(activeAgents, boolValue, rowData, true);
+                                    }, 10);
+                                }
                             }
                         }
                     } catch (error) {

@@ -22,7 +22,7 @@ const proceedWithProtection = (
     // If credentials were already checked and found invalid, show auth dialog
     if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {
         if (activeAgents.length === 0) {
-            return scAuthDialog(key, 'openNoAgent');
+            return scAuthDialog(key, 'openNoAgent', [], false, rowData);
         }
         return scAuthDialog(key, 'openSingleAgent', activeAgents, false, rowData);
     }
@@ -38,7 +38,7 @@ const proceedWithProtection = (
     // If credentials haven't been checked yet, show auth dialog first
     if (!existingData.scCredentialsChecked) {
         if (activeAgents.length === 0) {
-            return scAuthDialog(key, 'openNoAgent');
+            return scAuthDialog(key, 'openNoAgent', [], false, rowData);
         }
         return scAuthDialog(key, 'openSingleAgent', activeAgents, false, rowData);
     }
@@ -209,7 +209,7 @@ export const handleProtectionUtil = async (
                 }
             );
         } else if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {
-            scAuthDialog(key, 'openNoAgent');
+            scAuthDialog(key, 'openNoAgent', [], false, rowData);
         } else {
             showNoAgentDialog();
         }
