@@ -700,12 +700,9 @@ export const isValidUserName = (userName: string) => {
 export const isValidSqlUsername = (username: string, t: TFunction) => {
     const state = store.getState();
     const { selectedAuthenticationType } = state.workloadFactoryResource;
-    if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
-        // Allow backslash, @, and . for Windows authentication
-        if (/[^A-Za-z0-9_\\@.]/.test(username)) {
-            return t('databases.update-credentials.username-invalid-windows');
-        }
-    } else if (/[^A-Za-z0-9_]/.test(username)) {
+
+    const forbiddenChars = /[*:;|=,+?`'"]/;
+    if (forbiddenChars.test(username)) {
         return t('databases.update-credentials.username-invalid-sql');
     }
 };

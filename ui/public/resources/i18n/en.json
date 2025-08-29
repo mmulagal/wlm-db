@@ -407,8 +407,7 @@
                 "Must not contain non-English letters or 'admin'."
             ],
             "passwords-not-match": "Passwords do not match.",
-            "username-invalid-windows": "Username should not contain special characters except backslash (\\), period (.), and at sign (@).",
-            "username-invalid-sql": "Username should not contain special characters."
+            "username-invalid-sql": "Username cannot contain these special characters: * : ; | = , + ? ` ' \""
         },
         "bluexp-menu": {
             "api-hub": "API Hub",
