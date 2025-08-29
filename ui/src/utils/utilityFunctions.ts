@@ -170,6 +170,31 @@ const openNewTabWithPayload = (url: string, payload: {}) => {
     return newTab;
 };
 
+/**
+ * Generic function to handle redirects with wlmdbParams for both workload factory and non-workload factory scenarios
+ * @param isWorkloadFactory - Boolean indicating if it's workload factory mode
+ * @param baseUrl - The base URL for the redirect
+ * @param wlmdbParams - The parameters object to be passed with the redirect
+ */
+export const handleRedirectWithParams = (isWorkloadFactory: boolean, baseUrl: string, wlmdbParams: any) => {
+    if (isWorkloadFactory) {
+        openNewTabWithPayload(baseUrl, JSON.stringify(wlmdbParams));
+    } else {
+        window.parent.postMessage(
+            {
+                type: 'SERVICE:NAVIGATE',
+                payload: {
+                    pathname: '/unified-backup-restore',
+                    state: {
+                        wlmdbParams: JSON.stringify(wlmdbParams)
+                    }
+                }
+            },
+            '*'
+        );
+    }
+};
+
 export const bxpRedirect = async (
     isWorkloadFactory: boolean,
     rowData?: any,
@@ -180,12 +205,45 @@ export const bxpRedirect = async (
     const stageURL = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
     const prodURL = 'https://console.bluexp.netapp.com/unified-backup-restore';
     const { selectedAgent, alreadyExistAgentId, workSpaceData } = store.getState().snapCenter;
+    const { isDemoMode, orgId } = store.getState().auth;
 
     let baseUrl = '';
     if (import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION) {
         baseUrl = prodURL;
     } else {
         baseUrl = stageURL;
+    }
+
+    // Need to be removed after the patch
+    if (import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION) {
+        if (isWorkloadFactory) {
+            window.open(baseUrl, '_blank', 'noopener,noreferrer');
+        } else if (window.top) {
+            window.top.location.href = baseUrl;
+        }
+        return;
+    }
+    // Demo Mode Handling
+    if (isDemoMode) {
+        const demoParams = {
+            source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
+            redirectToWorkloadFactory: true,
+            hostName: rowData?.hostRow?.fqdn || 'demo-server.wlm.com',
+            instanceName:
+                rowData?.databaseInstanceName === 'MSSQLSERVER'
+                    ? rowData?.name || rowData?.hostName || 'demo-server'
+                    : `${rowData?.name || rowData?.hostName || 'demo-server'}-${
+                          rowData?.databaseInstanceName || 'DEMO'
+                      }`,
+            instanceId: `demo-instance-${Date.now()}`,
+            ...(from === 'database' && {
+                databaseName: rowData?.name || 'DemoDatabase',
+                databaseId: `demo-database-${Date.now()}`
+            })
+        };
+
+        handleRedirectWithParams(isWorkloadFactory, baseUrl, demoParams);
+        return;
     }
 
     // Check if we have the required API for the specific type
@@ -209,11 +267,10 @@ export const bxpRedirect = async (
             const instanceName = rowData?.databaseInstanceName; // "MSSQLSERVER" or "INSTANCEJUN_9"
             const hostName = rowData?.name; // "dec04std2"
             const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
-            const accountID = rowData?.accountId || rowData?.account_id;
             const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
-            const workspaceID = rowData?.workspaceId || rowData?.workspace_id || workSpaceData?.id;
+            const workspaceID = workSpaceData?.id;
 
-            if (!instanceName || !hostName || !fqdn || !accountID || !agentID || !workspaceID) {
+            if (!instanceName || !hostName || !fqdn || !orgId || !agentID || !workspaceID) {
                 return;
             }
 
@@ -223,7 +280,7 @@ export const bxpRedirect = async (
             const searchParam = instanceName === 'MSSQLSERVER' ? hostName : instanceName;
 
             const searchResult = await getDiscoverInstanceResult({
-                accountID,
+                orgId,
                 name: searchParam, // Use hostname for default instance, instance name for named instances
                 agentID,
                 workspaceID
@@ -261,7 +318,7 @@ export const bxpRedirect = async (
 
             if (matchingInstance) {
                 // Create wlmdbParams object for instance
-                const wlmdbParams = {
+                const instanceParams = {
                     source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
                     redirectToWorkloadFactory: true,
                     hostName: fqdn,
@@ -269,23 +326,7 @@ export const bxpRedirect = async (
                     instanceId: matchingInstance.id
                 };
 
-                if (isWorkloadFactory) {
-                    openNewTabWithPayload(baseUrl, JSON.stringify(wlmdbParams));
-                } else {
-                    // Keep existing postMessage for non-workload factory
-                    window.parent.postMessage(
-                        {
-                            type: 'SERVICE:NAVIGATE',
-                            payload: {
-                                pathname: '/unified-backup-restore',
-                                state: {
-                                    wlmdbParams: JSON.stringify(wlmdbParams)
-                                }
-                            }
-                        },
-                        '*'
-                    );
-                }
+                handleRedirectWithParams(isWorkloadFactory, baseUrl, instanceParams);
                 return;
             }
         } else if (rowData && from === 'database') {
@@ -294,16 +335,15 @@ export const bxpRedirect = async (
             const instanceName = rowData?.databaseInstanceName; // "INSTANCE2"
             const hostName = rowData?.hostName; // "dec04std2"
             const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
-            const accountID = rowData?.accountId || rowData?.account_id;
             const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
             const workspaceID = rowData?.workspaceId || rowData?.workspace_id || workSpaceData?.id;
 
-            if (!databaseName || !instanceName || !hostName || !fqdn || !accountID || !agentID || !workspaceID) {
+            if (!databaseName || !instanceName || !hostName || !fqdn || !orgId || !agentID || !workspaceID) {
                 return;
             }
 
             const searchResult = await getDiscoverHostResult({
-                accountID,
+                orgId,
                 name: databaseName,
                 agentID,
                 workspaceID
@@ -346,7 +386,7 @@ export const bxpRedirect = async (
 
             if (matchingDatabase) {
                 // Create wlmdbParams object for database
-                const wlmdbParams = {
+                const databaseParams = {
                     source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
                     redirectToWorkloadFactory: true,
                     hostName: fqdn,
@@ -356,23 +396,7 @@ export const bxpRedirect = async (
                     databaseId: matchingDatabase.id
                 };
 
-                if (isWorkloadFactory) {
-                    openNewTabWithPayload(baseUrl, JSON.stringify(wlmdbParams));
-                } else {
-                    // Keep existing postMessage for non-workload factory
-                    window.parent.postMessage(
-                        {
-                            type: 'SERVICE:NAVIGATE',
-                            payload: {
-                                pathname: '/unified-backup-restore',
-                                state: {
-                                    wlmdbParams: JSON.stringify(wlmdbParams)
-                                }
-                            }
-                        },
-                        '*'
-                    );
-                }
+                handleRedirectWithParams(isWorkloadFactory, baseUrl, databaseParams);
                 return;
             }
         }
