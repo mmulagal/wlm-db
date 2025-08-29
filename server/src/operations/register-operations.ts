@@ -2080,9 +2080,12 @@ async function rewriteOrDeleteSSMParameter(
     ) {
         // Delete the parameter store all credentials are invalid
         instanceIds.forEach(instanceId => paramsToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
-        await deleteSSMParameter(credentialsId, region, paramsToDelete);
     }
+    await deleteSSMParameter(credentialsId, region, paramsToDelete);
     // Rewrite parameter store after removing invalid credentials
+    const latestFsxCredentials = fsxCredentials
+        ? filterAndMapCredentials([fsxCredentials], [fsxCredentials], paramsToDelete)
+        : [];
     const latestSqlCredentials = filterAndMapCredentials(allDatabaseCredentials, sqlCredentials, instancesToBeDeleted);
     const latestWindowsUserCredentials = filterAndMapCredentials(
         allWindowsUserCredentials,
@@ -2096,7 +2099,7 @@ async function rewriteOrDeleteSSMParameter(
     );
 
     const creds = prepareParametersToStore(instanceIds, [
-        ...(fsxCredentials ? [fsxCredentials] : []),
+        ...latestFsxCredentials,
         ...latestSqlCredentials,
         ...latestWindowsUserCredentials,
         ...latestOracleAsmCredentials
@@ -2168,7 +2171,13 @@ function filterAndMapCredentials(
 
     // Filter allCredentials, but if a matching sqlinstancename exists in userRequestedCredentials, use that instead
     let latestAllCredentials = allCredentials
-        .filter(creds => !instancesToBeDeleted.includes(creds.resourceId))
+        .filter(
+            creds =>
+                !(
+                    instancesToBeDeleted.includes(creds.resourceId) ||
+                    instancesToBeDeleted.find(r => r.includes(creds.resourceId))
+                )
+        )
         .map(creds => ({ ...creds, resourceId: creds.resourceId.replace(TEMP, '') }));
 
     latestAllCredentials = uniqBy(latestAllCredentials, 'resourceId');

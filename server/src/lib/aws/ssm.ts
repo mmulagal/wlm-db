@@ -160,7 +160,11 @@ async function deleteParameters(credentialsId: string, region: string, ssmParame
     logger.info('Delete SSM paramters', { credentialsId, region, ssmParameterNames });
 
     const ssmClient = await getSSMClient(region, credentialsId);
-    return ssmClient.send(new DeleteParametersCommand({ Names: ssmParameterNames }));
+    try {
+        return await ssmClient.send(new DeleteParametersCommand({ Names: ssmParameterNames }));
+    } catch (error) {
+        logger.error('Failed to delete SSM parameters', error);
+    }
 }
 
 async function describeInstancePatchStates(
