@@ -111,7 +111,7 @@ function getVolumeConfigDrift(
     }
 
     const tieringPolicyRecommendations = {
-        'data-control-files': 'snapshot_only',
+        'data-control-files': 'none',
         'log-files': 'none',
         'archive-log-files': 'auto'
     };
@@ -435,7 +435,7 @@ async function initiateStorageAssessmentCollection(
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
     if (isEmpty(mappedVolumesUuids)) {
-        errorMessage = `Found no FSx for ONTAP volumes for the instance ${databaseInstanceName}.`;
+        errorMessage = `Found no FSx for ONTAP volumes for the database ${databaseInstanceName}.`;
         logger.error(errorMessage);
         jobStatus = JOBSTATUS.FAILED;
         await registerJob(accountId, credentialsId, region, {

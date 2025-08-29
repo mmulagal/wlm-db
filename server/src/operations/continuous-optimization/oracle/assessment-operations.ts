@@ -31,8 +31,11 @@ import {
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
+import { isDemo } from '../../../utils/utils';
+import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoInventoryData';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 async function initiateInstanceLevelAssessmentDataCollection(
     accountId: string,
@@ -81,10 +84,21 @@ async function initiateInstanceLevelAssessmentDataCollection(
 
         const protocol = response.get(databaseInstanceName)?.get(fsxFileSystem)?.protocol;
 
-        instanceVolumeMapping =
-            allInstanceVolumeMappings.find(mapping => mapping[databaseInstanceName])?.[databaseInstanceName] || {};
+        if (isDemoFlow) {
+            const mappedOntapVolumes = ORACLE_MAPPED_ONTAP_VOLUMES_DATA as unknown as Map<
+                string,
+                OracleMappedOntapVolumesResponse
+            >;
+            instanceVolumeMapping =
+                Object.values(mappedOntapVolumes)
+                    .flatMap(volumeResponse => volumeResponse.volumeMappings || [])
+                    .flatMap(volumeMapping => Object.values(volumeMapping))
+                    .find(mapping => Object.keys(mapping as object).length > 0) || {};
+        } else {
+            instanceVolumeMapping =
+                allInstanceVolumeMappings.find(mapping => mapping[databaseInstanceName])?.[databaseInstanceName] || {};
+        }
         const { ontapVolumes = {}, isCDB = false } = instanceVolumeMapping || {};
-
         const extractVolumeData = (
             volumes: Record<string, OracleVolumeRecord[]> | Record<string, Record<string, OracleVolumeRecord[]>>
         ) =>
@@ -140,7 +154,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
     });
 
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobName = `Oracle assessment for instance ${resourceWithInstanceName}`;
+    const jobName = `Oracle assessment for database ${resourceWithInstanceName}`;
     const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
 
     const { id: instanceLevelAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
@@ -298,7 +312,7 @@ async function onDemandTriggerOracleDriftAssessment(
             database_instance_name: instanceName
         } = managedInstance;
         const savedInstanceName = `${resourceName}\\${instanceName}`;
-        const jobName = `Oracle assessment for instance ${savedInstanceName}`;
+        const jobName = `Oracle assessment for database ${savedInstanceName}`;
         const jobDescription = `${jobName}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobName,
