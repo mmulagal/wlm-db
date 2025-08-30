@@ -84,12 +84,12 @@ catch {
             $ig = Get-NcIgroup -Name $igroup
             if ($null -eq $ig) {
                 Write-Output "Igroup $igroup not found, retrying..."
-                Start-Sleep -Seconds 20
+                Start-Sleep -Seconds 30
             }
         }
         catch {
             Write-Output "Error retrieving igroup: $_"
-            Start-Sleep -Seconds 20
+            Start-Sleep -Seconds 30
         }
         $retryCount++
     }

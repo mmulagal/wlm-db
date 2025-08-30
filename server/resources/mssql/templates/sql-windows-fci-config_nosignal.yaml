@@ -25,6 +25,7 @@ Metadata:
                   - DomainMemberSGID
                   - PreferredDomainController
                   - OUPath
+                  - ADGroup
             - Label:
                   default: Amazon EC2 Configuration
               Parameters:
@@ -54,6 +55,7 @@ Metadata:
                   - NumberOfNodes
                   - SqlFSxWSFCName
                   - SqlFSxFCIName
+                  - IsManagedServiceAccount
                   - SQLAdminAccounts
                   - AMIID
                   - BYOLAMI
@@ -132,7 +134,11 @@ Metadata:
             PreferredDomainController:
                 default: (optional) Preferred domain controller to use for AD join
             OUPath:
-                default: (optional) Preferred organizational unit in the AD to join.    
+                default: (optional) Preferred organizational unit in the AD to join.
+            ADGroup:
+                default: (optional) Active Directory group to add the computers to.
+            IsManagedServiceAccount:
+                default: (optional) Boolean to indicate if the service account is a managed service account.
 Parameters:
     ParentStackName:
         Description: Name of the parent CloudFormation stack.
@@ -313,7 +319,18 @@ Parameters:
     OUPath:
         Description: (optional) Preferred organizational unit in the AD to join.
         Type: String
-        Default: default 
+        Default: default
+    ADGroup:
+        Description: (optional) Active Directory group to add the computers to.
+        Type: String
+        Default: default
+    IsManagedServiceAccount:
+        Description: (optional) Whether the service account is a managed service account.
+        Type: String
+        AllowedValues:
+            - 'true'
+            - 'false'
+        Default: 'false'
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
@@ -794,7 +811,7 @@ Resources:
                                   - "' -DomainDNSName '"
                                   - !Ref 'DomainDNSName'
                                   - "' -DCName '"
-                                  - !Ref 'PreferredDomainController'                                  
+                                  - !Ref 'PreferredDomainController'
                                   - "' -ServiceAccountUser '"
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -Parentstackname '"
@@ -821,6 +838,16 @@ Resources:
                                   - -Command "
                                   - C:\cfn\scripts\common\AddUserToGroup.ps1 -UserName '
                                   - !Ref 'SQLAdminAccounts'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -ADGroup '"
+                                  - !Ref 'ADGroup'
+                                  - "' -IsManagedServiceAccount '"
+                                  - !Ref 'IsManagedServiceAccount'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
                                   - ''' -GroupName ''Administrators''"'
                             waitAfterCompletion: '0'
                 ConfigureInstance:
@@ -1458,6 +1485,16 @@ Resources:
                                   - -Command "
                                   - C:\cfn\scripts\common\AddUserToGroup.ps1 -UserName '
                                   - !Ref 'SQLAdminAccounts'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -ADGroup '"
+                                  - !Ref 'ADGroup'
+                                  - "' -IsManagedServiceAccount '"
+                                  - !Ref 'IsManagedServiceAccount'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
                                   - ''' -GroupName ''Administrators''"'
                             waitAfterCompletion: '0'
                         i-update-dnssuffixlist:

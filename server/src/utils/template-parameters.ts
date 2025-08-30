@@ -472,6 +472,12 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             default: 'false'
         },
         {
+            name: 'IsManagedServiceAccount',
+            description: '(optional)Boolean to indicate if the service account is a managed service account.',
+            type: 'String',
+            default: 'false'
+        },
+        {
             name: 'EBSVolumeSize',
             description: 'Size of the EBS Volume in GiB.',
             type: 'Number',
@@ -486,6 +492,12 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
         {
             name: 'OUPath',
             description: '(optional) Preferred organizational unit in the AD to join.',
+            type: 'String',
+            default: 'default'
+        },
+        {
+            name: 'ADGroup',
+            description: '(optional) Preferred Active Directory group to add the computers to.',
             type: 'String',
             default: 'default'
         }

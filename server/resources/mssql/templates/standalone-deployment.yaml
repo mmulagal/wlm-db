@@ -22,6 +22,7 @@ Metadata:
                   - DomainMemberSGID
                   - PreferredDomainController
                   - OUPath
+                  - ADGroup
             - Label:
                   default: Amazon EC2 Configuration
               Parameters:
@@ -47,6 +48,7 @@ Metadata:
                   - MSSQLMediaBucketName
                   - MSSQLMediaPathKey
                   - NumberOfNodes
+                  - IsManagedServiceAccount
                   - SQLAdminAccounts
                   - AMIID
                   - BYOLAMI
@@ -122,7 +124,12 @@ Metadata:
             PreferredDomainController:
                 default: (optional) Preferred domain controller to use for AD join
             OUPath:
-                default: (optional) Preferred organizational unit in the AD to join. For example, "OU=Workstations,DC=example,DC=com"                
+                default: (optional) Preferred organizational unit in the AD to join. For example, "OU=Workstations,DC=example,DC=com"
+            ADGroup:
+                default: (optional) Active Directory group to add the instance to. For example, "SQL Servers"
+            IsManagedServiceAccount:
+                default: (optional) Boolean to indicate if the service account is a managed service account.
+
 Parameters:
     ParentStackName:
         Description: Stack name for the parent CloudFormation stack.
@@ -273,7 +280,18 @@ Parameters:
     OUPath:
         Description: (optional) Preferred organizational unit in the AD to join.
         Type: String
-        Default: default      
+        Default: default
+    ADGroup:
+        Description: (optional) Active Directory group to add the instance to.
+        Type: String
+        Default: default
+    IsManagedServiceAccount:
+        Description: (optional) Whether the service account is a managed service account.
+        Type: String
+        AllowedValues:
+            - 'true'
+            - 'false'
+        Default: 'false'
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
@@ -756,6 +774,16 @@ Resources:
                                     - '\'
                                     - - !Ref 'DomainDNSName'
                                       - !Ref 'SQLAdminAccounts'
+                                  - "' -DCName '"
+                                  - !Ref 'PreferredDomainController'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -ADGroup '"
+                                  - !Ref 'ADGroup'
+                                  - "' -IsManagedServiceAccount '"
+                                  - !Ref 'IsManagedServiceAccount'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
                                   - ''' -GroupName ''Administrators''"'
                             waitAfterCompletion: '0'
                 SQLIncludedConfigure:

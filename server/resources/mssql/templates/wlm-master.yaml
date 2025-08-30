@@ -49,6 +49,7 @@ Metadata:
           - DomainMemberSGID
           - PreferredDomainController
           - OUPath
+          - ADGroup
       - Label:
           default: Amazon FSx for ONTAP configuration
         Parameters: 
@@ -80,6 +81,7 @@ Metadata:
         Parameters:
           - SQLDeploymentMode
           - SQLAMIID
+          - IsManagedServiceAccount
           - SQLServiceAccountName
           - SQLServiceAccountPassword
           - SqlFSxWSFCName
@@ -203,7 +205,11 @@ Metadata:
         default: (optional) Preferred domain controller to use for AD join
       OUPath:
         default: (optional) Preferred organizational unit in the AD to join.
-Parameters: 
+      IsManagedServiceAccount:
+        default: (optional) Boolean to indicate if the service account is a managed service account.
+      ADGroup:
+        default: (optional) Active Directory group to add the computers to.
+Parameters:
   UniqueID:
     Description: Automation execution unique ID.
     Type: String 
@@ -357,7 +363,11 @@ Parameters:
   {{{PreferredDomainController}}}
 
   {{{OUPath}}}
-       
+
+  {{{IsManagedServiceAccount}}}
+
+  {{{ADGroup}}}
+
 Conditions:
   UseAWSDirectoryServiceEE:
     Fn::Equals:
@@ -374,6 +384,7 @@ Conditions:
   ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
   HasPreferredDomainController: !Not [!Equals [!Ref PreferredDomainController, ""]]
   HasOUPath: !Not [!Equals [!Ref OUPath, ""]]
+  HasADGroup: !Not [!Equals [!Ref ADGroup, ""]]
 Resources:
   CredentialsSsmParameter:
     Type: AWS::SSM::Parameter
@@ -911,6 +922,8 @@ Resources:
           Ref: EBSVolumeSize
         SQLAdminAccounts:
           Ref: SQLServiceAccountName
+        IsManagedServiceAccount:
+          Ref: IsManagedServiceAccount
         VPCID:
           Ref: VPCID
         VPCCIDR:
@@ -969,7 +982,12 @@ Resources:
           Fn::If:
             - HasOUPath
             - Ref: OUPath
-            - !Ref AWS::NoValue            
+            - !Ref AWS::NoValue
+        ADGroup:
+          Fn::If:
+            - HasADGroup
+            - Ref: ADGroup
+            - !Ref AWS::NoValue
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -1075,7 +1093,12 @@ Resources:
           Fn::If:
             - HasOUPath
             - Ref: OUPath
-            - !Ref AWS::NoValue            
+            - !Ref AWS::NoValue
+        ADGroup:
+          Fn::If:
+            - HasADGroup
+            - Ref: ADGroup
+            - !Ref AWS::NoValue
       NotificationARNs:
         Fn::If:
         - IncludeNotification
