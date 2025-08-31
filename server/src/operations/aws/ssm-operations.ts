@@ -33,7 +33,7 @@ import {
 } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
-import { SSMParamterObject, MultipleCommandSsmResponse, AWSSDKCacheParams } from '../../utils/common-types';
+import { SSMParameterObject, MultipleCommandSsmResponse, AWSSDKCacheParams } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
@@ -461,7 +461,7 @@ async function pollSSMConnectionStatus(
     return pollSSMConnectionStatus(accountId, credentialId, region, instanceId, retryCount + 1, pollInterval);
 }
 
-async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParamterObject[]) {
+async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParameterObject[]) {
     logger.info('Put SSM parameters', { credentialsId, region });
 
     const inputList = credentials.map(({ path, value }) => ({

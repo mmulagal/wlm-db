@@ -16,7 +16,7 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import { SSMParamterObject } from '../../../src/utils/common-types';
+import { SSMParameterObject } from '../../../src/utils/common-types';
 import getParameterResponse from '../../simulator/responses/aws/ssm-get-parameter.json';
 import { ACCOUNTID } from '../../../src/utils/consts';
 
@@ -161,7 +161,7 @@ describe('executeSsmDocument', () => {
     });
 
     it('Put parameters in ssm parameter store', async () => {
-        const params: SSMParamterObject[] = [
+        const params: SSMParameterObject[] = [
             {
                 path: 'netapp/wlmdb/fs-1234',
                 value: {

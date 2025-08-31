@@ -64,7 +64,7 @@ import {
     OracleCredential,
     OracleInstanceRegistration,
     SqlCredential,
-    SSMParamterObject
+    SSMParameterObject
 } from '../utils/common-types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { getParameter, deleteParameters } from '../lib/aws/ssm';
@@ -103,6 +103,7 @@ const WINDOWS = 'windows';
 
 const { getPreSignedUrl } = preSignedUrl;
 
+const EXISTING_FSX_PARAMETERS = 'EXISTING_FSX_PARAMETERS';
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const TEMP = '_temp';
 const WINDOWS_LOCAL_USER_ACCESS_ERROR =
@@ -1717,7 +1718,7 @@ function getErrorMessage(detectResponse: Record<string, string[]>[]) {
 function prepareParametersToStore(instanceIds: string[], credentials: RegisterCredentialsType[]) {
     logger.debug('prepare parameters to store', { instanceIds });
 
-    return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
+    return credentials.reduce((acc: SSMParameterObject[], { resourceId, resourceType, username, password }) => {
         if (resourceType === RESOURCESTYPE.MSSQL) {
             const sqlItem = acc.find(el => el.value.sql);
 
@@ -2109,6 +2110,13 @@ async function rewriteOrDeleteSSMParameter(
         ...latestOracleAsmCredentials
     ]);
 
+    if (isEmpty(latestFsxCredentials)) {
+        const existingFsxCreds: SSMParameterObject = await getAsyncLocalStorageResource(EXISTING_FSX_PARAMETERS);
+        if (existingFsxCreds?.path?.includes(fsxCredentials?.resourceId)) {
+            creds.push(existingFsxCreds);
+        }
+    }
+
     if (!isEmpty(creds)) {
         await ssmPutParameters(credentialsId, region, creds);
     }
@@ -2124,7 +2132,7 @@ async function cleanUpdatedParams(
     credentialsId: string,
     region: string,
     instanceIds: string[]
-): Promise<(SSMParamterObject | undefined)[]> {
+): Promise<(SSMParameterObject | undefined)[]> {
     logger.info('Get existing SSM parameters', { credentialsId, region, instanceIds });
 
     return Promise.all(
@@ -2147,7 +2155,7 @@ async function cleanUpdatedParams(
                     ...(!isEmpty(domain) && { domain }),
                     ...(!isEmpty(sql) && { sql })
                 }
-            } as SSMParamterObject;
+            } as SSMParameterObject;
         })
     );
 }
@@ -2743,14 +2751,17 @@ async function verifyAndCreateCredentials(
     logger.info('Verify and create credentials', { instanceId, databaseCredentialsLength: databaseCredentials.length });
 
     if (fsxCredentials) {
-        const SSMParameter = await getParameter(
-            credentialsId,
-            region,
-            `${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`
-        );
+        const path = `${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`;
+        const SSMParameter = await getParameter(credentialsId, region, path);
         if (!SSMParameter) {
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
             setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), fsxCredentials.resourceId]);
+        } else {
+            const credsObject: SSMParameterObject = {
+                path,
+                value: JSON.parse(SSMParameter)
+            };
+            setAsyncLocalStorageResource(EXISTING_FSX_PARAMETERS, credsObject);
         }
     }
 

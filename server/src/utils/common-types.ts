@@ -445,7 +445,7 @@ interface NetworkInterface {
 type SqlCredential = { sqlinstancename: string; username: string; password: string };
 type OracleCredential = { oracleinstancename: string; username: string; password: string };
 
-interface SSMParamterObject {
+interface SSMParameterObject {
     path: string;
     value: {
         [key: string]: { username: string; password: string } | Array<SqlCredential | OracleCredential>;
@@ -843,7 +843,7 @@ export {
     Subnet,
     VPC,
     NetworkInterface,
-    SSMParamterObject,
+    SSMParameterObject,
     UserDatabase,
     MissingPermission,
     MissingPermissionInterface,
