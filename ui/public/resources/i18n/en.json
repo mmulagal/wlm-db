@@ -169,6 +169,8 @@
         "oracle-inner-page": {
             "storage-configuration": "Storage configuration",
             "storage-layout": "Storage layout",
+            "single-tenant": "Single tenant",
+            "multi-tenant": "Multi tenant",
             "view-recommendation": "View recommendation",
             "view-and-fix": " View and fix",
             "view": " View",

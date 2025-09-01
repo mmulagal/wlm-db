@@ -48,10 +48,7 @@ const TaskTable = ({ taskList = [] }: any) => {
             postBlueXPMessage({
                 type: BlueXPListeners.navigate,
                 payload: {
-                    pathname: '../fsxdb/inventory',
-                    state: {
-                        bxpParams: 'optimize'
-                    },
+                    pathname: '../fsxdb/inventory/optimize',
                     replace: true
                 }
             });

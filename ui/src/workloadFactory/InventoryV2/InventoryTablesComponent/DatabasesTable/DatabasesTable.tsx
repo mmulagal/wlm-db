@@ -222,12 +222,12 @@ const DatabasesTable = () => {
             <DialogComponent
                 header={t('databases.inventory.protect-header-database')}
                 content={<FetchingDialog />}
-                primaryButton={t('databases.inventory.redirect')}
                 secondaryButton={GENERAL.CANCEL}
                 closeCallback={() => {
                     dispatch(cancelProtectionForRow(key));
                     closeDialog();
                 }}
+                hidePrimaryButton={true}
                 callback={() => {}}
                 customClass={styles.protectionDialog}
                 dialogFrom={FROM_DIALOG.LOADER}

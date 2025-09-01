@@ -34,6 +34,19 @@ const ResourceHeader = ({
         return status;
     };
 
+    const formatTenancyValue = (tenancy: string) => {
+        if (!tenancy) return tenancy;
+
+        const lowerCaseTenancy = tenancy.toLowerCase();
+        if (lowerCaseTenancy.includes('single')) {
+            return t('databases.oracle-inner-page.single-tenant');
+        }
+        if (lowerCaseTenancy.includes('multi')) {
+            return t('databases.oracle-inner-page.multi-tenant');
+        }
+        return tenancy;
+    };
+
     return (
         <div className={styles.cardHeader}>
             {resourceHeaderType === DBType.MSSQL && (
@@ -169,9 +182,9 @@ const ResourceHeader = ({
                         <DsTypography
                             variant="Semibold_14"
                             className={styles.titleText}
-                            title={resourceDetails?.tenancy}
+                            title={formatTenancyValue(resourceDetails?.tenancy)}
                         >
-                            {resourceLoading ? <DsFlashingDotsLoader /> : resourceDetails?.tenancy}
+                            {resourceLoading ? <DsFlashingDotsLoader /> : formatTenancyValue(resourceDetails?.tenancy)}
                         </DsTypography>
 
                         <DsTypography variant="Regular_14" className={styles.label}>
