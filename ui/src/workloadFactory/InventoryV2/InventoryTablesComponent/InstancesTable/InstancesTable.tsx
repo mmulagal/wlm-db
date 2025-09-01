@@ -387,7 +387,7 @@ const InstancesTable = () => {
                     dispatch(cancelProtectionForRow(key));
                     closeDialog();
                 }}
-                hidePrimaryButton={true}
+                hidePrimaryButton
                 customClass={styles.protectionDialog}
                 dialogFrom={FROM_DIALOG.LOADER}
             />

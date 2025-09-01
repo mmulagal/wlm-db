@@ -1254,6 +1254,7 @@ export const formatOracleDiscoveredRows = (
         actionDisable: actionObj?.actionDisable,
         isManagedHost: false,
         loading: false,
+        isInstanceStorageAsmManaged: discoveredRow?.databaseInstanceDetails?.[0]?.isInstanceStorageAsmManaged,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
         ec2Details,

@@ -91,9 +91,29 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         let newSelectedMultiDetectInstances: BulkDetectedInstance[] = selectedMultiDetectInstances;
         const engineType = selectedMultiDetectInstances[0]?.data?.hostType;
 
+        // Check if any batch has credentials before processing
+        const hasCredentials = batches.some(batch =>
+            batch.some(item => item.credentials && item.credentials.length > 0)
+        );
+
+        if (!hasCredentials) {
+            goToNextStep();
+            return;
+        }
+
         try {
             for (let i = 0; i < batches.length; i++) {
                 const batchPayload = { items: batches[i] };
+
+                // Check if this batch has any items with credentials
+                const batchHasCredentials = batchPayload.items.some(
+                    item => item.credentials && item.credentials.length > 0
+                );
+
+                if (!batchHasCredentials) {
+                    continue; // Skip this batch if no credentials
+                }
+
                 const result = await registerResourceCredBulk({ payload: batchPayload });
 
                 if (result && !result?.error) {
@@ -159,48 +179,52 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     }
                 ]
             };
-            const result = await registerResourceCredBulk({ payload });
-            if (result && !result?.error && result?.data) {
-                if (
-                    result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
-                    result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
-                    result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError
-                ) {
-                    const error = [];
-                    error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError || '');
-                    error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError || '');
-                    error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError || '');
+            if (payload?.items?.some(item => item?.credentials?.length > 0)) {
+                const result = await registerResourceCredBulk({ payload });
+                if (result && !result?.error && result?.data) {
+                    if (
+                        result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
+                        result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
+                        result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError
+                    ) {
+                        const error = [];
+                        error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError || '');
+                        error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError || '');
+                        error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError || '');
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: error.join(' ') || t('databases.register-flow.manage-detect-fail-message')
+                            })
+                        );
+                    } else {
+                        // store fsx cred in register obj if payload has fsx register
+                        saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
+                        const updatedInventoryTableData = updateInstanceStatus(
+                            'detect',
+                            manageSingleInstanceData,
+                            manageSingleInstanceData
+                        );
+                        dispatch(setInventoryTableData(updatedInventoryTableData));
+                        if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
+                            dispatch(
+                                setManageSingleInstanceReadiness(
+                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
+                                )
+                            );
+                        }
+                        goToNextStep();
+                    }
+                } else {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: error.join(' ') || t('databases.register-flow.manage-detect-fail-message')
+                            message: t('databases.register-flow.manage-detect-fail-message')
                         })
                     );
-                } else {
-                    // store fsx cred in register obj if payload has fsx register
-                    saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
-                    const updatedInventoryTableData = updateInstanceStatus(
-                        'detect',
-                        manageSingleInstanceData,
-                        manageSingleInstanceData
-                    );
-                    dispatch(setInventoryTableData(updatedInventoryTableData));
-                    if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
-                        dispatch(
-                            setManageSingleInstanceReadiness(
-                                result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
-                            )
-                        );
-                    }
-                    goToNextStep();
                 }
             } else {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: t('databases.register-flow.manage-detect-fail-message')
-                    })
-                );
+                goToNextStep();
             }
         } catch (error) {
             dispatch(

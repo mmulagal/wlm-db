@@ -2401,13 +2401,12 @@ export const formatString = (s: string | undefined) => {
     return lowerCased.charAt(0).toUpperCase() + lowerCased.slice(1);
 };
 
-//This function is only for BXP
+// This function is only for BXP
 export const setSelectedTabInformation = (tabInfo: string, pathName: string) => {
     if (pathName === '/fsxdb/inventory/optimize') {
         return WLF_TABS.OPTIMIZE;
-    } else {
-        return tabInfo;
     }
+    return tabInfo;
 };
 
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {

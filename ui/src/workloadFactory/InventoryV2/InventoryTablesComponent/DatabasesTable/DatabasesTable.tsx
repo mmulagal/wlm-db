@@ -227,7 +227,7 @@ const DatabasesTable = () => {
                     dispatch(cancelProtectionForRow(key));
                     closeDialog();
                 }}
-                hidePrimaryButton={true}
+                hidePrimaryButton
                 callback={() => {}}
                 customClass={styles.protectionDialog}
                 dialogFrom={FROM_DIALOG.LOADER}
