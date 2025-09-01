@@ -2113,7 +2113,11 @@ async function rewriteOrDeleteSSMParameter(
     if (isEmpty(latestFsxCredentials)) {
         const existingFsxCreds: SSMParameterObject = await getAsyncLocalStorageResource(EXISTING_FSX_PARAMETERS);
         if (existingFsxCreds?.path?.includes(fsxCredentials?.resourceId)) {
-            creds.push(existingFsxCreds);
+            if (existingFsxCreds.value) {
+                creds.push(existingFsxCreds);
+            } else {
+                logger.error('Existing FSx credentials are invalid or missing', { existingFsxCreds });
+            }
         }
     }
 
@@ -2752,15 +2756,19 @@ async function verifyAndCreateCredentials(
 
     if (fsxCredentials) {
         const path = `${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`;
-        const SSMParameter = await getParameter(credentialsId, region, path);
-        if (!SSMParameter) {
+        let ssmParameter = await getParameter(credentialsId, region, path);
+        if (!ssmParameter) {
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
             setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), fsxCredentials.resourceId]);
         } else {
-            const credsObject: SSMParameterObject = {
-                path,
-                value: JSON.parse(SSMParameter)
-            };
+            ssmParameter = ssmParameter.replace(/([{,])\s*(\w+)\s*:/g, '$1"$2":').replace(/'/g, '"');
+            let value;
+            try {
+                value = JSON.parse(ssmParameter);
+            } catch (error) {
+                logger.error('Error parsing SSM parameter', { error });
+            }
+            const credsObject: SSMParameterObject = { path, value };
             setAsyncLocalStorageResource(EXISTING_FSX_PARAMETERS, credsObject);
         }
     }
