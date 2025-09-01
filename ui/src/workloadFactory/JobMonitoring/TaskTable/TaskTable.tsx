@@ -18,7 +18,7 @@ import {
 import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { GENERAL } from '../../../utils/appConstants';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import {
     setCredIdFromJM,
@@ -80,6 +80,7 @@ const TaskTable = ({ taskList = [] }: any) => {
             dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
             navigateToInventory();
         }
+        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
 
         if (rowData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
             dispatch(setCredIdFromJM(rowData?.credentialsId));

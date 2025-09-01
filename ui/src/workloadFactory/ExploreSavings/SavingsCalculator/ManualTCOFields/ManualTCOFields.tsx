@@ -18,8 +18,13 @@ import {
 import { useAppSelector } from '../../../../store/storeHooks';
 import { SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
-const ManualTCOFields = () => {
+interface ManualTCOFieldsProps {
+    printState: boolean;
+}
+
+const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
     const dispatch = useDispatch();
     const {
         selectedManualRegion,
@@ -203,17 +208,27 @@ const ManualTCOFields = () => {
                 </div>
 
                 <div className={styles.secondRow}>
-                    <TextField
-                        label={GENERAL.MONTHLY_DATA_CHANGE_RATE}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            dispatch(setMonthlyChangeRate(numVal));
-                        }}
-                        value={monthlyChangeRate || ''}
-                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                        info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
-                        error={errorForChangeRate()}
-                    />
+                    {!printState && (
+                        <TextField
+                            label={GENERAL.MONTHLY_DATA_CHANGE_RATE}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                dispatch(setMonthlyChangeRate(numVal));
+                            }}
+                            value={monthlyChangeRate || ''}
+                            className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                            info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
+                            error={errorForChangeRate()}
+                        />
+                    )}
+                    {printState && (
+                        <div className={CommonStyles.mockInputClone}>
+                            <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                                {GENERAL.MONTHLY_DATA_CHANGE_RATE}
+                            </DsTypography>
+                            <div className={CommonStyles.inputField}>{monthlyChangeRate}</div>
+                        </div>
+                    )}
                     <SelectField
                         label={GENERAL.ES_SNAPSHOT_FREQUENCY}
                         isClearable={false}
@@ -228,27 +243,47 @@ const ManualTCOFields = () => {
                 </div>
 
                 <div className={styles.secondRow}>
-                    <TextField
-                        label={GENERAL.NUMBER_OF_CLONED_COPIES}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            dispatch(setNumberOfClonedCopies(numVal));
-                        }}
-                        value={numberOfClonedCopies}
-                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                        error={errorForClonedCopiesCount()}
-                    />
+                    {!printState && (
+                        <TextField
+                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                dispatch(setNumberOfClonedCopies(numVal));
+                            }}
+                            value={numberOfClonedCopies}
+                            className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                            error={errorForClonedCopiesCount()}
+                        />
+                    )}
+                    {printState && (
+                        <div className={CommonStyles.mockInputClone}>
+                            <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                                {GENERAL.NUMBER_OF_CLONED_COPIES}
+                            </DsTypography>
+                            <div className={CommonStyles.inputField}>{numberOfClonedCopies}</div>
+                        </div>
+                    )}
 
-                    <TextField
-                        label={GENERAL.BYOL_TEXT}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setMachineDesc(numVal);
-                        }}
-                        isOptional
-                        value={machineDesc}
-                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                    />
+                    {!printState && (
+                        <TextField
+                            label={GENERAL.BYOL_TEXT}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                setMachineDesc(numVal);
+                            }}
+                            isOptional
+                            value={machineDesc}
+                            className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                        />
+                    )}
+                    {printState && (
+                        <div className={CommonStyles.mockInputClone}>
+                            <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                                {GENERAL.BYOL_TEXT}
+                            </DsTypography>
+                            <div className={CommonStyles.inputField}>{machineDesc}</div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

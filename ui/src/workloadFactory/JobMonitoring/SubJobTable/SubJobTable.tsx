@@ -29,7 +29,7 @@ import {
 } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import {
     setCredIdFromJM,
@@ -107,6 +107,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
             navigateToInventory();
         }
+        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
 
         if (subJobsData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
             dispatch(setCredIdFromJM(rowData?.credentialsId));

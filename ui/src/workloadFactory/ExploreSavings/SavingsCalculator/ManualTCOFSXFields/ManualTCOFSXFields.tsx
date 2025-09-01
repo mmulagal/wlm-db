@@ -15,8 +15,13 @@ import {
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import { TCO_MANUAL_DEPLOYMENT_TYPE } from '../../../../utils/consts';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
-const ManualTCOFSXFields = () => {
+interface ManualTCOFSXFieldsProps {
+    printState: boolean;
+}
+
+const ManualTCOFSXFields = ({ printState }: ManualTCOFSXFieldsProps) => {
     const dispatch = useDispatch();
     const {
         selectedManualDeploymentType,
@@ -188,16 +193,26 @@ const ManualTCOFSXFields = () => {
                 {/* Second row starts here */}
                 <div className={styles.rowContainer}>
                     <div className={styles.storageCapacityField}>
-                        <TextField
-                            label="Total storage capacity"
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                                setStorageCapacity(numVal);
-                            }}
-                            value={storageCapacity}
-                            className={`${styles.SCWidth} savings-calculator-input-fields`}
-                            error={handleStorageCapacityError()}
-                        />
+                        {!printState && (
+                            <TextField
+                                label="Total storage capacity"
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                    setStorageCapacity(numVal);
+                                }}
+                                value={storageCapacity}
+                                className={`${styles.SCWidth} savings-calculator-input-fields`}
+                                error={handleStorageCapacityError()}
+                            />
+                        )}
+                        {printState && (
+                            <div className={CommonStyles.mockInputClone}>
+                                <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                                    Total storage capacity
+                                </DsTypography>
+                                <div className={CommonStyles.inputField}>{storageCapacity}</div>
+                            </div>
+                        )}
                         <SelectField
                             label="hide"
                             isClearable={false}
@@ -211,29 +226,49 @@ const ManualTCOFSXFields = () => {
                         />
                     </div>
 
-                    <TextField
-                        label="Provisioned SSD IOPS"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setIOPSValue(numVal);
-                        }}
-                        value={iopsValue}
-                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                        error={handleIOPSError()}
-                    />
+                    {!printState && (
+                        <TextField
+                            label="Provisioned SSD IOPS"
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                setIOPSValue(numVal);
+                            }}
+                            value={iopsValue}
+                            className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                            error={handleIOPSError()}
+                        />
+                    )}
+                    {printState && (
+                        <div className={CommonStyles.mockInputClone}>
+                            <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                                Provisioned SSD IOPS
+                            </DsTypography>
+                            <div className={CommonStyles.inputField}>{iopsValue}</div>
+                        </div>
+                    )}
                 </div>
 
                 <div className={styles.rowContainer}>
-                    <TextField
-                        label="Throughput (MB/s)"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setThroughputValue(numVal);
-                        }}
-                        value={throughputValue}
-                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                        error={handleThroughputError()}
-                    />
+                    {!printState && (
+                        <TextField
+                            label="Throughput (MB/s)"
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                setThroughputValue(numVal);
+                            }}
+                            value={throughputValue}
+                            className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                            error={handleThroughputError()}
+                        />
+                    )}
+                    {printState && (
+                        <div className={CommonStyles.mockInputClone}>
+                            <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                                Throughput (MB/s)
+                            </DsTypography>
+                            <div className={CommonStyles.inputField}>{throughputValue}</div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

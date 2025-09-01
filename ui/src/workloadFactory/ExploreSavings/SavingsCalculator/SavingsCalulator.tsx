@@ -340,7 +340,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <>
                                         <SavingsHeader />
                                         <div style={{ padding: '40px' }}>
-                                            <ManualTCOFields />
+                                            <ManualTCOFields printState={printState} />
                                             <ManualEC2 />
                                             <ManualVolumeTypes />
                                             {selectedManualDeploymentModel?.label ===
@@ -353,8 +353,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <>
                                         <SavingsHeader />
                                         <div style={{ padding: '40px' }}>
-                                            <ManualTCOFields />
-                                            <ManualTCOFSXFields />
+                                            <ManualTCOFields printState={printState} />
+                                            <ManualTCOFSXFields printState={printState} />
                                             <ManualFSXEC2 />
                                         </div>
                                     </>

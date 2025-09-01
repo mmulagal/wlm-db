@@ -233,3 +233,28 @@
 .protectionTooltipPopOver {
     display: contents;
 }
+
+.mockInputClone {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 191px;
+    position: relative;
+
+    .inputField {
+        font-family: var(--font-family);
+        box-sizing: border-box;
+        min-height: 40px;
+        height: 40px;
+        box-shadow: none;
+        background-color: var(--content-background);
+        color: var(--text-primary);
+        padding: 0 16px;
+        padding-top: 10px;
+        border: 1px solid var(--field-border);
+        outline: none;
+        border-radius: 4px;
+        width: 100%;
+        font-size: 14px;
+    }
+}
