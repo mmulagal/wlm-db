@@ -122,8 +122,8 @@ function getVolumeConfigDrift(
     };
 
     const deduplicationRecommendations = {
-        'log-files': 'none',
-        others: 'inline'
+        'log-files': ['none'],
+        others: ['inline', 'both']
     };
 
     const controlDataFileVolumeNames = [...dataFileVolumeNames, ...controlFileVolumeNames];
@@ -199,14 +199,16 @@ function getVolumeConfigDrift(
 
                 case 'deduplication': {
                     const recommendations = deduplicationRecommendations;
+                    let multirecommendations = recommendations['log-files'];
                     if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
-                        recommended = recommendations['log-files'];
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                        recommended = 'none';
                     } else {
-                        recommended = recommendations.others;
+                        multirecommendations = recommendations.others;
                         dataCategory = 'non-log-files';
+                        recommended = 'inline';
                     }
-                    isViolated = value !== recommended;
+                    isViolated = !multirecommendations.includes(value);
                     break;
                 }
 
