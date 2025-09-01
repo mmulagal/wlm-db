@@ -11,8 +11,8 @@ import { ReactComponent as ReviewDisabled } from '../../../../../../assets/Revie
 import { ReactComponent as FixDisabled } from '../../../../../../assets/Fix-disabled.svg';
 import { ReactComponent as DatabaseDisabled } from '../../../../../../assets/Database-disabled.svg';
 import { ReactComponent as SandboxImageDisabled } from '../../../../../../assets/Sandbox-disabled.svg';
-import { ReactComponent as BedrockDisabled } from '../../../../../../assets/Bedrock-disabled.svg';
-import { ReactComponent as Bedrock } from '../../../../../../assets/Bedrock.svg';
+import { ReactComponent as LogAnalyzerDisabled } from '../../../../../../assets/log_analyzer_disable.svg';
+import { ReactComponent as LogAnalyzer } from '../../../../../../assets/log_analyzer.svg';
 
 export const PermissionListComponentItems = (
     t: TFunction,
@@ -314,9 +314,9 @@ export const PermissionListComponentItems = (
             missingPermission: manageChecks?.errorInvestigation !== MANAGE_STATES.READY,
             image:
                 wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.errorInvestigation !== MANAGE_STATES.READY ? (
-                    <BedrockDisabled />
+                    <LogAnalyzerDisabled />
                 ) : (
-                    <Bedrock />
+                    <LogAnalyzer />
                 ),
             content: (
                 <PermissionContent
