@@ -1,16 +1,9 @@
 {
-    "count": 2,
+    "count": 3,
     "items": [
         {
-            "id": "c7e74bc0e78b1f9f",
-            "name": "asm28n",
-            "databaseHostStatus": "UNKNOWN",
-            "ssmStatus": "notconnected",
-            "databaseInstanceDetails": []
-        },
-        {
-            "id": "3aae8727849ea447",
-            "name": "ordbsdl",
+            "id": "65c6fd61d60cd207",
+            "name": "oracle19c-normal-nfs-310825235525",
             "databaseHostStatus": "ONLINE",
             "ssmStatus": "connected",
             "storageAllocation": {
@@ -20,16 +13,10 @@
             },
             "databaseInstanceDetails": [
                 {
-                    "instanceName": "ordbsdl",
-                    "databaseInstanceId": "ordbsdl",
+                    "instanceName": "oradb1",
+                    "databaseInstanceId": "oradb1",
                     "isManaged": true,
                     "instanceState": "Up",
-                    "isDefault": false
-                },
-                {
-                    "instanceName": "oraclesan2",
-                    "isManaged": false,
-                    "instanceState": "Down",
                     "isDefault": false
                 }
             ],
@@ -61,8 +48,8 @@
             },
             "databaseInstancesSummary": [
                 {
-                    "databaseInstanceId": "ordbsdl",
-                    "databaseInstanceName": "ordbsdl",
+                    "databaseInstanceId": "oradb1",
+                    "databaseInstanceName": "oradb1",
                     "status": "Up",
                     "databaseCount": 1,
                     "databaseInstanceTopology": {
@@ -75,12 +62,28 @@
                         "fileSystemStatus": "AVAILABLE",
                         "fileSystemStorageCapacity": 1024,
                         "fileSystemThroughputCapacity": 128,
-                        "fileSystemStorageType": "SSD"
+                        "fileSystemStorageType": "SSD",
+                        "storageSummary": {
+                            "volumes": [
+                                {
+                                    "id": "02ff9ede-86e8-11f0-9e3f-b750f9c1c48e",
+                                    "name": "data_310825235912",
+                                    "luns": [{}]
+                                },
+                                {
+                                    "id": "4af890c3-86e8-11f0-9e3f-b750f9c1c48e",
+                                    "name": "oraredoctl_310825235912",
+                                    "luns": [{}]
+                                }
+                            ],
+                            "totalVolumes": 2,
+                            "totalLuns": 1
+                        }
                     },
                     "protection": {
                         "isSqlNativeEnabled": false,
                         "isAwsBackupEnabled": {
-                            "fsxn": true,
+                            "fsxn": false,
                             "fsxw": false,
                             "ebs": false
                         },
@@ -90,32 +93,73 @@
                         "assessment": "Excellent ( <=1 ms )",
                         "rwMetrics": {
                             "latency": {
-                                "read": 0,
-                                "write": 0,
-                                "serverIo": 0
+                                "read": [],
+                                "write": []
                             },
                             "iops": {
-                                "read": 0.1,
-                                "write": 0.62
+                                "read": [],
+                                "write": []
                             },
                             "throughput": {
-                                "read": 0.001,
-                                "write": 0.005
+                                "read": [],
+                                "write": []
                             }
                         }
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "size": 1099511627776,
+                            "used": 848170785543.2195,
+                            "spaceSavings": 665050822678.2487,
+                            "spaceSavingsPercentage": 78.41001293770219,
+                            "protocol": ["NFS"]
+                        }
+                    },
+                    "resourceUtilization": {
+                        "cpu": []
                     },
                     "sqlServerDeploymentType": "Standalone",
                     "databases": [
                         {
-                            "name": "ORDBSDL",
+                            "name": "ORADB1",
                             "status": "ONLINE",
                             "type": "Single tenant",
-                            "size": 2.53
+                            "size": 1850736640
                         }
                     ]
                 }
             ]
+        },
+        {
+            "id": "9c07489e2ed62123",
+            "name": "apeksha-oracle19c-pdb-sles15-iscsi-250825234438",
+            "databaseHostStatus": "UNKNOWN",
+            "ssmStatus": "notconnected",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "pdbnas1",
+                    "databaseInstanceId": "pdbnas1",
+                    "isManaged": true,
+                    "instanceState": "Down",
+                    "isDefault": false
+                }
+            ]
+        },
+        {
+            "id": "a4d6aaa59ae0fba9",
+            "name": "(c##su1/netapp) oracle19c-pdb-nfs-asm-250825234438",
+            "databaseHostStatus": "UNKNOWN",
+            "ssmStatus": "notconnected",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "asm28n",
+                    "databaseInstanceId": "asm28n",
+                    "isManaged": true,
+                    "instanceState": "Down",
+                    "isDefault": false
+                }
+            ]
         }
     ],
-    "nextToken": null
+    "nextToken": ""
 }
