@@ -2400,6 +2400,15 @@ export const formatString = (s: string | undefined) => {
     return lowerCased.charAt(0).toUpperCase() + lowerCased.slice(1);
 };
 
+//This function is only for BXP
+export const setSelectedTabInformation = (tabInfo: string, selectedHeaderTab: string) => {
+    if (selectedHeaderTab === WLF_TABS.OPTIMIZE || selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED) {
+        return selectedHeaderTab;
+    } else {
+        return tabInfo;
+    }
+};
+
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
     switch (tab) {
         case WLF_TABS.INVENTORY:

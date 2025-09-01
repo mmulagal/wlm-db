@@ -16,13 +16,14 @@ import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
 import { useRunOnce } from './common/hooks/useRunOnce';
-import { checkLeftNavRoute, setRoutePath, setTabInfoFOrBXP } from './utils/utilityFunctions';
+import { checkLeftNavRoute, setRoutePath, setSelectedTabInformation, setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
     const { isWorkloadFactory, pathname: navigationPath } = useAppSelector(state => state?.auth);
+    const { selectedHeaderTab } = useAppSelector(state => state.inventoryV2);
     const { statusData } = useAppSelector(state => state.headers.getStatus);
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -54,7 +55,9 @@ const Home = () => {
                             navigate(`../fsxdb/${routePath}`);
                         }
 
-                        dispatch(setSelectedHeaderTab(tabInfo));
+                        const tabInformation = setSelectedTabInformation(tabInfo, selectedHeaderTab);
+
+                        dispatch(setSelectedHeaderTab(tabInformation));
                     }
                 }
             };
