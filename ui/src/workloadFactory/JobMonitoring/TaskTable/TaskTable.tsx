@@ -1,4 +1,5 @@
 import { Button, Popover, Typography } from '@netapp/design-system';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import styles from './TaskTable.module.scss';
@@ -27,10 +28,32 @@ import {
     setSelectedWellArchitectTab
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/oracleSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const TaskTable = ({ taskList = [] }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+
+    const navigateToInventory = () => {
+        if (isWorkloadFactory) {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: '../databases/inventory',
+                    replace: true
+                }
+            });
+        } else {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: '../fsxdb/inventory',
+                    replace: true
+                }
+            });
+        }
+    };
     const navigateToContinuosOptimization = (message: string, rowData: any) => {
         const splitMessage = message.split(';');
 
@@ -50,10 +73,12 @@ const TaskTable = ({ taskList = [] }: any) => {
         if (sqlServerDeploymentType.toLowerCase() === DBType.ORACLE.toLowerCase()) {
             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
             dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+            navigateToInventory();
         } else {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
             dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+            navigateToInventory();
         }
 
         if (rowData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
