@@ -3920,7 +3920,7 @@ export const addHostJobPolling = async (
         isProcessing = true;
         try {
             const jobRes = await addHostJobScApi({
-                accountID: store.getState().auth.orgId,
+                accountID: store.getState().auth.accountId,
                 jobID: jobId
             });
             const status = jobRes?.data?.status;
