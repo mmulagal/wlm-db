@@ -3817,7 +3817,8 @@ const callDeleteHost = async (
 ) => {
     const state: any = store.getState().snapCenter;
     const deleteHostRes = await deleteHostSc({
-        accountID: store.getState().auth.accountId,
+        accountID: store.getState().auth.orgId,
+        actualAccountId: store.getState().auth.accountId,
         hostId,
         agentID: state.selectedAgent[0]?.id,
         workspaceID: state?.workSpaceData?.id
@@ -3848,7 +3849,8 @@ export const getDiscoverResult = (
     hostName: string,
     agentID: string,
     workspaceID: string,
-    getDiscoverHostResult: any
+    getDiscoverHostResult: any,
+    actualAccountId: string
 ): Promise<number> =>
     new Promise(resolve => {
         let retries = 0;
@@ -3861,7 +3863,8 @@ export const getDiscoverResult = (
                     accountID,
                     hostName,
                     agentID,
-                    workspaceID
+                    workspaceID,
+                    actualAccountId
                 });
 
                 if (result?.error) {
@@ -3991,6 +3994,7 @@ export const addHostJobPolling = async (
                     ) {
                         const state: any = store.getState().snapCenter;
                         const accountID = store.getState().auth.orgId;
+                        const actualAccountId = store.getState().auth.accountId;
                         const hostName = fqdn;
                         const agentID = state.selectedAgent[0]?.id;
                         const workspaceID = state?.workSpaceData?.id;
@@ -4000,7 +4004,8 @@ export const addHostJobPolling = async (
                                 hostName,
                                 agentID,
                                 workspaceID,
-                                getDiscoverHostResult
+                                getDiscoverHostResult,
+                                actualAccountId
                             );
 
                             if (discoverCount > 0) {
@@ -4008,7 +4013,8 @@ export const addHostJobPolling = async (
                                     accountID,
                                     hostID: subJob?.data?.host,
                                     agentID,
-                                    workspaceID
+                                    workspaceID,
+                                    actualAccountId
                                 });
                                 if (dirRes?.error) {
                                     dispatch(
@@ -4028,7 +4034,8 @@ export const addHostJobPolling = async (
                                             hostID: subJob?.data?.host,
                                             payload,
                                             agentID,
-                                            workspaceID
+                                            workspaceID,
+                                            actualAccountId
                                         });
                                     }
                                 }
@@ -4133,6 +4140,7 @@ export const addHostHandlerSc = async (
             // Do something with the credentialsId
             const addHostResponse = await addHostScApi({
                 accountID: store.getState().auth.orgId,
+                actualAccountID: store.getState().auth.accountId,
                 payload: {
                     workloadType: 'SQL',
                     hostName: rowData?.hostRow?.nodeIpAddress,

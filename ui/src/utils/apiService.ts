@@ -605,32 +605,32 @@ export const snapcenterAPI = createApi({
             })
         }),
         listAllDirectories: builder.mutation({
-            query: ({ accountID, hostID, agentID, workspaceID }) => ({
+            query: ({ accountID, hostID, agentID, workspaceID, actualAccountId }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts/${hostID}/drives`,
                 headers: {
-                    'x-account-id': accountID,
+                    'x-account-id': actualAccountId || accountID,
                     'x-agent-id': agentID,
                     'x-netapp-workspace-id': workspaceID
                 }
             })
         }),
         getDiscoverHostResult: builder.mutation({
-            query: ({ accountID, hostName, agentID, workspaceID }) => ({
+            query: ({ accountID, hostName, agentID, workspaceID, actualAccountId }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/databases?search=${hostName}`,
                 headers: {
-                    'x-account-id': accountID,
+                    'x-account-id': actualAccountId || accountID,
                     'x-agent-id': agentID,
                     'x-netapp-workspace-id': workspaceID
                 }
             })
         }),
         configureDirectory: builder.mutation({
-            query: ({ accountID, hostID, payload, agentID, workspaceID }) => ({
+            query: ({ accountID, hostID, payload, agentID, workspaceID, actualAccountId }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts/${hostID}/configurelogdirectory`,
                 method: 'POST',
                 body: payload,
                 headers: {
-                    'x-account-id': accountID,
+                    'x-account-id': actualAccountId || accountID,
                     'x-agent-id': agentID,
                     'x-netapp-workspace-id': workspaceID
                 }
@@ -644,23 +644,23 @@ export const snapcenterAPI = createApi({
             })
         }),
         addHostSc: builder.mutation({
-            query: ({ accountID, payload, agentID, workspaceID }) => ({
+            query: ({ accountID, payload, agentID, workspaceID, actualAccountID }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts`,
                 method: 'POST',
                 body: payload,
                 headers: {
-                    'x-account-id': accountID,
+                    'x-account-id': actualAccountID || accountID,
                     'x-agent-id': agentID,
                     'x-netapp-workspace-id': workspaceID
                 }
             })
         }),
         deleteHostSc: builder.mutation({
-            query: ({ accountID, agentID, workspaceID, hostId }) => ({
+            query: ({ accountID, agentID, workspaceID, hostId, actualAccountId }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts/${hostId}`,
                 method: 'DELETE',
                 headers: {
-                    'x-account-id': accountID,
+                    'x-account-id': actualAccountId || accountID,
                     'x-agent-id': agentID,
                     'x-netapp-workspace-id': workspaceID
                 }
