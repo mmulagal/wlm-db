@@ -14,7 +14,7 @@ import {
     setNoErrorsDetected,
     setNoLogAnalyzerData
 } from '../../../../store/workloadFactory/agenticAISlice';
-import { getCurrentDateTime } from '../../../../utils/utilityFunctions';
+import { getCurrentDateTime, sortListOfDict } from '../../../../utils/utilityFunctions';
 
 const ErrorInvestigationApi = () => {
     const dispatch = useDispatch();
@@ -91,7 +91,8 @@ const ErrorInvestigationApi = () => {
                 instanceId: selectedDatabaseInstance
             });
             if (result && !result?.error && result?.data?.reports && result.data.reports.length > 0) {
-                dispatch(setInvestigationDateData(result.data.reports));
+                const reportsList = sortListOfDict(result.data.reports, 'creationTime', false); // false means it will sort in desc order
+                dispatch(setInvestigationDateData(reportsList));
                 dispatch(setNoLogAnalyzerData(false));
             } else {
                 if (result?.data?.reports && result.data.reports.length === 0) {
