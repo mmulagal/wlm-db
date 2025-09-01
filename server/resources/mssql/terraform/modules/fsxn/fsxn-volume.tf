@@ -45,7 +45,7 @@ resource "aws_fsx_ontap_volume" "fsx_temp_db_volume" {
 
 // creates only for multi zone deployment
 resource "aws_fsx_ontap_volume" "fsx_cluster_quorum_volume" {
-  count                      = local.fsx_is_multi_zone_deployment ? 1 : 0
+  count                      = local.fsx_is_multi_zone_deployment && var.sql_deployment_mode != "standalone" ? 1 : 0
   name                       = var.fsx_cluster_quorum_volume_name
   junction_path              = "/${var.fsx_cluster_quorum_volume_name}"
   security_style             = "NTFS"

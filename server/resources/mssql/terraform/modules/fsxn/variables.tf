@@ -2,11 +2,7 @@ variable "deployment_mode" {
   description = "The deployment mode for the FSx for ONTAP file system."
   type        = string
   validation {
-    condition = (
-      var.fsx_file_system_id == "" ?
-        contains(["MULTI_AZ_1", "SINGLE_AZ_1"], var.deployment_mode) :
-        contains(["MULTI_AZ_1", "MULTI_AZ_2", "SINGLE_AZ_1", "SINGLE_AZ_2"], var.deployment_mode)
-    )
+    condition     = contains(["MULTI_AZ_1", "MULTI_AZ_2", "SINGLE_AZ_1", "SINGLE_AZ_2"], var.deployment_mode)
     error_message = "For new filesystem creation only MULTI_AZ_1 or SINGLE_AZ_1 are allowed. For existing filesystem MULTI_AZ_1, MULTI_AZ_2, SINGLE_AZ_1, or SINGLE_AZ_2 are allowed."
   }
 }
@@ -33,6 +29,11 @@ variable "fsx_storage_capacity" {
     condition     = (var.fsx_storage_capacity >= 1024 && var.fsx_storage_capacity <= 19922944) // 192 TiB in GiB
     error_message = "The storage capacity must be between 1024 GiB and 192 TiB."
   }
+}
+
+variable "sql_deployment_mode" {
+  description = "The SQL Server deployment mode (standalone, fci, etc.)"
+  type        = string
 }
 
 variable "fsx_volume_throughput_capacity" {

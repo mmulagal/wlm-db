@@ -32,21 +32,21 @@ try {
         $DomainAdminSecurePassword = $SsmParameter.domain.password
         $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminSecurePassword -AsPlainText -Force)))
 
-		if ($IsManagedServiceAccount -eq 'true') {
+		if (-not ([string]::IsNullOrEmpty($IsManagedServiceAccount)) -and ($IsManagedServiceAccount -eq 'true')) {
 			$Computer = $env:COMPUTERNAME
-			$InstallServiceAccount ={
-				if(-not ([string]::IsNullOrEmpty($Using:ADGroup)) -and $Using:ADGroup -ne "default" -and $Using:ADGroup -ne "no-value") {
+			$AddtoADGroup ={
+				if(-not ([string]::IsNullOrEmpty($Using:ADGroup)) -and ($Using:ADGroup -ne "default") -and ($Using:ADGroup -ne "no-value")) {
 					Write-Host "Adding computer to specified AD group $Using:ADGroup"
-					if(-not ([string]::IsNullOrEmpty($Using:DCName)) -and $Using:DCName -ne "default" -and $Using:DCName -ne "no-value") {
-						Add-ADGroupMember -Identity $Using:ADGroup -Members $Using:Computer -Server $Using:DCName -ErrorAction SilentlyContinue
+					if(-not ([string]::IsNullOrEmpty($Using:DCName)) -and ($Using:DCName -ne "default") -and ($Using:DCName -ne "no-value")) {
+						$Member = $Using:Computer+'$'
+						Add-ADGroupMember -Identity $Using:ADGroup -Members $Member -Server $Using:DCName -ErrorAction SilentlyContinue
 					} else {
-						Add-ADGroupMember -Identity $Using:ADGroup -Members $Using:Computer -ErrorAction SilentlyContinue
+						$Member = $Using:Computer+'$'
+						Add-ADGroupMember -Identity $Using:ADGroup -Members $Member -ErrorAction SilentlyContinue
 					}
                 }
-                Write-Host "Installing managed service account $Using:Username"
-                Install-ADServiceAccount -Identity $Using:Username -Force -ErrorAction SilentlyContinue
 			}
-			Invoke-Command -ScriptBlock $InstallServiceAccount -ComputerName $Computer -Credential $DomainAdminCreds -Authentication Credssp
+			Invoke-Command -ScriptBlock $AddtoADGroup -ComputerName $Computer -Credential $DomainAdminCreds -Authentication Credssp
 		}
 	}
 

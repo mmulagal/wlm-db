@@ -930,6 +930,8 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                  - "' -IsManagedServiceAccount '"
+                                  - !Ref 'IsManagedServiceAccount'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - "' -Parentstackname '"
@@ -1584,6 +1586,8 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                  - "' -IsManagedServiceAccount '"
+                                  - !Ref 'IsManagedServiceAccount'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - "' -Parentstackname '"
