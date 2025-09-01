@@ -554,7 +554,11 @@ const OptimizeOntapInnerPage = () => {
                     </div>
 
                     <div className={styles.tagSection}>
-                        <TagComponent tagHeight={cardHeight.tagSection} type={selectedOptimizeConfig?.type} />
+                        <TagComponent
+                            tagHeight={cardHeight.tagSection}
+                            type={selectedOptimizeConfig?.type}
+                            engineType={selectedOptimizeConfig?.engineType}
+                        />
                     </div>
                 </div>
 

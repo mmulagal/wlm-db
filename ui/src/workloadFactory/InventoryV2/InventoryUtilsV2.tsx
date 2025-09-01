@@ -243,7 +243,8 @@ export const getPlatformForManagedHost = (managedHostRow: any, engineType: strin
     return undefined;
 };
 
-const oracleSpecificProperties = (managedHostRow: any) => getMappedDiscoveredData(managedHostRow)?.databaseInstanceDetails?.[0]?.isInstanceStorageAsmManaged;
+const oracleSpecificProperties = (managedHostRow: any) =>
+    getMappedDiscoveredData(managedHostRow)?.databaseInstanceDetails?.[0]?.isInstanceStorageAsmManaged;
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
     if (row?.databaseHostStatus && row?.databaseHostStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {

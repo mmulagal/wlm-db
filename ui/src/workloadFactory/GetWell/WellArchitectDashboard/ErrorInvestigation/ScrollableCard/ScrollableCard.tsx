@@ -66,14 +66,6 @@ const ScrollableCard = () => {
                                         {t('databases.log-analyzer.second-card-point-3-text')}
                                     </DsTypography>
                                 </div>
-                                <div className={styles.contentArea}>
-                                    <DsTypography variant="Semibold_16">
-                                        {t('databases.log-analyzer.second-card-point-4-heading')}
-                                    </DsTypography>
-                                    <DsTypography variant="Regular_14">
-                                        {t('databases.log-analyzer.second-card-point-4-text')}
-                                    </DsTypography>
-                                </div>
                             </div>
 
                             <div className={styles.column}>
@@ -88,10 +80,10 @@ const ScrollableCard = () => {
 
                                 <div className={styles.contentArea}>
                                     <DsTypography variant="Semibold_16">
-                                        {t('databases.log-analyzer.second-card-point-5-heading')}
+                                        {t('databases.log-analyzer.second-card-point-4-heading')}
                                     </DsTypography>
                                     <DsTypography variant="Regular_14">
-                                        {t('databases.log-analyzer.second-card-point-5-text')}
+                                        {t('databases.log-analyzer.second-card-point-4-text')}
                                     </DsTypography>
                                 </div>
                             </div>
