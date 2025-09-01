@@ -164,6 +164,7 @@ module "fsxn_standalone" {
   fsx_administrator_password        = var.fsx_admin_password
   fsx_svm_name                      = var.sql_svm_name
   fsx_weekly_maintenance_start_time = "1:05:00"
+  sql_deployment_mode               = var.sql_deployment_mode
 }
 
 module "fsxn_fci" {
@@ -199,6 +200,7 @@ module "fsxn_fci" {
   fsx_administrator_password        = var.fsx_admin_password
   fsx_svm_name                      = var.sql_svm_name
   fsx_weekly_maintenance_start_time = "1:05:00"
+  sql_deployment_mode               = var.sql_deployment_mode
 }
 
 module "standalone_sql_node" {

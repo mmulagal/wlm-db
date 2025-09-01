@@ -75,22 +75,22 @@ output "fsx_log_volume_uuid" {
 # For Cluster Volume
 output "fsx_cluster_volume_logical_id" {
   description = "Logical ID of the FSx for ONTAP cluster volume"
-  value       = local.fsx_is_multi_zone_deployment ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].id : "Not Created"
+  value       = local.fsx_is_multi_zone_deployment && var.sql_deployment_mode != "standalone" ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].id : "Not Created"
 }
 
 output "fsx_cluster_volume_arn" {
   description = "ARN of the FSx for ONTAP cluster volume"
-  value       = local.fsx_is_multi_zone_deployment ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].arn : "Not Created"
+  value       = local.fsx_is_multi_zone_deployment && var.sql_deployment_mode != "standalone" ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].arn : "Not Created"
 }
 
 output "fsx_cluster_volume_id" {
   description = "System generated ID of cluster volume"
-  value       = local.fsx_is_multi_zone_deployment ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].id : "Not Created"
+  value       = local.fsx_is_multi_zone_deployment && var.sql_deployment_mode != "standalone" ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].id : "Not Created"
 }
 
 output "fsx_cluster_volume_uuid" {
   description = "System generated UUID of cluster volume"
-  value       = local.fsx_is_multi_zone_deployment ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].uuid : "Not Created"
+  value       = local.fsx_is_multi_zone_deployment && var.sql_deployment_mode != "standalone" ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].uuid : "Not Created"
 }
 
 # For Temp DP Volume
