@@ -8,9 +8,10 @@ import { DatabaseInstance, MappedOnTapVolumeResponse } from './common-types';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { AssessmentCategories } from './continous-optimization-consts';
 import { OracleMappedOntapVolumesResponse, OracleVolumeRecord } from '../operations/workloads/oracle/common-types';
-import { getFsxNameFromTags } from './utils';
+import { getFsxNameFromTags, isDemo } from './utils';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 async function getDatabaseInstanceTopology(
     accountId: string,
@@ -143,7 +144,9 @@ function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseT
     let luns: any[] = [];
     switch (dbType) {
         case DatabaseTypes.ORACLE: {
-            const storageDetails: OracleMappedOntapVolumesResponse = configData?.[fsxId];
+            const storageDetails: OracleMappedOntapVolumesResponse = isDemoFlow
+                ? Object.values(configData)[0]
+                : configData?.[fsxId];
             if (!storageDetails) {
                 return { combinedOntapVolumes, luns };
             }

@@ -83,6 +83,7 @@ import {
     LicenseDriftResponseType,
     StorageParameterDriftResponseType
 } from '../routes/types/mssql-continuous-optimisation.types';
+import { OracleDeploymentTenacy } from './workloads/oracle/consts';
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
@@ -860,6 +861,8 @@ async function createDeploymentMockDataInDBForOracle(
     };
 
     await upsertDatabaseInstance(accountId, instanceRecord);
+    const instanceMetadata = { oracleDeploymentType: OracleDeploymentTenacy.SINGLE_TENANT };
+    await updateInstanceMetadata(accountId, instanceId, instanceMetadata);
 
     await createAssessmentDataForOracle(accountId, credentialsId, region, resourceId, instanceId);
 }
