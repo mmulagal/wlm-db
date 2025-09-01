@@ -273,11 +273,20 @@ export function getOracleDatabaseColumnsList({
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'instanceType'),
             info: t('databases.databases-table.oracle.tenancy-column-info'),
-            renderCell: (cellData: string) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            )
+            renderCell: (cellData: string) => {
+                let displayText = cellData;
+                if (cellData === 'Multi Tenant') {
+                    displayText = t('databases.oracle-inner-page.multi-tenant');
+                } else if (cellData === 'Single Tenant') {
+                    displayText = t('databases.oracle-inner-page.single-tenant');
+                }
+
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {displayText || t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                );
+            }
         },
         {
             Header: t('databases.databases-table.oracle.headers.deployment-model'),
