@@ -13,10 +13,11 @@ import {
 } from '../../../utils/consts';
 import getLogger from '../../../utils/logger';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
-import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './consts';
+import { OracleDeploymentTenacy, SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './consts';
 import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import {
     DatabaseHostInstanceSummaryResponseType,
+    DatabasesResponseType,
     NodeTopologyResponseType
 } from '../../../routes/types/database-hosts.types';
 import {
@@ -48,6 +49,7 @@ import { OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getStorageData, getNodeTopology } from '../../database-hosts-util';
 import { MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
+import { PDB_DETAILS } from '../../../utils/demo-utils/demoInventoryData';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -673,6 +675,18 @@ async function getOracleDatabaseInstancesSummary(
                         })
                     )
                 );
+                if (isDemoFlow && databases?.length && databaseInstance?.metadata) {
+                    databases.forEach((database: DatabasesResponseType) => {
+                        database.type =
+                            (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType ===
+                            OracleDeploymentTenacy.MULTI_TENANT
+                                ? 'CDB'
+                                : 'Single tenant';
+                        if (database.type !== 'Single tenant') {
+                            databases.push(PDB_DETAILS);
+                        }
+                    });
+                }
             } catch (error) {
                 logger.error(`Error while fetching Oracle database instance summary ${accountId}, ${error}`);
                 throw createError(

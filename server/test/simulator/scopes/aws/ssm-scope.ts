@@ -971,7 +971,9 @@ ssmMock
         const commentString = /# Get Oracle server details/;
         return commentString.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getOracleServerDetails'));
+    .resolves(getSampleCommandResponse('getOracleServerDetails'))
+    .on(SendCommandCommand, params => params.Comment === 'oracle database count')
+    .resolves(getSampleCommandResponse('oracleDatabaseCount'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1481,6 +1483,10 @@ ssmMock
             '{"database_details":{"name": "ordbsdl","status": "online"}, "is_cdb": "no", "root_db_size": 2.51}'
         )
     )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleDatabaseCount'
+    })
+    .resolves(getSampleCommandResponseWithOutput('oracleDatabaseCount', '{"databases_count":"1"}'))
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-fetchMssqlInstanceMtuDetails'
     })
