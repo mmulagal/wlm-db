@@ -55,7 +55,7 @@ const Home = () => {
                             navigate(`../fsxdb/${routePath}`);
                         }
 
-                        const tabInformation = setSelectedTabInformation(tabInfo, selectedHeaderTab);
+                        const tabInformation = setSelectedTabInformation(tabInfo, msg?.data?.payload?.pathname);
 
                         dispatch(setSelectedHeaderTab(tabInformation));
                     }

@@ -2132,6 +2132,7 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
         case '/fsxdb/dashboard':
             return WLF_TABS.DASHBOARD;
         case '/fsxdb/inventory':
+        case '/fsxdb/inventory/optimize':
             return WLF_TABS.INVENTORY;
         case '/fsxdb/sandbox':
         case '/fsxdb/sandboxes':
@@ -2401,9 +2402,9 @@ export const formatString = (s: string | undefined) => {
 };
 
 //This function is only for BXP
-export const setSelectedTabInformation = (tabInfo: string, selectedHeaderTab: string) => {
-    if (selectedHeaderTab === WLF_TABS.OPTIMIZE || selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED) {
-        return selectedHeaderTab;
+export const setSelectedTabInformation = (tabInfo: string, pathName: string) => {
+    if (pathName === '/fsxdb/inventory/optimize') {
+        return WLF_TABS.OPTIMIZE;
     } else {
         return tabInfo;
     }

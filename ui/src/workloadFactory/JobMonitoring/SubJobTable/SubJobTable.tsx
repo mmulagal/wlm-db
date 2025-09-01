@@ -72,7 +72,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             postBlueXPMessage({
                 type: BlueXPListeners.navigate,
                 payload: {
-                    pathname: '../fsxdb/inventory',
+                    pathname: '../fsxdb/inventory/optimize',
                     replace: true
                 }
             });
