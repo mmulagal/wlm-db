@@ -11,6 +11,7 @@ Metadata:
                   default: SQL Server volumes' configuration for Amazon FSx for NetApp ONTAP file system
               Parameters:
                   - DeploymentMode
+                  - SQLDeploymentMode
                   - FSxFileSystemId
                   - FSxSvmName
                   - FSxDataVolumeName
@@ -24,6 +25,8 @@ Metadata:
         ParameterLabels:
             DeploymentMode:
                 default: File system deployment mode
+            SQLDeploymentMode:
+                default: SQL deployment mode
             FSxSvmName:
                 default: Storage virtual machine name
             FSxDataVolumeName:
@@ -49,6 +52,12 @@ Parameters:
         Type: String
         Default: MULTI_AZ_1
         AllowedValues: [SINGLE_AZ_1, MULTI_AZ_1, SINGLE_AZ_2, MULTI_AZ_2]
+
+    SQLDeploymentMode:
+        Description: The deployment mode for SQL Server.
+        Type: String
+        Default: standalone
+        AllowedValues: [standalone, fci]
 
     FSxFileSystemId:
         Description: ID of the FSx for ONTAP file system.
@@ -100,9 +109,11 @@ Parameters:
         Default: 2048
 
 Conditions:
-    FSxIsMultiZoneDeployment: !Or
-      - !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
-      - !Equals [!Ref DeploymentMode, 'MULTI_AZ_2']
+    FSxIsMultiZoneDeployment: !And
+        - !Equals [!Ref SQLDeploymentMode, 'fci']
+        - !Or
+            - !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
+            - !Equals [!Ref DeploymentMode, 'MULTI_AZ_2']
 
 Resources:
     FSxSvmConfiguration:

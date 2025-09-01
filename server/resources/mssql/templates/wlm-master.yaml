@@ -841,6 +841,8 @@ Resources:
       Parameters:
         DeploymentMode:
           Ref: DeploymentMode
+        SQLDeploymentMode:
+          Ref: SQLDeploymentMode
         FSxSvmName:
           Ref: SQLSvmName
         FSxFileSystemId:
