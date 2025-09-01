@@ -214,7 +214,7 @@ export const bxpRedirect = async (
         baseUrl = stageURL;
     }
 
-    // Need to be removed after the patch
+    // TODO: Need to be removed after the patch
     if (import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION) {
         if (isWorkloadFactory) {
             window.open(baseUrl, '_blank', 'noopener,noreferrer');
@@ -246,12 +246,14 @@ export const bxpRedirect = async (
         return;
     }
 
+    const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
+
     // Check if we have the required API for the specific type
     const missingRequiredApi =
         (from === 'instance' && !getDiscoverInstanceResult) || (from === 'database' && !getDiscoverHostResult);
 
-    // Case 1: Default behavior (no additional params)
-    if (!rowData || !from || !selectedAgent || missingRequiredApi) {
+    // Case 1: Default behavior (no additional params) - Updated condition to check agentID instead of selectedAgent
+    if (!rowData || !from || !agentID || missingRequiredApi) {
         if (isWorkloadFactory) {
             window.open(baseUrl, '_blank', 'noopener,noreferrer');
         } else if (window.top) {
@@ -267,7 +269,6 @@ export const bxpRedirect = async (
             const instanceName = rowData?.databaseInstanceName; // "MSSQLSERVER" or "INSTANCEJUN_9"
             const hostName = rowData?.name; // "dec04std2"
             const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
-            const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
             const workspaceID = workSpaceData?.id;
 
             if (!instanceName || !hostName || !fqdn || !orgId || !agentID || !workspaceID) {
@@ -335,8 +336,7 @@ export const bxpRedirect = async (
             const instanceName = rowData?.databaseInstanceName; // "INSTANCE2"
             const hostName = rowData?.hostName; // "dec04std2"
             const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
-            const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
-            const workspaceID = rowData?.workspaceId || rowData?.workspace_id || workSpaceData?.id;
+            const workspaceID = workSpaceData?.id;
 
             if (!databaseName || !instanceName || !hostName || !fqdn || !orgId || !agentID || !workspaceID) {
                 return;
