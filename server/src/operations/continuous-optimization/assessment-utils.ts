@@ -480,7 +480,6 @@ function processConfigForExpiration(configDetails: InstanceDismissParams) {
     const { endTime, configState, configurationName } = configDetails;
     let updatedStorageConfig = configDetails;
     let isConfigExpired = false;
-
     if (
         configState === DISMISS_STATUS.ACTIVATING ||
         (configState === DISMISS_STATUS.POSTPONED && endTime && Date.now() > endTime)
@@ -610,11 +609,11 @@ async function checkAndUpdatePostponedEndTime(
                   region,
                   databaseHostId,
                   databaseInstanceId,
-                  { dismissedConfigurations: dismissedInstanceConfigurations }
+                  { dismissedConfigurations: updatedInstanceConfigs }
               )
             : Promise.resolve(),
         updateDatabaseHostConfigurations(accountId, credentialsId, region, databaseHostId, {
-            dismissedConfigurations: dismissedHostConfigurations
+            dismissedConfigurations: updatedHostConfigs
         })
     ]);
 
