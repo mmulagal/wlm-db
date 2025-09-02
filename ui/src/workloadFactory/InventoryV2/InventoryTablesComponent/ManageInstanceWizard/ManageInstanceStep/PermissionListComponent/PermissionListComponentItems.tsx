@@ -12,7 +12,7 @@ import { ReactComponent as FixDisabled } from '../../../../../../assets/Fix-disa
 import { ReactComponent as DatabaseDisabled } from '../../../../../../assets/Database-disabled.svg';
 import { ReactComponent as SandboxImageDisabled } from '../../../../../../assets/Sandbox-disabled.svg';
 import { ReactComponent as LogAnalyzerDisabled } from '../../../../../../assets/log_analyzer_disable.svg';
-import { ReactComponent as LogAnalyzer } from '../../../../../../assets/log_analyzer.svg';
+import { ReactComponent as LogAnalyzer } from '../../../../../../assets/log_analyzer_small.svg';
 
 export const PermissionListComponentItems = (
     t: TFunction,
