@@ -148,7 +148,6 @@ const DialogContent = ({
                     ];
                 case 'Tiering minimum cooling days':
                     return [
-                        '[Data] tiering-minimum-cooling-days=2',
                         '[Archive,RMAN-compressed] tiering-minimum-cooling-days=2',
                         '[Archive, RMAN uncompressed] tiering-minimum-cooling-days=14'
                     ];
