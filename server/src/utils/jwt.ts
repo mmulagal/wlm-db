@@ -28,10 +28,10 @@ const CLIENT = (jwksuri: string) =>
 
 async function verifyToken(token: string) {
     logger.debug('Verify token', token);
-    const jwt = jsonwebtoken.decode(token, { complete: true });
+    const jwt: JwtPayload | null = jsonwebtoken.decode(token, { complete: true });
     if (jwt) {
-        // Determine JWKS URI based on token subject - Auth0 is user, else service token.
-        const isUserAuth = (jwt.payload.sub as string)?.includes('auth0');
+        // Determine JWKS URI based on token iss - Auth0 is user, else service token.
+        const isUserAuth = jwt.payload.iss.includes('auth0');
         const jwksuri = isUserAuth ? AUTH0_SERVER_ADDRESS : LOCAL_AUTH.ENDPOINT;
         const issuer = isUserAuth ? `${AUTH0_SERVER_ADDRESS}/` : LOCAL_AUTH.ISSUER;
         const audience = isUserAuth ? AUTH0_AUDIENCE : LOCAL_AUTH.AUDIENCE;
