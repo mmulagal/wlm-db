@@ -144,13 +144,17 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         password: '',
         userName: ''
     },
-    selectedAuthenticationType: ''
+    selectedAuthenticationType: '',
+    exploreSavingsRouteTab: ''
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setExploreSavingsRouteTab: (state, action: PayloadAction<string>) => {
+            state.exploreSavingsRouteTab = action.payload;
+        },
         setCredentials: (state, action: PayloadAction<Partial<typeof state.serverDetails>>) => {
             state.serverDetails = {
                 ...state.serverDetails,
@@ -513,6 +517,7 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setExploreSavingsRouteTab,
     setCredentials,
     setSelectedAuthenticationType,
     setOnPremiseData,

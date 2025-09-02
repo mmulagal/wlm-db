@@ -9,6 +9,7 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
+    exploreSavingsRouteTab: string;
     serverDetails: {
         password: string;
         userName: string;

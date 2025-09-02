@@ -16,6 +16,7 @@ interface AuthState {
     isWorkloadFactory: boolean;
     refreshBlocked: boolean;
     orgId: string;
+    initialPathName?: string;
 }
 
 interface PayloadAuthSuccess {
@@ -41,13 +42,17 @@ const initialState: AuthState = {
     userMetadata: {
         email: ''
     },
-    orgId: ''
+    orgId: '',
+    initialPathName: ''
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
+        updateInitialPathName: (state, action: PayloadAction<string>) => {
+            state.initialPathName = action.payload;
+        },
         updateOrgId: (state, action: PayloadAction<string>) => {
             state.orgId = action.payload;
         },
@@ -93,6 +98,7 @@ const authSlice = createSlice({
 });
 
 export const {
+    updateInitialPathName,
     updateOrgId,
     updateUserMetaData,
     updateAccountId,
