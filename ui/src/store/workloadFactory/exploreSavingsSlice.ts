@@ -145,7 +145,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         userName: ''
     },
     selectedAuthenticationType: '',
-    exploreSavingsRouteTab: ''
+    exploreSavingsRouteTab: WLF_TABS.EXPLORE_SAVINGS_EBS
 };
 
 const exploreSavingsSlice = createSlice({

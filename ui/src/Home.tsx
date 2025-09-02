@@ -68,9 +68,6 @@ const Home = () => {
 
     useEffect(() => {
         if (isWorkloadFactory && navigationPath && checkLeftNavRoute(navigationPath)) {
-            if (navigationPath === '/databases/explore-savings') {
-                dispatch(setExploreSavingsRouteTab(WLF_TABS.EXPLORE_SAVINGS_EBS));
-            }
             navigate(navigationPath);
         }
     }, [navigationPath]);
