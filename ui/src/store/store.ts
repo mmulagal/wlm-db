@@ -46,7 +46,7 @@ import agenticAISlice from './workloadFactory/agenticAISlice';
 import snapCenterSlice from './workloadFactory/snapcenterSlice';
 import dialogComponentSlice from './workloadFactory/dialogComponentSlice';
 import oracleSlice from './workloadFactory/oracleSlice';
-// import postgressSlice from './mssql/postgressSlice';
+import inventoryBannerSlice from './workloadFactory/inventorybannerSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -75,6 +75,7 @@ const rootReducer = combineReducers({
     [snapcenterAPI.reducerPath]: snapcenterAPI.reducer,
     [inventoryApiV2.reducerPath]: inventoryApiV2.reducer,
     [sandboxSlice.reducerPath]: sandboxSlice.reducer,
+    [inventoryBannerSlice.name]: inventoryBannerSlice.reducer,
     [snapCenterSlice.reducerPath]: snapCenterSlice.reducer,
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,

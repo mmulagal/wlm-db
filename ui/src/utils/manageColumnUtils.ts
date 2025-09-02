@@ -110,7 +110,7 @@ export const getInitialInstanceTableColState = (selectedHostType: string) => {
             2: { isHidden: false },
             3: { isHidden: false },
             4: { isHidden: false },
-            // 5: { isHidden: false },
+            5: { isHidden: false },
             6: { isHidden: false },
             7: { isHidden: false },
             8: { isHidden: false },

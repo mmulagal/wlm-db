@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../store/storeHooks';
 import styles from './Inventory.module.scss';
-import InventoryCards from './InventoryCards/InventoryCards';
 import InventoryTab from './InventoryTab/InventoryTab';
 import InventoryTablesComponent from './InventoryTablesComponent/InventoryTablesComponent';
 import {
@@ -29,6 +28,10 @@ import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/
 import store from '../../store/store';
 import EngineTypeSelector from './EngineTypeSelector/EngineTypeSelector';
 
+import MSSQLBanner from './InventoryBanners/MSSQLBanner/MSSQLBanner';
+import PGSQLBanner from './InventoryBanners/PGSQLBanner/PGSQLBanner';
+import OracleBanner from './InventoryBanners/MSSQLBanner/OracleBanner';
+
 const InventoryV2 = () => {
     const dispatch = useDispatch();
     const {
@@ -42,9 +45,44 @@ const InventoryV2 = () => {
         selectedHostType,
         fullHostTableRows,
         fullInstanceTableRows,
-        fullDatabaseTableRows
+        fullDatabaseTableRows,
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading,
+        fsxCredentialStatusLoadingOracle
     } = useAppSelector(state => state.inventoryV2);
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
+        useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
+        state => state.headers
+    );
+    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
+
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setLoading(
+            databaseHostsLoading ||
+                isDiscoverInProgress ||
+                fullHostDataLoading ||
+                isManagedHostListLoading ||
+                fsxCredentialStatusLoading ||
+                fsxCredentialStatusLoadingOracle ||
+                pgsqlDatabaseHostsLoading ||
+                pgsqlFullHostDataLoading ||
+                multiDataLoading
+        );
+    }, [
+        databaseHostsLoading,
+        isDiscoverInProgress,
+        fullHostDataLoading,
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading,
+        fsxCredentialStatusLoadingOracle,
+        pgsqlDatabaseHostsLoading,
+        pgsqlFullHostDataLoading,
+        multiDataLoading
+    ]);
 
     useEffect(() => {
         if (inventoryTableData) {
@@ -348,8 +386,13 @@ const InventoryV2 = () => {
                     : styles.inventory
             }
         >
-            <InventoryCards />
             <EngineTypeSelector />
+            <div className={styles.banner}>
+                {selectedHostType === DBType.MSSQL && <MSSQLBanner loading={loading} />}
+                {selectedHostType === DBType.POSTGRESQL && <PGSQLBanner loading={loading} />}
+                {selectedHostType === DBType.ORACLE && <OracleBanner loading={loading} />}
+            </div>
+
             <InventoryTab />
             {/* selectedHostType is send as key  so that on remounting the component it fetches the correct data */}
             <InventoryTablesComponent key={selectedHostType} />

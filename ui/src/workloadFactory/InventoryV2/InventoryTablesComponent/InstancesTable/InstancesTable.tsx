@@ -36,7 +36,14 @@ import {
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
 import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import { ACTION_CTA, DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import {
+    ACTION_CTA,
+    DBType,
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    INVENTORY_STATUS,
+    WLF_TABS
+} from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -86,7 +93,8 @@ import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
 import {
     getInstableTableTopMenuOptions,
     getInstanceTableMenuOptions,
-    handleInstanceMenuSelection
+    handleInstanceMenuSelection,
+    inventoryBannerFilterUpdates
 } from './InstanceTableHelper';
 
 const InstancesTable = () => {
@@ -109,6 +117,13 @@ const InstancesTable = () => {
         selectedFilterValue
     } = useAppSelector(state => state.inventoryV2);
     const { multiDataLoading } = useAppSelector(state => state.headers);
+    const {
+        notRegisteredSQLView,
+        notActiveSQLInstancesView,
+        notRegisteredOracleDatabasesView,
+        notOptimizedSQLInstancesView,
+        notOptimizedOracleDatabaseView
+    } = useAppSelector(state => state.inventoryBannerSlice);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -870,6 +885,31 @@ const InstancesTable = () => {
             }
         }
     });
+
+    // Handle banner filter views when instances table is already open
+    useEffect(() => {
+        inventoryBannerFilterUpdates(
+            tableProps,
+            notRegisteredSQLView,
+            notActiveSQLInstancesView,
+            notOptimizedSQLInstancesView,
+            notRegisteredOracleDatabasesView,
+            notOptimizedOracleDatabaseView,
+            updatedTableData,
+            selectedHostType,
+            dispatch
+        );
+    }, [
+        notRegisteredSQLView,
+        notActiveSQLInstancesView,
+        notOptimizedSQLInstancesView,
+        notRegisteredOracleDatabasesView,
+        notOptimizedOracleDatabaseView,
+        tableProps.updateFilterState,
+        tableProps.resetFilters,
+        selectedHostType,
+        updatedTableData
+    ]);
 
     useEffect(() => {
         dispatch(setTableManageColumnState({ ...tableManageColumnState, instanceTable: tableProps.columnsState }));

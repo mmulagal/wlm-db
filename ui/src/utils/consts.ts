@@ -1064,3 +1064,11 @@ export const ORACLE_DATABASES_COMPONENTS = {
     SINGLE_TENANT_API_RESPONSE: 'SINGLE_TENANT',
     SINGLE_TENANT_DATABASE_API_RESPONSE: 'Single tenant'
 };
+
+export const INVENTORY_BANNER_FILTER_OPTIONS = {
+    NOT_REGISTERED_INSTANCES: 'Not registered instances',
+    NOT_ACTIVE_INSTANCES: 'Not active instances',
+    NOT_OPTIMIZED_INSTANCE_SQL: 'Not-optimized instances sql',
+    NOT_REGISTERED_DATABASES: 'Not registered databases',
+    NOT_OPTIMIZED_DATABASES: 'Not-optimized databases'
+};

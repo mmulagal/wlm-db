@@ -1,7 +1,14 @@
 import { TFunction } from 'i18next';
 import { Dispatch } from '@reduxjs/toolkit';
 import { NavigateFunction } from 'react-router-dom';
-import { DBType, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
+import {
+    DBType,
+    ERROR_ANALYZER_STATUS,
+    INVENTORY_STATUS,
+    INVENTORY_TABLE_STATUS,
+    WELL_ARCHITECTED_TABS,
+    WLF_TABS
+} from '../../../../utils/consts';
 import { setFSXId, setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
     setBreadCrumbSelectedFrom,
@@ -19,6 +26,13 @@ import {
     setCdbPageData
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
+import {
+    setNotActiveSQLInstancesView,
+    setNotOptimizedOracleDatabaseView,
+    setNotOptimizedSQLInstancesView,
+    setNotRegisteredOracleDatabasesView,
+    setNotRegisteredSQLView
+} from '../../../../store/workloadFactory/inventorybannerSlice';
 
 export interface InstanceMenuSelectionParams {
     menuId: string;
@@ -285,5 +299,124 @@ export const getInstableTableTopMenuOptions = (
                 exportToCsvFileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv`,
                 buttonText: t('databases.register-flow.register-multiple-databases')
             };
+    }
+};
+
+export const inventoryBannerFilterUpdates = (
+    tableProps: any,
+    notRegisteredSQLView: boolean,
+    notActiveSQLInstancesView: boolean,
+    notOptimizedSQLInstancesView: boolean,
+    notRegisteredOracleDatabasesView: boolean,
+    notOptimizedOracleDatabaseView: boolean,
+    updatedTableData: any,
+    selectedHostType: string,
+    dispatch: any
+) => {
+    if (tableProps.updateFilterState && tableProps.resetFilters) {
+        if (notRegisteredSQLView && selectedHostType === DBType.MSSQL) {
+            // First reset all existing filters to match the original behavior
+            tableProps.resetFilters();
+            // Then apply the Not registered filter (column '4' with value 'Not registered')
+            tableProps.updateFilterState({
+                id: '4',
+                values: {
+                    [INVENTORY_STATUS.NOT_REGISTERED]: true
+                }
+            });
+            // Reset the notRegisteredSQLView flag
+            dispatch(setNotRegisteredSQLView(false));
+        } else if (notActiveSQLInstancesView && selectedHostType === DBType.MSSQL) {
+            // First reset all existing filters to match the original behavior
+            tableProps.resetFilters();
+            // Then apply the Not active filter (column '14' with value 'Not active')
+            tableProps.updateFilterState({
+                id: '14',
+                values: {
+                    [ERROR_ANALYZER_STATUS.NOT_ACTIVE]: true
+                }
+            });
+            tableProps.updateFilterState({
+                id: '4',
+                values: {
+                    [INVENTORY_STATUS.REGISTERED]: true
+                }
+            });
+            // Reset the notActiveSQLInstancesView flag
+            dispatch(setNotActiveSQLInstancesView(false));
+        } else if (notOptimizedSQLInstancesView && selectedHostType === DBType.MSSQL) {
+            // First reset all existing filters to match the original behavior
+            tableProps.resetFilters();
+            // Then apply the Not optimized filter (column '3' with values containing 'issue')
+            // Get all unique values from the table data that contain "issue" or "issues"
+            const optimizationIssueValues: { [key: string]: boolean } = {};
+            updatedTableData?.forEach((row: any) => {
+                const optimizationValue = row.optimizationStatus;
+                if (
+                    optimizationValue &&
+                    (optimizationValue.toLowerCase().includes('issue') ||
+                        optimizationValue.toLowerCase().includes('recommendation') ||
+                        optimizationValue.includes(INVENTORY_TABLE_STATUS.NOT_ANALYZED))
+                ) {
+                    optimizationIssueValues[optimizationValue] = true;
+                }
+            });
+
+            tableProps.updateFilterState({
+                id: '3',
+                values: optimizationIssueValues
+            });
+            tableProps.updateFilterState({
+                id: '4',
+                values: {
+                    [INVENTORY_STATUS.REGISTERED]: true
+                }
+            });
+            // Reset the notOptimizedSQLInstancesView flag
+            dispatch(setNotOptimizedSQLInstancesView(false));
+        } else if (notRegisteredOracleDatabasesView && selectedHostType === DBType.ORACLE) {
+            // First reset all existing filters to match the original behavior
+            tableProps.resetFilters();
+            // Then apply the Not registered filter for Oracle (column '4' with value 'Not registered')
+            tableProps.updateFilterState({
+                id: '4',
+                values: {
+                    [INVENTORY_STATUS.NOT_REGISTERED]: true
+                }
+            });
+            // Reset the notRegisteredOracleDatabasesView flag
+            dispatch(setNotRegisteredOracleDatabasesView(false));
+        } else if (notOptimizedOracleDatabaseView && selectedHostType === DBType.ORACLE) {
+            // First reset all existing filters to match the original behavior
+            tableProps.resetFilters();
+            // Then apply the Not optimized filter (column '3' with values containing 'issue')
+            // Get all unique values from the table data that contain "issue" or "issues"
+            const optimizationIssueValues: { [key: string]: boolean } = {};
+            updatedTableData?.forEach((row: any) => {
+                const optimizationValue = row.optimizationStatus;
+                if (
+                    optimizationValue &&
+                    (optimizationValue.toLowerCase().includes('issue') ||
+                        optimizationValue.toLowerCase().includes('recommendation') ||
+                        optimizationValue.includes(INVENTORY_TABLE_STATUS.NOT_ANALYZED))
+                ) {
+                    optimizationIssueValues[optimizationValue] = true;
+                }
+            });
+            // Then apply the Not optimized filter for Oracle (column '3' with values containing 'issue')
+            tableProps.updateFilterState({
+                id: '5',
+                values: optimizationIssueValues
+            });
+            // Then apply the Not registered filter for Oracle (column '4' with value 'Not registered')
+            tableProps.updateFilterState({
+                id: '4',
+                values: {
+                    [INVENTORY_STATUS.REGISTERED]: true
+                }
+            });
+            // Reset the notRegisteredOracleDatabasesView flag
+            dispatch(setNotOptimizedOracleDatabaseView(false));
+        }
     }
 };

@@ -17,6 +17,7 @@ import {
     AUTHENTICATION_TYPE,
     DBType,
     DETECT_HOST_VAR,
+    ERROR_ANALYZER_STATUS,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     INVENTORY_ACTIONS,
@@ -4283,4 +4284,35 @@ export const getDeregisterContent = (rowData: any, t: TFunction) => {
         return t('databases.deregister-flow.oracle');
     }
     return t('databases.deregister-flow.mssql');
+};
+
+export const calculateDbBannerCounts = (instanceTableRows: any, type: string) => {
+    const result = {
+        registeredRows: 0,
+        notRegisteredRows: 0,
+        wellArchitectedRows: 0,
+        notOptimizedRows: 0,
+        activatedRows: 0,
+        notActivatedRows: 0
+    };
+    instanceTableRows?.map((item: any) => {
+        if (item?.managementStatus === INVENTORY_STATUS.REGISTERED) {
+            result.registeredRows += 1;
+            if (item?.optimizationStatus === ACTION_CTA.WELL_ARCHITECTED) {
+                result.wellArchitectedRows += 1;
+            } else {
+                result.notOptimizedRows += 1;
+            }
+            if (type === DBType.MSSQL) {
+                if (item?.logAnalyzer?.status === ERROR_ANALYZER_STATUS.ACTIVE) {
+                    result.activatedRows += 1;
+                } else {
+                    result.notActivatedRows += 1;
+                }
+            }
+        } else {
+            result.notRegisteredRows += 1;
+        }
+    });
+    return result;
 };

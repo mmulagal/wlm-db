@@ -1195,8 +1195,7 @@ export const GENERAL = {
     ASSESSMENT_FOR_MANAGE: 'Well-architected analysis is only supported for registered instances.',
     FSXN_OPTIMIZE_SUPPORTED:
         'Well-architected analysis is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
-    ASSESSMENT_FOR_UNDETECTED_FSXN:
-        'Well-architected analysis is only supported for registered and authenticated instances.',
+    ASSESSMENT_FOR_UNDETECTED_FSXN: 'Well-architected is only supported for registered instances.',
     ASSESSMENT_STORAGE_TYPE_UNKNOWN:
         'Well-architected analysis is only supported for authenticated and registered FSx for ONTAP instances.',
     ASSESSMENT_AOAG_DETECTED: 'Well-architected analysis is only supported for registered instances.',
