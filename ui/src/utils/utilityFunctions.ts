@@ -2206,15 +2206,15 @@ export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolea
                 break;
         }
     }
-    // if (isWorkloadFactory) {
-    //     postBlueXPMessage({
-    //         type: BlueXPListeners.navigate,
-    //         payload: {
-    //             pathname: `${path}`,
-    //             replace: true
-    //         }
-    //     });
-    // }
+    if (isWorkloadFactory) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: `${path}`,
+                replace: true
+            }
+        });
+    }
 };
 
 export const checkLeftNavRoute = (route: string) => {
@@ -2222,7 +2222,7 @@ export const checkLeftNavRoute = (route: string) => {
         route === '/databases/dashboard' ||
         route === '/databases/inventory' ||
         route === '/databases/sandboxes' ||
-        route === '/databases/explore-savings' ||
+        route === '/databases/explore-savings-ebs' ||
         route === '/databases/job-monitoring'
     ) {
         return true;

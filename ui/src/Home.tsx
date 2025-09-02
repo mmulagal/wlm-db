@@ -19,13 +19,11 @@ import { useRunOnce } from './common/hooks/useRunOnce';
 import { checkLeftNavRoute, setRoutePath, setSelectedTabInformation, setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
-import { setExploreSavingsRouteTab } from './store/workloadFactory/exploreSavingsSlice';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
-    const { isWorkloadFactory, pathname: navigationPath, initialPathName } = useAppSelector(state => state?.auth);
-    const { exploreSavingsRouteTab } = useAppSelector(state => state?.exploreSavings);
+    const { isWorkloadFactory, pathname: navigationPath } = useAppSelector(state => state?.auth);
+
     const { statusData } = useAppSelector(state => state.headers.getStatus);
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -72,33 +70,6 @@ const Home = () => {
         }
     }, [navigationPath]);
 
-    useEffect(() => {
-        if (
-            isWorkloadFactory &&
-            initialPathName &&
-            [
-                '/databases/explore-savings-fsxw',
-                '/databases/explore-savings-ebs',
-                '/databases/explore-savings-on-premise'
-            ].includes(initialPathName)
-        ) {
-            let tabToSet;
-            if (initialPathName === '/databases/explore-savings-fsxw') {
-                tabToSet = WLF_TABS.EXPLORE_SAVINGS_FsxW;
-            } else if (initialPathName === '/databases/explore-savings-ebs') {
-                tabToSet = WLF_TABS.EXPLORE_SAVINGS_EBS;
-            } else {
-                tabToSet = WLF_TABS.EXPLORE_SAVINGS_ONPREM;
-            }
-
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: { pathname: '/databases/explore-savings', replace: true }
-            });
-            dispatch(setExploreSavingsRouteTab(tabToSet));
-        }
-    }, [initialPathName]);
-
     // @ts-ignore
     const showNotifications = useMemo(
         () => notificationsObj && notificationsObj.messages && notificationsObj.messages.length > 0,
@@ -127,7 +98,7 @@ const Home = () => {
                         {/* Routes For Explore savings */}
                         <Route
                             path="/databases/explore-savings"
-                            element={<HeaderComponent tab={exploreSavingsRouteTab} />}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
                         />
                         <Route
                             path="/databases/explore-savings-ebs"
