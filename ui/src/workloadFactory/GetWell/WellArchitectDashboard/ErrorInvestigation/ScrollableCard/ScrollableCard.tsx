@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { ReactComponent as OnboardingIllustration } from '../../../../../assets/Onbording illustration.svg';
 import { ReactComponent as OnboardingIllustration2 } from '../../../../../assets/onboarding2.svg';
+import { ReactComponent as CarousalLeft } from '../../../../../assets/Carousel Arrow left.svg';
+import { ReactComponent as CarousalRight } from '../../../../../assets/Carousel Arrow right.svg';
 import styles from './ScrollableCard.module.scss';
 
 const ScrollableCard = () => {
@@ -12,20 +14,32 @@ const ScrollableCard = () => {
         <div className={styles.scrollableCard2}>
             {activeSlide === 0 && (
                 <div className={styles.rightSection}>
-                    <div className={styles.topSection}>
-                        <OnboardingIllustration />
+                    <div className={styles.imageTextSection}>
+                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                            <CarousalLeft />
+                        </div>
+                        <div className={styles.topSection}>
+                            <OnboardingIllustration />
+                        </div>
                     </div>
+
                     <div className={styles.middleSection}>
-                        <DsTypography variant="Semibold_16">
-                            {t('databases.log-analyzer.first-card-heading')}
-                        </DsTypography>
-                        <div className={styles.textSection}>
-                            <DsTypography variant="Regular_14">
-                                {t('databases.log-analyzer.first-card-heading-text')}
+                        <div className={styles.textContentSection}>
+                            <DsTypography variant="Semibold_16">
+                                {t('databases.log-analyzer.first-card-heading')}
                             </DsTypography>
-                            <DsTypography variant="Regular_14">
-                                {t('databases.log-analyzer.first-card-point-1-heading')}
-                            </DsTypography>
+                            <div className={styles.textSection}>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.log-analyzer.first-card-heading-text')}
+                                </DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.log-analyzer.first-card-point-1-heading')}
+                                </DsTypography>
+                            </div>
+                        </div>
+
+                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                            <CarousalRight />
                         </div>
                     </div>
                 </div>
@@ -34,15 +48,20 @@ const ScrollableCard = () => {
             {activeSlide === 1 && (
                 <div className={styles.rightSection}>
                     <div className={styles.secondaryTopSection}>
-                        <OnboardingIllustration2 />
-                        <div className={styles.rightSection}>
-                            <DsTypography variant="Semibold_16">
-                                {t('databases.log-analyzer.second-card-heading')}
-                            </DsTypography>
-                            <DsTypography variant="Semibold_16">
-                                {' '}
-                                {t('databases.log-analyzer.second-card-heading-text')}
-                            </DsTypography>
+                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                            <CarousalLeft />
+                        </div>
+                        <div className={styles.imageTextSecondarySection}>
+                            <OnboardingIllustration2 />
+                            <div className={styles.rightSection}>
+                                <DsTypography variant="Semibold_16">
+                                    {t('databases.log-analyzer.second-card-heading')}
+                                </DsTypography>
+                                <DsTypography variant="Semibold_16">
+                                    {' '}
+                                    {t('databases.log-analyzer.second-card-heading-text')}
+                                </DsTypography>
+                            </div>
                         </div>
                     </div>
 
@@ -87,6 +106,10 @@ const ScrollableCard = () => {
                                     </DsTypography>
                                 </div>
                             </div>
+                        </div>
+
+                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                            <CarousalRight />
                         </div>
                     </div>
                 </div>

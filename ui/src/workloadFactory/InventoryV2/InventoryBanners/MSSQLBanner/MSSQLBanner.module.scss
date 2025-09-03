@@ -12,14 +12,20 @@
         height: 268px;
     }
 
-    .topSection {
+    .imageTextSection {
+        display: flex;
+        gap: 32px;
+        padding: 24px 40px 40px 40px;
+        align-items: center;
         height: auto;
         background: var(--hover-background);
         width: 32.39%;
+    }
+
+    .topSection {
         display: flex;
         flex-direction: column;
         gap: 12px;
-        padding: 32px 40px 40px 40px;
 
         .upperSection {
             display: flex;
@@ -43,9 +49,15 @@
         width: 67.61%;
         height: auto;
         display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 40px 24px 40px 40px;
 
-        gap: 10.8%;
-        padding: 40px 80px;
+        .bannerSection {
+            display: flex;
+            width: 100%;
+            gap: 6.21%;
+        }
     }
 
     .bottomSection {

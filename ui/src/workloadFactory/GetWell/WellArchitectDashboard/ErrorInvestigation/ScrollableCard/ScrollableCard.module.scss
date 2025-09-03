@@ -11,29 +11,35 @@
         display: flex;
     }
 
-    .topSection {
+    .imageTextSection {
         min-height: 295px;
         background: var(--hover-background);
         width: 32.39%;
         display: flex;
-        justify-content: center;
+
+        gap: 40px;
         align-items: center;
-        padding: 0 40px;
+        padding: 40px 40px 40px 24px;
     }
 
     .middleSection {
         width: 67.61%;
         min-height: 295px;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 24px;
-        padding: 0 40px;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 24px 0 40px;
 
-        .textSection {
+        .textContentSection {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            justify-content: center;
+            gap: 24px;
+            .textSection {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
         }
     }
 
@@ -51,11 +57,17 @@
         background: var(--hover-background);
         min-height: 295px;
         width: 32.39%;
-        padding: 24px 40px;
+        padding: 24px 40px 40px 24px;
         display: flex;
-        justify-content: center;
         align-items: center;
-        gap: 20px;
+        gap: 24px;
+
+        .imageTextSecondarySection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
 
         .rightSection {
             display: flex;
@@ -67,15 +79,17 @@
     .rightSideContainer {
         width: 67.61%;
         min-height: 295px;
+        display: flex;
+        justify-content: space-between;
+        padding: 70px 24px 40px 40px;
+        align-items: center;
 
         .secondaryMiddleSection {
             width: 100%;
             display: flex;
             flex-direction: row;
-            justify-content: space-between;
             gap: 40px;
             flex-wrap: wrap;
-            padding: 70px 40px 40px 40px;
 
             .column {
                 flex: 1;

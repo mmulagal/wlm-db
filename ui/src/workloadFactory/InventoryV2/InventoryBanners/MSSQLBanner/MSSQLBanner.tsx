@@ -6,6 +6,8 @@ import { ReactComponent as LogAnalyzer } from '../../../../assets/log_analyzer_b
 import { ReactComponent as InstanceRegistration } from '../../../../assets/instance-registration-distribution.svg';
 import { ReactComponent as InstanceWellArchitected } from '../../../../assets/instance-well-architected.svg';
 import { ReactComponent as InstanceLogAnalyzer } from '../../../../assets/instance-log-analyzer.svg';
+import { ReactComponent as CarousalLeft } from '../../../../assets/Carousel Arrow left.svg';
+import { ReactComponent as CarousalRight } from '../../../../assets/Carousel Arrow right.svg';
 import styles from './MSSQLBanner.module.scss';
 
 import BannerCard from '../BannerCard/BannerCard';
@@ -33,86 +35,114 @@ const MSSQLBanner = ({ loading }: { loading: boolean }) => {
         <div className={styles.scrollableCard2}>
             {activeSlide === 0 && (
                 <div className={styles.rightSection}>
-                    <div className={styles.topSection}>
-                        <div className={styles.upperSection}>
-                            <WellArchitectMSSQL />
-                            <div className={styles.upperRightSection}>
-                                <DsTypography variant="Semibold_16">
-                                    {t('databases.banner.well-architected')}
-                                </DsTypography>
-                                <DsTypography variant="Semibold_16">
-                                    {t('databases.banner.microsoft-sql-server')}
-                                </DsTypography>
+                    <div className={styles.imageTextSection}>
+                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                            <CarousalLeft />
+                        </div>
+                        <div className={styles.topSection}>
+                            <div className={styles.upperSection}>
+                                <WellArchitectMSSQL />
+                                <div className={styles.upperRightSection}>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.banner.well-architected')}
+                                    </DsTypography>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.banner.microsoft-sql-server')}
+                                    </DsTypography>
+                                </div>
                             </div>
+
+                            <DsTypography variant="Regular_14">
+                                {t('databases.banner.microsoft-sql-server-content')}
+                            </DsTypography>
+                        </div>
+                    </div>
+
+                    <div className={styles.mainSection}>
+                        <div className={styles.bannerSection}>
+                            <BannerCard
+                                Image={InstanceRegistration}
+                                topText={t('databases.banner.instance-registration')}
+                                text2={t('databases.banner.registered-instances')}
+                                text3={t('databases.banner.not-registered-instances')}
+                                value1={filteredCount?.registeredRows}
+                                value2={filteredCount?.notRegisteredRows}
+                                viewFilterOption={INVENTORY_BANNER_FILTER_OPTIONS.NOT_REGISTERED_INSTANCES}
+                                loading={loading}
+                            />
+
+                            <BannerCard
+                                Image={InstanceWellArchitected}
+                                topText={t('databases.banner.well-architected-instance-status')}
+                                text2={t('databases.banner.well-architected-instances')}
+                                text3={t('databases.banner.not-optimized-instances')}
+                                value1={filteredCount?.wellArchitectedRows}
+                                value2={filteredCount?.notOptimizedRows}
+                                viewFilterOption={INVENTORY_BANNER_FILTER_OPTIONS.NOT_OPTIMIZED_INSTANCE_SQL}
+                                loading={loading}
+                            />
                         </div>
 
-                        <DsTypography variant="Regular_14">
-                            {t('databases.banner.microsoft-sql-server-content')}
-                        </DsTypography>
-                    </div>
-                    <div className={styles.mainSection}>
-                        <BannerCard
-                            Image={InstanceRegistration}
-                            topText={t('databases.banner.instance-registration')}
-                            text2={t('databases.banner.registered-instances')}
-                            text3={t('databases.banner.not-registered-instances')}
-                            value1={filteredCount?.registeredRows}
-                            value2={filteredCount?.notRegisteredRows}
-                            viewFilterOption={INVENTORY_BANNER_FILTER_OPTIONS.NOT_REGISTERED_INSTANCES}
-                            loading={loading}
-                        />
-
-                        <BannerCard
-                            Image={InstanceWellArchitected}
-                            topText={t('databases.banner.well-architected-instance-status')}
-                            text2={t('databases.banner.well-architected-instances')}
-                            text3={t('databases.banner.not-optimized-instances')}
-                            value1={filteredCount?.wellArchitectedRows}
-                            value2={filteredCount?.notOptimizedRows}
-                            viewFilterOption={INVENTORY_BANNER_FILTER_OPTIONS.NOT_OPTIMIZED_INSTANCE_SQL}
-                            loading={loading}
-                        />
+                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                            <CarousalRight />
+                        </div>
                     </div>
                 </div>
             )}
 
             {activeSlide === 1 && (
                 <div className={styles.rightSection}>
-                    <div className={styles.topSection}>
-                        <div className={styles.upperSection}>
-                            <LogAnalyzer />
-                            <div className={styles.upperRightSection}>
-                                <DsTypography variant="Semibold_16">{t('databases.banner.log-analyzer')}</DsTypography>
-                                <DsTypography variant="Semibold_16">
-                                    {t('databases.banner.microsoft-sql-server')}
-                                </DsTypography>
+                    <div className={styles.imageTextSection}>
+                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                            <CarousalLeft />
+                        </div>
+                        <div className={styles.topSection}>
+                            <div className={styles.upperSection}>
+                                <LogAnalyzer />
+                                <div className={styles.upperRightSection}>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.banner.log-analyzer')}
+                                    </DsTypography>
+                                    <DsTypography variant="Semibold_16">
+                                        {t('databases.banner.microsoft-sql-server')}
+                                    </DsTypography>
+                                </div>
                             </div>
+
+                            <DsTypography variant="Regular_14">
+                                {t('databases.banner.log-analyzer-content')}
+                            </DsTypography>
+                        </div>
+                    </div>
+
+                    <div className={styles.mainSection}>
+                        <div className={styles.bannerSection}>
+                            <BannerCard
+                                Image={InstanceRegistration}
+                                topText={t('databases.banner.instance-registration')}
+                                text2={t('databases.banner.registered-instances')}
+                                text3={t('databases.banner.not-registered-instances')}
+                                value1={filteredCount?.registeredRows}
+                                value2={filteredCount?.notRegisteredRows}
+                                viewFilterOption={INVENTORY_BANNER_FILTER_OPTIONS.NOT_REGISTERED_INSTANCES}
+                                loading={loading}
+                            />
+
+                            <BannerCard
+                                Image={InstanceLogAnalyzer}
+                                topText={t('databases.banner.log-analyzer-instance-status')}
+                                text2={t('databases.banner.activated-instances')}
+                                text3={t('databases.banner.not-active-instances')}
+                                value1={filteredCount?.activatedRows}
+                                value2={filteredCount?.notActivatedRows}
+                                viewFilterOption={INVENTORY_BANNER_FILTER_OPTIONS.NOT_ACTIVE_INSTANCES}
+                                loading={loading}
+                            />
                         </div>
 
-                        <DsTypography variant="Regular_14">{t('databases.banner.log-analyzer-content')}</DsTypography>
-                    </div>
-                    <div className={styles.mainSection}>
-                        <BannerCard
-                            Image={InstanceRegistration}
-                            topText={t('databases.banner.instance-registration')}
-                            text2={t('databases.banner.registered-instances')}
-                            text3={t('databases.banner.not-registered-instances')}
-                            value1={filteredCount?.registeredRows}
-                            value2={filteredCount?.notRegisteredRows}
-                            viewFilterOption={INVENTORY_BANNER_FILTER_OPTIONS.NOT_REGISTERED_INSTANCES}
-                            loading={loading}
-                        />
-
-                        <BannerCard
-                            Image={InstanceLogAnalyzer}
-                            topText={t('databases.banner.log-analyzer-instance-status')}
-                            text2={t('databases.banner.activated-instances')}
-                            text3={t('databases.banner.not-active-instances')}
-                            value1={filteredCount?.activatedRows}
-                            value2={filteredCount?.notActivatedRows}
-                            viewFilterOption={INVENTORY_BANNER_FILTER_OPTIONS.NOT_ACTIVE_INSTANCES}
-                            loading={loading}
-                        />
+                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                            <CarousalRight />
+                        </div>
                     </div>
                 </div>
             )}
