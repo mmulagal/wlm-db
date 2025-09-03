@@ -28,6 +28,7 @@ import {
 } from '../../../../src/operations/workloads/mssql/discover-consts';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
+import listBedrockRegionsResponse from '../../responses/aws/list-bedrock-regions-response.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 import getConnectionStatusResponse from '../../responses/aws/ssm-connection-status.json';
 import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
@@ -1537,7 +1538,12 @@ ssmMock
     })
     .resolves(getSampleCommandResponseWithOutput('installPythonOnLinuxHost', '{ "installationSuccessful": "true" }'));
 
-ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
+ssmMock.on(GetParametersByPathCommand).callsFake(input => {
+    if (input.Path && input.Path.includes('/aws/service/global-infrastructure/services/bedrock/regions')) {
+        return Promise.resolve(listBedrockRegionsResponse);
+    }
+    return Promise.resolve(listFsxOntapRegionsResponse);
+});
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
 ssmMock.on(GetParameterCommand).resolves(getParameerResponse);

@@ -111,18 +111,21 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    server.get('/v1/fsx/regions', { schema: GetGenericFSxRegionsSchema }, async (_request, reply) => {
-        const response = await getGenericFSxOntapRegionsList();
+    server.get('/v1/fsx/regions', { schema: GetGenericFSxRegionsSchema }, async (request, reply) => {
+        const {
+            query: { includeBedrockStatus = false }
+        } = castRequest(request);
+        const response = await getGenericFSxOntapRegionsList(includeBedrockStatus);
         return reply.send(response);
     });
 
     server.get(`${FSX_PREFIX_PATH}/regions`, { schema: GetFSxRegionsSchema }, async (request, reply) => {
         const {
             params: { credentialsId },
-            query: { useCache = true }
+            query: { useCache = true, includeBedrockStatus }
         } = castRequest(request);
 
-        const response = await getFSxOntapRegionsList(credentialsId, { useCache });
+        const response = await getFSxOntapRegionsList(credentialsId, includeBedrockStatus, { useCache });
         return reply.send(response);
     });
 

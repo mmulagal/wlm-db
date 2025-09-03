@@ -1,11 +1,23 @@
 import createError from 'http-errors';
+import { compact } from 'lodash-es';
 import { listInferenceProfiles } from '../../lib/aws/bedrock';
 import { HttpErrorCodes } from '../../utils/consts';
 import getLogger from '../../utils/logger';
+import { getParametersByPath } from '../../lib/aws/ssm';
 
 const logger = getLogger();
 
-export default async function getInferenceProfileFromModelId(
+async function getBedrockRegionsList() {
+    logger.info('Getting Bedrock regions list');
+    const bedrockRegionsResponse = await getParametersByPath(
+        undefined,
+        undefined,
+        '/aws/service/global-infrastructure/services/bedrock/regions'
+    );
+    return compact(bedrockRegionsResponse.map(({ Value }) => Value));
+}
+
+async function getInferenceProfileFromModelId(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -24,3 +36,5 @@ export default async function getInferenceProfileFromModelId(
 
     return inferenceProfileArn;
 }
+
+export { getBedrockRegionsList, getInferenceProfileFromModelId };

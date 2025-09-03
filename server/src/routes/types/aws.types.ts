@@ -154,7 +154,8 @@ const AdsResponse = Type.Object({
 // Regions supporting FSx for ONTAP response
 const FSxAvailableRegion = Type.Object({
     regionCode: Type.String({ description: API_DESCRIPTION.AWS_REGION_CODE_DESC }),
-    regionName: Type.String({ description: API_DESCRIPTION.AWS_REGION_NAME_DESC })
+    regionName: Type.String({ description: API_DESCRIPTION.AWS_REGION_NAME_DESC }),
+    bedrockAvailable: Type.Optional(Type.Boolean({ description: API_DESCRIPTION.BEDROCK_SUPPORTED_DESC }))
 });
 
 const FSxRegionsResponse = Type.Object({
@@ -271,6 +272,10 @@ const FSxFileSystemsResponse = Type.Object({
 type FSxRegionsResponseType = Static<typeof FSxRegionsResponse>;
 type FSxAvailableRegionType = Static<typeof FSxAvailableRegion>;
 
+const IncludeBedrockStatusQueryParam = Type.Object({
+    includeBedrockStatus: Type.Optional(Type.Boolean({ default: false }))
+});
+
 export {
     AwsVpcQueryString,
     AwsParams,
@@ -291,5 +296,6 @@ export {
     KeyPairsSchema,
     KeyPairsResponse,
     VcpSecurityGroupParams,
-    VpcSecurityGroupsResponse
+    VpcSecurityGroupsResponse,
+    IncludeBedrockStatusQueryParam
 };

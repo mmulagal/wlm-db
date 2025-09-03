@@ -38,6 +38,7 @@ import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getCloudWatchLogs, setLogGroupRetentionPolicy } from './cloud-watch-logs-operations';
+import { getBedrockRegionsList } from './bedrock-operations';
 
 const logger = getLogger();
 
@@ -331,19 +332,31 @@ async function getSsmResponseFromCloudWatch(
     }
 }
 
-async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableRegionType[] }> {
-    logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
+async function getGenericFSxOntapRegionsList(
+    includeBedrockStatus?: boolean
+): Promise<{ regions: FSxAvailableRegionType[] }> {
+    logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP', { includeBedrockStatus });
 
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
 
     try {
-        const fsxRegionResponse = await getParametersByPath();
+        let fsxRegionResponse = await getParametersByPath();
 
+        let bedrockRegions: string[] = [];
+        if (includeBedrockStatus) {
+            [fsxRegionResponse, bedrockRegions] = await Promise.all([getParametersByPath(), getBedrockRegionsList()]);
+        } else {
+            fsxRegionResponse = await getParametersByPath();
+        }
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
             if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
                 fsxRegionsList.push({
                     regionCode,
-                    regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
+                    regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : '',
+                    bedrockAvailable:
+                        bedrockRegions.length > 0
+                            ? bedrockRegions.some(bedrockRegionCode => bedrockRegionCode === regionCode)
+                            : undefined
                 });
             }
         });
@@ -360,9 +373,14 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
 
 async function getFSxOntapRegionsList(
     credentialsId: string,
+    includeBedrockStatus?: boolean,
     cacheParams?: AWSSDKCacheParams
 ): Promise<{ regions: FSxAvailableRegionType[] }> {
-    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
+    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', {
+        credentialsId,
+        includeBedrockStatus,
+        cacheParams
+    });
 
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
 
@@ -379,11 +397,20 @@ async function getFSxOntapRegionsList(
 
         let fsxRegionResponse: Parameter[] = [];
         let ec2RegionResponse: DescribeRegionsResult = { Regions: [] };
+        let bedrockRegions: string[] = [];
         try {
-            [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
-                getParametersByPath(),
-                describeRegions(input, credentialsId, cacheParams)
-            ]);
+            if (includeBedrockStatus) {
+                [fsxRegionResponse, ec2RegionResponse, bedrockRegions] = await Promise.all([
+                    getParametersByPath(),
+                    describeRegions(input, credentialsId, cacheParams),
+                    getBedrockRegionsList()
+                ]);
+            } else {
+                [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
+                    getParametersByPath(),
+                    describeRegions(input, credentialsId, cacheParams)
+                ]);
+            }
         } catch (error: any) {
             if (error?.message?.includes('with an explicit deny in a service control policy')) {
                 logger.warn('Region us-east-1 is blocked by SCP', error);
@@ -400,7 +427,11 @@ async function getFSxOntapRegionsList(
                 if (enabledRegionsInAccount?.some(enabledRegion => enabledRegion?.RegionName === regionCode)) {
                     fsxRegionsList.push({
                         regionCode,
-                        regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
+                        regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : '',
+                        bedrockAvailable:
+                            bedrockRegions.length > 0
+                                ? bedrockRegions.some(bedrockRegionCode => bedrockRegionCode === regionCode)
+                                : undefined
                     });
                 }
             }

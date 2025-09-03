@@ -15,7 +15,8 @@ import {
     InstanceTypes,
     KeyPairsResponse,
     VpcSecurityGroupsResponse,
-    VcpSecurityGroupParams
+    VcpSecurityGroupParams,
+    IncludeBedrockStatusQueryParam
 } from '../types/aws.types';
 import { AccountIdParams, AccountIdRegionParams } from '../types/generic.types';
 
@@ -90,6 +91,7 @@ const GetSnsTopicsSchema = {
 const GetFSxRegionsSchema = {
     tags: [RouteTags.AWS],
     params: AwsParams,
+    query: IncludeBedrockStatusQueryParam,
     summary: 'List AWS regions that supports FSx',
     description: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
     response: {
@@ -100,6 +102,7 @@ const GetFSxRegionsSchema = {
 const GetGenericFSxRegionsSchema = {
     tags: [RouteTags.AWS],
     params: AccountIdParams,
+    query: IncludeBedrockStatusQueryParam,
     summary: 'List AWS regions that supports FSx',
     description: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
     response: {

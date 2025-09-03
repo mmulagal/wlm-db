@@ -11,7 +11,8 @@ const API_DESCRIPTION = {
     DATABASE_INSTANCE_NAME_DESC: 'SQL Server instance name.',
     ORACLE_DATABASE_INSTANCES_DESC: 'List of Oracle database instances.',
     SQL_DATABASE_INSTANCES_DESC: 'List of SQL Server database instances.',
-    EC2_INSTANCE_ID_DESC: 'EC2 instance id.'
+    EC2_INSTANCE_ID_DESC: 'EC2 instance id.',
+    BEDROCK_SUPPORTED_DESC: 'Indicates if AWS Bedrock is available in the region.'
 };
 
 const API_DESCRIPTION_EXAMPLES = {

@@ -1,10 +1,11 @@
-import getInferenceProfileFromModelId from '../../../src/operations/aws/bedrock-operations';
+import { getBedrockRegionsList, getInferenceProfileFromModelId } from '../../../src/operations/aws/bedrock-operations';
 import { LOGS_ANALYZER_MODEL_IDS } from '../../../src/utils/logs-analyzer/logs-analyzer-consts';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/bedrock-scope';
+import '../../simulator/scopes/aws/ssm-scope';
 
 describe('getInferenceProfileFromModelId', () => {
     it('should return the inferenceProfileArn when modelId matches', async () => {
@@ -27,5 +28,12 @@ describe('getInferenceProfileFromModelId', () => {
                 'non-existent-model-id'
             )
         ).rejects.toThrow('Inference profile not found for modelId: non-existent-model-id');
+    });
+});
+
+describe('getBedrockRegionsList', () => {
+    it('Should list all regions with bedrock support', async () => {
+        const regions = await getBedrockRegionsList();
+        expect(regions.length).toBeGreaterThan(0);
     });
 });

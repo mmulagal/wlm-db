@@ -47,7 +47,7 @@ import {
     RemediationRecommendationObject,
     RemediationRecommendationObjectType
 } from '../../routes/types/logs-analyzer.types';
-import getInferenceProfileFromModelId from '../aws/bedrock-operations';
+import { getInferenceProfileFromModelId } from '../aws/bedrock-operations';
 import {
     getLinuxBedrockAvailabilityCheckScript,
     getLinuxPrepareScript,

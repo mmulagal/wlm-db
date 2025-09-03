@@ -1,0 +1,235 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "471fa21a-371b-5b0f-8cdf-e5d5ea6c3ceg",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Parameters": [
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-northeast-3",
+            "DataType": "text",
+            "LastModifiedDate": "2025-02-19T23:31:17.127Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-northeast-3",
+            "Type": "String",
+            "Value": "ap-northeast-3",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-south-2",
+            "DataType": "text",
+            "LastModifiedDate": "2025-02-19T23:31:16.531Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-south-2",
+            "Type": "String",
+            "Value": "ap-south-2",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-southeast-1",
+            "DataType": "text",
+            "LastModifiedDate": "2023-09-28T23:15:39.061Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-southeast-1",
+            "Type": "String",
+            "Value": "ap-southeast-1",
+            "Version": 1
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/eu-central-2",
+            "DataType": "text",
+            "LastModifiedDate": "2024-11-07T04:24:27.178Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/eu-central-2",
+            "Type": "String",
+            "Value": "eu-central-2",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/eu-north-1",
+            "DataType": "text",
+            "LastModifiedDate": "2025-02-27T03:25:54.216Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/eu-north-1",
+            "Type": "String",
+            "Value": "eu-north-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/eu-south-2",
+            "DataType": "text",
+            "LastModifiedDate": "2025-03-14T02:40:21.360Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/eu-south-2",
+            "Type": "String",
+            "Value": "eu-south-2",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/eu-west-1",
+            "DataType": "text",
+            "LastModifiedDate": "2024-05-01T01:39:49.107Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/eu-west-1",
+            "Type": "String",
+            "Value": "eu-west-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/eu-west-3",
+            "DataType": "text",
+            "LastModifiedDate": "2024-04-03T17:08:23.992Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/eu-west-3",
+            "Type": "String",
+            "Value": "eu-west-3",
+            "Version": 1
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/us-east-1",
+            "DataType": "text",
+            "LastModifiedDate": "2023-09-28T23:15:38.746Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/us-east-1",
+            "Type": "String",
+            "Value": "us-east-1",
+            "Version": 1
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/us-gov-west-1",
+            "DataType": "text",
+            "LastModifiedDate": "2023-12-21T21:53:01.235Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/us-gov-west-1",
+            "Type": "String",
+            "Value": "us-gov-west-1",
+            "Version": 1
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-southeast-2",
+            "DataType": "text",
+            "LastModifiedDate": "2024-04-09T19:32:44.102Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-southeast-2",
+            "Type": "String",
+            "Value": "ap-southeast-2",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-southeast-3",
+            "DataType": "text",
+            "LastModifiedDate": "2025-08-21T10:38:53.445Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-southeast-3",
+            "Type": "String",
+            "Value": "ap-southeast-3",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/eu-central-1",
+            "DataType": "text",
+            "LastModifiedDate": "2023-10-19T18:03:51.031Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/eu-central-1",
+            "Type": "String",
+            "Value": "eu-central-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/eu-south-1",
+            "DataType": "text",
+            "LastModifiedDate": "2025-03-14T02:40:18.176Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/eu-south-1",
+            "Type": "String",
+            "Value": "eu-south-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/eu-west-2",
+            "DataType": "text",
+            "LastModifiedDate": "2024-06-07T07:13:26.356Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/eu-west-2",
+            "Type": "String",
+            "Value": "eu-west-2",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/sa-east-1",
+            "DataType": "text",
+            "LastModifiedDate": "2024-06-07T07:13:20.729Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/sa-east-1",
+            "Type": "String",
+            "Value": "sa-east-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/us-east-2",
+            "DataType": "text",
+            "LastModifiedDate": "2024-10-02T04:27:11.124Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/us-east-2",
+            "Type": "String",
+            "Value": "us-east-2",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/us-gov-east-1",
+            "DataType": "text",
+            "LastModifiedDate": "2024-11-10T01:02:49.720Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/us-gov-east-1",
+            "Type": "String",
+            "Value": "us-gov-east-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/us-west-1",
+            "DataType": "text",
+            "LastModifiedDate": "2025-07-25T18:21:19.655Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/us-west-1",
+            "Type": "String",
+            "Value": "us-west-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/us-west-2",
+            "DataType": "text",
+            "LastModifiedDate": "2023-09-28T23:15:39.253Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/us-west-2",
+            "Type": "String",
+            "Value": "us-west-2",
+            "Version": 1
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-northeast-1",
+            "DataType": "text",
+            "LastModifiedDate": "2023-10-04T04:49:35.562Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-northeast-1",
+            "Type": "String",
+            "Value": "ap-northeast-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-northeast-2",
+            "DataType": "text",
+            "LastModifiedDate": "2024-10-02T02:53:45.001Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-northeast-2",
+            "Type": "String",
+            "Value": "ap-northeast-2",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-south-1",
+            "DataType": "text",
+            "LastModifiedDate": "2024-05-01T06:27:04.677Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-south-1",
+            "Type": "String",
+            "Value": "ap-south-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ap-southeast-4",
+            "DataType": "text",
+            "LastModifiedDate": "2025-07-31T11:46:20.581Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ap-southeast-4",
+            "Type": "String",
+            "Value": "ap-southeast-4",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/bedrock/regions/ca-central-1",
+            "DataType": "text",
+            "LastModifiedDate": "2024-06-07T07:13:23.757Z",
+            "Name": "/aws/service/global-infrastructure/services/bedrock/regions/ca-central-1",
+            "Type": "String",
+            "Value": "ca-central-1",
+            "Version": 2
+        }
+    ]
+}

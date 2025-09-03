@@ -160,6 +160,12 @@ describe('executeSsmDocument', () => {
         expect(response).toEqual(fsxOntapRegionsResponse);
     });
 
+    it('List Amazon FSX regions with bedrockAvailable flag', async () => {
+        const { regions } = await getGenericFSxOntapRegionsList(true);
+        const regionWithBedrock = regions.find(region => region.bedrockAvailable === true);
+        expect(regionWithBedrock?.bedrockAvailable).toBeDefined();
+    });
+
     it('Put parameters in ssm parameter store', async () => {
         const params: SSMParameterObject[] = [
             {
