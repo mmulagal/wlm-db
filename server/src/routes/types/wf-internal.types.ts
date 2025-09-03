@@ -1,5 +1,4 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { NextTokenQueryString } from './generic.types';
 
 const StatusParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -17,16 +16,15 @@ const VolumeObject = Type.Object({
 });
 
 const ListVolumesResponse = Type.Object({
-    count: Type.Number(),
+    volumeCount: Type.Number(),
     nextToken: Type.Optional(Type.String()),
     volumes: Type.Array(VolumeObject)
 });
 
-const ListVolumesQueryParams = Type.Composite([
-    NextTokenQueryString,
-    Type.Object({
-        fsxId: Type.Optional(Type.String())
-    })
-]);
+const ListVolumesQueryParams = Type.Object({
+    nextToken: Type.Optional(Type.String()),
+    instancePagesize: Type.Optional(Type.Number()),
+    fsxId: Type.Optional(Type.String())
+});
 
 export { StatusParams, StatusResponse, VolumeObject, ListVolumesResponse, ListVolumesQueryParams };

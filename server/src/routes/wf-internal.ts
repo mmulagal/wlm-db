@@ -17,8 +17,8 @@ export default function systemRoutes(fastify: FastifyInstance) {
         .get('/v1/database-volumes', { schema: GetDatabaseVolumesSchema }, async (request: FastifyRequest) => {
             const {
                 params: { accountId },
-                query: { pageSize, nextToken, fsxId }
+                query: { instancePagesize, nextToken, fsxId }
             } = castRequest(request);
-            return getDatabaseVolumes(accountId, pageSize, nextToken, fsxId);
+            return getDatabaseVolumes(accountId, instancePagesize, nextToken, fsxId);
         });
 }

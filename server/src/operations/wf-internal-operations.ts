@@ -1,4 +1,4 @@
-import { isEmpty, uniqBy } from 'lodash-es';
+import { compact, isEmpty, uniqBy } from 'lodash-es';
 import getLogger from '../utils/logger';
 import { getCredentials } from './cloud-manager/credentials-operations';
 import { creadteDemoDBData } from '../utils/demo-utils/demoDefaultUtils';
@@ -71,8 +71,8 @@ async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?:
             : [];
     });
 
-    volumes = uniqBy(volumes, 'id');
-    return { count: volumes?.length ?? 0, volumes, nextToken: newToken };
+    volumes = compact(uniqBy(volumes, 'id'));
+    return { volumeCount: volumes?.length ?? 0, volumes, nextToken: newToken };
 }
 
 export { getSystemStatus, getDatabaseVolumes };
