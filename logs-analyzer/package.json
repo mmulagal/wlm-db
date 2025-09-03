@@ -1,9 +1,9 @@
 {
     "author": "",
     "dependencies": {
-        "@aws-sdk/client-bedrock-runtime": "^3.864.0",
-        "@aws-sdk/client-cloudwatch-logs": "^3.864.0",
-        "@types/node": "^24.2.1",
+        "@aws-sdk/client-bedrock-runtime": "^3.879.0",
+        "@aws-sdk/client-cloudwatch-logs": "^3.879.0",
+        "@types/node": "^24.3.0",
         "commander": "^14.0.0",
         "execa": "^9.6.0",
         "express": "^5.1.0",
@@ -13,7 +13,7 @@
         "log4js": "^6.9.1",
         "numeral": "^2.0.6",
         "rimraf": "^6.0.1",
-        "tsx": "^4.20.3"
+        "tsx": "^4.20.5"
     },
     "description": "",
     "devDependencies": {
