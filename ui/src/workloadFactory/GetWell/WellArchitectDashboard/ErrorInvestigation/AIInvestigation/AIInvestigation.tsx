@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
-import { ReactComponent as AIInvestigationIcon } from '../../../../../assets/ai-investigation.svg';
+import { ReactComponent as AIInvestigationIcon } from '../../../../../assets/instance-log-analyzer.svg';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './AIInvestigation.module.scss';
 import SeparatorComponent from '../../../../../common/SeparatorComponent/SeparatorComponent';

@@ -36,14 +36,7 @@ import {
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
 import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import {
-    ACTION_CTA,
-    DBType,
-    DETECT_HOST_VAR,
-    FROM_DIALOG,
-    INVENTORY_STATUS,
-    WLF_TABS
-} from '../../../../utils/consts';
+import { ACTION_CTA, DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -116,7 +109,7 @@ const InstancesTable = () => {
         selectedInventoryTab,
         selectedFilterValue
     } = useAppSelector(state => state.inventoryV2);
-    const { multiDataLoading } = useAppSelector(state => state.headers);
+    const { multiDataLoading, regionMapping } = useAppSelector(state => state.headers);
     const {
         notRegisteredSQLView,
         notActiveSQLInstancesView,
@@ -733,6 +726,13 @@ const InstancesTable = () => {
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
+                let isBedRockAvailable = true;
+                if (
+                    'bedrockAvailable' in regionMapping?.[rowData?.regionId] &&
+                    !regionMapping?.[rowData?.regionId]?.bedrockAvailable
+                ) {
+                    isBedRockAvailable = false;
+                }
                 let disableOption = false;
                 let disableMessage = '';
                 const disableCreateDb = isSmbProtocol(rowData?.storage?.fsxn?.protocol);
@@ -759,7 +759,8 @@ const InstancesTable = () => {
                             disableOption,
                             disableMessage,
                             disableCreateDb,
-                            disableCreateDbMsg
+                            disableCreateDbMsg,
+                            isBedRockAvailable
                         )
                     );
                 }

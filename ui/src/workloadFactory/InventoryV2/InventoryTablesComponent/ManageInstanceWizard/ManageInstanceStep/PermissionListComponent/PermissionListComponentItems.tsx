@@ -1,4 +1,5 @@
 import { TFunction } from 'i18next';
+import styles from './PermissionListComponent.module.scss';
 import { ACTION_TYPE, MANAGE_STATES } from '../../../../../../utils/consts';
 import { AccordionItem } from '../ManageInstanceAccordion/ManageInstanceAccordion';
 import { PermissionContent } from './PermissionContent/PermissionContent';
@@ -314,9 +315,13 @@ export const PermissionListComponentItems = (
             missingPermission: manageChecks?.errorInvestigation !== MANAGE_STATES.READY,
             image:
                 wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.errorInvestigation !== MANAGE_STATES.READY ? (
-                    <LogAnalyzerDisabled />
+                    <div className={`${styles.logAnalyzer} ${styles.logAnalyzerDisabled}`}>
+                        <LogAnalyzerDisabled />
+                    </div>
                 ) : (
-                    <LogAnalyzer />
+                    <div className={styles.logAnalyzer}>
+                        <LogAnalyzer />
+                    </div>
                 ),
             content: (
                 <PermissionContent

@@ -1,5 +1,5 @@
 import { useDispatch } from 'react-redux';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@netapp/design-system';
 import styles from './WellArchitectTabs.module.scss';
@@ -7,12 +7,26 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
+import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 
 const WellArchitectTabs = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState<any>();
     const { selectedWellArchitectTab } = useAppSelector(state => state.getWellOptimize);
+    const { regionMapping } = useAppSelector(state => state.headers);
+    const { selectedGwInstanceRegionId } = useAppSelector(state => state.getWellOptimize);
+
+    const isBedrockSupportedForRegion = useMemo(() => {
+        let isBedRockAvailable = true;
+        if (
+            'bedrockAvailable' in regionMapping?.[selectedGwInstanceRegionId] &&
+            !regionMapping?.[selectedGwInstanceRegionId]?.bedrockAvailable
+        ) {
+            isBedRockAvailable = false;
+        }
+        return isBedRockAvailable;
+    }, [regionMapping, selectedGwInstanceRegionId]);
 
     useEffect(() => {
         setSelectedTab(selectedWellArchitectTab);
@@ -63,28 +77,46 @@ const WellArchitectTabs = () => {
                 </DsTypography>
             </div>
 
-            <div
-                className={
-                    selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
-                        ? `${styles.headers} ${styles.headerWidthSecond} ${styles.active}`
-                        : `${styles.headers} ${styles.headerWidthSecond}`
-                }
-            >
-                <DsTypography
-                    variant="Semibold_14"
-                    className={
-                        selectedTab === 'Error investigation'
-                            ? `${styles.headerPart1} ${styles.activeText}`
-                            : `${styles.headerPart1}`
-                    }
-                    onClick={() => handleClick('Error investigation')}
+            {!isBedrockSupportedForRegion && (
+                <TooltipComponent
+                    placement="bottom"
+                    title={t('databases.log-analyzer.bedrock-in-region-not-supported')}
+                    width={300}
                 >
-                    {t('databases.log-analyzer.error-investigation')}
-                </DsTypography>
-                <DsTypography variant="Semibold_13" className={styles.tag}>
-                    {t('databases.log-analyzer.ai-tag')}
-                </DsTypography>
-            </div>
+                    <div className={`${styles.headers} ${styles.headerWidthSecond}`}>
+                        <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
+                            {t('databases.log-analyzer.error-investigation')}
+                        </DsTypography>
+                        <DsTypography variant="Semibold_13" className={`${styles.tag} ${styles.tagDisable}`}>
+                            {t('databases.log-analyzer.ai-tag')}
+                        </DsTypography>
+                    </div>
+                </TooltipComponent>
+            )}
+            {isBedrockSupportedForRegion && (
+                <div
+                    className={
+                        selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
+                            ? `${styles.headers} ${styles.headerWidthSecond} ${styles.active}`
+                            : `${styles.headers} ${styles.headerWidthSecond}`
+                    }
+                >
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            selectedTab === 'Error investigation'
+                                ? `${styles.headerPart1} ${styles.activeText}`
+                                : `${styles.headerPart1}`
+                        }
+                        onClick={() => handleClick('Error investigation')}
+                    >
+                        {t('databases.log-analyzer.error-investigation')}
+                    </DsTypography>
+                    <DsTypography variant="Semibold_13" className={styles.tag}>
+                        {t('databases.log-analyzer.ai-tag')}
+                    </DsTypography>
+                </div>
+            )}
 
             <div
                 className={

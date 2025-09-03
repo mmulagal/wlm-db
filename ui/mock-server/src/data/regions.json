@@ -2,111 +2,138 @@
     "regions": [
       {
         "regionCode": "ap-south-2",
-        "regionName": "Asia Pacific (Hyderabad)"
+        "regionName": "Asia Pacific (Hyderabad)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "ap-south-1",
-        "regionName": "Asia Pacific (Mumbai)"
+        "regionName": "Asia Pacific (Mumbai)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "eu-south-1",
-        "regionName": "Europe (Milan)"
+        "regionName": "Europe (Milan)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "eu-south-2",
-        "regionName": "Europe (Spain)"
+        "regionName": "Europe (Spain)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "me-central-1",
-        "regionName": "Middle East (UAE)"
+        "regionName": "Middle East (UAE)",
+        "bedrockAvailable": false
       },
       {
         "regionCode": "ca-central-1",
-        "regionName": "Canada (Central)"
+        "regionName": "Canada (Central)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "eu-central-1",
-        "regionName": "Europe (Frankfurt)"
+        "regionName": "Europe (Frankfurt)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "eu-central-2",
-        "regionName": "Europe (Zurich)"
+        "regionName": "Europe (Zurich)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "us-west-1",
-        "regionName": "US West (N. California)"
+        "regionName": "US West (N. California)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "us-west-2",
-        "regionName": "US West (Oregon)"
+        "regionName": "US West (Oregon)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "af-south-1",
-        "regionName": "Africa (Cape Town)"
+        "regionName": "Africa (Cape Town)",
+        "bedrockAvailable": false
       },
       {
         "regionCode": "eu-north-1",
-        "regionName": "Europe (Stockholm)"
+        "regionName": "Europe (Stockholm)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "eu-west-3",
-        "regionName": "Europe (Paris)"
+        "regionName": "Europe (Paris)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "eu-west-2",
-        "regionName": "Europe (London)"
+        "regionName": "Europe (London)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "eu-west-1",
-        "regionName": "Europe (Ireland)"
+        "regionName": "Europe (Ireland)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "ap-northeast-2",
-        "regionName": "Asia Pacific (Seoul)"
+        "regionName": "Asia Pacific (Seoul)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "me-south-1",
-        "regionName": "Middle East (Bahrain)"
+        "regionName": "Middle East (Bahrain)",
+        "bedrockAvailable": false
       },
       {
         "regionCode": "ap-northeast-1",
-        "regionName": "Asia Pacific (Tokyo)"
+        "regionName": "Asia Pacific (Tokyo)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "sa-east-1",
-        "regionName": "South America (Sao Paulo)"
+        "regionName": "South America (Sao Paulo)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "ap-east-1",
-        "regionName": "Asia Pacific (Hong Kong)"
+        "regionName": "Asia Pacific (Hong Kong)",
+        "bedrockAvailable": false
       },
       {
         "regionCode": "ap-southeast-1",
-        "regionName": "Asia Pacific (Singapore)"
+        "regionName": "Asia Pacific (Singapore)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "ap-southeast-2",
-        "regionName": "Asia Pacific (Sydney)"
+        "regionName": "Asia Pacific (Sydney)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "ap-southeast-3",
-        "regionName": "Asia Pacific (Jakarta)"
+        "regionName": "Asia Pacific (Jakarta)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "ap-southeast-4",
-        "regionName": "Asia Pacific (Melbourne)"
+        "regionName": "Asia Pacific (Melbourne)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "us-east-1",
-        "regionName": "US East (N. Virginia)"
+        "regionName": "US East (N. Virginia)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "us-east-2",
-        "regionName": "US East (Ohio)"
+        "regionName": "US East (Ohio)",
+        "bedrockAvailable": true
       },
       {
         "regionCode": "ap-southeast-5",
-        "regionName": "Asia Pacific (Malaysia)"
+        "regionName": "Asia Pacific (Malaysia)",
+        "bedrockAvailable": false
       }
     ]
 }

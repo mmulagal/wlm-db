@@ -9,3 +9,17 @@
     .accordionSection {
     }
 }
+
+.logAnalyzer {
+    width: 48px;
+    height: 48px;
+    background-color: var(--purple-03);
+    border-radius: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logAnalyzerDisabled {
+    background-color: var(--grey-15);
+}

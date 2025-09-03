@@ -55,6 +55,15 @@ const OnboardingAccordions = () => {
                                 value: false,
                                 withTabs: false
                             }
+                        },
+                        {
+                            label: t('databases.register-flow.powershell-modules'),
+                            values: ['AWS.Tools.BedrockRuntime'],
+                            showCopy: false,
+                            viewPolicy: {
+                                value: false,
+                                withTabs: false
+                            }
                         }
                     ]}
                     policies={{}}
@@ -75,7 +84,7 @@ const OnboardingAccordions = () => {
                     blocks={[
                         {
                             label: t('databases.log-analyzer.onboarding-accordion-3-label'),
-                            values: [t('databases.log-analyzer.onboarding-accordion-3-value-1')],
+                            values: ['bedrock:InvokeModel'],
                             showCopy: false,
                             viewPolicy: {
                                 value: false,
@@ -101,7 +110,7 @@ const OnboardingAccordions = () => {
                     blocks={[
                         {
                             label: t('databases.log-analyzer.onboarding-accordion-4-label'),
-                            values: [t('databases.log-analyzer.onboarding-accordion-4-value-1')],
+                            values: ['bedrock:GetFoundationModelAvailability', 'bedrock:ListInferenceProfiles'],
                             showCopy: false,
                             viewPolicy: {
                                 value: false,

@@ -649,7 +649,8 @@
             "detected-errors2": " unique errors",
             "no-errors": "No errors",
             "status-investigating": "Status: Investigating",
-            "running-status": "(This process can take upto 30 minutes)"
+            "running-status": "(This process can take upto 30 minutes)",
+            "bedrock-in-region-not-supported": "Error investigation is not available as the region is not supported by Amazon Bedrock."
         },
         "dashboard": {
             "no-credentials": "No credentials",

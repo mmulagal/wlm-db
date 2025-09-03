@@ -51,7 +51,8 @@ export const getInstanceTableMenuOptions = (
     disableOption: boolean,
     disableMessage: string,
     disableCreateDb: boolean,
-    disableCreateDbMsg: string
+    disableCreateDbMsg: string,
+    isBedRockAvailable: boolean
 ) => {
     switch (rowData.hostType) {
         case DBType.POSTGRESQL:
@@ -99,8 +100,10 @@ export const getInstanceTableMenuOptions = (
                 {
                     id: 'investigateErrors',
                     displayName: t('databases.instance-table.menu-options.investigate-errors'),
-                    disabled: disableOption,
-                    infoText: disableMessage
+                    disabled: !isBedRockAvailable || disableOption,
+                    infoText: !isBedRockAvailable
+                        ? t('databases.log-analyzer.bedrock-in-region-not-supported')
+                        : disableMessage
                 },
                 {
                     id: 'viewInstance',
