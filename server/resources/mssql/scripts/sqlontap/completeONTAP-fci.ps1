@@ -231,15 +231,14 @@ try {
                 }
             }
         } 
-    } -Credential $Credentials -ComputerName $HostName -Authentication credssp 
-}
-catch {
-    Write-Output "Failed to add $ClusterAdminUser and $ServiceAccountUser to sysadmin role. Error: $_"
-}
+    } -Credential $Credentials -ComputerName $HostName -Authentication credssp
+    }
+    catch {
+        Write-Output "Failed to add $ClusterAdminUser and $ServiceAccountUser to sysadmin role. Error: $_"
+    }
 
     Write-Output "Complete Failover Cluster Instance action completed successfully."
-    Send-CFNResourceSignal -StackName $Stackname -Status SUCCESS -LogicalResourceId $ResourceID -UniqueId $instanceID
-  }
+}
 
 catch {
     $FailureReason = "Failed to run complete Failover cluster action for SQL installation: " + $_.Exception.Message
