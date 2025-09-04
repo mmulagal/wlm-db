@@ -194,18 +194,18 @@ export const GENERAL = {
         'View the required permissions.'
     ],
     OPTION_ONE: 'To generate a CloudFormation stack for deployment from AWS, minimum permissions are required.',
-    OPTION_TWO: 'To deploy the configuration from Console, full permissions are required.',
+    OPTION_TWO: 'To deploy the configuration from NetApp Console, full permissions are required.',
     OPTION_TWO_WF: 'To deploy the configuration from Workload factory, full permissions are required.',
     FOR_MORE_INFO: 'Learn more about the',
     HOW_TO_ADD_AWS_CRED: 'Learn how to add AWS credentials.',
     AWS_ACCOUNT_SUB_TEXT:
-        'Select credentials that grant Console the permissions required to deploy and manage Microsoft SQL Server and FSx for ONTAP.',
+        'Select credentials that grant NetApp Console the permissions required to deploy and manage Microsoft SQL Server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_WF:
         'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL Server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_AUTOMATE:
-        'Use Console in automate mode by selecting credentials that grant Console the AWS permissions required to deploy and manage resources in your AWS account.',
+        'Use NetApp Console in automate mode by selecting credentials that grant NetApp Console the AWS permissions required to deploy and manage resources in your AWS account.',
     AWS_ACCOUNT_SUB_TEXT_READ:
-        'Use Console in read mode by selecting AWS credentials that provide the read permissions required to generate a CloudFormation template. You can then use the template from the AWS CloudFormation console to provision stacks.',
+        'Use NetApp Console in read mode by selecting AWS credentials that provide the read permissions required to generate a CloudFormation template. You can then use the template from the AWS CloudFormation console to provision stacks.',
     AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE:
         'Use Workload Factory in automate mode by selecting credentials that grant Workload Factory the AWS permissions required to deploy and manage resources in your AWS account.',
     AWS_ACCOUNT_SUB_TEXT_WF_READ:
@@ -427,7 +427,7 @@ export const GENERAL = {
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:
-        'Enter connection details for Microsoft SQL Server that is accessible from the Console Agent',
+        'Enter connection details for Microsoft SQL Server that is accessible from the NetApp Console Agent',
     IS_REQUIRED_MSG: ' is required',
     DATABASES_SUMMARY: 'Databases summary',
     DATABASES: 'Databases',
