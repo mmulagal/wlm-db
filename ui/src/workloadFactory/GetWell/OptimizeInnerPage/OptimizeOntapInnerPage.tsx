@@ -33,7 +33,8 @@ import {
     useLazyGetSubTaskListQuery,
     useOptimizeStorageConfigMutation,
     useOptimizeOperatingSystemMutation,
-    useOptimizeHAMssqlMutation
+    useOptimizeHAMssqlMutation,
+    useOptimizeOracleStorageConfigMutation
 } from '../../../utils/apiService';
 import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 
@@ -43,6 +44,7 @@ import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
 import OntapTableWithData from './InnerTables/OntapTableWithData';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 import MSSQLHighAvailabilityTableWithData from './InnerTables/MSSQLHighAvailabilityTableWithData';
+import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
@@ -70,6 +72,7 @@ const OptimizeOntapInnerPage = () => {
         selectedGwInstanceRegionId
     } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [optimizeOracleStorageConfig] = useOptimizeOracleStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -254,12 +257,29 @@ const OptimizeOntapInnerPage = () => {
         let apiInput = {};
         let apiCall = null;
         let statusType = '';
-        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE) {
+        if (
+            selectedOptimizeConfig?.engineType === DBType.ORACLE &&
+            (rowData?.type === 'volume' || rowData?.type === 'lun')
+        ) {
+            // For Oracle storage configuration ontap
+            statusType = 'ontap';
+            apiCall = optimizeOracleStorageConfig;
+            payload = getVolumeOrLunPayload(operation, singleRowData, selectedRowsForOptimizeInnerPage, rowData);
+            apiInput = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId || selectedOptimizeConfig?.hostId,
+                instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
+                payload
+            };
+        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE) {
+            // For MSSQL shared storage
             statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
             apiCall = optimizeHAMssql;
             payload = getSharedStoragePayload(operation, singleRowData, selectedRowsForOptimizeInnerPage);
             apiInput = { configName: 'shared-storage', payload };
         } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
+            // For MSSQL storage configuration ontap
             statusType = 'ontap';
             apiCall = optimizeStorageConfig;
             payload = getVolumeOrLunPayload(operation, singleRowData, selectedRowsForOptimizeInnerPage, rowData);
@@ -271,6 +291,7 @@ const OptimizeOntapInnerPage = () => {
                 payload
             };
         } else {
+            // For MSSQL storage configuration OS
             statusType = 'os';
             apiCall = optimizeOs;
             payload = getOsPayload(operation, singleRowData, selectedRowsForOptimizeInnerPage, rowData);
@@ -306,7 +327,13 @@ const OptimizeOntapInnerPage = () => {
                 [statusType]: [...(inProgressHostData[statusType] || []), selectedResourceId]
             })
         );
-        formatGetWellData(dispatch);
+        if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
+            // Format data call for oracle
+            formatOracleWellArchitectedData(dispatch);
+        } else {
+            // Format data call for MSSQL
+            formatGetWellData(dispatch);
+        }
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
@@ -374,7 +401,13 @@ const OptimizeOntapInnerPage = () => {
 
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
-                        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
+                            // Redirect to oracle well architect page
+                            dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+                        } else {
+                            // Redirect to MSSQL well architect page
+                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        }
                         dispatch(setLandingFromInnerPage(true));
                     }
                 }, 1000);

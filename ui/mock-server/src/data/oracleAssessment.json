@@ -464,14 +464,20 @@
                   "Operational excellence",
                   "Performance efficiency"
                ],
-               "objectsInViolation":[
-                  
-               ],
-               "violationDetails":[
-                  
-               ],
+               "objectsInViolation": [
+                    "oracleredo2"
+                ],
+                "violationDetails": [
+                    {
+                        "objectName": "oracleredo2",
+                        "value": "adaptive",
+                        "objectType": "Volume",
+                        "recommended": "none",
+                        "dataCategory": "log-files"
+                    }
+                ],
                "totalObjectsAssessed":3,
-               "totalObjectsInViolation":0
+               "totalObjectsInViolation":1
             },
             {
                "name":"space-reservation-enabled",

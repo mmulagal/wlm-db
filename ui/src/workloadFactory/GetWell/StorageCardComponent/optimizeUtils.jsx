@@ -78,9 +78,8 @@ export const handleDialog = (
 };
 
 const isDialogPrimaryBtnDisabled = rowData =>
-    rowData?.data?.name === 'OS type' ||
-    rowData?.data?.name === 'NTFS allocation unit size' ||
-    rowData?.engineType === DBType.ORACLE;
+    rowData?.engineType === DBType.MSSQL &&
+    (rowData?.data?.name === 'OS type' || rowData?.data?.name === 'NTFS allocation unit size');
 
 export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
     setDialog(

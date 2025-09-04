@@ -254,7 +254,7 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
                     return <StorageLayoutOracleDialog type={type} />;
 
-                // MSSQL assessment
+                // Oracle storage config ONTAP assessment
                 case 'Thin provisioning':
                 case 'Autosize':
                 case 'Autosize-mode':
