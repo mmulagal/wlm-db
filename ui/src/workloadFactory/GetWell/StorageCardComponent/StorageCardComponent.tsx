@@ -28,6 +28,7 @@ import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
+    DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     GETWELL_STATUS,
@@ -773,7 +774,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const handleNavigateToOptimizePage = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
-        dispatch(setSelectedOptimizeConfig({ type, data: cardData }));
+        // Storing data to identify which config is selected from inner optimize page for MSSQL
+        dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.MSSQL }));
     };
 
     // This is for inner page navigation

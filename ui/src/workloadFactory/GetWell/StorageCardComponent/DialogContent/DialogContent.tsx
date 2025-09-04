@@ -245,11 +245,16 @@ const DialogContent = ({
     const setContent = () => {
         if (engineType === DBType.ORACLE) {
             switch (type) {
-                case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT:
+                // Oracle storage layout assessment
+                case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
                 case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
-                case ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
                 case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
                     return <StorageLayoutOracleDialog type={type} />;
+
+                // MSSQL assessment
                 case 'Thin provisioning':
                 case 'Autosize':
                 case 'Autosize-mode':

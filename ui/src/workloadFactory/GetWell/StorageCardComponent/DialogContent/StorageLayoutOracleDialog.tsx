@@ -7,12 +7,12 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
     const { t } = useTranslation();
     const setContent = () => {
         switch (type) {
-            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_TEMP_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
                 return (
                     <>
                         {createSection(
                             t('databases.well-architect.action-summary'),
-                            t('databases.well-architect.redologs-temp-placement-action-summary')
+                            t('databases.well-architect.redologs-placement-action-summary')
                         )}
                         {createSection(
                             t('databases.well-architect.notes'),
@@ -20,20 +20,34 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                         )}
                         {createSection(
                             t('databases.well-architect.optimization-steps'),
-                            t('databases.well-architect.oracle-storage-layout-optimization-step1')
+                            t('databases.well-architect.redologs-placement-optimization-step1')
                         )}
-                        {createActionOptionSection(t('databases.well-architect.redo-logs-temp-placement-step1'), [
-                            t('databases.well-architect.redo-logs-temp-placement-step1-options1'),
-                            t('databases.well-architect.redo-logs-temp-placement-step1-options2'),
-                            t('databases.well-architect.redo-logs-temp-placement-step1-options3')
+                        {createActionOptionSection(t('databases.well-architect.redo-logs-placement-step1'), [
+                            t('databases.well-architect.redo-logs-placement-step1-options1'),
+                            t('databases.well-architect.redo-logs-placement-step1-options2'),
+                            t('databases.well-architect.redo-logs-placement-step1-options3')
                         ])}
-                        {createActionOptionSection(t('databases.well-architect.redo-logs-temp-placement-step2'), [
-                            t('databases.well-architect.redo-logs-temp-placement-step2-options1'),
-                            t('databases.well-architect.redo-logs-temp-placement-step2-options2'),
-                            t('databases.well-architect.redo-logs-temp-placement-step2-options3'),
-                            t('databases.well-architect.redo-logs-temp-placement-step2-options4'),
-                            t('databases.well-architect.redo-logs-temp-placement-step2-options5'),
-                            t('databases.well-architect.redo-logs-temp-placement-step2-options6')
+                    </>
+                );
+            case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.temp-placement-action-summary')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-storagelayout-note1')
+                        )}
+                        {createSection(t('databases.well-architect.optimization-steps'), '')}
+                        {createActionOptionSection(t('databases.well-architect.temp-placement-step1'), [
+                            t('databases.well-architect.temp-placement-step1-options1'),
+                            t('databases.well-architect.temp-placement-step1-options2'),
+                            t('databases.well-architect.temp-placement-step1-options3'),
+                            t('databases.well-architect.temp-placement-step1-options4'),
+                            t('databases.well-architect.temp-placement-step1-options5'),
+                            t('databases.well-architect.temp-placement-step1-options6')
                         ])}
                     </>
                 );
@@ -48,18 +62,26 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                             t('databases.well-architect.notes'),
                             t('databases.well-architect.oracle-storagelayout-note1')
                         )}
-                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                        {createSection(
+                            t('databases.well-architect.optimization-steps'),
+                            t('databases.well-architect.redologs-placement-optimization-step1')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.archive-placement-step1'), [
                             t('databases.well-architect.archive-placement-step1-options1'),
-                            t('databases.well-architect.archive-placement-step1-options2')
+                            t('databases.well-architect.archive-placement-step1-options2'),
+                            t('databases.well-architect.archive-placement-step1-options3'),
+                            t('databases.well-architect.archive-placement-step1-options4'),
+                            t('databases.well-architect.archive-placement-step1-options5'),
+                            t('databases.well-architect.archive-placement-step1-options6')
                         ])}
                     </>
                 );
-            case ASSESSMENT_CONFIG_NAMES.DATAFILES_CONTROLFILES_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
                 return (
                     <>
                         {createSection(
                             t('databases.well-architect.action-summary'),
-                            t('databases.well-architect.datafile-control-file-placement-action-summary')
+                            t('databases.well-architect.datafile-placement-action-summary')
                         )}
                         {createSection(
                             t('databases.well-architect.notes'),
@@ -67,7 +89,7 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                         )}
                         {createSection(
                             t('databases.well-architect.optimization-steps'),
-                            t('databases.well-architect.oracle-storage-layout-optimization-step1')
+                            t('databases.well-architect.data-control-file-optimization-step1')
                         )}
                         {createActionOptionSection(t('databases.well-architect.datafiles-optimization-step1'), [
                             t('databases.well-architect.datafiles-optimization-step1-options1'),
@@ -76,12 +98,29 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                             t('databases.well-architect.datafiles-optimization-step1-options4'),
                             t('databases.well-architect.datafiles-optimization-step1-options5')
                         ])}
-                        {createActionOptionSection(t('databases.well-architect.datafiles-optimization-step2'), [
-                            t('databases.well-architect.datafiles-optimization-step2-options1'),
-                            t('databases.well-architect.datafiles-optimization-step2-options2'),
-                            t('databases.well-architect.datafiles-optimization-step2-options3'),
-                            t('databases.well-architect.datafiles-optimization-step2-options4'),
-                            t('databases.well-architect.datafiles-optimization-step2-options5')
+                    </>
+                );
+            case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.controlfile-placement-action-summary')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-storagelayout-note1')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.optimization-steps'),
+                            t('databases.well-architect.data-control-file-optimization-step1')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.controlfiles-optimization-step1'), [
+                            t('databases.well-architect.controlfiles-optimization-step1-options1'),
+                            t('databases.well-architect.controlfiles-optimization-step1-options2'),
+                            t('databases.well-architect.controlfiles-optimization-step1-options3'),
+                            t('databases.well-architect.controlfiles-optimization-step1-options4'),
+                            t('databases.well-architect.controlfiles-optimization-step1-options5')
                         ])}
                     </>
                 );

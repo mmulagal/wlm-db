@@ -39,14 +39,14 @@ const StorageConfigurationSection = ({
                         <OracleCardComponent cardData={oracleCardData.ontap_configuration} />
 
                         <DsAccordion
-                            id="5"
+                            id="10"
                             variant="Default"
                             isDisabled={loading || !oracleCardData?.ontap_configuration?.block_two?.value}
-                            isExpanded={isAccordionExpanded('5', optimizePrintState)}
+                            isExpanded={isAccordionExpanded('10', optimizePrintState)}
                             onExpandChange={isExpanded => {
-                                handleAccordionExpanded('5', isExpanded);
+                                handleAccordionExpanded('10', isExpanded);
                             }}
-                            onClick={() => setClickedAccordionId('5')}
+                            onClick={() => setClickedAccordionId('10')}
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData?.ontap_configuration?.tags?.map((perTag: string, index: number) => (

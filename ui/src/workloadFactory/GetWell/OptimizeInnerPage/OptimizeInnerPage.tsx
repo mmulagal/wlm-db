@@ -48,6 +48,7 @@ import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSna
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
+import StorageLayoutOracleTable from './InnerTables/StorageLayoutOracleTable';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -118,6 +119,30 @@ const OptimizeInnerPage = () => {
 
     useEffect(() => {
         switch (selectedOptimizeConfig?.type) {
+            // Oracle storage layout assessment
+            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+                setCardHeight({
+                    recommendationSection: '164px',
+                    tagSection: '260px'
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+                setCardHeight({
+                    recommendationSection: '228px',
+                    tagSection: '324px'
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+                setCardHeight({
+                    recommendationSection: '208px',
+                    tagSection: '304px'
+                });
+                break;
+
+            // MSSQL Assessment
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
                 setCardHeight({
@@ -261,6 +286,37 @@ const OptimizeInnerPage = () => {
                             selectedOptimizeConfig?.data,
                             'single',
                             rowData
+                        );
+                    }}
+                >
+                    {GENERAL.OPTIMIZE}
+                </DsButton>
+            );
+        }
+        if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT
+        ) {
+            // Oracle storage layout assessment
+            return (
+                <DsButton
+                    isThin
+                    variant="secondary"
+                    onClick={() => {
+                        // optimizeAction(rowData);
+                        handleDialog(
+                            setDialog,
+                            selectedOptimizeConfig?.type,
+                            callOptimizeApi,
+                            closeDialog,
+                            selectedOptimizeConfig?.data,
+                            'single',
+                            rowData,
+                            DBType.ORACLE
                         );
                     }}
                 >
@@ -568,12 +624,31 @@ const OptimizeInnerPage = () => {
             callOptimizeApi,
             closeDialog,
             selectedOptimizeConfig?.data,
-            'bulk'
+            'bulk',
+            {},
+            selectedOptimizeConfig?.engineType
         );
     };
 
     const renderTable = () => {
         switch (selectedOptimizeConfig?.type) {
+            // Oracle storage layout assessment
+            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+                return (
+                    <StorageLayoutOracleTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+
+            // MSSQL assessment
             case 'Storage tier':
                 return (
                     <StorageTierOptimizeTable

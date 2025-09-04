@@ -39,6 +39,21 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
 
     const getCardData = (config: string, data: any) => {
         switch (config) {
+            // Below are storage layout Oracle assessment
+            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+                return {
+                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
+                    data: data?.recommendation
+                };
+            // MSSQL Assessment
             case 'Storage tier':
             case 'ONTAP / Tiering policy':
                 return {

@@ -857,9 +857,11 @@ export const GETWELL_CONFIG: any = {
     'sqlServer-service': 'SQL Server Services',
     clone: 'clone_management',
     'clone-management': 'clone_management',
-    'redologs-temp-placement': 'redologs_temp_placement',
+    'redologs-placement': 'redologs_placement',
+    'templogs-placement': 'templogs_placement',
     'archive-placement': 'archive_placement',
-    'datafiles-controlfiles-placement': 'datafiles_controlfiles_placement',
+    'datafiles-placement': 'datafiles_placement',
+    'controlfiles-placement': 'controlfiles_placement',
     'oracle-binary-placement': 'oracle_binary_placement'
 };
 
@@ -907,9 +909,11 @@ export const ASSESSMENT_CONFIG_NAMES = {
     HEARTBEAT_SETTINGS: 'Heartbeat Settings',
     CLUSTER_QUORUM: 'Cluster Quorum',
     SQL_SERVER_SERVICE: 'SQL Server Services',
-    REDO_LOGS_TEMP_PLACEMENT: 'Redo logs and Temp Placement',
+    REDO_LOGS_PLACEMENT: 'Redo logs Placement',
+    TEMP_LOGS_PLACEMENT: 'Temp Placement',
     ARCHIVE_PLACEMENT: 'Archive Placement',
-    DATAFILES_CONTROLFILES_PLACEMENT: 'Data Files and Control Files Placement',
+    DATAFILES_PLACEMENT: 'Data Files Placement',
+    CONTROLFILES_PLACEMENT: 'Control Files Placement',
     ORACLE_BINARY_PLACEMENT: 'Oracle Binary Placement',
     COMPRESSION: 'Compression',
     DEDUPLICATION: 'Deduplication',

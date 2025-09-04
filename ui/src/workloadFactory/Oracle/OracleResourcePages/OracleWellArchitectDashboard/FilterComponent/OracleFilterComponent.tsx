@@ -44,14 +44,14 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             .filter((tag: any) => tag && tag.type === 'all-catagories')
             .map((tag: any) => tag.value);
         const options = [
-            // {
-            //     id: 0,
-            //     label: 'Storage layout',
-            //     value: 'Storage layout',
-            //     category: 'Storage'
-            // },
             {
                 id: 0,
+                label: 'Storage layout',
+                value: 'Storage layout',
+                category: 'Storage'
+            },
+            {
+                id: 1,
                 label: 'Storage configuration',
                 value: 'Storage configuration',
                 category: 'Storage'
@@ -350,22 +350,22 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             formatLabel={() =>
                 `Resource type: ${
                     !oracleDefaultFilterOptions.resourceType?.length ||
-                    oracleDefaultFilterOptions.resourceType.length === 2
+                    oracleDefaultFilterOptions.resourceType.length === 3
                         ? 'All'
                         : ''
                 }(${
                     oracleDefaultFilterOptions.resourceType?.length > 0
                         ? oracleDefaultFilterOptions.resourceType?.length
-                        : 2
+                        : 3
                 })`
             }
             placeholder="Placeholder text"
             options={[
-                // {
-                //     id: 0,
-                //     label: 'Database',
-                //     value: 'Database'
-                // },
+                {
+                    id: 0,
+                    label: 'Database',
+                    value: 'Database'
+                },
                 {
                     id: 1,
                     label: 'Volume',
