@@ -401,6 +401,10 @@ function hoursAgoTimestamp(hours: number = 24): number {
     return Date.now() - 1000 * 60 * 60 * Number(hours);
 }
 
+function toMB(bytes: number): number {
+    return bytes / 1024 / 1024;
+}
+
 export {
     getPowershellScript,
     getBashScript,
@@ -410,5 +414,6 @@ export {
     deleteOlderFilesInDirectory,
     generateHash,
     safeParseJson,
-    hoursAgoTimestamp
+    hoursAgoTimestamp,
+    toMB
 };

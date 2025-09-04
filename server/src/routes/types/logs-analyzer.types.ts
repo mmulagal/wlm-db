@@ -14,9 +14,13 @@ const LogsAnalyzerBody = Type.Optional(
         logsAnalyzerS3SignedUrl: Type.Optional(Type.String()),
         logsCountToConsider: Type.Optional(Type.Number()),
         logsAnalyzerFromTimestamp: Type.Optional(Type.Number()),
-        logLevel: Type.Optional(Type.String())
+        logLevel: Type.Optional(Type.String()),
+        logsWindowDuration: Type.Optional(Type.Number()),
+        monitorUsage: Type.Optional(Type.Boolean())
     })
 );
+
+type LogsAnalyzerBodyType = Static<typeof LogsAnalyzerBody>;
 
 type LogsAnalyzerParamsType = Static<typeof LogsAnalyzerParams>;
 type InferenceConfigType = Static<typeof InferenceConfig>;
@@ -116,6 +120,7 @@ export {
     LogsAnalyzerParams,
     LogsAnalyzerParamsType,
     LogsAnalyzerBody,
+    LogsAnalyzerBodyType,
     InferenceConfigType,
     RemediationRecommendationObject,
     ReportIdentifier,

@@ -6,6 +6,7 @@ import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../../simulator/scopes/aws/pricing-scope';
 import '../../../simulator/scopes/aws/compute-optimizer-scope';
 import '../../../simulator/scopes/aws/cloud-watch-scope';
+import '../../../simulator/scopes/aws/cloud-watch-logs-scope';
 import '../../../simulator/scopes/opentelemetry-scope';
 import '../../../simulator/scopes/aws/ec2-scope';
 import '../../../simulator/scopes/aws/ssm-scope';

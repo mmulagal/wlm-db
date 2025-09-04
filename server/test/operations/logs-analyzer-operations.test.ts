@@ -63,7 +63,8 @@ describe('Logs Analyzer Operations', () => {
             TEST_CREDENTIALS_ID,
             TEST_REGION,
             TEST_RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            {}
         ));
     });
 
@@ -78,7 +79,8 @@ describe('Logs Analyzer Operations', () => {
             TEST_CREDENTIALS_ID,
             TEST_REGION,
             TEST_RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            {}
         );
         expect(result).toHaveProperty('jobId');
     });
@@ -215,7 +217,8 @@ describe('Logs Analyzer Operations', () => {
             TEST_CREDENTIALS_ID,
             TEST_REGION,
             TEST_RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            {}
         );
 
         await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, secondJobId);

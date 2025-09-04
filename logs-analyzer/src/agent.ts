@@ -1,6 +1,7 @@
 import { readdirSync, mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Command } from 'commander';
+import os from 'os';
 import { BedrockRuntimeClient, ConversationRole, InferenceConfiguration } from '@aws-sdk/client-bedrock-runtime';
 import { createHash } from 'node:crypto';
 import {
@@ -29,7 +30,8 @@ import {
     runPowerShellScript,
     deleteOlderFilesInDirectory,
     safeParseJson,
-    hoursAgoTimestamp
+    hoursAgoTimestamp,
+    toMB
 } from './utils/utils';
 import logger from './utils/logging';
 import { ToolUse, ToolSpec, MessageObj, AgentArgs, ErrorLogWithScriptAndDetails, ErrorLog } from './utils/interfaces';
@@ -53,6 +55,7 @@ program
     .option('-e, --temperature <temp>', 'Temperature for the model', '0.5')
     .option('-p, --top-p <topP>', 'Top P for the model', '0.9')
     .option('-m, --max-tokens <tokens>', 'Max tokens for the model', '1000')
+    .option('--monitor-usage', 'Monitor CPU and memory usage during analysis', false)
     .requiredOption('-a, --model-id <id>', 'Model ID to use for analysis')
     .requiredOption('-n, --model-region <region>', 'Model region to use for analysis');
 
@@ -76,8 +79,14 @@ const {
     timeWindowHours: TIME_WINDOW_HOURS,
     topP: TOP_P,
     temperature: TEMP,
-    maxTokens: MAX_TOKENS
+    maxTokens: MAX_TOKENS,
+    monitorUsage: MONITOR_USAGE
 } = argv as AgentArgs;
+
+let monitorInterval: NodeJS.Timeout | undefined;
+let maxMem = 0;
+let maxCpuPercent = 0;
+let usageLogFile = '';
 
 const LOGS_FOLDER = decodeURIComponent(logsPath);
 if (!existsSync(LOGS_FOLDER)) {
@@ -166,6 +175,11 @@ async function initiateLogsAnalysis(inputText: string) {
     const conversationFilePath = join(outputDir, `conversation_history_${timestamp}.json`);
     const remediationFilePath = join(outputDir, `remediation_recommendations_${timestamp}.json`);
     const statusFilePath = join(outputDir, `status_${timestamp}.txt`);
+    if (MONITOR_USAGE) {
+        usageLogFile = join(outputDir, `usage-monitor_${timestamp}.log`);
+        trackResourceUsage();
+    }
+
     writeFileSync(statusFilePath, 'In Progress', 'utf-8');
 
     try {
@@ -234,6 +248,19 @@ async function initiateLogsAnalysis(inputText: string) {
 
         logger.info('Step 5: Writing to CloudWatch Logs.');
         await writeToCloudWatchLogGroup(JSON.stringify(response));
+
+        if (MONITOR_USAGE && monitorInterval) {
+            clearInterval(monitorInterval);
+            const cpuCores = os.cpus().length;
+            const maxCpuCoresUsed = (maxCpuPercent / 100) * cpuCores;
+            const summary =
+                '\nMAX USAGE SUMMARY\n' +
+                `Max Process CPU: ${maxCpuPercent.toFixed(2)}% (~${maxCpuCoresUsed.toFixed(
+                    2
+                )} cores on a ${cpuCores}-core system)\n` +
+                `Max Process Mem: ${maxMem.toFixed(2)} MB\n`;
+            writeFileSync(usageLogFile, summary, { flag: 'a' });
+        }
     } catch (err) {
         writeFileSync(statusFilePath, `Failed: ${err}`, 'utf-8');
         const errorMessage = `Failed running logs analysis. A client error occurred: ${err}`;
@@ -244,6 +271,54 @@ async function initiateLogsAnalysis(inputText: string) {
             `Log analysis completed for ${LOGS_FOLDER}. Output files are saved in ${outputDir} of the database node. Log analysis results are available in Cloud watch logs at ${CW_OUTPUT_PATH}`
         );
     }
+}
+
+function trackResourceUsage() {
+    logger.info('Tracking resource usage, logging to:', usageLogFile);
+
+    const cpuInfo = os.cpus()[0];
+    const cpuModel = cpuInfo ? cpuInfo.model : 'Unknown';
+    const cpuCores = os.cpus().length;
+    const totalMemMb = toMB(os.totalmem());
+    let freeMemMb = toMB(os.freemem());
+    const machineInfo =
+        'MACHINE INFO\n' +
+        `CPU Model: ${cpuModel}\n` +
+        `CPU Cores: ${cpuCores}\n` +
+        `Total RAM: ${totalMemMb.toFixed(2)} MB\n` +
+        `Free RAM: ${freeMemMb.toFixed(2)} MB\n`;
+
+    writeFileSync(
+        usageLogFile,
+        `${machineInfo}\n` +
+            'timestamp,cpu_percent,mem_mb,total_mem_mb,free_mem_mb,app_heap_mb,app_external_mb,cpu_cores\n',
+        'utf-8'
+    );
+    let lastCpu = process.cpuUsage();
+    let lastTime = Date.now();
+    monitorInterval = setInterval(() => {
+        const now = Date.now();
+        const elapsedMs = now - lastTime;
+        const cpu = process.cpuUsage(lastCpu);
+        lastCpu = process.cpuUsage();
+        lastTime = now;
+        freeMemMb = toMB(os.freemem());
+        const cpuPercent = ((cpu.user + cpu.system) / 1000000 / (elapsedMs / 1000)) * 100;
+        const { rss, heapUsed, external } = process.memoryUsage();
+        const memMb = toMB(rss);
+        const heapMb = toMB(heapUsed);
+        const externalMb = toMB(external);
+        if (memMb > maxMem) {
+            maxMem = memMb;
+        }
+        if (cpuPercent > maxCpuPercent) {
+            maxCpuPercent = cpuPercent;
+        }
+        const logLine = `${new Date().toISOString()},${cpuPercent.toFixed(2)},${memMb.toFixed(2)},${totalMemMb.toFixed(
+            2
+        )},${freeMemMb.toFixed(2)},${heapMb.toFixed(2)},${externalMb.toFixed(2)},${cpuCores}\n`;
+        writeFileSync(usageLogFile, logLine, { flag: 'a' });
+    }, 2000);
 }
 
 function getStartTimestampForAnalysis(timeWindowHours: number = 24) {
@@ -375,7 +450,8 @@ async function analyzeErrorLogs(
                 inferenceConfig
             );
 
-            const { message, usage: { totalTokens: total = 0, outputTokens: output, inputTokens: input } = {} } = response;
+            const { message, usage: { totalTokens: total = 0, outputTokens: output, inputTokens: input } = {} } =
+                response;
             if (message.role === ConversationRole.ASSISTANT) {
                 const { content: [{ text }] = [] } = message;
                 if (text) {
@@ -559,8 +635,10 @@ async function recommendRemediation(
                 undefined,
                 inferenceConfig
             );
-            const { message, usage: { totalTokens: total = 0, inputTokens: input = 0, outputTokens: output = 0 } = {} } =
-                response;
+            const {
+                message,
+                usage: { totalTokens: total = 0, inputTokens: input = 0, outputTokens: output = 0 } = {}
+            } = response;
             const { content: [{ text }] = [] } = message;
             if (text) {
                 const { remediation } = JSON.parse(text);

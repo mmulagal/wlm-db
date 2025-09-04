@@ -43,7 +43,7 @@ import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
 import { parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
-    InferenceConfigType,
+    LogsAnalyzerBodyType,
     RemediationRecommendationObject,
     RemediationRecommendationObjectType
 } from '../../routes/types/logs-analyzer.types';
@@ -240,13 +240,18 @@ async function handleLogsAnalysis(
     region: string,
     managedInstance: DatabaseInstancesIncludingResource,
     jobId: string,
-    logsCountToConsider: number = LOGS_COUNT_TO_CONSIDER,
-    logsAnalyzerFromTimestamp: number = 1,
-    inferenceConfig?: InferenceConfigType,
-    logsAnalyzerS3SignedUrl?: string,
-    logLevel?: string,
-    logsWindowDuration?: number
+    scanParams: LogsAnalyzerBodyType
 ) {
+    let {
+        logsCountToConsider = LOGS_COUNT_TO_CONSIDER,
+        logsAnalyzerFromTimestamp = 1,
+        inferenceConfig,
+        logsAnalyzerS3SignedUrl,
+        logLevel,
+        logsWindowDuration,
+        monitorUsage
+    } = scanParams;
+
     logger.info(
         `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`,
         {
@@ -256,6 +261,7 @@ async function handleLogsAnalysis(
             logsAnalyzerFromTimestamp,
             logLevel,
             logsWindowDuration,
+            monitorUsage,
             jobId
         }
     );
@@ -342,7 +348,8 @@ async function handleLogsAnalysis(
                       jobId,
                       inferenceConfig,
                       logLevel,
-                      logsWindowDuration
+                      logsWindowDuration,
+                      monitorUsage
                   })
                 : getLinuxPrepareScript({
                       s3SignedUrl,
@@ -467,12 +474,7 @@ async function triggerLogsAnalysis(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    logsCountToConsider?: number,
-    logsAnalyzerFromTimestamp?: number,
-    inferenceConfig?: InferenceConfigType,
-    logsAnalyzerS3SignedUrl?: string,
-    logLevel?: string,
-    logsWindowDuration?: number
+    scanParams: LogsAnalyzerBodyType
 ) {
     logger.info('Triggering logs analysis:', {
         accountId,
@@ -480,12 +482,7 @@ async function triggerLogsAnalysis(
         region,
         databaseHostId,
         databaseInstanceId,
-        logsCountToConsider,
-        logsAnalyzerFromTimestamp,
-        inferenceConfig,
-        logsAnalyzerS3SignedUrl,
-        logLevel,
-        logsWindowDuration
+        scanParams
     });
     const paginatedResponse = await getPaginatedDatabaseInstances(accountId, {
         credentialsId,
@@ -522,19 +519,7 @@ async function triggerLogsAnalysis(
             status: jobsStatus,
             type: JOBTYPE.LOGS_ANALYSIS
         }));
-        handleLogsAnalysis(
-            accountId,
-            credentialsId,
-            region,
-            managedInstance,
-            jobId,
-            logsCountToConsider,
-            logsAnalyzerFromTimestamp,
-            inferenceConfig,
-            logsAnalyzerS3SignedUrl,
-            logLevel,
-            logsWindowDuration
-        );
+        handleLogsAnalysis(accountId, credentialsId, region, managedInstance, jobId, scanParams);
         return { jobId };
     } catch (error) {
         const errorMessage = `Error triggering logs analysis: ${error}`;

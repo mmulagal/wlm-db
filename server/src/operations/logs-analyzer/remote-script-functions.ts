@@ -101,6 +101,7 @@ function getWindowsPrepareScript(scriptParams: {
     inferenceConfig?: InferenceConfigType;
     logLevel?: string;
     logsWindowDuration?: number;
+    monitorUsage?: boolean;
 }): string {
     logger.debug('Generating Windows prepare script with params:', scriptParams);
     const {
@@ -118,7 +119,8 @@ function getWindowsPrepareScript(scriptParams: {
         logsAnalyzerFromTimestamp,
         logsCountToConsider,
         logLevel = LOG_LEVEL,
-        logsWindowDuration = 24
+        logsWindowDuration = 24,
+        monitorUsage = false
     } = scriptParams;
 
     const { temperature = 0.5, maxTokens = 5000, topP = 0.9 } = inferenceConfig;
@@ -145,6 +147,7 @@ function getWindowsPrepareScript(scriptParams: {
         $logsCountToConsider = ${logsCountToConsider};
         $timestamp = ${logsAnalyzerFromTimestamp};
         $logsWindowDuration = ${logsWindowDuration};
+        $monitorUsage = $${monitorUsage};
 
         function Invoke-RetryCommand {
             param ([scriptblock]$Command, [int]$Retries = 5)
@@ -203,7 +206,8 @@ function getWindowsPrepareScript(scriptParams: {
                 '--top-p', $topP,
                 '--logs-count-to-consider', $logsCountToConsider,
                 '--timestamp', $timestamp,
-                '--time-window-hours', $logsWindowDuration
+                '--time-window-hours', $logsWindowDuration,
+                '--monitor-usage', $monitorUsage
             )
             Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait  > $null 2>&1
         } catch {

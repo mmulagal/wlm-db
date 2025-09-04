@@ -96,6 +96,7 @@ interface AgentArgs {
     temperature: number;
     maxTokens: number;
     timeWindowHours: number;
+    monitorUsage?: boolean;
 }
 
 export { MessageObj, ToolUse, ErrorLog, ToolSpec, MsSqlErrorLog, ErrorLogWithScriptAndDetails, AgentArgs };

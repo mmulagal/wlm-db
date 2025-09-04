@@ -8,6 +8,7 @@ import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-sco
 import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../../simulator/scopes/aws/ssm-scope';
 import '../../../simulator/scopes/aws/fsx-scope';
+import '../../../simulator/scopes/aws/cloud-watch-logs-scope';
 import { createResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
