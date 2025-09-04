@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, uniq } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
@@ -75,9 +75,11 @@ function mapVolumeTypesToIdsOrNames(
           );
 
     return Object.values(OracleSysFileTypes).reduce((acc, type) => {
-        acc[type] = flattenedRecords
-            .filter(record => record.type === type)
-            .map(({ volume }) => (mapByName ? volume.volumeName : volume.volumeId));
+        acc[type] = uniq(
+            flattenedRecords
+                .filter(record => record.type === type)
+                .map(({ volume }) => (mapByName ? volume.volumeName : volume.volumeId))
+        );
         return acc;
     }, {} as Record<OracleSysFileTypes, string[]>);
 }
@@ -306,6 +308,9 @@ function getVolumeLayoutDrift(
         TEMP_FILES: tempFileVolumeIds
     } = volumeTypeToIdsMap;
 
+    let status = AssessmentStatus.OPTIMIZED;
+
+    // Archive logs should be on separate volume
     const archiveLogConflicts = [
         ...new Set(
             archiveLogVolumeIds.filter(volumeId =>
@@ -313,42 +318,88 @@ function getVolumeLayoutDrift(
             )
         )
     ];
+    status = archiveLogConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
     volumeLayoutDrift.push({
         ...storageGoldenConfigData.archivePlacement,
-        status: archiveLogConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
-        objectsInViolation: archiveLogConflicts,
+        status,
+        objectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts : [],
         totalObjectsAssessed: archiveLogVolumeIds.length,
-        totalObjectsInViolation: archiveLogConflicts.length
+        totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.length : 0
     });
 
-    const dataControlConflicts = [
+    // Data files can be on separate volume or shared with control files
+    const dataFileConflicts = [
         ...new Set(
-            controlFileVolumeIds.filter(volumeId =>
-                [...archiveLogVolumeIds, ...redoLogVolumeIds, ...tempFileVolumeIds].includes(volumeId)
+            dataFileVolumeIds.filter(volumeId =>
+                [...redoLogVolumeIds, ...archiveLogVolumeIds, ...tempFileVolumeIds].includes(volumeId)
             )
         )
     ];
+    status = dataFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
     volumeLayoutDrift.push({
-        ...storageGoldenConfigData.datafilesControlfilesPlacement,
-        status: dataControlConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
-        objectsInViolation: dataControlConflicts,
+        ...storageGoldenConfigData.datafilesPlacement,
+        status,
+        objectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts : [],
         totalObjectsAssessed: dataFileVolumeIds.length,
-        totalObjectsInViolation: dataControlConflicts.length
+        totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.length : 0
     });
 
-    const redoTempConflicts = [
+    // Control files can be on separate volume or shared with data/redo/temp and maintain at least two, preferably three, control file copies across separate volumes
+    const controlFileConflicts = [
+        ...new Set(controlFileVolumeIds.filter(volumeId => archiveLogVolumeIds.includes(volumeId)))
+    ];
+
+    let hasConflicts = controlFileConflicts.length > 0;
+    let insufficientMultiplexing = controlFileVolumeIds.length < 2;
+    status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+
+    volumeLayoutDrift.push({
+        ...storageGoldenConfigData.controlfilesPlacement,
+        status,
+        objectsInViolation: hasConflicts ? controlFileConflicts : insufficientMultiplexing ? controlFileVolumeIds : [],
+        totalObjectsAssessed: controlFileVolumeIds.length,
+        totalObjectsInViolation: hasConflicts
+            ? controlFileConflicts.length
+            : insufficientMultiplexing
+            ? controlFileVolumeIds.length
+            : 0
+    });
+
+    // Redo logs can be on separate or shared with temp/control and maintain at least 1 redo file copies across separate volumes
+    const redoFileConflicts = [
         ...new Set(
-            [...redoLogVolumeIds, ...tempFileVolumeIds].filter(volumeId =>
-                [controlFileVolumeIds, dataFileVolumeIds, archiveLogVolumeIds].flat().includes(volumeId)
-            )
+            redoLogVolumeIds.filter(volumeId => [...dataFileVolumeIds, ...archiveLogVolumeIds].includes(volumeId))
         )
     ];
+
+    hasConflicts = redoFileConflicts.length > 0;
+    insufficientMultiplexing = redoLogVolumeIds.length < 1;
+    status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
     volumeLayoutDrift.push({
-        ...storageGoldenConfigData.redologsTempPlacement,
-        status: redoTempConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
-        objectsInViolation: redoTempConflicts,
+        ...storageGoldenConfigData.redologsPlacement,
+        status,
+        objectsInViolation: hasConflicts ? redoFileConflicts : insufficientMultiplexing ? redoLogVolumeIds : [],
         totalObjectsAssessed: redoLogVolumeIds.length,
-        totalObjectsInViolation: redoTempConflicts.length
+        totalObjectsInViolation: hasConflicts
+            ? redoFileConflicts.length
+            : insufficientMultiplexing
+            ? redoLogVolumeIds.length
+            : 0
+    });
+
+    // Temp logs can be on separate or shared with redo/control
+    const tempFileConflicts = [
+        ...new Set(
+            tempFileVolumeIds.filter(volumeId => [...dataFileVolumeIds, ...archiveLogVolumeIds].includes(volumeId))
+        )
+    ];
+    status = tempFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+    volumeLayoutDrift.push({
+        ...storageGoldenConfigData.templogsPlacement,
+        status,
+        objectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts : [],
+        totalObjectsAssessed: tempFileVolumeIds.length,
+        totalObjectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.length : 0
     });
 
     const binaryVolumeConflicts = binaryVolumeIds.filter(volumeId =>
@@ -356,12 +407,13 @@ function getVolumeLayoutDrift(
             .flat()
             .includes(volumeId)
     );
+    status = binaryVolumeConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
     volumeLayoutDrift.push({
         ...storageGoldenConfigData.oracleBinaryPlacement,
-        status: binaryVolumeConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
-        objectsInViolation: binaryVolumeConflicts,
+        status,
+        objectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts : [],
         totalObjectsAssessed: binaryVolumeIds.length,
-        totalObjectsInViolation: binaryVolumeConflicts.length
+        totalObjectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts.length : 0
     });
 
     return volumeLayoutDrift;
@@ -460,17 +512,17 @@ async function initiateStorageAssessmentCollection(
             parentJobId,
             error: errorMessage
         });
-        // await registerJob(accountId, credentialsId, region, {
-        //     name: 'Storage layout assessment',
-        //     description: 'Storage layout assessment',
-        //     resourceName: resourceWithInstanceName,
-        //     startTime: Date.now(),
-        //     endTime: Date.now(),
-        //     status: jobStatus,
-        //     type: JOBTYPE.ASSESSMENT,
-        //     parentJobId,
-        //     error: errorMessage
-        // });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage layout assessment',
+            description: 'Storage layout assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: jobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId,
+            error: errorMessage
+        });
         return;
     }
     try {
@@ -516,16 +568,16 @@ async function initiateStorageAssessmentCollection(
             type: JOBTYPE.ASSESSMENT,
             parentJobId
         });
-        // await registerJob(accountId, credentialsId, region, {
-        //     name: 'Storage layout assessment',
-        //     description: 'Storage layout assessment',
-        //     resourceName: resourceWithInstanceName,
-        //     startTime: Date.now(),
-        //     endTime: Date.now(),
-        //     status: jobStatus,
-        //     type: JOBTYPE.ASSESSMENT,
-        //     parentJobId
-        // });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage layout assessment',
+            description: 'Storage layout assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: jobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
+        });
     } catch (error) {
         logger.error('Error while initiating storage assessment collection', {
             accountId,

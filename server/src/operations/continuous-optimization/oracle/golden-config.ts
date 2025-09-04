@@ -228,26 +228,52 @@ const GOLDEN_CONFIG = {
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ]
     },
-    datafilesControlfilesPlacement: {
-        parameter: 'datafiles-controlfiles-placement',
-        name: 'datafiles-controlfiles-placement',
-        recommended: 'separate-volume',
+    datafilesPlacement: {
+        parameter: 'datafiles-placement',
+        name: 'datafiles-placement',
+        recommended: 'separate-volume-or-shared-with-control-files',
         severity: SEVERITY.WARNING,
         recommendation:
-            'Data files and control files should reside on a dedicated volume to optimize performance and maintain data integrity. Isolating these files allows for efficient read/write operations and ensures critical control file accessibility, reducing the risk of corruption and enhancing database robustness.',
+            'Placing data files on a dedicated volume or shared with control files boosts performance by isolating their random I/O from redo or archive log writes, reducing contention. This separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.',
         tags: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ]
     },
-    redologsTempPlacement: {
-        parameter: 'redologs-temp-placement',
-        name: 'redologs-temp-placement',
-        recommended: 'separate-volume',
+    controlfilesPlacement: {
+        parameter: 'controlfiles-placement',
+        name: 'controlfiles-placement',
+        recommended: 'separate-volume-or-shared-with-data-redo-temp',
         severity: SEVERITY.WARNING,
         recommendation:
-            'Placing redo logs, temp files, and archive logs on a dedicated volume enhances performance and recovery processes. This isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.',
+            'Oracle strongly recommends multiplexing control files to avoid a single point of failure in production environments. Maintain at least two, preferably three, control file copies across separate volumes or disks to enhance redundancy and reduce the risk of losing all copies. Control files can be placed on a dedicated volume or shared with redo logs or data files, but avoid placing them on volumes tiered to object storage, such as archive volumes, as its slower access pattern is incompatible with control file performance needs.',
+        tags: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ]
+    },
+    redologsPlacement: {
+        parameter: 'redologs-placement',
+        name: 'redologs-placement',
+        recommended: 'separate-volume-or-shared-with-temp-control-files',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',
+        tags: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ]
+    },
+    templogsPlacement: {
+        parameter: 'templogs-placement',
+        name: 'templogs-placement',
+        recommended: 'separate-volume-or-shared-with-redo-control-files',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Placing temp logs on a dedicated volume or shared with redo/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed temp log copy should reside on a separate volume for redundancy. Frequent changes make temp logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Temp logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',
         tags: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
