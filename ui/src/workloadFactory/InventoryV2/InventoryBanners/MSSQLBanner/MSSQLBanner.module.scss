@@ -39,6 +39,36 @@
         }
     }
 
+    .oracleTopSection {
+        height: auto;
+        background: var(--hover-background);
+        width: 32.39%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 32px 40px 40px 40px;
+
+        .upperSection {
+            display: flex;
+            gap: 22px;
+            align-items: center;
+
+            .upperRightSection {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+    }
+
+    .oracleMainSection {
+        width: 67.61%;
+        height: auto;
+        display: flex;
+
+        gap: 10.8%;
+        padding: 40px 80px;
+    }
+
     .loaderClass {
         height: 38px;
         display: flex;

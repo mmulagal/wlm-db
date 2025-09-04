@@ -20,7 +20,7 @@ const OracleBanner = ({ loading }: { loading: boolean }) => {
     return (
         <div className={styles.scrollableCard2}>
             <div className={styles.rightSection}>
-                <div className={styles.topSection}>
+                <div className={styles.oracleTopSection}>
                     <div className={styles.upperSection}>
                         <WellArchitectMSSQL />
                         <div className={styles.upperRightSection}>
@@ -31,7 +31,7 @@ const OracleBanner = ({ loading }: { loading: boolean }) => {
 
                     <DsTypography variant="Regular_14">{t('databases.banner.oracle-server-content')}</DsTypography>
                 </div>
-                <div className={styles.mainSection}>
+                <div className={styles.oracleMainSection}>
                     <BannerCard
                         Image={InstanceRegistration}
                         topText={t('databases.banner.database-registration')}
