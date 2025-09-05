@@ -193,7 +193,7 @@ function getWindowsPrepareScript(scriptParams: {
 
             $argumentList = @(
                 '--logs-path', $logsPath,
-                '--sql-auth-enabled', $sqlAuthEnabled,
+                $(if ($sqlAuthEnabled) { '--sql-auth-enabled' }),
                 '--database-instance-name', $databaseInstanceName,
                 '--log-level', $logLevel,
                 '--region', $region,
@@ -207,7 +207,7 @@ function getWindowsPrepareScript(scriptParams: {
                 '--logs-count-to-consider', $logsCountToConsider,
                 '--timestamp', $timestamp,
                 '--time-window-hours', $logsWindowDuration,
-                '--monitor-usage', $monitorUsage
+                $(if ($monitorUsage) { '--monitor-usage' })
             )
             Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait  > $null 2>&1
         } catch {

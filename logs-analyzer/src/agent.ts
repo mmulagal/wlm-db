@@ -40,10 +40,12 @@ const LIMIT_3 = pLimit(3); // Limit concurrency to 3
 logger.info('Starting logs analysis agent...');
 
 const program = new Command();
+program.allowUnknownOption(true);
+program.allowExcessArguments(true);
 
 program
     .requiredOption('-l, --logs-path <path>', 'Database application logs folder path')
-    .option('-s, --sql-auth-enabled <enabled>', 'SQL authentication enabled', false)
+    .option('-s, --sql-auth-enabled', 'SQL authentication enabled', false)
     .option('-d, --database-instance-name <name>', 'SQL instance name', 'MSSQLSERVER')
     .requiredOption('-j, --job-id <id>', 'Workload Factory job ID')
     .requiredOption('-i, --instance-id <id>', 'EC2 instance ID')
@@ -87,6 +89,9 @@ let monitorInterval: NodeJS.Timeout | undefined;
 let maxMem = 0;
 let maxCpuPercent = 0;
 let usageLogFile = '';
+
+const MICROSECONDS_PER_SECOND = 1000000;
+const MILLISECONDS_PER_SECOND = 1000;
 
 const LOGS_FOLDER = decodeURIComponent(logsPath);
 if (!existsSync(LOGS_FOLDER)) {
@@ -291,7 +296,7 @@ function trackResourceUsage() {
     writeFileSync(
         usageLogFile,
         `${machineInfo}\n` +
-            'timestamp,cpu_percent,mem_mb,total_mem_mb,free_mem_mb,app_heap_mb,app_external_mb,cpu_cores\n',
+        'timestamp,cpu_percent,mem_mb,total_mem_mb,free_mem_mb,app_heap_mb,app_external_mb,cpu_cores\n',
         'utf-8'
     );
     let lastCpu = process.cpuUsage();
@@ -303,7 +308,8 @@ function trackResourceUsage() {
         lastCpu = process.cpuUsage();
         lastTime = now;
         freeMemMb = toMB(os.freemem());
-        const cpuPercent = ((cpu.user + cpu.system) / 1000000 / (elapsedMs / 1000)) * 100;
+        const cpuPercent =
+            ((cpu.user + cpu.system) / MICROSECONDS_PER_SECOND / (elapsedMs / MILLISECONDS_PER_SECOND)) * 100;
         const { rss, heapUsed, external } = process.memoryUsage();
         const memMb = toMB(rss);
         const heapMb = toMB(heapUsed);
