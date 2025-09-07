@@ -193,7 +193,6 @@ function getWindowsPrepareScript(scriptParams: {
 
             $argumentList = @(
                 '--logs-path', $logsPath,
-                $(if ($sqlAuthEnabled) { '--sql-auth-enabled' }),
                 '--database-instance-name', $databaseInstanceName,
                 '--log-level', $logLevel,
                 '--region', $region,
@@ -206,9 +205,10 @@ function getWindowsPrepareScript(scriptParams: {
                 '--top-p', $topP,
                 '--logs-count-to-consider', $logsCountToConsider,
                 '--timestamp', $timestamp,
-                '--time-window-hours', $logsWindowDuration,
-                $(if ($monitorUsage) { '--monitor-usage' })
+                '--time-window-hours', $logsWindowDuration
             )
+            if ($sqlAuthEnabled) { $argumentList += '--sql-auth-enabled' }
+            if ($monitorUsage) { $argumentList += '--monitor-usage' }
             Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait  > $null 2>&1
         } catch {
             throw "Failed to run Logs Analyzer: $($_.Exception.Message)"
