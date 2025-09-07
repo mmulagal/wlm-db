@@ -84,7 +84,7 @@ const OnboardingAccordions = () => {
                     blocks={[
                         {
                             label: t('databases.log-analyzer.onboarding-accordion-3-label'),
-                            values: ['bedrock:InvokeModel'],
+                            values: ['Add the "bedrock:InvokeModel" permission to the EC2 instance profile role.'],
                             showCopy: false,
                             viewPolicy: {
                                 value: false,
@@ -110,7 +110,9 @@ const OnboardingAccordions = () => {
                     blocks={[
                         {
                             label: t('databases.log-analyzer.onboarding-accordion-4-label'),
-                            values: ['bedrock:GetFoundationModelAvailability', 'bedrock:ListInferenceProfiles'],
+                            values: [
+                                'Ensure that your Workload Factory credentials have "bedrock:GetFoundationModelAvailability" and "bedrock:ListInferenceProfiles" permissions.'
+                            ],
                             showCopy: false,
                             viewPolicy: {
                                 value: false,
@@ -158,6 +160,7 @@ const OnboardingAccordions = () => {
                     setExpandedId={setExpandedId}
                     disableAll={disableAll}
                     loading={loading}
+                    type="log-analyzer"
                 />
             </div>
         </div>

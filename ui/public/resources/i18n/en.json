@@ -626,7 +626,7 @@
             "readiness-status-ready": "Ready",
             "readiness-status-missing": "Missing prerequisites",
             "prerequisites-list": "Prerequisites list",
-            "accordion-1-info": "Amazon Bedrock is required so that the AI agent running on the SQL node from workload factory can seamlessly connect with Bedrock and fetch AI-based insights for the identified error logs.",
+            "accordion-1-info": "Workload Factory's AI agent running on the SQL Server node requires Amazon Bedrock to fetch AI-based insights for identified error logs.",
             "bedrock-model-activation": "Bedrock model activation",
             "bedrock-model-activation-content": "Enable the following model in the AWS account: anthropic.claude-sonnet-4-20250514. Ensure the model is accessible from the region where the SQL node is hosted.",
 
@@ -634,7 +634,7 @@
             "onboarding-accordion-2-info": "The Amazon Bedrock VPC endpoint ensures private communication of your SQL node with Amazon Bedrock APIs and eliminates public internet exposure.",
             "onboarding-accordion-2-label": "Amazon Bedrock VPC endpoint",
             "onboarding-accordion-2-value-1": "Ensure s3 gateway VPC endpoint is present and associated with the SQL node subnet's route table (Eg: vpce-0d65fff7cd3372c46)",
-            "onboarding-accordion-2-value-2": "Ensure Bedrock VPC endpoint is associated with the SQL node's subnet (Eg: vpce-050cb2f33a1380ffd)",
+            "onboarding-accordion-2-value-2": "Ensure the Bedrock VPC endpoint is associated with the SQL node's subnet (example: vpce-050cb2f33a1380ffd).",
 
             "onboarding-accordion-3-title": "Permissions for EC2 instance profile role",
             "onboarding-accordion-3-info": "Enables the EC2 instance on the corresponding SQL node to invoke Bedrock models for proactive error investigation and remediation guidance. This profile also ensures secure AI access for tailored insights.",
@@ -646,9 +646,10 @@
             "onboarding-accordion-4-label": "Permissions",
             "onboarding-accordion-4-value-1": "Ensure that your Workload Factory credentials have \"bedrock:GetFoundationModelAvailability\" and \"bedrock:ListInferenceProfiles\" permissions",
             "scan-in-progress": "Error data analysis in progress",
-            "investigation-in-progress": "Investigation activation prerequisites",
+            "investigation-in-progress": "Setup requirements",
             "activate": "Investigate now",
-            "info-text": "The following prerequisites must be complete to activate SQL error investigation.",
+            "info-text": "Complete the setup requirements to activate SQL Server error investigation.",
+            "setup-details": "Setup details",
             "cost-legal-overview": "Scan activation prerequisites:",
             "cost": "Cost",
             "cost-content": "Scans are user-initiated. Each scan incurs a minimal cost  per unique error, calculated based on your instance's error data and powered by Amazon Bedrock.",
@@ -661,7 +662,9 @@
             "no-errors": "No errors",
             "status-investigating": "Status: Investigating",
             "running-status": "(This process can take upto 30 minutes)",
-            "bedrock-in-region-not-supported": "Error investigation is not available as the region is not supported by Amazon Bedrock."
+            "bedrock-in-region-not-supported": "Error investigation is not available as the region is not supported by Amazon Bedrock.",
+            "readiness-status-complete": "Complete",
+            "readiness-status-incomplete": "Incomplete"
         },
         "dashboard": {
             "no-credentials": "No credentials",

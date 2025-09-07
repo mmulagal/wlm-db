@@ -26,6 +26,7 @@ type AccordionProps = {
     disableAll?: boolean;
     loading?: boolean;
     errorInvestigationLoading?: boolean;
+    type?: string;
 };
 
 export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
@@ -34,13 +35,24 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     setExpandedId,
     disableAll = false,
     loading = false,
-    errorInvestigationLoading = false
+    errorInvestigationLoading = false,
+    type
 }) => {
     const { t } = useTranslation();
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     const handleToggle = (id: string) => {
         if (disableAll) return;
         setExpandedId((prev: any) => (prev === id ? null : id));
+    };
+
+    const readinessString = (readinessStr: any) => {
+        if (readinessStr === 'Ready') {
+            return t('databases.log-analyzer.readiness-status-complete');
+        } else if (readinessStr === 'Missing') {
+            return t('databases.log-analyzer.readiness-status-incomplete');
+        } else {
+            return readinessStr;
+        }
     };
 
     return (
@@ -76,7 +88,7 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                                 {!item?.missingPermission && <Success />}
                                                 {item?.missingPermission && <Cross />}
                                                 <DsTypography variant="Semibold_14">
-                                                    {item.readinessStatus}
+                                                    {readinessString(item.readinessStatus)}
                                                 </DsTypography>
                                             </div>
                                         )}
@@ -87,9 +99,16 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                     </div>
                                 </div>
                                 <div className={styles['accordion-status']}>
-                                    <DsTypography className={styles.text} variant="Semibold_14">
-                                        {t('databases.register-flow.view-prerequisites-list')}
-                                    </DsTypography>
+                                    {type !== 'log-analyzer' && (
+                                        <DsTypography className={styles.text} variant="Semibold_14">
+                                            {t('databases.register-flow.view-prerequisites-list')}
+                                        </DsTypography>
+                                    )}
+                                    {type === 'log-analyzer' && (
+                                        <DsTypography className={styles.text} variant="Semibold_14">
+                                            {t('databases.log-analyzer.setup-details')}
+                                        </DsTypography>
+                                    )}
                                     <Arrow />
                                 </div>
                             </div>
