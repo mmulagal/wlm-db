@@ -1,6 +1,7 @@
 import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 import { DsTypography } from '@tlveng/wlm-ds';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './OraclePDB.module.scss';
@@ -47,25 +48,30 @@ const OraclePDB = () => {
         (database: OracleDatabase) => database.type === t('databases.oracle-inner-page.pdb')
     );
 
-    const formatData = (tableData: OracleDatabase[]) =>
-        tableData?.map((perRow, index) => {
-            const protectionText = getProtectionText(perRow);
-            let protectionVal = '';
-            if (protectionText === PROTECTION_TEXT_STATUS.YES) {
-                protectionVal = t('databases.general.protected');
-            } else if (protectionText === PROTECTION_TEXT_STATUS.NO) {
-                protectionVal = t('databases.general.not_protected');
-            } else {
-                protectionVal = t('databases.general.not-available-table-columns');
-            }
-            return {
-                ...perRow,
-                id: `${perRow.name}-${index}`,
-                isProtected: protectionVal,
-                protectionData: perRow.protection,
-                sizeRange: categorizeStorageSize(formatSize(perRow?.size))
-            };
-        });
+    const formattedData = useMemo(() => {
+        const formatData = (tableData: OracleDatabase[]) =>
+            tableData?.map((perRow, index) => {
+                const protectionText = getProtectionText(perRow);
+                let protectionVal = '';
+                if (protectionText === PROTECTION_TEXT_STATUS.YES) {
+                    protectionVal = t('databases.general.protected');
+                } else if (protectionText === PROTECTION_TEXT_STATUS.NO) {
+                    protectionVal = t('databases.general.not_protected');
+                } else {
+                    protectionVal = t('databases.general.not-available-table-columns');
+                }
+                return {
+                    ...perRow,
+                    id: `${perRow.name}-${index}`,
+                    isProtected: protectionVal,
+                    protectionData: perRow.protection,
+                    sizeRange: categorizeStorageSize(formatSize(perRow?.size)),
+                    serviceKey: perRow.service || t('databases.general.not-available-table-columns')
+                };
+            });
+
+        return formatData(pdbData);
+    }, [pdbData, t]);
 
     const PDBColDefs: ColumnProps[] = [
         {
@@ -150,7 +156,7 @@ const OraclePDB = () => {
         },
         {
             Header: t('databases.pdb-table.headers.service-name'),
-            accessor: 'service',
+            accessor: 'serviceKey',
             id: '5',
             width: '18%',
             isSortable: true
@@ -170,10 +176,10 @@ const OraclePDB = () => {
         }
     ];
 
-    const formattedData = formatData(pdbData);
-
     const tableProps = useTable({
+        // @ts-ignore
         selectAllProps: false,
+        // @ts-ignore
         manageColumnsProps: false,
         isSorting: false,
         columns: PDBColDefs,
@@ -186,11 +192,15 @@ const OraclePDB = () => {
     return (
         <div className={styles.oraclePDB}>
             <TableTopBar
+                // @ts-ignore
                 tableProps={tableProps}
                 pluralTitle={t('databases.oracle-inner-page.pdbs')}
                 singularTitle={t('databases.oracle-inner-page.pdb')}
             />
-            <Table tableProps={tableProps} />
+            <Table
+                // @ts-ignore
+                tableProps={tableProps}
+            />
         </div>
     );
 };
