@@ -462,7 +462,7 @@ const createOntapConfigurationBlock = (
 };
 
 // Optimized function to get cards data
-export const getCardsData = (data: AssessmentResponseInterface, optimizingData: Record<string, string>) => {
+export const getOracleCardsData = (data: AssessmentResponseInterface, optimizingData: Record<string, string>) => {
     const {
         formatOntapConfigList,
         ontapTagsList,
@@ -505,7 +505,7 @@ const processStorageCardItem = (cardItem: any) => {
 };
 
 // Optimized function to format optimization breakdown data
-export const formatOptimizationBreakDown = (cardsData: Record<string, any>) => {
+export const formatOracleOptimizationBreakDown = (cardsData: Record<string, any>) => {
     const storageCount = {
         hasDismissedOrPostponed: false,
         total: 0,
@@ -559,8 +559,8 @@ export const formatOracleWellArchitectedData = (dispatch: any, data?: Assessment
     if (!assessmentData) return;
 
     // Process data and get formatted results
-    const { cardsData, formatOntapConfigList } = getCardsData(assessmentData, optimizingData);
-    const optBreakDown = formatOptimizationBreakDown(cardsData);
+    const { cardsData, formatOntapConfigList } = getOracleCardsData(assessmentData, optimizingData);
+    const optBreakDown = formatOracleOptimizationBreakDown(cardsData);
 
     // Batch dispatch all data to store
     const dispatchActions = [

@@ -65,7 +65,6 @@ import {
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import {
     DBType,
-    LOCAL,
     SAVINGS_CALC_MODE,
     STAGING,
     WLF_TABS,
@@ -163,6 +162,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const {
         isManagedHostListLoading,
         allmssqlHostAssessmentLoading,
+        allOracleHostAssessmentLoading,
         allLogAnalysisLoading,
         fsxCredentialStatusLoading,
         fsxCredentialStatusLoadingOracle,
@@ -475,6 +475,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             !pgsqlDatabaseHostsLoading &&
             !pgsqlFullHostDataLoading &&
             !allmssqlHostAssessmentLoading &&
+            !allOracleHostAssessmentLoading &&
             !allLogAnalysisLoading &&
             !dashSandboxListLoading &&
             !dashSandboxSavingsLoading &&
@@ -591,6 +592,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         pgsqlDatabaseHostsLoading,
         pgsqlFullHostDataLoading,
         allmssqlHostAssessmentLoading,
+        allOracleHostAssessmentLoading,
         allLogAnalysisLoading,
         dashSandboxListLoading,
         dashSandboxSavingsLoading,

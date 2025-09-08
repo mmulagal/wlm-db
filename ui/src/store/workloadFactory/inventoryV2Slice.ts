@@ -75,7 +75,9 @@ const initialInventoryV2State: InventorySliceData = {
     defaultFilterOptions: {},
     managedAssessmentHostIdsList: [],
     allmssqlHostAssessmentData: [],
+    allOracleHostAssessmentData: [],
     allmssqlHostAssessmentLoading: false,
+    allOracleHostAssessmentLoading: false,
     allLogAnalysisData: [],
     allLogAnalysisLoading: false,
     potentialSavingsHostData: {},
@@ -318,8 +320,14 @@ const inventoryV2Slice = createSlice({
         addAllMssqlHostAssessmentData: (state, action: PayloadAction<any>) => {
             state.allmssqlHostAssessmentData = action.payload;
         },
+        addAllOracleHostAssessmentData: (state, action: PayloadAction<any>) => {
+            state.allOracleHostAssessmentData = action.payload;
+        },
         setAllMssqlHostAssessmentLoading: (state, action: PayloadAction<any>) => {
             state.allmssqlHostAssessmentLoading = action.payload;
+        },
+        setAllOracleHostAssessmentLoading: (state, action: PayloadAction<any>) => {
+            state.allOracleHostAssessmentLoading = action.payload;
         },
         addAllLogAnalysisData: (state, action: PayloadAction<any>) => {
             state.allLogAnalysisData = action.payload;
@@ -405,6 +413,7 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.fullHostDataLoading = true;
             state.getOracleDatabaseHosts.fullHostDataLoading = true;
             state.allmssqlHostAssessmentLoading = true;
+            state.allOracleHostAssessmentLoading = true;
             state.allLogAnalysisLoading = true;
             state.getDatabaseHosts.databaseHostsData = null;
             state.getPgSqlDatabaseHosts.databaseHostsData = null;
@@ -424,6 +433,7 @@ const inventoryV2Slice = createSlice({
             state.inventoryTableData = null;
             state.fsxCredentialStatusObj = {};
             state.allmssqlHostAssessmentData = [];
+            state.allOracleHostAssessmentData = [];
             state.allLogAnalysisData = [];
             state.dashSandboxList.data = [];
             state.dashSandboxSavings.data = [];
@@ -451,6 +461,7 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.fullHostDataLoading = false;
             state.getOracleDatabaseHosts.fullHostDataLoading = false;
             state.allmssqlHostAssessmentLoading = false;
+            state.allOracleHostAssessmentLoading = false;
             state.allLogAnalysisLoading = false;
             state.discoveredHosts.discoverHostLoading = false;
             state.discoveredOracleHosts.discoverOracleHostLoading = false;
@@ -466,6 +477,7 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.fullHostDataLoading = false;
             state.getOracleDatabaseHosts.fullHostDataLoading = false;
             state.allmssqlHostAssessmentLoading = false;
+            state.allOracleHostAssessmentLoading = false;
             state.allLogAnalysisLoading = false;
             state.dashSandboxList.loading = false;
             state.dashSandboxSavings.loading = false;
@@ -528,7 +540,9 @@ export const {
     setBreadCrumbSelectedFrom,
     setManagedAssessmentHostIdsList,
     addAllMssqlHostAssessmentData,
+    addAllOracleHostAssessmentData,
     setAllMssqlHostAssessmentLoading,
+    setAllOracleHostAssessmentLoading,
     addAllLogAnalysisData,
     setAllLogAnalysisLoading,
     setPotentialSavingsHostData,

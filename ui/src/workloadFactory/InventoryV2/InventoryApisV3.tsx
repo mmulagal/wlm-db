@@ -15,9 +15,7 @@ import {
     setAllMssqlHostAssessmentLoading,
     setCreateResourceApiLoading,
     setDashSandboxList,
-    setDashSandboxListLoading,
     setDashSandboxSavings,
-    setDashSandboxSavingsLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusOracle,
     setFsxCredentialStatusPgsql,
@@ -49,7 +47,9 @@ import {
     setUnManagedPerfInstanceIdsList,
     resetManagedInventoryData,
     setAllLogAnalysisLoading,
-    addAllLogAnalysisData
+    addAllLogAnalysisData,
+    addAllOracleHostAssessmentData,
+    setAllOracleHostAssessmentLoading
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
     useCreateDemoResourcesMutation,
@@ -71,7 +71,8 @@ import {
     useLazyGetSandboxSavingsQuery,
     useLazyGetOracleDatabaseHostsListQuery,
     useLazyGetOracleDatabaseHostsFullDataV2Query,
-    useGetAccLogAnalysisLatestMutation
+    useGetAccLogAnalysisLatestMutation,
+    useLazyGetAllOracleHostsAssessmentDataQuery
 } from '../../utils/apiService';
 import {
     addInstanceIdToGetPerf,
@@ -151,6 +152,7 @@ const InventoryApisV3 = () => {
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const allmssqlHostAssessmentDataS = useAppSelector(state => state.inventoryV2.allmssqlHostAssessmentData);
+    const allOracleHostAssessmentDataS = useAppSelector(state => state.inventoryV2.allOracleHostAssessmentData);
     const allLogAnalysisDataS = useAppSelector(state => state.inventoryV2.allLogAnalysisData);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
@@ -213,9 +215,13 @@ const InventoryApisV3 = () => {
     const [getPgsqlInstanceDataApi] = useGetPgsqlInstanceDataMutation();
     const [getOracleInstanceDataApi] = useGetOracleInstanceDataMutation();
 
-    // Get all managed hosts assessment data
+    // Get all MSSQL managed hosts assessment data
     const [getAllMssqlHostAssessmentAPI] = useLazyGetAllMssqlHostsAssessmentDataQuery();
     const [allmssqlHostAssessmentData, setAllmssqlHostAssessmentData] = useState<any>([]);
+
+    // Get all oracle managed hosts assessment data
+    const [getAllOracleHostAssessmentAPI] = useLazyGetAllOracleHostsAssessmentDataQuery();
+    const [allOracleHostAssessmentData, setAllOracleHostAssessmentData] = useState<any>([]);
 
     // Get all managed hosts error analyzer data
     const [getLogAnalysisLatestAPI] = useGetAccLogAnalysisLatestMutation();
@@ -469,6 +475,7 @@ const InventoryApisV3 = () => {
             const pgsqlTopologyHostData: any = {};
             const oracleTopologyHostData: any = {};
             const assessmentData: any = [];
+            const assessmentOracleData: any = [];
             const logAnalysisData: any = [];
             const sandboxListData: any = [];
             const sandboxSavingsData: any = [];
@@ -479,6 +486,7 @@ const InventoryApisV3 = () => {
             getPgsqlDatabaseHostsFullData(fullPgsqlHostData, null, credId, regionId);
             getOracleDatabaseHostsFullData(fullOracleHostData, null, credId, regionId);
             getAllMssqlHostAssessmentData(assessmentData, null, credId, regionId);
+            getAllOracleHostAssessmentData(assessmentOracleData, null, credId, regionId);
             getAllLogAnalysisLatestData(logAnalysisData, null, credId, regionId);
             // sandbox APIs
             getAllSandboxListData(sandboxListData, null, credId, regionId);
@@ -1461,6 +1469,61 @@ const InventoryApisV3 = () => {
         }
     };
 
+    const getAllOracleHostAssessmentData = async (
+        assessmentOracleData: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getAllOracleHostAssessmentAPI({
+                    credentialId: credId,
+                    regionId,
+                    nextToken
+                });
+                if (
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+                ) {
+                    if (result && !result?.error) {
+                        assessmentOracleData = [
+                            // ...assessmentOracleData,
+                            ...(Array.isArray(result?.data?.assessmentsPerAccount)
+                                ? result.data.assessmentsPerAccount.map((assessment: any) => ({
+                                      ...assessment,
+                                      credentialId: credId,
+                                      regionId
+                                  }))
+                                : [])
+                        ];
+                        if (result?.data?.nextToken) {
+                            setAllOracleHostAssessmentData(assessmentOracleData);
+                            getAllOracleHostAssessmentData(
+                                assessmentOracleData,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setAllOracleHostAssessmentLoading(false));
+                            setAllOracleHostAssessmentData(assessmentOracleData);
+                        }
+                    } else {
+                        dispatch(setAllOracleHostAssessmentLoading(false));
+                        setAllOracleHostAssessmentData(assessmentOracleData);
+                    }
+                }
+            } catch (error) {
+                dispatch(setAllOracleHostAssessmentLoading(false));
+                setAllOracleHostAssessmentData(assessmentOracleData);
+            }
+        }
+    };
+
     const getAllLogAnalysisLatestData = async (
         logAnalysisData: any,
         nextToken: string | null,
@@ -1876,6 +1939,7 @@ const InventoryApisV3 = () => {
         setRunningPerfInstanceList([]);
         setRunningManagedAssessmentList([]);
         setAllmssqlHostAssessmentData([]);
+        setAllOracleHostAssessmentData([]);
         setAllLogAnalysisData([]);
     };
 
@@ -2322,6 +2386,13 @@ const InventoryApisV3 = () => {
             // dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentData]));
         }
     }, [allmssqlHostAssessmentData]);
+
+    useEffect(() => {
+        if (!refreshBlocked) {
+            // Below is required for multi cred and region - as it was creating duplicate so fixed now but will change for multi cred
+            dispatch(addAllOracleHostAssessmentData([...allOracleHostAssessmentDataS, ...allOracleHostAssessmentData]));
+        }
+    }, [allOracleHostAssessmentData]);
 
     useEffect(() => {
         if (!refreshBlocked) {

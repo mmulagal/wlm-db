@@ -1003,6 +1003,14 @@ export const inventoryApiV2 = createApi({
                 return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment`;
             }
         }),
+        getAllOracleHostsAssessmentData: builder.query({
+            query: ({ credentialId, regionId, nextToken = null }) => {
+                if (nextToken) {
+                    return `v1/oracle/credentials/${credentialId}/regions/${regionId}/assessment?nextToken=${nextToken}`;
+                }
+                return `v1/oracle/credentials/${credentialId}/regions/${regionId}/assessment`;
+            }
+        }),
         manageBulkV2MssqlInstance: builder.mutation({
             query: ({ payload }) => ({
                 url: 'v1/mssql/register',
@@ -1520,6 +1528,7 @@ export const {
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,
     useLazyGetAllMssqlHostsAssessmentDataQuery,
+    useLazyGetAllOracleHostsAssessmentDataQuery,
     useManageBulkV2MssqlInstanceMutation,
     useManageBulkV2OracleInstanceMutation
 } = inventoryApiV2;

@@ -48,11 +48,11 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     const readinessString = (readinessStr: any) => {
         if (readinessStr === 'Ready') {
             return t('databases.log-analyzer.readiness-status-complete');
-        } else if (readinessStr === 'Missing') {
-            return t('databases.log-analyzer.readiness-status-incomplete');
-        } else {
-            return readinessStr;
         }
+        if (readinessStr === 'Missing') {
+            return t('databases.log-analyzer.readiness-status-incomplete');
+        }
+        return readinessStr;
     };
 
     return (

@@ -24,7 +24,11 @@ import {
     sortInventoryTableData,
     uniqueHostRow
 } from './InventoryUtilsV2';
-import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
+import {
+    setAllOracleHostAssessmentLoading,
+    setFullInventoryTablesRows,
+    setInventoryTablesRows
+} from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
 import EngineTypeSelector from './EngineTypeSelector/EngineTypeSelector';
 
@@ -39,7 +43,9 @@ const InventoryV2 = () => {
         inProgressInstances,
         removeSecNodeDiscoveredList,
         allmssqlHostAssessmentLoading,
+        allOracleHostAssessmentLoading,
         allmssqlHostAssessmentData,
+        allOracleHostAssessmentData,
         allLogAnalysisData,
         allLogAnalysisLoading,
         selectedHostType,
@@ -89,6 +95,7 @@ const InventoryV2 = () => {
             const state = store.getState();
             const {
                 allmssqlHostAssessmentData: allmssqlHostAssessmentDataLatest,
+                allOracleHostAssessmentData: allOracleHostAssessmentDataLatest,
                 allLogAnalysisData: allLogAnalysisDataLatest
             } = state.inventoryV2;
             const allHostTableRows: any = [];
@@ -156,14 +163,26 @@ const InventoryV2 = () => {
                     const perHost = inventoryTableData?.[key];
                     let optimizationStatusLoading = false;
                     let optimizationStatusList: any = [];
-                    const assessRow = allmssqlHostAssessmentDataLatest?.filter(
-                        (perRow: any) =>
-                            uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === key
-                    );
-                    if (assessRow.length > 0) {
-                        optimizationStatusLoading = allmssqlHostAssessmentLoading;
-                        optimizationStatusList = assessRow?.[0]?.instancesAssessment;
+                    if (inventoryTableData?.[key]?.hostType === DBType.MSSQL) {
+                        const assessRow = allmssqlHostAssessmentDataLatest?.filter(
+                            (perRow: any) =>
+                                uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === key
+                        );
+                        if (assessRow.length > 0) {
+                            optimizationStatusLoading = allmssqlHostAssessmentLoading;
+                            optimizationStatusList = assessRow?.[0]?.instancesAssessment;
+                        }
+                    } else if (inventoryTableData?.[key]?.hostType === DBType.ORACLE) {
+                        const assessRow = allOracleHostAssessmentDataLatest?.filter(
+                            (perRow: any) =>
+                                uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === key
+                        );
+                        if (assessRow.length > 0) {
+                            optimizationStatusLoading = allOracleHostAssessmentLoading;
+                            optimizationStatusList = assessRow?.[0]?.instancesAssessment;
+                        }
                     }
+
                     const perInstanceData: any = [];
                     inventoryTableData?.[key]?.sqlServerInstances?.map((perRow: any) => {
                         if (
@@ -173,14 +192,28 @@ const InventoryV2 = () => {
                             return;
                         }
                         const protectionText = getProtectionText(perRow);
-                        const optimizationStatus = getOptimizationStatus(
+                        let optimizationStatus = '';
+                        optimizationStatus = getOptimizationStatus(
                             perRow?.databaseInstanceId,
-                            optimizationStatusList
+                            optimizationStatusList,
+                            inventoryTableData?.[key]?.hostType || ''
                         );
+
                         const fileSystemName = getFileSystemName(perRow);
-                        if (perRow?.statusColText === INVENTORY_STATUS.MANAGED) {
+
+                        // assessment loading for mssql and oracle
+                        if (
+                            perRow?.statusColText === INVENTORY_STATUS.MANAGED &&
+                            inventoryTableData?.[key]?.hostType === DBType.MSSQL
+                        ) {
                             optimizationStatusLoading = allmssqlHostAssessmentLoading;
+                        } else if (
+                            perRow?.statusColText === INVENTORY_STATUS.MANAGED &&
+                            inventoryTableData?.[key]?.hostType === DBType.ORACLE
+                        ) {
+                            optimizationStatusLoading = allOracleHostAssessmentLoading;
                         }
+
                         const managementStatus = inProgressInstances.has(
                             uniqueHostRow(
                                 `${perHost?.ec2InstanceId}_${perRow.databaseInstanceName}`,
@@ -359,6 +392,8 @@ const InventoryV2 = () => {
         inProgressInstances,
         allmssqlHostAssessmentLoading,
         allmssqlHostAssessmentData,
+        allOracleHostAssessmentLoading,
+        allOracleHostAssessmentData,
         allLogAnalysisData,
         allLogAnalysisLoading,
         headerSelectedMultiCredIdsList,

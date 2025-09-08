@@ -83,7 +83,9 @@ export interface InventorySliceData {
     isRefreshed: boolean;
     managedAssessmentHostIdsList: Array<string>;
     allmssqlHostAssessmentData: any;
+    allOracleHostAssessmentData: any;
     allmssqlHostAssessmentLoading: boolean;
+    allOracleHostAssessmentLoading: boolean;
     allLogAnalysisData: Array<ErrorInvestigationInstance>;
     allLogAnalysisLoading: boolean;
     potentialSavingsHostData: {

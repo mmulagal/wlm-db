@@ -73,6 +73,10 @@ import {
     startProtectionStep1
 } from '../../store/workloadFactory/snapcenterSlice';
 import { setActionsDisabled, setDialogErrorWithTooltip } from '../../store/workloadFactory/dialogComponentSlice';
+import {
+    formatOracleOptimizationBreakDown,
+    getOracleCardsData
+} from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 export const uniqueHostRow = (id: string, cred: string, region: string) => `${id}_${cred}_${region}`;
 
@@ -3341,7 +3345,8 @@ export const getProtectionText = (data: any) => {
 
 export const getOptimizationStatus = (
     databaseInstanceId: string,
-    optimizationStatusList: Array<HostAssessmentResponseInterface>
+    optimizationStatusList: Array<HostAssessmentResponseInterface>,
+    hostType: string
 ) => {
     if (!optimizationStatusList) {
         return '';
@@ -3349,14 +3354,25 @@ export const getOptimizationStatus = (
     const instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
     if (instanceRow && instanceRow?.assessments && instanceRow?.assessments?.lastAssessmentTimestamp) {
-        const { cardsData } = getCardsData(instanceRow?.assessments, {});
-        const optBreakDown = formatOptimizationBreakDown(cardsData);
-        optimizationStatus =
-            optBreakDown?.total?.notOptimized !== 0
-                ? optBreakDown?.total?.notOptimized === 1
-                    ? `${optBreakDown?.total?.notOptimized} issues`
-                    : `${optBreakDown?.total?.notOptimized} issues`
-                : ACTION_CTA.WELL_ARCHITECTED;
+        if (hostType === DBType.ORACLE) {
+            const { cardsData } = getOracleCardsData(instanceRow?.assessments, {});
+            const optBreakDown = formatOracleOptimizationBreakDown(cardsData);
+            optimizationStatus =
+                optBreakDown?.total?.notOptimized !== 0
+                    ? optBreakDown?.total?.notOptimized === 1
+                        ? `${optBreakDown?.total?.notOptimized} issue`
+                        : `${optBreakDown?.total?.notOptimized} issues`
+                    : ACTION_CTA.WELL_ARCHITECTED;
+        } else {
+            const { cardsData } = getCardsData(instanceRow?.assessments, {});
+            const optBreakDown = formatOptimizationBreakDown(cardsData);
+            optimizationStatus =
+                optBreakDown?.total?.notOptimized !== 0
+                    ? optBreakDown?.total?.notOptimized === 1
+                        ? `${optBreakDown?.total?.notOptimized} issue`
+                        : `${optBreakDown?.total?.notOptimized} issues`
+                    : ACTION_CTA.WELL_ARCHITECTED;
+        }
     } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     } else if (instanceRow?.assessments && !instanceRow?.assessments?.lastAssessmentTimestamp) {

@@ -4,12 +4,19 @@ import GetWellHostJson from '../data/getWellHost.json';
 import SnapshotPolicies from '../data/snapshotPolicies.json';
 import GetWellAccJson from '../data/getWellAcc.json';
 import OracleAssessmentJson from '../data/oracleAssessment.json';
+import OracleAssessmentAccJson from '../data/oracleAssessmentAcc.json';
 
 const router = require('express').Router();
 
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/assessment`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, GetWellAccJson);
+    }, 20);
+});
+
+router.get(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/assessment`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, OracleAssessmentAccJson);
     }, 20);
 });
 
