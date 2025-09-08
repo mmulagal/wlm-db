@@ -1,9 +1,14 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
+import throat from 'throat';
 import { isEmpty } from 'lodash-es';
 import moment from 'moment';
 import getLogger from '../../../utils/logger';
-import { getInstanceInfo, updateDatabaseInstanceAssessmentResults } from '../../database/database-operations';
+import {
+    getInstanceInfo,
+    getResources,
+    updateDatabaseInstanceAssessmentResults
+} from '../../database/database-operations';
 import {
     DatabaseInstance,
     DatabaseInstancesIncludingResource,
@@ -12,7 +17,11 @@ import {
     WorkloadInstance
 } from '../../../utils/common-types';
 import { AuditStatus, HttpErrorCodes, RESOURCESTYPE } from '../../../utils/consts';
-import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../utils/continous-optimization-consts';
+import {
+    AssessmentCategories,
+    AssessmentCategoriesOracle,
+    AssessmentTriggeredBy
+} from '../../../utils/continous-optimization-consts';
 import { registerJob, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
@@ -28,6 +37,8 @@ import {
     StorageAssessment
 } from './storage-assessment-operations';
 import {
+    DriftAssessmentResponsePerAccountType,
+    DriftAssessmentResponsePerHostType,
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
@@ -471,4 +482,147 @@ async function updateAssessmentResultsInInstanceMetadata(managedInstance: Databa
     }
 }
 
-export { triggerOracleAssessment, onDemandTriggerOracleDriftAssessment, fetchOracleDriftAssessment };
+async function fetchOracleDriftAssessmentPerHost(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    resourceDetail?: ResourceDetails
+) {
+    logger.info('Fetching oracle drift assessment per host', { accountId, credentialsId, region, databaseHostId });
+
+    if (!resourceDetail) {
+        const { items: [resource] = [] } = await getResources({
+            accountId,
+            resourceId: databaseHostId,
+            credentialsId,
+            region,
+            resourceType: RESOURCESTYPE.ORACLE,
+            includeDatabaseInstances: true,
+            allRecords: false,
+            assessmentData: true
+        });
+
+        if (!resource) {
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                `No oracle database host by id ${databaseHostId} for ${accountId} is found.`
+            );
+        }
+        resourceDetail = resource;
+    }
+
+    const { resource_name: databaseHostName = '', database_instances: instancesManaged = [] } = resourceDetail;
+
+    if (isEmpty(instancesManaged)) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No managed oracle databases found for account ${accountId} and host ${databaseHostId}.`
+        );
+    }
+
+    const driftAssessments = await Promise.all(
+        instancesManaged.map(
+            throat(
+                3,
+                async ({
+                    database_instance_id: databaseInstanceId,
+                    database_instance_name: databaseInstanceName,
+                    ...instance
+                }) => {
+                    try {
+                        const driftAssessment = await fetchOracleDriftAssessment(
+                            accountId,
+                            credentialsId,
+                            region,
+                            databaseHostId,
+                            databaseInstanceId,
+                            AssessmentCategories.STORAGE,
+                            { ...instance, resource: resourceDetail } as DatabaseInstancesIncludingResource
+                        );
+                        return { databaseInstanceId, databaseInstanceName, assessments: driftAssessment };
+                    } catch (error: any) {
+                        logger.error(
+                            `Error while fetching oracle drift assessment for ${databaseInstanceId}: ${error.message}`
+                        );
+                        return { databaseInstanceId, databaseInstanceName, error: error.message };
+                    }
+                }
+            )
+        )
+    );
+
+    return {
+        databaseHostId,
+        databaseHostName,
+        instancesAssessment: driftAssessments
+    } as DriftAssessmentResponsePerHostType;
+}
+
+async function fetchOracleDriftAssessmentPerAccount(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    clientNextToken?: string,
+    pageSize?: number
+) {
+    logger.info('Fetching oracle drift assessment per account', {
+        accountId,
+        credentialsId,
+        region,
+        clientNextToken,
+        pageSize
+    });
+
+    const { items: resourceDetails = [], nextToken } = await getResources({
+        accountId,
+        credentialsId,
+        region,
+        resourceType: RESOURCESTYPE.ORACLE,
+        pageSize: pageSize || 50,
+        nextToken: clientNextToken,
+        includeDatabaseInstances: true
+    });
+
+    if (isEmpty(resourceDetails)) {
+        logger.info(`No successfully deployed database hosts found for account ${accountId} in region ${region}.`);
+        return { count: 0, assessmentsPerAccount: [], nextToken: '' };
+    }
+
+    const driftAssessmentPerAccount = await Promise.all(
+        resourceDetails.map(
+            throat(3, async resourceDetail => {
+                const { resource_id: databaseHostId } = resourceDetail;
+                try {
+                    return await fetchOracleDriftAssessmentPerHost(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        resourceDetail
+                    );
+                } catch (error) {
+                    logger.error(
+                        `Error while fetching drift assessment per host ${accountId}, ${databaseHostId}, ${error}`
+                    );
+                }
+            })
+        )
+    );
+
+    const filteredAssessments = driftAssessmentPerAccount.filter(Boolean);
+
+    return {
+        count: filteredAssessments.length,
+        assessmentsPerAccount: filteredAssessments,
+        nextToken
+    } as DriftAssessmentResponsePerAccountType;
+}
+
+export {
+    triggerOracleAssessment,
+    onDemandTriggerOracleDriftAssessment,
+    fetchOracleDriftAssessment,
+    fetchOracleDriftAssessmentPerHost,
+    fetchOracleDriftAssessmentPerAccount
+};

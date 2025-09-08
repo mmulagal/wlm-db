@@ -41,10 +41,37 @@ const OracleDriftAssessmentResponse = Type.Object({
 });
 type OracleDriftAssessmentResponseType = Static<typeof OracleDriftAssessmentResponse>;
 
+const DriftAssessmentResponsePerInstance = Type.Object({
+    databaseInstanceId: Type.String({ minLength: 1 }),
+    databaseInstanceName: Type.String(),
+    assessments: Type.Optional(OracleDriftAssessmentResponse),
+    error: Type.Optional(Type.String())
+});
+
+const DriftAssessmentResponsePerHost = Type.Object({
+    databaseHostId: Type.String({ minLength: 1 }),
+    databaseHostName: Type.String(),
+    instancesAssessment: Type.Array(DriftAssessmentResponsePerInstance)
+});
+
+type DriftAssessmentResponsePerHostType = Static<typeof DriftAssessmentResponsePerHost>;
+
+const DriftAssessmentResponsePerAccount = Type.Object({
+    count: Type.Number(),
+    assessmentsPerAccount: Type.Array(DriftAssessmentResponsePerHost),
+    nextToken: Type.Optional(Type.String())
+});
+
+type DriftAssessmentResponsePerAccountType = Static<typeof DriftAssessmentResponsePerAccount>;
+
 export {
     OracleGenericParameterDriftResponse,
     OracleGenericParameterDriftResponseType,
     OracleDriftAssessmentResponse,
     OracleDriftAssessmentResponseType,
-    StorageParameterDriftResponseType
+    StorageParameterDriftResponseType,
+    DriftAssessmentResponsePerHost,
+    DriftAssessmentResponsePerHostType,
+    DriftAssessmentResponsePerAccount,
+    DriftAssessmentResponsePerAccountType
 };

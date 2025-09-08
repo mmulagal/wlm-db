@@ -65,7 +65,6 @@ import {
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
 import { checkAndUpdatePostponedEndTime, updateFieldsBasedOnDismissedConfigurations } from '../assessment-utils';
-import { listResources } from '../../../lib/database/db';
 import {
     ParameterDriftResponseType,
     ComputeDriftResponseType,
@@ -80,7 +79,6 @@ import {
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetAssessmentForDemo } from '../../demo-operations';
-import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../../utils/database-consts';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -493,7 +491,7 @@ async function fetchMssqlDriftAssessmentPerAccount(
     credentialsId: string,
     region: string,
     fields?: string,
-    nextToken?: string,
+    clientNextToken?: string,
     pageSize?: number
 ) {
     logger.info('Fetching drift assessment per account', {
@@ -501,21 +499,20 @@ async function fetchMssqlDriftAssessmentPerAccount(
         credentialsId,
         region,
         fields,
-        nextToken,
+        clientNextToken,
         pageSize
     });
 
     pageSize = pageSize || 50;
 
-    const resourceDetails = await listResources({
+    const { items: resourceDetails = [], nextToken } = await getResources({
         accountId,
-        credentialIds: credentialsId,
+        credentialsId,
         region,
         resourceType: RESOURCESTYPE.MSSQL,
         pageSize,
-        nextToken,
-        includeDatabaseInstances: true,
-        selectKeys: [...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data', 'configurations']
+        nextToken: clientNextToken,
+        includeDatabaseInstances: true
     });
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId} in region ${region}.`);
@@ -549,7 +546,7 @@ async function fetchMssqlDriftAssessmentPerAccount(
     return {
         count: driftAssessmentPerAccount.length,
         assessmentsPerAccount: driftAssessmentPerAccount,
-        nextToken: resourceDetails?.length === pageSize ? resourceDetails[resourceDetails.length - 1].id : undefined
+        nextToken
     };
 }
 

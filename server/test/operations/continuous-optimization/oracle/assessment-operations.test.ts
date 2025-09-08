@@ -6,6 +6,8 @@ import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../.
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 import {
     fetchOracleDriftAssessment,
+    fetchOracleDriftAssessmentPerAccount,
+    fetchOracleDriftAssessmentPerHost,
     onDemandTriggerOracleDriftAssessment
 } from '../../../../src/operations/continuous-optimization/oracle/assessment-operations';
 import { AssessmentTriggeredBy } from '../../../../src/utils/continous-optimization-consts';
@@ -77,5 +79,20 @@ describe('Oracle assessment operations', () => {
         expect(assessmentData).toBeDefined();
         expect(assessmentData.fileSystemId).toBe('fs-0f53fbecdd3d85fb2');
         expect(assessmentData.ec2InstanceId).toBe(node1InstanceId);
+    });
+    it('should return drift assessment data at host level', async () => {
+        const assessmentData = await fetchOracleDriftAssessmentPerHost(
+            accountId,
+            credentialsId,
+            region,
+            '6cbdabbfe3fb147e'
+        );
+        expect(assessmentData).toBeDefined();
+        expect(assessmentData.instancesAssessment.length).toBeGreaterThan(0);
+    });
+    it('should return drift assessment data at account level', async () => {
+        const assessmentData = await fetchOracleDriftAssessmentPerAccount(accountId, credentialsId, region);
+        expect(assessmentData).toBeDefined();
+        expect(assessmentData.assessmentsPerAccount.length).toBeGreaterThan(0);
     });
 });
