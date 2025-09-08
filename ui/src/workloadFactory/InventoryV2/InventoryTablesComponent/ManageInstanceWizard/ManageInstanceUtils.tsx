@@ -41,6 +41,33 @@ import {
     isAuthRequiredForInstance
 } from './DetectInstanceStep/DetectContent/DetectContentHelper';
 
+// Helper function to get engine type display name based on engine type
+const getEngineTypeDisplayName = (engineType: string): string => {
+    switch (engineType) {
+        case DBType.MSSQL:
+            return REGISTER_INSTANCE_STATE.MSSQL;
+        case DBType.ORACLE:
+            return REGISTER_INSTANCE_STATE.ORACLE;
+        default:
+            return REGISTER_INSTANCE_STATE.MSSQL;
+    }
+};
+
+// Helper function to create manage instance message text
+const createManageInstanceMessageText = (
+    engineType: string,
+    instanceIdentifier: string | number,
+    messageType: 'single' | 'multi'
+): string => {
+    const engineDisplayName = getEngineTypeDisplayName(engineType);
+
+    if (messageType === 'single') {
+        return `${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${engineDisplayName} ${instanceIdentifier} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`;
+    } else {
+        return `${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]} ${engineDisplayName} ${instanceIdentifier} ${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}`;
+    }
+};
+
 // Checks if the manage readiness data allows for management actions based on missing permissions and modules
 export const isAllowManage = (manageReadinessData: ManageReadinessInterface, engineType: string) => {
     const state = store.getState();
@@ -136,7 +163,8 @@ export const callManageSingleInstanceApi = async (
     dispatch: AppDispatch,
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
-    navigate: ReturnType<typeof useNavigate>
+    navigate: ReturnType<typeof useNavigate>,
+    engineType: string
 ) => {
     const state = store.getState();
     const { installMissingAWS, installMissingPowershell, installMissingJQ, installMissingPython } =
@@ -178,7 +206,11 @@ export const callManageSingleInstanceApi = async (
             dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
             const manageInstanceMsg = (
                 <DsTypography variant="Regular_14">
-                    {`${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${manageSingleInstanceChecks?.databaseInstanceName} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`}
+                    {createManageInstanceMessageText(
+                        engineType,
+                        manageSingleInstanceChecks?.databaseInstanceName,
+                        'single'
+                    )}
                     <Button
                         Component="button"
                         variant="text"
@@ -299,7 +331,8 @@ export const handleSingleInstanceManage = (
             dispatch,
             manageBulkV2InstanceApi,
             getJobDetailApi,
-            navigate
+            navigate,
+            engineType
         );
     }
 };
@@ -508,7 +541,7 @@ export const callManageMultiInstanceApi = async (
 
             const manageInstanceMsg = (
                 <DsTypography variant="Regular_14">
-                    {`${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]} ${inProgressIDList?.length} ${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}`}
+                    {createManageInstanceMessageText(engineType, inProgressIDList?.length, 'multi')}
                     <Button
                         Component="button"
                         variant="text"

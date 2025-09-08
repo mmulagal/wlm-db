@@ -865,8 +865,8 @@ export const GENERAL = {
         ' Managed hosts ',
         'tab.'
     ],
-    INSTANCE_MANAGE_REQUEST: ['Your request to register the SQL Server instance ', ' is in progress.'],
-    MULTI_INSTANCE_MANAGE_REQUEST: ['Your request to register ', ' SQL Server instances is in progress.'],
+    INSTANCE_MANAGE_REQUEST: ['Your request to register the ', ' is in progress.'],
+    MULTI_INSTANCE_MANAGE_REQUEST: ['Your request to register ', ' is in progress.'],
 
     INSTANCE_SUCCESS_DETECTED: ['Instance ', ' successfully detected.'],
     INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED: ['Instance ', ' successfully detected but failed to become managed. '],

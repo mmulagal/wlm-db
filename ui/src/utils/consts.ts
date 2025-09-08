@@ -1058,7 +1058,9 @@ export const ERROR_ANALYZER_STATUS = {
 };
 
 export const REGISTER_INSTANCE_STATE = {
-    NOT_AVAILABLE: 'n/a'
+    NOT_AVAILABLE: 'n/a',
+    MSSQL: 'SQL Server instance',
+    ORACLE: 'Oracle database'
 };
 
 export const ORACLE_DATABASES_COMPONENTS = {
