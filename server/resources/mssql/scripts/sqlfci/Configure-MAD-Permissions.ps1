@@ -44,10 +44,29 @@ try {
 	$Credentials = (New-Object PSCredential($ClusterAdminUser, (ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 	$wsfcCN = $wsfcName
 	Invoke-Command -scriptblock {
-		if([string]::IsNullOrEmpty($Using:DCName)) {
-		$computer = get-adcomputer $Using:wsfcCN
-		} else {
-			$computer = get-adcomputer $Using:wsfcCN -Server $Using:DCName
+		$maxRetries = 10
+		$retryCount = 0
+		$success = $false
+		while (-not $success -and $retryCount -lt $maxRetries) {
+			try {
+				if([string]::IsNullOrEmpty($Using:DCName)) {
+					$computer = get-adcomputer $Using:wsfcCN
+				} else {
+					$computer = get-adcomputer $Using:wsfcCN -Server $Using:DCName
+				}
+				$success = $true
+			}
+			catch {
+				$retryCount++
+				Write-Output "Attempt $retryCount failed: $($_.Exception.Message)"
+				if ($retryCount -lt $maxRetries) {
+					Write-Output "Retrying in 60 seconds..."
+					Start-Sleep -Seconds 60
+				} else {
+					Write-Output "Max retries reached. Throwing exception."
+					throw
+				}
+			}
 		}
 		$discard, $OU = $computer -split ',', 2
 		$acl = get-acl "ad:$OU"
