@@ -33,6 +33,7 @@ import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigForBulkMutation,
     useOptimizeComputeConfigMutation,
+    useOptimizeMTUConfigForBulkMutation,
     useOptimizeResiliencyMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
@@ -48,6 +49,7 @@ import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSna
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
+import MTUOptimizeTable from './InnerTables/MTUOptimizeTable';
 import StorageLayoutOracleTable from './InnerTables/StorageLayoutOracleTable';
 
 const OptimizeInnerPage = () => {
@@ -80,6 +82,7 @@ const OptimizeInnerPage = () => {
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [optimizeResiliency] = useOptimizeResiliencyMutation();
     const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
+    const [optimizeMTUConfigForBulk] = useOptimizeMTUConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const userNavigated = useRef(false);
@@ -173,6 +176,12 @@ const OptimizeInnerPage = () => {
                 setCardHeight({
                     recommendationSection: '450px',
                     tagSection: '546px'
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                setCardHeight({
+                    recommendationSection: '208px',
+                    tagSection: '304px'
                 });
                 break;
             case 'Cross-Region Replication (CRR)':
@@ -397,6 +406,45 @@ const OptimizeInnerPage = () => {
                                     id: selectedResourceId,
                                     sqlServerInstances: [selectedDatabaseInstance],
                                     networkAdapters: [singleRowData?.adapterName],
+                                    credentialsId: selectedGwInstanceCredId,
+                                    region: selectedGwInstanceRegionId
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.MTU) {
+            apiCall = optimizeMTUConfigForBulk;
+            if (operation === 'bulk') {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'mtu-alignment',
+                            databaseHosts: [
+                                {
+                                    id: selectedResourceId,
+                                    sqlServerInstances: [selectedDatabaseInstance],
+                                    interfaceNames: selectedRowsForOptimizeInnerPage.map(
+                                        (item: any) => item?.interfaceName || item?.objectName
+                                    ),
+                                    credentialsId: selectedGwInstanceCredId,
+                                    region: selectedGwInstanceRegionId
+                                }
+                            ]
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'mtu-alignment',
+                            databaseHosts: [
+                                {
+                                    id: selectedResourceId,
+                                    sqlServerInstances: [selectedDatabaseInstance],
+                                    interfaceNames: [singleRowData?.interfaceName || singleRowData?.objectName],
                                     credentialsId: selectedGwInstanceCredId,
                                     region: selectedGwInstanceRegionId
                                 }
@@ -700,6 +748,16 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                    />
+                );
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                return (
+                    <MTUOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                        hostname={selectedHostname}
                     />
                 );
             case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:

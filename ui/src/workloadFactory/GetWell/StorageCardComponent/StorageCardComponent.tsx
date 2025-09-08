@@ -788,7 +788,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.CRR ||
-            type === GENERAL.CLONE_MANAGEMENT
+            type === GENERAL.CLONE_MANAGEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.MTU
         ) {
             handleNavigateToOptimizePage(type);
         } else {
@@ -807,8 +808,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Log drive size' ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
-            type === GENERAL.CLONE_MANAGEMENT ||
-            type === t('databases.general.mtu')
+            type === GENERAL.CLONE_MANAGEMENT
         ) {
             return GENERAL.VIEW_AND_FIX;
         }

@@ -192,6 +192,17 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     },
                     data: data?.recommendation
                 };
+            case ASSESSMENT_CONFIG_NAMES.MTU:
+                return {
+                    block_one: { type: 'Impacted network interfaces', value: data.impactedCount || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
+                    data: {
+                        title: 'MTU alignment recommendation',
+                        description: data?.recommendationText
+                    }
+                };
             case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
