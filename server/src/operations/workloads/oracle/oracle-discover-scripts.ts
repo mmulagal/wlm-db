@@ -43,10 +43,17 @@ const loadStorageDetectionModules = `
         local ORACLE_SID="$1"
         local isCDB="$2"
         local pdbName="$3"
+        local isASMManaged="$4"
+        local matching="NOT LIKE"
         local alter_cmd=""
         if [ "$isCDB" == "YES" ]; then
             alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
         fi
+
+        if [ "$isASMManaged" == "YES" ]; then
+            matching="LIKE"
+        fi
+
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
             $sqlplus_command <<'EOSQL'
@@ -78,7 +85,7 @@ const loadStorageDetectionModules = `
                 '    "DATA_FILES": [' || 
                     NVL((SELECT LISTAGG('"' || data_dir || '"', ', ') WITHIN GROUP (ORDER BY data_dir)
                         FROM (SELECT DISTINCT SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1) AS data_dir 
-                            FROM dba_data_files WHERE file_name NOT LIKE '+%')), '') || 
+                            FROM dba_data_files WHERE file_name $matching '+%')), '') || 
                 ']' || CHR(10) ||
                 '}'
             AS json_output
@@ -491,7 +498,7 @@ EOF
         local pdbName="$3"
         
         # Get Oracle DB file paths
-        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO")
         oracleMountDetails="{"
         for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
             paths=$(echo "$db_paths_json" | jq -r ".$fileType[]" 2>/dev/null)
@@ -511,7 +518,58 @@ EOF
         
         oracleMountDetails+="}"
         echo "$oracleMountDetails"
-    }`;
+    }
+
+    get_oracle_db_asm_mount_details() {
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+
+        # Get Oracle DB file paths
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES")
+        oracleMountDetails="{"
+        for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+            diskgroups_csv=$(jq -r --arg ft "$fileType" '.[$ft][]? | split("/") | .[0] | ltrimstr("+")' <<< "$db_paths_json" | sort -u | paste -sd ',' -)
+
+            mountDetails="["
+            # Get mount details for these diskgroups
+            if [ -n "$diskgroups_csv" ]; then
+                for diskGroup in $(echo "$diskgroups_csv" | tr ',' ' '); do
+                    
+                    # Get first disk from the disk group, all disks in a diskgroup must follow same protocol & storage type. 
+                    diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup")
+                    if [ -n "$diskName" ]; then
+                        result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details $diskName)
+                        if [ $? -ne 0 ]; then
+                            continue
+                        fi
+                        mountIP=$(echo "$result" | cut -d',' -f1)
+                        mountPoint=$(echo "$result" | cut -d',' -f2)
+                        protocol=$(echo "$result" | cut -d',' -f3)
+
+                        json_obj="{\\"isAsmManaged\\":\\"true\\", \\"mountIP\\":\\"$mountIP\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+
+                        if [ "$mountDetails" == "[" ]; then
+                            mountDetails+="$json_obj"
+                        else
+                            mountDetails+=", $json_obj"
+                        fi
+                    fi
+                done
+                mountDetails+="]"
+            else
+                mountDetails="[]"
+            fi
+            if [ "$oracleMountDetails" != "{" ]; then
+                oracleMountDetails+=","
+            fi
+            oracleMountDetails+="\\"$fileType\\":$mountDetails"
+        done
+
+        oracleMountDetails+="}"
+        echo "$oracleMountDetails"
+    }
+`;
 
 const getInstanceStorageDetails = `
     isASMManaged=$(check_asm_managed $sid)
@@ -1099,11 +1157,26 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
             fi
             
             if [ "$isASMManaged" == "TRUE" ]; then
-                # TODO: get PDB/instance level mount details for ASM managed databases, currently we are not asking for ASM creds
                 if [ "$is_cdb" == "YES" ]; then
-                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"pdbMountDetails\\": {}}"
+                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"pdbMountDetails\\": {"
+                    firstPdb=true
+                    
+                    for pdb_name in $pdb_names; do
+                        if [ "$firstPdb" = true ]; then
+                            firstPdb=false
+                        else
+                            finalResult+=","
+                        fi
+                        
+                        # Get mount details for this PDB
+                        pdbMountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "$pdb_name")
+                        finalResult+="\\"$pdb_name\\": $pdbMountDetails"
+                    done
+                    
+                    finalResult+="}}"
                 else
-                    finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"mountDetails\\": {}}"
+                    mountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "")
+                    finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"mountDetails\\": $mountDetails}"
                 fi
             else
                 if [ "$is_cdb" == "YES" ]; then
@@ -1203,10 +1276,6 @@ const getMappedOntapDataVolumeForInstance = (
         sidData=$(echo "$mountPointData" | jq -r --arg sid "$sid" '.[$sid]')
         isCDB=$(echo "$sidData" | jq -r '.isCDB')
         isASMManaged=$(echo "$sidData" | jq -r '.isASMManaged')
-        if [ "$isASMManaged" == "true" ]; then
-            # TO-DO: add logic for ASM, Skip ASM managed instances for now
-            continue
-        fi
         
         if [ "$isCDB" == "false" ]; then
             # Single tenant instance
