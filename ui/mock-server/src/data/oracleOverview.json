@@ -241,6 +241,57 @@
             "error": ""
         }
     },
+    "databases": [
+        {
+            "name": "ORADB1SA",
+            "status": "ONLINE",
+            "type": "CDB",
+            "size": 2731540480,
+            "protection": {
+                "isSqlNativeEnabled": false,
+                "isAwsBackupEnabled": {
+                    "fsxn": false,
+                    "fsxw": false,
+                    "ebs": false
+                },
+                "isFsxOntapSnapshotsEnabled": true
+            }
+        },
+        {
+            "name": "ORCLPDB",
+            "status": "ONLINE",
+            "type": "PDB",
+            "size": 802160640,
+            "protection": {
+                "isSqlNativeEnabled": false,
+                "isAwsBackupEnabled": {
+                    "fsxn": false,
+                    "fsxw": false,
+                    "ebs": false
+                },
+                "isFsxOntapSnapshotsEnabled": true
+            },
+            "created": "2025-04-09T10:51:44",
+            "service": "ip-172-31-48-50.ap-southeast-1.compute.internal:1521"
+        },
+        {
+            "name": "PDB2",
+            "status": "ONLINE",
+            "type": "PDB",
+            "size": 775946240,
+            "protection": {
+                "isSqlNativeEnabled": false,
+                "isAwsBackupEnabled": {
+                    "fsxn": false,
+                    "fsxw": false,
+                    "ebs": false
+                },
+                "isFsxOntapSnapshotsEnabled": true
+            },
+            "created": "2025-06-12T07:45:17",
+            "service": "ip-172-31-48-50.ap-southeast-1.compute.internal:1521"
+        }
+    ],
 
     "sqlServerDeploymentType": "FCI"
 }

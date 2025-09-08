@@ -781,6 +781,7 @@ export const GETWELL_STATUS = {
 export const WELL_ARCHITECTED_TABS = {
     OVERVIEW: 'Overview',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
+    PDB: 'PDB',
     DATABASES: 'Databases',
     SANDBOXES: 'Sandboxes',
     ERROR_INVESTIGATION: 'Error investigation'

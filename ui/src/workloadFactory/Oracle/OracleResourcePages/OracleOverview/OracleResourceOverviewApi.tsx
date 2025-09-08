@@ -28,7 +28,7 @@ const useOracleResourceOverview = () => {
     const [getOracleOverviewDetails] = useGetOracleOverviewDetailsMutation();
 
     useEffect(() => {
-        if (!visitedTabs.Overview) {
+        if (!visitedTabs.Overview && !visitedTabs.PDB) {
             dispatch(setOracleRefreshTimes({ overviewRefreshTime: getCurrentDateTime() }));
             viewResourceAction();
         }

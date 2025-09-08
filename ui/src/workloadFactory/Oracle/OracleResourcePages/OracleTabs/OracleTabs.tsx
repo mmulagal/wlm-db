@@ -1,14 +1,15 @@
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@netapp/design-system';
 import styles from './OracleTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
 import { WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 
 const OracleTabs = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState<any>();
     const { selectedOracleInnerPageTab } = useAppSelector(state => state.oracleSlice);
 
@@ -38,7 +39,7 @@ const OracleTabs = () => {
                     }
                     onClick={() => handleClick(WELL_ARCHITECTED_TABS.OVERVIEW)}
                 >
-                    {GENERAL.OVERVIEW}
+                    {t('databases.oracle-inner-page.overview')}
                 </DsTypography>
             </div>
             <div
@@ -57,7 +58,27 @@ const OracleTabs = () => {
                     }
                     onClick={() => handleClick(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS)}
                 >
-                    {GENERAL.WELL_ARCHITECTED_STATUS}
+                    {t('databases.general.well_architected_status')}
+                </DsTypography>
+            </div>
+
+            <div
+                className={
+                    selectedTab === WELL_ARCHITECTED_TABS.PDB
+                        ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
+                        : `${styles.headers} ${styles.headerWidthThird}`
+                }
+            >
+                <DsTypography
+                    variant="Semibold_14"
+                    className={
+                        selectedTab === WELL_ARCHITECTED_TABS.PDB
+                            ? `${styles.headerPart1} ${styles.activeText}`
+                            : `${styles.headerPart1}`
+                    }
+                    onClick={() => handleClick(WELL_ARCHITECTED_TABS.PDB)}
+                >
+                    {t('databases.oracle-inner-page.pdb')}
                 </DsTypography>
             </div>
         </div>

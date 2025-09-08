@@ -26,7 +26,13 @@ interface ProtectionData {
     isAppConsistentBackupEnabled?: boolean;
 }
 
-const ProtectionIcons = ({ protectionData }: { protectionData: ProtectionData }) => {
+interface ProtectionIconsProps {
+    protectionData: ProtectionData;
+    excludeIcons?: string[];
+    comingSoonIcons?: string[];
+}
+
+const ProtectionIcons = ({ protectionData, excludeIcons = [], comingSoonIcons = [] }: ProtectionIconsProps) => {
     const { t } = useTranslation();
     const iconsConfig = [
         {
@@ -55,11 +61,24 @@ const ProtectionIcons = ({ protectionData }: { protectionData: ProtectionData })
             tooltipLabel: t('databases.general.sql-native-backup')
         }
     ];
+
+    const filteredConfig = iconsConfig.filter(config => !excludeIcons.includes(config.tooltipLabel));
     return (
         <>
-            {iconsConfig.map(({ Icon, tooltipValue, tooltipLabel }, idx) => (
-                <IconWithTooltip key={idx} Icon={Icon} tooltipValue={tooltipValue} tooltipLabel={tooltipLabel} />
-            ))}
+            {filteredConfig.map(({ Icon, tooltipValue, tooltipLabel }) => {
+                const isComingSoon = comingSoonIcons.includes(tooltipLabel);
+
+                return isComingSoon ? (
+                    <IconWithComingSoonTooltip key={tooltipLabel} Icon={Icon} tooltipLabel={tooltipLabel} />
+                ) : (
+                    <IconWithTooltip
+                        key={tooltipLabel}
+                        Icon={Icon}
+                        tooltipValue={tooltipValue}
+                        tooltipLabel={tooltipLabel}
+                    />
+                );
+            })}
         </>
     );
 };
@@ -71,6 +90,23 @@ const IconWithTooltip: FC<IconConfig> = ({ Icon, tooltipValue, tooltipLabel, ...
         container={<Icon {...iconProps} fill={tooltipValue === true ? 'var(--blue-70)' : 'var(--grey-45)'} />}
     />
 );
+
+const IconWithComingSoonTooltip: FC<{ Icon: React.FC<React.SVGProps<SVGSVGElement>>; tooltipLabel: string }> = ({
+    Icon,
+    tooltipLabel
+}) => {
+    const { t } = useTranslation();
+    return (
+        <Popover trigger="hover" container={<Icon fill="var(--grey-45)" />}>
+            <div className={styles.protectionTooltip}>
+                <div className={styles.protectionLabel}>{tooltipLabel}</div>
+                <div className={styles.protectionStatus}>
+                    <span>{t('databases.general.coming-soon')}</span>
+                </div>
+            </div>
+        </Popover>
+    );
+};
 
 const ProtectionTooltipItem = ({ label, value }: { label: string; value: boolean | number }) => {
     const { t } = useTranslation();

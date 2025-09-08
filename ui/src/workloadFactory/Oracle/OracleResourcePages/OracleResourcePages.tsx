@@ -20,6 +20,7 @@ import {
     FSXPasswordContent,
     OracleServerPasswordContent
 } from '../../GetWell/WellArchitectDashboard/FSXPasswordContent/FSXPasswordContent';
+import OraclePDB from './OraclePDB/OraclePDB';
 import {
     resetOracleResourceVisitedTabs,
     setOracleRefreshTimes,
@@ -103,7 +104,10 @@ const OracleResourcePages = () => {
 
     // refresh time on hover
     const setRefreshTimeOnIcon = () => {
-        if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW) {
+        if (
+            selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW ||
+            selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.PDB
+        ) {
             return refreshTimes.overviewRefreshTime;
         }
         if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
@@ -113,7 +117,10 @@ const OracleResourcePages = () => {
     };
 
     const handleOracleRefresh = () => {
-        if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW) {
+        if (
+            selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW ||
+            selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.PDB
+        ) {
             dispatch(setOracleResourceDetails({}));
             dispatch(setRefreshOracleOverview(true));
             dispatch(setOracleRefreshTimes({ overviewRefreshTime: getCurrentDateTime() }));
@@ -208,6 +215,8 @@ const OracleResourcePages = () => {
             )}
 
             {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW && <OracleOverview />}
+
+            {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.PDB && <OraclePDB />}
         </div>
     );
 };

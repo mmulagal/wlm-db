@@ -44,7 +44,9 @@
             "no-analysis-performed": "No analysis performed",
             "assessment-performed": "Automatic daily analysis",
             "last-update": "Last update:",
-            "assess-now": "Analyze now"
+            "assess-now": "Analyze now",
+            "online": "ONLINE",
+            "offline": "OFFLINE"
         },
         "banner": {
             "pgsql-deployment": "Deployment",
@@ -195,6 +197,9 @@
             "oracle": "Oracle instance"
         },
         "oracle-inner-page": {
+            "overview": "Overview",
+            "pdb": "PDB",
+            "pdbs": "PDBs",
             "storage-configuration": "Storage configuration",
             "storage-layout": "Storage layout",
             "single-tenant": "Single-tenant",
@@ -823,7 +828,10 @@
                 "fsx-for-ontap": "FSx for ONTAP",
                 "aws-credentials": "AWS credentials",
                 "aws-account": "AWS account",
-                "region": "Region"
+                "region": "Region",
+                "status": "Status",
+                "service-name": "Service name",
+                "creation-date": "Creation date"
             }
         },
         "job-monitor": {
