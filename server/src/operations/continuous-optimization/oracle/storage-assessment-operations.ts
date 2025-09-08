@@ -17,7 +17,11 @@ import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../.
 import storageGoldenConfigData from './golden-config';
 import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
 import { StorageParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
-import { OracleMappedOntapVolumesResponse, OracleSysFileTypes } from '../../workloads/oracle/common-types';
+import {
+    OracleMappedOntapVolumesResponse,
+    OracleSysFileTypes,
+    OracleVolumeRecord
+} from '../../workloads/oracle/common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -43,11 +47,10 @@ interface StorageAssessment {
     };
 }
 
-function mapVolumeTypesToIdsOrNames(
+function mapVolumeTypesToIdName(
     databaseInstanceName: string,
     fsxFileSystem: string,
-    mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
-    mapByName: boolean
+    mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>
 ) {
     let instanceVolumeMappings;
     if (isDemoFlow) {
@@ -71,39 +74,31 @@ function mapVolumeTypesToIdsOrNames(
               )
           )
         : Object.entries(volumeRecords).flatMap(
-              ([type, volumes]) => volumes?.map((volume: any) => ({ type, volume })) || []
+              ([type, volumes]) => volumes?.map((volume: OracleVolumeRecord) => ({ type, volume })) || []
           );
 
     return Object.values(OracleSysFileTypes).reduce((acc, type) => {
         acc[type] = uniq(
             flattenedRecords
                 .filter(record => record.type === type)
-                .map(({ volume }) => (mapByName ? volume.volumeName : volume.volumeId))
+                .map(({ volume }) => ({ id: volume.volumeId, name: volume.volumeName }))
         );
         return acc;
-    }, {} as Record<OracleSysFileTypes, string[]>);
+    }, {} as Record<OracleSysFileTypes, { id: string; name: string }[]>);
 }
 
 function getVolumeConfigDrift(
-    databaseInstanceName: string,
-    fsxFileSystem: string,
-    mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
+    volumeTypeMap: Record<OracleSysFileTypes, { id: string; name: string }[]>,
     storageAssessmentData: StorageAssessment
 ) {
     logger.info('Fetching volume configuration drift');
-    const volumeTypeToNamesMap = mapVolumeTypesToIdsOrNames(
-        databaseInstanceName,
-        fsxFileSystem,
-        mappedOntapVolumes,
-        true
-    );
     const {
-        CONTROL_FILES: controlFileVolumeNames,
-        DATA_FILES: dataFileVolumeNames,
-        REDO_LOGS: redoLogVolumeNames,
-        ARCHIVE_LOGS: archiveLogVolumeNames,
-        TEMP_FILES: tempFileVolumeNames
-    } = volumeTypeToNamesMap;
+        CONTROL_FILES: controlFileVolumes,
+        DATA_FILES: dataFileVolumes,
+        REDO_LOGS: redoLogVolumes,
+        ARCHIVE_LOGS: archiveLogVolumes,
+        TEMP_FILES: tempFileVolumes
+    } = volumeTypeMap;
 
     const { volumes, fraEnabled, rmanCompressionEnabled } = storageAssessmentData;
     const { data: volumesData, error } = volumes;
@@ -128,9 +123,16 @@ function getVolumeConfigDrift(
         others: ['inline', 'both']
     };
 
-    const controlDataFileVolumeNames = [...dataFileVolumeNames, ...controlFileVolumeNames];
-    const redoLogsTempLogsVolumeNames = [...redoLogVolumeNames, ...tempFileVolumeNames];
-    const isIn = (list: string[], objectName: string) => list.includes(objectName);
+    const controlDataFileVolumeIds = [
+        ...dataFileVolumes.map(volume => volume.id),
+        ...controlFileVolumes.map(volume => volume.id)
+    ];
+    const redoLogsTempLogsVolumeIds = [
+        ...redoLogVolumes.map(volume => volume.id),
+        ...tempFileVolumes.map(volume => volume.id)
+    ];
+    const archiveLogVolumeIds = [...archiveLogVolumes.map(volume => volume.id)];
+    const isIn = (list: string[], id: string) => list.includes(id);
 
     return volumeConfigData.map(config => {
         const objectsInViolation: GenericViolationResponseType[] = [];
@@ -139,15 +141,14 @@ function getVolumeConfigDrift(
         volumesData.forEach(volume => {
             let value = (volume[config.parameter] ?? '').toString();
             const objectName = volume.name || '';
+            const objectId = volume.uuid || '';
             let recommended = config.value.toString();
             let isViolated = false;
             let dataCategory = '';
 
-            const volumeMembership = [
-                controlDataFileVolumeNames,
-                redoLogsTempLogsVolumeNames,
-                archiveLogVolumeNames
-            ].filter(list => isIn(list, objectName)).length;
+            const volumeMembership = [controlDataFileVolumeIds, redoLogsTempLogsVolumeIds, archiveLogVolumeIds].filter(
+                list => isIn(list, objectId)
+            ).length;
 
             switch (config.parameter) {
                 case 'compaction':
@@ -156,27 +157,25 @@ function getVolumeConfigDrift(
                     break;
 
                 case 'tieringMinCoolingDays':
-                    totalObjectsAssessed = archiveLogVolumeNames.length;
-                    if (isIn(redoLogsTempLogsVolumeNames, objectName) || isIn(controlDataFileVolumeNames, objectName)) {
+                    totalObjectsAssessed = archiveLogVolumeIds.length;
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId) || isIn(controlDataFileVolumeIds, objectId)) {
                         return;
                     }
                     recommended =
-                        isIn(archiveLogVolumeNames, objectName) &&
-                        fraEnabled === 'yes' &&
-                        rmanCompressionEnabled === 'no'
+                        isIn(archiveLogVolumeIds, objectId) && fraEnabled === 'yes' && rmanCompressionEnabled === 'no'
                             ? '14'
                             : '2';
                     isViolated = value !== recommended;
                     break;
 
                 case 'tieringPolicy':
-                    if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
                         recommended = tieringPolicyRecommendations['log-files'];
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                    } else if (isIn(controlDataFileVolumeNames, objectName)) {
+                    } else if (isIn(controlDataFileVolumeIds, objectId)) {
                         recommended = tieringPolicyRecommendations['data-control-files'];
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'data-control-files';
-                    } else if (isIn(archiveLogVolumeNames, objectName)) {
+                    } else if (isIn(archiveLogVolumeIds, objectId)) {
                         recommended = tieringPolicyRecommendations['archive-log-files'];
                         dataCategory = 'archive-log-files';
                     }
@@ -187,7 +186,7 @@ function getVolumeConfigDrift(
                 case 'compressionType': {
                     const currentCompression = (volume.compression ?? '').toString();
                     const recommendations = compressionRecommendations;
-                    if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
                         value = currentCompression === 'none' ? 'none' : value;
                         recommended = recommendations['log-files'];
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
@@ -202,7 +201,7 @@ function getVolumeConfigDrift(
                 case 'deduplication': {
                     const recommendations = deduplicationRecommendations;
                     let multirecommendations = recommendations['log-files'];
-                    if (isIn(redoLogsTempLogsVolumeNames, objectName)) {
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
                         dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
                         recommended = 'none';
                     } else {
@@ -283,38 +282,32 @@ function getLunConfigDrift(storageAssessmentData: StorageAssessment) {
 }
 
 function getVolumeLayoutDrift(
-    databaseInstanceName: string,
-    fsxFileSystem: string,
-    mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
+    volumeTypeMap: Record<OracleSysFileTypes, { id: string; name: string }[]>,
     storageAssessmentData: StorageAssessment
 ) {
     logger.info('Fetching volume layout drift');
     const volumeLayoutDrift: StorageParameterDriftResponseType['layout'] = [];
 
-    const volumeTypeToIdsMap = mapVolumeTypesToIdsOrNames(
-        databaseInstanceName,
-        fsxFileSystem,
-        mappedOntapVolumes,
-        false
-    );
-
     const binaryVolumeIds = storageAssessmentData.binaryVolumes?.data?.map(volume => volume.volumeId) || [];
 
     const {
-        CONTROL_FILES: controlFileVolumeIds,
-        DATA_FILES: dataFileVolumeIds,
-        REDO_LOGS: redoLogVolumeIds,
-        ARCHIVE_LOGS: archiveLogVolumeIds,
-        TEMP_FILES: tempFileVolumeIds
-    } = volumeTypeToIdsMap;
+        CONTROL_FILES: controlFileVolumes,
+        DATA_FILES: dataFileVolumes,
+        REDO_LOGS: redoLogVolumes,
+        ARCHIVE_LOGS: archiveLogVolumes,
+        TEMP_FILES: tempFileVolumes
+    } = volumeTypeMap;
 
     let status = AssessmentStatus.OPTIMIZED;
 
     // Archive logs should be on separate volume
     const archiveLogConflicts = [
         ...new Set(
-            archiveLogVolumeIds.filter(volumeId =>
-                [controlFileVolumeIds, dataFileVolumeIds, redoLogVolumeIds, tempFileVolumeIds].flat().includes(volumeId)
+            archiveLogVolumes.filter(archiveVolume =>
+                [controlFileVolumes, dataFileVolumes, redoLogVolumes, tempFileVolumes]
+                    .flat()
+                    .map(volume => volume.id)
+                    .includes(archiveVolume.id)
             )
         )
     ];
@@ -322,16 +315,20 @@ function getVolumeLayoutDrift(
     volumeLayoutDrift.push({
         ...storageGoldenConfigData.archivePlacement,
         status,
-        objectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts : [],
-        totalObjectsAssessed: archiveLogVolumeIds.length,
+        objectsInViolation:
+            status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.map(conflict => conflict.name) : [],
+        totalObjectsAssessed: archiveLogVolumes.length,
         totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.length : 0
     });
 
     // Data files can be on separate volume or shared with control files
     const dataFileConflicts = [
         ...new Set(
-            dataFileVolumeIds.filter(volumeId =>
-                [...redoLogVolumeIds, ...archiveLogVolumeIds, ...tempFileVolumeIds].includes(volumeId)
+            dataFileVolumes.filter(dataVolume =>
+                [...redoLogVolumes, ...archiveLogVolumes, ...tempFileVolumes]
+                    .flat()
+                    .map(volume => volume.id)
+                    .includes(dataVolume.id)
             )
         )
     ];
@@ -339,73 +336,91 @@ function getVolumeLayoutDrift(
     volumeLayoutDrift.push({
         ...storageGoldenConfigData.datafilesPlacement,
         status,
-        objectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts : [],
-        totalObjectsAssessed: dataFileVolumeIds.length,
+        objectsInViolation:
+            status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.map(conflict => conflict.name) : [],
+        totalObjectsAssessed: dataFileVolumes.length,
         totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.length : 0
     });
 
     // Control files can be on separate volume or shared with data/redo/temp and maintain at least two, preferably three, control file copies across separate volumes
     const controlFileConflicts = [
-        ...new Set(controlFileVolumeIds.filter(volumeId => archiveLogVolumeIds.includes(volumeId)))
+        ...new Set(
+            controlFileVolumes.filter(controlVolume =>
+                archiveLogVolumes.map(volume => volume.id).includes(controlVolume.id)
+            )
+        )
     ];
 
     let hasConflicts = controlFileConflicts.length > 0;
-    let insufficientMultiplexing = controlFileVolumeIds.length < 2;
+    let insufficientMultiplexing = controlFileVolumes.length < 2;
     status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
 
     volumeLayoutDrift.push({
         ...storageGoldenConfigData.controlfilesPlacement,
         status,
-        objectsInViolation: hasConflicts ? controlFileConflicts : insufficientMultiplexing ? controlFileVolumeIds : [],
-        totalObjectsAssessed: controlFileVolumeIds.length,
+        objectsInViolation: hasConflicts
+            ? controlFileConflicts.map(conflict => conflict.name)
+            : insufficientMultiplexing
+            ? controlFileVolumes.map(volume => volume.name)
+            : [],
+        totalObjectsAssessed: controlFileVolumes.length,
         totalObjectsInViolation: hasConflicts
             ? controlFileConflicts.length
             : insufficientMultiplexing
-            ? controlFileVolumeIds.length
+            ? controlFileVolumes.length
             : 0
     });
 
     // Redo logs can be on separate or shared with temp/control and maintain at least 1 redo file copies across separate volumes
     const redoFileConflicts = [
         ...new Set(
-            redoLogVolumeIds.filter(volumeId => [...dataFileVolumeIds, ...archiveLogVolumeIds].includes(volumeId))
+            redoLogVolumes.filter(redoVolume =>
+                [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.id).includes(redoVolume.id)
+            )
         )
     ];
 
     hasConflicts = redoFileConflicts.length > 0;
-    insufficientMultiplexing = redoLogVolumeIds.length < 1;
+    insufficientMultiplexing = redoLogVolumes.length < 1;
     status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
     volumeLayoutDrift.push({
         ...storageGoldenConfigData.redologsPlacement,
         status,
-        objectsInViolation: hasConflicts ? redoFileConflicts : insufficientMultiplexing ? redoLogVolumeIds : [],
-        totalObjectsAssessed: redoLogVolumeIds.length,
+        objectsInViolation: hasConflicts
+            ? redoFileConflicts.map(conflict => conflict.name)
+            : insufficientMultiplexing
+            ? redoLogVolumes.map(volume => volume.name)
+            : [],
+        totalObjectsAssessed: redoLogVolumes.length,
         totalObjectsInViolation: hasConflicts
             ? redoFileConflicts.length
             : insufficientMultiplexing
-            ? redoLogVolumeIds.length
+            ? redoLogVolumes.length
             : 0
     });
 
     // Temp logs can be on separate or shared with redo/control
     const tempFileConflicts = [
         ...new Set(
-            tempFileVolumeIds.filter(volumeId => [...dataFileVolumeIds, ...archiveLogVolumeIds].includes(volumeId))
+            tempFileVolumes.filter(tempVolume =>
+                [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.id).includes(tempVolume.id)
+            )
         )
     ];
     status = tempFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
     volumeLayoutDrift.push({
         ...storageGoldenConfigData.templogsPlacement,
         status,
-        objectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts : [],
-        totalObjectsAssessed: tempFileVolumeIds.length,
+        objectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.map(conflict => conflict.name) : [],
+        totalObjectsAssessed: tempFileVolumes.length,
         totalObjectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.length : 0
     });
 
-    const binaryVolumeConflicts = binaryVolumeIds.filter(volumeId =>
-        [controlFileVolumeIds, dataFileVolumeIds, redoLogVolumeIds, archiveLogVolumeIds, tempFileVolumeIds]
+    const binaryVolumeConflicts = binaryVolumeIds.filter(binaryVolumeId =>
+        [controlFileVolumes, dataFileVolumes, redoLogVolumes, archiveLogVolumes, tempFileVolumes]
             .flat()
-            .includes(volumeId)
+            .map(volume => volume.id)
+            .includes(binaryVolumeId)
     );
     status = binaryVolumeConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
     volumeLayoutDrift.push({
@@ -437,26 +452,18 @@ function calculateStorageDrift(
         return { errorMessage };
     }
 
+    const volumeTypeMap = mapVolumeTypesToIdName(databaseInstanceName, fsxFileSystemId, mappedOntapVolumes);
+
     const storageDriftData: StorageParameterDriftResponseType = {
         configuration: { volumes: [] },
         layout: []
     };
 
-    const layoutAssessment = getVolumeLayoutDrift(
-        databaseInstanceName,
-        fsxFileSystemId,
-        mappedOntapVolumes,
-        storageAssessmentData
-    );
+    const layoutAssessment = getVolumeLayoutDrift(volumeTypeMap, storageAssessmentData);
 
     storageDriftData.layout = layoutAssessment;
 
-    storageDriftData.configuration.volumes = getVolumeConfigDrift(
-        databaseInstanceName,
-        fsxFileSystemId,
-        mappedOntapVolumes,
-        storageAssessmentData
-    );
+    storageDriftData.configuration.volumes = getVolumeConfigDrift(volumeTypeMap, storageAssessmentData);
 
     const protocol = mappedOntapVolumes[fsxFileSystemId]?.protocol;
     if (protocol === 'iSCSI') {
