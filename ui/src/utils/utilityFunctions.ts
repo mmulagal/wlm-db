@@ -214,15 +214,6 @@ export const bxpRedirect = async (
         baseUrl = stageURL;
     }
 
-    // TODO: Need to be removed after the patch
-    if (import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION) {
-        if (isWorkloadFactory) {
-            window.open(baseUrl, '_blank', 'noopener,noreferrer');
-        } else if (window.top) {
-            window.top.location.href = baseUrl;
-        }
-        return;
-    }
     // Demo Mode Handling
     if (isDemoMode) {
         const demoParams = {
