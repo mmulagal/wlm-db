@@ -44,6 +44,7 @@ import {
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { isDemo } from '../../../utils/utils';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoInventoryData';
+import { getLatestInstanceAssessmentTime } from '../assessment-utils';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -402,6 +403,7 @@ async function fetchOracleDriftAssessment(
         {} as Record<string, unknown>
     );
 
+    const latestInstanceAssessmentTime = getLatestInstanceAssessmentTime(databaseInstanceConfigData);
     const mappedOntapVolumes = assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as Record<
         string,
         OracleMappedOntapVolumesResponse
@@ -428,10 +430,8 @@ async function fetchOracleDriftAssessment(
         databaseInstanceName,
         ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId,
         deploymentType: databaseDeploymentType,
-        lastAssessmentTimestamp: (() => {
-            const creationTime = databaseInstanceConfigData[0]?.creation_time;
-            return creationTime instanceof Date ? moment(creationTime).valueOf() : undefined;
-        })(),
+        lastAssessmentTimestamp:
+            latestInstanceAssessmentTime instanceof Date ? moment(latestInstanceAssessmentTime).valueOf() : undefined,
         storageProtocol
     };
 

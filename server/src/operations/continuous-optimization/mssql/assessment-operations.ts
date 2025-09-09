@@ -64,7 +64,11 @@ import {
 } from './resilience-assessment-operation';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
-import { checkAndUpdatePostponedEndTime, updateFieldsBasedOnDismissedConfigurations } from '../assessment-utils';
+import {
+    checkAndUpdatePostponedEndTime,
+    getLatestInstanceAssessmentTime,
+    updateFieldsBasedOnDismissedConfigurations
+} from '../assessment-utils';
 import {
     ParameterDriftResponseType,
     ComputeDriftResponseType,
@@ -344,6 +348,8 @@ async function fetchMssqlDriftAssessment(
             : {}
     ];
 
+    const latestInstanceAssessmentTime = getLatestInstanceAssessmentTime(databaseInstanceConfigData).getTime();
+
     let driftAssessmentData: MSSQLDriftAssessmentResponseType = {
         storage: !isEmpty(storageAssessmentResponse)
             ? (storageAssessmentResponse as StorageParameterDriftResponseType)
@@ -355,10 +361,9 @@ async function fetchMssqlDriftAssessment(
         dismissedConfigurations,
         lastAssessmentTimestamp: (() => {
             try {
-                const latestInstanceTime = databaseInstanceConfigData[0]?.creation_time?.getTime() || 0;
                 const latestHostTime =
                     Number((hostLevelAssessmentData as ResourceAssessmentData).lastAssessedDate) || 0;
-                return moment(Math.max(latestInstanceTime, latestHostTime)).unix() * 1000;
+                return moment(Math.max(latestInstanceAssessmentTime, latestHostTime)).unix() * 1000;
             } catch {
                 return undefined;
             }

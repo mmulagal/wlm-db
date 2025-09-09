@@ -6,6 +6,7 @@ import { getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
     ASSESSMENT_CONFIGS,
+    AssessmentCategoriesOracle,
     AssessmentStatus,
     DISMISS_DEACTIVATION_REASON,
     DISMISS_STATUS,
@@ -637,6 +638,17 @@ function hasNotOptimizedStatus(obj: any): boolean {
     return false;
 }
 
+function getLatestInstanceAssessmentTime(
+    databaseInstanceConfigData: { config_data_type: string; creation_time: Date }[]
+) {
+    return databaseInstanceConfigData
+        .filter(config => config.config_data_type !== AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES)
+        .reduce((latest, { creation_time: currentCreationTime }) => {
+            const creationTime = new Date(currentCreationTime || 0);
+            return creationTime > latest ? creationTime : latest;
+        }, new Date(0));
+}
+
 export {
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
@@ -645,5 +657,6 @@ export {
     formatInstanceDismissConfigurations,
     updateFieldsBasedOnDismissedConfigurations,
     checkAndUpdatePostponedEndTime,
-    hasNotOptimizedStatus
+    hasNotOptimizedStatus,
+    getLatestInstanceAssessmentTime
 };

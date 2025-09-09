@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { isEmpty, uniq } from 'lodash-es';
+import { isEmpty, uniqBy } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
@@ -78,13 +78,21 @@ function mapVolumeTypesToIdName(
           );
 
     return Object.values(OracleSysFileTypes).reduce((acc, type) => {
-        acc[type] = uniq(
+        acc[type] = uniqBy(
             flattenedRecords
                 .filter(record => record.type === type)
-                .map(({ volume }) => ({ id: volume.volumeId, name: volume.volumeName }))
+                .map(({ volume }) => ({ id: volume.volumeId, name: volume.volumeName })),
+            'id'
         );
         return acc;
     }, {} as Record<OracleSysFileTypes, { id: string; name: string }[]>);
+}
+
+function createEmptyVolumeAssessment(configData: any, volumeType: string) {
+    return {
+        name: configData.name,
+        errorMessage: `No ${volumeType} volumes found.`
+    };
 }
 
 function getVolumeConfigDrift(
@@ -99,6 +107,11 @@ function getVolumeConfigDrift(
         ARCHIVE_LOGS: archiveLogVolumes,
         TEMP_FILES: tempFileVolumes
     } = volumeTypeMap;
+
+    const allVolumeNames = Object.values(volumeTypeMap).flat();
+    if (isEmpty(allVolumeNames)) {
+        return [{ errorMessage: 'Found no FSx for ONTAP volumes for the database.' }];
+    }
 
     const { volumes, fraEnabled, rmanCompressionEnabled } = storageAssessmentData;
     const { data: volumesData, error } = volumes;
@@ -300,136 +313,166 @@ function getVolumeLayoutDrift(
 
     let status = AssessmentStatus.OPTIMIZED;
 
-    // Archive logs should be on separate volume
-    const archiveLogConflicts = [
-        ...new Set(
-            archiveLogVolumes.filter(archiveVolume =>
-                [controlFileVolumes, dataFileVolumes, redoLogVolumes, tempFileVolumes]
-                    .flat()
-                    .map(volume => volume.id)
-                    .includes(archiveVolume.id)
+    if (isEmpty(archiveLogVolumes)) {
+        volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.archivePlacement, 'archive log'));
+    } else {
+        // Archive logs should be on separate volume
+        const archiveLogConflicts = [
+            ...new Set(
+                archiveLogVolumes.filter(archiveVolume =>
+                    [controlFileVolumes, dataFileVolumes, redoLogVolumes, tempFileVolumes]
+                        .flat()
+                        .map(volume => volume.id)
+                        .includes(archiveVolume.id)
+                )
             )
-        )
-    ];
-    status = archiveLogConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-    volumeLayoutDrift.push({
-        ...storageGoldenConfigData.archivePlacement,
-        status,
-        objectsInViolation:
-            status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.map(conflict => conflict.name) : [],
-        totalObjectsAssessed: archiveLogVolumes.length,
-        totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.length : 0
-    });
+        ];
+        status = archiveLogConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        volumeLayoutDrift.push({
+            ...storageGoldenConfigData.archivePlacement,
+            status,
+            objectsInViolation:
+                status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.map(conflict => conflict.name) : [],
+            totalObjectsAssessed: archiveLogVolumes.length,
+            totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.length : 0
+        });
+    }
 
-    // Data files can be on separate volume or shared with control files
-    const dataFileConflicts = [
-        ...new Set(
-            dataFileVolumes.filter(dataVolume =>
-                [...redoLogVolumes, ...archiveLogVolumes, ...tempFileVolumes]
-                    .flat()
-                    .map(volume => volume.id)
-                    .includes(dataVolume.id)
+    if (isEmpty(dataFileVolumes)) {
+        volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.datafilesPlacement, 'data file'));
+    } else {
+        // Data files can be on separate volume or shared with control files
+        const dataFileConflicts = [
+            ...new Set(
+                dataFileVolumes.filter(dataVolume =>
+                    [...redoLogVolumes, ...archiveLogVolumes, ...tempFileVolumes]
+                        .flat()
+                        .map(volume => volume.id)
+                        .includes(dataVolume.id)
+                )
             )
-        )
-    ];
-    status = dataFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-    volumeLayoutDrift.push({
-        ...storageGoldenConfigData.datafilesPlacement,
-        status,
-        objectsInViolation:
-            status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.map(conflict => conflict.name) : [],
-        totalObjectsAssessed: dataFileVolumes.length,
-        totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.length : 0
-    });
+        ];
+        status = dataFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        volumeLayoutDrift.push({
+            ...storageGoldenConfigData.datafilesPlacement,
+            status,
+            objectsInViolation:
+                status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.map(conflict => conflict.name) : [],
+            totalObjectsAssessed: dataFileVolumes.length,
+            totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.length : 0
+        });
+    }
 
-    // Control files can be on separate volume or shared with data/redo/temp and maintain at least two, preferably three, control file copies across separate volumes
-    const controlFileConflicts = [
-        ...new Set(
-            controlFileVolumes.filter(controlVolume =>
-                archiveLogVolumes.map(volume => volume.id).includes(controlVolume.id)
+    let hasConflicts;
+    let insufficientMultiplexing;
+    if (isEmpty(controlFileVolumes)) {
+        volumeLayoutDrift.push(
+            createEmptyVolumeAssessment(storageGoldenConfigData.controlfilesPlacement, 'control file')
+        );
+    } else {
+        // Control files can be on separate volume or shared with data/redo/temp and maintain at least two, preferably three, control file copies across separate volumes
+        const controlFileConflicts = [
+            ...new Set(
+                controlFileVolumes.filter(controlVolume =>
+                    archiveLogVolumes.map(volume => volume.id).includes(controlVolume.id)
+                )
             )
-        )
-    ];
+        ];
 
-    let hasConflicts = controlFileConflicts.length > 0;
-    let insufficientMultiplexing = controlFileVolumes.length < 2;
-    status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        hasConflicts = controlFileConflicts.length > 0;
+        insufficientMultiplexing = controlFileVolumes.length < 2;
+        status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
 
-    volumeLayoutDrift.push({
-        ...storageGoldenConfigData.controlfilesPlacement,
-        status,
-        objectsInViolation: hasConflicts
-            ? controlFileConflicts.map(conflict => conflict.name)
-            : insufficientMultiplexing
-            ? controlFileVolumes.map(volume => volume.name)
-            : [],
-        totalObjectsAssessed: controlFileVolumes.length,
-        totalObjectsInViolation: hasConflicts
-            ? controlFileConflicts.length
-            : insufficientMultiplexing
-            ? controlFileVolumes.length
-            : 0
-    });
+        volumeLayoutDrift.push({
+            ...storageGoldenConfigData.controlfilesPlacement,
+            status,
+            objectsInViolation: hasConflicts
+                ? controlFileConflicts.map(conflict => conflict.name)
+                : insufficientMultiplexing
+                ? controlFileVolumes.map(volume => volume.name)
+                : [],
+            totalObjectsAssessed: controlFileVolumes.length,
+            totalObjectsInViolation: hasConflicts
+                ? controlFileConflicts.length
+                : insufficientMultiplexing
+                ? controlFileVolumes.length
+                : 0
+        });
+    }
 
-    // Redo logs can be on separate or shared with temp/control and maintain at least 1 redo file copies across separate volumes
-    const redoFileConflicts = [
-        ...new Set(
-            redoLogVolumes.filter(redoVolume =>
-                [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.id).includes(redoVolume.id)
+    if (isEmpty(redoLogVolumes)) {
+        volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.redologsPlacement, 'redo log'));
+    } else {
+        // Redo logs can be on separate or shared with temp/control and maintain at least 1 redo file copies across separate volumes
+        const redoFileConflicts = [
+            ...new Set(
+                redoLogVolumes.filter(redoVolume =>
+                    [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.id).includes(redoVolume.id)
+                )
             )
-        )
-    ];
+        ];
 
-    hasConflicts = redoFileConflicts.length > 0;
-    insufficientMultiplexing = redoLogVolumes.length < 1;
-    status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-    volumeLayoutDrift.push({
-        ...storageGoldenConfigData.redologsPlacement,
-        status,
-        objectsInViolation: hasConflicts
-            ? redoFileConflicts.map(conflict => conflict.name)
-            : insufficientMultiplexing
-            ? redoLogVolumes.map(volume => volume.name)
-            : [],
-        totalObjectsAssessed: redoLogVolumes.length,
-        totalObjectsInViolation: hasConflicts
-            ? redoFileConflicts.length
-            : insufficientMultiplexing
-            ? redoLogVolumes.length
-            : 0
-    });
+        hasConflicts = redoFileConflicts.length > 0;
+        insufficientMultiplexing = redoLogVolumes.length < 1;
+        status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        volumeLayoutDrift.push({
+            ...storageGoldenConfigData.redologsPlacement,
+            status,
+            objectsInViolation: hasConflicts
+                ? redoFileConflicts.map(conflict => conflict.name)
+                : insufficientMultiplexing
+                ? redoLogVolumes.map(volume => volume.name)
+                : [],
+            totalObjectsAssessed: redoLogVolumes.length,
+            totalObjectsInViolation: hasConflicts
+                ? redoFileConflicts.length
+                : insufficientMultiplexing
+                ? redoLogVolumes.length
+                : 0
+        });
+    }
 
-    // Temp logs can be on separate or shared with redo/control
-    const tempFileConflicts = [
-        ...new Set(
-            tempFileVolumes.filter(tempVolume =>
-                [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.id).includes(tempVolume.id)
+    if (isEmpty(tempFileVolumes)) {
+        volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.templogsPlacement, 'temp log'));
+    } else {
+        // Temp logs can be on separate or shared with redo/control
+        const tempFileConflicts = [
+            ...new Set(
+                tempFileVolumes.filter(tempVolume =>
+                    [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.id).includes(tempVolume.id)
+                )
             )
-        )
-    ];
-    status = tempFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-    volumeLayoutDrift.push({
-        ...storageGoldenConfigData.templogsPlacement,
-        status,
-        objectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.map(conflict => conflict.name) : [],
-        totalObjectsAssessed: tempFileVolumes.length,
-        totalObjectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.length : 0
-    });
+        ];
+        status = tempFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        volumeLayoutDrift.push({
+            ...storageGoldenConfigData.templogsPlacement,
+            status,
+            objectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.map(conflict => conflict.name) : [],
+            totalObjectsAssessed: tempFileVolumes.length,
+            totalObjectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.length : 0
+        });
+    }
 
-    const binaryVolumeConflicts = binaryVolumeIds.filter(binaryVolumeId =>
-        [controlFileVolumes, dataFileVolumes, redoLogVolumes, archiveLogVolumes, tempFileVolumes]
-            .flat()
-            .map(volume => volume.id)
-            .includes(binaryVolumeId)
-    );
-    status = binaryVolumeConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-    volumeLayoutDrift.push({
-        ...storageGoldenConfigData.oracleBinaryPlacement,
-        status,
-        objectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts : [],
-        totalObjectsAssessed: binaryVolumeIds.length,
-        totalObjectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts.length : 0
-    });
+    if (isEmpty(binaryVolumeIds)) {
+        volumeLayoutDrift.push(
+            createEmptyVolumeAssessment(storageGoldenConfigData.oracleBinaryPlacement, 'binary log')
+        );
+    } else {
+        const binaryVolumeConflicts = binaryVolumeIds.filter(binaryVolumeId =>
+            [controlFileVolumes, dataFileVolumes, redoLogVolumes, archiveLogVolumes, tempFileVolumes]
+                .flat()
+                .map(volume => volume.id)
+                .includes(binaryVolumeId)
+        );
+        status = binaryVolumeConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        volumeLayoutDrift.push({
+            ...storageGoldenConfigData.oracleBinaryPlacement,
+            status,
+            objectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts : [],
+            totalObjectsAssessed: binaryVolumeIds.length,
+            totalObjectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts.length : 0
+        });
+    }
 
     return volumeLayoutDrift;
 }
