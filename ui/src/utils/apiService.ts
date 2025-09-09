@@ -411,7 +411,7 @@ export const workloadFactoryResourceApiV2 = createApi({
         }),
         getOracleOverviewDetails: builder.mutation({
             query: ({ credentialId, region, id, sqlInstanceId }) => ({
-                url: `v1/oracle/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology,databases`
+                url: `v1/oracle/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology,databasesWithProtection`
             })
         }),
         generateDiagram: builder.mutation({
