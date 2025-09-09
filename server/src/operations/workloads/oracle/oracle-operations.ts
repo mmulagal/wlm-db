@@ -915,7 +915,7 @@ async function getOracleDatabaseMappedVolumes(
                         'Get mapped volume details for Oracle db',
                         accountId,
                         undefined,
-                        undefined,
+                        '90',
                         undefined,
                         SSM_RUN_SHELL_SCRIPT_DOC,
                         SSM_RUN_SHELL_SCRIPT_DOC_VERSION
