@@ -120,7 +120,12 @@
 
     .hostTable {
         [class*='_header-row'] {
-            top: 137px !important;
+            top: 83px !important;
+        }
+
+        .topBarStyle {
+            z-index: 4 !important;
+            top: 0 !important;
         }
     }
 
