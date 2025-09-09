@@ -95,17 +95,48 @@ describe('Oracle Database Operations', () => {
             node1InstanceId,
             fsxNId,
             dbInstanceSid,
-            'test-ip',
-            '/mnt/oradata',
-            'NFS'
+            [[{ isAsmManaged: false, mountIP: 'test-ip', mountPoint: '/fsx/mountpoint1', protocol: 'NFS' }]]
         );
 
         expect(result).toEqual({
-            isSqlNativeBackupEnabled: false,
-            isAwsBackupEnabled: {
-                fsxn: true
+            oradbsan: {
+                isSqlNativeBackupEnabled: true,
+                isAwsBackupEnabled: {
+                    fsxn: true
+                },
+                isFsxOntapSnapshotsEnabled: true
+            }
+        });
+    });
+
+    it('should return oracle db protection data for PDBs', async () => {
+        const result = await getOracleProtectionStatus(
+            accountId,
+            credentialsId,
+            region,
+            node1InstanceId,
+            fsxNId,
+            dbInstanceSid,
+            [[{ isAsmManaged: false, mountIP: 'test-ip', mountPoint: '/fsx/mountpoint1', protocol: 'NFS' }]],
+            'YES',
+            ['pdb1']
+        );
+
+        expect(result).toEqual({
+            oradbsan: {
+                isAwsBackupEnabled: {
+                    fsxn: true
+                },
+                isFsxOntapSnapshotsEnabled: true,
+                isSqlNativeBackupEnabled: true
             },
-            isFsxOntapSnapshotsEnabled: true
+            pdb1: {
+                isAwsBackupEnabled: {
+                    fsxn: true
+                },
+                isFsxOntapSnapshotsEnabled: true,
+                isSqlNativeBackupEnabled: true
+            }
         });
     });
 

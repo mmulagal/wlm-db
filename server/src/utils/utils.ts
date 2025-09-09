@@ -1051,9 +1051,71 @@ function parseMultipleCommandResponse(response: string) {
     response = response.replaceAll('\\r\\n', '');
     response = response.replaceAll('\n', '');
     response = response.replaceAll('\\n', '');
-    const jsonObjects = response.match(/(\{[^{}]*\}|\[[^[\]]*\])/g);
 
-    return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
+    const results: any[] = [];
+    let depth = 0;
+    let start = 0;
+    let inString = false;
+    let escapeNext = false;
+    const bracketStack: string[] = [];
+
+    for (let i = 0; i < response.length; i++) {
+        const char = response[i];
+
+        // continue blocks beloew handle the escaped characters and strings that are intentionally escaped
+        if (escapeNext) {
+            escapeNext = false;
+            // eslint-disable-next-line no-continue
+            continue;
+        }
+
+        if (char === '\\' && !escapeNext) {
+            escapeNext = true;
+            // eslint-disable-next-line no-continue
+            continue;
+        }
+
+        if (char === '"' && !escapeNext) {
+            inString = !inString;
+            // eslint-disable-next-line no-continue
+            continue;
+        }
+
+        // Only process brackets when not inside a string
+        if (!inString) {
+            if (char === '{' || char === '[') {
+                if (depth === 0) {
+                    start = i;
+                }
+                depth += 1;
+                bracketStack.push(char);
+            } else if (char === '}' || char === ']') {
+                // Check for matching brackets
+                if (bracketStack.length > 0) {
+                    const lastOpen = bracketStack[bracketStack.length - 1];
+                    const isMatchingPair = (lastOpen === '{' && char === '}') || (lastOpen === '[' && char === ']');
+
+                    if (isMatchingPair) {
+                        bracketStack.pop();
+                        depth -= 1;
+
+                        if (depth === 0 && start >= 0) {
+                            const jsonString = response.substring(start, i + 1);
+                            try {
+                                const parsed = JSON.parse(jsonString);
+                                results.push(parsed);
+                            } catch (error) {
+                                logger.error('Failed to parse JSON segment:', { jsonString, error });
+                            }
+                            start = -1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return results;
 }
 
 function divideArrayIntoChunks(array: any[], chunkSize: number) {

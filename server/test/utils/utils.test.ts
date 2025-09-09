@@ -171,6 +171,15 @@ describe('Utils test cases', () => {
         expect(isEmpty(response.find(r => r.error))).toBeTruthy();
     });
 
+    it('Parse multiple SSM commands response no error', async () => {
+        const decompressedResponse = await decompressSSMResponse(
+            '{ "ontapProtectionDetails": { "records": [ { "uuid": "1d66d908-1512-11f0-a1b8-3de15f9d4c1a", "name": "ORADATA1", "snapshot_count": 10, "svm": { "name": "wlmdb_sqlsvm_1733315870640" }, "_links": { "self": { "href": "/api/storage/volumes/1d66d908-1512-11f0-a1b8-3de15f9d4c1a" } } } ], "num_records": 1, "_links": { "self": { "href": "/api/storage/volumes?fields=snapshot_count&name=ORADATA1&svm=wlmdb_sqlsvm_1733315870640" } } }, "isNativeProtectionEnabled": "false" }{ "ontapProtectionDetails": { "records": [ { "uuid": "1d66d908-1512-11f0-a1b8-3de15f9d4c1a", "name": "ORADATA1", "snapshot_count": 10, "svm": { "name": "wlmdb_sqlsvm_1733315870640" }, "_links": { "self": { "href": "/api/storage/volumes/1d66d908-1512-11f0-a1b8-3de15f9d4c1a" } } } ], "num_records": 1, "_links": { "self": { "href": "/api/storage/volumes?fields=snapshot_count&name=ORADATA1&svm=wlmdb_sqlsvm_1733315870640" } } }, "isNativeProtectionEnabled": "false" }'
+        );
+        const response = parseMultipleCommandResponse(decompressedResponse);
+        expect(response.length).toEqual(2);
+        expect(isEmpty(response.find(r => r.error))).toBeTruthy();
+    });
+
     it('Decompress SSM response that is not a valid base64 string', async () => {
         const string =
             'A\r\nB\r\nD\r\nE\r\nF\r\nG\r\nH\r\nI\r\nJ\r\nK\r\nL\r\nM\r\nN\r\nO\r\nP\r\nQ\r\nR\r\nT\r\nU\r\nV\r\nW\r\nX\r\nY\r\nZ\r\n';

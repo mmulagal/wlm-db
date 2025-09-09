@@ -1,5 +1,6 @@
 const SSM_RUN_SHELL_SCRIPT_DOC = 'AWS-RunShellScript';
 const SSM_RUN_SHELL_SCRIPT_DOC_VERSION = '1';
+const ORACLE_DEFAULT_PDB = 'PDB$SEED';
 
 enum OracleDeployment {
     STANDALONE = 'standalone',
@@ -23,5 +24,6 @@ export {
     SSM_RUN_SHELL_SCRIPT_DOC_VERSION,
     OracleDeployment,
     OracleDeploymentTenacy,
-    OracleSysFileTypes
+    OracleSysFileTypes,
+    ORACLE_DEFAULT_PDB
 };

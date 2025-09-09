@@ -13,7 +13,12 @@ import {
 } from '../../../utils/consts';
 import getLogger from '../../../utils/logger';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
-import { OracleDeploymentTenacy, SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './consts';
+import {
+    ORACLE_DEFAULT_PDB,
+    OracleDeploymentTenacy,
+    SSM_RUN_SHELL_SCRIPT_DOC,
+    SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+} from './consts';
 import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import {
     DatabaseHostInstanceSummaryResponseType,
@@ -45,7 +50,7 @@ import { getSqlInstanceUtilizationAndPerformance } from '../../aws/cloud-watch-o
 import { listResources } from '../../../lib/database/db';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { AssessmentCategories } from '../../../utils/continous-optimization-consts';
-import { OracleInstanceMountpointResponse } from './common-types';
+import { MountPointDetails, OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getStorageData, getNodeTopology } from '../../database-hosts-util';
 import { MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
@@ -248,6 +253,23 @@ async function getOraclePerformanceMetrics(
     }
 }
 
+async function parseProtectionDetails(credentialsId: string, region: string, fsxnId: string, protectionDetails: any) {
+    const { ontapProtectionDetails, isNativeProtectionEnabled, error } = protectionDetails;
+    if (error) {
+        throw error;
+    }
+    const records = ontapProtectionDetails?.records[0];
+    const { snapshot_count: snapshotCount, uuid } = records;
+    const backupStatus = await isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, [uuid]);
+    const volumeUuidsInBackups = backupStatus?.volumeUuidsInBackups || [];
+    const fsxnBackup = isDemoFlow ? true : volumeUuidsInBackups.includes(uuid);
+    return {
+        isSqlNativeBackupEnabled: isDemoFlow ? true : isNativeProtectionEnabled === 'true',
+        isAwsBackupEnabled: { fsxn: fsxnBackup },
+        isFsxOntapSnapshotsEnabled: isDemoFlow ? true : snapshotCount > 0
+    };
+}
+
 async function getOracleProtectionStatus(
     accountId: string,
     credentialsId: string,
@@ -255,33 +277,62 @@ async function getOracleProtectionStatus(
     node1InstanceId: string,
     fsxnId: string,
     dbInstanceSid: string,
-    mountIp?: string,
-    junctionPath?: string,
-    protocol?: string
+    mountPointDetails: MountPointDetails[][],
+    isCDB: string = 'NO',
+    pdbNames: string[] = []
 ) {
     logger.info('Fetching Oracle db protection status', { accountId, credentialsId, region, node1InstanceId });
 
     try {
-        if (mountIp === undefined || junctionPath === undefined || protocol === undefined) {
+        if (isEmpty(mountPointDetails) || (isCDB === 'YES' && mountPointDetails?.length !== pdbNames?.length)) {
             throw createError(
                 HttpErrorCodes.BAD_REQUEST,
-                `Missing mountIp, junctionPath or protocol for fsxnId: ${fsxnId}, ${credentialsId}, ${region}`
+                `Missing mountpoints for: ${fsxnId}, ${credentialsId}, ${region}`
             );
         }
-        const command = getOracleProtectionData(
-            fsxnId,
-            region,
-            mountIp,
-            junctionPath,
-            protocol,
-            dbInstanceSid,
-            node1InstanceId
-        );
+
+        const command = [];
+        if (isCDB === 'YES' && pdbNames?.length > 0) {
+            mountPointDetails.forEach(mountPointDetail => {
+                const [{ mountIP, mountPoint, protocol }] = mountPointDetail;
+                if (!mountIP || !mountPoint || !protocol) {
+                    throw createError(
+                        HttpErrorCodes.BAD_REQUEST,
+                        `Missing mountIp, junctionPath or protocol for fsxnId: ${fsxnId}, ${credentialsId}, ${region}`
+                    );
+                }
+                command.push(
+                    getOracleProtectionData(
+                        fsxnId,
+                        region,
+                        mountIP,
+                        mountPoint,
+                        protocol,
+                        dbInstanceSid,
+                        node1InstanceId
+                    )
+                );
+            });
+        } else {
+            const [[{ mountIP, mountPoint, protocol }]] = mountPointDetails;
+            command.push(
+                getOracleProtectionData(
+                    fsxnId,
+                    region,
+                    mountIP!,
+                    mountPoint!,
+                    protocol!,
+                    dbInstanceSid,
+                    node1InstanceId
+                )
+            );
+        }
+
         const comment = 'oracle protection status';
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [command],
+            command,
             node1InstanceId,
             comment,
             accountId,
@@ -292,21 +343,39 @@ async function getOracleProtectionStatus(
             SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
         if (response) {
-            const parsedResponse = sqlResponseParsing(response);
-            const { ontapProtectionDetails, isNativeProtectionEnabled, error } = parsedResponse;
-            if (error) {
-                throw error;
+            const protectionResponse: any = {};
+            const parsedResponse = parseMultipleCommandResponse(response);
+
+            if (isCDB === 'YES') {
+                let commonIsSqlNativeBackupEnabled = false;
+                let commonIsFsxOntapSnapshotsEnabled = false;
+                let commonIsAwsBackupEnabled = false;
+                const parsedDetailsPromises = parsedResponse.map(protectionDetail =>
+                    parseProtectionDetails(credentialsId, region, fsxnId, protectionDetail)
+                );
+                const allParsedDetails = await Promise.all(parsedDetailsPromises);
+                allParsedDetails.forEach((parsedDetails, idx) => {
+                    protectionResponse[pdbNames[idx]] = parsedDetails;
+                    commonIsAwsBackupEnabled = parsedDetails.isAwsBackupEnabled.fsxn || commonIsAwsBackupEnabled;
+                    commonIsSqlNativeBackupEnabled =
+                        parsedDetails.isSqlNativeBackupEnabled || commonIsSqlNativeBackupEnabled;
+                    commonIsFsxOntapSnapshotsEnabled =
+                        parsedDetails.isFsxOntapSnapshotsEnabled || commonIsFsxOntapSnapshotsEnabled;
+                });
+                protectionResponse[dbInstanceSid] = {
+                    isSqlNativeBackupEnabled: commonIsSqlNativeBackupEnabled,
+                    isAwsBackupEnabled: { fsxn: commonIsAwsBackupEnabled },
+                    isFsxOntapSnapshotsEnabled: commonIsFsxOntapSnapshotsEnabled
+                };
+            } else {
+                protectionResponse[dbInstanceSid] = await parseProtectionDetails(
+                    credentialsId,
+                    region,
+                    fsxnId,
+                    parsedResponse[parsedResponse.length - 1]
+                );
             }
-            const records = ontapProtectionDetails?.records[0];
-            const { snapshot_count: snapshotCount, uuid } = records;
-            const backupStatus = await isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, [uuid]);
-            const volumeUuidsInBackups = backupStatus?.volumeUuidsInBackups || [];
-            const fsxnBackup = volumeUuidsInBackups.includes(uuid);
-            return {
-                isSqlNativeBackupEnabled: isNativeProtectionEnabled === 'true',
-                isAwsBackupEnabled: { fsxn: fsxnBackup },
-                isFsxOntapSnapshotsEnabled: snapshotCount > 0
-            };
+            return protectionResponse;
         }
     } catch (err) {
         const errorMessage = `Error fetching oracle protection status: ${err}, ${credentialsId}, ${region}`;
@@ -394,7 +463,8 @@ async function getOracleDatabasesList(
                 is_cdb: isCDB,
                 pdbs_status: pdbsStatus,
                 pdbs_size: pdbsSize,
-                root_db_size: rootDbSize
+                root_db_size: rootDbSize,
+                service_name: serviceName
             } = parsedResponse;
 
             const databases = [];
@@ -412,12 +482,16 @@ async function getOracleDatabasesList(
                     const pdbName = pdb.pdb_name;
                     const status = pdb.status?.toLowerCase() || 'offline';
                     const pdbSize = pdbsSize[pdbName] || 0; // Default to 0 if size is not found
-                    databases.push({
-                        name: pdbName,
-                        size: pdbSize,
-                        status: status === 'online' ? ONLINE : OFFLINE,
-                        type: 'PDB'
-                    });
+                    if (pdbName !== ORACLE_DEFAULT_PDB) {
+                        databases.push({
+                            name: pdbName,
+                            size: pdbSize,
+                            status: status === 'online' ? ONLINE : OFFLINE,
+                            created: pdb.creation_time,
+                            type: 'PDB',
+                            service: serviceName
+                        });
+                    }
                 }
             }
             return databases;
@@ -464,23 +538,18 @@ async function getRegisteredOracleInstanceStorageDetails(
         );
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
-            const { storage_details: instanceStorageDetails } = parsedResponse;
-            const flattenedInstanceStorageDetails: [] = instanceStorageDetails.flat();
-            if (isEmpty(flattenedInstanceStorageDetails)) {
+            const { storage_details: mountPointDetails, is_cdb: isCDB, pdb_names: pdbNames } = parsedResponse;
+            if (isEmpty(mountPointDetails?.flat())) {
                 throw createError(
                     HttpErrorCodes.NOT_FOUND,
                     `No storage details found for fsxnId: ${fsxnId}, ${credentialsId}, ${region}`
                 );
             }
 
-            const storageDetails = flattenedInstanceStorageDetails[flattenedInstanceStorageDetails.length - 1];
-
-            const { mountIP: mountIp, mountPoint, protocol } = storageDetails;
-
             return {
-                mountIp,
-                mountPoint,
-                protocol
+                mountPointDetails,
+                isCDB,
+                pdbNames
             };
         }
     } catch (err) {
@@ -553,10 +622,12 @@ async function getOracleDatabaseInstancesSummary(
             };
             let mountPointDetails = isDemoFlow ? demoMountPointDetails : metadata?.mountPointDetails;
             databaseInstance.storage_type = resourceDetails?.storage_type;
+            let isCDB = 'NO';
+            let pdbNames: string[] = [];
 
             // Get the storage & mount point details for registered Oracle database instances
             if (!mountPointDetails && (getProtectionStatus || getDatabasesWithProtection)) {
-                mountPointDetails = await getRegisteredOracleInstanceStorageDetails(
+                const storageDetails = await getRegisteredOracleInstanceStorageDetails(
                     accountId,
                     credentialsId,
                     region,
@@ -564,9 +635,12 @@ async function getOracleDatabaseInstancesSummary(
                     databaseInstance.fsxn_ids,
                     dbInstanceSid
                 );
+                if (storageDetails) {
+                    mountPointDetails = storageDetails.mountPointDetails;
+                    isCDB = storageDetails.isCDB;
+                    pdbNames = storageDetails.pdbNames;
+                }
             }
-
-            const { mountIp, mountPoint, protocol } = mountPointDetails || {};
 
             try {
                 [
@@ -612,9 +686,9 @@ async function getOracleDatabaseInstancesSummary(
                                       activeNodeInstanceId,
                                       databaseInstance.fsxn_ids,
                                       dbInstanceSid,
-                                      mountIp,
-                                      mountPoint,
-                                      protocol
+                                      mountPointDetails as MountPointDetails[][],
+                                      isCDB,
+                                      pdbNames
                                   )
                               ]
                             : [Promise.resolve()]),
@@ -718,13 +792,26 @@ async function getOracleDatabaseInstancesSummary(
             databaseInstanceDetails.sqlServerDeploymentType = 'Standalone';
 
             if (getProtectionStatus && protectionData) {
-                databaseInstanceDetails.protection = protectionData;
+                databaseInstanceDetails.protection = protectionData[dbInstanceSid];
             }
             if (!isEmpty(errormessages)) {
                 databaseInstanceDetails.errors = errormessages;
             }
 
             if (getDatabasesWithoutProtection || getDatabasesWithProtection) {
+                if (getDatabasesWithProtection) {
+                    databases.forEach((database: DatabasesResponseType) => {
+                        if (database.type === 'CDB') {
+                            database.protection = protectionData?.[dbInstanceSid];
+                        } else {
+                            database.protection = protectionData?.[database.name] || {
+                                isSqlNativeBackupEnabled: false,
+                                isAwsBackupEnabled: { fsxn: false },
+                                isFsxOntapSnapshotsEnabled: false
+                            };
+                        }
+                    });
+                }
                 databaseInstanceDetails.databases = databases;
             }
             if (getDbCount) {

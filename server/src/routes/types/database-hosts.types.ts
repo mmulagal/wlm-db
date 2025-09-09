@@ -358,7 +358,9 @@ const DatabasesResponse = Type.Object({
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
-    collation: Type.Optional(Type.String({ minLength: 1 }))
+    collation: Type.Optional(Type.String({ minLength: 1 })),
+    created: Type.Optional(Type.String({ minLength: 1 })), // Optional for Oracle databases
+    service: Type.Optional(Type.String({ minLength: 1 })) // Optional for Oracle databases
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
 

@@ -2,6 +2,7 @@ import {
     checkOracleModuleAvailability,
     getMappedOntapDataVolume,
     getOracleDefaultOrUserAuthCommand,
+    getOracleHomePath,
     loadOracleUserPermissionsDetectionModule,
     oracleUserAuthLoginCommand
 } from './oracle-ssm-script-utils';
@@ -621,6 +622,42 @@ const getStorageWithoutCreds = `
     fi
 `;
 
+const getOracleServiceInstanceConnections = `
+    get_tns_connection() {
+        dbSid="$1"
+        oracle_home=$(${getOracleHomePath('$dbSid')})
+        tns_file=$(printf "%s/network/admin/tnsnames.ora" $oracle_home)
+        tns_config=$(sudo -i -u oracle bash <<EOF
+            export ORACLE_HOME="$oracle_home"
+            TNS_config=$(awk -v alias="$dbSid" '
+                BEGIN { IGNORECASE = 1; found = 0 }
+                /^[[:space:]]*#/ { next }
+                /^[[:space:]]*$/ { if(found) exit; else next }
+                /^[[:alnum:]_]+[[:space:]]*=/ {
+                    n = $1; sub(/=.*/,"",n)
+                    if (toupper(n) == toupper(alias)) {
+                        found = 1
+                    } else if(found) {
+                        exit
+                    }
+                }
+                found {
+                    if (match($0, /HOST[[:space:]]*=[[:space:]]*([^)]*)/, h))
+                        host = h[1]
+                    if (match($0, /PORT[[:space:]]*=[[:space:]]*([^)]*)/, p)) {
+                        port = p[1]
+                        printf "%s:%s", host, port
+                        exit
+                    }
+                }
+            ' $tns_file)
+        echo "\\$TNS_config"
+EOF
+    )
+    echo $tns_config
+}
+`;
+
 const loadDatabaseDetectionModules = `
     get_instance_details() {
         local ORACLE_SID="$1"
@@ -734,6 +771,7 @@ EOF
                 JSON_OBJECT(
                     'pdb_name' VALUE NAME,
                     'open_mode' VALUE OPEN_MODE,
+                    'creation_time' VALUE TO_CHAR(CREATION_TIME, 'YYYY-MM-DD"T"HH24:MI:SS'),
                     'status' VALUE CASE
                             WHEN open_mode = 'READ WRITE' THEN 'ONLINE'
                             ELSE 'OFFLINE'
@@ -950,6 +988,8 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
     fi
 
     ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+    ${loadOracleUserPermissionsDetectionModule}
+    ${loadDatabaseDetectionModules}
 
     while IFS=: read -r sid oracle_home; do
         # Check if the instance is running by checking for its PMON process.
@@ -963,13 +1003,28 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
         fi
 
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
+            if [ "$(is_cdb_instance)" == "true" ]; then
+                is_cdb="YES"
+                PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$dbSid")
+                pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
+                pdb_names=$(echo "$pdb_names" | tr ' ' '\\n' | grep -v '^PDB\\$SEED$' | tr '\\n' ' ')
+            else
+                is_cdb="NO"
+                pdb_names='[]'
+            fi
             ${loadStorageDetectionModules}
             ${getInstanceStorageDetails}
         else
             ${getStorageWithoutCreds}
         fi
 
-        results="{\\"storage_details\\": $storageDetails}"
+        if [ -n "$pdb_names" ]; then
+            pdb_names_json=$(echo "$pdb_names" | awk '{for(i=1;i<=NF;i++) printf "\\"%s\\"%s", $i, (i<NF?",":"") }')
+            pdb_names="[$pdb_names_json]"
+        else
+            pdb_names="[]"
+        fi
+        results="{\\"storage_details\\": $storageDetails, \\"is_cdb\\": \\"$is_cdb\\", \\"pdb_names\\": $pdb_names}"
     done <<< "$oratab_entries"
 
     echo $results
@@ -1084,8 +1139,9 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
         else
             DATABASE_DETAILS='{"error": "failed to retrieve database details, credentials not available for instance '$sid'"}'
         fi
-        
-        results="{\\"database_details\\": $DATABASE_DETAILS, \\"pdbs_size\\": $pdbs_size, \\"root_db_size\\": $root_db_size, \\"pdbs_status\\": $pdbs_status, \\"is_cdb\\": \\"$is_cdb\\"}"
+        ${getOracleServiceInstanceConnections}
+        service_name=$(get_tns_connection "$sid")
+        results="{\\"database_details\\": $DATABASE_DETAILS, \\"pdbs_size\\": $pdbs_size, \\"root_db_size\\": $root_db_size, \\"pdbs_status\\": $pdbs_status, \\"is_cdb\\": \\"$is_cdb\\", \\"service_name\\": \\"$service_name\\"}"
     done <<< "$oratab_entries"
 
     echo $results

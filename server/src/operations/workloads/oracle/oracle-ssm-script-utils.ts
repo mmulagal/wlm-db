@@ -7,6 +7,29 @@ const checkCommandStatus = `
     }
 `;
 
+const getOracleHomePath = (dbSid: string) => `
+    # Check if oratab exists
+    if [ ! -f /etc/oratab ]; then
+        echo "[]"
+        exit 0
+    fi
+    sid="${dbSid}"
+    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
+    if [ -z "$oratab_entries" ]; then
+        echo "No entries found in /etc/oratab."
+        exit 0
+    fi 
+
+    while IFS=: read -r sid home; do
+        if [ "$sid" == "$1" ]; then
+            echo "$home"
+            exit 0;
+            break
+        fi
+    done <<< "$oratab_entries"
+    exit 1
+`;
+
 const getMappedOntapDataVolume = (
     fsxnId: string,
     region: string,
@@ -1142,5 +1165,6 @@ export {
     oracleUserAuthLoginCommand,
     loadOracleUserPermissionsDetectionModule,
     installPythonOnLinuxHost,
-    initializeResultObject
+    initializeResultObject,
+    getOracleHomePath
 };
