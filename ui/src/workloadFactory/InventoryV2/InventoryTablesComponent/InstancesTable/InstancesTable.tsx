@@ -927,6 +927,17 @@ const InstancesTable = () => {
         }
     };
 
+    const getPopoverContent = (selectedHostType: string) => {
+        switch (selectedHostType) {
+            case DBType.ORACLE:
+                return t('databases.register-flow.register-bulk-disable-tooltip-oracle');
+            case DBType.MSSQL:
+                return t('databases.register-flow.register-bulk-disable-tooltip');
+            default:
+                return t('databases.register-flow.register-bulk-disable-tooltip');
+        }
+    };
+
     return (
         <div className={styles.inventoryTable}>
             <div
@@ -945,7 +956,7 @@ const InstancesTable = () => {
                             {!loading && !isUnregisteredRows ? (
                                 <Popover
                                     isAppendedToBody
-                                    children={t('databases.register-flow.register-bulk-disable-tooltip')}
+                                    children={getPopoverContent(selectedHostType)}
                                     trigger="hover"
                                     container={
                                         <DsButton isThin isDisabled>

@@ -78,6 +78,7 @@
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "No instances are eligible for registration at this time.",
+            "register-bulk-disable-tooltip-oracle": "No databases are eligible for registration at this time.",
             "register-multiple-instances": "Register multiple instances",
             "register-multiple-databases": "Register multiple databases",
             "drop_down_tooltip": "Multiple instances must share the same status: authenticated or unauthenticated.",
