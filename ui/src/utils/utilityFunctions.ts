@@ -216,25 +216,11 @@ export const bxpRedirect = async (
 
     // Demo Mode Handling
     if (isDemoMode) {
-        const demoParams = {
-            source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
-            redirectToWorkloadFactory: true,
-            hostName: rowData?.hostRow?.fqdn || 'demo-server.wlm.com',
-            instanceName:
-                rowData?.databaseInstanceName === 'MSSQLSERVER'
-                    ? rowData?.name || rowData?.hostName || 'demo-server'
-                    : `${rowData?.name || rowData?.hostName || 'demo-server'}-${
-                          rowData?.databaseInstanceName || 'DEMO'
-                      }`,
-            instanceId: `demo-instance-${Date.now()}`,
-            ...(from === 'database' && {
-                databaseName: rowData?.name || 'DemoDatabase',
-                databaseId: `demo-database-${Date.now()}`
-            })
-        };
-
-        handleRedirectWithParams(isWorkloadFactory, baseUrl, demoParams);
-        return;
+        if (isWorkloadFactory) {
+            window.open(baseUrl, '_blank', 'noopener,noreferrer');
+        } else if (window.top) {
+            window.top.location.href = baseUrl;
+        }
     }
 
     const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
