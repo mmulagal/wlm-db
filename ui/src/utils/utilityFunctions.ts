@@ -221,6 +221,7 @@ export const bxpRedirect = async (
         } else if (window.top) {
             window.top.location.href = baseUrl;
         }
+        return;
     }
 
     const agentID = selectedAgent?.[0]?.id || alreadyExistAgentId;
