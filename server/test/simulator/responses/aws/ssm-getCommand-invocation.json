@@ -3596,7 +3596,7 @@
             "data": [
                 {
                     "name": "oracleredo2",
-                    "uuid": "beac8c14-eee7-11ef-8fbb-837e18df6f7a",
+                    "uuid": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
                     "svmName": "wlmdb_sqlsvm_1735809893269",
                     "autosize": "off",
                     "compaction": "inline",
@@ -3610,9 +3610,11 @@
                     "spaceGuarantee": "none",
                     "compressionType": "adaptive",
                     "fractionalReserve": 100,
-                    "snapshotAutodelete": false,
+                    "snapshotAutodelete": true,
+                    "snapshotDeleteOrder": "newest_first",
                     "snapshotCopyReserve": 5,
-                    "tieringMinCoolingDays": null
+                    "tieringMinCoolingDays": 4,
+                    "spaceMgmtTryFirst": "volume_grow"
                 },
                 {
                     "name": "oraclearch2",
@@ -3630,13 +3632,15 @@
                     "spaceGuarantee": "none",
                     "compressionType": "adaptive",
                     "fractionalReserve": 100,
-                    "snapshotAutodelete": false,
+                    "snapshotAutodelete": true,
+                    "snapshotDeleteOrder": "newest_first",
                     "snapshotCopyReserve": 5,
-                    "tieringMinCoolingDays": null
+                    "tieringMinCoolingDays": 4,
+                    "spaceMgmtTryFirst": "volume_grow"
                 },
                 {
                     "name": "oracledata2",
-                    "uuid": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
+                    "uuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a",
                     "svmName": "wlmdb_sqlsvm_1735809893269",
                     "autosize": "off",
                     "compaction": "inline",
@@ -3650,9 +3654,11 @@
                     "spaceGuarantee": "none",
                     "compressionType": "adaptive",
                     "fractionalReserve": 100,
-                    "snapshotAutodelete": false,
+                    "snapshotAutodelete": true,
+                    "snapshotDeleteOrder": "newest_first",
                     "snapshotCopyReserve": 5,
-                    "tieringMinCoolingDays": null
+                    "tieringMinCoolingDays": 4,
+                    "spaceMgmtTryFirst": "volume_grow"
                 }
             ],
             "error": "",

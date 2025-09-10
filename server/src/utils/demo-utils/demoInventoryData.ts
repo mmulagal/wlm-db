@@ -2715,7 +2715,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         data: [
             {
                 name: 'oracleredo2',
-                uuid: 'beac8c14-eee7-11ef-8fbb-837e18df6f7a',
+                uuid: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
                 autosize: 'off',
                 compaction: 'inline',
