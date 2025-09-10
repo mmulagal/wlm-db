@@ -510,9 +510,11 @@ const MAPPED_ONTAP_VOLUMES_DATA = {
 
 const PDB_DETAILS = {
     name: 'pdb1',
-    size: 2.5,
+    size: 2500000000,
     status: 'online',
-    type: 'PDB'
+    type: 'PDB',
+    created: `${new Date(Date.now()).toISOString().split('.')[0]}Z`,
+    service: 'ip-172-31-48-50.ap-southeast-1.compute.internal:1521'
 };
 
 const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = {

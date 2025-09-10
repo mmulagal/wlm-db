@@ -1481,7 +1481,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'oracleDatabaseList',
-            '{"database_details":{"name": "ordbsdl","status": "online"}, "is_cdb": "no", "root_db_size": 2.51}'
+            '{"database_details":{"name": "ordbsdl","status": "online"}, "is_cdb": "no", "root_db_size": 2500000000}'
         )
     )
     .on(GetCommandInvocationCommand, {
