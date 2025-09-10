@@ -293,6 +293,8 @@ interface CalculateEbsComparisonResponse extends EbsVolumeTypesCalculation {
     single?: FsxCostCalculations;
     multi?: FsxCostCalculations;
     fsxw?: StorageSummary;
+    fsx_optimized?: StorageSummary;
+    fsx_optimized_single?: FsxCostCalculations;
 }
 
 interface InstanceEbsData extends EbsVolumeTypesCalculation {

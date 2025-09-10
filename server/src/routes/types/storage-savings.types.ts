@@ -188,7 +188,9 @@ const StorageSavingsResponse = Type.Object({
         recommended: Type.Number()
     }),
     single: Type.Optional(fsxCalculationData),
-    multi: Type.Optional(fsxCalculationData)
+    multi: Type.Optional(fsxCalculationData),
+    fsxOptimizedSingle: Type.Optional(fsxCalculationData),
+    fsxOptimized: Type.Optional(StorageMetrics)
 });
 
 const PriceUnitObject = Type.Object({
@@ -420,6 +422,7 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),
     single: Type.Optional(FsxCalculationResp),
     multi: Type.Optional(FsxCalculationResp),
+    fsxOptimizedSingle: Type.Optional(FsxCalculationResp),
     fsxwCalculation: Type.Optional(FsxwCalculationResp),
     fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
     fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp),
@@ -436,6 +439,7 @@ const StorageSavingsCalculationsMetrics = Type.Object({
     ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),
     single: Type.Optional(FsxCalculationResp),
     multi: Type.Optional(FsxCalculationResp),
+    fsxOptimizedSingle: Type.Optional(FsxCalculationResp),
     fsxwCalculation: Type.Optional(FsxwCalculationResp),
     fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
     fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp),

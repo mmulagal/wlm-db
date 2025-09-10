@@ -343,17 +343,18 @@ async function invokeMarketingApi(
             })
         };
     }
-    const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi, fsxw } = await getStorageSavings(
-        accountId,
-        credentialsId,
-        region,
-        getMarketingApiRequestBody(
-            ebsVolumeIds,
-            params,
-            sqlServerDeploymentType,
-            fileSystemsIds
-        ) as AutomaticModeMarketingRequestBody
-    );
+    const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi, fsxw, fsx_optimized_single, fsx_optimized } =
+        await getStorageSavings(
+            accountId,
+            credentialsId,
+            region,
+            getMarketingApiRequestBody(
+                ebsVolumeIds,
+                params,
+                sqlServerDeploymentType,
+                fileSystemsIds
+            ) as AutomaticModeMarketingRequestBody
+        );
 
     return {
         ebsClassification: { gp2, gp3, io1, io2, st1 },
@@ -361,7 +362,9 @@ async function invokeMarketingApi(
         fsx,
         single,
         multi,
-        fsxw
+        fsxw,
+        fsxOptimizedSingle: fsx_optimized_single,
+        fsxOptimized: fsx_optimized
     };
 }
 
@@ -752,7 +755,8 @@ async function formatStorageSavingsCalculationMetrics(
         single,
         multi,
         fsx,
-        fsxw
+        fsxw,
+        fsxOptimizedSingle
     } = await invokeMarketingApi(
         accountId,
         credentialsId,
@@ -849,6 +853,9 @@ async function formatStorageSavingsCalculationMetrics(
     return {
         ...(single && { single: derivePropertiesBasedOnDeploymentType(single, params) }),
         ...(multi && { multi: derivePropertiesBasedOnDeploymentType(multi, params) }),
+        ...(fsxOptimizedSingle && {
+            fsxOptimizedSingle: derivePropertiesBasedOnDeploymentType(fsxOptimizedSingle, params)
+        }),
         ebs,
         ebsCalculation,
         ebsCloneCalculation,

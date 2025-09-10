@@ -531,10 +531,8 @@ async function performStorageSavingsCalculations(
             undefined,
             true
         );
-        const [{ compute, license }, { fsx, single, multi, fsxw }] = await Promise.all([
-            recommendationPromise,
-            marketingPromise
-        ]);
+        const [{ compute, license }, { fsx, single, multi, fsxw, fsxOptimizedSingle, fsxOptimized }] =
+            await Promise.all([recommendationPromise, marketingPromise]);
 
         const existingComputeLicensePrice = Number(compute?.existing?.instanceMonthlyPrice || 0);
         const recommendedComputeLicensePrice = Number(compute?.recommended?.instanceMonthlyPrice || 0);
@@ -570,6 +568,8 @@ async function performStorageSavingsCalculations(
             }),
             fsx,
             fsxw,
+            ...(fsxOptimizedSingle && { fsxOptimizedSingle }),
+            ...(fsxOptimized && { fsxOptimized }),
             totalSummary: {
                 existing: fsxw ? fsxw.total + existingComputeLicensePrice : existingComputeLicensePrice,
                 recommended: fsx.total + recommendedComputeLicensePrice // recommendedComputeLicensePrice is inclusive of recommended License price (for fsxw recommended compute price remains same as existing, but recommended license price can vary)
@@ -613,7 +613,7 @@ async function performStorageSavingsCalculations(
         instanceId
     );
 
-    const [{ compute, license }, { ebs, fsx, single, multi }] = await Promise.all([
+    const [{ compute, license }, { ebs, fsx, single, multi, fsxOptimizedSingle, fsxOptimized }] = await Promise.all([
         recommendationPromise,
         marketingPromise
     ]);
@@ -632,6 +632,8 @@ async function performStorageSavingsCalculations(
         license,
         ebs,
         fsx,
+        ...(fsxOptimizedSingle && { fsxOptimizedSingle }),
+        ...(fsxOptimized && { fsxOptimized }),
         totalSummary: {
             existing: Number(ebs?.total || 0) + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
@@ -795,7 +797,7 @@ async function getStorageSavingsCalculationMetrics(
         compute: { existing: existingComputeCalculation, recommended: recommendedComputeCalculation },
         license: { existing: existingLicenseCalculation, recommended: recommendedLicenseCalculation }
     } = currentNodeComputeLicenseDetails;
-    const { ebs, ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi, fsx } =
+    const { ebs, ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi, fsx, fsxOptimizedSingle } =
         await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
@@ -819,6 +821,7 @@ async function getStorageSavingsCalculationMetrics(
         ebsSnapshotCalculation,
         single,
         multi,
+        ...(fsxOptimizedSingle && { fsxOptimizedSingle }),
         totalSummary: {
             existing: ebs ? ebs.total + existingComputeLicensePrice : existingComputeLicensePrice,
             recommended: fsx ? fsx.total + recommendedComputeLicensePrice : recommendedComputeLicensePrice
