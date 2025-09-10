@@ -523,32 +523,27 @@ async function fetchOracleDriftAssessmentPerHost(
 
     const driftAssessments = await Promise.all(
         instancesManaged.map(
-            throat(
-                3,
-                async ({
-                    database_instance_id: databaseInstanceId,
-                    database_instance_name: databaseInstanceName,
-                    ...instance
-                }) => {
-                    try {
-                        const driftAssessment = await fetchOracleDriftAssessment(
-                            accountId,
-                            credentialsId,
-                            region,
-                            databaseHostId,
-                            databaseInstanceId,
-                            AssessmentCategories.STORAGE,
-                            { ...instance, resource: resourceDetail } as DatabaseInstancesIncludingResource
-                        );
-                        return { databaseInstanceId, databaseInstanceName, assessments: driftAssessment };
-                    } catch (error: any) {
-                        logger.error(
-                            `Error while fetching oracle drift assessment for ${databaseInstanceId}: ${error.message}`
-                        );
-                        return { databaseInstanceId, databaseInstanceName, error: error.message };
-                    }
+            throat(3, async instance => {
+                const { database_instance_id: databaseInstanceId, database_instance_name: databaseInstanceName } =
+                    instance;
+                try {
+                    const driftAssessment = await fetchOracleDriftAssessment(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        databaseInstanceId,
+                        AssessmentCategories.STORAGE,
+                        { ...instance, resource: resourceDetail } as DatabaseInstancesIncludingResource
+                    );
+                    return { databaseInstanceId, databaseInstanceName, assessments: driftAssessment };
+                } catch (error: any) {
+                    logger.error(
+                        `Error while fetching oracle drift assessment for ${databaseInstanceId}: ${error.message}`
+                    );
+                    return { databaseInstanceId, databaseInstanceName, error: error.message };
                 }
-            )
+            })
         )
     );
 
