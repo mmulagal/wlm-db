@@ -1065,6 +1065,7 @@ export const REGISTER_INSTANCE_STATE = {
 
 export const ORACLE_DATABASES_COMPONENTS = {
     CDB: 'CDB',
+    PDB: 'PDB',
     MULTI_TENANT: 'Multi Tenant',
     SINGLE_TENANT: 'Single Tenant',
     MULTI_TENANT_API_RESPONSE: 'MULTI_TENANT',

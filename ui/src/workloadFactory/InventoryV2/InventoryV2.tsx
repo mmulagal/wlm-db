@@ -9,6 +9,7 @@ import {
     ERROR_ANALYZER_STATUS,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
+    ORACLE_DATABASES_COMPONENTS,
     PROTECTION_TEXT_STATUS,
     STAGING
 } from '../../utils/consts';
@@ -342,7 +343,13 @@ const InventoryV2 = () => {
                                 resourceId: perHost?.resourceId,
                                 ec2InstanceId: perHost?.ec2InstanceId
                             };
-                            allDatabaseTableRows.push(perRowData);
+                            // Only add Oracle PDB databases or all non-Oracle databases
+                            if (
+                                perHost?.hostType !== DBType.ORACLE ||
+                                perRowData.type === ORACLE_DATABASES_COMPONENTS.PDB
+                            ) {
+                                allDatabaseTableRows.push(perRowData);
+                            }
                         });
                     });
                 }
