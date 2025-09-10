@@ -17,7 +17,8 @@ const proceedWithProtection = (
     // Check if SC credentials are valid first
     const existingData = store.getState().snapCenter.dataMap[key] || {};
 
-    const activeAgents = data?.occms?.filter((item: any) => item.agent.status === 'active') || [];
+    const activeAgents =
+        data?.occms?.filter((item: any) => item.agent.status === 'active' && item?.agent?.provider === 'aws') || [];
 
     // If credentials were already checked and found invalid, show auth dialog
     if (existingData.scCredentialsChecked && !existingData.scCredentialsValid) {

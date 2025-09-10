@@ -180,18 +180,15 @@ export const handleRedirectWithParams = (isWorkloadFactory: boolean, baseUrl: st
     if (isWorkloadFactory) {
         openNewTabWithPayload(baseUrl, JSON.stringify(wlmdbParams));
     } else {
-        window.parent.postMessage(
-            {
-                type: 'SERVICE:NAVIGATE',
-                payload: {
-                    pathname: '/unified-backup-restore',
-                    state: {
-                        wlmdbParams: JSON.stringify(wlmdbParams)
-                    }
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: '/unified-backup-restore',
+                state: {
+                    wlmdbParams: JSON.stringify(wlmdbParams)
                 }
-            },
-            '*'
-        );
+            }
+        });
     }
 };
 
