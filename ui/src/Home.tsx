@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
@@ -73,7 +74,13 @@ const Home = () => {
     //To set dashboard highlight
     useEffect(() => {
         if (isWorkloadFactory && initialPathName === '/databases') {
-            navigate('/databases/dashboard');
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: '../databases/dashboard',
+                    replace: true
+                }
+            });
         }
     }, [isWorkloadFactory, initialPathName]);
 
