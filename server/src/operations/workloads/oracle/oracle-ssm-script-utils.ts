@@ -1145,7 +1145,193 @@ jq -n     --arg prettyName "$prettyName"     --arg name "$osName"     --arg vers
 }'
 `;
 
+const getFsxCredentials = (fileSystemId: string, region: string) => `
+def getFsxCredentials(fileSystemId):
+    fileSystemId = '${fileSystemId}'
+    region = '${region}'
+    name = f"/netapp/wlmdb/{fileSystemId}"
+    try:
+        raw = subprocess.check_output(
+            [aws_path,"ssm","get-parameter","--name",name,"--with-decryption","--query","Parameter.Value","--output","text"],
+            universal_newlines=True
+        ).strip()
+    except Exception as e:
+        log(f"Failed to get FSx credentials: SSM param {name} not found or empty. Exception: {e}")
+        return None, f"SSM param {name} not found or empty: {e}"
+
+    txt = re.sub(r"'", '"', raw)
+    txt = re.sub(r'(?<!")(\b\\w+\b)(?=\\s*:)', r'"\\1"', txt)
+    creds = json.loads(txt)
+    return creds.get("fsx"), None
+`;
+
+const pythonImports = `
+import sys
+import os
+import datetime
+import json
+import ssl
+import base64
+import http.client
+import subprocess
+import re
+import shutil
+from urllib.parse import urlparse
+from urllib.request import urlopen, Request
+`;
+
+const ontapRestApiScript = (fileSystemId: string, region: string) => `
+def ontapRestApiRequest(method, url, body=None):
+    fileSystemId = '${fileSystemId}'
+    region = '${region}'
+
+    # Getting auth token
+    fsx_creds, error = getFsxCredentials(fileSystemId)
+    if error:
+        log("Failed to get FSx credentials: error: {error}")
+        return None, error
+
+    username = fsx_creds['username']
+    password = fsx_creds['password']
+    if not username or not password:
+        log("FSx credential is empty")
+        return None, "FSx credential is empty"
+
+    auth_raw = f"{username}:{password}".encode("utf-8")
+    auth_b64 = base64.b64encode(auth_raw).decode("ascii")
+    headers = {
+        "Authorization": f"Basic {auth_b64}",
+        "Accept": "application/json",
+    }
+
+    # Check for public IP
+    cert_option = ""
+    cert_url = f"https://fsx-aws-Certificates.s3.amazonaws.com/bundle-{region}.pem"
+    cert_path = "/tmp/fsx_bundle.pem"
+    try:
+        token = urlopen(
+            Request(
+                "http://169.254.169.254/latest/api/token",
+                method="PUT",
+                headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"}
+            ), timeout=2
+        ).read().decode()
+        public_ip = urlopen(
+            Request(
+                "http://169.254.169.254/latest/meta-data/public-ipv4",
+                headers={"X-aws-ec2-metadata-token": token}
+            ), timeout=2
+        ).read().decode()
+    except Exception as e:
+        public_ip = ""
+        log(f"Failed to get public IP; Exception:{e}")
+
+
+    if public_ip:
+        if not os.path.isfile(cert_path):
+            try: urlretrieve(cert_url, cert_path)
+            except: pass
+        cert_option = cert_path
+
+    management_ip = f"management.{fileSystemId}.fsx.{region}.amazonaws.com"
+    if os.system(f"ping -c 1 -W 2 {management_ip} > /dev/null 2>&1") != 0:
+        management_ip = subprocess.check_output([
+            aws_path, "fsx", "describe-file-systems",
+            "--file-system-id", fileSystemId,
+            "--region", region,
+            "--query", "FileSystems[0].OntapConfiguration.Endpoints.Management.IpAddresses[0]",
+            "--output", "text"
+        ], text=True).strip()
+        use_insecure = True
+    else:
+        use_insecure = False
+
+    if body:
+        if isinstance(body, dict):
+            body_str = json.dumps(body)
+            headers["Content-Type"] = "application/json"
+        else:
+            body_str = str(body)
+    else:
+        body_str = None
+
+    try:
+        if cert_option and not use_insecure:
+            ssl_ctx = ssl.create_default_context(cafile=cert_option)
+        else:
+            ssl_ctx = ssl.create_default_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = ssl.CERT_NONE
+
+        url = f"https://{management_ip}/api/{url}"
+        parsed_url = urlparse(url)
+        path_with_query = parsed_url.path
+        if parsed_url.query:
+            path_with_query += "?" + parsed_url.query
+        conn = http.client.HTTPSConnection(parsed_url.hostname, parsed_url.port or 443, context=ssl_ctx, timeout=10)
+        conn.request(method.upper(), path_with_query, body=body_str, headers=headers)
+        resp = conn.getresponse()
+        raw = resp.read()
+        status = resp.status
+        log(f"ONTAP rest api response: {status} {resp.reason}")
+        if not (200 <= status < 300):
+            return None, {
+                "error": {
+                    "status": f"HTTP {status} {resp.reason}",
+                    "message": raw.decode("utf-8", errors="replace")
+                }
+            }
+        ct = resp.getheader("Content-Type", "")
+        if "application/json" in ct.lower():
+            try:
+                return json.loads(raw.decode("utf-8")), None
+            except Exception as je:
+                return None, f"JSON parse error: {je!s}"
+        else:
+            return None, raw.decode("utf-8", errors="replace")
+    except Exception as e:
+        return None, {"error": str(e)}
+    finally:
+        try:
+            conn.close()
+        except:
+            pass
+`;
+
+const pythonLogger = (logFileName: string) => `
+def log(msg):
+    LOG_DIR = "/var/log/netapp"
+    LOG_FILE = f"{LOG_DIR}/${logFileName}"
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR, exist_ok=True)
+    with open(LOG_FILE, "a") as f:
+        f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\\n") 
+
+log("Starting Python Logging")
+`;
+
+const pythonScriptInit = (pythonTemplate: string, fileName: string) => `
+export PYTHON_LATEST=$(ls /usr/bin/python* /usr/local/bin/python* 2>/dev/null | xargs -I {} sh -c 'version=$({} -c "import sys; print(f\\"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\\")" 2>/dev/null); if [[ "$version" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then echo "{}|$version"; fi' | sort -t'|' -k2 -V | tail -n1 | cut -d'|' -f1)
+
+$PYTHON_LATEST <<'PYTHON'
+${pythonImports}
+
+aws_path = shutil.which("aws") or '/usr/local/bin/aws'
+
+${pythonLogger(fileName)}
+${pythonTemplate}
+PYTHON
+`;
+
+const logFileCheck = `
+# Ensure log directory exists
+LOG_DIR="/var/log/netapp"
+sudo mkdir -p "$LOG_DIR"
+sudo chown oracle:oinstall "$LOG_DIR"
+`;
+
 export {
+    getFsxCredentials,
     getOracleProtectionData,
     ORACLE_PERFORMANCE_METRICS,
     getOracleInstanceData,
@@ -1166,5 +1352,10 @@ export {
     loadOracleUserPermissionsDetectionModule,
     installPythonOnLinuxHost,
     initializeResultObject,
+    pythonScriptInit,
+    pythonImports,
+    pythonLogger,
+    ontapRestApiScript,
+    logFileCheck,
     getOracleHomePath
 };

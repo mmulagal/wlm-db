@@ -24,7 +24,8 @@ import {
     AuditStatus,
     SqlServerDeploymentModel,
     RESOURCESTYPE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    DatabaseTypes
 } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
@@ -93,6 +94,11 @@ import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimizatio
 import { listJobs } from '../lib/database/job';
 import { resetCache } from '../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './continuous-optimization/mssql/assessment-operations';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
+
+import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
+import { optimizeStorageParamsOracle } from './workloads/oracle/storage-optimize-scripts';
+import { onDemandTriggerOracleDriftAssessment } from './continuous-optimization/oracle/assessment-operations';
 
 const isDemoFlow = isDemo();
 
@@ -107,9 +113,10 @@ interface OptimizeStorageAttributeParams {
     parentJobId: string;
     optimizationTargets: OptimizeStorageRequestParamsType[];
     optimizationConfigs: Record<string, any>;
-    apiRequestData: Record<string, any>;
+    apiRequestData: typeof OptimizeStorageApiData;
     svmName: string;
     serverNameWithHostName: string;
+    resourceType: RESOURCESTYPE;
 }
 
 interface OptimizeStorageOperationParams {
@@ -129,6 +136,7 @@ interface OptimizeStorageOperationParams {
     svmName: string;
     optimizationTargets: OptimizeStorageRequestParamsType[];
     instanceMetadata?: DatabaseInstanceMetadata;
+    volumeTypeMap?: Map<string, string[]>;
 }
 
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
@@ -164,7 +172,8 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
                 optimizationConfigs: OptimizeStorageConfigs,
                 apiRequestData: OptimizeStorageApiData,
                 svmName,
-                serverNameWithHostName
+                serverNameWithHostName,
+                resourceType: databaseType as RESOURCESTYPE
             });
         }
 
@@ -175,7 +184,7 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             region,
             sqlAuthEnabled: sqlAuthEnabled || false,
             fsxFileSystem: fsxId,
-            activeNodeInstanceid: activeNodeInstanceId!,
+            activeNodeInstanceid: activeNodeInstanceId,
             cloudProviderAccountId: awsAccountId,
             resourceName: serverNameWithHostName
         };
@@ -200,7 +209,8 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             serverNameWithHostName,
             parentJobId,
             instanceToAssess,
-            AssessmentCategories.STORAGE
+            AssessmentCategories.STORAGE,
+            databaseType as RESOURCESTYPE
         );
     } catch (error) {
         logger.error('Failed to optimize storage', { params, error });
@@ -219,9 +229,14 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
         optimizationConfigs,
         apiRequestData,
         svmName,
-        serverNameWithHostName
+        serverNameWithHostName,
+        resourceType
     } = params;
-    logger.info(`Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
+    logger.info(
+        `Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${JSON.stringify(
+            optimizationTargets
+        )}`
+    );
     const jobDescription = `Fix storage for ${serverNameWithHostName}`;
 
     await Promise.all(
@@ -252,35 +267,75 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 }
 
                 const apiData = apiRequestData[configKey as keyof typeof apiRequestData];
-                const apiBody = JSON.stringify(apiData.body);
-                const optimizeType = apiData.type;
                 if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
                     throw new Error('objectsToOptimize must be an array with non-empty string elements.');
                 }
+                const apiBody = JSON.stringify(apiData.body);
+                const optimizeType = apiData.type;
                 const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
                 const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
                 const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
                 const apiEndpoint = apiData.api;
 
-                const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-                    fsxId,
-                    region,
-                    apiEndpoint,
-                    apiQueryFilter,
-                    apiBody
-                });
+                let commands: string[] = [];
+                let ssmDocument: string;
+                let ssmVersion: string;
+
+                switch (resourceType) {
+                    case RESOURCESTYPE.MSSQL:
+                        commands = [
+                            OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+                                fsxId,
+                                region,
+                                apiEndpoint,
+                                apiQueryFilter,
+                                apiBody
+                            })
+                        ];
+                        ssmDocument = SSM_RUN_POWERSHELL_SCRIPT_DOC;
+                        ssmVersion = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION;
+                        break;
+                    case RESOURCESTYPE.ORACLE:
+                        commands = [
+                            optimizeStorageParamsOracle({
+                                fsxId,
+                                region,
+                                apiEndpoint,
+                                apiQueryFilter,
+                                apiBody
+                            })
+                        ];
+                        ssmDocument = SSM_RUN_SHELL_SCRIPT_DOC;
+                        ssmVersion = SSM_RUN_SHELL_SCRIPT_DOC_VERSION;
+                        break;
+                    default:
+                        throw new Error(`Unsupported resourceType for SSM command: ${resourceType}`);
+                }
+
+                if (commands.length === 0 || !ssmDocument || !ssmVersion) {
+                    logger.error('Invalid SSM command configuration', commands, ssmDocument, ssmVersion);
+                    throw new Error('Invalid SSM command configuration');
+                }
+
                 const resp = await retryWithDelay(
                     callSsmExecution.bind(
                         null,
                         credentialsId,
                         region,
-                        [ssmCommand],
-                        activeNodeInstanceId!,
-                        jobDescription
+                        commands,
+                        activeNodeInstanceId,
+                        jobDescription,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        ssmDocument,
+                        ssmVersion
                     ),
                     3,
                     5000
                 );
+
                 const parsedResp = sqlResponseParsing(resp);
                 let objectsOptimized = parsedResp.num_records || 0;
 
@@ -362,7 +417,8 @@ async function activeSqlNodeDetails(
     const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(credentialsId, region, {
         node1InstanceId,
         node2InstanceId,
-        accountId
+        accountId,
+        resourceType: databaseType as DatabaseTypes
     });
     logger.info('instancesDetails', { instanceIds: instancesDetails?.map(instance => instance?.instanceName) });
     const sqlAuthEnabled =
@@ -438,6 +494,7 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
         serverNameWithHostName,
         instanceMetadata
     } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+
     // check whether any jobs on the same resource running
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
@@ -2958,7 +3015,8 @@ async function triggerAssessmentAfterOptimization(
     serverNameWithHostName: string,
     parentJobId: string,
     instanceToAssess: { id: string },
-    fields?: string
+    fields?: string,
+    databaseType?: RESOURCESTYPE
 ) {
     logger.info('Triggering assessment after optimization', {
         credentialsId,
@@ -2976,16 +3034,29 @@ async function triggerAssessmentAfterOptimization(
         await sleep(5000);
     }
 
-    await onDemandTriggerMssqlDriftAssessment(
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        instanceToAssess.id,
-        AssessmentTriggeredBy.SYSTEM,
-        fields || '',
-        parentJobId
-    );
+    if (databaseType === RESOURCESTYPE.MSSQL) {
+        await onDemandTriggerMssqlDriftAssessment(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceToAssess.id,
+            AssessmentTriggeredBy.SYSTEM,
+            fields || '',
+            parentJobId
+        );
+    } else if (databaseType === RESOURCESTYPE.ORACLE) {
+        await onDemandTriggerOracleDriftAssessment(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceToAssess.id,
+            AssessmentTriggeredBy.SYSTEM,
+            fields || '',
+            parentJobId
+        );
+    }
 
     let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';

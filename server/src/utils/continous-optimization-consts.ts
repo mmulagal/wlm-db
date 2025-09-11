@@ -153,6 +153,7 @@ const SEVERITY = {
     CRITICAL: 'critical',
     WARNING: 'warning'
 };
+
 const OptimizeStorageApiData = {
     THIN_PROVISIONING: {
         api: '/private/cli/volume',
@@ -346,7 +347,6 @@ export {
     OptimizeStorageConfigsJobNames,
     OPTIMIZE_SIZING_CONFIGS,
     SEVERITY,
-    OptimizeStorageApiData,
     OptimizeStorageParams,
     DRIFT_ASSESSMENT_QUEUE,
     VOLUME,
@@ -382,5 +382,6 @@ export {
     DEFAULT_MPIO_TIMEOUT,
     OptimizeHighAvailabilityParams,
     AssessmentCategoriesOracle,
-    DEFAULT_FSX_MTU_VALUE
+    DEFAULT_FSX_MTU_VALUE,
+    OptimizeStorageApiData
 };

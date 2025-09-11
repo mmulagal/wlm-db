@@ -1,6 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
+import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
 import { TriggerDriftAssessmentSchema } from './schemas/mssql-continuous-optimization-schema';
 import castRequest from './utils';
 import {
@@ -12,8 +12,10 @@ import {
 import {
     DriftAssessmentDataCollection,
     DriftAssessmentPerAccount,
-    DriftAssessmentPerHost
+    DriftAssessmentPerHost,
+    OracleOptimizeStorageSchema
 } from './schemas/oracle-continuous-optimization-schema';
+import { optimizeStorage } from '../operations/cont-opt-optimize-operations';
 
 const API_PREFIX_PATH = '/v1/oracle/credentials/:credentialsId/regions/:region';
 
@@ -57,6 +59,26 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     databaseInstanceId,
                     fields
                 );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-configuration`,
+            { schema: OracleOptimizeStorageSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    body: { assessments }
+                } = castRequest(request);
+
+                const response = await optimizeStorage({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    optimizationTargets: assessments
+                } as OptimizeStorageParams);
                 return reply.send(response);
             }
         )

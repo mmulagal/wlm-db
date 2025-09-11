@@ -1,9 +1,11 @@
+import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
 import { DatabaseHostOptionalInstanceSummaryParams, DatabaseHostSummaryParams } from '../types/database-hosts.types';
 
 import {
     AssessmentQueryStringPerAccount,
-    ContinuousOptimizationQueryString
+    ContinuousOptimizationQueryString,
+    OptimizeStorageRequestBody
 } from '../types/continuous-optimization.types';
 import {
     DriftAssessmentResponsePerAccount,
@@ -22,6 +24,20 @@ const DriftAssessmentDataCollection = {
     querystring: ContinuousOptimizationQueryString,
     response: {
         200: OracleDriftAssessmentResponse
+    }
+};
+
+const OracleOptimizeStorageSchema = {
+    ...resourceRequest,
+    summary: 'Fix storage for a database instance',
+    description: 'Fix storage parameters as per the best practice for the selected database instance.',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    body: OptimizeStorageRequestBody,
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
     }
 };
 
@@ -49,4 +65,9 @@ const DriftAssessmentPerAccount = {
     }
 };
 
-export { DriftAssessmentDataCollection, DriftAssessmentPerHost, DriftAssessmentPerAccount };
+export {
+    DriftAssessmentDataCollection,
+    DriftAssessmentPerHost,
+    DriftAssessmentPerAccount,
+    OracleOptimizeStorageSchema
+};

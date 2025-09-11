@@ -166,11 +166,11 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    MSSQL_ASSESSMENT = 'MSSQL Well Architected',
     ONPREM_TCO = 'OnPremises TCO',
     NOTIFICATION = 'Notification',
     LOGS_ANALYSIS = 'Logs Analysis',
     REGISTER = 'Register',
+    MSSQL_ASSESSMENT = 'Well Architected - MSSQL',
     ORACLE_ASSESSMENT = 'Well Architected - Oracle'
 }
 
