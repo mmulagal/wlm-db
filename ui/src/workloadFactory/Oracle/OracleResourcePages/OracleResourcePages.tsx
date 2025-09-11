@@ -8,7 +8,7 @@ import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { resetAllPasswords } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import styles from './OracleResourcePages.module.scss';
-import { WELL_ARCHITECTED_TABS, WLF_TABS, RESET_PASSWORD_TYPE, FROM_DIALOG, STAGING } from '../../../utils/consts';
+import { WELL_ARCHITECTED_TABS, WLF_TABS, RESET_PASSWORD_TYPE, FROM_DIALOG } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import OracleTabs from './OracleTabs/OracleTabs';
 import OracleWellArchitectDashboard from './OracleWellArchitectDashboard/OracleWellArchitectDashboard';
@@ -130,13 +130,7 @@ const OracleResourcePages = () => {
         }
     };
     return (
-        <div
-            className={
-                import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
-                    ? `${styles['oracle-inner-pages']} ${styles.tempClass}`
-                    : styles['oracle-inner-pages']
-            }
-        >
+        <div className={styles['oracle-inner-pages']}>
             <div className={`${commonStyles.commonBreadCrumb} ${styles.breadCrumb}`} style={{ left: '0%' }}>
                 <BreadCrumbs
                     items={[

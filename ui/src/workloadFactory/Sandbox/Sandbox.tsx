@@ -8,20 +8,13 @@ import SandboxDistributionType from './SandboxDistributionType/SandboxDistributi
 import SandboxTable from './SandboxTable/SandboxTable';
 import { useAppSelector } from '../../store/storeHooks';
 import SandboxApis from './SandboxApis';
-import { STAGING } from '../../utils/consts';
 
 const Sandbox = () => {
     const { showBanner, connectionInfoLoading, splitEstimateLoading } = useAppSelector(state => state?.sandbox);
     SandboxApis();
 
     return (
-        <div
-            className={
-                import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
-                    ? `${styles.sandbox} ${styles.tempClass}`
-                    : styles.sandbox
-            }
-        >
+        <div className={styles.sandbox}>
             {(connectionInfoLoading || splitEstimateLoading) && (
                 <>
                     <div className={styles.loaderOverlay} />

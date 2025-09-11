@@ -10,8 +10,7 @@ import {
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     ORACLE_DATABASES_COMPONENTS,
-    PROTECTION_TEXT_STATUS,
-    STAGING
+    PROTECTION_TEXT_STATUS
 } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
@@ -421,13 +420,7 @@ const InventoryV2 = () => {
     }, [selectedHostType, fullHostTableRows, fullInstanceTableRows, fullDatabaseTableRows]);
 
     return (
-        <div
-            className={
-                import.meta.env.VITE_APP_ENVIRONMENT !== STAGING
-                    ? `${styles.inventory} ${styles.tempClass}`
-                    : styles.inventory
-            }
-        >
+        <div className={styles.inventory}>
             <EngineTypeSelector />
             <div className={styles.banner}>
                 {selectedHostType === DBType.MSSQL && <MSSQLBanner loading={loading} />}
