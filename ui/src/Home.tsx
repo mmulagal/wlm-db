@@ -101,7 +101,7 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
                         />
                         <Route
-                            path="/databases/explore-savings-ebs"
+                            path="/databases/explore-savings/explore-savings-ebs"
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                         />
                         <Route
@@ -109,11 +109,11 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                         />
                         <Route
-                            path="/databases/explore-savings-fsxw"
+                            path="/databases/explore-savings/explore-savings-fsxw"
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                         />
                         <Route
-                            path="/databases/explore-savings-on-premise"
+                            path="/databases/explore-savings/explore-savings-on-premise"
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ONPREM} />}
                         />
                         <Route
@@ -166,7 +166,7 @@ const Home = () => {
                                 element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                             />
                             <Route
-                                path="/databases/explore-savings-ebs"
+                                path="/databases/explore-savings/explore-savings-ebs"
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
 

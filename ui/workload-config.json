@@ -37,17 +37,17 @@
         "primaryCtaDropdownTo": [
             {
                 "label": "Microsoft SQL Server on EBS",
-                "to": "/databases/explore-savings-ebs",
+                "to": "/databases/explore-savings/explore-savings-ebs",
                 "bluexpTo": "/fsxdb/explore-savings-ebs"
             },
             {
                 "label": "Microsoft SQL Server on FSx for Windows",
-                "to": "/databases/explore-savings-fsxw",
+                "to": "/databases/explore-savings/explore-savings-fsxw",
                 "bluexpTo": "/fsxdb/explore-savings-fsxw"
             },
             {
                 "label": "Microsoft SQL Server on-premises",
-                "to": "/databases/explore-savings-on-premise",
+                "to": "/databases/explore-savings/explore-savings-on-premise",
                 "bluexpTo": "/fsxdb/explore-savings-on-premise"
             }
         ],
@@ -73,7 +73,7 @@
             },
             {
                 "label": "Explore savings",
-                "to": "/databases/explore-savings-ebs"
+                "to": "/databases/explore-savings"
             },
             {
                 "label": "Job monitoring",
