@@ -22,7 +22,7 @@ import Marketing from './Marketing/Marketing';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
-    const { isWorkloadFactory, pathname: navigationPath } = useAppSelector(state => state?.auth);
+    const { isWorkloadFactory, pathname: navigationPath, initialPathName } = useAppSelector(state => state?.auth);
 
     const { statusData } = useAppSelector(state => state.headers.getStatus);
     const dispatch = useDispatch();
@@ -69,6 +69,13 @@ const Home = () => {
             navigate(navigationPath);
         }
     }, [navigationPath]);
+
+    //To set dashboard highlight
+    useEffect(() => {
+        if (isWorkloadFactory && initialPathName === '/databases') {
+            navigate('/databases/dashboard');
+        }
+    }, [isWorkloadFactory, initialPathName]);
 
     // @ts-ignore
     const showNotifications = useMemo(
