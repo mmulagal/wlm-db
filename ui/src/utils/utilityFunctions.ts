@@ -2159,13 +2159,13 @@ export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolea
     if (isWorkloadFactory) {
         switch (value) {
             case WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE:
-                path = './explore-savings-ebs';
+                path = './explore-savings/explore-savings-ebs';
                 break;
             case WLF_TABS.MSSQL_FSX_FOR_WINDOWS:
-                path = './explore-savings-fsxw';
+                path = './explore-savings/explore-savings-fsxw';
                 break;
             case WLF_TABS.MSSQL_ON_PREMISES:
-                path = './explore-savings-on-premise';
+                path = './explore-savings/explore-savings-on-premise';
                 break;
         }
     } else {
