@@ -7,7 +7,6 @@
     },
     "Parameters": [
         {
-
             "Name": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
             "Type": "String",
             "Value": "ami-012967cc5a8c9f891",
@@ -215,6 +214,15 @@
             "Version": 2
         },
         {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/fsx-ontap/regions/ap-southeast-7",
+            "DataType": "text",
+            "LastModifiedDate": "2025-05-14T15:39:34.516Z",
+            "Name": "/aws/service/global-infrastructure/services/fsx-ontap/regions/ap-southeast-7",
+            "Type": "String",
+            "Value": "ap-southeast-7",
+            "Version": 2
+        },
+        {
             "ARN": "arn:aws:ssm:ap-southeast-1::parameter/aws/service/global-infrastructure/services/fsx-ontap/regions/ca-central-1",
             "DataType": "text",
             "LastModifiedDate": "2021-09-10T17:22:25.541Z",
@@ -248,6 +256,15 @@
             "Name": "/aws/service/global-infrastructure/services/fsx-ontap/regions/me-central-1",
             "Type": "String",
             "Value": "me-central-1",
+            "Version": 2
+        },
+        {
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/global-infrastructure/services/fsx-ontap/regions/mx-central-1",
+            "DataType": "text",
+            "LastModifiedDate": "2025-05-14T15:39:39.816Z",
+            "Name": "/aws/service/global-infrastructure/services/fsx-ontap/regions/mx-central-1",
+            "Type": "String",
+            "Value": "mx-central-1",
             "Version": 2
         },
         {
