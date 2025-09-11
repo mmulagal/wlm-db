@@ -1,4 +1,18 @@
 .select-config {
     display: flex;
     gap: 24px;
+    align-items: stretch;
+}
+
+@media screen and (max-width: 768px) {
+    .select-config {
+        flex-direction: column;
+        gap: 16px;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .select-config {
+        gap: 16px;
+    }
 }

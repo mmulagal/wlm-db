@@ -23,7 +23,7 @@ const CardComponentConfig = ({
     tickIcon,
     isDisabled = false
 }: CC) => (
-    <div className={styles.cardComponent} style={{ width: '50%' }}>
+    <div className={styles.cardComponent}>
         <div
             id={idToAdd}
             className={

@@ -1,23 +1,31 @@
 .cardComponent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
     .add-border {
         border: 1px solid var(--selector-on-bg);
     }
 
     .tick-placement {
         text-align: end;
-        position: relative;
-        bottom: 93px;
-        right: 13.5px;
+        position: absolute;
+        top: 24px;
+        right: 24px;
     }
 
     .easy-create {
         // width: 520px;
-        height: 136px;
-        padding: 24px 0 24px 24px;
+        position: relative;
+        padding: 24px;
         background-color: var(--content-background);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
 
         .level {
             display: flex;
+            flex: 1;
         }
 
         .headingContent {
@@ -34,6 +42,7 @@
             display: flex;
             flex-direction: column;
             padding-left: 24px;
+            flex: 1;
 
             .easy-create-heading {
                 font-size: 16px;
@@ -42,16 +51,22 @@
                 line-height: 28px;
                 text-align: left;
                 color: var(--text-primary);
+                margin-bottom: 8px;
             }
 
             .easy-create-content-text {
                 font-size: 13px;
                 font-style: normal;
                 font-weight: 400;
-                width: 75.71%;
-                height: 60px;
+                width: 90%;
                 text-align: left;
                 color: var(--text-primary);
+                line-height: 1.4;
+                word-break: normal;
+                overflow-wrap: normal;
+                word-wrap: normal;
+                hyphens: none;
+                white-space: normal;
             }
         }
 
@@ -62,14 +77,61 @@
     }
 }
 
+@media screen and (max-width: 768px) {
+    .cardComponent {
+        .easy-create {
+            padding: 20px;
+
+            .level {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .easy-create-content {
+                padding-left: 0;
+                margin-top: 16px;
+
+                .easy-create-content-text {
+                    width: 100%;
+                }
+            }
+        }
+
+        .tick-placement {
+            top: 20px;
+            right: 20px;
+        }
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .cardComponent {
+        .easy-create {
+            padding: 20px;
+
+            .easy-create-content {
+                padding-left: 16px;
+
+                .easy-create-content-text {
+                    width: 85%;
+                }
+            }
+        }
+    }
+}
+
 @media screen and (max-width: 1350px) {
     .cardComponent {
         .easy-create {
-            // width: 504px;
-
             .tag {
                 position: relative;
-                right: 5;
+                right: 5px;
+            }
+
+            .easy-create-content {
+                .easy-create-content-text {
+                    width: 88%;
+                }
             }
         }
     }
@@ -85,7 +147,7 @@
 
             .easy-create-content {
                 .easy-create-content-text {
-                    width: 80%;
+                    width: 85%;
                 }
             }
         }
