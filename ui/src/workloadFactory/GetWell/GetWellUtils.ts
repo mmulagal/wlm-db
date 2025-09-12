@@ -1543,6 +1543,7 @@ export const formatMTUCardConfig = (
             recommendationText: item?.recommendation || cardDataDefault?.[itemName]?.recommendation?.description,
             objectsInViolation: item?.objectsInViolation,
             violationDetails: item?.violationDetails || [],
+            ec2InterfacesToFix: item?.ec2InterfacesToFix || [],
             dismissedObj: data?.dismissedConfigurations?.mtuAlignment
         }
     };

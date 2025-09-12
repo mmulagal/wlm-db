@@ -15,12 +15,12 @@ const MTUOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let id = 0;
-        const mtuData = data?.violationDetails || [];
+        const mtuData = data?.ec2InterfacesToFix || [];
         const processedData = mtuData.map((row: any) => ({
             ...row,
             cellProps: { ...row.cellProps, isDisabled: false },
             id: String(id++),
-            interfaceName: row.interfaceName || row.objectName
+            interfaceName: row.name
         }));
         return processedData;
     }, [data]);
@@ -38,7 +38,7 @@ const MTUOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
         },
         {
             Header: t('databases.well-architect.mtu-value'),
-            accessor: 'value',
+            accessor: 'currentMTU',
             id: '2',
             width: 'auto',
             filterOptions: 'auto',

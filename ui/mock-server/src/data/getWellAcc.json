@@ -987,12 +987,22 @@
                                 {
                                     "objectName": "Ethernet 3",
                                     "value": "9",
-                                    "objectType": "Network Interface"
+                                    "objectType": "Network Interface",
+                                    "recommended": "9001"
                                 }
                             ],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Network Interface"
+                            "resourceType": "Network Interface",
+                            "ec2InterfacesToFix": [
+                                {
+                                    "ec2InstanceId": "i-0759a747cbf629e47",
+                                    "name": "Ethernet 3",
+                                    "currentMTU": 1500,
+                                    "recommendedMTU": 9001,
+                                    "interfaceIndex": 6
+                                }
+                            ]
                         },
                         "license": {
                             "name": "sql-license",
@@ -1484,12 +1494,22 @@
                                 {
                                     "objectName": "Ethernet 3",
                                     "value": "9",
-                                    "objectType": "Network Interface"
+                                    "objectType": "Network Interface",
+                                    "recommended": "9001"
                                 }
                             ],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Network Interface"
+                            "resourceType": "Network Interface",
+                            "ec2InterfacesToFix": [
+                                {
+                                    "ec2InstanceId": "i-0759a747cbf629e47",
+                                    "name": "Ethernet 3",
+                                    "currentMTU": 1500,
+                                    "recommendedMTU": 9001,
+                                    "interfaceIndex": 6
+                                }
+                            ]
                         },
                         "license": {
                             "name": "sql-license",
@@ -2887,12 +2907,22 @@
                                 {
                                     "objectName": "Ethernet 3",
                                     "value": "9",
-                                    "objectType": "Network Interface"
+                                    "objectType": "Network Interface",
+                                    "recommended": "9001"
                                 }
                             ],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Network Interface"
+                            "resourceType": "Network Interface",
+                            "ec2InterfacesToFix": [
+                                {
+                                    "ec2InstanceId": "i-0759a747cbf629e47",
+                                    "name": "Ethernet 3",
+                                    "currentMTU": 1500,
+                                    "recommendedMTU": 9001,
+                                    "interfaceIndex": 6
+                                }
+                            ]
                         },
                         "license": {
                             "name": "sql-license",
@@ -4301,12 +4331,22 @@
                                 {
                                     "objectName": "Ethernet 3",
                                     "value": "9",
-                                    "objectType": "Network Interface"
+                                    "objectType": "Network Interface",
+                                    "recommended": "9001"
                                 }
                             ],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Network Interface"
+                            "resourceType": "Network Interface",
+                            "ec2InterfacesToFix": [
+                                {
+                                    "ec2InstanceId": "i-0759a747cbf629e47",
+                                    "name": "Ethernet 3",
+                                    "currentMTU": 1500,
+                                    "recommendedMTU": 9001,
+                                    "interfaceIndex": 6
+                                }
+                            ]
                         },
                         "license": {
                             "name": "sql-license",
@@ -5704,12 +5744,22 @@
                                 {
                                     "objectName": "Ethernet 3",
                                     "value": "9",
-                                    "objectType": "Network Interface"
+                                    "objectType": "Network Interface",
+                                    "recommended": "9001"
                                 }
                             ],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Network Interface"
+                            "resourceType": "Network Interface",
+                            "ec2InterfacesToFix": [
+                                {
+                                    "ec2InstanceId": "i-0759a747cbf629e47",
+                                    "name": "Ethernet 3",
+                                    "currentMTU": 1500,
+                                    "recommendedMTU": 9001,
+                                    "interfaceIndex": 6
+                                }
+                            ]
                         },
                         "license": {
                             "name": "sql-license",
@@ -7107,12 +7157,22 @@
                                 {
                                     "objectName": "Ethernet 3",
                                     "value": "9",
-                                    "objectType": "Network Interface"
+                                    "objectType": "Network Interface",
+                                    "recommended": "9001"
                                 }
                             ],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Network Interface"
+                            "resourceType": "Network Interface",
+                            "ec2InterfacesToFix": [
+                                {
+                                    "ec2InstanceId": "i-0759a747cbf629e47",
+                                    "name": "Ethernet 3",
+                                    "currentMTU": 1500,
+                                    "recommendedMTU": 9001,
+                                    "interfaceIndex": 6
+                                }
+                            ]
                         },
                         "license": {
                             "name": "sql-license",
@@ -8458,12 +8518,22 @@
                                 {
                                     "objectName": "Ethernet 3",
                                     "value": "9",
-                                    "objectType": "Network Interface"
+                                    "objectType": "Network Interface",
+                                    "recommended": "9001"
                                 }
                             ],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Network Interface"
+                            "resourceType": "Network Interface",
+                            "ec2InterfacesToFix": [
+                                {
+                                    "ec2InstanceId": "i-0759a747cbf629e47",
+                                    "name": "Ethernet 3",
+                                    "currentMTU": 1500,
+                                    "recommendedMTU": 9001,
+                                    "interfaceIndex": 6
+                                }
+                            ]
                         },
                         "license": {
                             "name": "sql-license",
@@ -9799,12 +9869,22 @@
                                 {
                                     "objectName": "Ethernet 3",
                                     "value": "9",
-                                    "objectType": "Network Interface"
+                                    "objectType": "Network Interface",
+                                    "recommended": "9001"
                                 }
                             ],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Network Interface"
+                            "resourceType": "Network Interface",
+                            "ec2InterfacesToFix": [
+                                {
+                                    "ec2InstanceId": "i-0759a747cbf629e47",
+                                    "name": "Ethernet 3",
+                                    "currentMTU": 1500,
+                                    "recommendedMTU": 9001,
+                                    "interfaceIndex": 6
+                                }
+                            ]
                         },
                         "license": {
                             "name": "sql-license",
