@@ -345,7 +345,9 @@ async function getAmiList(
                     '460214486919', // eu-south-1
                     '162367869970', // me-south-1
                     '194652444849', // ca-west-1,
-                    '002667544638' // ap-southeast-5
+                    '002667544638', // ap-southeast-5
+                    '767398017123', // ap-southeast-7
+                    '574179025982' // mx-central-1
                 ]
             })
         });

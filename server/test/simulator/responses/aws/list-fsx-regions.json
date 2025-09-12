@@ -157,6 +157,16 @@
             "Endpoint": "ec2.ap-southeast-5.amazonaws.com",
             "RegionName": "ap-southeast-5",
             "OptInStatus": "opt-in-not-required"
+        },
+        {
+            "Endpoint": "ec2.ap-southeast-7.amazonaws.com",
+            "RegionName": "ap-southeast-7",
+            "OptInStatus": "opt-in-not-required"
+        },
+        {
+            "Endpoint": "ec2.mx-central-1.amazonaws.com",
+            "RegionName": "mx-central-1",
+            "OptInStatus": "opt-in-not-required"
         }
     ]
 }

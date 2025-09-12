@@ -116,6 +116,10 @@ describe('executeSsmDocument', () => {
                     regionName: 'Asia Pacific (Melbourne)'
                 },
                 {
+                    regionCode: 'ap-southeast-7',
+                    regionName: 'Asia Pacific (Thailand)'
+                },
+                {
                     regionCode: 'ca-central-1',
                     regionName: 'Canada (Central)'
                 },
@@ -130,6 +134,10 @@ describe('executeSsmDocument', () => {
                 {
                     regionCode: 'me-central-1',
                     regionName: 'Middle East (UAE)'
+                },
+                {
+                    regionCode: 'mx-central-1',
+                    regionName: 'Mexico (Central)'
                 },
                 {
                     regionCode: 'us-east-1',
