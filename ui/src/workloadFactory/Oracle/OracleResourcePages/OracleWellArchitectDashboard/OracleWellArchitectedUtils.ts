@@ -350,18 +350,16 @@ const getHighestSeverity = (hasCritical: boolean, hasWarning: boolean): string =
 
 // Helper function to process volume item
 const processOntapItem = (item: PerConfigInterface, optimizingData: Record<string, string>, type: 'volume' | 'lun') => {
+    let name = item?.name;
     if (item?.name === 'snapshot-policy') {
-        item = {
-            ...item,
-            name: 'snapshot-policy-vol'
-        };
+        name = 'snapshot-policy-vol';
     }
     const status = optimizingData?.[item?.name || ''] || item?.status || '';
     return {
         ...item,
         id: item?.name,
         type,
-        name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+        name: GETWELL_CONFIG?.[name || ''] || name,
         status: formatValue(status),
         severity: formatValue(item?.severity || ''),
         originalStatus: status

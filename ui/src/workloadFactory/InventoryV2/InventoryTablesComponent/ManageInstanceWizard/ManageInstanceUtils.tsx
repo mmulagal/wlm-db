@@ -63,9 +63,8 @@ const createManageInstanceMessageText = (
 
     if (messageType === 'single') {
         return `${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${engineDisplayName} ${instanceIdentifier} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`;
-    } else {
-        return `${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]} ${engineDisplayName} ${instanceIdentifier} ${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}`;
     }
+    return `${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]} ${engineDisplayName} ${instanceIdentifier} ${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}`;
 };
 
 // Checks if the manage readiness data allows for management actions based on missing permissions and modules
