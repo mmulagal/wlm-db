@@ -1,7 +1,7 @@
 import { useDispatch } from 'react-redux';
+import { DsTypography } from '@tlveng/wlm-ds';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DsTypography } from '@netapp/design-system';
 import styles from './WellArchitectTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
@@ -53,6 +53,7 @@ const WellArchitectTabs = () => {
                             : `${styles.headerPart1}`
                     }
                     onClick={() => handleClick('Overview')}
+                    data-testid="wlm-db-mssql-overview-tab"
                 >
                     {GENERAL.OVERVIEW}
                 </DsTypography>
@@ -72,6 +73,7 @@ const WellArchitectTabs = () => {
                             : `${styles.headerPart1}`
                     }
                     onClick={() => handleClick('Well-architected status')}
+                    data-testid="wlm-db-mssql-well-architected-status-tab"
                 >
                     {GENERAL.WELL_ARCHITECTED_STATUS}
                 </DsTypography>
@@ -109,6 +111,7 @@ const WellArchitectTabs = () => {
                                 : `${styles.headerPart1}`
                         }
                         onClick={() => handleClick('Error investigation')}
+                        data-testid="wlm-db-mssql-error-investigation-tab"
                     >
                         {t('databases.log-analyzer.error-investigation')}
                     </DsTypography>
@@ -133,6 +136,7 @@ const WellArchitectTabs = () => {
                             : `${styles.headerPart1}`
                     }
                     onClick={() => handleClick('Databases')}
+                    data-testid="wlm-db-mssql-databases-tab"
                 >
                     {GENERAL.DATABASES}
                 </DsTypography>
@@ -153,6 +157,7 @@ const WellArchitectTabs = () => {
                             : `${styles.headerPart1}`
                     }
                     onClick={() => handleClick('Sandboxes')}
+                    data-testid="wlm-db-mssql-sandboxes-tab"
                 >
                     {GENERAL.SANDBOXES}
                 </DsTypography>

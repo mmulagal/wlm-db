@@ -134,6 +134,7 @@ const LogAnalyzerOnboarding = () => {
                                 isThin
                                 variant="primary"
                                 isDisabled={!isActive || preReqLoading}
+                                data-testid="wlm-db-mssql-log-analyzer-activate-button"
                             >
                                 {t('databases.log-analyzer.activate')}
                             </DsButton>
