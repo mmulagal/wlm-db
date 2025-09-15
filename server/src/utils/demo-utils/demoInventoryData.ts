@@ -635,9 +635,65 @@ const ASSESMENT_CONFIG_DATA = {
         }
     ],
     layout: {
+        'user-database-layout': {
+            log: [
+                {
+                    name: 'RetailBanking',
+                    lunPath: '/vol/wlmdb_sqldata_1750140716368/sqldata',
+                    lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
+                    svmName: 'wlmdb_sqlsvm_1750140716368',
+                    sizeInMb: 23.8125,
+                    diskNumber: 1,
+                    accessPaths: ['S:\\', '\\\\?\\Volume{68d026b4-dc23-4799-aecb-2bb59d251e32}\\'],
+                    databaseDetails: [
+                        {
+                            name: 'RetailBanking',
+                            sizeInMb: 23.8125
+                        }
+                    ],
+                    lunSerialNumber: 'lWB5g?XW76m/',
+                    ontapVolumeName: 'wlmdb_sqldata_1750140716368',
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620'
+                }
+            ],
+            data: [
+                {
+                    name: 'RetailBanking',
+                    lunPath: '/vol/wlmdb_sqldata_1750140716368/sqldata',
+                    lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
+                    svmName: 'wlmdb_sqlsvm_1750140716368',
+                    sizeInMb: 16.875,
+                    diskNumber: 1,
+                    accessPaths: ['S:\\', '\\\\?\\Volume{68d026b4-dc23-4799-aecb-2bb59d251e32}\\'],
+                    databaseDetails: [
+                        {
+                            name: 'RetailBanking',
+                            sizeInMb: 16.875
+                        }
+                    ],
+                    lunSerialNumber: 'lWB5g?XW76m/',
+                    ontapVolumeName: 'wlmdb_sqldata_1750140716368',
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620'
+                }
+            ],
+            tempDb: [
+                {
+                    name: 'tempdev',
+                    lunPath: '/vol/wlmdb_sqltemp_1750140716368/tempdb',
+                    lunUuid: 'c8bcdf6e-060c-4cb9-b07e-d8036108379f',
+                    svmName: 'wlmdb_sqlsvm_1750140716368',
+                    sizeInMb: 8,
+                    diskNumber: 3,
+                    accessPaths: ['T:\\', '\\\\?\\Volume{f3a06d64-ba64-40e9-af09-123ca22ac071}\\'],
+                    lunSerialNumber: 'lWB5g?XW76mb',
+                    ontapVolumeName: 'wlmdb_sqltemp_1750140716368',
+                    ontapVolumeUuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620'
+                }
+            ]
+        },
         'tempdb-files-location': 'separate-drive',
-        'default-log-files-location': 'separate-drive',
-        'default-data-files-location': 'separate-drive'
+        'default-log-files-location': 'shared-drive',
+        'default-data-files-location': 'shared-drive'
     },
     sizing: {
         'performance-tier': [
@@ -2580,27 +2636,27 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
         'user-database-layout': {
             log: [
                 {
-                    name: 'msdb',
-                    lunPath: '/vol/wlmdb_sqldata_1750140716368/sqldata',
+                    name: 'RetailBanking',
+                    lunPath: '/vol/wlmdb_sqllog_1750140716369/sqllog',
                     lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
                     svmName: 'wlmdb_sqlsvm_1750140716368',
                     sizeInMb: 23.8125,
                     diskNumber: 1,
-                    accessPaths: ['S:\\', '\\\\?\\Volume{68d026b4-dc23-4799-aecb-2bb59d251e32}\\'],
+                    accessPaths: ['S:\\', '\\\\?\\Volume{68d026b4-dc23-4799-aecb-2bb59d251e33}\\'],
                     databaseDetails: [
                         {
-                            name: 'msdb',
+                            name: 'RetailBanking',
                             sizeInMb: 23.8125
                         }
                     ],
                     lunSerialNumber: 'lWB5g?XW76m/',
-                    ontapVolumeName: 'wlmdb_sqldata_1750140716368',
-                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620'
+                    ontapVolumeName: 'wlmdb_sqllog_1750140716368',
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e621'
                 }
             ],
             data: [
                 {
-                    name: 'msdb',
+                    name: 'RetailBanking',
                     lunPath: '/vol/wlmdb_sqldata_1750140716368/sqldata',
                     lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
                     svmName: 'wlmdb_sqlsvm_1750140716368',
@@ -2609,7 +2665,7 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
                     accessPaths: ['S:\\', '\\\\?\\Volume{68d026b4-dc23-4799-aecb-2bb59d251e32}\\'],
                     databaseDetails: [
                         {
-                            name: 'msdb',
+                            name: 'RetailBanking',
                             sizeInMb: 16.875
                         }
                     ],

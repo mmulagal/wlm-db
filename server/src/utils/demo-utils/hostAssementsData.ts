@@ -1,7 +1,7 @@
 const mockResourceAssessmentData = {
     assessment: {
         compute: {
-            finding: 'over-provisioned',
+            finding: 'OVER_PROVISIONED',
             findingReasonCodes: [
                 'CPUOverprovisioned',
                 'EBSIOPSOverprovisioned',
@@ -522,7 +522,7 @@ const mockResourceAssessmentData = {
 const mockResourceAssessmentDataAllOptimized = {
     assessment: {
         compute: {
-            finding: 'optimized',
+            finding: 'OPTIMIZED',
             findingReasonCodes: [],
             currentInstanceType: 'r7i.xlarge',
             recommendationOptions: []
