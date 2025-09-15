@@ -65,7 +65,7 @@ async function cloneIssue(owner, repo, issueNumber) {
     const { data: subIssues } = await octokit.rest.issues.listSubIssues({
             owner,
             repo,
-            issue_number: issueNumber,
+            issue_number: ISSUE_NUMBER,
         });
     console.log("Found sub-issues:", subIssues.map(i => i.number));
 
