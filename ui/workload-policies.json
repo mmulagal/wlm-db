@@ -211,10 +211,7 @@
             {
                 "Sid": "IAMGroup3",
                 "Effect": "Allow",
-                "Action": [
-                    "iam:PassRole",
-                    "iam:CreateRole"
-                ],
+                "Action": "iam:PassRole",
                 "Resource": [
                     "arn:aws:iam::*:instance-profile/*",
                     "arn:aws:iam::*:role/WLMDB*"
@@ -224,6 +221,12 @@
                         "iam:PassedToService": "ec2.amazonaws.com"
                     }
                 }
+            },
+            {
+                "Sid": "IAMGroup4",
+                "Effect": "Allow",
+                "Action": "iam:CreateRole",
+                "Resource": "arn:aws:iam::*:role/WLMDB*"
             },
             {
                 "Sid": "SSMParameterStore",
