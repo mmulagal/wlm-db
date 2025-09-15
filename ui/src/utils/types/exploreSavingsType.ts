@@ -9,12 +9,20 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
+    showOptimizeMode: {
+        optimizeLoading: boolean;
+        showCalcMode: boolean;
+    };
     exploreSavingsRouteTab: string;
     serverDetails: {
         password: string;
         userName: string;
     };
     selectedAuthenticationType: string;
+    selectedCalculatorMode: string;
+    hasFetched: boolean;
+    showOptimizeLink: boolean;
+    showOptimizedModal: boolean;
     regionChangeInstanceLoading: boolean;
     onPremiseData: any;
     onPremiseDataLoading: boolean;
@@ -47,10 +55,14 @@ export interface ExploreSavingsSliceEntities {
     selectedPartnerHostDetails: any;
     getPartnerHostDetailsLoading: boolean;
     storageSavingsResponse: StorageSavingsInterface;
+    optimizedStorageSavingsResponse: StorageSavingsInterface;
+    standardStorageSavingsResponse: StorageSavingsInterface;
     storageSavingsLoading: boolean;
     savingsCalculatorRefresh: boolean;
     selectedDeploymentModel: string;
     viewCalculationsResponse: ViewCalculationsInterface | null;
+    optimizedViewCalculationsResponse: ViewCalculationsInterface | null;
+    standardViewCalculationsResponse: ViewCalculationsInterface | null;
     viewCalculationsApiResponse: ViewCalculationsInterface | null;
     viewCalculationsLoading: boolean;
     savingsCalculatorFrom: string | null;
@@ -128,6 +140,17 @@ export interface StorageSavingsInterface {
         recommended?: RecommendedLicense;
     };
     recommendedInstance?: any;
+    fsxOptimized?: {
+        capacity?: number | string;
+        iops?: number | string;
+        throughput?: number | string;
+        snapshots?: number | string;
+        clones?: number | string;
+        compute?: number | string;
+        license?: number | string;
+        total?: number | string;
+    };
+    fsxOptimizedSingle?: StorageSavingsFsxnForAZ;
 }
 
 export interface StorageSavingsFsxnForAZ {
@@ -281,6 +304,11 @@ export interface ViewCalculationsInterface {
         provisionedThroughputCapacity?: number | string;
         fsxwThroughputPrice?: number | string;
         totalMonthlyCostForThroughputCapacity?: number | string;
+    };
+    fsxOptimizedSingle?: {
+        fsxOntapCalculation?: FsxOntapCalculation;
+        fsxOntapSnapshotCalculation?: FsxOntapSnapshotCalculation;
+        fsxCloneCalculation?: FsxCloneCalculation;
     };
 }
 

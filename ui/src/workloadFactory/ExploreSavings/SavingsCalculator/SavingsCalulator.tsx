@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import { useEffect, useRef, useState } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
@@ -15,6 +16,7 @@ import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionDisable.svg';
 import { ReactComponent as CalculateIcon } from '../../../assets/ic_calculateicon.svg';
+import { ReactComponent as LightIcon } from '../../../assets/lighticon.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
 
 import ExportPDF from './ExportPDF/ExportPDF';
@@ -22,6 +24,7 @@ import downloadPdf from '../../../common/pdfGenerator';
 import { GENERAL } from '../../../utils/appConstants';
 import {
     addExploreSavingsInitialData,
+    setShowOptimizeModal,
     setStorageSavingsResponse,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -32,7 +35,7 @@ import ManualEC2 from './ManualEC2/ManualEC2';
 import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 
-import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
+import { formatStorageSavingsRecommendedData } from '../ExploreSavingsUtils';
 import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
 import WindowFileServer from './WindowFileServer/WindowFileServer';
@@ -43,8 +46,12 @@ import OnPremRegion from './OnPremRegion/OnPremRegion';
 import downloadPdfEmail from '../../../common/emailPDF';
 import CalculateSavingCard from './CalculateSavingCard/CalculateSavingCard';
 import { useGetSendEmailMutation } from '../../../utils/apiService';
+import OptimizedModel from './OptimizedModel/OptimizedModel';
+import CalculatorMode from './CalculatorMode/CalculatorMode';
+import { prepareViewCalcData } from './savingsUtil';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
@@ -65,7 +72,10 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         viewCalculationsApiResponse,
         viewCalculationsResponse,
         disableState,
-        selectedExploreSavingsTab
+        selectedExploreSavingsTab,
+        showOptimizedModal,
+        showOptimizeLink,
+        showOptimizeMode
     } = useAppSelector(state => state.exploreSavings);
 
     const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
@@ -85,11 +95,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
         if (viewCalculationsApiResponse) {
-            dispatch(
-                setViewCalculationsResponse(
-                    formatViewCalcData(viewCalculationsApiResponse, selectedDeploymentModel, monthlyChangeRate)
-                )
-            );
+            prepareViewCalcData(viewCalculationsApiResponse, dispatch, selectedDeploymentModel, monthlyChangeRate);
         } else {
             dispatch(setViewCalculationsResponse(null));
         }
@@ -236,6 +242,10 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         }
         return `${styles.firstContainer} `;
     };
+
+    const handleOptimizeLinkButton = () => {
+        dispatch(setShowOptimizeModal(true));
+    };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -286,6 +296,14 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         <DsTypography variant="Regular_24" style={{ width: '100%' }}>
                             {GENERAL.SAVINGS_CALCULATOR}
                         </DsTypography>
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && showOptimizeLink && (
+                            <div className={styles.optimizeLinkContainer}>
+                                <LightIcon />
+                                <DsButton type="text" onClick={handleOptimizeLinkButton}>
+                                    {t('databases.explore-savings.optimize-your-calculation')}
+                                </DsButton>
+                            </div>
+                        )}
                         {(!statusData || statusData?.isActive === false) &&
                             (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                                 savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) && (
@@ -309,6 +327,12 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             />
                         )}
                     </div>
+
+                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && showOptimizeMode?.showCalcMode && (
+                        <div className={styles.optimizeModeContainer}>
+                            <CalculatorMode />
+                        </div>
+                    )}
 
                     <div
                         className={
@@ -381,6 +405,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         )}
 
                         {/* Right side code here */}
+
                         <div className={styles.secondContainer}>
                             <div className={styles.firstSection}>
                                 <CostSavings disableState={disableState} />
@@ -427,6 +452,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     emailStatus={printState}
                 />
             </div>
+
+            {showOptimizedModal && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && <OptimizedModel />}
         </div>
     );
 };

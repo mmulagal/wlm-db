@@ -71,7 +71,7 @@ const Home = () => {
         }
     }, [navigationPath]);
 
-    //To set dashboard highlight
+    // To set dashboard highlight
     useEffect(() => {
         if (isWorkloadFactory && initialPathName === '/databases') {
             postBlueXPMessage({

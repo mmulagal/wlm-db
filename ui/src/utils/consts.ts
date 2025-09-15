@@ -1080,3 +1080,8 @@ export const INVENTORY_BANNER_FILTER_OPTIONS = {
     NOT_REGISTERED_DATABASES: 'Not registered databases',
     NOT_OPTIMIZED_DATABASES: 'Not-optimized databases'
 };
+
+export const TCO_CALCULATOR_MODE = {
+    OPTIMIZED: 'optimized',
+    STANDARD: 'standard'
+};

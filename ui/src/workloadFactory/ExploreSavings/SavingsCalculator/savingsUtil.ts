@@ -26,6 +26,15 @@ import {
     WLF_TABS
 } from '../../../utils/consts';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import {
+    setOptimizedStorageSavingsResponse,
+    setOptimizedViewCalculationResponse,
+    setStorageSavingsResponse,
+    setViewCalculationsApiResponse,
+    setViewCalculationsResponse
+} from '../../../store/workloadFactory/exploreSavingsSlice';
+import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
+import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../utils/types/exploreSavingsType';
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
@@ -2049,4 +2058,79 @@ export const checkIfEbsProtected = (selectedHostDetailsD?: any, perfMssqlInstanc
         }
     }
     return '';
+};
+
+export const prepareViewCalcData = (
+    apiResponse: ViewCalculationsInterface,
+    dispatch: any,
+    selectedDeploymentModel: string,
+    monthlyChangeRate: string
+) => {
+    const formattedData = formatViewCalcData(apiResponse, selectedDeploymentModel, monthlyChangeRate);
+    if (apiResponse?.fsxOptimizedSingle) {
+        let optimizedViewData = {
+            ...apiResponse
+        };
+        if (apiResponse?.single) {
+            optimizedViewData = {
+                ...optimizedViewData,
+                single: apiResponse?.fsxOptimizedSingle
+            };
+        } else {
+            optimizedViewData = {
+                ...optimizedViewData,
+                multi: apiResponse?.fsxOptimizedSingle
+            };
+        }
+        const optimizedFormattedData = formatViewCalcData(
+            optimizedViewData,
+            selectedDeploymentModel,
+            monthlyChangeRate
+        );
+        dispatch(
+            setOptimizedViewCalculationResponse({
+                standard: formattedData,
+                optimized: optimizedFormattedData
+            })
+        );
+        dispatch(setViewCalculationsResponse(optimizedFormattedData));
+    } else {
+        dispatch(setViewCalculationsResponse(formattedData));
+    }
+};
+
+export const prepareStorageSavingsData = (apiResponse: StorageSavingsInterface, dispatch: any) => {
+    const formattedData = formatStorageSavingsRecommendedData(apiResponse);
+    if (apiResponse?.fsxOptimized) {
+        const recommendedDiff = Number(apiResponse?.fsx?.total) - Number(apiResponse?.fsxOptimized?.total);
+        let optimizedStorageData = {
+            ...apiResponse,
+            fsx: apiResponse?.fsxOptimized,
+            totalSummary: {
+                ...apiResponse?.totalSummary,
+                recommended: Number(apiResponse?.totalSummary?.recommended) - recommendedDiff
+            }
+        };
+        if (apiResponse?.single) {
+            optimizedStorageData = {
+                ...optimizedStorageData,
+                single: apiResponse?.fsxOptimizedSingle
+            };
+        } else {
+            optimizedStorageData = {
+                ...optimizedStorageData,
+                multi: apiResponse?.fsxOptimizedSingle
+            };
+        }
+        const optimizedFormattedData = formatStorageSavingsRecommendedData(optimizedStorageData);
+        dispatch(
+            setOptimizedStorageSavingsResponse({
+                standard: formattedData,
+                optimized: optimizedFormattedData
+            })
+        );
+        dispatch(setStorageSavingsResponse(optimizedFormattedData));
+    } else {
+        dispatch(setStorageSavingsResponse(formattedData));
+    }
 };

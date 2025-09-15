@@ -10,6 +10,7 @@ import {
 } from '../../../utils/apiService';
 import {
     addOnPremRegionsList,
+    resetOptimizedStorage,
     setDisableState,
     setGetPartnerHostDetailsLoading,
     setOnPremRegionsLoading,
@@ -20,6 +21,7 @@ import {
     setSelectedPartnerHostDetails,
     setSelectedPartnerInstanceId,
     setSelectedSnapshotFrequency,
+    setShowFirstTimeOptimize,
     setSnapshotLoading,
     setStorageSavingsLoading,
     setStorageSavingsOnPremLoading,
@@ -42,7 +44,7 @@ import {
     SNAPSHOT_FREQUENCY
 } from '../../../utils/consts';
 import { addInstanceIdToGetPerf, uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
-import { checkIfEbsProtected } from './savingsUtil';
+import { checkIfEbsProtected, prepareStorageSavingsData, prepareViewCalcData } from './savingsUtil';
 
 interface ONPREM_PAYLOAD {
     regionCode?: string;
@@ -84,7 +86,8 @@ const SavingsCalculatorApi = () => {
         onPremNetworkPerformance,
         onPremStorageAndComputeInfo,
         selectedExCredId,
-        selectedExRegionId
+        selectedExRegionId,
+        showOptimizeMode
     } = useAppSelector(state => state.exploreSavings);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -258,15 +261,20 @@ const SavingsCalculatorApi = () => {
                         : 'fsxw'
             });
             if (result && !result?.error) {
-                dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
+                prepareStorageSavingsData(result?.data, dispatch);
+                if (result?.data?.fsxOptimized && !showOptimizeMode?.showCalcMode) {
+                    dispatch(setShowFirstTimeOptimize(null));
+                }
                 dispatch(setStorageSavingsLoading(false));
             } else {
                 dispatch(setStorageSavingsLoading(false));
                 dispatch(setStorageSavingsResponse(null));
+                dispatch(resetOptimizedStorage());
             }
         } catch (error) {
             dispatch(setStorageSavingsResponse(null));
             dispatch(setStorageSavingsLoading(false));
+            dispatch(resetOptimizedStorage());
         }
     };
 
@@ -301,12 +309,8 @@ const SavingsCalculatorApi = () => {
                         : 'fsxw'
             });
             if (result && !result?.error) {
+                prepareViewCalcData(result?.data, dispatch, selectedDeploymentModel, monthlyChangeRate);
                 dispatch(setViewCalculationsApiResponse(result?.data));
-                dispatch(
-                    setViewCalculationsResponse(
-                        formatViewCalcData(result?.data, selectedDeploymentModel, monthlyChangeRate)
-                    )
-                );
                 dispatch(setViewCalculationsLoading(false));
             } else {
                 dispatch(setViewCalculationsLoading(false));

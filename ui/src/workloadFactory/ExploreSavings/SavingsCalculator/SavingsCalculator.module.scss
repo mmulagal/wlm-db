@@ -14,6 +14,10 @@
         }
     }
 
+    .optimizeModeContainer {
+        padding: 24px 125px 0px;
+    }
+
     .savingsHeading {
         margin: 0 auto;
 
@@ -22,6 +26,15 @@
         justify-content: space-between;
         position: relative;
         align-items: center;
+
+        .optimizeLinkContainer {
+            position: relative;
+            top: 12px;
+
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
     }
 
     .savingsHeadingOnPremise {
@@ -173,7 +186,7 @@
 @media screen and (min-width: 1920px) {
     .savingsCalculator {
         .savingsHeading {
-            width: 100%;
+            width: 95%;
             padding: 0px 120px 0px;
             padding-top: 24px;
         }

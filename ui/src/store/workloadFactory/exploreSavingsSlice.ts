@@ -1,8 +1,13 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { ExploreSavingsSliceEntities } from '../../utils/types/exploreSavingsType';
-import { WLF_TABS } from '../../utils/consts';
+import { TCO_CALCULATOR_MODE, WLF_TABS } from '../../utils/consts';
 
 export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
+    showOptimizeMode: {
+        optimizeLoading: false,
+        showCalcMode: false
+    },
+    selectedCalculatorMode: TCO_CALCULATOR_MODE.OPTIMIZED,
     selectedSnapshotFrequency: null,
     numberOfClonedCopies: 1,
     selectedCloneRefresh: null,
@@ -21,10 +26,16 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedPartnerHostDetails: {},
     getPartnerHostDetailsLoading: false,
     storageSavingsResponse: {},
+    optimizedStorageSavingsResponse: {},
+    standardStorageSavingsResponse: {},
+    hasFetched: false,
+    showOptimizedModal: false,
     storageSavingsLoading: false,
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: '',
     viewCalculationsResponse: null,
+    optimizedViewCalculationsResponse: {},
+    standardViewCalculationsResponse: {},
     viewCalculationsApiResponse: null,
     viewCalculationsLoading: false,
     savingsCalculatorFrom: null,
@@ -145,6 +156,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         userName: ''
     },
     selectedAuthenticationType: '',
+    showOptimizeLink: false,
     exploreSavingsRouteTab: WLF_TABS.EXPLORE_SAVINGS_EBS
 };
 
@@ -152,6 +164,41 @@ const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setShowOptimizeMode(state, action: PayloadAction<{ optimizeLoading: boolean; showCalcMode: boolean }>) {
+            state.showOptimizeMode = action.payload;
+        },
+        setSelectedCalculatorMode: (state, action: PayloadAction<any>) => {
+            state.selectedCalculatorMode = action.payload;
+        },
+        setOptimizedStorageSavingsResponse(state, action: PayloadAction<any>) {
+            state.optimizedStorageSavingsResponse = action.payload?.optimized;
+            state.standardStorageSavingsResponse = action.payload?.standard;
+        },
+        setShowFirstTimeOptimize(state, action: PayloadAction<any>) {
+            state.hasFetched = true;
+            state.showOptimizedModal = true; // show modal first time after fetch
+            state.showOptimizeLink = false; // show link after first fetch
+        },
+        setOptimizedViewCalculationResponse(state, action: PayloadAction<any>) {
+            state.optimizedViewCalculationsResponse = action.payload?.optimized;
+            state.standardViewCalculationsResponse = action.payload?.standard;
+        },
+        setShowOptimizeModal(state, action: PayloadAction<boolean>) {
+            state.showOptimizedModal = action.payload;
+        },
+        setOptimizeLink(state, action: PayloadAction<boolean>) {
+            state.showOptimizeLink = action.payload;
+            state.showOptimizedModal = false;
+        },
+        resetOptimizedStorage(state) {
+            state.optimizedStorageSavingsResponse = {};
+            state.standardStorageSavingsResponse = {};
+            state.optimizedViewCalculationsResponse = {};
+            state.standardViewCalculationsResponse = {};
+            state.hasFetched = false;
+            state.showOptimizedModal = false;
+            state.showOptimizeLink = false;
+        },
         setExploreSavingsRouteTab: (state, action: PayloadAction<string>) => {
             state.exploreSavingsRouteTab = action.payload;
         },
@@ -517,6 +564,13 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setShowOptimizeMode,
+    setSelectedCalculatorMode,
+    setShowOptimizeModal,
+    setOptimizeLink,
+    resetOptimizedStorage,
+    setOptimizedStorageSavingsResponse,
+    setOptimizedViewCalculationResponse,
     setExploreSavingsRouteTab,
     setCredentials,
     setSelectedAuthenticationType,
@@ -588,7 +642,8 @@ export const {
     setOnPremStorageAndComputeInfo,
     setOnPremStorageAndComputeInfoFull,
     setSelectedEsPageInstance,
-    resetServerDetailsCredentials
+    resetServerDetailsCredentials,
+    setShowFirstTimeOptimize
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

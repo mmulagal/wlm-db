@@ -728,7 +728,15 @@
             "connect-sql": "CONNECT SQL",
             "permissions-required-heading": "Another method of authentication is to add the missing SQL Server permissions.",
             "permissions-required-content": "Ensure that the following SQL Server permissions are granted to the NT Authority\\SYSTEM user. After permissions are granted, select Explore savings again.",
-            "missing-sql-permissions": "Missing SQL Server permissions"
+            "missing-sql-permissions": "Missing SQL Server permissions",
+            "select-calculator-mode": "Select calculator mode",
+            "optimized-based-on-usage": "Optimized (based on usage)",
+            "standard": "Standard",
+            "optimize-dialog-title": "Optimize the FSx for ONTAP and save more",
+            "optimize-dialog-description": "Workload Factory can analyze your performance usage and then suggest the best and more cost-efficient configuration for FSx for ONTAP so that you can save more.",
+            "maybe-later": "Maybe later",
+            "optimize-savings": "Optimize savings",
+            "optimize-your-calculation": "Optimize your calculation"
         },
         "instance-table": {
             "headers": {

@@ -90,7 +90,7 @@
     },
     "single": {
         "fsxCalculation": {
-            "deploymentType": "Multi",
+            "deploymentType": "Single",
             "numberOfVolumes": 1,
             "throughput": 128,
             "totalStorageCapacity": 10995116277760,
@@ -114,5 +114,40 @@
             "fsxBufferVolumeSize": 1832519379627,
             "fsxStorageCapacity": 10995116277760
         }
+    },
+    "fsxOptimizedSingle": {
+        "fsxCalculation": {
+            "deploymentType": "Single",
+            "numberOfVolumes": 1,
+            "throughput": 128,
+            "totalStorageCapacity": 10995116277760,
+            "percentageSsd": 100,
+            "savings": 0,
+            "effectiveCapacity": 10995116277760,
+            "ssdTierReqCapacity": 10995116277760,
+            "capacityPoolTier": 0,
+            "ssdIop": 40000,
+            "throughputCapacity": 1024,
+            "useCase": "Low-latency",
+            "regionName": "US East (N. Virginia)",
+            "monthlySnapshotCapacity": 52776558133248
+        },
+        "fsxBreakdown": {
+            "fsxDataLunSize": 6162018113221,
+            "fsxDataVolumeSize": 6778219924544,
+            "fsxLogVolumeSize": 1694554981136,
+            "fsxTempDbVolumeSize": 677821992455,
+            "fsxQuorumVolumeSize": 12000000000,
+            "fsxBufferVolumeSize": 1832519379627,
+            "fsxStorageCapacity": 10995116277760
+        }
+    },
+    "fsxOptimized": {
+        "capacity": 2560,
+        "iops": 205.52,
+        "throughput": 208.8,
+        "snapshots": 3166.37,
+        "clones": 204.8,
+        "total": 6345.49
     }
 }
