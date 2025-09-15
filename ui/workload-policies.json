@@ -220,15 +220,7 @@
                 "Sid": "IAMGroup4",
                 "Effect": "Allow",
                 "Action": "iam:CreateRole",
-                "Resource": "*",
-                "Condition": {
-                    "StringLike": {
-                        "sts:RoleSessionName": "WLMDB*"
-                    },
-                    "StringEquals": {
-                        "iam:PassedToService": "ec2.amazonaws.com"
-                    }
-                }
+                "Resource": "arn:aws:iam::*:role/WLMDB*"
             },
             {
                 "Sid": "SSMParameterStore",
