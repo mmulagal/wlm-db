@@ -4,7 +4,7 @@
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": "EC2Group",
+                "Sid": "EC2TagGroup",
                 "Effect": "Allow",
                 "Action": [
                     "ec2:AllocateAddress",
@@ -55,7 +55,9 @@
             {
                 "Sid": "FSxNGroup",
                 "Effect": "Allow",
-                "Action": ["fsx:TagResource"],
+                "Action": [
+                    "fsx:TagResource"
+                ],
                 "Resource": "*",
                 "Condition": {
                     "StringLike": {
@@ -82,27 +84,50 @@
                     "ec2:CreateSecurityGroup",
                     "ec2:CreateTags",
                     "ec2:CreateVpcEndpoint",
-                    "ec2:Describe*",
-                    "ec2:Get*",
+                    "ec2:DescribeInstances",
+                    "ec2:DescribeVolumes",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeImages",
+                    "ec2:DescribeKeyPairs",
+                    "ec2:DescribeVpcs",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeTags",
+                    "ec2:DescribeAddresses",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DescribeRegions",
+                    "ec2:DescribeRouteTables",
+                    "ec2:DescribeInstanceTypes",
+                    "ec2:DescribeVpcEndpoints",
+                    "ec2:DescribeInstanceTypeOfferings",
+                    "ec2:DescribeSnapshots",
+                    "ec2:DescribeLaunchTemplates",
                     "ec2:RunInstances",
                     "ec2:ModifyVpcAttribute",
-                    "ec2messages:*",
                     "fsx:CreateFileSystem",
                     "fsx:UpdateFileSystem",
                     "fsx:CreateStorageVirtualMachine",
                     "fsx:CreateVolume",
                     "fsx:UpdateVolume",
-                    "fsx:Describe*",
-                    "fsx:List*",
+                    "fsx:DescribeFileSystems",
+                    "fsx:DescribeStorageVirtualMachines",
+                    "fsx:DescribeVolumes",
+                    "fsx:DescribeFileSystemAliases",
+                    "fsx:ListTagsForResource",
                     "kms:CreateGrant",
-                    "kms:Describe*",
-                    "kms:List*",
+                    "kms:DescribeKey",
+                    "kms:DescribeCustomKeyStores",
+                    "kms:ListAliases",
+                    "kms:ListKeys",
                     "kms:GenerateDataKey",
                     "kms:Decrypt",
                     "logs:CreateLogGroup",
                     "logs:CreateLogStream",
-                    "logs:DescribeLog*",
-                    "logs:GetLog*",
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                    "logs:GetLogEvents",
+                    "logs:GetLogGroupFields",
+                    "logs:GetLogRecord",
+                    "logs:GetQueryResults",
                     "logs:ListLogDeliveries",
                     "logs:PutLogEvents",
                     "logs:TagResource",
@@ -110,9 +135,13 @@
                     "servicequotas:ListServiceQuotas",
                     "sns:ListTopics",
                     "sns:Publish",
-                    "ssm:Describe*",
-                    "ssm:Get*",
-                    "ssm:List*",
+                    "ssm:DescribeInstanceInformation",
+                    "ssm:DescribeInstancePatchStates",
+                    "ssm:DescribePatchBaselines",
+                    "ssm:GetParametersByPath",
+                    "ssm:GetCommandInvocation",
+                    "ssm:GetConnectionStatus",
+                    "ssm:ListCommands",
                     "ssm:PutComplianceItems",
                     "ssm:PutConfigurePackageResult",
                     "ssm:PutInventory",
@@ -120,7 +149,10 @@
                     "ssm:UpdateAssociationStatus",
                     "ssm:UpdateInstanceAssociationStatus",
                     "ssm:UpdateInstanceInformation",
-                    "ssmmessages:*",
+                    "ssmmessages:CreateControlChannel",
+                    "ssmmessages:CreateDataChannel",
+                    "ssmmessages:OpenControlChannel",
+                    "ssmmessages:OpenDataChannel",
                     "compute-optimizer:GetEnrollmentStatus",
                     "compute-optimizer:PutRecommendationPreferences",
                     "compute-optimizer:GetEffectiveRecommendationPreferences",
@@ -128,36 +160,43 @@
                     "autoscaling:DescribeAutoScalingGroups",
                     "autoscaling:DescribeAutoScalingInstances",
                     "bedrock:GetFoundationModelAvailability",
-                    "bedrock:ListInferenceProfiles"
+                    "bedrock:ListInferenceProfiles",
+                    "iam:GetPolicy",
+                    "iam:GetPolicyVersion",
+                    "iam:GetRole",
+                    "iam:GetRolePolicy",
+                    "iam:GetUser"
                 ],
                 "Resource": "*"
             },
             {
                 "Sid": "ArnGroup",
                 "Effect": "Allow",
-                "Action": ["cloudformation:SignalResource"],
-                "Resource": ["arn:aws:cloudformation:*:*:stack/WLMDB*", "arn:aws:logs:*:*:log-group:WLMDB*"]
+                "Action": [
+                    "cloudformation:SignalResource"
+                ],
+                "Resource": [
+                    "arn:aws:cloudformation:*:*:stack/WLMDB*",
+                    "arn:aws:logs:*:*:log-group:WLMDB*"
+                ]
             },
             {
-                "Sid": "IAMGroup",
+                "Sid": "IAMGroup1",
                 "Effect": "Allow",
                 "Action": [
                     "iam:AddRoleToInstanceProfile",
                     "iam:CreateInstanceProfile",
-                    "iam:CreateRole",
                     "iam:DeleteInstanceProfile",
-                    "iam:GetPolicy",
-                    "iam:GetPolicyVersion",
-                    "iam:GetRole",
-                    "iam:GetRolePolicy",
-                    "iam:GetUser",
                     "iam:PutRolePolicy",
                     "iam:RemoveRoleFromInstanceProfile"
                 ],
-                "Resource": "*"
+                "Resource": [
+                    "arn:aws:iam::*:instance-profile/*",
+                    "arn:aws:iam::*:role/WLMDB*"
+                ]
             },
             {
-                "Sid": "IAMGroup1",
+                "Sid": "IAMGroup2",
                 "Effect": "Allow",
                 "Action": "iam:CreateServiceLinkedRole",
                 "Resource": "*",
@@ -168,7 +207,7 @@
                 }
             },
             {
-                "Sid": "IAMGroup2",
+                "Sid": "IAMGroup3",
                 "Effect": "Allow",
                 "Action": "iam:PassRole",
                 "Resource": "*",
@@ -179,9 +218,28 @@
                 }
             },
             {
+                "Sid": "IAMGroup4",
+                "Effect": "Allow",
+                "Action": "iam:CreateRole",
+                "Resource": "*",
+                "Condition": {
+                    "StringLike": {
+                        "sts:RoleSessionName": "WLMDB*"
+                    },
+                    "StringEquals": {
+                        "iam:PassedToService": "ec2.amazonaws.com"
+                    }
+                }
+            },
+            {
                 "Sid": "SSMParameterStore",
                 "Effect": "Allow",
-                "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameters"],
+                "Action": [
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
+                    "ssm:PutParameter",
+                    "ssm:DeleteParameters"
+                ],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }
         ]
