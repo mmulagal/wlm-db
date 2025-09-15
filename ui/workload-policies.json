@@ -198,7 +198,10 @@
                 "Sid": "IAMGroup2",
                 "Effect": "Allow",
                 "Action": "iam:CreateServiceLinkedRole",
-                "Resource": "*",
+                "Resource": [
+                    "arn:aws:iam::*:instance-profile/*",
+                    "arn:aws:iam::*:role/WLMDB*"
+                ],
                 "Condition": {
                     "StringLike": {
                         "iam:AWSServiceName": "ec2.amazonaws.com"
@@ -208,19 +211,19 @@
             {
                 "Sid": "IAMGroup3",
                 "Effect": "Allow",
-                "Action": "iam:PassRole",
-                "Resource": "*",
+                "Action": [
+                    "iam:PassRole",
+                    "iam:CreateRole"
+                ],
+                "Resource": [
+                    "arn:aws:iam::*:instance-profile/*",
+                    "arn:aws:iam::*:role/WLMDB*"
+                ],
                 "Condition": {
                     "StringEquals": {
                         "iam:PassedToService": "ec2.amazonaws.com"
                     }
                 }
-            },
-            {
-                "Sid": "IAMGroup4",
-                "Effect": "Allow",
-                "Action": "iam:CreateRole",
-                "Resource": "arn:aws:iam::*:role/WLMDB*"
             },
             {
                 "Sid": "SSMParameterStore",
