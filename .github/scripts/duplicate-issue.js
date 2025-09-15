@@ -5,6 +5,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
 const ISSUE_NUMBER = parseInt(process.env.ISSUE_NUMBER, 10);
 
+
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 const graphqlWithAuth = graphql.defaults({
     headers: { authorization: `token ${GITHUB_TOKEN}` }
@@ -60,7 +61,12 @@ async function cloneIssue(owner, repo, issueNumber) {
 
 (async () => {
     // 1. Get all sub-issues (children) of the parent issue
-    const subIssues = await getChildIssues(owner, repo, ISSUE_NUMBER);
+    // const subIssues = await getChildIssues(owner, repo, ISSUE_NUMBER);
+    const { data: subIssues } = await octokit.rest.issues.listSubIssues({
+            owner,
+            repo,
+            issue_number: issueNumber,
+        });
     console.log("Found sub-issues:", subIssues.map(i => i.number));
 
     // 2. Clone each sub-issue
