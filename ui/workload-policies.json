@@ -127,7 +127,6 @@
                     "logs:GetLogEvents",
                     "logs:GetLogGroupFields",
                     "logs:GetLogRecord",
-                    "logs:GetQueryResults",
                     "logs:ListLogDeliveries",
                     "logs:PutLogEvents",
                     "logs:TagResource",
