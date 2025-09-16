@@ -198,6 +198,10 @@ const exploreSavingsSlice = createSlice({
             state.hasFetched = false;
             state.showOptimizedModal = false;
             state.showOptimizeLink = false;
+            state.showOptimizeMode = {
+                optimizeLoading: false,
+                showCalcMode: false
+            };
         },
         setExploreSavingsRouteTab: (state, action: PayloadAction<string>) => {
             state.exploreSavingsRouteTab = action.payload;

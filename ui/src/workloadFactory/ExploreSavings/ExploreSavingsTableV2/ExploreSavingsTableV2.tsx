@@ -21,7 +21,10 @@ import useResize from '../../../common/hooks/useResize';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import AuthDialog from './AuthDialog/AuthDialog';
 import { useRegisterResourceCredentialsBulkMutation } from '../../../utils/apiService';
-import { resetServerDetailsCredentials } from '../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    resetOptimizedStorage,
+    resetServerDetailsCredentials
+} from '../../../store/workloadFactory/exploreSavingsSlice';
 import { resetDialogComponent } from '../../../store/workloadFactory/dialogComponentSlice';
 
 const ExploreSavingsTableV2 = () => {
@@ -155,6 +158,7 @@ const ExploreSavingsTableV2 = () => {
             <div
                 className={styles.detectManage}
                 onClick={() => {
+                    dispatch(resetOptimizedStorage());
                     shouldAuthDialogOpen(rowData)
                         ? handleDialog(rowData)
                         : onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
