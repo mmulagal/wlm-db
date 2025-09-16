@@ -1,7 +1,7 @@
 import { STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandOutput, DeviceType, Volume } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
-import { compact, isEmpty } from 'lodash-es';
+import { compact, isEmpty, omit } from 'lodash-es';
 import throat from 'throat';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { listResources } from '../lib/database/db';
@@ -1010,6 +1010,14 @@ async function getDatabaseHostSummaryV2(
                 });
 
                 databaseHostDetails.storageAllocation = { fsxn: totalFsxnSize, fsxw: totalFsxwSize, ebs: totalEbsSize };
+            }
+            if (resourceType === DatabaseTypes.ORACLE && instanceResults?.length > 0) {
+                databaseHostDetails.platform = instanceResults.find((d: DatabaseHostInstanceSummaryResponseType) =>
+                    Boolean(d?.platform)
+                )?.platform;
+                instanceResults = instanceResults.map((d: DatabaseHostInstanceSummaryResponseType) =>
+                    omit(d, 'platform')
+                );
             }
 
             if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {

@@ -519,7 +519,9 @@ const DatabaseInstanceTopology = Type.Object({
 type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;
 
 const DatabaseHostInstanceSummaryResponse = Type.Object({
-    tenancy: Type.Optional(OracleDeploymentTenacyType),
+    tenancy: Type.Optional(OracleDeploymentTenacyType), // Oracle specific
+    isInstanceStorageAsmManaged: Type.Optional(Type.Boolean()), // Oracle specific
+    platform: Type.Optional(Type.String()), // Oracle specific
     databaseInstanceId: Type.String(),
     databaseInstanceName: Type.String(),
     status: Type.String({ enum: [ServerState.UP, ServerState.DOWN, NOT_AVAILABLE] }),
@@ -555,6 +557,7 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
             ebs: Type.Optional(Type.Number({ description: 'Aggregate EBS size in bytes' }))
         })
     ),
+    platform: Type.Optional(Type.String()), // Oracle specific
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),

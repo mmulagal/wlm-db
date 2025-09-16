@@ -7,6 +7,34 @@ import {
     oracleUserAuthLoginCommand
 } from './oracle-ssm-script-utils';
 
+const isASMManagedCheck = `
+    check_asm_managed() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command <<'EOSQL'
+            SET HEADING OFF;
+            SET FEEDBACK OFF;
+            SET VERIFY OFF;
+            SET PAGESIZE 0;
+            SELECT CASE 
+                    WHEN COUNT(*) > 0 THEN 'TRUE'
+                    ELSE 'FALSE'
+                END
+            FROM dba_data_files
+            WHERE file_name LIKE '+%';
+            EXIT;
+EOSQL
+EOF
+}
+`;
+
+const isStorageASMmanaged = (dbSid: string, ec2InstanceId: string) => `
+    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+    ${isASMManagedCheck}
+    echo $(check_asm_managed "${dbSid}")  | tr -d '\n' | tr -d ' ';
+`;
+
 const loadStorageDetectionModules = `
 
     # Function to find mount point details for a given file or directory.
@@ -286,25 +314,7 @@ EOF
         echo "$diskgroupMappings"
     }
 
-    check_asm_managed() {
-        local ORACLE_SID="$1"
-        sudo -i -u oracle bash <<EOF
-            export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command <<'EOSQL'
-            SET HEADING OFF;
-            SET FEEDBACK OFF;
-            SET VERIFY OFF;
-            SET PAGESIZE 0;
-            SELECT CASE 
-                    WHEN COUNT(*) > 0 THEN 'TRUE'
-                    ELSE 'FALSE'
-                END
-            FROM dba_data_files
-            WHERE file_name LIKE '+%';
-            EXIT;
-EOSQL
-EOF
-}
+    ${isASMManagedCheck}
 
 get_data_directories_without_creds() {
         local ORACLE_SID="$1"
@@ -1420,6 +1430,8 @@ const getMappedOntapDataVolumeForInstance = (
 `;
 
 export {
+    isASMManagedCheck,
+    isStorageASMmanaged,
     discoverOracleHosts,
     getStorageDetailsForRegisteredInstances,
     fetchOracleDatabasesCount,
