@@ -168,6 +168,7 @@ export interface DatabaseHostsEntities {
     selectedConfig: string;
     selectedConfigSummary: {
         optimizationScore: string;
+        dismissedInstances: number;
         optimizedInstances: number;
         notOptimizedInstances: number;
         severity: string;

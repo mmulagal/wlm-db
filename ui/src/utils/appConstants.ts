@@ -1326,7 +1326,6 @@ export const GENERAL = {
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
         "You postponed or dismissed configuration analysis for some SQL Server instances. Configurations with postponed or dismissed analysis don't affect the well-architected score.",
-    MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
     DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
 
     DISMISS_PAGE_MESSAGE:

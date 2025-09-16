@@ -3,9 +3,11 @@ import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 
-const FirstColumnComponent = ({ rowData }: any) => (
+const FirstColumnComponent = ({ rowData, showDismissed = false }: any) => (
     <div className={styles.renderTable}>
-        <DsTypography variant="Semibold_14">{rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}</DsTypography>
+        <DsTypography variant="Semibold_14" className={showDismissed ? styles.disabled : ''}>
+            {rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}
+        </DsTypography>
         {rowData?.loadingStatus && <DsFlashingDotsLoader />}
         {!rowData?.loadingStatus && (
             <div className={styles.statusContainer}>
@@ -20,7 +22,7 @@ const FirstColumnComponent = ({ rowData }: any) => (
                 {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
                     <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
                 )}
-                <DsTypography variant="Regular_13">
+                <DsTypography variant="Regular_13" className={showDismissed ? styles.disabled : ''}>
                     {rowData?.status === INVENTORY_STATUS.RUNNING ||
                     rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
                         ? INVENTORY_STATUS.ONLINE

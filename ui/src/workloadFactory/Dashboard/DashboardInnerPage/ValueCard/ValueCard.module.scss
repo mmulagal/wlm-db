@@ -1,12 +1,46 @@
 .valueCard {
-    width: 926px;
     height: 96px;
     padding: 16px 40px;
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
-    // border-bottom: 1px solid var(--border);
     display: flex;
     gap: 24px;
+
+    .cardContent {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(140px, 200px);
+        align-items: center;
+        gap: 24px;
+        flex-wrap: nowrap;
+        overflow-x: hidden;
+    }
+
+    .column {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        border-right: 1px solid var(--border);
+        padding-right: 16px;
+    }
+
+    .titleText {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: 16px;
+
+        .valueSection {
+            margin-left: 8px;
+        }
+    }
+
+    .label {
+        margin-top: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
     .block {
         display: flex;
@@ -40,16 +74,6 @@
                     cursor: not-allowed;
                 }
             }
-        }
-    }
-}
-
-@media screen and (min-width: 1920px) {
-    .valueCard {
-        width: calc(926px + ((100vw - 1920px) * 0.6941));
-
-        .block {
-            width: calc(200px + ((100vw - 1920px) * 0.2159));
         }
     }
 }

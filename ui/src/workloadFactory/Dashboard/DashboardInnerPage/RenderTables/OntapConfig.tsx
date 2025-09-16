@@ -102,7 +102,7 @@ const OntapConfig = () => {
     ]);
 
     const lastColDetails = () => ({
-        id: '7',
+        id: '8',
         Header: '',
         accessor: '',
         isSticky: true,

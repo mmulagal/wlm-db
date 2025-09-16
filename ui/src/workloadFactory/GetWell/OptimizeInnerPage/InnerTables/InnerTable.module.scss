@@ -1,6 +1,4 @@
 .inner-table {
-    width: 1334px;
-
     [class*='Table-module_cell'] {
         color: var(--text-primary) !important;
     }
@@ -147,11 +145,5 @@
 
     &::-webkit-scrollbar {
         width: 4px;
-    }
-}
-
-@media screen and (min-width: 1920px) {
-    .inner-table {
-        width: calc(1334px + ((100vw - 1920px)));
     }
 }

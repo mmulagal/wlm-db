@@ -74,6 +74,7 @@ type DialogType = {
     operation?: string;
     objectsInViolation?: string[];
     engineType?: string;
+    assessmentStatus?: boolean;
 };
 
 const DialogContent = ({
@@ -85,7 +86,8 @@ const DialogContent = ({
     missingPatchList = [],
     operation = 'single',
     objectsInViolation = [],
-    engineType = DBType.MSSQL
+    engineType = DBType.MSSQL,
+    assessmentStatus = false
 }: DialogType) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
@@ -314,7 +316,9 @@ const DialogContent = ({
                         t('databases.well-architect.storage-tier-what-will-happen-content2'),
                         t('databases.well-architect.storage-tier-what-will-happen-content3')
                     ]),
-                    createStandardNotesSection()
+                    createStandardNotesSection(),
+                    '',
+                    assessmentStatus
                 );
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 return missingPermissions && missingPermissions.length ? (
@@ -422,7 +426,9 @@ const DialogContent = ({
                           t,
                           t('databases.well-architect.log-drive-size-action-summary'),
                           createContentWithBullets([t('databases.well-architect.log-drive-size-what-will-happen')]),
-                          createStandardNotesSection()
+                          createStandardNotesSection(),
+                          '',
+                          assessmentStatus
                       );
 
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:

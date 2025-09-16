@@ -1,17 +1,22 @@
 import { useDispatch } from 'react-redux';
-import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
+import { DsTypography, useDialog, DsButton, Button, Popover, TooltipInfo } from '@netapp/design-system';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
-import commonStyles from '../../../utils/CommonStyles.module.scss';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
+    ACTION_TYPE,
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATE_ACTIONS,
+    CONFIG_STATES,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FROM_DIALOG,
+    GETWELL_STATUS,
     WLF_TABS
 } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -26,20 +31,12 @@ import {
     setOptimizeInnerpageSummary
 } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
-import StorageTierTable from './RenderTables/StorageTierTable';
-import FileSystemHeadroomTable from './RenderTables/FileSystemHeadroom';
-import LogDriveSizeTable from './RenderTables/LogDriveSizeTable';
-import TempDBDriveSizeTable from './RenderTables/TempDBDriveSizeTable';
-import UserDataFilesTable from './RenderTables/UserDataFilesTable';
-import LogFileTable from './RenderTables/LogFileTable';
-import TempDBPlacement from './RenderTables/TempDBPlacement';
-import ComputeRightSizingTable from './RenderTables/ComputeRightSizingTable';
+import { ReactComponent as Schedule } from '../../../assets/Schedule.svg';
 import OntapConfig from './RenderTables/OntapConfig';
 import MSSQLHighAvailabilityConfig from './RenderTables/MSSQLHighAvailabilityConfig';
 import OperatingSystemTable from './RenderTables/OperatingSystemTable';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
-import { GENERAL } from '../../../utils/appConstants';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import {
     useLazyGetSubTaskListQuery,
@@ -53,7 +50,8 @@ import {
     useOptimizeMTUConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeResiliencyMutation,
-    useOptimizeAwsBackupMutation
+    useOptimizeAwsBackupMutation,
+    useDismissMssqlAssessmentMutation
 } from '../../../utils/apiService';
 import {
     setCloneDashboardData,
@@ -67,22 +65,19 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
-import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimize-in-progress.svg';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import MaxDopTable from './RenderTables/MaxDopTable';
-import MicrosoftSQLPatchTable from './RenderTables/MicrosoftSQLPatchTable';
-import LicenseTable from './RenderTables/LicenseTable';
-import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
-import MTUTable from './RenderTables/MTUTable';
-import OSPatchTable from './RenderTables/OSPatchTable';
-import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
-import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
-import { backupStartTime } from '../../../utils/utilityFunctions';
-import CloneManagementTable from './RenderTables/CloneManagementTable';
-import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import { backupStartTime, formatDateAssess } from '../../../utils/utilityFunctions';
+import {
+    callDashboardDismissApi,
+    filterNotOptimizedRows,
+    getAssessmentStatusConsistency
+} from './DashboardInnerPageHelper';
+import DashboardConfigsTable from './RenderTables/DashboardConfigsTable';
+import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 
 const DashboardInnerPage = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -94,6 +89,9 @@ const DashboardInnerPage = () => {
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
+        dismissedInstances: '',
+        activatingInstances: '',
+        totalInstances: '',
         optimizedInstances: '',
         notOptimizedInstances: '',
         severity: '',
@@ -107,6 +105,13 @@ const DashboardInnerPage = () => {
         },
         cardName: ''
     });
+
+    const selectedConfigName = useMemo(() => {
+        if (selectedConfig === ASSESSMENT_CONFIG_NAMES.CRR) {
+            return 'Cross-Region Replication (CRR)';
+        }
+        return selectedConfig;
+    }, [selectedConfig]);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
@@ -122,8 +127,12 @@ const DashboardInnerPage = () => {
     const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [optimizeMTUConfigForBulk] = useOptimizeMTUConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
 
-    const callOptimizeApi = (type: any, rowData?: any, operation?: string) => {
+    const callOptimizeApi = (type: any, fullRowData?: any, operation?: string) => {
+        // Filter rows to only include those with "Not optimized" status if fullRowData is an array
+        const rowData = Array.isArray(fullRowData) ? filterNotOptimizedRows(fullRowData) : fullRowData;
+
         let payload: null | object | any = {};
         let apiCall = null;
         const state = store.getState();
@@ -131,13 +140,12 @@ const DashboardInnerPage = () => {
             selectedDatabaseInstance,
             selectedResourceId,
             landingFrom,
-            cardData,
             recommendedInstanceInBulk,
             selectedGwInstanceCredId,
             selectedGwInstanceRegionId
         } = state.getWellOptimize;
-        if (type === GENERAL.COMPUTE_RIGHTSIZING) {
-            if (operation === 'bulk') {
+        if (type === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
+            if (operation === ACTION_TYPE.BULK) {
                 apiCall = optimizeComputeConfigForBulk;
 
                 payload = {
@@ -197,8 +205,8 @@ const DashboardInnerPage = () => {
                     instanceType: selectedRecommendedInstance?.value
                 };
             }
-        } else if (type === GENERAL.RSS_CONFIGURATION) {
-            if (operation === 'bulk') {
+        } else if (type === ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) {
+            if (operation === ACTION_TYPE.BULK) {
                 apiCall = optimizeComputeConfigForBulk;
 
                 payload = {
@@ -277,7 +285,7 @@ const DashboardInnerPage = () => {
             type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
             type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
         ) {
-            if (operation === 'bulk') {
+            if (operation === ACTION_TYPE.BULK) {
                 apiCall = optimizeStorageSizingForBulk;
 
                 payload = {
@@ -343,7 +351,7 @@ const DashboardInnerPage = () => {
                 };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
-            if (operation === 'bulk') {
+            if (operation === ACTION_TYPE.BULK) {
                 apiCall = optimizeStorageTierForBulk;
 
                 payload = {
@@ -440,7 +448,7 @@ const DashboardInnerPage = () => {
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
             apiCall = optimizeMaxdopConfigForBulk;
-            if (operation === 'bulk') {
+            if (operation === ACTION_TYPE.BULK) {
                 payload = {
                     hostsToOptimize: [
                         {
@@ -504,7 +512,7 @@ const DashboardInnerPage = () => {
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.MTU) {
             apiCall = optimizeMTUConfigForBulk;
-            if (operation === 'bulk') {
+            if (operation === ACTION_TYPE.BULK) {
                 payload = {
                     hostsToOptimize: [
                         {
@@ -579,7 +587,7 @@ const DashboardInnerPage = () => {
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
-            if (operation === 'bulk') {
+            if (operation === ACTION_TYPE.BULK) {
                 payload = {
                     databaseHosts: []
                 };
@@ -603,7 +611,7 @@ const DashboardInnerPage = () => {
                 [nameToIdConfigMapping(type)]: 'optimizing'
             })
         );
-        if (operation === 'bulk') {
+        if (operation === ACTION_TYPE.BULK) {
             const hostIds = payload.hostsToOptimize[0].databaseHosts.map((host: any) => host.id);
             dispatch(
                 setInProgressHostData({
@@ -646,7 +654,9 @@ const DashboardInnerPage = () => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Fixing process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        {`${t('databases.well-architect.fixing-process-initiated-for')} ${type}. ${t(
+                            'databases.well-architect.process-can-take-min'
+                        )} `}
                         <Button
                             Component="button"
                             variant="text"
@@ -664,7 +674,7 @@ const DashboardInnerPage = () => {
                                 dispatch(clearNotifications());
                             }}
                         >
-                            {GENERAL.JOB_MONITORING}.
+                            {t('databases.general.job-monitoring')}.
                         </Button>
                     </div>
                 )
@@ -672,7 +682,7 @@ const DashboardInnerPage = () => {
         );
 
         let apiData = {};
-        if (operation === 'bulk') {
+        if (operation === ACTION_TYPE.BULK) {
             apiData = {
                 payload
             };
@@ -718,12 +728,12 @@ const DashboardInnerPage = () => {
                             dispatch(clearNotifications());
                         }}
                     >
-                        {GENERAL.VIEW_JOB_MONITORING}.
+                        {t('databases.general.view-job-monitoring')}.
                     </Button>
                 </div>
             );
             if (!res.error) {
-                if (operation === 'bulk') {
+                if (operation === ACTION_TYPE.BULK) {
                     dispatch(
                         setJobToInstanceMapForBulk({
                             ...state.getWellOptimize.jobToInstanceMap,
@@ -739,7 +749,7 @@ const DashboardInnerPage = () => {
                     );
                 }
             }
-            if (operation === 'bulk') {
+            if (operation === ACTION_TYPE.BULK) {
                 handleOptimizeStorageJob(
                     res,
                     {},
@@ -814,6 +824,58 @@ const DashboardInnerPage = () => {
         );
     };
 
+    const handleSingleDismissPostpone = (rowData: any, type: string, operation: string) => {
+        if (operation === CONFIG_STATE_ACTIONS.DISMISS) {
+            setDialog(
+                <DialogComponent
+                    header={t('databases.dismiss.dismiss-instance')}
+                    content={
+                        <div className={styles.dismissDialog}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.dismiss.dialog-text-1')} {rowData?.data?.databaseInstanceName} ?
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">{t('databases.dismiss.dialog-text-2')}</DsTypography>
+                        </div>
+                    }
+                    primaryButton={t('databases.dismiss.dismiss')}
+                    secondaryButton={t('databases.dismiss.cancel')}
+                    callback={() => {
+                        callDashboardDismissApi(type, [rowData], operation, dismissMssqlAssessment, dispatch, t);
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                />
+            );
+        }
+        if (operation === CONFIG_STATE_ACTIONS.POSTPONED) {
+            setDialog(
+                <DialogComponent
+                    header={t('databases.dismiss.postpone-days')}
+                    content={
+                        <div className={styles.dismissDialog}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.dismiss.postpone-line-1')} {rowData?.data?.databaseInstanceName} ?
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">{t('databases.dismiss.dialog-text-2')}</DsTypography>
+                        </div>
+                    }
+                    primaryButton={t('databases.dismiss.dismiss')}
+                    secondaryButton={t('databases.dismiss.cancel')}
+                    callback={() => {
+                        callDashboardDismissApi(type, [rowData], operation, dismissMssqlAssessment, dispatch, t);
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                />
+            );
+        }
+        if (operation === CONFIG_STATE_ACTIONS.ACTIVE) {
+            callDashboardDismissApi(type, [rowData], operation, dismissMssqlAssessment, dispatch, t);
+        }
+    };
+
     const handleDialog = (type: string, rowData: any, operation?: string) => {
         if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
             let cloneViolationsList: any = [];
@@ -846,7 +908,11 @@ const DashboardInnerPage = () => {
                 );
             } else {
                 // get violations clone details for all selected instance. From dashboard bulk selection.
-                rowData?.map((item: any) => {
+                // Filter only not optimized row for clone
+                const filteredRowData = rowData.filter(
+                    (row: any) => row?.assessmentStatus !== GETWELL_STATUS.OPTIMIZED
+                );
+                filteredRowData?.map((item: any) => {
                     cloneViolationsList = [
                         ...cloneViolationsList,
                         ...(item?.cloneDetails
@@ -878,6 +944,8 @@ const DashboardInnerPage = () => {
             }
             dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE));
         } else {
+            const assessmentStatusConsistent = getAssessmentStatusConsistency(rowData);
+
             setDialog(
                 <DialogComponent
                     header={`${type}`}
@@ -890,11 +958,12 @@ const DashboardInnerPage = () => {
                             bulkRecommendationOptions={rowData}
                             operation={operation}
                             objectsInViolation={rowData?.objectsInViolation}
+                            assessmentStatus={assessmentStatusConsistent}
                         />
                     }
                     dialogFrom={FROM_DIALOG.OPTIMIZE}
-                    primaryButton={GENERAL.CONTINUE}
-                    secondaryButton={GENERAL.CANCEL}
+                    primaryButton={t('databases.general.continue')}
+                    secondaryButton={t('databases.general.cancel')}
                     callback={() => {
                         callOptimizeApi(type, rowData, operation);
                     }}
@@ -925,10 +994,7 @@ const DashboardInnerPage = () => {
         switch (selectedConfig) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
@@ -941,10 +1007,7 @@ const DashboardInnerPage = () => {
                 break;
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '184px',
                     tagHeight: '281px',
@@ -958,10 +1021,7 @@ const DashboardInnerPage = () => {
                 break;
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '208px',
                     tagHeight: '305px',
@@ -976,10 +1036,7 @@ const DashboardInnerPage = () => {
 
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '232px',
                     tagHeight: '329px',
@@ -993,13 +1050,10 @@ const DashboardInnerPage = () => {
                 break;
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: '202px',
+                    tagHeight: '299px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.user_data_files?.recommendation?.description
@@ -1008,13 +1062,10 @@ const DashboardInnerPage = () => {
                 break;
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: '202px',
+                    tagHeight: '299px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.transaction_log_files?.recommendation?.description
@@ -1023,10 +1074,7 @@ const DashboardInnerPage = () => {
                 break;
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '160px',
                     tagHeight: '257px',
@@ -1037,58 +1085,46 @@ const DashboardInnerPage = () => {
                 });
                 break;
 
-            case 'ONTAP':
+            case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: 'Expand instances to view recommendations.'
+                        description: t('databases.well-architect.general-recommendations')
                     }
                 });
                 break;
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: 'Expand instances to view FCI configuration recommendations.'
+                        description: t('databases.well-architect.fci-recommendations')
                     }
                 });
                 break;
 
-            case 'Operating system':
+            case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: 'Expand instances to view recommendations.'
+                        description: t('databases.well-architect.general-recommendations')
                     }
                 });
                 break;
-            case GENERAL.COMPUTE_RIGHTSIZING:
+            case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '204px',
                     tagHeight: '301px',
@@ -1099,12 +1135,9 @@ const DashboardInnerPage = () => {
                     cardName: 'compute_right_sizing'
                 });
                 break;
-            case GENERAL.OPERATING_SYSTEM_PATCH:
+            case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
@@ -1114,12 +1147,9 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case GENERAL.RSS_CONFIGURATION:
+            case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '450px',
                     tagHeight: '547px',
@@ -1131,10 +1161,7 @@ const DashboardInnerPage = () => {
                 break;
             case ASSESSMENT_CONFIG_NAMES.MTU:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '214px',
                     tagHeight: '311px',
@@ -1144,24 +1171,18 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case GENERAL.LICENSE_SQL_SERVER:
+            case ASSESSMENT_CONFIG_NAMES.LICENSE:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '228px',
                     tagHeight: '325px',
                     data: cardDataDefault?.sql_licenses?.recommendation
                 });
                 break;
-            case GENERAL.MICROSOFT_SQL_PATCH:
+            case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '160px',
                     tagHeight: '257px',
@@ -1171,12 +1192,9 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case GENERAL.MAXDOP_PATCH:
+            case ASSESSMENT_CONFIG_NAMES.MAXDOP:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '216px',
                     tagHeight: '313px',
@@ -1189,10 +1207,7 @@ const DashboardInnerPage = () => {
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
@@ -1206,10 +1221,7 @@ const DashboardInnerPage = () => {
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
@@ -1221,10 +1233,7 @@ const DashboardInnerPage = () => {
                 break;
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
                 setValueCardData({
-                    optimizationScore: selectedConfigSummary.optimizationScore,
-                    optimizedInstances: selectedConfigSummary.optimizedInstances,
-                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
-                    severity: selectedConfigSummary.severity,
+                    ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
@@ -1234,29 +1243,116 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+            case ASSESSMENT_CONFIG_NAMES.CRR:
+                setValueCardData({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.crr?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
-    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => ({
-        id: '7',
+    const daysLeft = (endTime: string) => {
+        const endDate = new Date(endTime);
+        const currentDate = new Date();
+        const diffTime = Math.abs(currentDate.getTime() - endDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
+
+    const lastColDetails = (
+        name: string,
+        data?: any,
+        inProgressOptimizationData?: any,
+        inProgressHostData?: any,
+        showDismissed?: boolean,
+        isFixEnabled?: boolean
+    ) => ({
+        id: '8',
         Header: '',
         accessor: '',
         isSticky: true,
-        width: '220px',
+        width: showDismissed ? '416px' : '242px',
         renderCell: (cellData: any, rowData: any) => {
-            const { isDisabled, errorMessage } = checkIfDisableForOptimize(
-                inProgressHostData,
-                name,
-                rowData,
-                selectedRowsForOptimize
-            );
+            // If showing dismissed items, show Reactivate button
+            if (
+                showDismissed &&
+                (rowData?.configState === CONFIG_STATES.DISMISSED || rowData?.configState === CONFIG_STATES.POSTPONED)
+            ) {
+                return (
+                    <div className={styles.reactiveButtonContainer}>
+                        <div className={styles.postpone}>
+                            {rowData?.configState === CONFIG_STATES.POSTPONED && (
+                                <div className={styles.postponeContainer}>
+                                    <div>
+                                        <Schedule />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.postponed-for-30-days')}
+                                    </DsTypography>
+                                    {rowData?.configObj?.endTime && (
+                                        <TooltipInfo isAppendedToBody>
+                                            {rowData?.configObj?.startTime && (
+                                                <DsTypography variant="Regular_13">
+                                                    {t('databases.well-architect.postpone-date')}{' '}
+                                                    {formatDateAssess(rowData?.configObj?.startTime)}.
+                                                </DsTypography>
+                                            )}
+                                            <DsTypography variant="Regular_13">
+                                                {daysLeft(rowData?.configObj?.endTime)}{' '}
+                                                {t('databases.well-architect.days-left')}
+                                            </DsTypography>
+                                        </TooltipInfo>
+                                    )}
+                                </div>
+                            )}
+                            {rowData?.configState !== CONFIG_STATES.POSTPONED && <div style={{ width: '204px' }} />}
+                        </div>
+                        <div>
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                isDisabled={selectedRowsForOptimize?.length > 0}
+                                onClick={() => {
+                                    handleSingleDismissPostpone(rowData, name, CONFIG_STATE_ACTIONS.ACTIVE);
+                                }}
+                            >
+                                {t('databases.well-architect.reactivate')}
+                            </DsButton>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Original logic for non-dismissed items
+            let isDisabled = false;
+            let errorMessage = '';
+            if (!isFixEnabled) {
+                isDisabled = true;
+                errorMessage = t('databases.well-architect.fix-disabled');
+            } else {
+                ({ isDisabled, errorMessage } = checkIfDisableForOptimize(
+                    inProgressHostData,
+                    name,
+                    rowData,
+                    t,
+                    selectedRowsForOptimize
+                ));
+            }
+
             const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.id);
             return (
                 <div className={styles.buttonContainer}>
                     {isInProgress ? (
                         <div className={styles['optimize-in-progress']}>
-                            <OptimizeInProgressIcon />
-                            <DsTypography variant="Semibold_14">Fixing</DsTypography>
+                            <DsFlashingDotsLoader />
+                            <DsTypography variant="Regular_14">{t('databases.well-architect.fixing')}</DsTypography>
                         </div>
                     ) : isDisabled && errorMessage ? (
                         <Popover
@@ -1268,7 +1364,7 @@ const DashboardInnerPage = () => {
                             interactive
                             container={
                                 <DsButton variant="secondary" isDisabled>
-                                    {GENERAL.OPTIMIZE}
+                                    {t('databases.well-architect.fix')}
                                 </DsButton>
                             }
                         />
@@ -1276,13 +1372,15 @@ const DashboardInnerPage = () => {
                         <DsButton
                             isThin
                             variant="secondary"
-                            isDisabled={isDisabled}
+                            isDisabled={
+                                isDisabled || rowData?.assessmentStatus === GETWELL_STATUS.OPTIMIZED || !isFixEnabled
+                            }
                             onClick={() => {
                                 optimizeAction(rowData);
                                 handleDialog(name, rowData, 'single');
                             }}
                         >
-                            {GENERAL.OPTIMIZE}
+                            {t('databases.well-architect.fix')}
                         </DsButton>
                     )}
                 </div>
@@ -1291,83 +1389,116 @@ const DashboardInnerPage = () => {
     });
 
     const handleBulkAction = (type: string, rowData: any) => {
-        // optimizeAction(rowData[0]);
-        handleDialog(type, rowData, 'bulk');
+        handleDialog(type, rowData, ACTION_TYPE.BULK);
+    };
+
+    // Function to handle dismiss bulk and postpone bulk action
+    const handleBulkDismissPostpone = (type: string, rowData: any, operationType: string) => {
+        if (operationType === CONFIG_STATE_ACTIONS.DISMISS) {
+            setDialog(
+                <DialogComponent
+                    header={t('databases.dismiss.dismiss-instance')}
+                    content={
+                        <div className={styles.dismissDialog}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.dismiss.dialog-bulk-text-1')} {rowData?.length}{' '}
+                                {t('databases.dismiss.selected-instances')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">{t('databases.dismiss.dialog-text-2')}</DsTypography>
+                        </div>
+                    }
+                    primaryButton={t('databases.dismiss.dismiss')}
+                    secondaryButton={t('databases.dismiss.cancel')}
+                    callback={() => {
+                        callDashboardDismissApi(type, rowData, operationType, dismissMssqlAssessment, dispatch, t);
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                />
+            );
+        }
+        if (operationType === CONFIG_STATE_ACTIONS.POSTPONED) {
+            setDialog(
+                <DialogComponent
+                    header={t('databases.dismiss.postpone-days')}
+                    content={
+                        <div className={styles.dismissDialog}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.dismiss.postpone-bulk-line-1')} {rowData?.length}{' '}
+                                {t('databases.dismiss.selected-instances')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">{t('databases.dismiss.dialog-text-2')}</DsTypography>
+                        </div>
+                    }
+                    primaryButton={t('databases.dismiss.dismiss')}
+                    secondaryButton={t('databases.dismiss.cancel')}
+                    callback={() => {
+                        callDashboardDismissApi(type, rowData, operationType, dismissMssqlAssessment, dispatch, t);
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                />
+            );
+        }
+        if (operationType === CONFIG_STATE_ACTIONS.ACTIVE) {
+            callDashboardDismissApi(type, rowData, operationType, dismissMssqlAssessment, dispatch, t);
+        }
     };
 
     const renderTable = () => {
         switch (selectedConfig) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
-                return <StorageTierTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
-                return <FileSystemHeadroomTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
-                return <LogDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-                return <TempDBDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
-                return <UserDataFilesTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
-                return <LogFileTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-                return <TempDBPlacement lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
-                return <ComputeRightSizingTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'ONTAP':
-                return <OntapConfig />;
-            case 'Operating system':
-                return <OperatingSystemTable />;
-            case 'MAXDOP':
-                return <MaxDopTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case GENERAL.MICROSOFT_SQL_PATCH:
-                return <MicrosoftSQLPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case GENERAL.LICENSE_SQL_SERVER:
-                return <LicenseTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case GENERAL.RSS_CONFIGURATION:
-                return <NetworkAdapterTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case ASSESSMENT_CONFIG_NAMES.MAXDOP:
+            case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
+            case ASSESSMENT_CONFIG_NAMES.LICENSE:
+            case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
             case ASSESSMENT_CONFIG_NAMES.MTU:
-                return <MTUTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case GENERAL.OPERATING_SYSTEM_PATCH:
-                return <OSPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
-                return (
-                    <ScheduledLocalSnapshotTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
-                );
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                return <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+            case ASSESSMENT_CONFIG_NAMES.CRR:
+                return (
+                    <DashboardConfigsTable
+                        configType={selectedConfig}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                        handleSingleDismissPostpone={handleSingleDismissPostpone}
+                        handleBulkDismissPostpone={handleBulkDismissPostpone}
+                    />
+                );
+            case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
+                return <OntapConfig />;
+            case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
+                return <OperatingSystemTable />;
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
                 return <MSSQLHighAvailabilityConfig />;
-            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-                return <CloneManagementTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
         }
     };
-
-    const handleEditAnanlysis = (type: string) => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
-        dispatch(setDismissPageLanding(WLF_TABS.DASHBOARD_INNER_PAGE));
-        dispatch(setSelectedConfig(type));
-        setOptimizeInnerpageSummary(type, configData, dispatch);
-    };
-
-    const configData = useMemo(
-        () => getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData),
-        [allmssqlHostAssessmentData]
-    );
 
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
-                <div className={commonStyles.commonBreadCrumb}>
+                <div className={styles.breadCrumb}>
                     <BreadCrumbs
                         items={[
                             {
-                                title: 'Dashboard',
+                                title: `${t('databases.general.dashboard')}`,
                                 onClick: () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
                                 }
                             },
                             {
-                                title: `Fix configuration (${selectedConfig})`,
+                                title: `${t('databases.well-architect.fix-configuration')} (${selectedConfigName})`,
                                 dataTestId: 'wlm-db-optimize-configuration'
                             }
                         ]}
@@ -1377,35 +1508,25 @@ const DashboardInnerPage = () => {
                 <div className={styles.headingSection}>
                     <DsTypography
                         data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
-                        variant="Semibold_20"
+                        variant="Semibold_24"
+                        style={{ lineHeight: 'unset' }}
                     >
-                        {selectedConfig}
+                        {selectedConfigName}
                     </DsTypography>
+                    <SeparatorComponent variant="vertical" height="24px" />
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-optimization-heading-for-${selectedConfig
                             .toLowerCase()
                             .replace(/ /g, '-')}`}
-                        variant="Semibold_16"
+                        variant="Regular_16"
                     >
-                        Register instance fixing
+                        {t('databases.well-architect.register-instance-fixing')}
                     </DsTypography>
                 </div>
 
                 <div className={styles.mainSection}>
                     <div className={styles.leftSection}>
-                        <ValueCard
-                            optimizedInstances={valueCardData.optimizedInstances}
-                            notOptimizedInstances={valueCardData.notOptimizedInstances}
-                            severity={valueCardData.severity}
-                            configurationState={valueCardData.configurationState}
-                            type={selectedConfig}
-                            handleEdit={handleEditAnanlysis}
-                            isAnalysisDisabled={[
-                                'ONTAP',
-                                'Operating system',
-                                ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
-                            ].includes(selectedConfig)}
-                        />
+                        <ValueCard valueCardData={valueCardData} />
 
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
                             <RecommendationText
@@ -1415,7 +1536,7 @@ const DashboardInnerPage = () => {
                             />
                         </div>
                     </div>
-                    <div className={styles.rightSection}>
+                    <div className={styles.rightSection} style={{ width: '32%' }}>
                         <TagComponent tagHeight={valueCardData.tagHeight} />
                     </div>
                 </div>

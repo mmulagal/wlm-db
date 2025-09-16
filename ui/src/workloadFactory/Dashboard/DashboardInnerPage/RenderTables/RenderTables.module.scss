@@ -1,11 +1,41 @@
 .renderTable {
-    width: 1334px;
+    width: 100%;
 
     [class*='header-row'] {
         [class*='header-cell']:nth-last-child(2) {
             [class*='right-border'] {
                 display: none !important;
             }
+        }
+    }
+
+    .disabled {
+        color: var(--text-disabled);
+    }
+
+    .menuIcon {
+        font-weight: 600;
+        color: var(--text-title);
+        font-size: 22px;
+        width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 16px;
+
+        &.selected {
+            border: 1.5px solid var(--text-title);
+            border-radius: 9px;
+        }
+
+        &:hover {
+            cursor: pointer;
+            border: 1.5px solid var(--selector-on-bg);
+            border-radius: 9px;
+        }
+
+        .menuPointer {
+            height: 40px;
         }
     }
     .statusContainer {
@@ -56,16 +86,36 @@
     [class*='Table-module_high-row'] {
         background-color: var(--content-background) !important;
     }
+
+    .jobMenuPopover {
+        margin-left: -13px;
+        [class*='MenuPopover_menuPointer'] {
+            background: none !important;
+        }
+
+        .disabled {
+            color: var(--text-disabled);
+        }
+    }
+
+    .menuPointerDisabled {
+        margin-left: -13px;
+        font-weight: 600;
+        font-size: 22px;
+        width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-disabled);
+
+        .menuPointer {
+            height: 40px;
+        }
+    }
 }
 
 .colorSet {
     div {
         color: var(--text-primary);
-    }
-}
-
-@media screen and (min-width: 1920px) {
-    .renderTable {
-        width: calc(1334px + ((100vw - 1920px)));
     }
 }

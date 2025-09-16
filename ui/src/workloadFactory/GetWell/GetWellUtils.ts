@@ -1,3 +1,4 @@
+import { TFunction } from 'i18next';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHomeSlice';
@@ -40,7 +41,6 @@ import {
 import { groupByType, mapDismissedValues } from '../../utils/resourceUtils';
 import {
     AssessmentResponseInterface,
-    GwCardDataInterface,
     GwSqlServerInstanceInterface,
     PerConfigInterface,
     RSSConfigAdapterInterface
@@ -54,7 +54,7 @@ import {
 import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
-export const cardDataDefault: GwCardDataInterface = {
+export const cardDataDefault: any = {
     deploymentType: '',
     storage_tier: {
         id: 'performance-tier',
@@ -3801,22 +3801,26 @@ export const checkIfDisableForOptimize = (
     inProgressHostData: any,
     name: string,
     rowData: any,
+    translation: TFunction,
     selectedRowsForOptimize?: any
 ) => {
     let isDisabled = false;
     let errorMessage = '';
     if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
         isDisabled = true;
-        errorMessage = 'Optimization in progress for this host';
+        errorMessage = translation('databases.well-architect.optimization-in-progress-for-host');
     } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
         isDisabled = true;
-        errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
+        errorMessage = translation('databases.well-architect.only-online-instances');
+    } else if (rowData?.configState && rowData?.configState === CONFIG_STATES.ACTIVATING) {
+        isDisabled = true;
+        errorMessage = '';
     } else if (
         !rowData?.assessmentStatus ||
         rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
     ) {
         isDisabled = true;
-        errorMessage = `${name} ${GENERAL.NO_ASSESSMENT_DATA}`;
+        errorMessage = `${name} ${translation('databases.well-architect.assessment-not-available')}`;
     } else if (
         name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
         (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
@@ -3824,7 +3828,7 @@ export const checkIfDisableForOptimize = (
                 !rowData?.sizingViolations?.underProvisionedDrives?.length))
     ) {
         isDisabled = true;
-        errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+        errorMessage = translation('databases.well-architect.log-drive-over-provisioned-error');
     } else if (
         name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE &&
         (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
@@ -3832,7 +3836,7 @@ export const checkIfDisableForOptimize = (
                 !rowData?.sizingViolations?.underProvisionedDrives?.length))
     ) {
         isDisabled = true;
-        errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+        errorMessage = translation('databases.well-architect.tempdb-drive-over-provisioned-error');
     } else if (
         name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
         (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
@@ -3840,7 +3844,7 @@ export const checkIfDisableForOptimize = (
                 !rowData?.sizingViolations?.underProvisionedDrives?.length))
     ) {
         isDisabled = true;
-        errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
+        errorMessage = translation('databases.well-architect.file-system-headroom-over-provisioned-error');
     } else if (
         (name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
@@ -3850,12 +3854,25 @@ export const checkIfDisableForOptimize = (
         rowData?.sizingViolations?.ignoredDrives?.length
     ) {
         isDisabled = true;
-        errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+        errorMessage = translation('databases.well-architect.not-optimized-shared-drive');
     } else if (selectedRowsForOptimize && selectedRowsForOptimize.length > 0) {
         isDisabled = true;
         errorMessage = '';
     }
 
+    return { isDisabled, errorMessage };
+};
+
+export const checkIfDisableFullRow = (inProgressHostData: any, name: string, rowData: any, translation: TFunction) => {
+    let isDisabled = false;
+    let errorMessage = '';
+    if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+        isDisabled = true;
+        errorMessage = translation('databases.well-architect.optimization-in-progress-for-host');
+    } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+        isDisabled = true;
+        errorMessage = translation('databases.well-architect.only-online-instances');
+    }
     return { isDisabled, errorMessage };
 };
 
@@ -3873,13 +3890,13 @@ export const checkIfDisableForDismiss = (rowData: any, selectedRowsForDismiss?: 
     return { isDisabled, errorMessage };
 };
 
-export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) => {
+export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string, translation: TFunction) => {
     const state = store.getState();
     const { inProgressHostData } = state.getWellOptimize;
 
     // If no rows are selected, reset `isDisabled` for all rows
     return tableData.map((row: any) => {
-        const { isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, type, row);
+        const { isDisabled, errorMessage } = checkIfDisableFullRow(inProgressHostData, type, row, translation);
         return {
             ...row,
             cellProps: {
@@ -3952,7 +3969,12 @@ export const disableOptimizeResourceCheckBoxForOptimizeCase = (
     });
 };
 
-export const disableOptimizeCheckBoxForOptimizeCase = (tableData: any, type: string, selectedRowsForOptimize: any) => {
+export const disableOptimizeCheckBoxForOptimizeCase = (
+    tableData: any,
+    type: string,
+    selectedRowsForOptimize: any,
+    translation: TFunction
+) => {
     const state = store.getState();
     const { inProgressHostData, inProgressOptimizationData } = state.getWellOptimize;
 
@@ -3970,7 +3992,7 @@ export const disableOptimizeCheckBoxForOptimizeCase = (tableData: any, type: str
         let isDisabled = isBeingOptimized || hasStatusOffline;
         let errorMessage = '';
         if (!isDisabled) {
-            ({ isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, type, row));
+            ({ isDisabled, errorMessage } = checkIfDisableFullRow(inProgressHostData, type, row, translation));
         }
 
         return {
@@ -4077,7 +4099,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             configKey = 'mtuConfiguration';
             break;
     }
-    const optimizedInstances = configData[configKey] || 0;
+    const optimizedInstances = configData?.[configKey]?.optimized || 0;
+    const dismissedInstances = configData?.[configKey]?.dismissed || 0;
+    const activatingInstances = configData?.[configKey]?.activating || 0;
     let configStateValue = '';
     if (!configData?.configState?.[configKey] || configData?.configState?.[configKey]?.includes(CONFIG_STATES.ACTIVE)) {
         configStateValue = CONFIG_STATES_UI.ACTIVE;
@@ -4099,7 +4123,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         setSelectedConfigSummary({
             totalInstances: configData?.total || 0,
             optimizedInstances,
-            notOptimizedInstances: configData?.total - optimizedInstances,
+            dismissedInstances,
+            activatingInstances,
+            notOptimizedInstances: configData?.total - (optimizedInstances + dismissedInstances + activatingInstances),
             optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
             severity: configData?.severityObj?.[configKey] || '',
             configState: configStateValue,

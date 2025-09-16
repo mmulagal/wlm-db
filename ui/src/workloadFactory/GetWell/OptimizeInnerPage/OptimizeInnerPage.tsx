@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
-import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -796,7 +795,7 @@ const OptimizeInnerPage = () => {
     return (
         <div className={styles['optimize-inner-page']}>
             <div className={styles.innerPage}>
-                <div className={commonStyles.commonBreadCrumb}>
+                <div style={{ marginTop: '24px' }}>
                     <BreadCrumbs
                         items={[
                             {

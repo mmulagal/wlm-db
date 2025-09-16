@@ -4,6 +4,7 @@
     background-color: var(--main-background);
 
     .innerPage {
+        padding: 0 120px;
         .headingSection {
             margin-top: 16px;
             display: flex;
@@ -16,6 +17,14 @@
             justify-content: center;
             margin-top: 24px;
 
+            .contentSection {
+                width: 80%;
+            }
+
+            .tagSection {
+                width: 20%;
+            }
+
             .leftSection {
                 display: flex;
                 gap: 1px;
@@ -23,7 +32,6 @@
 
                 .recommendation {
                     background-color: var(--content-background);
-                    width: 926px;
                     box-shadow: 2px 2px 6px 0px var(--border);
                 }
             }
@@ -31,8 +39,6 @@
 
         .tableSection {
             margin-top: 44px;
-            display: flex;
-            justify-content: center;
 
             .buttonContainer {
                 display: flex;
@@ -50,6 +56,7 @@
             .contentSection {
                 display: flex;
                 justify-content: center;
+                width: 80%;
             }
         }
     }
@@ -62,7 +69,6 @@
     border-bottom: 1px solid var(--grey-30);
     display: flex;
     gap: 4px;
-    width: 1334px;
 
     .headers {
         height: 35px;
@@ -104,8 +110,6 @@
 
 .tableSection {
     margin-top: 44px;
-    display: flex;
-    justify-content: center;
 
     .buttonContainer {
         display: flex;
@@ -115,11 +119,5 @@
         [class*='dsButtons'] {
             border-radius: 20px !important;
         }
-    }
-}
-
-@media screen and (min-width: 1920px) {
-    .cloneTabs {
-        width: 73.22%;
     }
 }

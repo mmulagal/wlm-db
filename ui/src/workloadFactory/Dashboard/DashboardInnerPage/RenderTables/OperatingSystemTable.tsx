@@ -95,7 +95,7 @@ const OperatingSystemTable = () => {
     ]);
 
     const lastColDetails = () => ({
-        id: '4',
+        id: '8',
         Header: '',
         accessor: '',
         isSticky: true,

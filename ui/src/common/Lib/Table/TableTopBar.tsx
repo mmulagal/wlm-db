@@ -73,6 +73,8 @@ export interface TableTopBarProps {
     /** Should use Tabs instead of title? */
     TabsProps?: any;
     subTitle?: string;
+    /** Hide the automatic count display - useful when title already contains custom count */
+    hideCount?: boolean;
 }
 
 export const TableTopBar = ({
@@ -89,7 +91,8 @@ export const TableTopBar = ({
     titleClassName = '',
     LeftComponent,
     lazyLoadingText = 'Loading',
-    subTitle
+    subTitle,
+    hideCount = false
 }: TableTopBarProps) => {
     const { organizedRows, updateTextFilter, rows, filterState, resetFilters, selectionState, isLazyLoading } =
         tableProps;
@@ -107,7 +110,11 @@ export const TableTopBar = ({
             <Typography variant="Semibold_16" isEllipsis className={classNames(styles.title, titleClassName)}>
                 <div className={styles.tableMainTitleContainer}>
                     <span>{itemCount === 1 ? singularTitle : pluralTitle}</span>
-                    <span>({itemCount === filteredItemCount ? itemCount : `${filteredItemCount}/${itemCount}`})</span>
+                    {!hideCount && (
+                        <span>
+                            ({itemCount === filteredItemCount ? itemCount : `${filteredItemCount}/${itemCount}`})
+                        </span>
+                    )}
                     {info && <TooltipInfo isAppendedToBody>{info}</TooltipInfo>}
                     {showFilterText && (
                         <span>{`| Filtered by${textFilter ? ' search' : ''}${

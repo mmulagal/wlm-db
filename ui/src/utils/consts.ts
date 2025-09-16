@@ -919,7 +919,9 @@ export const ASSESSMENT_CONFIG_NAMES = {
     COMPRESSION: 'Compression',
     DEDUPLICATION: 'Deduplication',
     COMPACTION: 'Compaction',
-    SNAPSHOT_POLICY: 'Snapshot policy'
+    SNAPSHOT_POLICY: 'Snapshot policy',
+    OPERATING_SYSTEM: 'Operating system',
+    ONTAP_CAPS: 'ONTAP'
 };
 
 export const CONFIG_STATES = {

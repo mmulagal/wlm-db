@@ -112,7 +112,7 @@ const MSSQLHighAvailabilityConfig = () => {
     ]);
 
     const lastColDetails = () => ({
-        id: '7',
+        id: '8',
         Header: '',
         accessor: '',
         isSticky: true,

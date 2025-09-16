@@ -173,13 +173,16 @@ export const initialDashboardInnerPageOptimizeColState = {
         isHidden: false
     },
     5: {
-        isHidden: true
+        isHidden: false
     },
 
     6: {
         isHidden: true
     },
     7: {
+        isHidden: true
+    },
+    8: {
         isHidden: false,
         isRemovalDisabled: true
     }

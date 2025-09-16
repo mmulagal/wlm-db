@@ -791,7 +791,7 @@ const DashboardDismissPage = () => {
                         }
                     },
                     {
-                        title: `Fix configuration (${selectedConfig})`,
+                        title: `${t('databases.well-architect.fix-configuration')} (${selectedConfig})`,
                         onClick: () => {
                             dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
                         }
@@ -831,13 +831,7 @@ const DashboardDismissPage = () => {
 
                 <div className={styles.mainSection}>
                     <div className={styles.leftSection}>
-                        <ValueCard
-                            instances={valueCardData.instances}
-                            configurationState={valueCardData.configurationState}
-                            severity={valueCardData.severity}
-                            from="dismissPage"
-                            tooltipText={valueCardData?.tooltipText || ''}
-                        />
+                        <ValueCard valueCardData={valueCardData} />
 
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
                             <RecommendationText

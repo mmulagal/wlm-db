@@ -3,8 +3,6 @@
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px #e0e0e0;
 
-    width: 408px;
-
     .topSection {
         display: flex;
         gap: 8px;
@@ -21,11 +19,5 @@
             font-weight: 500;
             font-size: 13px;
         }
-    }
-}
-
-@media screen and (min-width: 1920px) {
-    .tagComponent {
-        width: calc(408px + ((100vw - 1920px) * 0.3059));
     }
 }

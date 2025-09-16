@@ -4,6 +4,20 @@
         flex-direction: column;
         gap: 32px;
 
+        .noticeSection {
+            background-color: var(--hover-background);
+            padding: 16px 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .noticeText {
+                display: flex;
+                gap: 4px;
+            }
+        }
+
         .widthSet {
             width: 384px;
         }

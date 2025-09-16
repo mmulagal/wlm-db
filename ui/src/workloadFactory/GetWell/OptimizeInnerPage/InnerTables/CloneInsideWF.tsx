@@ -2,6 +2,8 @@ import { Table, useTable, TableTopBar, DsTypography, ButtonWithDropdown } from '
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import styles from './InnerTable.module.scss';
 
 import { GENERAL } from '../../../../utils/appConstants';
@@ -12,9 +14,9 @@ import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import BulkCloneContainer from '../../../../common/BulkAction/BulkCloneContainer';
 import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../../utils/consts';
 import { disableOptimizeResourceCheckBoxForOptimizeCase } from '../../GetWellUtils';
-import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 
 const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressResourceOptimizeData } = useAppSelector(state => state.getWellOptimize);
@@ -107,8 +109,8 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                     <>
                         {isInProgress ? (
                             <div className={styles['optimize-in-progress']}>
-                                <SmallLoader />
-                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
+                                <DsFlashingDotsLoader />
+                                <DsTypography variant="Regular_14">{t('databases.well-architect.fixing')}</DsTypography>
                             </div>
                         ) : (
                             <div

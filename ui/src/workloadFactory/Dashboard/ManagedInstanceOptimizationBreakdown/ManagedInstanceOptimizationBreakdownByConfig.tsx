@@ -1,4 +1,4 @@
-import { DsButton, DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
+import { DsButton, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,15 +8,13 @@ import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATES_UI, WLF_TABS } from '../../../utils/consts';
-import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import { GENERAL } from '../../../utils/appConstants';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
-import { ReactComponent as Edit } from '../../../assets/ic_edit.svg';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { t } = useTranslation();
@@ -30,13 +28,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setSelectedConfig(type));
-        setOptimizeInnerpageSummary(type, configData, dispatch);
-    };
-
-    const handleEdit = (type: string) => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
-        dispatch(setDismissPageLanding(WLF_TABS.DASHBOARD));
         dispatch(setSelectedConfig(type));
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
@@ -69,17 +60,17 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             state.includes(CONFIG_STATES.ACTIVE) &&
             (state.includes(CONFIG_STATES.POSTPONED) || state.includes(CONFIG_STATES.DISMISSED))
         ) {
-            return GENERAL.MIXED_STATE_CONFIG_TOOLTIP;
+            return t('databases.well-architect.mixed-state-config-tooltip');
         }
         return '';
     };
 
-    const renderOptimizationBar = (
-        assessmentKey: string,
-        optimizedCount: number,
-        headingText: string,
-        configStateKey: any
-    ) => {
+    const renderOptimizationBar = (assessmentKey: string, headingText: string, key: string) => {
+        const optimizedCount =
+            (configData?.[key]?.optimized || 0) +
+            (configData?.[key]?.dismissed || 0) +
+            (configData?.[key]?.activating || 0);
+        const configStateKey = configData?.configState?.[key] || [];
         const dismissedOrPostponedText = hasDismissedOrPosponed(configStateKey);
         const total = configData?.total || 1;
         const afterOutOfTotal = configData?.total;
@@ -127,12 +118,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
             <div className={styles.mainSection}>
                 <div className={`${styles.tile} ${styles.firstTile}`}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
-                        configData?.storageTier || 0,
-                        'Storage tier',
-                        configData?.configState?.storageTier
-                    )}
+                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, 'Storage tier', 'storageTier')}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -145,44 +131,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-storage-tier"
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.storageTier) !== '' ||
-                                loading ||
-                                configData?.total === 0 ||
-                                configData?.storageTier === configData?.total ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
+                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
-                        configData?.fileSystemHeadroom || 0,
                         'File system headroom',
-                        configData?.configState?.fileSystemHeadroom
+                        'fileSystemHeadroom'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -196,45 +157,17 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
                             }}
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.fileSystemHeadroom) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData?.fileSystemHeadroom === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
-                        configData?.logDriveSize || 0,
-                        'Log drive size',
-                        configData?.configState?.logDriveSize
-                    )}
+                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE, 'Log drive size', 'logDriveSize')}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -247,44 +180,20 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-log-drive-size"
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.logDriveSize) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData?.logDriveSize === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
-                        configData.tempdbDriveSize || 0,
                         'TempDB drive size',
-                        configData?.configState?.tempdbDriveSize
+                        'tempdbDriveSize'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -298,180 +207,90 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
                             }}
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.tempdbDriveSize) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData?.tempdbDriveSize === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
-                        configData.userDataFiles || 0,
                         'Data files (.mdf)',
-                        configData?.configState?.userDataFiles
+                        'userDataFiles'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            data-testid="wlm-db-optimize-data-files"
+                            variant="secondary"
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF);
+                            }}
+                            isDisabled={
+                                loading ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton data-testid="wlm-db-optimize-data-files" variant="secondary" isDisabled>
-                                    {GENERAL.VIEW_AND_FIX}
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
+                            {t('databases.well-architect.view-and-fix')}
+                        </DsButton>
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
-                        configData.logFiles || 0,
-                        'Log files (.ldf)',
-                        configData?.configState?.logFiles
-                    )}
+                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF, 'Log files (.ldf)', 'logFiles')}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            data-testid="wlm-db-optimize-log-files"
+                            variant="secondary"
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF);
+                            }}
+                            isDisabled={
+                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton data-testid="wlm-db-optimize-log-files" variant="secondary" isDisabled>
-                                    {GENERAL.VIEW_AND_FIX}
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
+                            {t('databases.well-architect.view-and-fix')}
+                        </DsButton>
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
-                        configData.tempdbPlacement || 0,
                         ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
-                        configData?.configState?.tempdbPlacement
+                        'tempdbPlacement'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            data-testid="wlm-db-optimize-temdb-placement"
+                            variant="secondary"
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT);
+                            }}
+                            isDisabled={
+                                loading ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton data-testid="wlm-db-optimize-temdb-placement" variant="secondary" isDisabled>
-                                    {GENERAL.VIEW_AND_FIX}
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
+                            {t('databases.well-architect.view-and-fix')}
+                        </DsButton>
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.ONTAP,
-                        configData.ontapConfiguration || 0,
-                        'ONTAP',
-                        configData?.configState?.ontapConfiguration
-                    )}
+                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.ONTAP, 'ONTAP', 'ontapConfiguration')}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -481,38 +300,17 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             isThin
                             data-testid="wlm-db-optimize-ontap"
                             onClick={() => {
-                                handleOptimize('ONTAP');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
                             }}
-                            isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.ontapConfiguration) !== '' ||
-                                loading ||
-                                configData?.total === 0 ||
-                                configData?.ontapConfiguration === configData?.total
-                            }
+                            isDisabled={loading}
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        <Popover
-                            children={GENERAL.COMING_SOON}
-                            trigger="hover"
-                            container={
-                                <div className={styles.editDisableIcon}>
-                                    <Edit />
-                                </div>
-                            }
-                        />
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.OS,
-                        configData.operatingSystem || 0,
-                        'Operating system',
-                        configData?.configState?.operatingSystem
-                    )}
+                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.OS, 'Operating system', 'operatingSystem')}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -522,37 +320,20 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             isThin
                             data-testid="wlm-db-optimize-operating-system"
                             onClick={() => {
-                                handleOptimize('Operating system');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
                             }}
-                            isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.operatingSystem) !== '' ||
-                                loading ||
-                                configData?.total === 0 ||
-                                configData?.operatingSystem === configData?.total
-                            }
+                            isDisabled={loading}
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        <Popover
-                            children={GENERAL.COMING_SOON}
-                            trigger="hover"
-                            container={
-                                <div className={styles.editDisableIcon}>
-                                    <Edit />
-                                </div>
-                            }
-                        />
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
-                        GENERAL.COMPUTE_RIGHTSIZING,
-                        configData.computeRightsizing || 0,
-                        GENERAL.COMPUTE_RIGHTSIZING,
-                        configData?.configState?.computeRightsizing
+                        ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+                        ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+                        'computeRightsizing'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -563,95 +344,50 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             isThin
                             data-testid="wlm-db-optimize-compute-right-sizing"
                             onClick={() => {
-                                handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING);
                             }}
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.computeRightsizing) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData?.computeRightsizing === configData?.total
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(GENERAL.COMPUTE_RIGHTSIZING)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
-                        GENERAL.OPERATING_SYSTEM_PATCH,
-                        configData.operatingSystemPatch || 0,
-                        GENERAL.OPERATING_SYSTEM_PATCH,
-                        configData?.configState?.operatingSystemPatch
+                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                        'operatingSystemPatch'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            data-testid="wlm-db-optimize-operating-system-patch"
+                            isThin
+                            variant="secondary"
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH);
+                            }}
+                            isDisabled={
+                                loading ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-operating-system-patch"
-                                    variant="secondary"
-                                    isDisabled
-                                >
-                                    {GENERAL.VIEW_AND_FIX}
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
+                            {t('databases.well-architect.view-and-fix')}
+                        </DsButton>
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
-                        configData.rssConfiguration || 0,
-                        GENERAL.RSS_CONFIGURATION,
-                        configData?.configState?.rssConfiguration
+                        ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
+                        'rssConfiguration'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -661,48 +397,20 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin
                             onClick={() => {
-                                handleOptimize(GENERAL.RSS_CONFIGURATION);
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION);
                             }}
                             data-testid="wlm-db-optimize-rss-configuration"
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.rssConfiguration) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData.rssConfiguration === configData?.total ||
-                                inProgressOptimizationData[GENERAL.RSS_CONFIGURATION]?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
                 <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.MTU,
-                        configData.mtuConfiguration || 0,
-                        t('databases.general.mtu'),
-                        configData?.configState?.mtuConfiguration
-                    )}
+                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.MTU, t('databases.general.mtu'), 'mtuConfiguration')}
                     <SeparatorComponent variant="vertical" height="60px" />
                     <div className={styles.buttonContainer}>
                         <DsButton
@@ -712,141 +420,70 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.MTU);
                             }}
-                            isDisabled={
-                                hasDismissedOrPosponed(configData?.configState?.mtuConfiguration) !== '' ||
-                                loading ||
-                                configData?.total === 0 ||
-                                configData?.mtuConfiguration === configData?.total ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MTU]?.length > 0
-                            }
+                            isDisabled={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MTU]?.length > 0}
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MTU)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.LICENSE,
-                        configData.applicationSqlServer || 0,
-                        GENERAL.LICENSE_SQL_SERVER,
-                        configData?.configState?.applicationSqlServer
+                        ASSESSMENT_CONFIG_NAMES.LICENSE,
+                        'applicationSqlServer'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            data-testid="wlm-db-optimize-license-sql-server"
+                            isThin
+                            variant="secondary"
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.LICENSE);
+                            }}
+                            isDisabled={
+                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LICENSE]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-license-sql-server"
-                                    variant="secondary"
-                                    isDisabled
-                                >
-                                    {GENERAL.VIEW_AND_FIX}
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LICENSE)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
+                            {t('databases.well-architect.view-and-fix')}
+                        </DsButton>
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-                        configData.mssqlPatch || 0,
-                        GENERAL.MICROSOFT_SQL_PATCH,
-                        configData?.configState?.mssqlPatch
+                        ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+                        'mssqlPatch'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            data-testid="wlm-db-optimize-microsoft-sql-server"
+                            variant="secondary"
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH);
+                            }}
+                            isDisabled={
+                                loading ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]?.length >
+                                    0
+                            }
                         >
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-microsoft-sql-server"
-                                    variant="secondary"
-                                    isDisabled
-                                >
-                                    {GENERAL.VIEW_AND_FIX}
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
+                            {t('databases.well-architect.view-and-fix')}
+                        </DsButton>
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.MAXDOP,
-                        configData.maxdopPatch || 0,
-                        GENERAL.MAXDOP_PATCH,
-                        configData?.configState?.maxdopPatch
+                        ASSESSMENT_CONFIG_NAMES.MAXDOP,
+                        'maxdopPatch'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -860,44 +497,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-maxdop"
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.maxdopPatch) !== '' ||
-                                loading ||
-                                configData?.total === 0 ||
-                                configData?.maxdopPatch === configData?.total ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
+                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MAXDOP)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
-                        configData.scheduledLocalSnapshot || 0,
-                        GENERAL.SCHEDULED_LOCAL_SNAPSHOT,
-                        configData?.configState?.scheduledLocalSnapshot
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+                        'scheduledLocalSnapshot'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -911,84 +523,46 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-snapshot"
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.scheduledLocalSnapshot) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData?.scheduledLocalSnapshot === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.CRR,
-                        configData.crr || 0,
-                        GENERAL.CRR,
-                        configData?.configState?.crr
-                    )}
+                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.CRR, 'Cross-Region Replication (CRR)', 'crr')}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
                         <TooltipComponent title="" placement="bottom" width="120px" height="30px">
                             <div>
-                                <DsButton data-testid="wlm-db-optimize-crr" variant="secondary" isDisabled>
-                                    {GENERAL.VIEW_AND_FIX}
+                                <DsButton
+                                    data-testid="wlm-db-optimize-crr"
+                                    variant="secondary"
+                                    isThin
+                                    onClick={() => {
+                                        handleOptimize(ASSESSMENT_CONFIG_NAMES.CRR);
+                                    }}
+                                    isDisabled={
+                                        loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0
+                                    }
+                                >
+                                    {t('databases.well-architect.view-and-fix')}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CRR)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-                        configData.scheduledawsBackup || 0,
-                        GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-                        configData?.configState?.scheduledawsBackup
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        'scheduledawsBackup'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -1002,46 +576,20 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-awsbackup"
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.scheduledawsBackup) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData?.scheduledawsBackup === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
                                     ?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() =>
-                                            handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS)
-                                        }
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
                 <div className={styles.tile}>
                     {renderOptimizationBar(
                         ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
-                        configData.mssqlhighAvailability || 0,
                         t('databases.general.mssql-high-availability'),
-                        configData?.configState?.mssqlhighAvailability
+                        'mssqlhighAvailability'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -1055,64 +603,20 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
                             }}
                             isDisabled={
-                                hasDismissedOrPosponed(configData?.configState?.mssqlhighAvailability) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData?.mssqlhighAvailability === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        <Popover
-                            children={GENERAL.COMING_SOON}
-                            trigger="hover"
-                            container={
-                                <div className={styles.editDisableIcon}>
-                                    <Edit />
-                                </div>
-                            }
-                        />
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.clone) || showNA ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={showNA ? t('databases.general.not-available') : 0}
-                            headingText={GENERAL.CLONE_MANAGEMENT}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={showNA ? undefined : hasDismissedOrPosponed(configData?.configState?.clone)}
-                            textMessageVariant={showNA ? 'Regular_14' : undefined}
-                            optimizePercentage={showNA ? 100 : 0}
-                            loading={loading}
-                            isDisabled={showNA}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.CLONE_MANAGEMENT}
-                            percentage={Math.round(((configData.clone || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.clone}
-                            afterOutOf={configData.total}
-                            bottomText="Well-architected databases:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.clone)}
-                            isDisabled={showNA}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        'clone'
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -1126,35 +630,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-clone"
                             isDisabled={
-                                showNA ||
-                                hasDismissedOrPosponed(configData?.configState?.clone) !== '' ||
                                 loading ||
-                                configData?.total === 0 ||
-                                configData?.clone === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
                             }
                         >
-                            {GENERAL.VIEW_AND_FIX}
+                            {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-
-                        {loading || showNA ? (
-                            <div className={styles.editDisableIcon}>
-                                <Edit />
-                            </div>
-                        ) : (
-                            <Popover
-                                children={GENERAL.MANAGE_ANALYSIS_STATE}
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT)}
-                                        className={styles.editIcon}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            />
-                        )}
                     </div>
                 </div>
             </div>

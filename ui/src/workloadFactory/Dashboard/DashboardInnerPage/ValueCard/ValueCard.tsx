@@ -1,119 +1,114 @@
-import { DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
+import { DsTypography, TooltipInfo } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import styles from './ValueCard.module.scss';
-import { ReactComponent as Edit } from '../../../../assets/ic_edit.svg';
-import { GENERAL } from '../../../../utils/appConstants';
 
 type ValueCardProps = {
-    optimizedInstances?: string;
-    notOptimizedInstances?: string;
-    severity?: string;
-    instances?: string;
-    configurationState?: string;
-    from?: string;
-    tooltipText?: string;
-    type?: string;
-    handleEdit?: any;
-    isAnalysisDisabled?: boolean;
+    valueCardData: {
+        optimizedInstances?: number;
+        notOptimizedInstances?: number;
+        totalInstances?: number;
+        dismissedInstances?: number;
+        activatingInstances?: number;
+        severity?: string;
+    };
 };
 
-const ValueCard = ({
-    optimizedInstances,
-    notOptimizedInstances,
-    severity,
-    instances,
-    configurationState,
-    from = 'innerPage',
-    tooltipText,
-    type,
-    handleEdit,
-    isAnalysisDisabled = false
-}: ValueCardProps) => {
+const ValueCard = ({ valueCardData }: ValueCardProps) => {
+    const {
+        optimizedInstances,
+        notOptimizedInstances,
+        totalInstances,
+        dismissedInstances,
+        activatingInstances,
+        severity
+    } = valueCardData;
     const { t } = useTranslation();
     return (
-        <>
-            {from === 'innerPage' && (
-                <div className={styles.valueCard}>
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
-                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                            {optimizedInstances}
-                        </DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.well-architected-instances')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
-                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                            {notOptimizedInstances}
-                        </DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.not-optimized-instances')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
-                        <DsTypography variant="Semibold_14">{severity}</DsTypography>
-                        <DsTypography variant="Regular_14">{t('databases.well-architect.severity')}</DsTypography>
-                    </div>
-
-                    <div className={styles.block}>
-                        <div className={styles.configState}>
-                            <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
-                            <Popover
-                                trigger="hover"
-                                container={
-                                    <div
-                                        onClick={isAnalysisDisabled ? undefined : () => handleEdit(type)}
-                                        onKeyDown={
-                                            isAnalysisDisabled
-                                                ? undefined
-                                                : e => {
-                                                      if (e.key === 'Enter' || e.key === ' ') handleEdit(type);
-                                                  }
-                                        }
-                                        role="button"
-                                        tabIndex={isAnalysisDisabled ? -1 : 0}
-                                        className={`${styles.editButton} ${isAnalysisDisabled ? styles.disabled : ''}`}
-                                    >
-                                        <Edit />
-                                    </div>
-                                }
-                            >
-                                {isAnalysisDisabled
-                                    ? GENERAL.COMING_SOON
-                                    : t('databases.general.manage-analysis-state')}
-                            </Popover>
-                        </div>
-                        <DsTypography variant="Regular_14">{t('databases.well-architect.analysis-state')}</DsTypography>
-                    </div>
+        <div className={styles.valueCard}>
+            <div className={styles.cardContent}>
+                <div className={styles.column} style={{ borderRight: '1px solid var(--border)' }}>
+                    <DsTypography variant="Regular_24" className={styles.titleText} style={{ lineHeight: 'unset' }}>
+                        {totalInstances}
+                    </DsTypography>
+                    <DsTypography
+                        className={styles.label}
+                        title={t('databases.well-architect.total-instances')}
+                        variant="Regular_14"
+                    >
+                        {t('databases.well-architect.total-instances')}
+                    </DsTypography>
                 </div>
-            )}
-            {from === 'dismissPage' && (
-                <div className={styles.valueCard}>
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
-                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                            {instances}
-                        </DsTypography>
-                        <DsTypography variant="Regular_14">{t('databases.well-architect.instances')}</DsTypography>
-                    </div>
 
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
-                        <div className={styles.configContainer}>
-                            {tooltipText && <TooltipInfo>{tooltipText}</TooltipInfo>}
-                            <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
-                        </div>
-
-                        <DsTypography variant="Regular_14">{t('databases.well-architect.analysis-state')}</DsTypography>
-                    </div>
-
-                    <div className={styles.block}>
-                        <DsTypography variant="Semibold_14">{severity}</DsTypography>
-                        <DsTypography variant="Regular_14">{t('databases.well-architect.severity')}</DsTypography>
-                    </div>
+                <div className={styles.column} style={{ borderRight: '1px solid var(--border)' }}>
+                    <DsTypography variant="Regular_24" className={styles.titleText} style={{ lineHeight: 'unset' }}>
+                        {optimizedInstances}
+                    </DsTypography>
+                    <DsTypography
+                        className={styles.label}
+                        title={t('databases.well-architect.well-architected-instances')}
+                        variant="Regular_14"
+                    >
+                        {t('databases.well-architect.well-architected-instances')}
+                    </DsTypography>
                 </div>
-            )}
-        </>
+
+                <div className={styles.column} style={{ borderRight: '1px solid var(--border)' }}>
+                    <DsTypography variant="Regular_24" className={styles.titleText} style={{ lineHeight: 'unset' }}>
+                        {notOptimizedInstances}
+                    </DsTypography>
+                    <DsTypography
+                        className={styles.label}
+                        title={t('databases.well-architect.not-optimized-instances')}
+                        variant="Regular_14"
+                    >
+                        {t('databases.well-architect.not-optimized-instances')}
+                    </DsTypography>
+                </div>
+
+                {dismissedInstances !== 0 && (
+                    <div className={styles.column} style={{ borderRight: '1px solid var(--border)' }}>
+                        <DsTypography variant="Regular_24" className={styles.titleText} style={{ lineHeight: 'unset' }}>
+                            {dismissedInstances}
+                        </DsTypography>
+                        <DsTypography
+                            className={styles.label}
+                            title={t('databases.well-architect.dismissed-instances')}
+                            variant="Regular_14"
+                        >
+                            {t('databases.well-architect.dismissed-instances')}
+                        </DsTypography>
+                    </div>
+                )}
+
+                {activatingInstances !== 0 && (
+                    <div className={styles.column} style={{ borderRight: '1px solid var(--border)' }}>
+                        <DsTypography variant="Regular_24" className={styles.titleText} style={{ lineHeight: 'unset' }}>
+                            {activatingInstances}
+                        </DsTypography>
+                        <DsTypography
+                            className={styles.label}
+                            title={t('databases.well-architect.pending-instances')}
+                            variant="Regular_14"
+                        >
+                            {t('databases.well-architect.pending-instances')}
+                        </DsTypography>
+                    </div>
+                )}
+
+                <div className={styles.column} style={{ borderRight: 'none' }}>
+                    <DsTypography variant="Semibold_14" className={styles.titleText}>
+                        {severity}
+                    </DsTypography>
+                    <DsTypography
+                        className={styles.label}
+                        title={t('databases.well-architect.severity')}
+                        variant="Regular_14"
+                    >
+                        {t('databases.well-architect.severity')}
+                    </DsTypography>
+                </div>
+            </div>
+        </div>
     );
 };
 

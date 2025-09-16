@@ -1,13 +1,30 @@
 .dashboardInnerPage {
     height: inherit;
     overflow: auto;
+    width: 100%;
+    padding: 0 120px;
     background-color: var(--main-background);
 
+    .breadCrumb {
+        margin-top: 24px;
+        width: 100%;
+        position: relative;
+        left: -5%;
+    }
+
     .innerPage {
-        .headingSection {
+        .breadCrumbSection {
             margin-top: 16px;
+            width: 100%;
+            position: relative;
+            left: -5%;
+        }
+
+        .headingSection {
+            margin-top: 40px;
             display: flex;
-            flex-direction: column;
+            gap: 16px;
+
             align-items: center;
 
             .dismissPageMessage {
@@ -22,15 +39,21 @@
             display: flex;
             justify-content: center;
             margin-top: 24px;
+            width: 100%;
+
+            .contentSection {
+                width: 80%;
+            }
 
             .leftSection {
                 display: flex;
                 gap: 1px;
                 flex-direction: column;
+                width: 68%;
 
                 .recommendation {
                     background-color: var(--content-background);
-                    width: 926px;
+
                     box-shadow: 2px 2px 6px 0px var(--border);
                 }
             }
@@ -46,6 +69,22 @@
                 display: flex;
                 justify-content: space-between;
                 width: 92%;
+
+                [class*='dsButtons'] {
+                    border-radius: 20px !important;
+                }
+            }
+
+            .reactiveButtonContainer {
+                display: flex;
+                gap: 34px;
+
+                .postponeContainer {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    width: 204px;
+                }
 
                 [class*='dsButtons'] {
                     border-radius: 20px !important;
@@ -75,12 +114,8 @@
     }
 }
 
-@media screen and (min-width: 1920px) {
-    .dashboardInnerPage {
-        .mainSection {
-            .recommendation {
-                width: calc(926px + ((100vw - 1920px) * 0.6941)) !important;
-            }
-        }
-    }
+.dismissDialog {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }

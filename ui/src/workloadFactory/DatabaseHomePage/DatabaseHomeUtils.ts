@@ -456,6 +456,18 @@ export const isOptimized = (status?: string, dismissState?: string) =>
     dismissState === CONFIG_STATES.POSTPONED ||
     dismissState === CONFIG_STATES.ACTIVATING;
 
+export const isOptimizedDashInner = (status?: string, dismissState?: string) =>
+    (status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
+        status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase()) &&
+    dismissState !== CONFIG_STATES.DISMISSED &&
+    dismissState !== CONFIG_STATES.POSTPONED &&
+    dismissState !== CONFIG_STATES.ACTIVATING;
+
+export const isActivating = (dismissState?: string) => dismissState === CONFIG_STATES.ACTIVATING;
+
+export const isDismissed = (dismissState?: string) =>
+    dismissState === CONFIG_STATES.DISMISSED || dismissState === CONFIG_STATES.POSTPONED;
+
 export const hasPostponedOrDismissed = (obj: any): boolean => {
     const checkState = (item: any): boolean => {
         if (typeof item !== 'object' || item === null) return false;
@@ -770,27 +782,111 @@ export const setConfigState = (configState: any, configName: string, state: stri
 
 export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
     const getAssessmentGroupedByConfigurations: any = {
-        storageTier: 0,
-        fileSystemHeadroom: 0,
-        logDriveSize: 0,
-        tempdbDriveSize: 0,
-        userDataFiles: 0,
-        logFiles: 0,
-        tempdbPlacement: 0,
-        ontapConfiguration: 0,
-        operatingSystem: 0,
-        computeRightsizing: 0,
-        operatingSystemPatch: 0,
-        rssConfiguration: 0,
-        mtuConfiguration: 0,
-        applicationSqlServer: 0,
-        mssqlPatch: 0,
-        maxdopPatch: 0,
-        scheduledLocalSnapshot: 0,
-        scheduledawsBackup: 0,
-        mssqlhighAvailability: 0,
-        clone: 0,
-        crr: 0,
+        storageTier: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        fileSystemHeadroom: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        logDriveSize: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        tempdbDriveSize: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        userDataFiles: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        logFiles: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        tempdbPlacement: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        ontapConfiguration: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        operatingSystem: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        computeRightsizing: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        operatingSystemPatch: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        rssConfiguration: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        mtuConfiguration: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        applicationSqlServer: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        mssqlPatch: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        maxdopPatch: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        scheduledLocalSnapshot: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        scheduledawsBackup: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        mssqlhighAvailability: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        clone: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        crr: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         total: 0,
         severityObj: {}
     };
@@ -844,7 +940,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const perfTierStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
                     (item: any) => item?.configurationName === 'performance-tier'
                 );
-                const isStorageTierOptimized = isOptimized(perfTierObj?.status, perfTierStateObj?.configState);
+                const isStorageTierOptimized = isOptimizedDashInner(perfTierObj?.status, perfTierStateObj?.configState);
                 setConfigState(configState, 'storageTier', perfTierStateObj?.configState);
 
                 const headroomObj = instanceAssessmentData?.storage?.sizing?.find(
@@ -853,7 +949,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const headroomStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
                     (item: any) => item?.configurationName === 'headroom'
                 );
-                const isFileSystemHeadroomOptimized = isOptimized(headroomObj?.status, headroomStateObj?.configState);
+                const isFileSystemHeadroomOptimized = isOptimizedDashInner(
+                    headroomObj?.status,
+                    headroomStateObj?.configState
+                );
                 setConfigState(configState, 'fileSystemHeadroom', headroomStateObj?.configState);
 
                 const logDriveSizeObj = instanceAssessmentData?.storage?.sizing?.find(
@@ -862,7 +961,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const logDriveSizeStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
                     (item: any) => item?.configurationName === 'log-drive-size'
                 );
-                const isLogDriveSizeOptimized = isOptimized(logDriveSizeObj?.status, logDriveSizeStateObj?.configState);
+                const isLogDriveSizeOptimized = isOptimizedDashInner(
+                    logDriveSizeObj?.status,
+                    logDriveSizeStateObj?.configState
+                );
                 setConfigState(configState, 'logDriveSize', logDriveSizeStateObj?.configState);
 
                 const tempdbDriveSizeObj = instanceAssessmentData?.storage?.sizing?.find(
@@ -871,7 +973,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const tempdbDriveSizeStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
                     (item: any) => item?.configurationName === 'tempdb-drive-size'
                 );
-                const isTempdbDriveSizeOptimized = isOptimized(
+                const isTempdbDriveSizeOptimized = isOptimizedDashInner(
                     tempdbDriveSizeObj?.status,
                     tempdbDriveSizeStateObj?.configState
                 );
@@ -883,7 +985,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const userDataFilesStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
                     (item: any) => item?.configurationName === 'data-files-location'
                 );
-                const isUserDataFilesOptimized = isOptimized(
+                const isUserDataFilesOptimized = isOptimizedDashInner(
                     userDataFilesObj?.status,
                     userDataFilesStateObj?.configState
                 );
@@ -895,7 +997,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const logFilesStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
                     (item: any) => item?.configurationName === 'log-files-location'
                 );
-                const isLogFilesOptimized = isOptimized(logFilesObj?.status, logFilesStateObj?.configState);
+                const isLogFilesOptimized = isOptimizedDashInner(logFilesObj?.status, logFilesStateObj?.configState);
                 setConfigState(configState, 'logFiles', logFilesStateObj?.configState);
 
                 const tempdbFilesLocationObj = instanceAssessmentData?.storage?.layout?.find(
@@ -905,7 +1007,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
                         (item: any) => item?.configurationName === 'tempdb-files-location'
                     );
-                const isTempdbPlacementOptimized = isOptimized(
+                const isTempdbPlacementOptimized = isOptimizedDashInner(
                     tempdbFilesLocationObj?.status,
                     tempdbFilesLocationStateObj?.configState
                 );
@@ -920,7 +1022,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                                 (config: any) => config?.configurationName === item.name
                             )?.configState;
                         setConfigState(configState, 'ontapConfiguration', configStateVal);
-                        return isOptimized(item?.status, configStateVal);
+                        return isOptimizedDashInner(item?.status, configStateVal);
                     }) &&
                     instanceAssessmentData?.storage?.configuration?.volumes?.every((item: any) => {
                         const configStateVal =
@@ -928,7 +1030,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                                 (config: any) => config?.configurationName === item.name
                             )?.configState;
                         setConfigState(configState, 'ontapConfiguration', configStateVal);
-                        return isOptimized(item?.status, configStateVal);
+                        return isOptimizedDashInner(item?.status, configStateVal);
                     });
                 const isOperatingSystemOptimized =
                     instanceAssessmentData &&
@@ -940,7 +1042,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                                 (config: any) => config?.configurationName === item.name
                             )?.configState;
                         setConfigState(configState, 'operatingSystem', configStateVal);
-                        return isOptimized(item?.status, configStateVal);
+                        return isOptimizedDashInner(item?.status, configStateVal);
                     });
 
                 const isMssqlHighAvailabilityOptimized =
@@ -951,7 +1053,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                             (config: any) => config?.configurationName === item.name
                         )?.configState;
                         setConfigState(configState, 'mssqlhighAvailability', configStateVal);
-                        return isOptimized(item?.status, configStateVal);
+                        return isOptimizedDashInner(item?.status, configStateVal);
                     });
                 const isAllMssqlHighAvailability =
                     instanceAssessmentData?.highAvailability?.length === 5 &&
@@ -964,7 +1066,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                             'sqlServer-service'
                         ].includes(item?.name)
                     );
-                const isComputeRightsizingOptimized = isOptimized(
+                const isComputeRightsizingOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.compute?.status,
                     instanceAssessmentData?.dismissedConfigurations?.compute?.configState
                 );
@@ -974,7 +1076,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.compute?.configState
                 );
 
-                const isOpearingSystemPatchOptimized = isOptimized(
+                const isOperatingSystemPatchOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.hostOsPatch?.status,
                     instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
                 );
@@ -984,7 +1086,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
                 );
 
-                const isRssConfigurationOptimized = isOptimized(
+                const isRssConfigurationOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.rssConfig?.status,
                     instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
                 );
@@ -994,7 +1096,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
                 );
 
-                const isMtuConfigurationOptimized = isOptimized(
+                const isMtuConfigurationOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.mtuAlignment?.status,
                     instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
                 );
@@ -1004,7 +1106,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
                 );
 
-                const isApplicationSqlServerOptimized = isOptimized(
+                const isApplicationSqlServerOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.license?.status,
                     instanceAssessmentData?.dismissedConfigurations?.license?.configState
                 );
@@ -1014,7 +1116,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.license?.configState
                 );
 
-                const isMicrosoftSqlPatchOptimized = isOptimized(
+                const isMicrosoftSqlPatchOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.mssqlPatch?.status,
                     instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
                 );
@@ -1024,7 +1126,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
                 );
 
-                const isMaxdopPatchOptimized = isOptimized(
+                const isMaxdopPatchOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.maxDOP?.status,
                     instanceAssessmentData?.dismissedConfigurations?.maxDOP?.configState
                 );
@@ -1034,7 +1136,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.maxDOP?.configState
                 );
 
-                const isScheduledLocalSnapshotOptimized = isOptimized(
+                const isScheduledLocalSnapshotOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.snapshotPolicy?.status,
                     instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
                 );
@@ -1044,7 +1146,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
                 );
 
-                const isScheduledawsBackupOptimized = isOptimized(
+                const isScheduledawsBackupOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.awsBackup?.status,
                     instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
                 );
@@ -1054,7 +1156,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
                 );
 
-                const isCloneOptimized = isOptimized(
+                const isCloneOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.clone?.status,
                     instanceAssessmentData?.dismissedConfigurations?.clone?.configState
                 );
@@ -1064,99 +1166,299 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.clone?.configState
                 );
 
-                const isCrrOptimized = isOptimized(
+                const isCrrOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.crr?.status,
                     instanceAssessmentData?.dismissedConfigurations?.crr?.configState
                 );
                 setConfigState(configState, 'crr', instanceAssessmentData?.dismissedConfigurations?.crr?.configState);
 
-                getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.storageTier.optimized += isStorageTierOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.storageTier.dismissed += isDismissed(perfTierStateObj?.configState)
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.storageTier.activating += isActivating(
+                    perfTierStateObj?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.storageTier =
                     GETWELL_VALUES[perfTierObj?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.storageTier;
-                getAssessmentGroupedByConfigurations.fileSystemHeadroom += isFileSystemHeadroomOptimized ? 1 : 0;
+
+                getAssessmentGroupedByConfigurations.fileSystemHeadroom.optimized += isFileSystemHeadroomOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.fileSystemHeadroom.dismissed += isDismissed(
+                    headroomStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.fileSystemHeadroom.activating += isActivating(
+                    headroomStateObj?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.fileSystemHeadroom =
                     GETWELL_VALUES[headroomObj?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.fileSystemHeadroom;
-                getAssessmentGroupedByConfigurations.logDriveSize += isLogDriveSizeOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.logDriveSize.optimized += isLogDriveSizeOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.logDriveSize.dismissed += isDismissed(
+                    logDriveSizeStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.logDriveSize.activating += isActivating(
+                    logDriveSizeStateObj?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.logDriveSize =
                     GETWELL_VALUES[logDriveSizeObj?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.logDriveSize;
-                getAssessmentGroupedByConfigurations.tempdbDriveSize += isTempdbDriveSizeOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.tempdbDriveSize.optimized += isTempdbDriveSizeOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.tempdbDriveSize.dismissed += isDismissed(
+                    tempdbDriveSizeStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.tempdbDriveSize.activating += isActivating(
+                    tempdbDriveSizeStateObj?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.tempdbDriveSize =
                     GETWELL_VALUES[tempdbDriveSizeObj?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.tempdbDriveSize;
-                getAssessmentGroupedByConfigurations.userDataFiles += isUserDataFilesOptimized ? 1 : 0;
+
+                getAssessmentGroupedByConfigurations.userDataFiles.optimized += isUserDataFilesOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.userDataFiles.dismissed += isDismissed(
+                    userDataFilesStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.userDataFiles.activating += isActivating(
+                    userDataFilesStateObj?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.userDataFiles =
                     GETWELL_VALUES[userDataFilesObj?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.userDataFiles;
-                getAssessmentGroupedByConfigurations.logFiles += isLogFilesOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.logFiles.optimized += isLogFilesOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.logFiles.dismissed += isDismissed(logFilesStateObj?.configState)
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.logFiles.activating += isActivating(logFilesStateObj?.configState)
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.logFiles =
                     GETWELL_VALUES[logFilesObj?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.logFiles;
-                getAssessmentGroupedByConfigurations.tempdbPlacement += isTempdbPlacementOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.tempdbPlacement.optimized += isTempdbPlacementOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.tempdbPlacement.dismissed += isDismissed(
+                    tempdbFilesLocationStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.tempdbPlacement.activating += isActivating(
+                    tempdbFilesLocationStateObj?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.tempdbPlacement =
                     GETWELL_VALUES[tempdbFilesLocationObj?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.tempdbPlacement;
-                getAssessmentGroupedByConfigurations.ontapConfiguration += isOntapConfigurationOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.ontapConfiguration.optimized += isOntapConfigurationOptimized
+                    ? 1
+                    : 0;
+                // getAssessmentGroupedByConfigurations.dismissedCount.ontapConfiguration += isDismissed(perfTierStateObj?.configState) ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.ontapConfiguration = 'Critical';
-                getAssessmentGroupedByConfigurations.operatingSystem += isOperatingSystemOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.operatingSystem.optimized += isOperatingSystemOptimized ? 1 : 0;
+                // getAssessmentGroupedByConfigurations.dismissedCount.operatingSystem += isDismissed(perfTierStateObj?.configState) ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystem = 'Critical';
-                getAssessmentGroupedByConfigurations.computeRightsizing += isComputeRightsizingOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.computeRightsizing.optimized += isComputeRightsizingOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.computeRightsizing.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.compute?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.computeRightsizing.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.compute?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.computeRightsizing =
                     GETWELL_VALUES[instanceAssessmentData?.compute?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.computeRightsizing;
-                getAssessmentGroupedByConfigurations.operatingSystemPatch += isOpearingSystemPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.operatingSystemPatch.optimized += isOperatingSystemPatchOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.operatingSystemPatch.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.operatingSystemPatch.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystemPatch =
                     GETWELL_VALUES[instanceAssessmentData?.hostOsPatch?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.operatingSystemPatch;
-                getAssessmentGroupedByConfigurations.rssConfiguration += isRssConfigurationOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.rssConfiguration.optimized += isRssConfigurationOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.rssConfiguration.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.rssConfiguration.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.rssConfiguration =
                     GETWELL_VALUES[instanceAssessmentData?.rssConfig?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.rssConfiguration;
-                getAssessmentGroupedByConfigurations.mtuConfiguration += isMtuConfigurationOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.mtuConfiguration.optimized += isMtuConfigurationOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.mtuConfiguration.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.mtuConfiguration.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.mtuConfiguration =
                     GETWELL_VALUES[instanceAssessmentData?.mtuAlignment?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.mtuConfiguration;
-                getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.applicationSqlServer.optimized += isApplicationSqlServerOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.applicationSqlServer.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.license?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.applicationSqlServer.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.license?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
                     GETWELL_VALUES[instanceAssessmentData?.license?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.applicationSqlServer;
-                getAssessmentGroupedByConfigurations.mssqlPatch += isMicrosoftSqlPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.mssqlPatch.optimized += isMicrosoftSqlPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.mssqlPatch.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.mssqlPatch.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.mssqlPatch =
                     GETWELL_VALUES[instanceAssessmentData?.mssqlPatch?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.mssqlPatch;
-                getAssessmentGroupedByConfigurations.maxdopPatch += isMaxdopPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.maxdopPatch.optimized += isMaxdopPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.maxdopPatch.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.maxDOP?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.maxdopPatch.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.maxDOP?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.maxdopPatch =
                     GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.maxdopPatch;
-                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot += isScheduledLocalSnapshotOptimized
+                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.optimized +=
+                    isScheduledLocalSnapshotOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
+                )
                     ? 1
                     : 0;
+                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
+                )
+                    ? 1
+                    : 0;
+
                 getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
                     GETWELL_VALUES[instanceAssessmentData?.snapshotPolicy?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
 
-                getAssessmentGroupedByConfigurations.scheduledawsBackup += isScheduledawsBackupOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.scheduledawsBackup.optimized += isScheduledawsBackupOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.scheduledawsBackup.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.scheduledawsBackup.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.scheduledawsBackup =
                     GETWELL_VALUES[instanceAssessmentData?.awsBackup?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
 
-                getAssessmentGroupedByConfigurations.clone += isCloneOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.clone.optimized += isCloneOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.clone.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.clone.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.clone =
                     GETWELL_VALUES[instanceAssessmentData?.clone?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.clone;
 
-                getAssessmentGroupedByConfigurations.crr += isCrrOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.crr.optimized += isCrrOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.crr.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.crr.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.crr =
                     GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.crr;
 
-                getAssessmentGroupedByConfigurations.mssqlhighAvailability +=
+                getAssessmentGroupedByConfigurations.mssqlhighAvailability.optimized +=
                     instance?.assessments?.deploymentType !== GENERAL.FCI ||
                     (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability)
                         ? 1
                         : 0;
+                getAssessmentGroupedByConfigurations.mssqlhighAvailability.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.mssqlhighAvailability?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.mssqlhighAvailability.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.mssqlhighAvailability?.configState
+                )
+                    ? 1
+                    : 0;
                 getAssessmentGroupedByConfigurations.severityObj.mssqlhighAvailability = 'Critical';
             }
         });

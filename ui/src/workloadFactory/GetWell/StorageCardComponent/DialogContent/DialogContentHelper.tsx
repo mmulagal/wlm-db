@@ -1,8 +1,10 @@
 import { DsTypography } from '@tlveng/wlm-ds';
+import { TFunction } from 'i18next';
 import styles from './DialogContent.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { ReactComponent as Info } from '../../../../assets/info.svg';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 
 // Helper function to create a section with title and description
@@ -107,15 +109,27 @@ export const createClusterQuorumSQLNotesSection = (t: any) =>
         { width: '712px' }
     );
 
+const noticeHelper = (t: TFunction) => (
+    <div className={styles.noticeSection}>
+        <Info />
+        <div className={styles.noticeText}>
+            <DsTypography variant="Semibold_14">{t('databases.well-architect.notice-title')}</DsTypography>
+            <DsTypography variant="Regular_14">{t('databases.well-architect.notice-description')}</DsTypography>
+        </div>
+    </div>
+);
+
 // Helper function to create standard dialog structure
 export const createStandardDialog = (
     t: any,
     actionSummary: string,
     whatWillHappen: string | React.ReactNode,
     notesSection: React.ReactNode,
-    configSection?: React.ReactNode
+    configSection?: React.ReactNode,
+    assessmentStatus?: boolean
 ) => (
     <div className={styles['storage-tier-block']}>
+        {assessmentStatus && noticeHelper(t)}
         {createSection(t('databases.well-architect.action-summary'), actionSummary)}
         {createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
         {configSection}

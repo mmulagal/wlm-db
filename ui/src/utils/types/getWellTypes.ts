@@ -53,6 +53,7 @@ export interface PerConfigInterface {
         baselineId?: string;
         criticalNonCompliantCount?: number;
         ec2InstanceId?: string;
+        ec2InstanceName?: string;
         operationStartTime?: number;
         operationEndTime?: number;
         securityNonCompliantCount?: number;
@@ -186,7 +187,7 @@ export interface GwPerConfigCardInterface {
 }
 
 export interface GwCardDataInterface {
-    [key: string]: GwPerConfigCardInterface | string;
+    [key: string]: GwPerConfigCardInterface;
 }
 
 export interface GwSqlServerInstanceInterface {

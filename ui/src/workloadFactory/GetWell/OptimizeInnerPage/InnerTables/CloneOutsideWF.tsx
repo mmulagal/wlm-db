@@ -2,8 +2,9 @@ import { Table, useTable, TableTopBar, DsTypography, DsButton, Popover } from '@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import styles from './InnerTable.module.scss';
-
 import { GENERAL } from '../../../../utils/appConstants';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -11,9 +12,9 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import BulkCloneContainer from '../../../../common/BulkAction/BulkCloneContainer';
 import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../../utils/consts';
 import { disableOptimizeResourceCheckBoxForOptimizeCase } from '../../GetWellUtils';
-import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 
 const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressResourceOptimizeData } = useAppSelector(state => state.getWellOptimize);
@@ -97,8 +98,8 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                     <>
                         {isInProgress ? (
                             <div className={styles['optimize-in-progress']}>
-                                <SmallLoader />
-                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
+                                <DsFlashingDotsLoader />
+                                <DsTypography variant="Regular_14">{t('databases.well-architect.fixing')}</DsTypography>
                             </div>
                         ) : (
                             <div className={styles.buttonContainer}>
