@@ -278,7 +278,7 @@ function getLunConfigDrift(storageAssessmentData: StorageAssessment) {
             .map(lun => ({
                 objectName: lun.name,
                 objectType: ASSESSMENT_RESOURCE_TYPE.LUN,
-                value: lun[config.parameter],
+                value: lun[config.parameter]?.toString() || '',
                 recommended: config.value.toString()
             }));
 
