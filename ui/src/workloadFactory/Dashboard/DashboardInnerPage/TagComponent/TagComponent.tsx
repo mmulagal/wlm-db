@@ -160,6 +160,55 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagCompone
                         { label: t('databases.well-architect.tags.security'), value: 'security' }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
+                case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.SELINUX:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.security'), value: 'security' },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
+                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        }
+                    ]);
+                    break;
                 default:
                     setTagData([{ label: t('databases.well-architect.tags.noTagsAvailable'), value: '' }]);
             }

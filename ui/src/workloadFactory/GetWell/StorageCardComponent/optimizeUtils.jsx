@@ -77,9 +77,31 @@ export const handleDialog = (
     }
 };
 
-const isDialogPrimaryBtnDisabled = rowData =>
-    rowData?.engineType === DBType.MSSQL &&
-    (rowData?.data?.name === 'OS type' || rowData?.data?.name === 'NTFS allocation unit size');
+const isDialogPrimaryBtnDisabled = rowData => {
+    if (
+        rowData?.engineType === DBType.MSSQL &&
+        (rowData?.data?.name === 'OS type' || rowData?.data?.name === 'NTFS allocation unit size')
+    ) {
+        return true;
+    }
+    if (
+        rowData?.engineType === DBType.ORACLE &&
+        (rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION)
+    ) {
+        return true;
+    }
+    return false;
+};
 
 export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
     setDialog(

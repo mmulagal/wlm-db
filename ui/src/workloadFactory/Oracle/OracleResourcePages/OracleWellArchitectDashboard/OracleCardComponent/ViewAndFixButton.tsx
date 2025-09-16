@@ -44,18 +44,19 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
 
     return (
         <>
-            {cardData?.block_one?.value !== 'ONTAP' && (
-                <div className={styles.lastButton}>
-                    <DsButton
-                        variant="secondary"
-                        isThin
-                        isDisabled={loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED}
-                        onClick={() => handleDifferentNavigation()}
-                    >
-                        {t('databases.oracle-inner-page.view')}
-                    </DsButton>
-                </div>
-            )}
+            {cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS &&
+                cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM && (
+                    <div className={styles.lastButton}>
+                        <DsButton
+                            variant="secondary"
+                            isThin
+                            isDisabled={loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED}
+                            onClick={() => handleDifferentNavigation()}
+                        >
+                            {t('databases.oracle-inner-page.view')}
+                        </DsButton>
+                    </div>
+                )}
         </>
     );
 };

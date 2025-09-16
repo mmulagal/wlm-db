@@ -6,7 +6,7 @@ import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
 import { DBType, WLF_TABS } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import RecommendationTable from '../../../../GetWell/RecommendationTable/RecommendationTable';
+import RecommendationTableOracle from '../../../../GetWell/RecommendationTable/RecommendationTableOracle';
 
 const StorageConfigurationSection = ({
     styles,
@@ -19,7 +19,7 @@ const StorageConfigurationSection = ({
     oracleCardData
 }: any) => {
     const { t } = useTranslation();
-    const { ontapConfigTableData } = useAppSelector(state => state.getWellOptimize);
+    const { ontapConfigTableData, osConfigTableData } = useAppSelector(state => state.getWellOptimize);
     return (
         <div>
             <div className={styles['header-buttons']}>
@@ -78,8 +78,64 @@ const StorageConfigurationSection = ({
                                 </div>
                             ]}
                             children={
-                                <RecommendationTable
+                                <RecommendationTableOracle
                                     tableData={ontapConfigTableData}
+                                    isLoading={loading}
+                                    optimizePrintState={optimizePrintState}
+                                    from={WLF_TABS.INVENTORY}
+                                    engineType={DBType.ORACLE}
+                                />
+                            }
+                        />
+                    </div>
+                )}
+
+                {oracleCardData.os_configuration && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.os_configuration} />
+
+                        <DsAccordion
+                            id="11"
+                            variant="Default"
+                            isDisabled={loading || !oracleCardData?.os_configuration?.block_two?.value}
+                            isExpanded={isAccordionExpanded('11', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('11', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('11')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData?.os_configuration?.tags?.map((perTag: string, index: number) => (
+                                        <div key={index}>
+                                            <Tag text={perTag} />
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading || !oracleCardData?.os_configuration?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color:
+                                                loading || !oracleCardData?.os_configuration?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendations-optimizations')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={
+                                <RecommendationTableOracle
+                                    tableData={osConfigTableData}
                                     isLoading={loading}
                                     optimizePrintState={optimizePrintState}
                                     from={WLF_TABS.INVENTORY}

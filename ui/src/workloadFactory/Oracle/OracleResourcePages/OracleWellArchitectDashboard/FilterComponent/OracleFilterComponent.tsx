@@ -264,10 +264,10 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             isCleanable={false}
             formatLabel={() =>
                 `Tags: ${
-                    !oracleDefaultFilterOptions.tags?.length || oracleDefaultFilterOptions.tags.length === 3
+                    !oracleDefaultFilterOptions.tags?.length || oracleDefaultFilterOptions.tags.length === 5
                         ? 'All'
                         : ''
-                }(${oracleDefaultFilterOptions.tags?.length > 0 ? oracleDefaultFilterOptions.tags?.length : 3})`
+                }(${oracleDefaultFilterOptions.tags?.length > 0 ? oracleDefaultFilterOptions.tags?.length : 5})`
             }
             placeholder="Placeholder text"
             options={[
@@ -285,6 +285,16 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
                     id: 2,
                     label: 'Operational excellence',
                     value: 'Operational excellence'
+                },
+                {
+                    id: 3,
+                    label: 'Reliability',
+                    value: 'Reliability'
+                },
+                {
+                    id: 4,
+                    label: 'Security',
+                    value: 'Security'
                 }
             ]}
             selectionType="multi"
@@ -350,13 +360,13 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             formatLabel={() =>
                 `Resource type: ${
                     !oracleDefaultFilterOptions.resourceType?.length ||
-                    oracleDefaultFilterOptions.resourceType.length === 3
+                    oracleDefaultFilterOptions.resourceType.length === 4
                         ? 'All'
                         : ''
                 }(${
                     oracleDefaultFilterOptions.resourceType?.length > 0
                         ? oracleDefaultFilterOptions.resourceType?.length
-                        : 3
+                        : 4
                 })`
             }
             placeholder="Placeholder text"
@@ -375,6 +385,11 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
                     id: 2,
                     label: 'LUN path',
                     value: 'LUN path'
+                },
+                {
+                    id: 3,
+                    label: 'EC2 instance',
+                    value: 'EC2 instance'
                 }
             ]}
             selectionType="multi"
@@ -609,9 +624,9 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
                                 variant="Semibold_14"
                             >
                                 {!oracleDefaultFilterOptions.tags?.length ||
-                                oracleDefaultFilterOptions.tags?.length === 3
-                                    ? 'All(3)'
-                                    : `${oracleDefaultFilterOptions.tags?.length}/3`}
+                                oracleDefaultFilterOptions.tags?.length === 5
+                                    ? 'All(5)'
+                                    : `${oracleDefaultFilterOptions.tags?.length}/5`}
                             </DsTypography>
                         </div>
 
@@ -665,9 +680,9 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
                                 variant="Semibold_14"
                             >
                                 {!oracleDefaultFilterOptions.resourceType?.length ||
-                                oracleDefaultFilterOptions.resourceType?.length === 2
-                                    ? 'All(2)'
-                                    : `${oracleDefaultFilterOptions.resourceType?.length}/2`}
+                                oracleDefaultFilterOptions.resourceType?.length === 4
+                                    ? 'All(4)'
+                                    : `${oracleDefaultFilterOptions.resourceType?.length}/4`}
                             </DsTypography>
                         </div>
                     </div>

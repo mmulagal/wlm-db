@@ -795,7 +795,7 @@ const OptimizeInnerPage = () => {
     return (
         <div className={styles['optimize-inner-page']}>
             <div className={styles.innerPage}>
-                <div style={{ marginTop: '24px' }}>
+                <div className={styles.breadCrump}>
                     <BreadCrumbs
                         items={[
                             {

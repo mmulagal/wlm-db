@@ -4,7 +4,8 @@ import {
     setGwRefreshTimestamp,
     setGwTimestamp,
     setOntapConfigTableData,
-    setOptimizationBreakDown
+    setOptimizationBreakDown,
+    setOsConfigTableData
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -22,202 +23,120 @@ import {
 } from '../../../../utils/utilityFunctions';
 import { isOptimized } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
-export const oracleCardData: any = {
+// Factory function for creating base block structure
+const createBaseBlocks = () => ({
+    block_two: { type: 'Status', value: '' },
+    block_four: { type: 'Severity', value: '' },
+    block_five: { type: 'Resource type', value: 'Volume' },
+    tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+});
+
+// Factory function for creating storage layout cards
+const createStorageLayoutCard = (
+    id: string,
+    configName: string,
+    title: string,
+    description: string,
+    blockSixType: string,
+    smallFont: boolean = false
+) => ({
+    id,
+    mapName: configName,
+    category: 'storage',
+    block_one: {
+        value: configName,
+        type: 'Storage layout'
+    },
+    ...createBaseBlocks(),
+    block_six: {
+        type: blockSixType,
+        value: '',
+        ...(smallFont && { smallFont: true })
+    },
+    recommendation: {
+        title,
+        description
+    }
+});
+
+// Card configuration interface
+interface CardConfig {
+    id: string;
+    configName: string;
+    title: string;
+    description: string;
+    smallFont?: boolean;
+}
+
+// Configuration data for all storage layout cards
+const cardConfigurations: Record<string, CardConfig> = {
     redologs_placement: {
         id: 'redologs-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
-
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Volume'
-        },
-        block_six: {
-            type: 'Impacted volumes',
-            value: '',
-            smallFont: true
-        },
-        recommendation: {
-            title: 'Redo Logs Placement Recommendation',
-            description:
-                "Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storage's slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency."
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+        configName: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
+        title: 'Redo Logs Placement Recommendation',
+        description:
+            "Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storage's slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.",
+        smallFont: true
     },
     templogs_placement: {
         id: 'templogs-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
-
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Volume'
-        },
-        block_six: {
-            type: 'Impacted volumes',
-            value: '',
-            smallFont: true
-        },
-        recommendation: {
-            title: 'Temp Placement Recommendation',
-            description:
-                "Placing temp files on a dedicated volume or with redo/control files isolates their high-write I/O from data files, improving performance. Temp tablespaces change frequently but don’t require restoration, so it's best to avoid placing them on snapshotted volumes, such as data volumes, to prevent bloated snapshots. Temp files must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates can degrade database performance."
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+        configName: ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
+        title: 'Temp Placement Recommendation',
+        description:
+            "Placing temp files on a dedicated volume or with redo/control files isolates their high-write I/O from data files, improving performance. Temp tablespaces change frequently but don't require restoration, so it's best to avoid placing them on snapshotted volumes, such as data volumes, to prevent bloated snapshots. Temp files must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates can degrade database performance.",
+        smallFont: true
     },
     archive_placement: {
         id: 'archive-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
-
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Volume'
-        },
-        block_six: {
-            type: 'Impacted volumes',
-            value: '',
-            smallFont: true
-        },
-        recommendation: {
-            title: 'Archive Placement Recommendation',
-            description:
-                'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting\nthe performance of redo logs, data files, or control files.'
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+        configName: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
+        title: 'Archive Placement Recommendation',
+        description:
+            'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting\nthe performance of redo logs, data files, or control files.',
+        smallFont: true
     },
     datafiles_placement: {
         id: 'datafiles-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
-
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Volume'
-        },
-        block_six: {
-            type: 'Impacted volumes',
-            value: ''
-        },
-        recommendation: {
-            title: 'Data Files Placement Recommendation',
-            description:
-                'Placing data files on a dedicated volume or shared with control files boosts performance by isolating their random I/O from redo or archive log writes, reducing contention. This separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.'
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+        configName: ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
+        title: 'Data Files Placement Recommendation',
+        description:
+            'Placing data files on a dedicated volume or shared with control files boosts performance by isolating their random I/O from redo or archive log writes, reducing contention. This separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.'
     },
     controlfiles_placement: {
         id: 'controlfiles-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
-
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Volume'
-        },
-        block_six: {
-            type: 'Impacted volumes',
-            value: ''
-        },
-        recommendation: {
-            title: 'Control Files Placement Recommendation',
-            description:
-                'Oracle strongly recommends multiplexing control files to avoid a single point of failure in production environments. Maintain at least two, preferably three, control file copies across separate volumes or disks to enhance redundancy and reduce the risk of losing all copies. Control files can be placed on a dedicated volume or shared with redo logs or data files, but avoid placing them on volumes tiered to object storage, such as archive volumes, as its slower access pattern is incompatible with control file performance needs.'
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+        configName: ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
+        title: 'Control Files Placement Recommendation',
+        description:
+            'Oracle strongly recommends multiplexing control files to avoid a single point of failure in production environments. Maintain at least two, preferably three, control file copies across separate volumes or disks to enhance redundancy and reduce the risk of losing all copies. Control files can be placed on a dedicated volume or shared with redo logs or data files, but avoid placing them on volumes tiered to object storage, such as archive volumes, as its slower access pattern is incompatible with control file performance needs.'
     },
     oracle_binary_placement: {
         id: 'oracle-binary-placement',
-        mapName: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
-        category: 'storage',
-        block_one: {
-            value: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
-            type: 'Storage layout'
-        },
-        block_two: {
-            type: 'Status',
-            value: ''
-        },
+        configName: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+        title: 'Oracle Binary Placement Recommendation',
+        description:
+            'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files.\nThis separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.'
+    }
+};
 
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        block_five: {
-            type: 'Resource type',
-            value: 'Volume'
-        },
-        block_six: {
-            type: 'Impacted volumes',
-            value: ''
-        },
-        recommendation: {
-            title: 'Oracle Binary Placement Recommendation',
-            description:
-                'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files.\nThis separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.'
-        },
-        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
-    },
+// Generate oracle card data dynamically
+const generateStorageLayoutCards = () => {
+    const cards: any = {};
+
+    Object.entries(cardConfigurations).forEach(([key, config]) => {
+        cards[key] = createStorageLayoutCard(
+            config.id,
+            config.configName,
+            config.title,
+            config.description,
+            'Impacted volumes',
+            config.smallFont || false
+        );
+    });
+
+    return cards;
+};
+
+export const oracleCardData: any = {
+    ...generateStorageLayoutCards(),
     ontap_configuration: {
         id: 'ontap',
         category: 'storage',
@@ -245,6 +164,33 @@ export const oracleCardData: any = {
         },
 
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency']
+    },
+    os_configuration: {
+        category: 'storage',
+        mapName: ASSESSMENT_CONFIG_NAMES.OS,
+        block_one: {
+            value: 'Operating system',
+            type: 'Configuration'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Not optimized configurations',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: 'Critical'
+        },
+        block_five: {
+            type: 'Not optimized configurations',
+            value: '',
+            minWidth: '200px'
+        },
+
+        tags: ['Reliability', 'Operational excellence', 'Performance efficiency', 'Security']
     }
 };
 
@@ -349,7 +295,11 @@ const getHighestSeverity = (hasCritical: boolean, hasWarning: boolean): string =
 };
 
 // Helper function to process volume item
-const processOntapItem = (item: PerConfigInterface, optimizingData: Record<string, string>, type: 'volume' | 'lun') => {
+const processStorageConfigItem = (
+    item: PerConfigInterface,
+    optimizingData: Record<string, string>,
+    type: 'volume' | 'lun' | 'os'
+) => {
     let name = item?.name;
     if (item?.name === 'snapshot-policy') {
         name = 'snapshot-policy-vol';
@@ -391,7 +341,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 
     fullList?.forEach((list: any, index: number) => {
         list?.forEach((item: PerConfigInterface) => {
-            const processedItem = processOntapItem(item, optimizingData, index === 0 ? 'volume' : 'lun');
+            const processedItem = processStorageConfigItem(item, optimizingData, index === 0 ? 'volume' : 'lun');
             formatOntapConfigList.push(processedItem);
 
             // Count optimized vs not optimized
@@ -416,6 +366,55 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
         ontapOptimizedConfig,
         ontapNotOptimizedConfig,
         highestOntapSeverity: getHighestSeverity(hasCritical, hasWarning)
+    };
+};
+
+// Optimized function to format OS configuration data
+export const formatOSConfig = (data: AssessmentResponseInterface, optimizingData: Record<string, string>) => {
+    const osList = data?.storage?.configuration?.os;
+
+    if (!osList?.length || osList[0]?.errorMessage) {
+        return {
+            formatOSConfigList: [],
+            osTagsList: [],
+            osOptimizedConfig: 0,
+            osNotOptimizedConfig: 0,
+            highestOsSeverity: 'None'
+        };
+    }
+
+    const formatOsConfigList: PerConfigInterface[] = [];
+    const allTags: string[] = [];
+    let osOptimizedConfig = 0;
+    let osNotOptimizedConfig = 0;
+    let hasCritical = false;
+    let hasWarning = false;
+
+    osList?.forEach((item: PerConfigInterface) => {
+        const processedItem = processStorageConfigItem(item, optimizingData, 'os');
+        formatOsConfigList.push(processedItem);
+
+        // Count optimized vs not optimized
+        if (processedItem.originalStatus === 'optimized') {
+            osOptimizedConfig++;
+        } else {
+            osNotOptimizedConfig++;
+        }
+
+        // Track severities
+        if (item?.severity === 'critical') hasCritical = true;
+        if (item?.severity === 'warning') hasWarning = true;
+
+        // Collect tags
+        if (item?.tags) allTags.push(...item.tags);
+    });
+
+    return {
+        formatOsConfigList,
+        osTagsList: allTags,
+        osOptimizedConfig,
+        osNotOptimizedConfig,
+        highestOsSeverity: getHighestSeverity(hasCritical, hasWarning)
     };
 };
 
@@ -459,6 +458,46 @@ const createOntapConfigurationBlock = (
     };
 };
 
+// Helper function to create ONTAP configuration block
+const createOsConfigurationBlock = (
+    osOptimizedConfig: number,
+    osNotOptimizedConfig: number,
+    highestOsSeverity: string,
+    osTagsList: string[]
+) => {
+    const totalConfigs = osOptimizedConfig + osNotOptimizedConfig;
+    const hasConfigs = totalConfigs > 0;
+
+    return {
+        ...oracleCardData?.os_configuration,
+        block_two: {
+            ...oracleCardData?.os_configuration?.block_two,
+            value: hasConfigs ? (osNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized') : ''
+        },
+        block_three: {
+            ...oracleCardData?.os_configuration?.block_three,
+            value:
+                osNotOptimizedConfig !== 0
+                    ? `${formatNumberWithCustomComma((osNotOptimizedConfig / totalConfigs) * 100)}%`
+                    : '0%'
+        },
+        block_four: {
+            ...oracleCardData?.os_configuration?.block_four,
+            value: highestOsSeverity
+        },
+        block_five: {
+            ...oracleCardData?.os_configuration?.block_five,
+            value: `${osNotOptimizedConfig} out of ${totalConfigs}`,
+            count: {
+                totalObjectsAssessed: totalConfigs,
+                totalObjectsInViolation: osNotOptimizedConfig
+            }
+        },
+        tags: [...new Set(osTagsList)], // Remove duplicates
+        category: 'storage'
+    };
+};
+
 // Optimized function to get cards data
 export const getOracleCardsData = (data: AssessmentResponseInterface, optimizingData: Record<string, string>) => {
     const {
@@ -469,6 +508,9 @@ export const getOracleCardsData = (data: AssessmentResponseInterface, optimizing
         highestOntapSeverity
     } = formatOntapConfig(data, optimizingData);
 
+    const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
+        formatOSConfig(data, optimizingData);
+
     const cardsData = {
         ...formatIndividualCardMainConfig(data, optimizingData),
         deploymentType: data?.deploymentType || '',
@@ -477,10 +519,16 @@ export const getOracleCardsData = (data: AssessmentResponseInterface, optimizing
             ontapNotOptimizedConfig,
             highestOntapSeverity,
             ontapTagsList
+        ),
+        os_configuration: createOsConfigurationBlock(
+            osOptimizedConfig,
+            osNotOptimizedConfig,
+            highestOsSeverity,
+            osTagsList
         )
     };
 
-    return { cardsData, formatOntapConfigList };
+    return { cardsData, formatOntapConfigList, formatOsConfigList };
 };
 
 // Helper function to check if item is optimized via dismissal
@@ -557,13 +605,14 @@ export const formatOracleWellArchitectedData = (dispatch: any, data?: Assessment
     if (!assessmentData) return;
 
     // Process data and get formatted results
-    const { cardsData, formatOntapConfigList } = getOracleCardsData(assessmentData, optimizingData);
+    const { cardsData, formatOntapConfigList, formatOsConfigList } = getOracleCardsData(assessmentData, optimizingData);
     const optBreakDown = formatOracleOptimizationBreakDown(cardsData);
 
     // Batch dispatch all data to store
     const dispatchActions = [
         () => dispatch(setCardData(cardsData)),
         () => dispatch(setOntapConfigTableData(formatOntapConfigList)),
+        () => dispatch(setOsConfigTableData(formatOsConfigList)),
         () => dispatch(setOptimizationBreakDown(optBreakDown)),
         () => dispatch(setGwTimestamp(formatTimestamp(assessmentData?.lastAssessmentTimestamp))),
         () => dispatch(setGwRefreshTimestamp(getCurrentDateTime()))
@@ -585,7 +634,8 @@ export const oracleApplyFilter = (cardData: any, optimizeFilterTags: any) => {
         datafiles_placement: { category: 'Storage', subCategory: 'Storage layout' },
         controlfiles_placement: { category: 'Storage', subCategory: 'Storage layout' },
         oracle_binary_placement: { category: 'Storage', subCategory: 'Storage layout' },
-        ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' }
+        ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
+        os_configuration: { category: 'Storage', subCategory: 'Storage configuration' }
     };
 
     Object.keys(cardData)?.forEach((key: any) => {
@@ -629,7 +679,9 @@ export const oracleApplyFilter = (cardData: any, optimizeFilterTags: any) => {
         } else if (
             key === 'os_configuration' &&
             filters.resourceType &&
-            (filters.resourceType.includes('Drive') || filters.resourceType.includes('Storage multipath'))
+            (filters.resourceType.includes('EC2 instance') ||
+                filters.resourceType.includes('Volume') ||
+                filters.resourceType.includes('Database'))
         ) {
             resourceType = filters.resourceType[0];
         }

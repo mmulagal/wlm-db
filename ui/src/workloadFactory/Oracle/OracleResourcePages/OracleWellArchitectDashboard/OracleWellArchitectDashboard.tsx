@@ -9,6 +9,7 @@ import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
+import StorageConfigurationOSSection from './Categories/StorageConfigurationOSSection';
 
 const OracleWellArchitectDashboard = () => {
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -97,7 +98,7 @@ const OracleWellArchitectDashboard = () => {
                         </div>
                     )}
 
-                    {filteredCardData?.ontap_configuration && (
+                    {(filteredCardData?.ontap_configuration || filteredCardData?.os_configuration) && (
                         <div className={styles.sectionTwo}>
                             <div className={styles.sectionClass}>
                                 <StorageConfigurationSection

@@ -53,6 +53,48 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText },
                     data: data?.recommendation
                 };
+            // Below are storage config
+            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
+            case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
+            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
+            case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+            case ASSESSMENT_CONFIG_NAMES.SELINUX:
+            case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
+            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
+            case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                return {
+                    block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
+                };
+            case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                return {
+                    block_one: { type: 'Impacted databases', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
+                };
+            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
+                return {
+                    block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
+                };
             // MSSQL Assessment
             case 'Storage tier':
             case 'ONTAP / Tiering policy':

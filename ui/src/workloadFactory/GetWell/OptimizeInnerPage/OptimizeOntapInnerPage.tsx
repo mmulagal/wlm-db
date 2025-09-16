@@ -93,6 +93,37 @@ const OptimizeOntapInnerPage = () => {
                         tagSection: '256px'
                     });
                     break;
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
+                case ASSESSMENT_CONFIG_NAMES.SELINUX:
+                    setCardHeight({
+                        recommendationSection: '190px',
+                        tagSection: '286px'
+                    });
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
+                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+                case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
+                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
+                    setCardHeight({
+                        recommendationSection: '170px',
+                        tagSection: '266px'
+                    });
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                    setCardHeight({
+                        recommendationSection: '140px',
+                        tagSection: '236px'
+                    });
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
+                    setCardHeight({
+                        recommendationSection: '200px',
+                        tagSection: '296px'
+                    });
+                    break;
                 default:
                     setCardHeight({
                         recommendationSection: '210px',
@@ -442,15 +473,40 @@ const OptimizeOntapInnerPage = () => {
         if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
             // Default we have ontap config which has inner page so directly returning it.
             // Once we have cases with more inner page than add switch cases.
-            return (
-                <OntapTableWithData
-                    type={selectedOptimizeConfig?.type}
-                    data={selectedOptimizeConfig?.data}
-                    lastColDetails={lastColDetails}
-                    handleBulkAction={handleBulkAction}
-                    engineType={selectedOptimizeConfig?.engineType}
-                />
-            );
+            switch (selectedOptimizeConfig?.type) {
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
+                case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
+                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+                case ASSESSMENT_CONFIG_NAMES.SELINUX:
+                case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
+                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
+                    return (
+                        <OntapTableWithData
+                            type={selectedOptimizeConfig?.type}
+                            data={selectedOptimizeConfig?.data}
+                            lastColDetails={lastColDetails}
+                            handleBulkAction={handleBulkAction}
+                            engineType={selectedOptimizeConfig?.engineType}
+                            isRecommendation={false}
+                        />
+                    );
+                default:
+                    return (
+                        <OntapTableWithData
+                            type={selectedOptimizeConfig?.type}
+                            data={selectedOptimizeConfig?.data}
+                            lastColDetails={lastColDetails}
+                            handleBulkAction={handleBulkAction}
+                            engineType={selectedOptimizeConfig?.engineType}
+                            isRecommendation
+                        />
+                    );
+            }
         }
         switch (selectedOptimizeConfig?.type) {
             case 'Multipath I/O Policy':
@@ -535,7 +591,7 @@ const OptimizeOntapInnerPage = () => {
     return (
         <div className={styles['optimize-inner-page']}>
             <div className={styles.innerPage}>
-                <div className={commonStyles.commonBreadCrumb}>
+                <div className={styles.breadCrump}>
                     <BreadCrumbs
                         items={[
                             {

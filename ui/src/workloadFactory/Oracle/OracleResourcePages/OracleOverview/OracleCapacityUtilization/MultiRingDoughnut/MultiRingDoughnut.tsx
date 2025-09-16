@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { Chart } from 'chart.js';
-import { registerables } from 'chart.js';
-import { useEffect, useRef, useState } from 'react';
+import { Chart, registerables } from 'chart.js';
+import { useTranslation } from 'react-i18next';
 import styles from './MultiRingDoughnut.module.scss';
 import { byteToGiB } from '../../../../../../utils/utilityFunctions';
-import { useTranslation } from 'react-i18next';
 
 Chart.register(...registerables);
 

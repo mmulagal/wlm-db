@@ -863,7 +863,19 @@ export const GETWELL_CONFIG: any = {
     'archive-placement': 'archive_placement',
     'datafiles-placement': 'datafiles_placement',
     'controlfiles-placement': 'controlfiles_placement',
-    'oracle-binary-placement': 'oracle_binary_placement'
+    'oracle-binary-placement': 'oracle_binary_placement',
+    // Storage Config OS names - oracle
+    'multipath-io': 'Multipath I/O',
+    'host-utilities': 'Host Utilities',
+    'transparent-hugepages': 'Transparent Hugepages',
+    selinux: 'SELinux',
+    'iscsi-replacement-timeout': 'ISCSI Replacement Timeout',
+    'multipath-friendly-names': 'Multipath Friendly Names',
+    'tcp-advanced-options': 'TCP Advanced Options',
+    'filesystems-io-options': 'Filesystem I/O Options',
+    'multipath-readcount': 'Multiblock Read Count',
+    'multipath-io-sessions': 'Multipath I/O Sessions',
+    'multipath-configuration': 'Multipath Config File'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -921,7 +933,18 @@ export const ASSESSMENT_CONFIG_NAMES = {
     COMPACTION: 'Compaction',
     SNAPSHOT_POLICY: 'Snapshot policy',
     OPERATING_SYSTEM: 'Operating system',
-    ONTAP_CAPS: 'ONTAP'
+    ONTAP_CAPS: 'ONTAP',
+    MULTIPATH_IO: 'Multipath I/O',
+    HOST_UTILITIES: 'Host Utilities',
+    TRANSPARENT_HUGEPAGES: 'Transparent Hugepages',
+    SELINUX: 'SELinux',
+    ISCSI_REPLACEMENT_TIMEOUT: 'ISCSI Replacement Timeout',
+    MULTIPATH_FRIENDLY_NAMES: 'Multipath Friendly Names',
+    TCP_ADVANCED_OPTIONS: 'TCP Advanced Options',
+    FILESYSTEMS_IO_OPTIONS: 'Filesystem I/O Options',
+    MULTIPATH_READCOUNT: 'Multiblock Read Count',
+    MULTIPATH_IO_SESSIONS: 'Multipath I/O Sessions',
+    MULTIPATH_CONFIGURATION: 'Multipath Config File'
 };
 
 export const CONFIG_STATES = {

@@ -44,14 +44,14 @@ import {
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import store from '../../../store/store';
 
-const RecommendationTable = ({
+const RecommendationTableOracle = ({
     tableData,
     isLoading,
     optimizePrintState,
     from,
     hostId,
     instanceId,
-    engineType = DBType.MSSQL
+    engineType = DBType.ORACLE
 }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -654,4 +654,4 @@ const RecommendationTable = ({
     );
 };
 
-export default RecommendationTable;
+export default RecommendationTableOracle;

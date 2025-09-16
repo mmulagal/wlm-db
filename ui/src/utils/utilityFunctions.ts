@@ -630,7 +630,7 @@ export const customErrorMessages = (inputString: string, endpoint: string) => {
     return inputString;
 };
 
-//function to convert byte to GiB
+// function to convert byte to GiB
 export const byteToGiB = (value: number) => {
     if (value === null || value === undefined) return 0;
     if (isNaN(value)) return 0;

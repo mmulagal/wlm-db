@@ -8,6 +8,7 @@ import StatusSection from './StatusSection';
 import SectionSix from './SectionSix';
 import SectionFive from './SectionFive';
 import ViewAndFixButton from './ViewAndFixButton';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../../utils/consts';
 
 const OracleCardComponent = ({ cardData }: any) => {
     const { t } = useTranslation();
@@ -86,18 +87,19 @@ const OracleCardComponent = ({ cardData }: any) => {
                     </div>
                 </div>
 
-                {cardData?.block_one?.value !== 'ONTAP' && (
-                    <div className={styles.itemContainer}>
-                        <div className={styles.item}>
-                            <div className={styles.summaryValue}>
-                                <SectionSix cardData={cardData} loading={loading} disableText={disableText} />
+                {cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS &&
+                    cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM && (
+                        <div className={styles.itemContainer}>
+                            <div className={styles.item}>
+                                <div className={styles.summaryValue}>
+                                    <SectionSix cardData={cardData} loading={loading} disableText={disableText} />
+                                </div>
+                                <DsTypography variant="Regular_14" className={styles.descriptionText}>
+                                    {cardData?.block_six?.type}
+                                </DsTypography>
                             </div>
-                            <DsTypography variant="Regular_14" className={styles.descriptionText}>
-                                {cardData?.block_six?.type}
-                            </DsTypography>
                         </div>
-                    </div>
-                )}
+                    )}
                 <ViewAndFixButton cardData={cardData} loading={loading ?? undefined} />
             </div>
         </div>

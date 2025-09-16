@@ -35,6 +35,7 @@ import {
 } from './DialogContentHelper';
 import StorageLayoutOracleDialog from './StorageLayoutOracleDialog';
 import StorageConfigOracleDialog from './StorageConfigOracleDialog';
+import StorageConfigOSOracleDialog from './StorageConfigOSOracleDialog';
 
 interface SavingsOpportunity {
     savingsOpportunityPercentage?: number;
@@ -165,6 +166,28 @@ const DialogContent = ({
                     return 'Space reservation enabled ';
                 case 'Space allocation':
                     return 'Space allocation enabled';
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
+                    return ['Install device-mapper-multipath', 'Start multipathd'];
+                case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
+                    return 'Install host utilities';
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
+                    return '--------';
+                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+                    return 'Transparent HugePages disabled (enabled=never, defrag=never)';
+                case ASSESSMENT_CONFIG_NAMES.SELINUX:
+                    return 'SELINUX=disabled';
+                case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
+                    return 'node.session.timeo.replacement_timeout = 5';
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
+                    return 'user_friendly_names = yes in /etc/multipath.conf';
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
+                    return '4 active iSCSI sessions per host';
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                    return 'db_file_multiblock_read_count unset in init.ora';
+                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                    return 'filesystemio_options = setall';
+                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                    return ['net.ipv4.tcp_timestamps = 1', 'net.ipv4.tcp_sack = 1', 'net.ipv4.tcp_window_scaling = 1'];
             }
         }
         switch (type) {
@@ -276,6 +299,19 @@ const DialogContent = ({
                     return (
                         <StorageConfigOracleDialog type={type} createONTAPConfigSection={createONTAPConfigSection} />
                     );
+                // Oracle storage config OS dialogs -
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
+                case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
+                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+                case ASSESSMENT_CONFIG_NAMES.SELINUX:
+                case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
+                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
+                    return <StorageConfigOSOracleDialog type={type} createOSConfigSection={createONTAPConfigSection} />;
             }
         }
         switch (type) {

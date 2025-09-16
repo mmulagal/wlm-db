@@ -11,7 +11,14 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES, DBType } from '../../../../utils/consts';
 
-const OntapTableWithData = ({ type, data, lastColDetails, handleBulkAction, engineType = DBType.ORACLE }: any) => {
+const OntapTableWithData = ({
+    type,
+    data,
+    lastColDetails,
+    handleBulkAction,
+    engineType = DBType.ORACLE,
+    isRecommendation = false
+}: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
@@ -64,7 +71,7 @@ const OntapTableWithData = ({ type, data, lastColDetails, handleBulkAction, engi
         },
 
         // Conditional column for Oracle
-        ...(engineType === DBType.ORACLE
+        ...(isRecommendation
             ? [
                   {
                       Header: t('databases.well-architect.recommended-value'),
