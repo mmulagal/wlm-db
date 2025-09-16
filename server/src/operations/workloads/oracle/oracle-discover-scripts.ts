@@ -1138,9 +1138,18 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
             fi
         else
             DATABASE_DETAILS='{"error": "failed to retrieve database details, credentials not available for instance '$sid'"}'
+            pdbs_size="null"
+            pdbs_status="null"
+            root_db_size="null"
+            is_cdb="NO"
         fi
         ${getOracleServiceInstanceConnections}
-        service_name=$(get_tns_connection "$sid")
+        service_name=$(get_tns_connection "$sid" 2>/dev/null || true)
+        service_name=$(echo "$service_name" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        if [ -z "$service_name" ] || [ "$service_name" = "null" ]; then
+            service_name=""
+        fi
+
         results="{\\"database_details\\": $DATABASE_DETAILS, \\"pdbs_size\\": $pdbs_size, \\"root_db_size\\": $root_db_size, \\"pdbs_status\\": $pdbs_status, \\"is_cdb\\": \\"$is_cdb\\", \\"service_name\\": \\"$service_name\\"}"
     done <<< "$oratab_entries"
 

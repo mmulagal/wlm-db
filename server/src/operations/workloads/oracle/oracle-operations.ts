@@ -489,7 +489,7 @@ async function getOracleDatabasesList(
                             status: status === 'online' ? ONLINE : OFFLINE,
                             created: pdb.creation_time,
                             type: 'PDB',
-                            service: serviceName
+                            service: isEmpty(serviceName) ? 'n/a' : serviceName
                         });
                     }
                 }
