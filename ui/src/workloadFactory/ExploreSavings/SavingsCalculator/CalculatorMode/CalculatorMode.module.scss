@@ -7,11 +7,29 @@
     background: var(--background-content, #fff);
     /* Light/Drop shadow/level 1 */
     box-shadow: 2px 2px 6px 0 var(--border-drop-shadow, #e0e0e0);
-    width: 95%;
+    width: 1336px;
     margin: 0 auto;
 
     .radioContainer {
         display: flex;
         gap: 32px;
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .calcMode {
+        width: 1128px;
+    }
+}
+
+@media screen and (min-width: 1501px) and (max-width: 1800px) {
+    .calcMode {
+        width: 1228px;
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .calcMode {
+        width: 83%;
     }
 }
