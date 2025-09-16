@@ -308,6 +308,8 @@ interface ManualModeEbsComparisonResponse {
     ebsTotal: StorageSummary;
     single: FsxCostCalculations;
     multi: FsxCostCalculations;
+    fsx_optimized?: StorageSummary;
+    fsx_optimized_single?: FsxCostCalculations;
 }
 
 interface MarketingRequestBody {

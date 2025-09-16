@@ -182,26 +182,27 @@ async function aoagStorageSavingsCalculations(
             partnerNodeDetails
         );
 
-        const [{ ebs: allEbsDetails }, { ebs, fsx, single, multi }] = await Promise.all([
-            invokeMarketingApi(
-                accountId,
-                credentialsId,
-                region,
-                SqlServerDeploymentModel.SQL_AOAG_SHORT,
-                allEbsVolumeIds, // Consider all EBS volumes for storage, iops and throughput calculation
-                params,
-                instanceId
-            ),
-            invokeMarketingApi(
-                accountId,
-                credentialsId,
-                region,
-                SqlServerDeploymentModel.SQL_AOAG_SHORT,
-                uniqueHostVolumeIds, // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
-                params,
-                instanceId
-            )
-        ]);
+        const [{ ebs: allEbsDetails }, { ebs, fsx, single, multi, fsxOptimized, fsxOptimizedSingle }] =
+            await Promise.all([
+                invokeMarketingApi(
+                    accountId,
+                    credentialsId,
+                    region,
+                    SqlServerDeploymentModel.SQL_AOAG_SHORT,
+                    allEbsVolumeIds, // Consider all EBS volumes for storage, iops and throughput calculation
+                    params,
+                    instanceId
+                ),
+                invokeMarketingApi(
+                    accountId,
+                    credentialsId,
+                    region,
+                    SqlServerDeploymentModel.SQL_AOAG_SHORT,
+                    uniqueHostVolumeIds, // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
+                    params,
+                    instanceId
+                )
+            ]);
 
         // existing compute and license details
         const allNodesExistingComputePrice = allNodesComputeLicenseDetails.compute.existing.computeHourlyPrice;
@@ -222,6 +223,12 @@ async function aoagStorageSavingsCalculations(
             : undefined;
         const multiFsxCalculationData = multi?.fsx_calculation
             ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
+            : undefined;
+        const fsxOptimizedSingleFsxCalculationData = fsxOptimizedSingle?.fsx_calculation
+            ? handleMarketingApiFsxCalculationObject(
+                  fsxOptimizedSingle.fsx_calculation,
+                  fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
+              )
             : undefined;
         return {
             compute,
@@ -253,7 +260,9 @@ async function aoagStorageSavingsCalculations(
                           existingComputeMonthlyPrice! +
                           existingLicenseMonthlyPrice!
                         : 0,
-                recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
+                recommended:
+                    (fsxOptimized as StorageSummary)?.total ||
+                    fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
             },
             ...(singleFsxCalculationData && {
                 single: {
@@ -272,7 +281,17 @@ async function aoagStorageSavingsCalculations(
                         SqlServerDeploymentModel.SQL_AOAG_SHORT
                     )
                 }
-            })
+            }),
+            ...(fsxOptimizedSingleFsxCalculationData && {
+                fsxOptimizedSingle: {
+                    fsxCalculation: fsxOptimizedSingleFsxCalculationData,
+                    fsxBreakdown: fsxStorageCapacityBreakdown(
+                        fsxOptimizedSingleFsxCalculationData.totalStorageCapacity,
+                        SqlServerDeploymentModel.SQL_AOAG_SHORT
+                    )
+                }
+            }),
+            ...(fsxOptimized && { fsxOptimized })
         };
     }
     throw createError(
@@ -321,9 +340,10 @@ async function aoagStorageSavingsMetrics(
         );
 
         // Consider all EBS volumes for storage, iops and throughput calculation
-        const {
+        let {
             ebs,
             fsx,
+            fsxOptimized,
             ebsCalculation: allVolumesEbsCalculation
         } = await formatStorageSavingsCalculationMetrics(
             accountId,
@@ -338,6 +358,7 @@ async function aoagStorageSavingsMetrics(
         const {
             single,
             multi,
+            fsxOptimizedSingle,
             ebsCloneCalculation: uniqueVolumesEbsCloneCalculation,
             ebsSnapshotCalculation: uniqueVolumesEbsSnapshotCalculation
         } = await formatStorageSavingsCalculationMetrics(
@@ -351,6 +372,7 @@ async function aoagStorageSavingsMetrics(
         );
         const existingComputeLicensePrice = Number(existingComputeCalculation?.instanceMonthlyPrice || 0);
         const recommendedComputeLicensePrice = Number(recommendedComputeCalculation?.instanceMonthlyPrice || 0);
+        fsx = (fsxOptimized as StorageSummary) || fsx;
 
         return {
             recommendedComputeCalculation,
@@ -360,6 +382,7 @@ async function aoagStorageSavingsMetrics(
             ebsCalculation: allVolumesEbsCalculation,
             single,
             multi,
+            ...(fsxOptimizedSingle && { fsxOptimizedSingle }),
             ebsCloneCalculation: uniqueVolumesEbsCloneCalculation,
             ebsSnapshotCalculation: uniqueVolumesEbsSnapshotCalculation,
             totalSummary: {
@@ -627,16 +650,21 @@ async function performStorageSavingsCalculations(
     const multiFsxCalculationData = multi?.fsx_calculation
         ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
         : undefined;
+    const fsxOptimizedSingleFsxCalculationData = fsxOptimizedSingle?.fsx_calculation
+        ? handleMarketingApiFsxCalculationObject(
+              fsxOptimizedSingle.fsx_calculation,
+              fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
+          )
+        : undefined;
     return {
         compute,
         license,
         ebs,
         fsx,
-        ...(fsxOptimizedSingle && { fsxOptimizedSingle }),
         ...(fsxOptimized && { fsxOptimized }),
         totalSummary: {
             existing: Number(ebs?.total || 0) + existingComputeLicensePrice,
-            recommended: fsx.total + recommendedComputeLicensePrice
+            recommended: (fsxOptimized as StorageSummary)?.total || fsx.total + recommendedComputeLicensePrice
         },
         ...(singleFsxCalculationData && {
             single: {
@@ -652,6 +680,15 @@ async function performStorageSavingsCalculations(
                 fsxCalculation: multiFsxCalculationData,
                 fsxBreakdown: fsxStorageCapacityBreakdown(
                     multiFsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType!
+                )
+            }
+        }),
+        ...(fsxOptimizedSingleFsxCalculationData && {
+            fsxOptimizedSingle: {
+                fsxCalculation: fsxOptimizedSingleFsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    fsxOptimizedSingleFsxCalculationData.totalStorageCapacity,
                     sqlServerDeploymentType!
                 )
             }
@@ -797,20 +834,29 @@ async function getStorageSavingsCalculationMetrics(
         compute: { existing: existingComputeCalculation, recommended: recommendedComputeCalculation },
         license: { existing: existingLicenseCalculation, recommended: recommendedLicenseCalculation }
     } = currentNodeComputeLicenseDetails;
-    const { ebs, ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi, fsx, fsxOptimizedSingle } =
-        await formatStorageSavingsCalculationMetrics(
-            accountId,
-            credentialsId,
-            region,
-            ebsVolumeIds,
-            params,
-            sqlServerDeploymentType!,
-            instanceId
-        );
+    let {
+        ebs,
+        ebsCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation,
+        single,
+        multi,
+        fsx,
+        fsxOptimizedSingle,
+        fsxOptimized
+    } = await formatStorageSavingsCalculationMetrics(
+        accountId,
+        credentialsId,
+        region,
+        ebsVolumeIds,
+        params,
+        sqlServerDeploymentType!,
+        instanceId
+    );
 
     const existingComputeLicensePrice = Number(existingComputeCalculation?.instanceMonthlyPrice || 0);
     const recommendedComputeLicensePrice = Number(recommendedComputeCalculation?.instanceMonthlyPrice || 0);
-
+    fsx = (fsxOptimized as StorageSummary) || fsx;
     return {
         recommendedComputeCalculation,
         recommendedLicenseCalculation,

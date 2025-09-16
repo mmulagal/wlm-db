@@ -444,7 +444,8 @@ const StorageSavingsCalculationsMetrics = Type.Object({
     fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
     fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp),
     fsxw: Type.Optional(StorageMetrics),
-    fsx: Type.Optional(StorageMetrics)
+    fsx: Type.Optional(StorageMetrics),
+    fsxOptimized: Type.Optional(StorageMetrics)
 });
 
 type EbsCloneCalculationType = Static<typeof EbsCloneCalculation>;

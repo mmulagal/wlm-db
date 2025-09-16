@@ -328,7 +328,7 @@ async function invokeMarketingApi(
             ]
         }) as ManualModeMarketingRequestBody;
 
-        const { ebsTotal, instanceEbs, fsx, single, multi } =
+        const { ebsTotal, instanceEbs, fsx, single, multi, fsx_optimized, fsx_optimized_single } =
             await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(accountId, marketingRequestBody);
 
         return {
@@ -340,10 +340,12 @@ async function invokeMarketingApi(
             }),
             ...(sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && {
                 multi
-            })
+            }),
+            ...(fsx_optimized && { fsxOptimized: fsx_optimized }),
+            ...(fsx_optimized_single && { fsxOptimizedSingle: fsx_optimized_single })
         };
     }
-    const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi, fsxw, fsx_optimized_single, fsx_optimized } =
+    const { gp2, gp3, io1, io2, st1, fsx, ebs, single, multi, fsxw, fsx_optimized, fsx_optimized_single } =
         await getStorageSavings(
             accountId,
             credentialsId,
@@ -756,6 +758,7 @@ async function formatStorageSavingsCalculationMetrics(
         multi,
         fsx,
         fsxw,
+        fsxOptimized,
         fsxOptimizedSingle
     } = await invokeMarketingApi(
         accountId,
@@ -860,7 +863,8 @@ async function formatStorageSavingsCalculationMetrics(
         ebsCalculation,
         ebsCloneCalculation,
         ebsSnapshotCalculation,
-        fsx
+        fsx,
+        fsxOptimized
     };
 }
 

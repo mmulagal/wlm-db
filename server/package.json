@@ -9,7 +9,7 @@
         "build": "rimraf dist && tsc && copyfiles -u 0 \"src/**/*.json\" dist",
         "start": "node --loader ./dist/src/utils/loader.js dist/src/index.js",
         "dev": "tsx --watch src/index.ts --exclude test/**/*",
-        "simulator": "cross-env NODE_ENV=simulator node --loader @esbuild-kit/esm-loader --inspect --watch test/simulator/index.ts",
+        "simulator": "cross-env NODE_ENV=simulator tsx --watch test/simulator/index.ts",
         "format": "../node_modules/prettier/bin-prettier.js --write \"{src,test}/**/*.ts\"",
         "format:check": "../node_modules/prettier/bin-prettier.js --check \"{src,test}/**/*.ts\"",
         "lint": "../node_modules/eslint/bin/eslint.js \"{src,test}/**/*.ts\"",
