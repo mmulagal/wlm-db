@@ -201,10 +201,12 @@
     },
     "storage": {
         "fsxn": {
-            "size": 38482906972160,
-            "used": 29686813949952,
-            "spaceSavings": 9895604649984,
-            "spaceSavingsPercentage": 33.33333333333333,
+            "size": 84389396480,
+            "used": 20690313216,
+            "physicalUsed": 3266818048,
+            "ssd": 6618697728,
+            "capacityPool": 0,
+            "snapshotUsed": 411291648,
             "protocol": ["iSCSI"]
         }
     },

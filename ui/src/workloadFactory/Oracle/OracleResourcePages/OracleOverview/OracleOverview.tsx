@@ -11,6 +11,7 @@ import { DBType, MS_PER_HOUR } from '../../../../utils/consts';
 import { isPartialData } from '../../../../utils/utilityFunctions';
 import ResourceMSSQLPartialContainer from '../../../GetWell/WellArchitectDashboard/ResourceMSSQLOverview/ResourceMSSQLPartailContainer/ResourceMSSQLPartailContainer';
 import { GENERAL } from '../../../../utils/appConstants';
+import OracleCapacityUtilization from './OracleCapacityUtilization/OracleCapacityUtilization';
 
 const PARTIAL_DATA_THRESHOLD = 6 * MS_PER_HOUR; // 6 hours in milliseconds
 
@@ -49,6 +50,13 @@ const OracleOverview = () => {
                     <div className={styles.commonBlock}>
                         <IOPSCard resourceDetails={resourceDetails} resourceLoading={resourceLoading} />
                         <ThroughputCard resourceDetails={resourceDetails} resourceLoading={resourceLoading} />
+                    </div>
+
+                    <div className={styles.capacityUtilizationContainer}>
+                        <OracleCapacityUtilization
+                            resourceDetails={resourceDetails}
+                            resourceLoading={resourceLoading}
+                        />
                     </div>
                 </div>
                 <div className={styles.rightSide}>

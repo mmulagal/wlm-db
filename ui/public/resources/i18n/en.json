@@ -213,7 +213,13 @@
             "number-of-pdbs": "Number of PDBs",
             "deployment-type": "Deployment type",
             "oracle-server": "Oracle server",
-            "view-recommendations-optimizations": "View recommendations & optimizations"
+            "view-recommendations-optimizations": "View recommendations & optimizations",
+            "capacity-utilization": "Capacity utilization",
+            "written-data-size": "Written data size",
+            "used-ssd": "Used SSD",
+            "used-capacity-pool": "Used capacity pool",
+            "gib": "GiB",
+            "total-size": "Total size"
         },
         "well-architect": {
             "fix": "Fix",

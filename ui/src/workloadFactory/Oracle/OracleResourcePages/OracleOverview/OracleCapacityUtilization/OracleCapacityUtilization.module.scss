@@ -1,0 +1,47 @@
+.oracleCapacityUtilization {
+    background-color: var(--content-background);
+    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
+    height: 336px;
+    margin-bottom: 60px;
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+
+        .rightTopValue {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+    }
+
+    .mainSection {
+        padding: 40px;
+        display: flex;
+        gap: 40px;
+
+        .detailsSection {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            width: 54%;
+
+            .itemContainer {
+                display: flex;
+                flex-direction: column;
+                width: 27.5%;
+
+                .itemBottom {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    min-width: 144px;
+                }
+            }
+        }
+    }
+}
