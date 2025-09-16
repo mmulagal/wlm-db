@@ -1,5 +1,5 @@
 import { JsonValue } from '@prisma/client/runtime/library';
-import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
+import type { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
 import { GetCommandInvocationCommandOutput } from '@aws-sdk/client-ssm';
 import { OracleDeploymentTenacy } from '../operations/workloads/oracle/consts';
@@ -766,7 +766,7 @@ interface InstanceDismissParams {
     configState: string;
     startTime: number;
     endTime?: number;
-    deactivationReason?: string;
+    reactivationReason?: string;
 }
 
 interface DatabaseInstanceDismissConfigs {
@@ -790,6 +790,62 @@ interface DatabaseInstanceDismissConfigs {
     license?: InstanceDismissParams;
     hostOsPatch?: InstanceDismissParams;
     mtuAlignment?: InstanceDismissParams;
+    highAvailability?: InstanceDismissParams[];
+}
+
+// Configuration grouping types for bulk dismiss operations
+interface DismissConfigItem {
+    configName: string;
+    configState: string;
+    startTime: number;
+    endTime: number | undefined;
+    originalConfigIndex: number;
+}
+
+interface BulkDismissConfigurationType {
+    configurationName: string;
+    configState: string;
+    databaseHosts: Array<{
+        id: string;
+        sqlServerInstances: string[];
+        credentialsId: string;
+        region: string;
+        status?: string;
+        failedInstances?: Array<{
+            databaseHostId: string;
+            instanceId?: string;
+            errorMessage: string;
+        }>;
+    }>;
+}
+
+interface DismissBaseGroup {
+    credentialsId: string;
+    region: string;
+    hostId: string;
+    configs: DismissConfigItem[];
+}
+
+interface DismissHostGroup extends DismissBaseGroup {}
+
+interface DismissInstanceGroup extends DismissBaseGroup {
+    instanceId: string;
+}
+
+// Bulk dismiss operation interfaces
+interface BulkDismissConfigurationResponseItem extends BulkDismissConfigurationType {
+    startTime: number;
+    endTime?: number;
+}
+
+interface PerHostJobMetadata {
+    optimizationType: string;
+    resourceId: string;
+    sqlServerInstances: Array<string>;
+}
+
+interface JobMetadata {
+    hostsToOptimize: Array<PerHostJobMetadata>;
 }
 
 interface MappedVolumeResponseForClone {
@@ -834,6 +890,7 @@ interface IgroupMissingInitiators {
 }
 
 export {
+    BulkDismissConfigurationType,
     Metadata,
     NodeDetails,
     ResourceDetails,
@@ -904,5 +961,12 @@ export {
     OracleInstanceRegistration,
     HighAvailabilityAssessment,
     IgroupMissingInitiators,
-    HighAvailabilitySharedStorage
+    HighAvailabilitySharedStorage,
+    DismissConfigItem,
+    DismissBaseGroup,
+    DismissHostGroup,
+    DismissInstanceGroup,
+    BulkDismissConfigurationResponseItem,
+    PerHostJobMetadata,
+    JobMetadata
 };

@@ -533,24 +533,14 @@ const DatabaseHostsWithInstances = Type.Intersect([
     })
 ]);
 
-const BulkDismissConfiguration = Type.Object({
-    configurationName: Type.String(),
-    configState: Type.String(),
-    databaseHosts: Type.Array(DatabaseHostsWithInstances)
-});
-
-type BulkDismissConfigurationType = Static<typeof BulkDismissConfiguration>;
-
-const BulkDismissConfigurationBody = Type.Object({
-    configurationName: Type.String(),
-    configState: Type.Enum(DISMISS_STATUS_ENUM),
-    databaseHosts: Type.Array(DatabaseHostsWithInstances)
-});
-
-type BulkDismissConfigurationBodyType = Static<typeof BulkDismissConfigurationBody>;
-
 const BulkDismissConfigurationRequestBody = Type.Object({
-    configurationsToDismiss: Type.Array(BulkDismissConfigurationBody)
+    configurationsToDismiss: Type.Array(
+        Type.Object({
+            configurationName: Type.String(),
+            configState: Type.Enum(DISMISS_STATUS_ENUM),
+            databaseHosts: Type.Array(DatabaseHostsWithInstancesBody)
+        })
+    )
 });
 
 type BulkDismissConfigurationRequestBodyType = Static<typeof BulkDismissConfigurationRequestBody>;
@@ -691,12 +681,10 @@ export {
     BulkOptimizeCloneBody,
     OptimizeClonesPerHostRequestBodyType,
     CloneDetailType,
-    BulkDismissConfigurationType,
     BulkDismissConfigurationRequestBodyType,
     BulkDismissConfigurationResponseType,
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
-    BulkDismissConfigurationBodyType,
     DriftAssessmentResponsePerHostType,
     BulkOptimizeHASharedStorageBody,
     BulkOptimizeHASharedStorageBodyType,

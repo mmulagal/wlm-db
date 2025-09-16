@@ -69,6 +69,7 @@ type GenericAssessmentResponseType = Static<typeof GenericAssessmentResponse>;
 const InstanceDismissResponse = Type.Object({
     configurationName: Type.String(),
     configState: Type.String(),
+    startTime: Type.Optional(Type.Number()),
     endTime: Type.Optional(Type.Number())
 });
 
@@ -96,7 +97,8 @@ const DismissedConfigurationsResponse = Type.Object({
     clone: Type.Optional(InstanceDismissResponse),
     snapshotPolicy: Type.Optional(InstanceDismissResponse),
     awsBackup: Type.Optional(InstanceDismissResponse),
-    mtuAlignment: Type.Optional(InstanceDismissResponse)
+    mtuAlignment: Type.Optional(InstanceDismissResponse),
+    highAvailability: Type.Optional(Type.Array(Type.Optional(InstanceDismissResponse)))
 });
 type DismissedConfigurationsResponseType = Static<typeof DismissedConfigurationsResponse>;
 

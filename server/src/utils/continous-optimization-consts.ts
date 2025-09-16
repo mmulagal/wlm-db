@@ -266,6 +266,14 @@ const STORAGE_ASSESMENT_CONFIGS_MAP = {
     layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
 };
 
+const HIGH_AVAILABILITY = [
+    'shared-storage',
+    'heartbeat-settings',
+    'cluster-quorum',
+    'sqlserver-service',
+    'drive-letter'
+];
+
 const STORAGE_CONFIGURATION_ASSESMENT_MAP = {
     volumes: [
         'thin-provision',
@@ -293,7 +301,14 @@ const ASSESSMENT_CONFIGS = {
     crr: 'crr',
     awsBackup: 'scheduled-fsx-for-ontap-backups',
     clone: 'clone-management',
-    mtuAlignment: 'mtu-alignment'
+    mtuAlignment: 'mtu-alignment',
+    highAvailability: {
+        heartbeatSettings: 'heartbeat-settings',
+        clusterQuorum: 'cluster-quorum',
+        sharedStorage: 'shared-storage',
+        sqlserverService: 'sqlserver-service',
+        driveLetter: 'drive-letter'
+    }
 };
 
 const DISMISS_STATUS = {
@@ -321,7 +336,34 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     'mapped-ontap-volumes',
     'clone',
     'snapshot-policy',
-    'crr'
+    'crr',
+    'shared-storage',
+    'sqlserver-service',
+    'drive-letter',
+    'thin-provision',
+    'autosize',
+    'autosize-mode',
+    'fractional-reserve',
+    'snapshot-copy-reserve',
+    'snapshot-autodelete',
+    'space-mgmt-try-first',
+    'tiering-policy',
+    'tiering-min-cooling-days',
+    'os-type',
+    'space-reservation-enabled',
+    'space-allocation-allocated',
+    'mpio-enabled',
+    'mpio-iscsi-count',
+    'mpio-load-balance-policy',
+    'ntfs-allocation-unit-size',
+    'mpio-timeout',
+    'performance-tier',
+    'tempdb-drive-size',
+    'log-drive-size',
+    'headroom',
+    'tempdb-files-location',
+    'data-files-location',
+    'log-files-location'
 ];
 
 const HOST_LEVEL_CONFIGURATIONS = [
@@ -330,7 +372,9 @@ const HOST_LEVEL_CONFIGURATIONS = [
     'rss-config',
     'compute-rightsizing',
     'scheduled-fsx-for-ontap-backups',
-    'mtu-alignment'
+    'mtu-alignment',
+    'heartbeat-settings',
+    'cluster-quorum'
 ];
 
 const DEFAULT_MPIO_TIMEOUT = 60; // seconds
@@ -378,6 +422,7 @@ export {
     INSTANCE_LEVEL_CONFIGURATIONS,
     HOST_LEVEL_CONFIGURATIONS,
     STORAGE_CONFIGURATION_ASSESMENT_MAP,
+    HIGH_AVAILABILITY,
     DISMISS_STATUS_ENUM,
     DEFAULT_MPIO_TIMEOUT,
     OptimizeHighAvailabilityParams,

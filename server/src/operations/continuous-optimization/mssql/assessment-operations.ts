@@ -16,7 +16,6 @@ import {
     CloneAssessment,
     DatabaseInstance,
     DatabaseInstanceConfigurations,
-    DatabaseInstanceDismissConfigs,
     DatabaseInstancesIncludingResource,
     MappedOnTapVolumeResponse,
     MaxDOPAssesment,
@@ -64,11 +63,12 @@ import {
 } from './resilience-assessment-operation';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
+import { getLatestInstanceAssessmentTime } from '../assessment-utils';
 import {
     checkAndUpdatePostponedEndTime,
-    getLatestInstanceAssessmentTime,
-    updateFieldsBasedOnDismissedConfigurations
-} from '../assessment-utils';
+    updateFieldsBasedOnDismissedConfigurations,
+    mergeDismissConfigurations
+} from '../assessment-dismiss-operations';
 import {
     ParameterDriftResponseType,
     ComputeDriftResponseType,
@@ -228,10 +228,11 @@ async function fetchMssqlDriftAssessment(
         }
     } = instanceDetail as DatabaseInstance;
 
-    const dismissedConfigurations = {
-        ...(instanceConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations,
-        ...(hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
-    };
+    const instanceDismissedConfigs = (instanceConfigurations as DatabaseInstanceConfigurations)
+        ?.dismissedConfigurations;
+    const hostDismissedConfigs = (hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations;
+
+    const dismissedConfigurations = mergeDismissConfigurations(instanceDismissedConfigs, hostDismissedConfigs);
 
     let fieldsValues = (
         fields?.toLowerCase().replace(/\s+/g, '').split(',') ||
@@ -1084,10 +1085,10 @@ async function triggerMssqlAssessment(
             databaseInstanceId
         );
 
-        const dismissedConfigurations: DatabaseInstanceDismissConfigs = {
-            ...dismissedInstanceConfigurations,
-            ...dismissedHostConfigurations
-        };
+        const dismissedConfigurations = mergeDismissConfigurations(
+            dismissedInstanceConfigurations,
+            dismissedHostConfigurations
+        );
 
         const {
             database_instance_name: savedInstanceName,

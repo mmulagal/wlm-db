@@ -55,7 +55,7 @@ import {
     OptimizeResiliencyBodyType,
     BulkOptimizeCloneInHostRequestBodyType
 } from './types/mssql-continuous-optimisation.types';
-import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-utils';
+import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
 import {
     fetchMssqlDriftAssessment,
     fetchMssqlDriftAssessmentPerAccount,
