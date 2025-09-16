@@ -202,6 +202,10 @@ type PerformanceResponseType = Static<typeof PerformanceResponse>;
 const StorageResponse = Type.Object({
     size: Type.Number({ description: 'Provisioned size, in bytes' }),
     used: Type.Optional(Type.Number({ description: 'The virtual space used before storage efficiency, in bytes.' })),
+    physicalUsed: Type.Optional(Type.Number({ description: 'The physical space used, in bytes.' })),
+    ssdUsed: Type.Optional(Type.Number({ description: 'The space used by performance tier, in bytes.' })),
+    capacityPoolUsed: Type.Optional(Type.Number({ description: 'The capacity pool space used, in bytes.' })),
+    snapshotUsed: Type.Optional(Type.Number({ description: 'The unique snapshot space used, in bytes.' })),
     spaceSavings: Type.Optional(
         Type.Number({
             description: 'Total disk space saved in the volume due to storage efficiency, in bytes.'

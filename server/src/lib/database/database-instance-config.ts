@@ -31,7 +31,7 @@ async function listDatabaseInstanceConfigData({
     region,
     credentialsId,
     resourceId,
-    databaseInstanceId,
+    databaseInstanceIds,
     configDataType,
     pageSize,
     nextToken,
@@ -45,7 +45,7 @@ async function listDatabaseInstanceConfigData({
         region,
         credentialsId,
         resourceId,
-        databaseInstanceId,
+        databaseInstanceIds,
         configDataType,
         pageSize,
         nextToken,
@@ -78,7 +78,7 @@ async function listDatabaseInstanceConfigData({
         ...(region && { region }),
         ...(credentialsId && { credentials_id: credentialsId }),
         ...(resourceId && { resource_id: resourceId }),
-        ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
+        ...(!isEmpty(databaseInstanceIds) && { database_instance_id: { in: databaseInstanceIds } }),
         ...(configDataType && { config_data_type: configDataType }),
         ...filters
     };
@@ -161,7 +161,7 @@ async function countDatabaseInstanceConfigRecords({
     region,
     credentialsId,
     resourceId,
-    databaseInstanceId,
+    databaseInstanceIds,
     configDataType,
     filters
 }: CountDatabaseInstanceConfigRecordsParams): Promise<number> {
@@ -170,7 +170,7 @@ async function countDatabaseInstanceConfigRecords({
         region,
         credentialsId,
         resourceId,
-        databaseInstanceId,
+        databaseInstanceIds,
         configDataType
     });
 
@@ -183,7 +183,7 @@ async function countDatabaseInstanceConfigRecords({
             ...(region && { region }),
             ...(credentialsId && { credentials_id: credentialsId }),
             ...(resourceId && { resource_id: resourceId }),
-            ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
+            ...(!isEmpty(databaseInstanceIds) && { database_instance_id: { in: databaseInstanceIds } }),
             ...(configDataType && { config_data_type: configDataType }),
             ...filters
         }

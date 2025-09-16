@@ -62,7 +62,8 @@ import {
     DEFAULT_INSTANCE_NAME,
     STANDALONE,
     ORACLE_INSTANCE_STATE,
-    DEMO_BYOL_INSTANCE_ID
+    DEMO_BYOL_INSTANCE_ID,
+    SSM_COMMAND_RUNTIMES
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -1913,7 +1914,9 @@ async function fetchFsxResourceMappings(
         ]);
 
     const extractedSsmResponseList = await Promise.all(
-        ssmResponseList.map(async ssmResponse => extractSsmResponse(credentialsId, region, ssmResponse))
+        ssmResponseList.map(async ssmResponse =>
+            extractSsmResponse(credentialsId, region, SSM_COMMAND_RUNTIMES.POWERSHELL, ssmResponse)
+        )
     );
     const ssmResponseMap = new Map(
         extractedSsmResponseList.map((response, index) => [ssmResponseList[index].instanceId, response])

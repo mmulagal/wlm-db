@@ -55,10 +55,17 @@ import {
 } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
-import { DatabaseInstance, Metadata, ResourceDetails, InstanceDetails } from '../../../utils/common-types';
+import {
+    DatabaseInstance,
+    Metadata,
+    ResourceDetails,
+    InstanceDetails,
+    VolumeSpaceRecord
+} from '../../../utils/common-types';
 import {
     GET_FQDN,
     GET_NODE_IP_ADDRESS,
+    getMappedOntapVolumesScript,
     INSTANCE_DETAILS,
     RESOURCE_UTILIZATION,
     sqlQueryExecution,
@@ -1612,6 +1619,96 @@ function getSqlAuthEnabledStatus(instanceName: string, sql: any[], domain: any[]
     return sqlAuthEnabled;
 }
 
+async function getMssqlStorageDataFromOntap(
+    activeNodeInstanceId: string,
+    instanceDetails: DatabaseInstance[],
+    isSqlAuthEnabled: boolean
+) {
+    const ssmComment = 'Get storage data from ONTAP';
+    logger.info(ssmComment, ':', { activeNodeInstanceId, instancesLength: instanceDetails.length, isSqlAuthEnabled });
+
+    try {
+        const managedInstances = instanceDetails.filter(
+            ({ isManaged, fsxn_ids: fsxnIds }) => isManaged && fsxnIds?.length
+        );
+        const [{ credentials_id: credentialsId, region, fsxn_ids: fsxnId }] = managedInstances;
+
+        const instanceNames = managedInstances.map(({ database_instance_name: instanceName }) => instanceName);
+        const command = getMappedOntapVolumesScript(
+            fsxnId,
+            region,
+            '$false',
+            instanceNames,
+            isSqlAuthEnabled,
+            'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used,space.physical_used,space.performance_tier_footprint,space.capacity_tier_footprint,space.snapshot.used'
+        );
+        const response = await callSsmExecution(
+            credentialsId,
+            region!,
+            [command],
+            activeNodeInstanceId,
+            ssmComment,
+            undefined,
+            true,
+            undefined,
+            true
+        );
+
+        const cleanResponse = response?.replaceAll('\r\n', '');
+        let parsedResponse = attempt(JSON.parse, cleanResponse);
+
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+        logger.debug({ parsedResponse });
+
+        const instancesResponse: { [key: string]: any } = {};
+        instanceNames?.forEach((iName: string) => {
+            if (
+                parsedResponse?.[iName] &&
+                !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
+            ) {
+                const { volumes } = parsedResponse?.[iName] ?? {};
+                const initialStorage = {
+                    size: 0,
+                    used: 0,
+                    spaceSavings: 0,
+                    physicalUsed: 0,
+                    ssdUsed: 0,
+                    capacityPoolUsed: 0,
+                    snapshotUsed: 0
+                };
+                if (volumes && !isEmpty(volumes?.records)) {
+                    const storageSavings = volumes.records.reduce(
+                        (savings: Record<string, number>, { space, efficiency }: VolumeSpaceRecord) => ({
+                            size: savings.size + space.size,
+                            used: savings.used + space.used,
+                            physicalUsed: savings.physicalUsed + (space.physical_used ?? 0),
+                            ssdUsed: savings.ssdUsed + (space.performance_tier_footprint ?? 0),
+                            capacityPoolUsed: savings.capacityPoolUsed + (space.capacity_tier_footprint ?? 0),
+                            snapshotUsed: savings.snapshotUsed + (space.snapshot?.used ?? 0),
+                            spaceSavings: savings.spaceSavings + efficiency.space_savings.total
+                        }),
+                        initialStorage as Record<string, number>
+                    );
+                    // storageSavings.spaceSavingsPercent = (storageSavings.spaceSavings / storageSavings.used) * 100;
+                    instancesResponse[iName] = { ...storageSavings };
+                } else {
+                    instancesResponse[iName] = { ...initialStorage };
+                }
+            } else {
+                logger.error(
+                    'Failed to get storage savings from ONTAP for the instance:',
+                    iName,
+                    parsedResponse?.[iName]
+                );
+            }
+        });
+
+        return instancesResponse;
+    } catch (error) {
+        logger.error('Failed executing SSM script to get storage data from ONTAP', { error });
+    }
+}
+
 export {
     getSqlServerDetails,
     getAllResourceUtilisation,
@@ -1641,5 +1738,6 @@ export {
     getActiveNodeAndInstanceDetails,
     getActiveSqlNodeAndInstanceDetails,
     ActiveSqlNodeDetails,
-    getSqlServerVersionAndEdition
+    getSqlServerVersionAndEdition,
+    getMssqlStorageDataFromOntap
 };

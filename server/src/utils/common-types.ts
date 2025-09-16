@@ -485,6 +485,7 @@ interface DatabaseInstance {
     resource: ResourceDetails;
     configurations?: DatabaseInstanceConfigurations | JsonValue;
     crrConfigData?: { crrDetails: CrrDetails[] };
+    account_id?: string;
 }
 
 interface InstanceDetails {
@@ -641,6 +642,12 @@ type VolumeSpaceRecord = {
     space: {
         size: number;
         used: number;
+        physical_used?: number;
+        performance_tier_footprint?: number;
+        capacity_tier_footprint?: number;
+        snapshot?: {
+            used?: number;
+        };
     };
 };
 

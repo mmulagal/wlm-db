@@ -2164,8 +2164,12 @@
                         "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
                         "name": "daily",
                         "cron": {
-                            "minutes": [10],
-                            "hours": [0]
+                            "minutes": [
+                                10
+                            ],
+                            "hours": [
+                                0
+                            ]
                         },
                         "_links": {
                             "self": {
@@ -3442,7 +3446,23 @@
             "instanceState": "Running"
         }
     ],
-    "getAvailableDriveLetters": ["A", "B", "D", "E", "F", "G", "N", "O", "P", "Q", "R", "W", "X", "Y", "Z"],
+    "getAvailableDriveLetters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "F",
+        "G",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "W",
+        "X",
+        "Y",
+        "Z"
+    ],
     "getSqlServerServicesCommand": {
         "Name": "MSSQLSERVER",
         "Status": "Running",
@@ -3467,14 +3487,18 @@
                 "lunName": "/vol/wlmdb_sqllog_1753314349998/sqllog",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
+                "initiatorNames": [
+                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"
+                ]
             },
             {
                 "lunUuid": "74f32fa7-a69a-46ad-ac43-96446696235b",
                 "lunName": "/vol/wlmdb_sqldata_1753314349998/sqldata",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
+                "initiatorNames": [
+                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"
+                ]
             },
             {
                 "lunUuid": "5267b549-d42c-41dd-a54e-31a8beb96cb5",
@@ -3491,7 +3515,9 @@
                 "lunName": "/vol/wlmdb_sqllog_1753333408/sqllog",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
+                "initiatorNames": [
+                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"
+                ]
             },
             {
                 "lunUuid": "1e9b1d45-4c81-4bd1-bfe8-7d0ab4c8899c",
@@ -3568,26 +3594,47 @@
                 "name": "Ethernet 3",
                 "mtu": 1500,
                 "interfaceIndex": 9,
-                "ports": ["1433"],
+                "ports": [
+                    "1433"
+                ],
                 "ipAddresses": [
-                    { "address": "172.31.32.100", "family": "IPv4" },
-                    { "address": "fe80::a1b2:c3d4:e5f6:7890", "family": "IPv6" }
+                    {
+                        "address": "172.31.32.100",
+                        "family": "IPv4"
+                    },
+                    {
+                        "address": "fe80::a1b2:c3d4:e5f6:7890",
+                        "family": "IPv6"
+                    }
                 ]
             },
             {
                 "name": "Ethernet 4",
                 "mtu": 9001,
                 "interfaceIndex": 10,
-                "ports": ["1434"],
-                "ipAddresses": [{ "address": "172.31.32.101", "family": "IPv4" }]
+                "ports": [
+                    "1434"
+                ],
+                "ipAddresses": [
+                    {
+                        "address": "172.31.32.101",
+                        "family": "IPv4"
+                    }
+                ]
             }
         ],
         "error": null
     },
     "fetchFsxMtuDetailsInvocationResponse": {
         "fsxInterfaces": [
-            { "Name": "e0a", "MTU": 9001 },
-            { "Name": "e0b", "MTU": 9001 }
+            {
+                "Name": "e0a",
+                "MTU": 9001
+            },
+            {
+                "Name": "e0b",
+                "MTU": 9001
+            }
         ],
         "error": null
     },
@@ -3674,9 +3721,14 @@
             "error": ""
         }
     },
-
     "getoptimizeMtuResponse": {
-        "optimizedInterfaces": [{ "jumboValue": "9015", "status": "MTU update successful", "name": "Ethernet 3" }],
+        "optimizedInterfaces": [
+            {
+                "jumboValue": "9015",
+                "status": "MTU update successful",
+                "name": "Ethernet 3"
+            }
+        ],
         "success": true
     },
     "getOracleServerDetailsResponse": {
@@ -3689,5 +3741,54 @@
         "nodeNames": "i-055ed011c2068033a",
         "activeConnections": 54,
         "creationDate": "2025-02-20T04:37:27Z"
+    },
+    "getOracleStorageDataFromOntapResponse": {
+        "pdb21cnas1": {
+            "records": [
+                {
+                    "uuid": "1ce3f626-92d6-11f0-9e3f-b750f9c1c48e",
+                    "name": "oraredoctl_160925111853",
+                    "space": {
+                        "size": 21223178240,
+                        "used": 16949751808,
+                        "capacity_tier_footprint": 0,
+                        "performance_tier_footprint": 127311872,
+                        "physical_used": 153726976,
+                        "snapshot": {
+                            "used": 4145152
+                        }
+                    }
+                },
+                {
+                    "uuid": "d4a4e839-92d5-11f0-9e3f-b750f9c1c48e",
+                    "name": "data_160925111853",
+                    "space": {
+                        "size": 21223178240,
+                        "used": 16124792832,
+                        "capacity_tier_footprint": 0,
+                        "performance_tier_footprint": 4002406400,
+                        "physical_used": 2894036992,
+                        "snapshot": {
+                            "used": 292306944
+                        }
+                    }
+                },
+                {
+                    "uuid": "f8ccd09b-92d5-11f0-9e3f-b750f9c1c48e",
+                    "name": "log_160925111853",
+                    "space": {
+                        "size": 21223178240,
+                        "used": 16930557952,
+                        "capacity_tier_footprint": 0,
+                        "performance_tier_footprint": 213917696,
+                        "physical_used": 231022592,
+                        "snapshot": {
+                            "used": 770048
+                        }
+                    }
+                }
+            ],
+            "num_records": 3
+        }
     }
 }

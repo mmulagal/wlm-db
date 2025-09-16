@@ -58,7 +58,8 @@ import {
     getServerDetails,
     getAllResourceUtilisationDetails,
     getDatabasesCount,
-    getActiveNodeAndInstanceDetails
+    getActiveNodeAndInstanceDetails,
+    getMssqlStorageDataFromOntap
 } from './workloads/mssql/mssql-operations';
 import {
     isFsxnAwsBackupEnabled,
@@ -66,7 +67,6 @@ import {
     getCostAllocationTagFsxResource,
     isFsxwAwsBackupEnabled,
     getMappedOntapVolumes,
-    getStorageDataFromOntap,
     isInstanceAppConsistentBackupEnabled
 } from './aws/fsx-operations';
 import {
@@ -89,7 +89,7 @@ import { assessMssqlServerPerformance, determineStorageType, formatDuration, isD
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
-import getDatabaseInstanceTopology from '../utils/sql-utils';
+import { getDatabaseInstanceTopology } from '../utils/sql-utils';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import {
@@ -1694,11 +1694,7 @@ async function getDatabaseInstancesSummary(
                       ]
                     : [Promise.resolve()]), // Fetch io latency data
                 ...(getStorageSavings
-                    ? [
-                          Promise.all(
-                              databaseInstances.map(dbInstance => getStorageData(undefined, dbInstance, VERSION_2_0))
-                          )
-                      ]
+                    ? [Promise.all(databaseInstances.map(dbInstance => getStorageData(undefined, dbInstance, true)))]
                     : [Promise.resolve()]), // Fetch storage savings data
                 ...(getProtection && !shouldQueryDatabasesWithProtection
                     ? [
@@ -1739,7 +1735,7 @@ async function getDatabaseInstancesSummary(
                       ]
                     : [Promise.resolve()]),
                 ...(getStorageSavings && shouldGetStorageSavingsFromOntap
-                    ? [getStorageDataFromOntap(activeNodeInstanceId, databaseInstances, isSqlAuthEnabled)]
+                    ? [getMssqlStorageDataFromOntap(activeNodeInstanceId, databaseInstances, isSqlAuthEnabled)]
                     : [Promise.resolve()]),
                 ...(shouldQueryDatabasesWithProtection || shouldQueryDatabasesWithoutProtection
                     ? [

@@ -1,3 +1,17 @@
+type ontapRequestParams = {
+    fsxId?: string;
+    region: string;
+    apiEndpoint: string;
+    apiQueryFields?: string;
+    apiQueryFilter?: string;
+    apiBody?: string;
+    instances?: {
+        name: string;
+        fsxId: string;
+        volumes?: string[];
+    }[];
+};
+
 const checkCommandStatus = `
     check_status() {
         if [ $? -ne 0 ]; then
@@ -1145,10 +1159,8 @@ jq -n     --arg prettyName "$prettyName"     --arg name "$osName"     --arg vers
 }'
 `;
 
-const getFsxCredentials = (fileSystemId: string, region: string) => `
+const getFsxCredentials = `
 def getFsxCredentials(fileSystemId):
-    fileSystemId = '${fileSystemId}'
-    region = '${region}'
     name = f"/netapp/wlmdb/{fileSystemId}"
     try:
         raw = subprocess.check_output(
@@ -1180,11 +1192,8 @@ from urllib.parse import urlparse
 from urllib.request import urlopen, Request
 `;
 
-const ontapRestApiScript = (fileSystemId: string, region: string) => `
-def ontapRestApiRequest(method, url, body=None):
-    fileSystemId = '${fileSystemId}'
-    region = '${region}'
-
+const ontapRestApiScript = `
+def ontapRestApiRequest(fileSystemId, region, method, url, body=None):
     # Getting auth token
     fsx_creds, error = getFsxCredentials(fileSystemId)
     if error:
@@ -1330,6 +1339,65 @@ sudo mkdir -p "$LOG_DIR"
 sudo chown oracle:oinstall "$LOG_DIR"
 `;
 
+const oracleStorageInfoFromOntapPythonTemplate = (params: ontapRequestParams) => `
+
+${getFsxCredentials}
+${ontapRestApiScript}
+region = '${params.region}'
+apiPath = '${params.apiEndpoint}'
+query = '${params.apiQueryFields}'
+instances = json.loads('${JSON.stringify(params.instances)}')
+visited = {}
+final_results = {}
+
+for instance in instances:
+    fsx_id = instance.get("fsxId")
+    volumes = instance.get("volumes", [])
+    name = instance.get("name")
+    if not fsx_id or not name:
+        continue
+
+    # Build query_filter as uuid=<comma separated volumes>
+    query_filter = ""
+    if volumes and isinstance(volumes, list) and len(volumes) > 0:
+        joined_uuids = ",".join(volumes)
+        query_filter = f"uuid={joined_uuids}"
+
+    # Compose full query string
+    full_query = query
+    if query_filter:
+        if full_query:
+            full_query = f"{query_filter}&{full_query}"
+        else:
+            full_query = query_filter
+
+    if fsx_id in visited:
+        result = visited[fsx_id]
+    else:
+        # Fetch credentials and make ONTAP API request
+        creds, error = getFsxCredentials(fsx_id)
+        if error:
+            result = {"error": error}
+        else:
+            url = f"{apiPath}?{full_query}" if full_query else apiPath
+            response, error = ontapRestApiRequest(fsx_id, region, 'GET', url)
+            if error:
+                result = {"error": error}
+            else:
+                result = response
+        visited[fsx_id] = result
+
+    final_results[name] = result
+
+print(json.dumps(final_results))
+`;
+
+const oracleStorageInfoFromOntap = (params: ontapRequestParams) => `
+#!/bin/bash
+${logFileCheck}
+${pythonScriptInit(oracleStorageInfoFromOntapPythonTemplate(params), 'wlmdb-oracle-storage-information')}
+`;
+
 export {
     getFsxCredentials,
     getOracleProtectionData,
@@ -1357,5 +1425,6 @@ export {
     pythonLogger,
     ontapRestApiScript,
     logFileCheck,
-    getOracleHomePath
+    getOracleHomePath,
+    oracleStorageInfoFromOntap
 };

@@ -8,16 +8,19 @@ import { checkAccount, getNextToken } from '../../utils/utils';
 
 const logger = getLogger();
 
-async function paginateListInstanceConfigData(params: ListDatabaseInstanceConfigDataParams): Promise<{
+async function paginateListInstanceConfigData(
+    params: ListDatabaseInstanceConfigDataParams & { databaseInstanceId?: string }
+): Promise<{
     totalCount: number;
     items: DatabaseInstanceConfigData[];
     nextToken?: string;
 }> {
     logger.info('Paginating list of database instance config data', params);
 
-    const { accountId, pageSize } = params;
+    const { accountId, pageSize, databaseInstanceId } = params;
     const normalizedParams = {
         ...params,
+        ...(databaseInstanceId && { databaseInstanceIds: [databaseInstanceId] }),
         ...(accountId && { accountId: checkAccount(accountId) })
     };
 

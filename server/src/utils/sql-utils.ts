@@ -108,7 +108,7 @@ async function getDatabaseInstanceTopology(
             credentialsId,
             region,
             resourceId,
-            databaseInstanceId,
+            databaseInstanceIds: [databaseInstanceId],
             configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
         })) || [{}];
         const { combinedOntapVolumes, luns } = parseMappedVolumeData(
@@ -150,7 +150,12 @@ function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseT
             if (!storageDetails) {
                 return { combinedOntapVolumes, luns };
             }
-            const processVolumeRecords = (fileType: string, volumeRecords: OracleVolumeRecord[], tenancy: string) => {
+            const processVolumeRecords = (
+                fileType: string,
+                volumeRecords: OracleVolumeRecord[],
+                sid: string,
+                tenancy?: string
+            ) => {
                 volumeRecords.forEach((record: OracleVolumeRecord) => {
                     if (!combinedOntapVolumes.some(v => v.id === record.volumeId)) {
                         luns = luns.some(lun => lun.id === record.lunId)
@@ -159,11 +164,12 @@ function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseT
                         combinedOntapVolumes.push({
                             id: record.volumeId,
                             name: record.volumeName,
-                            luns: [{ id: record.lunId, name: record.lunName }]
+                            luns: [{ id: record.lunId, name: record.lunName }],
+                            instance: sid
                         });
                     }
                 });
-                logger.debug(`${tenancy}, File Type: ${fileType}`);
+                logger.debug(`${tenancy || sid}, File Type: ${fileType}`);
             };
             storageDetails?.volumeMappings?.forEach(volumeMapping => {
                 Object.entries(volumeMapping).forEach(([sid, sidMappedOntapVolumeRecord]) => {
@@ -177,7 +183,7 @@ function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseT
                                 return;
                             }
                             Object.entries(pdbMappedOntapVolumeRecord).forEach(([fileType, volumeRecord]) => {
-                                processVolumeRecords(fileType, volumeRecord as OracleVolumeRecord[], pdb);
+                                processVolumeRecords(fileType, volumeRecord as OracleVolumeRecord[], sid, pdb);
                             });
                         });
                     } else {
@@ -214,4 +220,4 @@ function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseT
     };
 }
 
-export default getDatabaseInstanceTopology;
+export { getDatabaseInstanceTopology, parseMappedVolumeData };

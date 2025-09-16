@@ -974,7 +974,9 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('getOracleServerDetails'))
     .on(SendCommandCommand, params => params.Comment === 'oracle database count')
-    .resolves(getSampleCommandResponse('oracleDatabaseCount'));
+    .resolves(getSampleCommandResponse('oracleDatabaseCount'))
+    .on(SendCommandCommand, params => params.Comment === 'Get Oracle storage data from ONTAP')
+    .resolves(getSampleCommandResponse('getOracleStorageDataFromOntap'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1536,7 +1538,16 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installPythonOnLinuxHost'
     })
-    .resolves(getSampleCommandResponseWithOutput('installPythonOnLinuxHost', '{ "installationSuccessful": "true" }'));
+    .resolves(getSampleCommandResponseWithOutput('installPythonOnLinuxHost', '{ "installationSuccessful": "true" }'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getOracleStorageDataFromOntap'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getOracleStorageDataFromOntap',
+            JSON.stringify(getCommandInvocationResponse.getOracleStorageDataFromOntapResponse)
+        )
+    );
 
 ssmMock.on(GetParametersByPathCommand).callsFake(input => {
     if (input.Path && input.Path.includes('/aws/service/global-infrastructure/services/bedrock/regions')) {

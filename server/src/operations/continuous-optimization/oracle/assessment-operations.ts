@@ -392,7 +392,7 @@ async function fetchOracleDriftAssessment(
         region,
         credentialsId,
         resourceId: databaseHostId,
-        databaseInstanceId
+        databaseInstanceIds: [databaseInstanceId]
     });
 
     const assessmentDataMap = databaseInstanceConfigData.reduce(

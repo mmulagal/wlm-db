@@ -111,12 +111,12 @@ async function getEbsResourceInfo(
 async function getStorageData(
     resourceDetail?: ResourceDetails,
     databaseInstanceDetails?: DatabaseInstance,
-    version?: string
+    readFsxnData = false
 ): Promise<StoragePerStorageTypeResponseType | undefined> {
     logger.info('Getting storage data:', {
         resourceId: resourceDetail?.resource_id,
         databaseInstanceId: databaseInstanceDetails?.database_instance_id,
-        version
+        readFsxnData
     });
 
     try {
@@ -147,7 +147,7 @@ async function getStorageData(
 
         ebsVolumeIds = ebsVolumeIds || [];
         const response = {} as StoragePerStorageTypeResponseType;
-        if (fsxnId && region && credentialsId && !(databaseInstanceDetails?.isManaged && !isDemoFlow)) {
+        if (readFsxnData && fsxnId && region && credentialsId && !(databaseInstanceDetails?.isManaged && !isDemoFlow)) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxnId));
             response.fsxn = {

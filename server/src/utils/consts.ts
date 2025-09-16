@@ -1820,6 +1820,10 @@ const DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN: string = config.has('daily-dr
 
 const DEMO_BYOL_INSTANCE_ID = 'i-p9o5n2m4l8k6byol';
 const JOB_MONITORING_ENDPOINT = 'databases/job-monitoring';
+enum SSM_COMMAND_RUNTIMES {
+    POWERSHELL = 'PowerShell',
+    SHELL = 'Shell'
+}
 
 export {
     WLMDB,
@@ -2192,5 +2196,6 @@ export {
     JQ_LINUX_RELATIVE_PATH,
     MAKE_LINUX_RELATIVE_PATH,
     JOB_MONITORING_ENDPOINT,
-    LOCAL_AUTH
+    LOCAL_AUTH,
+    SSM_COMMAND_RUNTIMES
 };

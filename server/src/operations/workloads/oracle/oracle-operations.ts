@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { isEmpty, omit } from 'lodash-es';
+import { compact, isEmpty, omit, uniq } from 'lodash-es';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import {
     DatabaseHostsQueryFields,
@@ -36,9 +36,10 @@ import {
     GET_ORACLE_SERVER_DETAILS,
     getOracleInstanceData,
     getOracleProtectionData,
-    ORACLE_PERFORMANCE_METRICS
+    ORACLE_PERFORMANCE_METRICS,
+    oracleStorageInfoFromOntap
 } from './oracle-ssm-script-utils';
-import getDatabaseInstanceTopology from '../../../utils/sql-utils';
+import { getDatabaseInstanceTopology, parseMappedVolumeData } from '../../../utils/sql-utils';
 import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 import {
     fetchOracleDatabasesCount,
@@ -49,11 +50,14 @@ import {
 } from './oracle-discover-scripts';
 import { getSqlInstanceUtilizationAndPerformance } from '../../aws/cloud-watch-operations';
 import { listResources } from '../../../lib/database/db';
-import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../../../lib/database/database-instance-config';
 import { AssessmentCategories } from '../../../utils/continous-optimization-consts';
 import { MountPointDetails, OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
-import { getStorageData, getNodeTopology } from '../../database-hosts-util';
+import { getNodeTopology, getStorageData } from '../../database-hosts-util';
 import { MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
 import { PDB_DETAILS } from '../../../utils/demo-utils/demoInventoryData';
 
@@ -95,6 +99,14 @@ async function checkASMmanagedStorage(
         throw createError(errorMessage);
     }
 }
+type ontapStorageSummary = {
+    size: number;
+    used: number;
+    physicalUsed: number;
+    ssdUsed: number;
+    capacityPoolUsed: number;
+    snapshotUsed: number;
+};
 
 async function getOracleInstanceDetails(
     accountId: string,
@@ -637,306 +649,327 @@ async function getOracleDatabaseInstancesSummary(
     const getStorage = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLowerCase());
     const getDbNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
 
-    // Run for all instances
-    const results = await Promise.all(
-        databaseInstances.map(async databaseInstance => {
-            let performanceData: any;
-            let databaseInstancetopologyData: any;
-            let protectionData: any;
-            let databasesCount: any;
-            let databases: any;
-            let resourceTrendsData: any;
-            let storage: any;
-            let nodeTopology: any;
-            let activeNodeDetails: any;
-            let isASMManaged: boolean = false;
-            const errormessages: { [index: string]: string } = {};
-            const dbInstanceSid = databaseInstance.database_instance_name; // In Oracle database instance name is same as sid
-            const metadata = databaseInstance?.metadata as
-                | { mountPointDetails?: { mountIp?: string; mountPoint?: string; protocol?: string } }
-                | undefined;
+    // Run getOracleStorageInfoFromOntap concurrently with databaseInstances.map
+    const [storageInfoFromOntap, results] = await Promise.all([
+        getStorage ? getOracleStorageInfoFromOntap(activeNodeInstanceId, databaseInstances) : Promise.resolve(),
+        Promise.all(
+            databaseInstances.map(async databaseInstance => {
+                let performanceData: any;
+                let databaseInstancetopologyData: any;
+                let protectionData: any;
+                let databasesCount: any;
+                let databases: any;
+                let resourceTrendsData: any;
+                let storage: any;
+                let nodeTopology: any;
+                let activeNodeDetails: any;
+                let isASMManaged: boolean = false;
+                const errormessages: { [index: string]: string } = {};
+                const dbInstanceSid = databaseInstance.database_instance_name; // In Oracle database instance name is same as sid
+                const metadata = databaseInstance?.metadata as
+                    | { mountPointDetails?: { mountIp?: string; mountPoint?: string; protocol?: string } }
+                    | undefined;
 
-            const demoMountPointDetails = [
-                {
-                    mountIp: '10.0.0.0',
-                    mountPoint: '/oradata',
-                    protocol: 'iSCSI'
-                }
-            ];
-            let mountPointDetails = isDemoFlow ? demoMountPointDetails : metadata?.mountPointDetails;
-            databaseInstance.storage_type = resourceDetails?.storage_type;
-            let isCDB = 'NO';
-            let pdbNames: string[] = [];
+                const demoMountPointDetails = [
+                    {
+                        mountIp: '10.0.0.0',
+                        mountPoint: '/oradata',
+                        protocol: 'iSCSI'
+                    }
+                ];
+                let mountPointDetails = isDemoFlow ? demoMountPointDetails : metadata?.mountPointDetails;
+                databaseInstance.storage_type = resourceDetails?.storage_type;
+                let isCDB = 'NO';
+                let pdbNames: string[] = [];
 
-            // Get the storage & mount point details for registered Oracle database instances
-            if (!mountPointDetails) {
-                if (getProtectionStatus || getDatabasesWithProtection || isDemoFlow) {
-                    const storageDetails = await getRegisteredOracleInstanceStorageDetails(
-                        accountId,
-                        credentialsId,
-                        region,
-                        activeNodeInstanceId,
-                        databaseInstance.fsxn_ids,
-                        dbInstanceSid
-                    );
-                    if (storageDetails) {
-                        mountPointDetails = storageDetails.mountPointDetails;
-                        isCDB = storageDetails.isCDB;
-                        pdbNames = storageDetails.pdbNames;
-                        isASMManaged = storageDetails?.mountPointDetails?.some(
-                            (m: MountPointDetails) => m.isAsmManaged
+                // Get the storage & mount point details for registered Oracle database instances
+                if (!mountPointDetails) {
+                    if (getProtectionStatus || getDatabasesWithProtection || isDemoFlow) {
+                        const storageDetails = await getRegisteredOracleInstanceStorageDetails(
+                            accountId,
+                            credentialsId,
+                            region,
+                            activeNodeInstanceId,
+                            databaseInstance.fsxn_ids,
+                            dbInstanceSid
+                        );
+                        if (storageDetails) {
+                            mountPointDetails = storageDetails.mountPointDetails;
+                            isCDB = storageDetails.isCDB;
+                            pdbNames = storageDetails.pdbNames;
+                            isASMManaged = storageDetails?.mountPointDetails?.some(
+                                (m: MountPointDetails) => m.isAsmManaged
+                            );
+                        }
+                    } else {
+                        isASMManaged = await checkASMmanagedStorage(
+                            accountId,
+                            credentialsId,
+                            region,
+                            activeNodeInstanceId,
+                            dbInstanceSid
                         );
                     }
-                } else {
-                    isASMManaged = await checkASMmanagedStorage(
-                        accountId,
-                        credentialsId,
-                        region,
-                        activeNodeInstanceId,
-                        dbInstanceSid
+                }
+
+                try {
+                    [
+                        databaseInstancetopologyData,
+                        performanceData,
+                        protectionData,
+                        databasesCount,
+                        databases,
+                        resourceTrendsData,
+                        storage,
+                        nodeTopology,
+                        { activeNodeDetails }
+                    ] = await Promise.all(
+                        [
+                            ...(shouldQueryDatabaseTopology
+                                ? [
+                                      getDatabaseInstanceTopology(
+                                          accountId,
+                                          credentialsId,
+                                          region,
+                                          activeNodeInstanceId,
+                                          databaseInstance,
+                                          DatabaseTypes.ORACLE
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
+                            ...(getPerformanceMetrics
+                                ? [
+                                      getOraclePerformanceMetrics(
+                                          accountId,
+                                          credentialsId,
+                                          region,
+                                          activeNodeInstanceId,
+                                          dbInstanceSid
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
+                            ...(getProtectionStatus || getDatabasesWithProtection
+                                ? [
+                                      getOracleProtectionStatus(
+                                          accountId,
+                                          credentialsId,
+                                          region,
+                                          activeNodeInstanceId,
+                                          databaseInstance.fsxn_ids,
+                                          dbInstanceSid,
+                                          mountPointDetails as MountPointDetails[][],
+                                          isCDB,
+                                          pdbNames
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
+                            ...(getDbCount
+                                ? [
+                                      getOracleDatabaseCount(
+                                          accountId,
+                                          credentialsId,
+                                          region,
+                                          activeNodeInstanceId,
+                                          dbInstanceSid
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
+                            ...(getDatabasesWithoutProtection || getDatabasesWithProtection
+                                ? [
+                                      getOracleDatabasesList(
+                                          accountId,
+                                          credentialsId,
+                                          region,
+                                          activeNodeInstanceId,
+                                          dbInstanceSid
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
+                            ...(getPerformanceMetrics
+                                ? [
+                                      getSqlInstanceUtilizationAndPerformance(
+                                          accountId,
+                                          region,
+                                          credentialsId,
+                                          activeNodeInstanceId,
+                                          [dbInstanceSid]
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
+                            ...(getStorage
+                                ? [getStorageData(databaseInstance.resource, databaseInstance)]
+                                : [Promise.resolve()]),
+                            ...(getDbNodeTopology
+                                ? [
+                                      getNodeTopology(
+                                          accountId,
+                                          region,
+                                          resourceDetails?.resource_id || databaseInstance?.resource?.resource_id,
+                                          databaseInstance?.resource,
+                                          activeNodeInstanceId,
+                                          standbyNodeInstanceId
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
+                            ...[
+                                getOracleInstanceDetails(accountId, credentialsId, region, activeNodeInstanceId, {
+                                    fetchServerDetails: true,
+                                    oracleSid: databaseInstance.database_instance_name
+                                })
+                            ]
+                        ].map((p, index) =>
+                            p.catch(error => {
+                                if (ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                                    errormessages[ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]] =
+                                        JSON.stringify(error);
+                                }
+                                logger.error(`Error while fetching data: ${error}.`);
+                            })
+                        )
+                    );
+                    if (isDemoFlow && databases?.length && databaseInstance?.metadata) {
+                        databases.forEach((database: DatabasesResponseType) => {
+                            database.type =
+                                (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType ===
+                                OracleDeploymentTenacy.MULTI_TENANT
+                                    ? 'CDB'
+                                    : 'Single tenant';
+                            if (database.type !== 'Single tenant') {
+                                databases.push(PDB_DETAILS);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    logger.error(`Error while fetching Oracle database instance summary ${accountId}, ${error}`);
+                    throw createError(
+                        HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                        `Error while fetching Oracle database instance summary ${accountId}, ${error}`
                     );
                 }
-            }
 
-            try {
-                [
-                    databaseInstancetopologyData,
-                    performanceData,
-                    protectionData,
-                    databasesCount,
-                    databases,
-                    resourceTrendsData,
-                    storage,
-                    nodeTopology,
-                    { activeNodeDetails }
-                ] = await Promise.all(
-                    [
-                        ...(shouldQueryDatabaseTopology
-                            ? [
-                                  getDatabaseInstanceTopology(
-                                      accountId,
-                                      credentialsId,
-                                      region,
-                                      activeNodeInstanceId,
-                                      databaseInstance,
-                                      DatabaseTypes.ORACLE
-                                  )
-                              ]
-                            : [Promise.resolve()]),
-                        ...(getPerformanceMetrics
-                            ? [
-                                  getOraclePerformanceMetrics(
-                                      accountId,
-                                      credentialsId,
-                                      region,
-                                      activeNodeInstanceId,
-                                      dbInstanceSid
-                                  )
-                              ]
-                            : [Promise.resolve()]),
-                        ...(getProtectionStatus || getDatabasesWithProtection
-                            ? [
-                                  getOracleProtectionStatus(
-                                      accountId,
-                                      credentialsId,
-                                      region,
-                                      activeNodeInstanceId,
-                                      databaseInstance.fsxn_ids,
-                                      dbInstanceSid,
-                                      mountPointDetails as MountPointDetails[][],
-                                      isCDB,
-                                      pdbNames
-                                  )
-                              ]
-                            : [Promise.resolve()]),
-                        ...(getDbCount
-                            ? [
-                                  getOracleDatabaseCount(
-                                      accountId,
-                                      credentialsId,
-                                      region,
-                                      activeNodeInstanceId,
-                                      dbInstanceSid
-                                  )
-                              ]
-                            : [Promise.resolve()]),
-                        ...(getDatabasesWithoutProtection || getDatabasesWithProtection
-                            ? [
-                                  getOracleDatabasesList(
-                                      accountId,
-                                      credentialsId,
-                                      region,
-                                      activeNodeInstanceId,
-                                      dbInstanceSid
-                                  )
-                              ]
-                            : [Promise.resolve()]),
-                        ...(getPerformanceMetrics
-                            ? [
-                                  getSqlInstanceUtilizationAndPerformance(
-                                      accountId,
-                                      region,
-                                      credentialsId,
-                                      activeNodeInstanceId,
-                                      [dbInstanceSid]
-                                  )
-                              ]
-                            : [Promise.resolve()]),
-                        ...(getStorage
-                            ? [getStorageData(databaseInstance.resource, databaseInstance)]
-                            : [Promise.resolve()]),
-                        ...(getDbNodeTopology
-                            ? [
-                                  getNodeTopology(
-                                      accountId,
-                                      region,
-                                      resourceDetails?.resource_id || databaseInstance?.resource?.resource_id,
-                                      databaseInstance?.resource,
-                                      activeNodeInstanceId,
-                                      standbyNodeInstanceId
-                                  )
-                              ]
-                            : [Promise.resolve()]),
-                        ...[
-                            getOracleInstanceDetails(accountId, credentialsId, region, activeNodeInstanceId, {
-                                fetchServerDetails: true,
-                                oracleSid: databaseInstance.database_instance_name
-                            })
-                        ]
-                    ].map((p, index) =>
-                        p.catch(error => {
-                            if (ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
-                                errormessages[ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
-                            }
-                            logger.error(`Error while fetching data: ${error}.`);
-                        })
-                    )
-                );
-                if (isDemoFlow && databases?.length && databaseInstance?.metadata) {
-                    databases.forEach((database: DatabasesResponseType) => {
-                        database.type =
-                            (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType ===
-                            OracleDeploymentTenacy.MULTI_TENANT
-                                ? 'CDB'
-                                : 'Single tenant';
-                        if (database.type !== 'Single tenant') {
-                            databases.push(PDB_DETAILS);
-                        }
-                    });
-                }
-            } catch (error) {
-                logger.error(`Error while fetching Oracle database instance summary ${accountId}, ${error}`);
-                throw createError(
-                    HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Error while fetching Oracle database instance summary ${accountId}, ${error}`
-                );
-            }
+                const { database_instance_id: databaseInstanceId, database_instance_name: databaseInstanceName } =
+                    databaseInstance;
 
-            const { database_instance_id: databaseInstanceId, database_instance_name: databaseInstanceName } =
-                databaseInstance;
-
-            const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
-                databaseInstanceId,
-                databaseInstanceName,
-                status: ''
-            };
-
-            databaseInstanceDetails.status = ServerState.UP;
-
-            if (getPerformanceMetrics && performanceData) {
-                databaseInstanceDetails.performance = {
-                    assessment: performanceData?.assessment,
-                    rwMetrics: performanceData!
-                };
-            }
-            if (shouldQueryDatabaseTopology && databaseInstancetopologyData) {
-                databaseInstanceDetails.databaseInstanceTopology = databaseInstancetopologyData;
-            }
-            databaseInstanceDetails.sqlServerDeploymentType = 'Standalone';
-
-            if (getProtectionStatus && protectionData) {
-                databaseInstanceDetails.protection = protectionData[dbInstanceSid];
-            }
-            if (!isEmpty(errormessages)) {
-                databaseInstanceDetails.errors = errormessages;
-            }
-
-            if (getDatabasesWithoutProtection || getDatabasesWithProtection) {
-                if (getDatabasesWithProtection) {
-                    databases.forEach((database: DatabasesResponseType) => {
-                        if (database.type === 'CDB') {
-                            database.protection = protectionData?.[dbInstanceSid];
-                        } else {
-                            database.protection = protectionData?.[database.name] || {
-                                isSqlNativeBackupEnabled: false,
-                                isAwsBackupEnabled: { fsxn: false },
-                                isFsxOntapSnapshotsEnabled: false
-                            };
-                        }
-                    });
-                }
-                databaseInstanceDetails.databases = databases;
-            }
-            if (getDbCount) {
-                databaseInstanceDetails.databaseCount = databasesCount;
-            }
-
-            if (resourceTrendsData?.[dbInstanceSid] && getPerformanceMetrics) {
-                const instanceResourceTrendsData = resourceTrendsData?.[dbInstanceSid] || {};
-                databaseInstanceDetails.performance = {
-                    assessment: performanceData?.assessment,
-                    rwMetrics: {
-                        latency: {
-                            read: instanceResourceTrendsData.readLatency,
-                            write: instanceResourceTrendsData.writeLatency
-                        },
-                        iops: {
-                            read: instanceResourceTrendsData.readIops,
-                            write: instanceResourceTrendsData.writeIops
-                        },
-                        throughput: {
-                            read: instanceResourceTrendsData.readThroughput,
-                            write: instanceResourceTrendsData.writeThroughput
-                        }
-                    }
+                const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
+                    databaseInstanceId,
+                    databaseInstanceName,
+                    status: ''
                 };
 
-                databaseInstanceDetails.resourceUtilization = {
-                    cpu: resourceTrendsData?.[dbInstanceSid].cpuUsed
-                };
-            }
+                databaseInstanceDetails.status = ServerState.UP;
 
-            if (getStorage && storage) {
-                databaseInstanceDetails.storage = storage;
-            }
-
-            if (getDbNodeTopology && nodeTopology) {
-                databaseInstanceDetails.nodeTopology = omit(nodeTopology, [
-                    'activeDirectoryDetails'
-                ]) as NodeTopologyResponseType;
-            }
-
-            if (activeNodeDetails) {
-                if (getOracleHostSummary) {
-                    databaseInstanceDetails.databaseServer = {
-                        operatingSystem:
-                            activeNodeDetails?.prettyName ?? `${activeNodeDetails?.name} ${activeNodeDetails?.version}`,
-                        serverEdition: `Oracle ${activeNodeDetails?.serverEdition}`,
-                        serverVersion: activeNodeDetails?.serverVersion,
-                        activeNode: activeNodeDetails?.activeNode,
-                        nodeNames: [activeNodeDetails?.nodeNames],
-                        activeConnections: activeNodeDetails?.activeConnections,
-                        creationDate: activeNodeDetails?.creationDate
+                if (getPerformanceMetrics && performanceData) {
+                    databaseInstanceDetails.performance = {
+                        assessment: performanceData?.assessment,
+                        rwMetrics: performanceData!
                     };
-                } else {
-                    databaseInstanceDetails.platform =
-                        activeNodeDetails?.prettyName ?? `${activeNodeDetails?.name} ${activeNodeDetails?.version}`;
                 }
-            }
-            databaseInstanceDetails.isInstanceStorageAsmManaged = isASMManaged;
-            return databaseInstanceDetails;
-        })
-    );
+                if (shouldQueryDatabaseTopology && databaseInstancetopologyData) {
+                    databaseInstanceDetails.databaseInstanceTopology = databaseInstancetopologyData;
+                }
+                databaseInstanceDetails.sqlServerDeploymentType = 'Standalone';
+
+                if (getProtectionStatus && protectionData) {
+                    databaseInstanceDetails.protection = protectionData[dbInstanceSid];
+                }
+                if (!isEmpty(errormessages)) {
+                    databaseInstanceDetails.errors = errormessages;
+                }
+
+                if (getDatabasesWithoutProtection || getDatabasesWithProtection) {
+                    if (getDatabasesWithProtection) {
+                        databases.forEach((database: DatabasesResponseType) => {
+                            if (database.type === 'CDB') {
+                                database.protection = protectionData?.[dbInstanceSid];
+                            } else {
+                                database.protection = protectionData?.[database.name] || {
+                                    isSqlNativeBackupEnabled: false,
+                                    isAwsBackupEnabled: { fsxn: false },
+                                    isFsxOntapSnapshotsEnabled: false
+                                };
+                            }
+                        });
+                    }
+                    databaseInstanceDetails.databases = databases;
+                }
+                if (getDbCount) {
+                    databaseInstanceDetails.databaseCount = databasesCount;
+                }
+
+                if (resourceTrendsData?.[dbInstanceSid] && getPerformanceMetrics) {
+                    const instanceResourceTrendsData = resourceTrendsData?.[dbInstanceSid] || {};
+                    databaseInstanceDetails.performance = {
+                        assessment: performanceData?.assessment,
+                        rwMetrics: {
+                            latency: {
+                                read: instanceResourceTrendsData.readLatency,
+                                write: instanceResourceTrendsData.writeLatency
+                            },
+                            iops: {
+                                read: instanceResourceTrendsData.readIops,
+                                write: instanceResourceTrendsData.writeIops
+                            },
+                            throughput: {
+                                read: instanceResourceTrendsData.readThroughput,
+                                write: instanceResourceTrendsData.writeThroughput
+                            }
+                        }
+                    };
+
+                    databaseInstanceDetails.resourceUtilization = {
+                        cpu: resourceTrendsData?.[dbInstanceSid].cpuUsed
+                    };
+                }
+
+                if (getStorage && storage) {
+                    databaseInstanceDetails.storage = storage;
+                }
+
+                if (getDbNodeTopology && nodeTopology) {
+                    databaseInstanceDetails.nodeTopology = omit(nodeTopology, [
+                        'activeDirectoryDetails'
+                    ]) as NodeTopologyResponseType;
+                }
+
+                if (activeNodeDetails) {
+                    if (getOracleHostSummary) {
+                        databaseInstanceDetails.databaseServer = {
+                            operatingSystem:
+                                activeNodeDetails?.prettyName ??
+                                `${activeNodeDetails?.name} ${activeNodeDetails?.version}`,
+                            serverEdition: `Oracle ${activeNodeDetails?.serverEdition}`,
+                            serverVersion: activeNodeDetails?.serverVersion,
+                            activeNode: activeNodeDetails?.activeNode,
+                            nodeNames: [activeNodeDetails?.nodeNames],
+                            activeConnections: activeNodeDetails?.activeConnections,
+                            creationDate: activeNodeDetails?.creationDate
+                        };
+                    } else {
+                        databaseInstanceDetails.platform =
+                            activeNodeDetails?.prettyName ?? `${activeNodeDetails?.name} ${activeNodeDetails?.version}`;
+                    }
+                }
+                databaseInstanceDetails.isInstanceStorageAsmManaged = isASMManaged;
+                return databaseInstanceDetails;
+            })
+        )
+    ]);
+
+    if (getStorage && storageInfoFromOntap) {
+        results.forEach(result => {
+            const { storage_protocol: storageProtocol } =
+                databaseInstances.find(db => db.database_instance_id === result.databaseInstanceId) || {};
+            result.storage = {
+                ...result?.storage,
+                ...{
+                    fsxn: {
+                        ...storageInfoFromOntap[result.databaseInstanceId],
+                        protocol: storageProtocol?.split(',') ?? []
+                    }
+                }
+            };
+        });
+    }
 
     return results;
 }
@@ -1116,6 +1149,103 @@ async function getOracleDatabaseMappedVolumes(
         const errorMessage = `Error fetching oracle instance mapped volume information ${credentialsId},${region}, ${err}`;
         logger.error(errorMessage);
         throw createError(errorMessage);
+    }
+}
+
+async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, instanceDetails: DatabaseInstance[]) {
+    const ssmComment = 'Get Oracle storage data from ONTAP';
+    logger.info(ssmComment, ':', { activeNodeInstanceId, instancesLength: instanceDetails.length });
+
+    try {
+        const [
+            {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource: { resource_id: resourceId }
+            }
+        ] = instanceDetails;
+
+        const configList = (await listDatabaseInstanceConfigData({
+            accountId,
+            credentialsId,
+            region,
+            resourceId,
+            databaseInstanceIds: instanceDetails.map(di => di.database_instance_id),
+            configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
+        })) || [{}];
+        const fsxIds = uniq(compact(instanceDetails.map(di => di.fsxn_ids)));
+        const mappedVolumesByFsxId = fsxIds.map(fsxId =>
+            parseMappedVolumeData(
+                configList.flatMap(cd => cd.config_data).find(cd => Object.keys(cd as any).includes(fsxId)),
+                fsxId,
+                DatabaseTypes.ORACLE
+            )
+        );
+
+        const mappedByInstances = instanceDetails.map(instance => {
+            const mappedVolumesPerInstance = mappedVolumesByFsxId
+                .flatMap(mv => mv.combinedOntapVolumes.filter(cv => cv.instance === instance.database_instance_id))
+                .map(v => v.id);
+            return { name: instance.database_instance_id, fsxId: instance.fsxn_ids, volumes: mappedVolumesPerInstance };
+        });
+
+        const fields = [
+            'space.size',
+            'space.used',
+            'space.physical_used',
+            'space.performance_tier_footprint',
+            'space.capacity_tier_footprint',
+            'space.snapshot.used'
+        ];
+        const command = oracleStorageInfoFromOntap({
+            region,
+            apiEndpoint: 'storage/volumes',
+            apiQueryFields: `fields=${fields.join(',')}`,
+            instances: mappedByInstances
+        });
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [command],
+            activeNodeInstanceId,
+            ssmComment,
+            accountId,
+            true,
+            '45',
+            true,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+        if (!parsedResponse || isEmpty(parsedResponse)) {
+            const errorMessage = `No storage data found from ONTAP for Oracle instances: with ${credentialsId}, ${region}`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        }
+
+        const instancesResponse: Record<string, ontapStorageSummary> = {};
+        Object.entries(parsedResponse).forEach(([instanceName, value]) => {
+            const records = (value as { records?: any[] }).records ?? [];
+            const storageSummary = records.reduce(
+                (acc, { space }) => ({
+                    size: (acc.size || 0) + Number(space.size || 0),
+                    used: (acc.used || 0) + Number(space.used || 0),
+                    physicalUsed: (acc.physicalUsed || 0) + Number(space.physical_used || 0),
+                    ssdUsed: (acc.ssdUsed || 0) + Number(space.performance_tier_footprint || 0),
+                    capacityPoolUsed: (acc.capacityPoolUsed || 0) + Number(space.capacity_tier_footprint || 0),
+                    snapshotUsed: (acc.snapshotUsed || 0) + Number(space.snapshot.used || 0)
+                }),
+                {} as ontapStorageSummary
+            );
+            instancesResponse[instanceName] = storageSummary;
+        });
+        logger.debug('SSM response for Oracle storage data from ONTAP', { instancesResponse });
+        return instancesResponse;
+    } catch (error) {
+        logger.error('Failed executing SSM script to get storage data from ONTAP', { error });
     }
 }
 

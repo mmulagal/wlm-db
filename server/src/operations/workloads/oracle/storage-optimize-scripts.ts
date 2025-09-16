@@ -2,9 +2,11 @@ import { OptimizeStorageParams } from '../../../utils/common-types';
 import { pythonScriptInit, ontapRestApiScript, getFsxCredentials, logFileCheck } from './oracle-ssm-script-utils';
 
 const oracleStorageConfigurationPythonTemplate = (params: OptimizeStorageParams) => `
-${getFsxCredentials(params.fsxId, params.region)}
-${ontapRestApiScript(params.fsxId, params.region)}
+${getFsxCredentials}
+${ontapRestApiScript}
 
+fsxId = '${params.fsxId}'
+region = '${params.region}'
 apiPath = '${params.apiEndpoint}'[1:]
 query = '${params.apiQueryFilter}'
 body = '${params.apiBody}'
@@ -13,7 +15,7 @@ if query:
     url = f"{apiPath}?{query}"
 
 log(f"Sending PATCH request to: {url} with body: {body}")
-response, error = ontapRestApiRequest('PATCH', url, body)
+response, error = ontapRestApiRequest(fsxId, region, 'PATCH', url, body)
 if error:
     log(f"Error occurred: {error}")
     print(json.dumps(error))

@@ -20,7 +20,7 @@ import { DatabaseInstance, PgSqlInstanceDetails, ResourceDetails } from '../../.
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
 import { DATABASES_COUNT, LIST_DATABASES, PERFORMANCE_METRICS } from './queries';
 import { getPgSqlProtection, getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
-import getDatabaseInstanceTopology from '../../../utils/sql-utils';
+import { getDatabaseInstanceTopology } from '../../../utils/sql-utils';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './const';
 import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 

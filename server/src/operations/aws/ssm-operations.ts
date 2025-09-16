@@ -29,7 +29,8 @@ import {
     AWS_REGIONS,
     RESTRICTED_FSX_REGIONS,
     SSM_COMMAND_CACHE_TYPE,
-    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+    SSM_COMMAND_RUNTIMES
 } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
@@ -296,7 +297,11 @@ async function callSsmExecution(
                 logger.error('Error setting log group retention policy', error);
             });
         }
-        const { error, output = '' } = await extractSsmResponse(credentialsId, region, response, accountId);
+        const runtime =
+            documentName === SSM_RUN_POWERSHELL_SCRIPT_DOC
+                ? SSM_COMMAND_RUNTIMES.POWERSHELL
+                : SSM_COMMAND_RUNTIMES.SHELL;
+        const { error, output = '' } = await extractSsmResponse(credentialsId, region, runtime, response, accountId);
         if (error) {
             throw createError(error);
         }
@@ -314,13 +319,14 @@ async function callSsmExecution(
 async function getSsmResponseFromCloudWatch(
     credentialId: string,
     region: string,
+    runtime: SSM_COMMAND_RUNTIMES,
     commandId: string,
     instanceId: string,
     accountId?: string
 ) {
     logger.info('Getting SSM response from CloudWatch', { credentialId, region, commandId, instanceId, accountId });
     const logGroupName = CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE;
-    const logStreamSuffix = 'aws-runPowerShellScript/stdout';
+    const logStreamSuffix = `aws-run${runtime}Script/stdout`;
     const logStreamName = `${commandId}/${instanceId}/${logStreamSuffix}`;
 
     try {
@@ -559,6 +565,7 @@ async function getSSMConnectionStatusByInstanceIds(credentialsId: string, region
 async function extractSsmResponse(
     credentialsId: string,
     region: string,
+    runtime: SSM_COMMAND_RUNTIMES,
     ssmResponse: {
         commandId?: string;
         instanceId?: string;
@@ -596,6 +603,7 @@ async function extractSsmResponse(
         const responses = await getSsmResponseFromCloudWatch(
             credentialsId,
             region,
+            runtime,
             response?.CommandId,
             instanceId,
             accountId

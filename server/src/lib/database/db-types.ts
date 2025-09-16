@@ -134,7 +134,7 @@ interface ListDatabaseInstanceConfigDataParams {
     region?: string;
     credentialsId?: string;
     resourceId?: string;
-    databaseInstanceId?: string;
+    databaseInstanceIds?: string[];
     configDataType?: string;
     pageSize?: number;
     nextToken?: string;
