@@ -26,9 +26,10 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading }: MRDProps) => {
         }
     };
 
-    var config = {
-        type: 'doughnut',
-        data: {
+    const buildChartData = () => {
+        if (!data) return null;
+
+        return {
             datasets: [
                 {
                     data: [byteToGiB(data?.used), byteToGiB(data?.size) - byteToGiB(data?.used)],
@@ -43,21 +44,34 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading }: MRDProps) => {
                     backgroundColor: ['#0BAFFC', '#A815F3', '#FFF']
                 }
             ]
-            //   labels: label,
-        },
-        options: { ...doughnutOptions, animation: false }
+        };
     };
 
     useEffect(() => {
-        if (ref.current) {
+        if (!ref.current) return;
+
+        // Destroy existing chart if it exists
+        if (doughnutChart) {
+            doughnutChart.destroy();
+            setDoughnutChart(null);
+        }
+
+        // Only create chart when data is available
+        const chartData = buildChartData();
+        if (chartData) {
             //@ts-ignore
-            var myDoughnut = new Chart(ref.current, config);
+            const myDoughnut = new Chart(ref.current, {
+                type: 'doughnut',
+                data: chartData,
+                options: { ...doughnutOptions, animation: false }
+            });
             setDoughnutChart(myDoughnut);
         }
+
         return () => {
-            myDoughnut.destroy();
+            if (doughnutChart) doughnutChart.destroy();
         };
-    }, []);
+    }, [data]); // Re-run when data changes
     return (
         <div className={styles.chartItem} id="chart-item">
             <div className={styles['center-text']}>
@@ -75,7 +89,8 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading }: MRDProps) => {
 
                 <DsTypography variant="Regular_14">{t('databases.oracle-inner-page.total-size')}</DsTypography>
             </div>
-            <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>
+            {!resourceLoading && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
+            {resourceLoading && <div className={styles.emptyCircle} />}
         </div>
     );
 };
