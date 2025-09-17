@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import randomize from 'randomatic';
 import { Volume } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
@@ -66,7 +67,11 @@ import {
     ORACLE_STORAGE_ASSESSMENT_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA
 } from '../utils/demo-utils/demoInventoryData';
-import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../lib/database/database-instance-config';
+import { DatabaseInstanceConfigData } from '../lib/database/db-types';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 import {
     mockResourceAssessmentData,
@@ -87,6 +92,101 @@ import { OracleDeploymentTenacy } from './workloads/oracle/consts';
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
+
+async function createAssessmentDataWithRetry(
+    configDataRecords: DatabaseInstanceConfigData[],
+    verificationParams: {
+        accountId: string;
+        region: string;
+        credentialsId: string;
+        resourceId: string;
+        databaseInstanceId: string;
+    },
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
+) {
+    await createDatabaseInstanceConfigData(configDataRecords);
+
+    logger.info(`Creating demo assessment data for ${databaseType} in ${verificationParams.region}`);
+
+    let retryCount = 0;
+    const maxRetries = 2;
+    let verificationSuccessful = false;
+
+    while (retryCount <= maxRetries && !verificationSuccessful) {
+        try {
+            await new Promise(resolve => {
+                setTimeout(resolve, 500);
+            });
+
+            const verificationResult = await listDatabaseInstanceConfigData({
+                accountId: verificationParams.accountId,
+                region: verificationParams.region,
+                credentialsId: verificationParams.credentialsId,
+                resourceId: verificationParams.resourceId,
+                databaseInstanceIds: [verificationParams.databaseInstanceId]
+            });
+
+            const expectedRecordCount = configDataRecords.length;
+            const actualRecordCount = verificationResult?.length || 0;
+
+            if (actualRecordCount >= expectedRecordCount) {
+                logger.info(`${databaseType} assessment data verification successful`, {
+                    accountId: verificationParams.accountId,
+                    databaseInstanceId: verificationParams.databaseInstanceId,
+                    expectedRecords: expectedRecordCount,
+                    actualRecords: actualRecordCount
+                });
+                verificationSuccessful = true;
+            } else if (retryCount < maxRetries) {
+                logger.info(`${databaseType} assessment data verification failed, retrying...`, {
+                    accountId: verificationParams.accountId,
+                    databaseInstanceId: verificationParams.databaseInstanceId,
+                    expectedRecords: expectedRecordCount,
+                    actualRecords: actualRecordCount,
+                    retryCount: retryCount + 1
+                });
+
+                // Retry creating the data
+                await createDatabaseInstanceConfigData(configDataRecords);
+                retryCount += 1;
+            } else {
+                logger.error(`${databaseType} assessment data verification failed after all retries`, {
+                    accountId: verificationParams.accountId,
+                    databaseInstanceId: verificationParams.databaseInstanceId,
+                    expectedRecords: expectedRecordCount,
+                    actualRecords: actualRecordCount
+                });
+                throw new Error(`Failed to create ${databaseType} assessment data after ${maxRetries + 1} attempts`);
+            }
+        } catch (error) {
+            if (retryCount < maxRetries) {
+                logger.error(`Error during ${databaseType} assessment data verification, retrying...`, {
+                    accountId: verificationParams.accountId,
+                    databaseInstanceId: verificationParams.databaseInstanceId,
+                    error: error instanceof Error ? error.message : error,
+                    retryCount: retryCount + 1
+                });
+                try {
+                    await createDatabaseInstanceConfigData(configDataRecords);
+                } catch (retryError) {
+                    logger.error(`Error during ${databaseType} retry attempt`, {
+                        accountId: verificationParams.accountId,
+                        databaseInstanceId: verificationParams.databaseInstanceId,
+                        retryError: retryError instanceof Error ? retryError.message : retryError
+                    });
+                }
+                retryCount += 1;
+            } else {
+                logger.error(`${databaseType} assessment data creation and verification failed`, {
+                    accountId: verificationParams.accountId,
+                    databaseInstanceId: verificationParams.databaseInstanceId,
+                    error: error instanceof Error ? error.message : error
+                });
+                throw error;
+            }
+        }
+    }
+}
 
 async function createJobMockData(
     accountId: string,
@@ -1051,7 +1151,17 @@ async function createAssessmentData(
             ? configDataRecords
             : [...configDataRecords, instanceHighAvailabilityDataRecord];
 
-    await createDatabaseInstanceConfigData(newConfigDataRecords);
+    await createAssessmentDataWithRetry(
+        newConfigDataRecords,
+        {
+            accountId,
+            region,
+            credentialsId,
+            resourceId,
+            databaseInstanceId
+        },
+        DatabaseTypes.MS_SQL_SERVER
+    );
 }
 
 async function createAssessmentDataForOracle(
@@ -1082,7 +1192,17 @@ async function createAssessmentDataForOracle(
 
     const configDataRecords = [instanceConfigDataRecord, instanceConfigMappedOntapDataRecord];
 
-    await createDatabaseInstanceConfigData(configDataRecords);
+    await createAssessmentDataWithRetry(
+        configDataRecords,
+        {
+            accountId,
+            region,
+            credentialsId,
+            resourceId,
+            databaseInstanceId
+        },
+        DatabaseTypes.ORACLE
+    );
 }
 
 function prepareDemoSandboxMetadata(
