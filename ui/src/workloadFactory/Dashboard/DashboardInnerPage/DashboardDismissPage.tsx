@@ -551,7 +551,7 @@ const DashboardDismissPage = () => {
                     tagHeight: '233px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.scheduled_FSx_for_ONTAP_backups?.recommendation?.description
+                        description: cardDataDefault?.scheduled_fsx_for_ontap_backups?.recommendation?.description
                     },
                     tooltipText: selectedConfigSummary?.tooltipText
                 });
@@ -685,7 +685,7 @@ const DashboardDismissPage = () => {
                 return instanceData?.assessments?.dismissedConfigurations?.hostOsPatch;
             case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
                 return instanceData?.assessments?.dismissedConfigurations?.snapshotPolicy;
-            case GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                 return instanceData?.assessments?.dismissedConfigurations?.awsBackup;
             case GENERAL.CLONE_MANAGEMENT:
                 return instanceData?.assessments?.dismissedConfigurations?.clone;

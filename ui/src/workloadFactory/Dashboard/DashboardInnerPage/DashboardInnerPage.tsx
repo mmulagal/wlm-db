@@ -436,7 +436,7 @@ const DashboardInnerPage = () => {
                             {
                                 id: rowData?.databaseHostId,
                                 sqlServerInstances: [rowData?.instanceId],
-                                fsxFileSystemId: rowData?.objectsInViolation?.[0],
+                                fsxFileSystemId: rowData?.data?.assessments?.fileSystemId,
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
                                 backupStartTime: backupStartTime(selectedAWSBackup),
                                 credentialsId: rowData?.credentialId,
@@ -1227,7 +1227,7 @@ const DashboardInnerPage = () => {
                     tagHeight: '233px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.scheduled_FSx_for_ONTAP_backups?.recommendation?.description
+                        description: cardDataDefault?.scheduled_fsx_for_ontap_backups?.recommendation?.description
                     }
                 });
                 break;

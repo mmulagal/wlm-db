@@ -10,6 +10,7 @@
                     "databaseInstanceName": "MSSQLSERVER",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "fileSystemId": "fs-07a22f282fd4f5a20",
                         "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
@@ -1144,12 +1145,21 @@
                             "status": "optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
-                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
                             "tags": ["Reliability"],
-                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                            "totalObjectsAssessed": 1,
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "totalObjectsAssessed": 4,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Filesystem"
+                            "resourceType": "Volume"
                         },
                         "highAvailability": [
                             {
@@ -1396,6 +1406,7 @@
                     "databaseInstanceName": "MSSQLSERVER2",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "fileSystemId": "fs-07a22f282fd4f5a20",
                         "deploymentType": "FCI",
                         "storage": {
                             "error": "some error"
@@ -1651,12 +1662,21 @@
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
-                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
                             "tags": ["Reliability"],
-                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                            "totalObjectsAssessed": 1,
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "totalObjectsAssessed": 4,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Filesystem"
+                            "resourceType": "Volume"
                         },
                         "highAvailability": [
                             {
@@ -1903,6 +1923,7 @@
                     "databaseInstanceName": "MSSQLSERVER3",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "fileSystemId": "fs-07a22f282fd4f5a20",
                         "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
@@ -3064,12 +3085,21 @@
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
-                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
                             "tags": ["Reliability"],
-                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                            "totalObjectsAssessed": 1,
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "totalObjectsAssessed": 4,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Filesystem"
+                            "resourceType": "Volume"
                         },
                         "highAvailability": [
                             {
@@ -3328,6 +3358,7 @@
                     "databaseInstanceName": "MSSQLSERVER",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "fileSystemId": "fs-07a22f282fd4f5a20",
                         "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
@@ -4489,12 +4520,21 @@
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
-                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
                             "tags": ["Reliability"],
-                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                            "totalObjectsAssessed": 1,
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "totalObjectsAssessed": 4,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Filesystem"
+                            "resourceType": "Volume"
                         },
                         "highAvailability": [
                             {
@@ -4741,6 +4781,7 @@
                     "databaseInstanceName": "MSSQLSERVER2",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "fileSystemId": "fs-07a22f282fd4f5a20",
                         "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
@@ -5902,12 +5943,21 @@
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
-                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
                             "tags": ["Reliability"],
-                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                            "totalObjectsAssessed": 1,
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "totalObjectsAssessed": 4,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Filesystem"
+                            "resourceType": "Volume"
                         },
                         "highAvailability": [
                             {
@@ -6154,6 +6204,7 @@
                     "databaseInstanceName": "MSSQLSERVER3",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "fileSystemId": "fs-07a22f282fd4f5a20",
                         "deploymentType": "FCI",
                         "storage": {
                             "timestamp": 1730074791000,
@@ -7315,12 +7366,21 @@
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
-                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
                             "tags": ["Reliability"],
-                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                            "totalObjectsAssessed": 1,
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "totalObjectsAssessed": 4,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Filesystem"
+                            "resourceType": "Volume"
                         },
                         "clone": {
                             "name": "clone-management",
@@ -7515,6 +7575,7 @@
                     "databaseInstanceName": "MSSQLSERVER",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "fileSystemId": "fs-07a22f282fd4f5a20",
                         "deploymentType": "Standalone",
                         "storage": {
                             "timestamp": 1730074791000,
@@ -8676,12 +8737,21 @@
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
-                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
                             "tags": ["Reliability"],
-                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                            "totalObjectsAssessed": 1,
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "totalObjectsAssessed": 4,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Filesystem"
+                            "resourceType": "Volume"
                         },
                         "clone": {
                             "name": "clone-management",
@@ -8866,6 +8936,7 @@
                     "databaseInstanceName": "MSSQLSERVER2",
                     "assessments": {
                         "lastAssessmentTimestamp": 1730074791000,
+                        "fileSystemId": "fs-07a22f282fd4f5a20",
                         "deploymentType": "Standalone",
                         "storage": {
                             "timestamp": 1730074791000,
@@ -10027,12 +10098,21 @@
                             "status": "optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
-                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
                             "tags": ["Reliability"],
-                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                            "totalObjectsAssessed": 1,
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "totalObjectsAssessed": 4,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Filesystem"
+                            "resourceType": "Volume"
                         },
                         "clone": {
                             "name": "clone-management",

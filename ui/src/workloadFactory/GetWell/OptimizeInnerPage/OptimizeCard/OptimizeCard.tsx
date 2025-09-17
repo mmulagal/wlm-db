@@ -253,15 +253,6 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText },
                     data: data?.recommendation
                 };
-
-            case GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                return {
-                    block_one: { type: 'File system Name', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
-                    data: data?.recommendation
-                };
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
             case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
                 return {

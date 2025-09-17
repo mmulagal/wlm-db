@@ -2467,19 +2467,19 @@ const GetWell = () => {
                                             </div>
                                         )}
 
-                                        {filteredCardData?.scheduled_FSx_for_ONTAP_backups && (
+                                        {filteredCardData?.scheduled_fsx_for_ontap_backups && (
                                             <div className={styles.combineComponent}>
                                                 <StorageCardComponent
-                                                    cardData={filteredCardData?.scheduled_FSx_for_ONTAP_backups}
+                                                    cardData={filteredCardData?.scheduled_fsx_for_ontap_backups}
                                                     optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
+                                                    type={ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
                                                 />
                                                 <DsAccordion
                                                     id="19"
                                                     variant="Default"
                                                     isDisabled={
                                                         loading ||
-                                                        !cardData?.scheduled_FSx_for_ONTAP_backups?.block_two?.value
+                                                        !cardData?.scheduled_fsx_for_ontap_backups?.block_two?.value
                                                     }
                                                     isExpanded={isAccordionExpanded('19', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
@@ -2488,7 +2488,7 @@ const GetWell = () => {
                                                     onClick={() => setClickedAccordionId('19')}
                                                     title={
                                                         <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.scheduled_FSx_for_ONTAP_backups?.tags?.map(
+                                                            {filteredCardData?.scheduled_fsx_for_ontap_backups?.tags?.map(
                                                                 (perTag: string, index: number) => (
                                                                     <div key={index}>
                                                                         <Tag text={perTag} />
@@ -2507,7 +2507,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
-                                                                !cardData?.scheduled_FSx_for_ONTAP_backups?.block_two
+                                                                !cardData?.scheduled_fsx_for_ontap_backups?.block_two
                                                                     ?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -2518,7 +2518,7 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
-                                                                        !cardData?.scheduled_FSx_for_ONTAP_backups
+                                                                        !cardData?.scheduled_fsx_for_ontap_backups
                                                                             ?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
@@ -2531,7 +2531,7 @@ const GetWell = () => {
                                                     children={
                                                         <RecommendationText
                                                             data={
-                                                                filteredCardData?.scheduled_FSx_for_ONTAP_backups
+                                                                filteredCardData?.scheduled_fsx_for_ontap_backups
                                                                     ?.recommendation
                                                             }
                                                         />

@@ -808,7 +808,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Log drive size' ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
-            type === GENERAL.CLONE_MANAGEMENT
+            type === GENERAL.CLONE_MANAGEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
         ) {
             return GENERAL.VIEW_AND_FIX;
         }

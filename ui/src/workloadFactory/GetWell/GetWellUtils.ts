@@ -722,13 +722,13 @@ export const cardDataDefault: any = {
         },
         tags: ['Reliability']
     },
-    scheduled_FSx_for_ONTAP_backups: {
-        id: 'aws-backup-policy',
+    scheduled_fsx_for_ontap_backups: {
+        id: 'scheduled-fsx-for-ontap-backups',
         mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
         category: 'application',
         block_one: {
             type: GENERAL.RESILIENCY,
-            value: GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+            value: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
         },
         block_two: {
             type: 'Status',
@@ -748,14 +748,14 @@ export const cardDataDefault: any = {
             value: ''
         },
         block_six: {
-            type: 'File system',
+            type: 'Impacted volumes',
             value: '',
             smallFont: true
         },
         recommendation: {
-            title: 'Scheduled FSx for ONTAP backups recommendation',
+            title: 'Backup Configuration recommendation',
             description:
-                'Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. \nUse FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.'
+                'Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. \nIf using both, consider removing redundant backups manually.'
         },
         tags: ['Reliability']
     },
@@ -1087,12 +1087,13 @@ export const formatAWSBackUpPolicyCardConfig = (
 ) => {
     const item: any = data?.awsBackup;
     const categoryVal = 'resiliency';
-    let itemName = 'aws-backup-policy';
+    let itemName = item?.name || 'scheduled-fsx-for-ontap-backups';
     let status = item?.status || '';
     const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
+
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
     cardsData = {
@@ -1125,7 +1126,7 @@ export const formatAWSBackUpPolicyCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name || 'aws-backup-policy',
+            id: item?.name || 'scheduled-fsx-for-ontap-backups',
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             objectsInViolation: item?.objectsInViolation,
@@ -2391,7 +2392,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any, selectedData
         microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
         maxdop: { category: 'Application', subCategory: 'Application_sub' },
         scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
-        scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
+        scheduled_fsx_for_ontap_backups: { category: 'Resiliency', subCategory: 'Protection' },
         crr: { category: 'Resiliency', subCategory: 'Protection' },
         clone_management: { category: 'Cloning', subCategory: 'Cloning' },
         mssql_high_availability: { category: 'Resiliency', subCategory: 'Protection' }
@@ -3186,6 +3187,15 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                             assessments: {
                                 ...instance?.assessments,
                                 mtuAlignment: { ...instance.assessments.mtuAlignment, status: 'optimized' }
+                            }
+                        };
+                    }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                awsBackup: { ...instance.assessments.awsBackup, status: 'optimized' }
                             }
                         };
                     }

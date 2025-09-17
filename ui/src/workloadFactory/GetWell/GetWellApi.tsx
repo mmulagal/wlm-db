@@ -58,7 +58,7 @@ const GetWellApi = () => {
                 formatGetWellData(dispatch, result.data);
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
-                dispatch(setGwSelectedRowFsxId(result?.data?.awsBackup?.objectsInViolation?.[0]));
+                dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
             } else {
                 dispatch(setIsAssessmentAvailable(false));
                 dispatch(setOptimizePageLoading(false));

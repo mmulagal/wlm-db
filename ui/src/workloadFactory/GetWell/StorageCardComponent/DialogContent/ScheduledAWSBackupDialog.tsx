@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, DsTypography, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -11,6 +12,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 
 const ScheduledAWSBackupDialog = ({ type }: any) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
 
     // Function to generate the options for Select Field
@@ -50,10 +52,9 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
     return (
         <div className={styles['storage-tier-block']}>
             <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                <DsTypography variant="Semibold_14">{t('databases.well-architect.action-summary')}</DsTypography>
                 <DsTypography variant="Regular_14">
-                    Workload Factory recommends enabling AWS backup on your FSx for ONTAP filesystem to set retention
-                    based scheduled backups of your data volumes.
+                    {t('databases.well-architect.aws-backup-action-summary-content')}
                 </DsTypography>
             </div>
 
@@ -64,12 +65,13 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                 <div className={styles.content}>
                     <div className={styles.row}>
                         <DsTypography variant="Regular_14">
-                            Choose the number of days (between 1 and 90 days) that FSx for ONTAP should retain automatic
-                            backups for the serving file system.
+                            {t('databases.well-architect.aws-backup-user-action-content')}
                         </DsTypography>
                     </div>
                     <div className={styles.row}>
-                        <DsTypography variant="Regular_14">Number of days.</DsTypography>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.well-architect.aws-backup-number-of-days')}
+                        </DsTypography>
                     </div>
                     <div className={styles.row}>
                         <TextField
@@ -88,7 +90,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                     <div className={styles.content}>
                         <div className={styles.row}>
                             <DsTypography variant="Regular_14">
-                                Select start time for 30-minute daily automatic backup window.
+                                {t('databases.well-architect.aws-backup-automatic-window')}
                             </DsTypography>
                         </div>
                     </div>
@@ -158,14 +160,14 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                             />
                         </div>
                         <DsTypography style={{ position: 'relative', top: '-5px' }} variant="Regular_16">
-                            UTC
+                            {t('databases.well-architect.aws-backup-utc')}
                         </DsTypography>
                     </div>
                 </div>
 
                 <div className={styles['first-section']}>
                     <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                        What will happen
+                        {t('databases.well-architect.what-will-happen')}
                     </DsTypography>
                     <div className={styles.content}>
                         <div className={styles.row}>
@@ -173,7 +175,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                The FSx for ONTAP backup feature will be enabled on the FSx for ONTAP filesystem
+                                {t('databases.well-architect.aws-backup-what-will-happen-content1')}
                             </DsTypography>
                         </div>
 
@@ -182,26 +184,30 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                A retention policy of daily backup copies will be set
+                                {t('databases.well-architect.aws-backup-what-will-happen-content2')}
                             </DsTypography>
                         </div>
                         <div className={styles.row}>
                             <div>
                                 <Bullet />
                             </div>
-                            <DsTypography variant="Regular_14">The backup window will be scheduled for:</DsTypography>
-                        </div>
-
-                        <div className={styles.row} style={{ marginLeft: '60px' }}>
                             <DsTypography variant="Regular_14">
-                                Daily automatic backup window: {selectedAWSBackup?.hour}:{selectedAWSBackup?.minute} UTC
+                                {t('databases.well-architect.aws-backup-what-will-happen-content3')}
                             </DsTypography>
                         </div>
 
                         <div className={styles.row} style={{ marginLeft: '60px' }}>
                             <DsTypography variant="Regular_14">
-                                Automatic backup retention period: {selectedAWSBackup?.numberOfDays}{' '}
-                                {selectedAWSBackup?.numberOfDays > 1 ? 'days' : 'day'}
+                                {t('databases.well-architect.aws-backup-what-will-happen-content3a')}{' '}
+                                {selectedAWSBackup?.hour}:{selectedAWSBackup?.minute}{' '}
+                                {t('databases.well-architect.aws-backup-utc')}
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles.row} style={{ marginLeft: '60px' }}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.aws-backup-what-will-happen-content3b')}{' '}
+                                {selectedAWSBackup?.numberOfDays} {selectedAWSBackup?.numberOfDays > 1 ? 'days' : 'day'}
                             </DsTypography>
                         </div>
                     </div>
@@ -209,28 +215,15 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
 
                 <div className={styles['first-section']}>
                     <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                        {GENERAL.NOTE}
+                        {t('databases.well-architect.note')}
                     </DsTypography>
                     <div className={styles.content}>
                         <div className={styles.row}>
                             <div>
                                 <Bullet />
                             </div>
-                            <DsTypography variant="Regular_14">Backups are crash-consistent.</DsTypography>
-                        </div>
-
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
-                            <DsTypography variant="Regular_14">Offline volumes cannot be backed up.</DsTypography>
-                        </div>
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
                             <DsTypography variant="Regular_14">
-                                You can still manually initiate backup and restore operations via workload factory.
+                                {t('databases.well-architect.aws-backup-note1')}
                             </DsTypography>
                         </div>
 
@@ -239,7 +232,24 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                The retention period and scheduling can be modified as needed via workload factory.
+                                {t('databases.well-architect.aws-backup-note2')}
+                            </DsTypography>
+                        </div>
+                        <div className={styles.row}>
+                            <div>
+                                <Bullet />
+                            </div>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.aws-backup-note3')}
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles.row}>
+                            <div>
+                                <Bullet />
+                            </div>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.aws-backup-note4')}
                             </DsTypography>
                         </div>
                     </div>
