@@ -13,10 +13,20 @@
     height: 88px;
     border-bottom: 1px solid var(--border);
 
+    /* Disabled state for dismissed configurations */
+    &.dismissed {
+        .column {
+            * {
+                color: var(--text-disabled);
+            }
+        }
+    }
+
     .buttonSection {
-        width: 170px;
+        width: auto;
         display: flex;
-        justify-content: end;
+        justify-content: flex-end;
+        flex-shrink: 0;
         [class*='dsButtons'] {
             height: 32px !important;
             min-width: 140px !important;
@@ -26,6 +36,36 @@
             background-color: var(--grey-15);
             color: var(--text-primary);
         }
+
+        /* Responsive behavior for button sizing */
+        @media (max-width: 1200px) {
+            [class*='dsButtons'] {
+                min-width: 120px !important;
+            }
+        }
+    }
+
+    /* Button container that holds both dismiss and main action buttons */
+    .buttonContainer {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        width: 100%;
+        align-items: center;
+    }
+
+    /* Wrapper for button group containing dismiss and View/View and Fix */
+    .buttonGroup {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    /* Last column alignment for (ONTAP, Operating system, MSSQL HA) cards*/
+    .lastColumnAlignment {
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-start;
     }
 
     .dismissSection {
@@ -73,22 +113,29 @@
     }
 
     .cardContent {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1.3fr;
         align-items: center;
         gap: 24px;
-        flex-wrap: nowrap;
         overflow-x: hidden;
+
+        /* Responsive behavior for smaller screens */
+        @media (max-width: 1500px) {
+            gap: 16px;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 2fr;
+        }
     }
 
     .column {
-        flex: 1 1 140px;
         min-width: 0;
         overflow: hidden;
         border-right: 1px solid var(--border);
     }
 
-    .column.wide {
-        flex: 2 1 240px;
+    /* Remove border from the last column */
+    .column:last-child,
+    .cardContent > div:last-child {
+        border-right: none;
     }
 
     .titleText {

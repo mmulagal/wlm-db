@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
@@ -14,18 +15,29 @@ import Tag from '../../../common/Tag/Tag';
 import RecommendationTooltip from '../RecommendationTooltip/RecommendationTooltip';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
+import { DismissDialog } from '../StorageCardComponent/DismissDialog/DismissDialog';
 import { GENERAL } from '../../../utils/appConstants';
 import {
+    useDismissMssqlAssessmentMutation,
     useLazyGetSubTaskListQuery,
     useOptimizeHAMssqlMutation,
     useOptimizeOperatingSystemMutation,
     useOptimizeStorageConfigMutation
 } from '../../../utils/apiService';
 import { useAppSelector } from '../../../store/storeHooks';
+import {
+    handleSingleAction as handleSingleActionHelper,
+    addSuccessNotification as addSuccessNotificationHelper,
+    handleDismissResponse as handleDismissResponseHelper,
+    handleDismissError as handleDismissErrorHelper
+} from '../StorageCardComponent/StorageCardComponentHelper';
+
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATE_ACTIONS,
+    CONFIG_STATES,
     DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
@@ -51,12 +63,19 @@ const RecommendationTable = ({
     from,
     hostId,
     instanceId,
-    engineType = DBType.MSSQL
+    engineType = DBType.MSSQL,
+    // Adding undefined by default to stop showing dismiss button in Dashboard
+    showDismissedConfigurations = undefined,
+    setShowDismissedConfigurations
 }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const windowSize = useResize();
     const { setDialog, closeDialog } = useDialog();
+    const [dismissAction, setDismissAction] = useState(false);
+    const [showDismissButton, setShowDismissButton] = useState(false);
+    const [selectedRowData, setSelectedRowData] = useState<any>(null);
+    const [activeRowId, setActiveRowId] = useState<string | null>(null);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -69,11 +88,14 @@ const RecommendationTable = ({
         selectedGwInstanceRegionId
     } = useAppSelector(state => state.getWellOptimize);
     const { selectedHeaderTab } = useAppSelector(state => state.inventoryV2);
+    // Get the full card data to check dismissed configurations count
+    const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
 
     const isDialogPrimaryBtnDisabled = (rowData: any) =>
         rowData?.name === 'OS type' ||
@@ -340,6 +362,144 @@ const RecommendationTable = ({
         }
     };
 
+    const handleCardHoverMouseLeave = useCallback(() => {
+        // Hide dismiss button when mouse leaves the card
+        if (showDismissedConfigurations !== undefined && !showDismissedConfigurations) {
+            setActiveRowId(null);
+            setSelectedRowData(null);
+            setShowDismissButton(false);
+        }
+    }, [showDismissedConfigurations]);
+
+    const handleCardHoverMouseEnter = useCallback(
+        (rowData: any) => {
+            // Show dismiss button when mouse enters the card
+            if (showDismissedConfigurations !== undefined || !showDismissedConfigurations) {
+                setActiveRowId(rowData?.id);
+                setSelectedRowData(rowData);
+                setShowDismissButton(true);
+            }
+        },
+        [showDismissedConfigurations]
+    );
+
+    // Common cell wrapper component for consistent styling and click handling
+    const CellWrapper = ({
+        children,
+        rowData,
+        onMouseEnter = () => handleCardHoverMouseEnter(rowData),
+        onMouseLeave = () => handleCardHoverMouseLeave()
+    }: {
+        children: React.ReactNode;
+        rowData: any;
+        onMouseEnter?: (event?: React.MouseEvent) => void;
+        onMouseLeave?: (event?: React.MouseEvent) => void;
+    }) => (
+        <div
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+            role="button"
+            tabIndex={0}
+            className={styles.cellClickable}
+        >
+            {children}
+        </div>
+    );
+
+    // Function For Dismiss
+    const handleSingleAction = (action: string) => {
+        if (!selectedRowData) return;
+
+        handleSingleActionHelper(
+            action,
+            selectedRowData,
+            selectedResourceId || hostId,
+            selectedDatabaseInstance || instanceId,
+            selectedGwInstanceCredId || credIdFromJM,
+            selectedGwInstanceRegionId || regionFromJM,
+            dismissMssqlAssessment,
+            setDismissAction,
+            handleDismissResponse,
+            handleDismissError
+        );
+    };
+
+    const addSuccessNotification = (action: string, cardName?: string) => {
+        addSuccessNotificationHelper(action, cardName || '', dispatch, t);
+    };
+
+    const handleDismissResponse = (res: any, action: string) => {
+        if (!selectedRowData) return;
+
+        handleDismissResponseHelper(
+            res,
+            action,
+            selectedRowData,
+            selectedGwInstanceCredId || credIdFromJM,
+            selectedResourceId || hostId,
+            selectedDatabaseInstance || instanceId,
+            selectedGwInstanceRegionId || regionFromJM,
+            showDismissedConfigurations,
+            setShowDismissedConfigurations,
+            fullCardData,
+            dispatch,
+            addSuccessNotification,
+            t
+        );
+    };
+
+    const handleDismissError = (err: any) => {
+        handleDismissErrorHelper(err, dispatch, setDismissAction);
+    };
+
+    const handleDismissButtonClick = () => {
+        if (!selectedRowData) return;
+
+        setDialog(
+            <DismissDialog
+                type="single"
+                isSubConfiguration
+                subConfigurationName={selectedRowData?.name}
+                callback={(selectedAction: string) => {
+                    handleSingleAction(selectedAction);
+                }}
+                closeCallback={closeDialog}
+            />
+        );
+    };
+
+    const dismissDisableButton = () => {
+        if (!selectedRowData) return true;
+
+        return (
+            selectedRowData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            selectedRowData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
+            selectedRowData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING
+        );
+    };
+
+    // Dismiss button component
+    const renderDismissButton = (rowData: any) => {
+        // Don't show dismiss button when in dismissed configuration mode
+        if (showDismissedConfigurations === undefined || showDismissedConfigurations) return null;
+
+        if (activeRowId !== rowData?.id) return null;
+        if (showDismissButton) {
+            return (
+                <div className={styles.buttonSection}>
+                    <DsButton
+                        type="text"
+                        onClick={handleDismissButtonClick}
+                        isDisabled={isLoading || dismissAction || dismissDisableButton()}
+                    >
+                        {GENERAL.DISMISS}
+                    </DsButton>
+                </div>
+            );
+        }
+        return null;
+    };
+
     const statusValue = (cellData: string) => {
         if (cellData === GETWELL_STATUS.OPTIMIZED) {
             return GETWELL_STATUS.OPTIMIZED;
@@ -373,20 +533,22 @@ const RecommendationTable = ({
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
-            Header: 'Configuration',
+            Header: t('databases.well-architect.recommendation-table.headers.configuration'),
             accessor: 'name',
             width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '268px' : '250px',
             isSortable: true,
-            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: any, rowData: any) => (
+                <CellWrapper rowData={rowData}>{cellData || GENERAL.NOT_AVAILABLE}</CellWrapper>
+            )
         },
         {
             id: '2',
-            Header: 'Status',
+            Header: t('databases.well-architect.recommendation-table.headers.status'),
             accessor: 'status',
-            width: windowSize.width > 1700 ? '15%' : '220px',
+            width: windowSize.width > 1700 ? '10%' : '180px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
-                <>
+                <CellWrapper rowData={rowData}>
                     {rowData?.errorMessage && showUnavailableWithTooltip(rowData)}
 
                     {cellData && !rowData?.errorMessage && (
@@ -403,45 +565,51 @@ const RecommendationTable = ({
                             <div>{statusValue(cellData)}</div>
                         </div>
                     )}
-                </>
+                </CellWrapper>
             )
         },
         {
             id: '3',
-            Header: 'Severity',
+            Header: t('databases.well-architect.recommendation-table.headers.severity'),
             accessor: 'severity',
-            width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '173px' : '200px',
+            width: windowSize.width > 1700 ? '10%' : from === WLF_TABS.INVENTORY ? '173px' : '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 if (rowData?.errorMessage) {
-                    return showUnavailableWithTooltip(rowData);
+                    return <CellWrapper rowData={rowData}>{showUnavailableWithTooltip(rowData)}</CellWrapper>;
                 }
 
                 if (!cellData || cellData === GENERAL.NOT_AVAILABLE) {
                     return (
-                        <DsTypography variant="Regular_13" className={styles.colText}>
-                            {t('databases.well-architect.unavailable')}
-                        </DsTypography>
+                        <CellWrapper rowData={rowData}>
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {t('databases.well-architect.unavailable')}
+                            </DsTypography>
+                        </CellWrapper>
                     );
                 }
 
                 return (
-                    <div className={styles.statusCol}>
-                        <div>
-                            {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
-                            {cellData === GETWELL_STATUS.NOT_OPTIMIZED && <NotActive className={styles.statusIcon} />}
-                            {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
-                                <InProgress className={styles.statusIcon} />
-                            )}
+                    <CellWrapper rowData={rowData}>
+                        <div className={styles.statusCol}>
+                            <div>
+                                {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
+                                {cellData === GETWELL_STATUS.NOT_OPTIMIZED && (
+                                    <NotActive className={styles.statusIcon} />
+                                )}
+                                {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
+                                    <InProgress className={styles.statusIcon} />
+                                )}
+                            </div>
+                            <div>{statusValue(cellData)}</div>
                         </div>
-                        <div>{statusValue(cellData)}</div>
-                    </div>
+                    </CellWrapper>
                 );
             }
         },
         {
             id: '4',
-            Header: 'Impacted resources',
+            Header: t('databases.well-architect.recommendation-table.headers.impacted-resources'),
             accessor: 'totalObjectsInViolation',
             width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '220px' : '200px',
             isSortable: true,
@@ -482,7 +650,7 @@ const RecommendationTable = ({
                 }
 
                 return (
-                    <>
+                    <CellWrapper rowData={rowData}>
                         {(engineType === DBType.MSSQL &&
                             rowData?.name !== 'Multipath I/O Sessions' &&
                             rowData?.name !== 'Multipath I/O Status' &&
@@ -500,47 +668,49 @@ const RecommendationTable = ({
                                 Storage multipath
                             </DsTypography>
                         )}
-                    </>
+                    </CellWrapper>
                 );
             }
         },
         {
             id: '5',
-            Header: 'Tags',
+            Header: t('databases.well-architect.recommendation-table.headers.tags'),
             accessor: 'tags',
             width: windowSize.width > 1700 ? '10%' : from === WLF_TABS.INVENTORY ? '220px' : '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
-                <div className={styles.tooltipContainer}>
-                    {cellData?.length > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass=""
-                                children={
-                                    <div className={styles.tags}>
-                                        {cellData?.map((perTag: string) => (
-                                            <Tag text={perTag} />
-                                        ))}
-                                    </div>
-                                }
-                                trigger="hover"
-                                delayHide={200}
-                                interactive
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                            />
-                        </div>
-                    )}
-                    {cellData?.length === 0 && (
-                        <div>
-                            <DisabledTooltipIcon />
-                        </div>
-                    )}
+                <CellWrapper rowData={rowData}>
+                    <div className={styles.tooltipContainer}>
+                        {cellData?.length > 0 && (
+                            <div className={styles.tooltip}>
+                                <Popover
+                                    popoverClass=""
+                                    children={
+                                        <div className={styles.tags}>
+                                            {cellData?.map((perTag: string) => (
+                                                <Tag text={perTag} />
+                                            ))}
+                                        </div>
+                                    }
+                                    trigger="hover"
+                                    delayHide={200}
+                                    interactive
+                                    isAppendedToBody={false}
+                                    container={<TooltipIcon />}
+                                />
+                            </div>
+                        )}
+                        {cellData?.length === 0 && (
+                            <div>
+                                <DisabledTooltipIcon />
+                            </div>
+                        )}
 
-                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                        {`Tags (${cellData.length})`}
-                    </DsTypography>
-                </div>
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            {`Tags (${cellData.length})`}
+                        </DsTypography>
+                    </div>
+                </CellWrapper>
             )
         },
         {
@@ -549,30 +719,32 @@ const RecommendationTable = ({
             accessor: 'recommendation',
             width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '202px' : '290px',
             renderCell: (cellData: any, rowData: any) => (
-                <div className={styles.recommendation}>
-                    <div className={styles.tooltipContainer}>
-                        {cellData?.length === 0 && (
-                            <div>
-                                <DisabledTooltipIcon />
-                            </div>
-                        )}
-                        {cellData?.length > 0 && (
-                            <div className={styles.tooltip}>
-                                <Popover
-                                    popoverClass=""
-                                    children={cellData && <RecommendationTooltip data={cellData} />}
-                                    trigger="hover"
-                                    delayHide={200}
-                                    container={<TooltipIcon />}
-                                    placement="bottom"
-                                />
-                            </div>
-                        )}
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            View recommendation
-                        </DsTypography>
+                <CellWrapper rowData={rowData}>
+                    <div className={styles.recommendation}>
+                        <div className={styles.tooltipContainer}>
+                            {cellData?.length === 0 && (
+                                <div>
+                                    <DisabledTooltipIcon />
+                                </div>
+                            )}
+                            {cellData?.length > 0 && (
+                                <div className={styles.tooltip}>
+                                    <Popover
+                                        popoverClass=""
+                                        children={cellData && <RecommendationTooltip data={cellData} />}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        container={<TooltipIcon />}
+                                        placement="bottom"
+                                    />
+                                </div>
+                            )}
+                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                {t('databases.well-architect.recommendation-table.recommendation')}
+                            </DsTypography>
+                        </div>
                     </div>
-                </div>
+                </CellWrapper>
             )
         },
         {
@@ -580,61 +752,122 @@ const RecommendationTable = ({
             Header: '',
             accessor: '',
             isSticky: true,
-            width: windowSize.width > 1700 ? '15%' : from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            width: windowSize.width > 1700 ? '22%' : from === WLF_TABS.INVENTORY ? '350px' : '200px',
             renderCell: (cellData: any, rowData: any) => (
-                <div className={styles.recommendation}>
-                    {!optimizePrintState &&
-                        (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
-                        rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
-                            <TooltipComponent
-                                title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                                placement="bottom"
-                                width="120px"
-                                height="30px"
+                <CellWrapper rowData={rowData}>
+                    <div className={styles.buttonGroup}>
+                        {renderDismissButton(rowData)}
+
+                        {/* Reactivate button for dismissed configurations */}
+                        {showDismissedConfigurations && (
+                            <div
+                                className={styles.buttonSection}
+                                style={{
+                                    position: 'relative',
+                                    zIndex: 1000,
+                                    pointerEvents: 'auto'
+                                }}
+                                onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    setSelectedRowData(rowData);
+                                    handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
+                                }}
                             >
-                                <div>
-                                    <DsButton variant="secondary" isDisabled>
-                                        {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
-                                    </DsButton>
-                                </div>
-                            </TooltipComponent>
-                        ) : optimizingInstanceData &&
-                          rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
-                          rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
-                            <TooltipComponent
-                                title={GENERAL.OPTIMIZATION_IN_PROGRESS}
-                                placement="bottom"
-                                width="310px"
-                                height="50px"
-                            >
-                                <div>
-                                    <DsButton variant="secondary" isDisabled>
-                                        {innerPageText(rowData?.name)}
-                                    </DsButton>
-                                </div>
-                            </TooltipComponent>
-                        ) : (
-                            <div id={`${rowData?.id}-optimize`}>
                                 <DsButton
                                     variant="secondary"
-                                    onClick={() => handleDifferentNavigation(rowData)}
-                                    isDisabled={rowData?.status !== 'Not optimized'}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        setSelectedRowData(rowData);
+                                        handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
+                                    }}
+                                    isDisabled={isLoading || dismissAction}
                                 >
-                                    {innerPageText(rowData?.name)}
+                                    {t('databases.well-architect.dismiss.reactivate')}
                                 </DsButton>
                             </div>
-                        ))}
-                </div>
+                        )}
+
+                        {/* Regular action buttons for non-dismissed configurations */}
+                        {!showDismissedConfigurations && (
+                            <div className={styles.recommendation}>
+                                {!optimizePrintState &&
+                                    (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
+                                    rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
+                                        <TooltipComponent
+                                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                                            placement="bottom"
+                                            width="120px"
+                                            height="30px"
+                                        >
+                                            <div>
+                                                <DsButton variant="secondary" isDisabled>
+                                                    {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
+                                                </DsButton>
+                                            </div>
+                                        </TooltipComponent>
+                                    ) : optimizingInstanceData &&
+                                      rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
+                                      rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
+                                        <TooltipComponent
+                                            title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                                            placement="bottom"
+                                            width="310px"
+                                            height="50px"
+                                        >
+                                            <div>
+                                                <DsButton variant="secondary" isDisabled>
+                                                    {innerPageText(rowData?.name)}
+                                                </DsButton>
+                                            </div>
+                                        </TooltipComponent>
+                                    ) : (
+                                        <div id={`${rowData?.id}-optimize`}>
+                                            <DsButton
+                                                variant="secondary"
+                                                onClick={(e: any) => {
+                                                    e.stopPropagation();
+                                                    handleDifferentNavigation(rowData);
+                                                }}
+                                                isDisabled={rowData?.status !== 'Not optimized'}
+                                            >
+                                                {innerPageText(rowData?.name)}
+                                            </DsButton>
+                                        </div>
+                                    ))}
+                            </div>
+                        )}
+                    </div>
+                </CellWrapper>
             )
         }
     ];
 
     const colDefsForDashboard = ColDefs.filter((item: any) => item.id !== '2');
 
+    // Filter table data based on dismissed state
+    const filteredTableData = React.useMemo(() => {
+        if (!tableData) return [];
+
+        return tableData.filter((row: any) => {
+            const isDismissed =
+                row?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+                row?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
+
+            // Show dismissed rows only when in dismissed configuration mode
+            if (showDismissedConfigurations) {
+                return isDismissed;
+            }
+            // Show non-dismissed rows in normal mode
+            return !isDismissed;
+        });
+    }, [tableData, showDismissedConfigurations]);
+
     const tableProps = useTable({
         isSorting: false,
         columns: from === WLF_TABS.INVENTORY ? ColDefs : colDefsForDashboard,
-        rows: tableData,
+        rows: filteredTableData,
         selectionType: 'none',
         isHorizontalScroll: true,
         isLazyLoading: isLoading
@@ -642,14 +875,12 @@ const RecommendationTable = ({
 
     return (
         <div className={from === WLF_TABS.INVENTORY ? styles.recommendationTable : styles.recommendationTableDashboard}>
-            {/* <div className={styles.table}> */}
             <Table
-                // @ts-ignore
+                // @ts-expect-error - Table props type mismatch
                 tableProps={tableProps}
                 isDoubleRow
                 // variant="innerTable"
             />
-            {/* </div> */}
         </div>
     );
 };

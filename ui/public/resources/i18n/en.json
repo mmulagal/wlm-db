@@ -553,7 +553,7 @@
             "analysis-state-change-failed": "Failed to update analysis state.",
             "instance": "Instance",
             "dismissed-instance": "Dismissed instance",
-            "dismiss": "Dismiss",
+            "dismiss-text": "Dismiss",
             "postpone-for-30-days": "Postpone for 30 days",
             "postponed-for-30-days": "Postponed for 30 days",
             "postpone-date": "Postpone date: ",
@@ -587,7 +587,53 @@
             "oracle-filesystem-io-options-action-summary": "Workload Factory recommends setting the Oracle filesystemio_options parameter to setall to enable both asynchronous and direct I/O for optimal database performance.",
             "oracle-filesystem-io-options-what-will-happen": "Workload Factory will update the Oracle initialization file to set filesystemio_options = setall. If switching from buffered I/O, an increase in Oracle SGA memory may be required to compensate for the loss of OS buffer cache.",
             "oracle-tcp-action-summary": "Workload Factory recommends enabling TCP timestamps, selective acknowledgment (SACK), and TCP window scaling on Oracle database hosts to ensure optimal network performance.",
-            "oracle-tcp-what-will-happen": "Workload Factory will verify and enable TCP timestamps, SACK, and window scaling in the host’s network configuration."
+            "oracle-tcp-what-will-happen": "Workload Factory will verify and enable TCP timestamps, SACK, and window scaling in the host’s network configuration.",
+            "dismiss": {
+                "header": "Dismiss configuration",
+                "content": "Select the dismiss option for ",
+                "dismiss-option": "Dismiss configuration",
+                "postpone-option": "Postpone configuration for 30 days",
+                "footer": "You can reactivate any time",
+                "primaryButton": "Dismiss",
+                "secondaryButton": "Cancel",
+                "no-dismissed-configurations": "No dismissed configurations.",
+                "dialog-message-content1": "Select the dismiss option for",
+                "dialog-message-subConfiguration": "sub-configuration.",
+                "dialog-message-configuration": "configuration.",
+                "dialog-message-content2": "configuration includes",
+                "reactivate": "Reactivate",
+                "dismissed-configuration-tooltip-header": "Dismissed configuration",
+                "dismiss-notification-content1": "Dismissed",
+                "dismiss-notification-content2": "configuration.",
+                "activating-info-content1": "Active:",
+                "activating-info-content2": "Will be analyzed in the next analysis.",
+                "reactivate-notification-message": "Reactivated configuration.",
+                "configuration": "Configuration",
+                "dismissed-configuration": "Dismissed Configuration"
+            },
+            "recommendation-table": {
+                "headers": {
+                    "configuration": "Configuration",
+                    "status": "Status",
+                    "severity": "Severity",
+                    "impacted-resources": "Impacted resources",
+                    "tags": "Tags"
+                },
+                "recommendation": "View recommendation"
+            },
+            "sections": {
+                "storage-sizing": "Storage sizing",
+                "storage-layout": "Storage layout",
+                "storage-configuration": "Storage configuration",
+                "compute": "Compute"
+            },
+            "actions": {
+                "view-recommendation": "View recommendation",
+                "view-recommendations-optimizations": "View recommendations & optimizations",
+                "compute-rightsizing": "Compute rightsizing",
+                "learn-compute-rightsizing": "Learn how to get compute rightsizing recommendations",
+                "compute-rightsizing-unavailable": "Compute rightsizing details are unavailable due to"
+            }
         },
         "update-credentials": {
             "password-info-heading": "The password must be:",

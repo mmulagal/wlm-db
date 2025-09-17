@@ -85,6 +85,43 @@
     [class*='Button-module_content'] {
         max-width: 152px !important;
     }
+
+    [class*='Table-module_last-col'] {
+        justify-content: flex-end;
+        padding-right: 40px !important;
+    }
+
+    /* Common cell styles for clickable areas */
+    .cellClickable {
+        cursor: pointer;
+        width: 100%;
+        padding: 8px 0;
+    }
+
+    /* Wrapper for button group containing dismiss and View/View and Fix */
+    .buttonGroup {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    .buttonSection {
+        width: auto;
+        display: flex;
+        justify-content: flex-end;
+        flex-shrink: 0;
+
+        [class*='dsButtons'] {
+            height: 32px !important;
+            min-width: 140px !important;
+        }
+
+        .disabled {
+            background-color: var(--button-primary-bg-disabled);
+            color: var(--text-primary);
+        }
+    }
 }
 
 .recommendationTableDashboard {

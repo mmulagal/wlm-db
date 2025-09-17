@@ -1,4 +1,5 @@
-import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Storage } from '../../../assets/Storage.svg';
 import { ReactComponent as Applications } from '../../../assets/Application.svg';
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
@@ -11,16 +12,46 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
 const OptimizationBreakdown = () => {
+    const { t } = useTranslation();
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const optimizationBreakDown = useAppSelector(state => state.getWellOptimize.optimizationBreakDown);
+
+    const renderTooltipContent = () => {
+        if (!optimizationBreakDown?.total?.dismissedIds?.length) return null;
+
+        const dismissedConfigText = t('databases.well-architect.dismiss.dismissed-configuration-tooltip-header');
+        const configIds = optimizationBreakDown.total.dismissedIds;
+
+        return (
+            <>
+                <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
+                    {dismissedConfigText}
+                </DsTypography>
+                {configIds.map((id, index) => (
+                    <div key={index}>{id}</div>
+                ))}
+            </>
+        );
+    };
 
     return (
         <div className={styles.optimizationBreakdown}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Configuration categories
+                    {t('databases.well-architect.optimization-breakdown-category-heading')}
                 </DsTypography>
-                {loading && <DsFlashingDotsLoader />}
+                <div className={styles.headerRight}>
+                    {optimizationBreakDown?.total?.dismissedOrPostponed != null &&
+                        optimizationBreakDown.total.dismissedOrPostponed > 0 && (
+                            <div className={styles.dismissedInfo}>
+                                <TooltipInfo className={styles.tooltipIcon}>{renderTooltipContent()}</TooltipInfo>
+                                <DsTypography variant="Regular_14" className={styles.dismissedText}>
+                                    Dismissed: {optimizationBreakDown.total.dismissedOrPostponed} Configuration
+                                </DsTypography>
+                            </div>
+                        )}
+                    {loading && <DsFlashingDotsLoader />}
+                </div>
             </div>
 
             <div className={styles.mainSection}>

@@ -1,13 +1,4 @@
-import {
-    Button,
-    ButtonWithDropdown,
-    DsButton,
-    DsFlashingDotsLoader,
-    DsTypography,
-    Popover,
-    TooltipInfo,
-    useDialog
-} from '@netapp/design-system';
+import { Button, DsButton, DsFlashingDotsLoader, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -16,9 +7,6 @@ import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
-import { ReactComponent as ActionMenu } from '../../../assets/ic_actions_menu_circle.svg';
-import { ReactComponent as Warning } from '../../../assets/warning.svg';
-import { ReactComponent as InfoIcon } from '../../../assets/info.svg';
 import styles from './StorageCardComponent.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 
@@ -72,11 +60,26 @@ import store from '../../../store/store';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { handleDialog } from './optimizeUtils';
 import { backupStartTime, formatDateAssess } from '../../../utils/utilityFunctions';
+import { DismissDialog } from './DismissDialog/DismissDialog';
+import {
+    getSubConfigurationData,
+    handleSingleAction as handleSingleActionHelper,
+    addSuccessNotification as addSuccessNotificationHelper,
+    handleDismissResponse as handleDismissResponseHelper,
+    handleDismissError as handleDismissErrorHelper
+} from './StorageCardComponentHelper';
 
-const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
+const StorageCardComponent = ({
+    cardData,
+    optimizePrintState,
+    type,
+    showDismissedConfigurations,
+    setShowDismissedConfigurations
+}: any) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const [dismissAction, setDismissAction] = useState(false);
+    const [showDismissButton, setShowDismissButton] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -91,6 +94,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         cardData: cardDataFromStore
     } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
+
+    // Get the full card data to check dismissed configurations count
+    const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
@@ -312,65 +318,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </>
                 )}
             </DsTypography>
-        );
-    };
-
-    const sectionSevenContentNew = (cardData: any) => {
-        if (loading) {
-            return (
-                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
-                    <DsFlashingDotsLoader />
-                </div>
-            );
-        }
-        return (
-            <div
-                className={`${styles.column} ${styles.warningColumn}`}
-                style={{ borderRight: 'none', flex: '1 1 191px', minWidth: '193px' }}
-            >
-                <DsTypography variant="Semibold_14" className={styles.titleText} style={{ display: 'flex' }}>
-                    <span>
-                        {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && (
-                            <div style={{ marginTop: '5px' }}>
-                                <InfoIcon />
-                            </div>
-                        )}
-                        {cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVATING && <Warning />}
-                    </span>
-                    <span style={{ marginLeft: '8px' }}>
-                        {cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED && (
-                            <DsTypography title={GENERAL.DISMISSED_MESSAGE} variant="Regular_14">
-                                {GENERAL.DISMISSED_MESSAGE}
-                            </DsTypography>
-                        )}{' '}
-                        {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <DsTypography
-                                    variant="Regular_14"
-                                    style={{ whiteSpace: 'nowrap', position: 'relative', top: '2px' }}
-                                >
-                                    Active
-                                </DsTypography>
-                                <TooltipInfo>{GENERAL.ACTIVATING_MESSAGE_TWO}</TooltipInfo>
-                            </div>
-                        )}
-                        {cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <DsTypography
-                                    variant="Regular_14"
-                                    style={{ whiteSpace: 'nowrap', position: 'relative', top: '2px' }}
-                                    title="Analysis is postponed"
-                                >
-                                    Analysis is postponed
-                                </DsTypography>
-                                <TooltipInfo>
-                                    {`until ${formatDateAssess(cardData?.dismissedObj?.endTime)}`}
-                                </TooltipInfo>
-                            </div>
-                        )}
-                    </span>
-                </DsTypography>
-            </div>
         );
     };
 
@@ -781,10 +728,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     // This is for inner page navigation
     const handleDifferentNavigation = () => {
         if (
-            type === 'Storage tier' ||
-            type === 'Log drive size' ||
-            type === 'Data files' ||
-            type === 'Log files' ||
+            type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
+            type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.CRR ||
@@ -804,8 +751,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const setButtonText = () => {
         if (
-            type === 'Storage tier' ||
-            type === 'Log drive size' ||
+            type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.CLONE_MANAGEMENT ||
@@ -814,8 +761,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return GENERAL.VIEW_AND_FIX;
         }
         if (
-            type === 'Data files' ||
-            type === 'Log files' ||
+            type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
+            type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
             type === GENERAL.OPERATING_SYSTEM_PATCH ||
             type === GENERAL.MICROSOFT_SQL_PATCH ||
             type === GENERAL.CRR
@@ -827,97 +774,62 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     // Function For Dismiss
     const handleSingleAction = (action: string) => {
-        setDismissAction(true);
-        const payload = {
-            configurationsToDismiss: [
-                {
-                    configurationName: cardData?.id,
-                    configState: action,
-                    databaseHosts: [
-                        {
-                            id: selectedResourceId,
-                            sqlServerInstances: [selectedDatabaseInstance],
-                            credentialsId: selectedGwInstanceCredId,
-                            region: selectedGwInstanceRegionId
-                        }
-                    ]
-                }
-            ]
-        };
-        dismissMssqlAssessment({ payload })
-            .then((res: any) => {
-                setDismissAction(false);
-                const dismissedConfigs = res?.data?.dismissedConfigurations;
-                const databaseHosts = dismissedConfigs?.[0]?.databaseHosts;
-                const status = databaseHosts?.[0].status;
-                if (
-                    !res.error &&
-                    dismissedConfigs?.length > 0 &&
-                    databaseHosts?.length > 0 &&
-                    status.toUpperCase() === RESPONSE_STATUS.SUCCESS
-                ) {
-                    let updatedState = '';
-                    if (
-                        action === CONFIG_STATE_ACTIONS.ACTIVE &&
-                        res?.data?.dismissedConfigurations?.[0]?.configState === CONFIG_STATE_ACTIONS.ACTIVE
-                    ) {
-                        updatedState = CONFIG_STATES.ACTIVATING;
-                    } else {
-                        updatedState = res?.data?.dismissedConfigurations?.[0]?.configState;
-                        updatedState = updatedState?.toUpperCase();
-                    }
+        handleSingleActionHelper(
+            action,
+            cardData,
+            selectedResourceId,
+            selectedDatabaseInstance,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId,
+            dismissMssqlAssessment,
+            setDismissAction,
+            handleDismissResponse,
+            handleDismissError
+        );
+    };
 
-                    const targetId = cardData?.id;
+    const addSuccessNotification = (action: string, cardName?: string) => {
+        addSuccessNotificationHelper(action, cardName || '', dispatch, t);
+    };
 
-                    if (!targetId || !updatedState) return;
+    const handleDismissResponse = (res: any, action: string) => {
+        handleDismissResponseHelper(
+            res,
+            action,
+            cardData,
+            selectedGwInstanceCredId,
+            selectedResourceId,
+            selectedDatabaseInstance,
+            selectedGwInstanceRegionId,
+            showDismissedConfigurations,
+            setShowDismissedConfigurations,
+            fullCardData,
+            dispatch,
+            addSuccessNotification,
+            t
+        );
+    };
 
-                    const newData =
-                        updateConfigStatePerInstance(
-                            updatedState,
-                            targetId,
-                            res?.data?.dismissedConfigurations?.[0]?.endTime
-                        ) || {};
-                    dispatch(setDriftAssessmentData(newData));
-                    // @ts-ignore
-                    formatGetWellData(dispatch, newData);
+    const handleDismissError = (err: any) => {
+        handleDismissErrorHelper(err, dispatch, setDismissAction);
+    };
 
-                    // Below code is to reset dashboard level assessment value also
-                    const perObj = {
-                        credentialId: selectedGwInstanceCredId,
-                        hostId: selectedResourceId,
-                        instanceId: selectedDatabaseInstance,
-                        regionId: selectedGwInstanceRegionId,
-                        state: updatedState,
-                        id: targetId,
-                        name: cardData?.mapName
-                    };
-                    updateConfigStateStatus([perObj], dispatch, updatedState);
+    const handleDismissButtonClick = () => {
+        const { isSubConfiguration, subConfigurationCount, storageTier } = getSubConfigurationData(cardData);
 
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: GENERAL.ANALYSIS_STATE_CHANGE_SUCCESS
-                        })
-                    );
-                } else {
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: GENERAL.ANALYSIS_STATE_CHANGE_FAILED
-                        })
-                    );
-                }
-            })
-            .catch(err => {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: err
-                    })
-                );
-
-                setDismissAction(false);
-            });
+        setDialog(
+            <DismissDialog
+                type="single"
+                storageTier={storageTier}
+                isSubConfiguration={isSubConfiguration}
+                subConfigurationCount={subConfigurationCount}
+                callback={(selectedAction: string) => {
+                    const configName = cardData?.block_one?.value;
+                    handleSingleAction(selectedAction);
+                }}
+                closeCallback={closeDialog}
+            />
+        );
     };
 
     const dismissDisableButton = () => {
@@ -931,9 +843,51 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         return false;
     };
 
+    const handleCardHoverMouseLeave = () => {
+        // Hide dismiss button when mouse leaves the card
+        if (!showDismissedConfigurations) {
+            setShowDismissButton(false);
+        }
+    };
+
+    const handleCardHoverMouseEnter = () => {
+        // Show dismiss button when mouse enters the card
+        if (!showDismissedConfigurations) {
+            setShowDismissButton(true);
+        }
+    };
+
+    // Dismiss button component
+    const renderDismissButton = () => {
+        if (!showDismissButton) return null;
+
+        return (
+            <div className={styles.buttonSection}>
+                <DsButton
+                    type="text"
+                    onClick={handleDismissButtonClick}
+                    isDisabled={loading || dismissAction || dismissDisableButton()}
+                >
+                    {GENERAL.DISMISS}
+                </DsButton>
+            </div>
+        );
+    };
+
     return (
-        <div className={styles.card}>
-            <div className={styles.cardContent}>
+        <div
+            className={`${styles.card} ${
+                showDismissedConfigurations || cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING
+                    ? styles.dismissed
+                    : ''
+            }`}
+        >
+            <div
+                className={styles.cardContent}
+                onMouseEnter={handleCardHoverMouseEnter}
+                onMouseLeave={handleCardHoverMouseLeave}
+                style={{ cursor: 'pointer' }}
+            >
                 {/* First Column */}
                 <div className={`${styles.column}`}>
                     <DsTypography variant="Semibold_14" className={styles.titleText} title={cardData?.block_one?.value}>
@@ -996,35 +950,53 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </div>
                 )}
 
-                {(cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-                    cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
-                    cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING) && (
-                    <>{sectionSevenContentNew(cardData)}</>
+                {/* Empty Column for ONTAP and Operating System so that dismiss button is aligned at last column */}
+                {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) && (
+                    <div className={`${styles.column} ${styles.emptyColumn}`} />
                 )}
 
-                {/* Buttons */}
-                {!optimizePrintState &&
-                    cardData?.block_one?.value !== 'ONTAP' &&
-                    cardData?.block_one?.value !== 'Operating system' &&
-                    cardData?.block_one?.value !== t('databases.general.mssql-high-availability') &&
+                {/* Buttons - Handling for ONTAP, Operating system, and MSSQL High Availability cards */}
+                {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
+                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) &&
+                !showDismissedConfigurations ? (
+                    <div className={`${styles.column} ${styles.lastColumnAlignment}`}>
+                        {/* Dismiss Button - Show for ONTAP, Operating system, and MSSQL High Availability in last grid column */}
+                        {renderDismissButton()}
+                    </div>
+                ) : null}
+
+                {/* Buttons for regular cards */}
+                {!showDismissedConfigurations &&
+                    !(
+                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
+                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
+                    ) &&
+                    !optimizePrintState &&
                     (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
                     cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
-                        <div
-                            className={styles.buttonSection}
-                            // style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
-                        >
-                            <TooltipComponent
-                                title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                                placement="bottom"
-                                width="120px"
-                                height="30px"
+                        <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {renderDismissButton()}
+                            <div
+                                className={styles.buttonSection}
+                                // style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
                             >
-                                <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
-                                    <DsButton variant="secondary" isDisabled>
-                                        {setButtonText()}
-                                    </DsButton>
-                                </div>
-                            </TooltipComponent>
+                                <TooltipComponent
+                                    title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                                    placement="bottom"
+                                    width="120px"
+                                    height="30px"
+                                >
+                                    <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
+                                        <DsButton variant="secondary" isDisabled>
+                                            {setButtonText()}
+                                        </DsButton>
+                                    </div>
+                                </TooltipComponent>
+                            </div>
                         </div>
                     ) : optimizingInstanceData &&
                       cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
@@ -1042,98 +1014,74 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             </div>
                         </TooltipComponent>
                     ) : disableOptimizeButtonTooltip ? (
-                        <Popover
-                            popoverClass={CommonStyles.popover}
-                            isAppendedToBody
-                            children={<DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>}
-                            trigger="hover"
-                            container={
-                                <div
-                                    className={
-                                        isDarkTheme
-                                            ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
-                                            : styles.buttonSection
-                                    }
-                                >
-                                    <DsButton variant="secondary" isDisabled>
-                                        {setButtonText()}
-                                    </DsButton>
-                                </div>
-                            }
-                        />
+                        <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {renderDismissButton()}
+                            <Popover
+                                popoverClass={CommonStyles.popover}
+                                isAppendedToBody
+                                children={
+                                    <DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>
+                                }
+                                trigger="hover"
+                                container={
+                                    <div
+                                        className={
+                                            isDarkTheme
+                                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                                : styles.buttonSection
+                                        }
+                                    >
+                                        <DsButton variant="secondary" isDisabled>
+                                            {setButtonText()}
+                                        </DsButton>
+                                    </div>
+                                }
+                            />
+                        </div>
                     ) : (
-                        <div
-                            className={
-                                isDarkTheme && (loading || disableOptimizeButton)
-                                    ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
-                                    : styles.buttonSection
-                            }
-                            id={`${cardData?.id}-optimize`}
-                        >
-                            <DsButton
-                                variant="secondary"
-                                onClick={() => handleDifferentNavigation()}
-                                isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
+                        <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {renderDismissButton()}
+                            {/* View and Fix Action Button */}
+                            <div
+                                className={
+                                    isDarkTheme && (loading || disableOptimizeButton)
+                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                        : styles.buttonSection
+                                }
+                                id={`${cardData?.id}-optimize`}
                             >
-                                {setButtonText()}
-                            </DsButton>
+                                <DsButton
+                                    variant="secondary"
+                                    onClick={() => handleDifferentNavigation()}
+                                    isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
+                                >
+                                    {setButtonText()}
+                                </DsButton>
+                            </div>
                         </div>
                     ))}
 
-                {/* Section 7 */}
-                {cardData?.block_one?.value !== 'ONTAP' &&
-                    cardData?.block_one?.value !== 'Operating system' &&
-                    cardData?.block_one?.value !== t('databases.general.mssql-high-availability') && (
-                        <ButtonWithDropdown
-                            variant="icon"
-                            isDisabled={loading || dismissAction}
-                            items={[
-                                {
-                                    id: 'activate',
-                                    children: GENERAL.REACTIVATE,
-                                    isDisabled:
-                                        cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVE ||
-                                        cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING ||
-                                        !cardData?.dismissedObj?.configState,
-                                    onClick: () => {
-                                        handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
-                                    },
-                                    title: GENERAL.REACTIVATE_TOOLTIP,
-                                    titleProps: {
-                                        placement: 'left'
-                                    }
-                                },
-                                {
-                                    id: 'postponeFor30Days',
-                                    children: GENERAL.POSTPONE_FOR_30_DAYS,
-                                    isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED,
-                                    onClick: () => {
-                                        handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
-                                    },
-                                    title: GENERAL.POSTPONED_TOOLTIP,
-                                    titleProps: {
-                                        placement: 'left'
-                                    }
-                                },
-                                {
-                                    id: 'dismiss',
-                                    children: GENERAL.DISMISS,
-                                    isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED,
-                                    onClick: () => {
-                                        handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);
-                                    },
-                                    title: GENERAL.DISMISS_TOOLTIP,
-                                    titleProps: {
-                                        placement: 'left'
-                                    }
-                                }
-                            ]}
+                {/* Reactivate button for dismissed configurations */}
+                {showDismissedConfigurations && (
+                    <div
+                        className={
+                            isDarkTheme && (loading || disableOptimizeButton)
+                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                : styles.buttonSection
+                        }
+                        id={`${cardData?.id}-reactivate`}
+                    >
+                        <DsButton
+                            variant="secondary"
+                            onClick={() => handleSingleAction(CONFIG_STATES.ACTIVE)}
+                            isDisabled={loading || false}
                         >
-                            <div className={loading || dismissAction ? styles.actionMenu : ''}>
-                                <ActionMenu />
-                            </div>
-                        </ButtonWithDropdown>
-                    )}
+                            {t('databases.well-architect.dismiss.reactivate')}
+                        </DsButton>
+                    </div>
+                )}
             </div>
         </div>
     );

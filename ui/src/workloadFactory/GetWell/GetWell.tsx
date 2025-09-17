@@ -11,6 +11,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DsPopover, DsToggleSwitch } from '@tlveng/wlm-ds';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -29,7 +30,7 @@ import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, WLF_TABS } from '../../utils/co
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
-import { generateDate, applyFilter, resetGwValuesOnRefresh } from './GetWellUtils';
+import { generateDate, applyFilter, resetGwValuesOnRefresh, generateDynamicFilterOptions } from './GetWellUtils';
 import { setDefaultFilterOptions, setOptimizeFilterTags } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
 import GetWellApi from './GetWellApi';
@@ -42,7 +43,6 @@ import {
 // import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
-
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
 import downloadPdf from '../../common/pdfGenerator';
@@ -56,6 +56,13 @@ import {
     handleTriggerAssessment,
     useWellArchitectRefresh
 } from '../../utils/resourceUtils';
+import {
+    ActivatingInfo,
+    PostponeInfo,
+    checkHasDismissedConfigurations,
+    calculateTotalConfigCount,
+    calculatePostponeInfo
+} from './GetWellHelper';
 
 const GetWell = () => {
     const { t } = useTranslation();
@@ -87,6 +94,7 @@ const GetWell = () => {
     const [configCount, setConfigCount] = useState(0);
     const [showChartArea, setShowChartArea] = useState(true);
     const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
+    const [showDismissedConfigurations, setShowDismissedConfigurations] = useState(false);
     const { setDialog, closeDialog } = useDialog();
     // @ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
@@ -97,6 +105,7 @@ const GetWell = () => {
     useEffect(() => {
         handleFilterClearAll();
         dispatch(setGwAdhocError(''));
+        setShowDismissedConfigurations(false);
     }, []);
 
     useEffect(() => {
@@ -174,17 +183,46 @@ const GetWell = () => {
         }, 100);
     };
 
+    const toggleDismissedConfiguration = () => {
+        setShowDismissedConfigurations(!showDismissedConfigurations);
+    };
+
+    // Helper function to check if there are any dismissed configurations
+    const hasDismissedConfigurations = useMemo(() => checkHasDismissedConfigurations(cardData), [cardData]);
+
+    // Helper function to get total count based on dismissed configuration state
+    const getTotalConfigCount = useMemo(
+        () => calculateTotalConfigCount(cardData, showDismissedConfigurations),
+        [cardData, showDismissedConfigurations]
+    );
+
+    // Helper function to calculate postpone information for configurations
+    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
+
     // To apply filters on change of filters or card data
     useEffect(() => {
-        const { data, configCount } = applyFilter(cardData, optimizeFilterTags, selectedDatabaseStorageType);
+        const { data, configCount } = applyFilter(
+            cardData,
+            optimizeFilterTags,
+            selectedDatabaseStorageType,
+            showDismissedConfigurations
+        );
         setFilteredCardData(data);
         setInstanceDeploymentType(cardData?.deploymentType || '');
         setConfigCount(configCount);
-    }, [cardData, optimizeFilterTags, ontapConfigTableData, osConfigTableData, selectedDatabaseStorageType]);
+    }, [
+        cardData,
+        optimizeFilterTags,
+        ontapConfigTableData,
+        osConfigTableData,
+        selectedDatabaseStorageType,
+        showDismissedConfigurations
+    ]);
 
     const handleFilterClearAll = useCallback(() => {
         dispatch(setOptimizeFilterTags([]));
         dispatch(setDefaultFilterOptions({}));
+        setShowDismissedConfigurations(false);
     }, []);
 
     const refreshGetWellPage = useWellArchitectRefresh({
@@ -201,57 +239,31 @@ const GetWell = () => {
         }
     }, [isInnerPageOptimize, dispatch, refreshGetWellPage]);
 
+    // Generate dynamic filter options based on actual card data
+    const dynamicFilterOptions = useMemo(() => {
+        if (!filteredCardData || Object.keys(filteredCardData).length === 0) {
+            return {
+                categories: [],
+                subCategories: [],
+                severities: [],
+                tags: [],
+                resourceTypes: [],
+                statuses: []
+            };
+        }
+        return generateDynamicFilterOptions(filteredCardData, instanceDeploymentType);
+    }, [filteredCardData, instanceDeploymentType]);
+
     const generateSubCategoryOptions = useMemo(() => {
         const selectedCategories = optimizeFilterTags
             .filter((tag: any) => tag && tag.type === 'all-catagories')
             .map((tag: any) => tag.value);
-        const options = [
-            {
-                id: 0,
-                label: 'Storage sizing',
-                value: 'Storage sizing',
-                category: 'Storage'
-            },
-            {
-                id: 1,
-                label: 'Storage layout',
-                value: 'Storage layout',
-                category: 'Storage'
-            },
-            {
-                id: 2,
-                label: 'Storage configuration',
-                value: 'Storage configuration',
-                category: 'Storage'
-            },
-            {
-                id: 3,
-                label: 'Compute',
-                value: 'Compute_sub',
-                category: 'Compute'
-            },
-            {
-                id: 4,
-                label: GENERAL.APPLICATION,
-                value: 'Application_sub',
-                category: 'Application'
-            },
-            {
-                id: 5,
-                label: 'Protection',
-                value: 'Protection',
-                category: GENERAL.RESILIENCY
-            },
-            {
-                id: 6,
-                label: 'Cloning',
-                value: 'Cloning',
-                category: GENERAL.CLONING
-            }
-        ];
+
+        // Use dynamic subcategories filtered by selected categories
         const filteredOptions = selectedCategories.length
-            ? options.filter((option: any) => selectedCategories.includes(option.category))
-            : options;
+            ? dynamicFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
+            : dynamicFilterOptions.subCategories;
+
         const selectedSubCategories =
             defaultFilterOptions['sub-catagories']?.filter((id: any) =>
                 filteredOptions.find((option: any) => option.id === id)
@@ -264,7 +276,7 @@ const GetWell = () => {
         }
         dispatch(setDefaultFilterOptions({ ...defaultFilterOptions, 'sub-catagories': selectedSubCategories }));
         return filteredOptions;
-    }, [optimizeFilterTags]);
+    }, [optimizeFilterTags, dynamicFilterOptions.subCategories]);
 
     GetWellApi();
 
@@ -293,6 +305,17 @@ const GetWell = () => {
     const handleAccordionExpanded = (id: any, isExpanded: boolean) => {
         isExpanded && clickedAccordionId === id && setExpandedValue(id);
     };
+
+    // Helper function to render PostponeInfo/ActivatingInfo based on showDismissedConfigurations
+    const renderPostponeActivatingInfo = (configKey: string) => (
+        <>
+            {showDismissedConfigurations && <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} />}
+
+            {!showDismissedConfigurations && (
+                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
+            )}
+        </>
+    );
 
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
@@ -423,26 +446,63 @@ const GetWell = () => {
                                                 : styles.downloadSection
                                         }
                                     >
-                                        <div />
-                                        <div
-                                            id="assessment-export-pdf"
-                                            className={styles.buttonStyle}
-                                            onClick={loading || !isAssessmentAvailable ? () => {} : printDocument}
-                                        >
-                                            <div>
-                                                <Download />
-                                            </div>
-                                            <DsTypography
-                                                style={{
-                                                    color:
-                                                        loading || !isAssessmentAvailable
-                                                            ? 'var(--text-disabled)'
-                                                            : 'var(--text-button-primary)'
-                                                }}
-                                                variant="Semibold_14"
-                                            >
-                                                Export PDF
+                                        <div className={styles.configurationText}>
+                                            <DsTypography variant="Semibold_16">
+                                                {showDismissedConfigurations
+                                                    ? t('databases.well-architect.dismiss.dismissed-configuration')
+                                                    : t('databases.well-architect.dismiss.configuration')}
                                             </DsTypography>
+                                        </div>
+                                        <div className={styles.rightSection}>
+                                            <div
+                                                id="assessment-export-pdf"
+                                                className={styles.buttonStyle}
+                                                onClick={loading || !isAssessmentAvailable ? () => {} : printDocument}
+                                            >
+                                                <div>
+                                                    <Download />
+                                                </div>
+                                                <DsTypography
+                                                    style={{
+                                                        color:
+                                                            loading || !isAssessmentAvailable
+                                                                ? 'var(--text-disabled)'
+                                                                : 'var(--text-button-primary)'
+                                                    }}
+                                                    variant="Semibold_14"
+                                                >
+                                                    Export PDF
+                                                </DsTypography>
+                                            </div>
+                                            <div>
+                                                {!hasDismissedConfigurations ? (
+                                                    <DsPopover
+                                                        trigger="hover"
+                                                        title={t(
+                                                            'databases.well-architect.dismiss.no-dismissed-configurations'
+                                                        )}
+                                                        monitorPosition="all"
+                                                        placement="bottom"
+                                                    >
+                                                        <DsToggleSwitch
+                                                            id="dismissed-configuration-toggle"
+                                                            onClick={() => {}}
+                                                            title="Dismissed configuration"
+                                                            isDisabled
+                                                        />
+                                                    </DsPopover>
+                                                ) : (
+                                                    <DsToggleSwitch
+                                                        id="dismissed-configuration-toggle"
+                                                        onClick={
+                                                            loading || !isAssessmentAvailable
+                                                                ? () => {}
+                                                                : toggleDismissedConfiguration
+                                                        }
+                                                        title="Dismissed configuration"
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -479,9 +539,9 @@ const GetWell = () => {
                                                     {loading
                                                         ? GENERAL.NOT_AVAILABLE
                                                         : `${
-                                                              totalConfigCount === configCount
-                                                                  ? `All(${totalConfigCount})`
-                                                                  : `${configCount}/${totalConfigCount}`
+                                                              getTotalConfigCount === configCount
+                                                                  ? `All(${getTotalConfigCount})`
+                                                                  : `${configCount}/${getTotalConfigCount}`
                                                           }`}
                                                 </DsTypography>
                                             </div>
@@ -505,43 +565,18 @@ const GetWell = () => {
                                                             formatLabel={() =>
                                                                 `Categories: ${
                                                                     !defaultFilterOptions['all-catagories']?.length ||
-                                                                    defaultFilterOptions['all-catagories'].length === 2
+                                                                    defaultFilterOptions['all-catagories'].length ===
+                                                                        dynamicFilterOptions.categories.length
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
                                                                     defaultFilterOptions['all-catagories']?.length > 0
                                                                         ? defaultFilterOptions['all-catagories']?.length
-                                                                        : 5
+                                                                        : dynamicFilterOptions.categories.length
                                                                 })`
                                                             }
                                                             placeholder="Placeholder text"
-                                                            options={[
-                                                                {
-                                                                    id: 0,
-                                                                    label: 'Storage ',
-                                                                    value: 'Storage'
-                                                                },
-                                                                {
-                                                                    id: 1,
-                                                                    label: 'Compute',
-                                                                    value: 'Compute'
-                                                                },
-                                                                {
-                                                                    id: 2,
-                                                                    label: GENERAL.APPLICATION,
-                                                                    value: 'Application'
-                                                                },
-                                                                {
-                                                                    id: 3,
-                                                                    label: GENERAL.RESILIENCY,
-                                                                    value: 'Resiliency'
-                                                                },
-                                                                {
-                                                                    id: 4,
-                                                                    label: GENERAL.CLONING,
-                                                                    value: 'Cloning'
-                                                                }
-                                                            ]}
+                                                            options={dynamicFilterOptions.categories}
                                                             selectionType="multi"
                                                             isWithActions
                                                             onSelect={(option: any) =>
@@ -598,28 +633,18 @@ const GetWell = () => {
                                                             formatLabel={() =>
                                                                 `Status: ${
                                                                     !defaultFilterOptions.status?.length ||
-                                                                    defaultFilterOptions.status.length === 2
+                                                                    defaultFilterOptions.status.length ===
+                                                                        dynamicFilterOptions.statuses.length
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
                                                                     defaultFilterOptions.status?.length > 0
                                                                         ? defaultFilterOptions.status?.length
-                                                                        : 2
+                                                                        : dynamicFilterOptions.statuses.length
                                                                 })`
                                                             }
                                                             placeholder="Placeholder text"
-                                                            options={[
-                                                                {
-                                                                    id: 0,
-                                                                    label: 'Optimized',
-                                                                    value: 'Optimized'
-                                                                },
-                                                                {
-                                                                    id: 1,
-                                                                    label: 'Not optimized',
-                                                                    value: 'Not optimized'
-                                                                }
-                                                            ]}
+                                                            options={dynamicFilterOptions.statuses}
                                                             selectionType="multi"
                                                             isWithActions
                                                             onSelect={(option: any) => handleSelect(option, 'status')}
@@ -654,28 +679,18 @@ const GetWell = () => {
                                                             formatLabel={() =>
                                                                 `Severity: ${
                                                                     !defaultFilterOptions.severity?.length ||
-                                                                    defaultFilterOptions.severity.length === 2
+                                                                    defaultFilterOptions.severity.length ===
+                                                                        dynamicFilterOptions.severities.length
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
                                                                     defaultFilterOptions.severity?.length > 0
                                                                         ? defaultFilterOptions.severity?.length
-                                                                        : 2
+                                                                        : dynamicFilterOptions.severities.length
                                                                 })`
                                                             }
                                                             placeholder="Placeholder text"
-                                                            options={[
-                                                                {
-                                                                    id: 0,
-                                                                    label: 'Critical',
-                                                                    value: 'Critical'
-                                                                },
-                                                                {
-                                                                    id: 1,
-                                                                    label: 'Warning',
-                                                                    value: 'Warning'
-                                                                }
-                                                            ]}
+                                                            options={dynamicFilterOptions.severities}
                                                             selectionType="multi"
                                                             isWithActions
                                                             onSelect={(option: any) => handleSelect(option, 'severity')}
@@ -695,99 +710,21 @@ const GetWell = () => {
                                                             formatLabel={() =>
                                                                 `Tags: ${
                                                                     !defaultFilterOptions.tags?.length ||
-                                                                    defaultFilterOptions.tags.length === 6
+                                                                    defaultFilterOptions.tags.length ===
+                                                                        dynamicFilterOptions.tags.length
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
                                                                     defaultFilterOptions.tags?.length > 0
                                                                         ? defaultFilterOptions.tags?.length
-                                                                        : 6
+                                                                        : dynamicFilterOptions.tags.length
                                                                 })`
                                                             }
                                                             placeholder="Placeholder text"
-                                                            options={[
-                                                                {
-                                                                    id: 0,
-                                                                    label: 'Cost optimization',
-                                                                    value: 'Cost optimization'
-                                                                },
-                                                                {
-                                                                    id: 1,
-                                                                    label: 'Cost efficiency',
-                                                                    value: 'Cost efficiency'
-                                                                },
-                                                                {
-                                                                    id: 2,
-                                                                    label: 'Performance efficiency',
-                                                                    value: 'Performance efficiency'
-                                                                },
-                                                                {
-                                                                    id: 3,
-                                                                    label: 'Operational excellence',
-                                                                    value: 'Operational excellence'
-                                                                },
-                                                                {
-                                                                    id: 4,
-                                                                    label: 'Reliability',
-                                                                    value: 'Reliability'
-                                                                },
-                                                                {
-                                                                    id: 5,
-                                                                    label: 'Security',
-                                                                    value: 'Security'
-                                                                }
-                                                            ]}
+                                                            options={dynamicFilterOptions.tags}
                                                             selectionType="multi"
                                                             isWithActions
                                                             onSelect={(option: any) => handleSelect(option, 'tags')}
-                                                            variant="underline"
-                                                        />
-                                                    </div>
-                                                    <div className={styles.dropDown}>
-                                                        <DsSelect
-                                                            title=""
-                                                            selectedOptionIds={
-                                                                defaultFilterOptions.configState
-                                                                    ? defaultFilterOptions.configState
-                                                                    : []
-                                                            }
-                                                            isExpanded={isAccordionOpen ? undefined : false}
-                                                            isCleanable={false}
-                                                            formatLabel={() =>
-                                                                `Analysis state: ${
-                                                                    !defaultFilterOptions.configState?.length ||
-                                                                    defaultFilterOptions.configState.length === 3
-                                                                        ? 'All'
-                                                                        : ''
-                                                                }(${
-                                                                    defaultFilterOptions.configState?.length > 0
-                                                                        ? defaultFilterOptions.configState?.length
-                                                                        : 3
-                                                                })`
-                                                            }
-                                                            placeholder="Placeholder text"
-                                                            options={[
-                                                                {
-                                                                    id: 0,
-                                                                    label: 'Active',
-                                                                    value: CONFIG_STATES.ACTIVE
-                                                                },
-                                                                {
-                                                                    id: 1,
-                                                                    label: 'Postponed',
-                                                                    value: CONFIG_STATES.POSTPONED
-                                                                },
-                                                                {
-                                                                    id: 2,
-                                                                    label: 'Dismissed',
-                                                                    value: CONFIG_STATES.DISMISSED
-                                                                }
-                                                            ]}
-                                                            selectionType="multi"
-                                                            isWithActions
-                                                            onSelect={(option: any) =>
-                                                                handleSelect(option, 'configState')
-                                                            }
                                                             variant="underline"
                                                         />
                                                     </div>
@@ -804,68 +741,18 @@ const GetWell = () => {
                                                             formatLabel={() =>
                                                                 `Resource type: ${
                                                                     !defaultFilterOptions.resourceType?.length ||
-                                                                    defaultFilterOptions.resourceType.length === 9
+                                                                    defaultFilterOptions.resourceType.length ===
+                                                                        dynamicFilterOptions.resourceTypes.length
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
                                                                     defaultFilterOptions.resourceType?.length > 0
                                                                         ? defaultFilterOptions.resourceType?.length
-                                                                        : 9
+                                                                        : dynamicFilterOptions.resourceTypes.length
                                                                 })`
                                                             }
                                                             placeholder="Placeholder text"
-                                                            options={[
-                                                                {
-                                                                    id: 0,
-                                                                    label: 'Database',
-                                                                    value: 'Database'
-                                                                },
-                                                                {
-                                                                    id: 1,
-                                                                    label: 'Volume',
-                                                                    value: 'Volume'
-                                                                },
-                                                                {
-                                                                    id: 2,
-                                                                    label: 'File system (FSx for ONTAP)',
-                                                                    value: 'File system (FSx for ONTAP)'
-                                                                },
-                                                                {
-                                                                    id: 3,
-                                                                    label: 'Drive',
-                                                                    value: 'Drive'
-                                                                },
-                                                                {
-                                                                    id: 4,
-                                                                    label: 'LUN path',
-                                                                    value: 'LUN path'
-                                                                },
-                                                                {
-                                                                    id: 5,
-                                                                    label: 'Storage multipath',
-                                                                    value: 'Storage multipath'
-                                                                },
-                                                                {
-                                                                    id: 6,
-                                                                    label: 'EC2 instance',
-                                                                    value: 'EC2 instance'
-                                                                },
-                                                                {
-                                                                    id: 8,
-                                                                    label: 'SQL instance',
-                                                                    value: 'SQL instance'
-                                                                },
-                                                                {
-                                                                    id: 9,
-                                                                    label: 'Network Adapter',
-                                                                    value: 'Network Adapter'
-                                                                },
-                                                                {
-                                                                    id: 10,
-                                                                    label: 'Network Interface',
-                                                                    value: 'Network Interface'
-                                                                }
-                                                            ]}
+                                                            options={dynamicFilterOptions.resourceTypes}
                                                             selectionType="multi"
                                                             isWithActions
                                                             onSelect={(option: any) =>
@@ -936,9 +823,10 @@ const GetWell = () => {
                                                         variant="Semibold_14"
                                                     >
                                                         {!defaultFilterOptions['all-catagories']?.length ||
-                                                        defaultFilterOptions['all-catagories']?.length === 5
-                                                            ? 'All(5)'
-                                                            : `${defaultFilterOptions['all-catagories']?.length}/5`}
+                                                        defaultFilterOptions['all-catagories']?.length ===
+                                                            dynamicFilterOptions.categories.length
+                                                            ? `All(${dynamicFilterOptions.categories.length})`
+                                                            : `${defaultFilterOptions['all-catagories']?.length}/${dynamicFilterOptions.categories.length}`}
                                                     </DsTypography>
                                                 </div>
 
@@ -993,9 +881,10 @@ const GetWell = () => {
                                                         variant="Semibold_14"
                                                     >
                                                         {!defaultFilterOptions.status?.length ||
-                                                        defaultFilterOptions.status?.length === 2
-                                                            ? 'All(2)'
-                                                            : `${defaultFilterOptions.status?.length}/2`}
+                                                        defaultFilterOptions.status?.length ===
+                                                            dynamicFilterOptions.statuses.length
+                                                            ? `All(${dynamicFilterOptions.statuses.length})`
+                                                            : `${defaultFilterOptions.status?.length}/${dynamicFilterOptions.statuses.length}`}
                                                     </DsTypography>
                                                 </div>
 
@@ -1021,9 +910,10 @@ const GetWell = () => {
                                                         variant="Semibold_14"
                                                     >
                                                         {!defaultFilterOptions.severity?.length ||
-                                                        defaultFilterOptions.severity?.length === 2
-                                                            ? 'All(2)'
-                                                            : `${defaultFilterOptions.severity?.length}/2`}
+                                                        defaultFilterOptions.severity?.length ===
+                                                            dynamicFilterOptions.severities.length
+                                                            ? `All(${dynamicFilterOptions.severities.length})`
+                                                            : `${defaultFilterOptions.severity?.length}/${dynamicFilterOptions.severities.length}`}
                                                     </DsTypography>
                                                 </div>
 
@@ -1049,37 +939,10 @@ const GetWell = () => {
                                                         variant="Semibold_14"
                                                     >
                                                         {!defaultFilterOptions.tags?.length ||
-                                                        defaultFilterOptions.tags?.length === 6
-                                                            ? 'All(6)'
-                                                            : `${defaultFilterOptions.tags?.length}/6`}
-                                                    </DsTypography>
-                                                </div>
-
-                                                <div className={styles.items}>
-                                                    <DsTypography
-                                                        style={{
-                                                            color:
-                                                                loading || !isAssessmentAvailable
-                                                                    ? 'var(--text-disabled)'
-                                                                    : 'var(--text-primary)'
-                                                        }}
-                                                        variant="Regular_14"
-                                                    >
-                                                        Analysis state:
-                                                    </DsTypography>
-                                                    <DsTypography
-                                                        style={{
-                                                            color:
-                                                                loading || !isAssessmentAvailable
-                                                                    ? 'var(--text-disabled)'
-                                                                    : 'var(--text-primary)'
-                                                        }}
-                                                        variant="Semibold_14"
-                                                    >
-                                                        {!defaultFilterOptions.configState?.length ||
-                                                        defaultFilterOptions.configState?.length === 3
-                                                            ? 'All(3)'
-                                                            : `${defaultFilterOptions.configState?.length}/3`}
+                                                        defaultFilterOptions.tags?.length ===
+                                                            dynamicFilterOptions.tags.length
+                                                            ? `All(${dynamicFilterOptions.tags.length})`
+                                                            : `${defaultFilterOptions.tags?.length}/${dynamicFilterOptions.tags.length}`}
                                                     </DsTypography>
                                                 </div>
 
@@ -1105,9 +968,10 @@ const GetWell = () => {
                                                         variant="Semibold_14"
                                                     >
                                                         {!defaultFilterOptions.resourceType?.length ||
-                                                        defaultFilterOptions.resourceType?.length === 9
-                                                            ? 'All(9)'
-                                                            : `${defaultFilterOptions.resourceType?.length}/9`}
+                                                        defaultFilterOptions.resourceType?.length ===
+                                                            dynamicFilterOptions.resourceTypes.length
+                                                            ? `All(${dynamicFilterOptions.resourceTypes.length})`
+                                                            : `${defaultFilterOptions.resourceType?.length}/${dynamicFilterOptions.resourceTypes.length}`}
                                                     </DsTypography>
                                                 </div>
                                             </div>
@@ -1129,7 +993,7 @@ const GetWell = () => {
                                             }}
                                             variant="Semibold_16"
                                         >
-                                            Storage sizing
+                                            {t('databases.well-architect.sections.storage-sizing')}
                                         </DsTypography>
                                     </div>
 
@@ -1139,12 +1003,18 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.storage_tier}
                                                     optimizePrintState={optimizePrintState}
-                                                    type="Storage tier"
+                                                    type={ASSESSMENT_CONFIG_NAMES.STORAGE_TIER}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="1"
                                                     variant="Default"
-                                                    isDisabled={loading || !cardData?.storage_tier?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.storage_tier?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('1', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('1', isExpanded);
@@ -1155,7 +1025,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.storage_tier?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1164,6 +1041,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('storage_tier')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1172,6 +1051,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.storage_tier?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -1182,12 +1062,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.storage_tier?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1205,13 +1088,17 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.file_system_headroom}
                                                     optimizePrintState={optimizePrintState}
-                                                    type="File system headroom"
+                                                    type={ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="2"
                                                     variant="Default"
                                                     isDisabled={
-                                                        loading || !cardData?.file_system_headroom?.block_two?.value
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.file_system_headroom?.block_two?.value
                                                     }
                                                     isExpanded={isAccordionExpanded('2', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
@@ -1223,7 +1110,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.file_system_headroom?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1232,6 +1126,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('file_system_headroom')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1240,6 +1136,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.file_system_headroom?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -1250,13 +1147,16 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.file_system_headroom?.block_two
                                                                             ?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1276,13 +1176,16 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.transaction_log_drive_size}
                                                     optimizePrintState={optimizePrintState}
-                                                    type="Log drive size"
+                                                    type={ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="3"
                                                     variant="Default"
                                                     isDisabled={
                                                         loading ||
+                                                        showDismissedConfigurations ||
                                                         !cardData?.transaction_log_drive_size?.block_two?.value
                                                     }
                                                     isExpanded={isAccordionExpanded('3', optimizePrintState)}
@@ -1294,7 +1197,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.transaction_log_drive_size?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1303,6 +1213,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('transaction_log_drive_size')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1311,6 +1223,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.transaction_log_drive_size?.block_two
                                                                     ?.value ? (
                                                                     <LightDisabled />
@@ -1322,13 +1235,16 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.transaction_log_drive_size?.block_two
                                                                             ?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1349,13 +1265,17 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.tempdb_drive_size}
                                                     optimizePrintState={optimizePrintState}
-                                                    type="TempDB drive size"
+                                                    type={ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="4"
                                                     variant="Default"
                                                     isDisabled={
-                                                        loading || !cardData?.tempdb_drive_size?.block_two?.value
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.tempdb_drive_size?.block_two?.value
                                                     }
                                                     isExpanded={isAccordionExpanded('4', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
@@ -1366,7 +1286,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.tempdb_drive_size?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1375,6 +1302,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('tempdb_drive_size')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1383,6 +1312,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.tempdb_drive_size?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -1393,12 +1323,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.tempdb_drive_size?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1426,7 +1359,7 @@ const GetWell = () => {
                                             }}
                                             variant="Semibold_16"
                                         >
-                                            Storage layout
+                                            {t('databases.well-architect.sections.storage-layout')}
                                         </DsTypography>
                                     </div>
 
@@ -1436,12 +1369,18 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.user_data_files}
                                                     optimizePrintState={optimizePrintState}
-                                                    type="Data files"
+                                                    type={ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="5"
                                                     variant="Default"
-                                                    isDisabled={loading || !cardData?.user_data_files?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.user_data_files?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('5', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('5', isExpanded);
@@ -1451,7 +1390,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.user_data_files?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1460,6 +1406,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('user_data_files')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1468,6 +1416,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.user_data_files?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -1478,12 +1427,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.user_data_files?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1501,7 +1453,9 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.transaction_log_files}
                                                     optimizePrintState={optimizePrintState}
-                                                    type="Log files"
+                                                    type={ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="6"
@@ -1510,7 +1464,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.transaction_log_files?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1518,7 +1479,9 @@ const GetWell = () => {
                                                         </div>
                                                     }
                                                     isDisabled={
-                                                        loading || !cardData?.transaction_log_files?.block_two?.value
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.transaction_log_files?.block_two?.value
                                                     }
                                                     isExpanded={isAccordionExpanded('6', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
@@ -1527,6 +1490,8 @@ const GetWell = () => {
                                                     onClick={() => setClickedAccordionId('6')}
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('transaction_log_files')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1535,6 +1500,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.transaction_log_files?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -1545,13 +1511,16 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.transaction_log_files?.block_two
                                                                             ?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1572,11 +1541,17 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.tempdb_files}
                                                     optimizePrintState={optimizePrintState}
                                                     type={ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="7"
                                                     variant="Default"
-                                                    isDisabled={loading || !cardData?.tempdb_files?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.tempdb_files?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('7', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('7', isExpanded);
@@ -1586,7 +1561,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.tempdb_files?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1595,6 +1577,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('tempdb_files')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1603,6 +1587,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.tempdb_files?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -1613,12 +1598,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.tempdb_files?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1644,7 +1632,7 @@ const GetWell = () => {
                                             }}
                                             variant="Semibold_16"
                                         >
-                                            Storage configuration
+                                            {t('databases.well-architect.sections.storage-configuration')}
                                         </DsTypography>
                                     </div>
 
@@ -1654,6 +1642,8 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.ontap_configuration}
                                                     optimizePrintState={optimizePrintState}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="9"
@@ -1670,7 +1660,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.ontap_configuration?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1679,6 +1676,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('ontap_configuration')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1702,7 +1701,9 @@ const GetWell = () => {
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendations & optimizations
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendations-optimizations'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1712,6 +1713,10 @@ const GetWell = () => {
                                                             isLoading={loading}
                                                             optimizePrintState={optimizePrintState}
                                                             from={WLF_TABS.INVENTORY}
+                                                            showDismissedConfigurations={showDismissedConfigurations}
+                                                            setShowDismissedConfigurations={
+                                                                setShowDismissedConfigurations
+                                                            }
                                                         />
                                                     }
                                                 />
@@ -1723,6 +1728,8 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.os_configuration}
                                                     optimizePrintState={optimizePrintState}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="10"
@@ -1739,7 +1746,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.os_configuration?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -1748,6 +1762,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('os_configuration')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1771,7 +1787,9 @@ const GetWell = () => {
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendations & optimizations
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendations-optimizations'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1781,6 +1799,10 @@ const GetWell = () => {
                                                             isLoading={loading}
                                                             optimizePrintState={optimizePrintState}
                                                             from={WLF_TABS.INVENTORY}
+                                                            showDismissedConfigurations={showDismissedConfigurations}
+                                                            setShowDismissedConfigurations={
+                                                                setShowDismissedConfigurations
+                                                            }
                                                         />
                                                     }
                                                     style={{ marginBottom: '40px' }}
@@ -1804,7 +1826,7 @@ const GetWell = () => {
                                             }}
                                             variant="Semibold_16"
                                         >
-                                            Compute
+                                            {t('databases.well-architect.sections.compute')}
                                         </DsTypography>
                                     </div>
 
@@ -1814,13 +1836,16 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.compute_rightsizing}
                                                     optimizePrintState={optimizePrintState}
-                                                    type="Compute rightsizing"
+                                                    type={t('databases.well-architect.actions.compute-rightsizing')}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="11"
                                                     variant="Default"
                                                     isDisabled={
                                                         loading ||
+                                                        showDismissedConfigurations ||
                                                         !cardData?.compute_rightsizing?.block_two?.value ||
                                                         filteredCardData?.compute_rightsizing?.isMissingPermissions
                                                     }
@@ -1841,7 +1866,9 @@ const GetWell = () => {
                                                                 </DsTypography>
                                                                 &nbsp;
                                                                 <DsTypography variant="Regular_14">
-                                                                    Compute rightsizing details are unavailable due to
+                                                                    {t(
+                                                                        'databases.well-architect.actions.compute-rightsizing-unavailable'
+                                                                    )}
                                                                     missing permissions.
                                                                 </DsTypography>
                                                                 &nbsp;
@@ -1852,15 +1879,23 @@ const GetWell = () => {
                                                                         handleLearnHowClick();
                                                                     }}
                                                                 >
-                                                                    Learn how to get compute rightsizing
-                                                                    recommendations.
+                                                                    {t(
+                                                                        'databases.well-architect.actions.learn-compute-rightsizing'
+                                                                    )}
                                                                 </DsButton>
                                                             </div>
                                                         ) : (
                                                             <div className={styles.tagPlacement}>
                                                                 {filteredCardData?.compute_rightsizing?.tags?.map(
                                                                     (perTag: string, index: number) => (
-                                                                        <div key={index}>
+                                                                        <div
+                                                                            className={`${
+                                                                                showDismissedConfigurations
+                                                                                    ? styles.dismissed
+                                                                                    : ''
+                                                                            }`}
+                                                                            key={index}
+                                                                        >
                                                                             <Tag text={perTag} />
                                                                         </div>
                                                                     )
@@ -1870,6 +1905,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('compute_rightsizing')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1878,6 +1915,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.compute_rightsizing?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -1888,12 +1926,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.compute_rightsizing?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1912,6 +1953,8 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.host_os_patch}
                                                     optimizePrintState={optimizePrintState}
                                                     type={GENERAL.OPERATING_SYSTEM_PATCH}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="12"
@@ -1920,14 +1963,25 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.host_os_patch?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
                                                             )}
                                                         </div>
                                                     }
-                                                    isDisabled={loading || !cardData?.host_os_patch?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.host_os_patch?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('12', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('12', isExpanded);
@@ -1935,6 +1989,8 @@ const GetWell = () => {
                                                     onClick={() => setClickedAccordionId('12')}
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('host_os_patch')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -1943,6 +1999,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.host_os_patch?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -1953,12 +2010,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.host_os_patch?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -1977,6 +2037,8 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.rss_config}
                                                     optimizePrintState={optimizePrintState}
                                                     type={GENERAL.RSS_CONFIGURATION}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="13"
@@ -1985,14 +2047,25 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.rss_config?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
                                                             )}
                                                         </div>
                                                     }
-                                                    isDisabled={loading || !cardData?.rss_config?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.rss_config?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('13', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('13', isExpanded);
@@ -2000,6 +2073,8 @@ const GetWell = () => {
                                                     onClick={() => setClickedAccordionId('13')}
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('rss_config')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2007,7 +2082,9 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading || !cardData?.rss_config?.block_two?.value ? (
+                                                                {loading ||
+                                                                showDismissedConfigurations ||
+                                                                !cardData?.rss_config?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2017,12 +2094,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.rss_config?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -2040,6 +2120,8 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.mtu}
                                                     optimizePrintState={optimizePrintState}
                                                     type={t('databases.general.mtu')}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="21"
@@ -2048,14 +2130,25 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.mtu?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
                                                             )}
                                                         </div>
                                                     }
-                                                    isDisabled={loading || !cardData?.mtu?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.mtu?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('21', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('21', isExpanded);
@@ -2063,6 +2156,8 @@ const GetWell = () => {
                                                     onClick={() => setClickedAccordionId('21')}
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('mtu')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2070,7 +2165,9 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading || !cardData?.mtu?.block_two?.value ? (
+                                                                {loading ||
+                                                                showDismissedConfigurations ||
+                                                                !cardData?.mtu?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2079,12 +2176,16 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading || !cardData?.mtu?.block_two?.value
+                                                                        loading ||
+                                                                        showDismissedConfigurations ||
+                                                                        !cardData?.mtu?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -2123,11 +2224,17 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.sql_licenses}
                                                     optimizePrintState={optimizePrintState}
                                                     type={GENERAL.LICENSE_SQL_SERVER}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="14"
                                                     variant="Default"
-                                                    isDisabled={loading || !cardData?.sql_licenses?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.sql_licenses?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('14', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('14', isExpanded);
@@ -2137,7 +2244,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.sql_licenses?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -2146,6 +2260,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('sql_licenses')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2154,6 +2270,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.sql_licenses?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -2164,12 +2281,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.sql_licenses?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -2188,12 +2308,16 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.microsoft_sql_patch}
                                                     optimizePrintState={optimizePrintState}
                                                     type={GENERAL.MICROSOFT_SQL_PATCH}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="15"
                                                     variant="Default"
                                                     isDisabled={
-                                                        loading || !cardData?.microsoft_sql_patch?.block_two?.value
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.microsoft_sql_patch?.block_two?.value
                                                     }
                                                     isExpanded={isAccordionExpanded('15', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
@@ -2204,7 +2328,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.microsoft_sql_patch?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -2213,6 +2344,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('microsoft_sql_patch')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2221,6 +2354,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.microsoft_sql_patch?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
@@ -2231,12 +2365,15 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.microsoft_sql_patch?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -2255,11 +2392,17 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.maxdop}
                                                     optimizePrintState={optimizePrintState}
                                                     type={GENERAL.MAXDOP_PATCH}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="16"
                                                     variant="Default"
-                                                    isDisabled={loading || !cardData?.maxdop?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.maxdop?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('16', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('16', isExpanded);
@@ -2269,7 +2412,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.maxdop?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -2278,6 +2428,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('maxdop')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2285,7 +2437,9 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading || !cardData?.maxdop?.block_two?.value ? (
+                                                                {loading ||
+                                                                showDismissedConfigurations ||
+                                                                !cardData?.maxdop?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2294,12 +2448,16 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading || !cardData?.maxdop?.block_two?.value
+                                                                        loading ||
+                                                                        showDismissedConfigurations ||
+                                                                        !cardData?.maxdop?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -2339,12 +2497,16 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.scheduled_local_snapshot}
                                                     optimizePrintState={optimizePrintState}
                                                     type={GENERAL.SCHEDULED_LOCAL_SNAPSHOT}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="17"
                                                     variant="Default"
                                                     isDisabled={
-                                                        loading || !cardData?.scheduled_local_snapshot?.block_two?.value
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.scheduled_local_snapshot?.block_two?.value
                                                     }
                                                     isExpanded={isAccordionExpanded('17', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
@@ -2355,7 +2517,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.scheduled_local_snapshot?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -2364,6 +2533,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('scheduled_local_snapshot')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2372,6 +2543,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.scheduled_local_snapshot?.block_two
                                                                     ?.value ? (
                                                                     <LightDisabled />
@@ -2383,13 +2555,16 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.scheduled_local_snapshot?.block_two
                                                                             ?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -2410,11 +2585,17 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.crr}
                                                     optimizePrintState={optimizePrintState}
                                                     type={GENERAL.CRR}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="18"
                                                     variant="Default"
-                                                    isDisabled={loading || !cardData?.crr?.block_two?.value}
+                                                    isDisabled={
+                                                        loading ||
+                                                        showDismissedConfigurations ||
+                                                        !cardData?.crr?.block_two?.value
+                                                    }
                                                     isExpanded={isAccordionExpanded('18', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('18', isExpanded);
@@ -2424,7 +2605,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.crr?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -2433,6 +2621,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('crr')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2440,7 +2630,9 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading || !cardData?.crr?.block_two?.value ? (
+                                                                {loading ||
+                                                                showDismissedConfigurations ||
+                                                                !cardData?.crr?.block_two?.value ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2449,12 +2641,16 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading || !cardData?.crr?.block_two?.value
+                                                                        loading ||
+                                                                        showDismissedConfigurations ||
+                                                                        !cardData?.crr?.block_two?.value
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -2473,6 +2669,8 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.scheduled_fsx_for_ontap_backups}
                                                     optimizePrintState={optimizePrintState}
                                                     type={ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="19"
@@ -2499,6 +2697,10 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo(
+                                                                'scheduled_FSx_for_ONTAP_backups'
+                                                            )}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2524,7 +2726,9 @@ const GetWell = () => {
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}
@@ -2547,6 +2751,8 @@ const GetWell = () => {
                                                         cardData={filteredCardData?.mssql_high_availability}
                                                         optimizePrintState={optimizePrintState}
                                                         type={GENERAL.MSSQL_HIGH_AVAILABILITY}
+                                                        showDismissedConfigurations={showDismissedConfigurations}
+                                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                     />
                                                     <DsAccordion
                                                         id="22"
@@ -2564,7 +2770,14 @@ const GetWell = () => {
                                                             <div className={styles.tagPlacement}>
                                                                 {filteredCardData?.mssql_high_availability?.tags?.map(
                                                                     (perTag: string, index: number) => (
-                                                                        <div key={index}>
+                                                                        <div
+                                                                            className={`${
+                                                                                showDismissedConfigurations
+                                                                                    ? styles.dismissed
+                                                                                    : ''
+                                                                            }`}
+                                                                            key={index}
+                                                                        >
                                                                             <Tag text={perTag} />
                                                                         </div>
                                                                     )
@@ -2573,6 +2786,10 @@ const GetWell = () => {
                                                         }
                                                         headerActions={[
                                                             <div className={styles.headerAction}>
+                                                                {renderPostponeActivatingInfo(
+                                                                    'mssql_high_availability'
+                                                                )}
+
                                                                 <div
                                                                     className={
                                                                         isDarkTheme && !loading
@@ -2598,7 +2815,9 @@ const GetWell = () => {
                                                                                 : 'var(--text-button-primary)'
                                                                     }}
                                                                 >
-                                                                    View recommendations & optimizations
+                                                                    {t(
+                                                                        'databases.well-architect.actions.view-recommendations-optimizations'
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         ]}
@@ -2608,6 +2827,12 @@ const GetWell = () => {
                                                                 isLoading={loading}
                                                                 optimizePrintState={optimizePrintState}
                                                                 from={WLF_TABS.INVENTORY}
+                                                                showDismissedConfigurations={
+                                                                    showDismissedConfigurations
+                                                                }
+                                                                setShowDismissedConfigurations={
+                                                                    setShowDismissedConfigurations
+                                                                }
                                                             />
                                                         }
                                                     />
@@ -2637,6 +2862,8 @@ const GetWell = () => {
                                                     cardData={filteredCardData?.clone_management}
                                                     optimizePrintState={optimizePrintState}
                                                     type={GENERAL.CLONE_MANAGEMENT}
+                                                    showDismissedConfigurations={showDismissedConfigurations}
+                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />
                                                 <DsAccordion
                                                     id="20"
@@ -2662,6 +2889,8 @@ const GetWell = () => {
                                                     }
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
+                                                            {renderPostponeActivatingInfo('clone_management')}
+
                                                             <div
                                                                 className={
                                                                     isDarkTheme && !loading
@@ -2685,7 +2914,9 @@ const GetWell = () => {
                                                                             : 'var(--text-button-primary)'
                                                                 }}
                                                             >
-                                                                View recommendation
+                                                                {t(
+                                                                    'databases.well-architect.actions.view-recommendation'
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ]}

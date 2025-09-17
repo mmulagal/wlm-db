@@ -11,6 +11,8 @@ interface CountBreakDown {
     percent?: number;
     critical?: number;
     warning?: number;
+    dismissedOrPostponed?: number;
+    dismissedIds?: string[];
 }
 
 export interface RSSConfigAdapterInterface {

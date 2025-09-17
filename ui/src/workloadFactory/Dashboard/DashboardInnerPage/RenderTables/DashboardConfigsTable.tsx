@@ -923,7 +923,7 @@ const DashboardConfigsTable = ({
                                     items={[
                                         {
                                             id: 'dismiss',
-                                            children: `${t('databases.well-architect.dismiss')}`,
+                                            children: `${t('databases.well-architect.dismiss-text')}`,
                                             onClick: () => {
                                                 handleSingleDismissPostpone(
                                                     rowData,

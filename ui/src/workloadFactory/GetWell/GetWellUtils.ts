@@ -53,6 +53,127 @@ import {
 } from '../../utils/utilityFunctions';
 import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
 
+// Category and subcategory mapping for configurations
+export const getCategoryData = () => ({
+    file_system_headroom: { category: 'Storage', subCategory: 'Storage sizing' },
+    storage_tier: { category: 'Storage', subCategory: 'Storage sizing' },
+    transaction_log_drive_size: { category: 'Storage', subCategory: 'Storage sizing' },
+    tempdb_drive_size: { category: 'Storage', subCategory: 'Storage sizing' },
+    user_data_files: { category: 'Storage', subCategory: 'Storage layout' },
+    transaction_log_files: { category: 'Storage', subCategory: 'Storage layout' },
+    tempdb_files: { category: 'Storage', subCategory: 'Storage layout' },
+    ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
+    os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
+    compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
+    host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
+    rss_config: { category: 'Compute', subCategory: 'Compute_sub' },
+    mtu: { category: 'Compute', subCategory: 'Compute_sub' },
+    sql_licenses: { category: 'Application', subCategory: 'Application_sub' },
+    microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
+    maxdop: { category: 'Application', subCategory: 'Application_sub' },
+    scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
+    scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
+    crr: { category: 'Resiliency', subCategory: 'Protection' },
+    clone_management: { category: 'Cloning', subCategory: 'Cloning' },
+    mssql_high_availability: { category: 'Resiliency', subCategory: 'Protection' }
+});
+
+// Generate dynamic filter options based on actual card data
+export const generateDynamicFilterOptions = (cardData: any, deploymentType?: string) => {
+    const categoryData = getCategoryData();
+    const availableCategories = new Set();
+    const availableSubCategories = new Set();
+    const availableSeverities = new Set();
+    const availableTags = new Set();
+    const availableResourceTypes = new Set();
+    const availableStatuses = new Set();
+
+    Object.keys(cardData).forEach((key: any) => {
+        if (key === 'deploymentType') {
+            return; // Skip deploymentType as it is not a card
+        }
+
+        // Skip MSSQL High Availability for non-FCI instances
+        const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
+        if (isMSSQLHighAvailability && deploymentType !== GENERAL.FCI) {
+            return; // Skip this card for non-FCI instances
+        }
+
+        const config = cardData[key];
+        const categoryInfo = categoryData[key as keyof typeof categoryData];
+
+        if (categoryInfo) {
+            availableCategories.add(categoryInfo.category);
+            availableSubCategories.add(categoryInfo.subCategory);
+        }
+
+        // Add severity if available
+        if (config.block_four?.value) {
+            availableSeverities.add(config.block_four.value);
+        }
+
+        // Add tags if available
+        if (config.tags) {
+            config.tags.forEach((tag: string) => availableTags.add(tag));
+        }
+
+        // Add resource type if available
+        if (config.block_five?.value) {
+            availableResourceTypes.add(config.block_five.value);
+        }
+
+        // Add status based on optimization state
+        const isOptimizedStatus = isOptimized(config.block_two?.value, config.dismissedObj?.configState);
+        availableStatuses.add(isOptimizedStatus ? GETWELL_STATUS.OPTIMIZED : GETWELL_STATUS.NOT_OPTIMIZED);
+    });
+
+    return {
+        categories: Array.from(availableCategories).map((category, index) => ({
+            id: index,
+            label: category as string,
+            value: category as string
+        })),
+        subCategories: Array.from(availableSubCategories).map((subCategory, index) => ({
+            id: index,
+            label:
+                subCategory === 'Compute_sub'
+                    ? 'Compute'
+                    : subCategory === 'Application_sub'
+                    ? 'Application'
+                    : (subCategory as string),
+            value: subCategory as string,
+            category: getCategoryForSubCategory(subCategory as string)
+        })),
+        severities: Array.from(availableSeverities).map((severity, index) => ({
+            id: index,
+            label: severity as string,
+            value: severity as string
+        })),
+        tags: Array.from(availableTags).map((tag, index) => ({
+            id: index,
+            label: tag as string,
+            value: tag as string
+        })),
+        resourceTypes: Array.from(availableResourceTypes).map((resourceType, index) => ({
+            id: index,
+            label: resourceType as string,
+            value: resourceType as string
+        })),
+        statuses: Array.from(availableStatuses).map((status, index) => ({
+            id: index,
+            label: status as string,
+            value: status as string
+        }))
+    };
+};
+
+// Helper function to get category for a subcategory
+const getCategoryForSubCategory = (subCategory: string) => {
+    const categoryData = getCategoryData();
+    const entry = Object.values(categoryData).find((item: any) => item.subCategory === subCategory);
+    return entry ? entry.category : '';
+};
+
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: any = {
     deploymentType: '',
@@ -1921,6 +2042,20 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let warningCloning = 0;
     let criticalCloning = 0;
 
+    // Combined counts for dismissed and postponed
+    let dismissedOrPostponedStorage = 0;
+    let dismissedOrPostponedCompute = 0;
+    let dismissedOrPostponedApplication = 0;
+    let dismissedOrPostponedResiliency = 0;
+    let dismissedOrPostponedCloning = 0;
+
+    // Arrays to store dismissed/postponed configuration IDs
+    const dismissedStorageIds: string[] = [];
+    const dismissedComputeIds: string[] = [];
+    const dismissedApplicationIds: string[] = [];
+    const dismissedResiliencyIds: string[] = [];
+    const dismissedCloningIds: string[] = [];
+
     let hasDismissedOrPostponedStorage = false;
     let hasDismissedOrPostponedCompute = false;
     let hasDismissedOrPostponedApplication = false;
@@ -1930,14 +2065,18 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
         const dismissedState = nestedObject?.dismissedObj?.configState;
-        const isOptimizedViaDismissal =
-            dismissedState === CONFIG_STATES.DISMISSED ||
-            dismissedState === CONFIG_STATES.POSTPONED ||
-            dismissedState === CONFIG_STATES.ACTIVATING;
+        const isDismissed = dismissedState === CONFIG_STATES.DISMISSED;
+        const isPostponed = dismissedState === CONFIG_STATES.POSTPONED;
+        const isOptimizedViaDismissal = dismissedState === CONFIG_STATES.ACTIVATING;
+
         if (nestedObject?.category === 'storage') {
-            if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
+            if (isDismissed || isPostponed) {
+                dismissedOrPostponedStorage++;
+                hasDismissedOrPostponedStorage = true;
+                dismissedStorageIds.push(nestedObject?.mapName);
+            } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedStorage++;
+                if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedStorage++;
                 criticalStorage++;
@@ -1948,13 +2087,17 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 notOptimizedStorage++;
             }
         } else if (nestedObject?.category === 'compute') {
-            if (isOptimizedViaDismissal) hasDismissedOrPostponedCompute = true;
-            if (
+            if (isDismissed || isPostponed) {
+                dismissedOrPostponedCompute++;
+                hasDismissedOrPostponedCompute = true;
+                dismissedComputeIds.push(nestedObject?.mapName);
+            } else if (
                 nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
                 nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING ||
                 isOptimizedViaDismissal
             ) {
                 optimizedCompute++;
+                if (isOptimizedViaDismissal) hasDismissedOrPostponedCompute = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedCompute++;
                 criticalCompute++;
@@ -1965,9 +2108,13 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 notOptimizedCompute++;
             }
         } else if (nestedObject?.category === 'application') {
-            if (isOptimizedViaDismissal) hasDismissedOrPostponedApplication = true;
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
+            if (isDismissed || isPostponed) {
+                dismissedOrPostponedApplication++;
+                hasDismissedOrPostponedApplication = true;
+                dismissedApplicationIds.push(nestedObject?.mapName);
+            } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedApplication++;
+                if (isOptimizedViaDismissal) hasDismissedOrPostponedApplication = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedApplication++;
                 criticalApplication++;
@@ -1984,9 +2131,13 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isMSSQLHighAvailability && cardsData?.deploymentType !== GENERAL.FCI) {
                 return; // Skip this card for non-FCI instances
             }
-            if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
+            if (isDismissed || isPostponed) {
+                dismissedOrPostponedResiliency++;
+                hasDismissedOrPostponedResiliency = true;
+                dismissedResiliencyIds.push(nestedObject?.mapName);
+            } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
+                if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedResiliency++;
                 criticalResiliency++;
@@ -1997,9 +2148,13 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 notOptimizedResiliency++;
             }
         } else if (nestedObject?.category === 'cloning') {
-            if (isOptimizedViaDismissal) hasDismissedOrPostponedCloning = true;
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
+            if (isDismissed || isPostponed) {
+                dismissedOrPostponedCloning++;
+                hasDismissedOrPostponedCloning = true;
+                dismissedCloningIds.push(nestedObject?.mapName);
+            } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedCloning++;
+                if (isOptimizedViaDismissal) hasDismissedOrPostponedCloning = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedCloning++;
                 criticalCloning++;
@@ -2019,6 +2174,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         warning: warningStorage,
         optimized: optimizedStorage,
         notOptimized: notOptimizedStorage,
+        dismissedOrPostponed: dismissedOrPostponedStorage,
+        dismissedIds: dismissedStorageIds,
         percent: optimizedStorage
             ? formatNumberWithCustomComma((optimizedStorage / (optimizedStorage + notOptimizedStorage)) * 100)
             : 0
@@ -2030,6 +2187,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         warning: warningCompute,
         optimized: optimizedCompute,
         notOptimized: notOptimizedCompute,
+        dismissedOrPostponed: dismissedOrPostponedCompute,
+        dismissedIds: dismissedComputeIds,
         percent: optimizedCompute
             ? formatNumberWithCustomComma((optimizedCompute / (optimizedCompute + notOptimizedCompute)) * 100)
             : 0
@@ -2041,6 +2200,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         warning: warningApplication,
         optimized: optimizedApplication,
         notOptimized: notOptimizedApplication,
+        dismissedOrPostponed: dismissedOrPostponedApplication,
+        dismissedIds: dismissedApplicationIds,
         percent: optimizedApplication
             ? formatNumberWithCustomComma(
                   (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
@@ -2055,6 +2216,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         warning: warningResiliency,
         optimized: optimizedResiliency,
         notOptimized: notOptimizedResiliency,
+        dismissedOrPostponed: dismissedOrPostponedResiliency,
+        dismissedIds: dismissedResiliencyIds,
         percent: optimizedResiliency
             ? formatNumberWithCustomComma((optimizedResiliency / (optimizedResiliency + notOptimizedResiliency)) * 100)
             : 0
@@ -2067,6 +2230,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         warning: warningCloning,
         optimized: optimizedCloning,
         notOptimized: notOptimizedCloning,
+        dismissedOrPostponed: dismissedOrPostponedCloning,
+        dismissedIds: dismissedCloningIds,
         percent: optimizedCloning
             ? formatNumberWithCustomComma((optimizedCloning / (optimizedCloning + notOptimizedCloning)) * 100)
             : 0
@@ -2110,6 +2275,19 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 applicationCount?.notOptimized +
                 resiliencyCount?.notOptimized +
                 cloningCount?.notOptimized,
+            dismissedOrPostponed:
+                storageCount?.dismissedOrPostponed +
+                computeCount?.dismissedOrPostponed +
+                applicationCount?.dismissedOrPostponed +
+                resiliencyCount?.dismissedOrPostponed +
+                cloningCount?.dismissedOrPostponed,
+            dismissedIds: [
+                ...(storageCount?.dismissedIds || []),
+                ...(computeCount?.dismissedIds || []),
+                ...(applicationCount?.dismissedIds || []),
+                ...(resiliencyCount?.dismissedIds || []),
+                ...(cloningCount?.dismissedIds || [])
+            ],
             percent:
                 storageCount?.optimized ||
                 computeCount?.optimized ||
@@ -2369,34 +2547,17 @@ export const generateDate = () => {
 };
 
 // filters card data based on filter tags
-export const applyFilter = (cardData: any, optimizeFilterTags: any, selectedDatabaseStorageType?: string) => {
+export const applyFilter = (
+    cardData: any,
+    optimizeFilterTags: any,
+    selectedDatabaseStorageType?: string,
+    showDismissedConfigurations?: boolean
+) => {
     const filteredCardData: any = {};
     let configCount = 0;
     const filters = groupByType(optimizeFilterTags, 'value');
 
-    const categoryData: any = {
-        file_system_headroom: { category: 'Storage', subCategory: 'Storage sizing' },
-        storage_tier: { category: 'Storage', subCategory: 'Storage sizing' },
-        transaction_log_drive_size: { category: 'Storage', subCategory: 'Storage sizing' },
-        tempdb_drive_size: { category: 'Storage', subCategory: 'Storage sizing' },
-        user_data_files: { category: 'Storage', subCategory: 'Storage layout' },
-        transaction_log_files: { category: 'Storage', subCategory: 'Storage layout' },
-        tempdb_files: { category: 'Storage', subCategory: 'Storage layout' },
-        ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-        os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-        compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
-        host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
-        rss_config: { category: 'Compute', subCategory: 'Compute_sub' },
-        mtu: { category: 'Compute', subCategory: 'Compute_sub' },
-        sql_licenses: { category: 'Application', subCategory: 'Application_sub' },
-        microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
-        maxdop: { category: 'Application', subCategory: 'Application_sub' },
-        scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
-        scheduled_fsx_for_ontap_backups: { category: 'Resiliency', subCategory: 'Protection' },
-        crr: { category: 'Resiliency', subCategory: 'Protection' },
-        clone_management: { category: 'Cloning', subCategory: 'Cloning' },
-        mssql_high_availability: { category: 'Resiliency', subCategory: 'Protection' }
-    };
+    const categoryData = getCategoryData();
 
     Object.keys(cardData).map((key: any) => {
         if (key === 'deploymentType') {
@@ -2409,9 +2570,11 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any, selectedData
         }
 
         const checkCategory =
-            !filters['all-catagories'] || filters['all-catagories']?.includes(categoryData[key]?.category);
+            !filters['all-catagories'] ||
+            filters['all-catagories']?.includes(categoryData[key as keyof typeof categoryData]?.category);
         const checkSubCategory =
-            !filters['sub-catagories'] || filters['sub-catagories']?.includes(categoryData[key]?.subCategory);
+            !filters['sub-catagories'] ||
+            filters['sub-catagories']?.includes(categoryData[key as keyof typeof categoryData]?.subCategory);
 
         const isOptmized = isOptimized(cardData[key].block_two.value, cardData[key].dismissedObj?.configState);
         const checkStatus =
@@ -2450,6 +2613,22 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any, selectedData
         }
         const checkResourceType = !filters.resourceType || filters.resourceType?.includes(resourceType);
 
+        // Handle dismissed configuration toggle filtering
+        const configState = cardData[key].dismissedObj?.configState;
+        let checkDismissedFilter = true;
+
+        if (showDismissedConfigurations !== undefined) {
+            if (showDismissedConfigurations) {
+                // Show only dismissed and postponed configurations
+                checkDismissedFilter =
+                    configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED;
+            } else {
+                // Show only active configurations (excluding dismissed and postponed)
+                checkDismissedFilter =
+                    !configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING;
+            }
+        }
+
         if (
             checkCategory &&
             checkSubCategory &&
@@ -2457,10 +2636,11 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any, selectedData
             checkSeverity &&
             checkTags &&
             checkConfigState &&
-            checkResourceType
+            checkResourceType &&
+            checkDismissedFilter
         ) {
             filteredCardData[key] = cardData[key];
-            if (categoryData[key] && cardData[key].block_two.value) {
+            if (categoryData[key as keyof typeof categoryData] && cardData[key].block_two.value) {
                 configCount++;
             }
         }
@@ -4064,10 +4244,10 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
             configKey = 'tempdbPlacement';
             break;
-        case 'ONTAP':
+        case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
             configKey = 'ontapConfiguration';
             break;
-        case 'Operating system':
+        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
             configKey = 'operatingSystem';
             break;
         case GENERAL.COMPUTE_RIGHTSIZING:

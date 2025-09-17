@@ -70,12 +70,6 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
                             <div style={{ height: '24px' }} />
                         ) : (
                             <div className={styles.tooltipContainer}>
-                                {data?.hasDismissedOrPostponed && (
-                                    <TooltipInfo>
-                                        Some configurations are dismissed or postponed. Use filters to view dismissed &
-                                        postponed configurations.
-                                    </TooltipInfo>
-                                )}
                                 <DsTypography variant="Regular_14">Well-architected configurations:</DsTypography>
                             </div>
                         )}
