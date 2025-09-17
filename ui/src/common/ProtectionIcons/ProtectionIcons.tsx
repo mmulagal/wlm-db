@@ -101,7 +101,7 @@ const IconWithComingSoonTooltip: FC<{ Icon: React.FC<React.SVGProps<SVGSVGElemen
             <div className={styles.protectionTooltip}>
                 <div className={styles.protectionLabel}>{tooltipLabel}</div>
                 <div className={styles.protectionStatus}>
-                    <span>{t('databases.general.coming-soon')}</span>
+                    <span className={styles.comingSoonTag}>{t('databases.general.coming-soon')}</span>
                 </div>
             </div>
         </Popover>

@@ -207,6 +207,7 @@
             "overview": "Overview",
             "pdb": "PDB",
             "pdbs": "PDBs",
+            "single-tenant-tooltip": "This database is set up as a single-tenant database, which does not support multiple PDBs.",
             "storage-configuration": "Storage configuration",
             "storage-layout": "Storage layout",
             "single-tenant": "Single-tenant",
@@ -263,7 +264,6 @@
                 "mix-dismiss-status": "{{successCount}} instances have been dismissed, but failed to dismiss {{failedCount}}.",
                 "mix-postpone-status": "{{successCount}} instances have been postponed for 30 days, but failed to postpone {{failedCount}}.",
                 "mix-active-status": "{{successCount}} instances reactivated, but failed to reactivate {{failedCount}}. Successful instances will be analyzed in the next analysis."
-
             },
             "fixing": "Fixing",
             "bulk-fix-disable-for-fsx-for-ontap-backup": "Bulk fix is not supported for Scheduled FSx for ONTAP Backups.",

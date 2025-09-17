@@ -1,23 +1,39 @@
 import { useDispatch } from 'react-redux';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, Popover } from '@netapp/design-system';
 import styles from './OracleTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
+import { WELL_ARCHITECTED_TABS, ORACLE_DATABASES_COMPONENTS } from '../../../../utils/consts';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 
 const OracleTabs = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const [selectedTab, setSelectedTab] = useState<any>();
+    const [selectedTab, setSelectedTab] = useState<string>();
     const { selectedOracleInnerPageTab } = useAppSelector(state => state.oracleSlice);
+    const { selectedResourceId, selectedDatabaseInstanceName } = useAppSelector(state => state.workloadFactoryResource);
+    const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
+
+    const isSingleTenant = useMemo(() => {
+        if (!selectedResourceId || !selectedDatabaseInstanceName || !inventoryTableData) {
+            return false;
+        }
+        const hostData = Object.values(inventoryTableData).find(host => host?.resourceId === selectedResourceId);
+        const instanceData = hostData?.sqlServerInstances?.find(
+            instance => instance?.databaseInstanceName?.toLowerCase() === selectedDatabaseInstanceName?.toLowerCase()
+        );
+        return instanceData?.instanceType === ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT;
+    }, [selectedResourceId, selectedDatabaseInstanceName, inventoryTableData]);
 
     useEffect(() => {
         setSelectedTab(selectedOracleInnerPageTab);
     }, [selectedOracleInnerPageTab]);
 
     const handleClick = (value: string) => {
+        if (value === WELL_ARCHITECTED_TABS.PDB && isSingleTenant) {
+            return;
+        }
         setSelectedTab(value);
         dispatch(setSelectedOracleInnerPageTab(value));
     };
@@ -64,22 +80,35 @@ const OracleTabs = () => {
 
             <div
                 className={
-                    selectedTab === WELL_ARCHITECTED_TABS.PDB
+                    selectedTab === WELL_ARCHITECTED_TABS.PDB && !isSingleTenant
                         ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
-                        : `${styles.headers} ${styles.headerWidthThird}`
+                        : `${styles.headers} ${styles.headerWidthThird} ${isSingleTenant ? styles.disabled : ''}`
                 }
             >
-                <DsTypography
-                    variant="Semibold_14"
-                    className={
-                        selectedTab === WELL_ARCHITECTED_TABS.PDB
-                            ? `${styles.headerPart1} ${styles.activeText}`
-                            : `${styles.headerPart1}`
-                    }
-                    onClick={() => handleClick(WELL_ARCHITECTED_TABS.PDB)}
-                >
-                    {t('databases.oracle-inner-page.pdb')}
-                </DsTypography>
+                {isSingleTenant ? (
+                    <Popover
+                        trigger="hover"
+                        container={
+                            <DsTypography variant="Semibold_14" className={styles.headerPart1}>
+                                {t('databases.oracle-inner-page.pdb')}
+                            </DsTypography>
+                        }
+                    >
+                        {t('databases.oracle-inner-page.single-tenant-tooltip')}
+                    </Popover>
+                ) : (
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            selectedTab === WELL_ARCHITECTED_TABS.PDB
+                                ? `${styles.headerPart1} ${styles.activeText}`
+                                : `${styles.headerPart1}`
+                        }
+                        onClick={() => handleClick(WELL_ARCHITECTED_TABS.PDB)}
+                    >
+                        {t('databases.oracle-inner-page.pdb')}
+                    </DsTypography>
+                )}
             </div>
         </div>
     );

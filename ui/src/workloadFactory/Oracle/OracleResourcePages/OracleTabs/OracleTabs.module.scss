@@ -44,4 +44,10 @@
     .activeText {
         color: var(--text-button-primary);
     }
+
+    .disabled {
+        .headerPart1 {
+            color: var(--text-disabled, var(--grey-60));
+        }
+    }
 }

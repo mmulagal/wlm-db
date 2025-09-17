@@ -36,5 +36,19 @@
         .notProtected {
             background: var(--orange-60);
         }
+
+        .comingSoonTag {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            gap: 24px;
+            height: 26px;
+            width: fit-content;
+            padding: 2px 11px;
+            background-color: var(--tag-3-bg);
+            color: var(--text-button-primary-hover);
+            border-radius: 24px;
+            border: 1px solid var(--tag-3-text, #1e4a93);
+        }
     }
 }
