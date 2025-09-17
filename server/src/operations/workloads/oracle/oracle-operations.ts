@@ -58,7 +58,7 @@ import { AssessmentCategories } from '../../../utils/continous-optimization-cons
 import { MountPointDetails, OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getNodeTopology, getStorageData } from '../../database-hosts-util';
-import { MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
+import { demoFsxId, MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
 import { PDB_DETAILS } from '../../../utils/demo-utils/demoInventoryData';
 
 const logger = getLogger();
@@ -991,6 +991,12 @@ async function getOracleDatabaseHostInstanceSummary(
         region,
         shouldIncludeResource: true
     });
+    if (isEmpty(instanceResult?.items)) {
+        const errorMessage = `No database instance found for host ${databaseHostId} and instance ${databaseInstanceId} in account ${accountId}.`;
+        logger.warn(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
     const [databaseInstance] = instanceResult.items as DatabaseInstance[];
     const resourceDetails = databaseInstance.resource;
     const activeNodeInstanceId = (resourceDetails?.metadata as Metadata)?.node1InstanceId;
@@ -1175,17 +1181,23 @@ async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, insta
             configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
         })) || [{}];
         const fsxIds = uniq(compact(instanceDetails.map(di => di.fsxn_ids)));
-        const mappedVolumesByFsxId = fsxIds.map(fsxId =>
-            parseMappedVolumeData(
-                configList.flatMap(cd => cd.config_data).find(cd => Object.keys(cd as any).includes(fsxId)),
-                fsxId,
-                DatabaseTypes.ORACLE
-            )
-        );
+        const mappedVolumesByFsxId = fsxIds.map(fsxId => {
+            fsxId = isDemoFlow ? demoFsxId : fsxId; // Demo flow FSx ID, so that it always matches
+            const matchingConfigData = configList
+                .map(cd => cd.config_data)
+                .find(cd => Object.keys(cd as any).includes(fsxId));
+
+            if (!matchingConfigData) {
+                logger.warn(`No matching config data found for FSx ID ${fsxId}`);
+                return null;
+            }
+
+            return parseMappedVolumeData(matchingConfigData, fsxId, DatabaseTypes.ORACLE);
+        });
 
         const mappedByInstances = instanceDetails.map(instance => {
             const mappedVolumesPerInstance = mappedVolumesByFsxId
-                .flatMap(mv => mv.combinedOntapVolumes.filter(cv => cv.instance === instance.database_instance_id))
+                .flatMap(mv => mv?.combinedOntapVolumes?.filter(cv => cv.instance === instance.database_instance_id))
                 .map(v => v.id);
             return { name: instance.database_instance_id, fsxId: instance.fsxn_ids, volumes: mappedVolumesPerInstance };
         });

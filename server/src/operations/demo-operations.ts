@@ -1279,6 +1279,24 @@ async function updateAllOptimizedClonesDemoFlow(
     );
 }
 
+// Percentage constants for MSSQL storage calculations
+const PHYSICAL_USED_PERCENTAGE = 0.6; // 60% of used data is physicalUsed
+const SSD_USED_PERCENTAGE = 0.8; // 80% of physicalUsed is ssdUsed
+const CAPACITY_POOL_USED_PERCENTAGE = 0.03; // 3% of physicalUsed is capacityPoolUsed
+const SNAPSHOT_USED_PERCENTAGE = 0.1; // 10% of physicalUsed is snapshotUsed
+
+function getMssqlStorageDataForDemo(totalUsed: number) {
+    totalUsed = Number(Number.isNaN(totalUsed) ? 0 : totalUsed);
+    const physicalUsed = Number(totalUsed * PHYSICAL_USED_PERCENTAGE);
+
+    return {
+        ssdUsed: Number(physicalUsed * SSD_USED_PERCENTAGE),
+        capacityPoolUsed: Number(physicalUsed * CAPACITY_POOL_USED_PERCENTAGE),
+        snapshotUsed: Number(physicalUsed * SNAPSHOT_USED_PERCENTAGE),
+        physicalUsed
+    };
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -1304,5 +1322,6 @@ export {
     handleGetAssessmentForDemo,
     createDeploymentMockDataInDBForOracle,
     createAssessmentDataForOracle,
-    updateAllOptimizedClonesDemoFlow
+    updateAllOptimizedClonesDemoFlow,
+    getMssqlStorageDataForDemo
 };

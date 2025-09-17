@@ -3316,6 +3316,8 @@ const MockOracleServerDetails = {
     creationDate: '2025-02-20T04:37:27Z'
 };
 
+const demoFsxId = 'fs-0d5efc3057c4f12cb';
+
 export {
     masterStackData,
     validationStack1Data,
@@ -3341,5 +3343,6 @@ export {
     onPremAOAGAUploadObject,
     onPremFCIUploadObject,
     DEMO_REGISTER_RESPONSE,
-    MockOracleServerDetails
+    MockOracleServerDetails,
+    demoFsxId
 };

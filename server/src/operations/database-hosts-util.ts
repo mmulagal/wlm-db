@@ -11,7 +11,7 @@ import {
 } from './aws/cloud-watch-operations';
 import { getEc2Hostname, isDemo } from '../utils/utils';
 import { AWS_ERROR_CODES, AWS_REGIONS, DatabaseTypes, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
-import { getEBSVolumesForDemo } from './demo-operations';
+import { getEBSVolumesForDemo, getMssqlStorageDataForDemo } from './demo-operations';
 import { describeInstance, describeVolumes, describeVpc } from '../lib/aws/ec2';
 
 const logger = getLogger();
@@ -155,7 +155,8 @@ async function getStorageData(
                 used: totalUsed,
                 spaceSavings: totalSpaceSavings,
                 spaceSavingsPercentage: totalSpaceSavingsPercentage,
-                protocol: storageProtocol ? storageProtocol.split(',') : []
+                protocol: storageProtocol ? storageProtocol.split(',') : [],
+                ...(isDemoFlow && { ...getMssqlStorageDataForDemo(totalUsed as number) })
             };
         }
         if (fsxwId && region && credentialsId) {
