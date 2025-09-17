@@ -66,7 +66,7 @@ const getActionName = (request: FastifyRequest) => {
         }
 
         case request.url.includes('/resiliency/aws-backup'): {
-            return 'Fix scheduled FSx for ONTAP backups parameters as per the best practice for the selected database instance.';
+            return 'Fix backup configuration parameters as per the best practice for the selected database instance.';
         }
         default:
     }

@@ -104,7 +104,15 @@ interface AWSBackupAssessment {
     fileSystemId: string;
     isAWSBackupEnabled: boolean;
     errorMessage?: string;
+    volumeBackupDetails: VolumeBackupDetail[];
 }
+
+interface VolumeBackupDetail {
+    uuid: string;
+    name: string;
+    isAWSBackupEnabled: boolean;
+}
+
 interface HighAvailabilityHeartbeatDetails {
     crossSiteDelay: number;
     sameSubnetDelay: number;

@@ -263,9 +263,9 @@ const GOLDEN_CONFIG = {
         awsBackup: {
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
             severity: SEVERITY.WARNING,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             recommendation:
-                'Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.'
+                'Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.'
         },
         heartbeatSettings: {
             SameSubnetDelay: 1000,

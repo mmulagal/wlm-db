@@ -71,19 +71,13 @@ function filterDataLogVolumes(instanceVolumeMapping: MappedOnTapVolumeResponse) 
     const nonTempDBVolumeUuids = [
         ...new Set(volumeDBMap.filter(volume => volume.databaseName !== 'tempdb').map(volume => volume.ontapVolumeuuid))
     ];
-    const dataLogVolumeUuids = [
-        ...new Set(
-            volumeRecords.filter(volume => nonTempDBVolumeUuids.includes(volume.uuid)).map(volume => volume.uuid)
-        )
-    ];
-    const dataLogVolumeNames = [
-        ...new Set(
-            volumeRecords
-                .filter(volume => dataLogVolumeUuids.includes(volume.uuid as string))
-                .map(volume => volume.name as string)
-        )
-    ];
-    return { dataLogVolumeUuids, dataLogVolumeNames };
+
+    const dataLogVolumeMap = new Map(
+        volumeRecords
+            .filter(volume => nonTempDBVolumeUuids.includes(volume.uuid))
+            .map(volume => [volume.uuid, volume.name])
+    );
+    return { dataLogVolumeMap };
 }
 
 function getVolumesWithoutSnapshotPolicy(volumes: Array<{ Key?: string; Value?: string }> = []) {
@@ -319,7 +313,10 @@ async function getSnapshotPolicyDriftData(
         // Check if mapped volumes data is available and filter out only data and log volumes
         let dataLogVolumeUuids: string[] = [];
         if (!isEmpty(mappedVolumesData)) {
-            ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumesData as unknown as MappedOnTapVolumeResponse));
+            const { dataLogVolumeMap } = filterDataLogVolumes(
+                mappedVolumesData as unknown as MappedOnTapVolumeResponse
+            );
+            dataLogVolumeUuids = Array.from(dataLogVolumeMap.keys());
         }
 
         snapshotPolicyAssessmentData.totalObjectsAssessed = dataLogVolumeUuids.length;
@@ -386,7 +383,7 @@ async function initiateAWSBackupAssessment(
         fsxFileSystem: fileSystemId
     } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobName = 'Scheduled FSx for ONTAP backup assessment';
+    const jobName = 'Backup configuration assessment';
     const jobDescription = `${jobName}`;
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
@@ -401,6 +398,7 @@ async function initiateAWSBackupAssessment(
     });
 
     let isAWSBackupEnabled = false;
+    const volumeBackupDetails = [];
     try {
         const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId, {
             useCache: true
@@ -413,9 +411,10 @@ async function initiateAWSBackupAssessment(
                 logger.error(errorMessage);
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
             }
-            const { dataLogVolumeUuids } = filterDataLogVolumes(
+            const { dataLogVolumeMap } = filterDataLogVolumes(
                 instanceVolumeMapping as unknown as MappedOnTapVolumeResponse
             );
+            const dataLogVolumeUuids = Array.from(dataLogVolumeMap.keys());
 
             const { volumeUuidsInBackups } =
                 (await isFsxnAwsBackupEnabled(
@@ -430,11 +429,17 @@ async function initiateAWSBackupAssessment(
 
             logger.debug('Is on-demand backup enabled:', volumeUuidsInBackups);
 
-            if (volumeUuidsInBackups && !isEmpty(volumeUuidsInBackups)) {
-                const backupVolumeSet = new Set(volumeUuidsInBackups);
-                const allUuidsMatch = [...volumeUuidsInBackups].every(uuid => backupVolumeSet.has(uuid));
-                isAWSBackupEnabled = allUuidsMatch;
-            }
+            const backupVolumeSet = new Set(volumeUuidsInBackups);
+            const allUuidsMatch = dataLogVolumeUuids.every(uuid => backupVolumeSet.has(uuid));
+            isAWSBackupEnabled = allUuidsMatch;
+
+            volumeBackupDetails.push(
+                ...dataLogVolumeUuids.map(uuid => ({
+                    name: dataLogVolumeMap.get(uuid),
+                    uuid,
+                    isAWSBackupEnabled: backupVolumeSet.has(uuid)
+                }))
+            );
         }
     } catch (error) {
         errorMessage = `Error while assessing Scheduled FSx for ONTAP backup: ${error}.`;
@@ -450,7 +455,7 @@ async function initiateAWSBackupAssessment(
                 database_instance_id: databaseInstanceId,
                 creation_time: new Date(Date.now()),
                 config_data_type: AssessmentCategories.AWS_BACKUP,
-                config_data: { fileSystemId, isAWSBackupEnabled, errorMessage }
+                config_data: { fileSystemId, isAWSBackupEnabled, errorMessage, volumeBackupDetails }
             }
         ]);
     }
@@ -483,18 +488,23 @@ async function getAwsBackupDriftData(
         return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
     }
 
-    const { fileSystemId, isAWSBackupEnabled, errorMessage } = awsBackupAssessmentData;
+    const { fileSystemId, isAWSBackupEnabled, errorMessage, volumeBackupDetails } = awsBackupAssessmentData;
     if (errorMessage) {
         return { errorMessage };
     }
+
+    const volumesWithoutBackup = volumeBackupDetails
+        ?.filter(volume => !volume.isAWSBackupEnabled)
+        .map(volume => ({ ontapVolumeUuid: volume.uuid, ontapVolumeName: volume.name }));
+
     const awsBackupAssesmentData: ParameterDriftResponseType = {
         ...storageGoldenConfigData.resiliency.awsBackup,
-        name: 'scheduled-fsx-for-ontap-backups',
+        name: 'backup-configuration',
         status: isAWSBackupEnabled ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-        totalObjectsInViolation: isAWSBackupEnabled ? 0 : 1,
+        totalObjectsInViolation: isAWSBackupEnabled ? 0 : volumesWithoutBackup.length || 1,
         recommended: 'aws-backup-enabled',
-        objectsInViolation: isAWSBackupEnabled ? [] : [fileSystemId],
-        totalObjectsAssessed: 1
+        objectsInViolation: isAWSBackupEnabled ? [] : volumesWithoutBackup || [fileSystemId],
+        totalObjectsAssessed: volumeBackupDetails.length || 1
     };
     return awsBackupAssesmentData;
 }
@@ -540,11 +550,11 @@ async function initiateCrossRegionResiliencyAssessment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessageText);
         }
 
-        const { dataLogVolumeUuids, dataLogVolumeNames } = filterDataLogVolumes(
+        const { dataLogVolumeMap } = filterDataLogVolumes(
             instanceVolumeMapping as unknown as MappedOnTapVolumeResponse
         );
-        instanceRecord.mappedVolumesUuids = dataLogVolumeUuids;
-        instanceRecord.mappedVolumeNames = dataLogVolumeNames;
+        instanceRecord.mappedVolumesUuids = Array.from(dataLogVolumeMap.keys());
+        instanceRecord.mappedVolumeNames = Array.from(dataLogVolumeMap.values());
 
         const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord)];
         const ssmComment = 'Get Cross Region Replication Assessment';
