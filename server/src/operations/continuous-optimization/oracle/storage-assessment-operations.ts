@@ -13,7 +13,12 @@ import { isDemo, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob } from '../../database/job-operations';
 import { VOLUME_LUN_CONFIGURATION } from '../../workloads/oracle/storage-assessment-scripts';
-import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
+import {
+    MAX_LUNS_PER_DG,
+    MIN_OPTIMAL_LUN_PER_DG,
+    SSM_RUN_SHELL_SCRIPT_DOC,
+    SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+} from '../../workloads/oracle/consts';
 import storageGoldenConfigData from './golden-config';
 import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
 import { StorageParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
@@ -81,11 +86,18 @@ function mapVolumeTypesToIdName(
         acc[type] = uniqBy(
             flattenedRecords
                 .filter(record => record.type === type)
-                .map(({ volume }) => ({ id: volume.volumeId, name: volume.volumeName })),
-            'id'
+                .map(({ volume }) => ({
+                    volumeId: volume.volumeId,
+                    volumeName: volume.volumeName,
+                    ...(volume.lunId && { lunId: volume.lunId }),
+                    ...(volume.lunName && { lunName: volume.lunName }),
+                    ...(volume.diskName && { diskName: volume.diskName }),
+                    ...(volume.diskGroup && { diskGroup: volume.diskGroup })
+                })),
+            'volumeId'
         );
         return acc;
-    }, {} as Record<OracleSysFileTypes, { id: string; name: string }[]>);
+    }, {} as Record<OracleSysFileTypes, OracleVolumeRecord[]>);
 }
 
 function createEmptyVolumeAssessment(configData: any, volumeType: string) {
@@ -95,8 +107,42 @@ function createEmptyVolumeAssessment(configData: any, volumeType: string) {
     };
 }
 
+function prepareASMLunLayoutAssessment(
+    goldenConfig: any,
+    lunMap: OracleVolumeRecord[],
+    minLunType: MIN_OPTIMAL_LUN_PER_DG,
+    diskGroupLabel: string
+) {
+    logger.info(`Drift assessment for ASM LUN layout of ${diskGroupLabel}`);
+    const luns = lunMap.reduce((acc, record) => {
+        if (!acc.some(lun => lun.lunId === record.lunId)) {
+            acc.push(record);
+        }
+        return acc;
+    }, [] as OracleVolumeRecord[]);
+
+    if (isEmpty(luns)) {
+        goldenConfig = createEmptyVolumeAssessment(goldenConfig, diskGroupLabel);
+    } else {
+        if (luns.length < minLunType || luns.length > MAX_LUNS_PER_DG) {
+            goldenConfig.status = AssessmentStatus.NOT_OPTIMIZED;
+            goldenConfig.objectsInViolation = luns.map(lun => lun.diskGroup);
+            goldenConfig.totalObjectsInViolation = luns.length;
+        } else {
+            goldenConfig.status = AssessmentStatus.OPTIMIZED;
+            goldenConfig.totalObjectsInViolation = 0;
+            goldenConfig.objectsInViolation = [];
+        }
+
+        // remove duplicates
+        goldenConfig.totalObjectsAssessed = uniqBy(luns, 'diskGroup').length;
+        goldenConfig.objectsInViolation = [...new Set(goldenConfig.objectsInViolation)];
+    }
+    return goldenConfig;
+}
+
 function getVolumeConfigDrift(
-    volumeTypeMap: Record<OracleSysFileTypes, { id: string; name: string }[]>,
+    volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
     storageAssessmentData: StorageAssessment
 ) {
     logger.info('Fetching volume configuration drift');
@@ -137,14 +183,14 @@ function getVolumeConfigDrift(
     };
 
     const controlDataFileVolumeIds = [
-        ...dataFileVolumes.map(volume => volume.id),
-        ...controlFileVolumes.map(volume => volume.id)
+        ...dataFileVolumes.map(volume => volume.volumeId),
+        ...controlFileVolumes.map(volume => volume.volumeId)
     ];
     const redoLogsTempLogsVolumeIds = [
-        ...redoLogVolumes.map(volume => volume.id),
-        ...tempFileVolumes.map(volume => volume.id)
+        ...redoLogVolumes.map(volume => volume.volumeId),
+        ...tempFileVolumes.map(volume => volume.volumeId)
     ];
-    const archiveLogVolumeIds = [...archiveLogVolumes.map(volume => volume.id)];
+    const archiveLogVolumeIds = [...archiveLogVolumes.map(volume => volume.volumeId)];
     const isIn = (list: string[], id: string) => list.includes(id);
 
     return volumeConfigData.map(config => {
@@ -295,7 +341,7 @@ function getLunConfigDrift(storageAssessmentData: StorageAssessment) {
 }
 
 function getVolumeLayoutDrift(
-    volumeTypeMap: Record<OracleSysFileTypes, { id: string; name: string }[]>,
+    volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
     storageAssessmentData: StorageAssessment
 ) {
     logger.info('Fetching volume layout drift');
@@ -322,8 +368,8 @@ function getVolumeLayoutDrift(
                 archiveLogVolumes.filter(archiveVolume =>
                     [controlFileVolumes, dataFileVolumes, redoLogVolumes, tempFileVolumes]
                         .flat()
-                        .map(volume => volume.id)
-                        .includes(archiveVolume.id)
+                        .map(volume => volume.volumeId)
+                        .includes(archiveVolume.volumeId)
                 )
             )
         ];
@@ -332,7 +378,9 @@ function getVolumeLayoutDrift(
             ...storageGoldenConfigData.archivePlacement,
             status,
             objectsInViolation:
-                status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.map(conflict => conflict.name) : [],
+                status === AssessmentStatus.NOT_OPTIMIZED
+                    ? archiveLogConflicts.map(conflict => conflict.volumeName)
+                    : [],
             totalObjectsAssessed: archiveLogVolumes.length,
             totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.length : 0
         });
@@ -347,8 +395,8 @@ function getVolumeLayoutDrift(
                 dataFileVolumes.filter(dataVolume =>
                     [...redoLogVolumes, ...archiveLogVolumes, ...tempFileVolumes]
                         .flat()
-                        .map(volume => volume.id)
-                        .includes(dataVolume.id)
+                        .map(volume => volume.volumeId)
+                        .includes(dataVolume.volumeId)
                 )
             )
         ];
@@ -357,7 +405,7 @@ function getVolumeLayoutDrift(
             ...storageGoldenConfigData.datafilesPlacement,
             status,
             objectsInViolation:
-                status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.map(conflict => conflict.name) : [],
+                status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.map(conflict => conflict.volumeName) : [],
             totalObjectsAssessed: dataFileVolumes.length,
             totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.length : 0
         });
@@ -374,7 +422,7 @@ function getVolumeLayoutDrift(
         const controlFileConflicts = [
             ...new Set(
                 controlFileVolumes.filter(controlVolume =>
-                    archiveLogVolumes.map(volume => volume.id).includes(controlVolume.id)
+                    archiveLogVolumes.map(volume => volume.volumeId).includes(controlVolume.volumeId)
                 )
             )
         ];
@@ -387,9 +435,9 @@ function getVolumeLayoutDrift(
             ...storageGoldenConfigData.controlfilesPlacement,
             status,
             objectsInViolation: hasConflicts
-                ? controlFileConflicts.map(conflict => conflict.name)
+                ? controlFileConflicts.map(conflict => conflict.volumeName)
                 : insufficientMultiplexing
-                ? controlFileVolumes.map(volume => volume.name)
+                ? controlFileVolumes.map(volume => volume.volumeName)
                 : [],
             totalObjectsAssessed: controlFileVolumes.length,
             totalObjectsInViolation: hasConflicts
@@ -407,7 +455,9 @@ function getVolumeLayoutDrift(
         const redoFileConflicts = [
             ...new Set(
                 redoLogVolumes.filter(redoVolume =>
-                    [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.id).includes(redoVolume.id)
+                    [...dataFileVolumes, ...archiveLogVolumes]
+                        .map(volume => volume.volumeId)
+                        .includes(redoVolume.volumeId)
                 )
             )
         ];
@@ -419,9 +469,9 @@ function getVolumeLayoutDrift(
             ...storageGoldenConfigData.redologsPlacement,
             status,
             objectsInViolation: hasConflicts
-                ? redoFileConflicts.map(conflict => conflict.name)
+                ? redoFileConflicts.map(conflict => conflict.volumeName)
                 : insufficientMultiplexing
-                ? redoLogVolumes.map(volume => volume.name)
+                ? redoLogVolumes.map(volume => volume.volumeName)
                 : [],
             totalObjectsAssessed: redoLogVolumes.length,
             totalObjectsInViolation: hasConflicts
@@ -439,7 +489,9 @@ function getVolumeLayoutDrift(
         const tempFileConflicts = [
             ...new Set(
                 tempFileVolumes.filter(tempVolume =>
-                    [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.id).includes(tempVolume.id)
+                    [...dataFileVolumes, ...archiveLogVolumes]
+                        .map(volume => volume.volumeId)
+                        .includes(tempVolume.volumeId)
                 )
             )
         ];
@@ -447,7 +499,8 @@ function getVolumeLayoutDrift(
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.templogsPlacement,
             status,
-            objectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.map(conflict => conflict.name) : [],
+            objectsInViolation:
+                tempFileConflicts.length > 0 ? tempFileConflicts.map(conflict => conflict.volumeName) : [],
             totalObjectsAssessed: tempFileVolumes.length,
             totalObjectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.length : 0
         });
@@ -461,7 +514,7 @@ function getVolumeLayoutDrift(
         const binaryVolumeConflicts = binaryVolumeIds.filter(binaryVolumeId =>
             [controlFileVolumes, dataFileVolumes, redoLogVolumes, archiveLogVolumes, tempFileVolumes]
                 .flat()
-                .map(volume => volume.id)
+                .map(volume => volume.volumeId)
                 .includes(binaryVolumeId)
         );
         status = binaryVolumeConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
@@ -475,6 +528,57 @@ function getVolumeLayoutDrift(
     }
 
     return volumeLayoutDrift;
+}
+
+function getLunLayoutDrift(
+    volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
+    storageAssessmentData: StorageAssessment
+) {
+    logger.info('Fetching LUN layout drift');
+    const {
+        DATA_FILES: dataFileLuns,
+        REDO_LOGS: redoLogLuns,
+        ARCHIVE_LOGS: archiveLogLuns,
+        FRA: fraLuns
+    } = volumeTypeMap;
+    const { fraEnabled } = storageAssessmentData;
+    const result = [];
+    result.push(
+        prepareASMLunLayoutAssessment(
+            storageGoldenConfigData.dataDiskLunLayout,
+            dataFileLuns,
+            MIN_OPTIMAL_LUN_PER_DG.DATA,
+            'data disk group'
+        )
+    );
+    result.push(
+        prepareASMLunLayoutAssessment(
+            storageGoldenConfigData.redoLogDiskLunLayout,
+            redoLogLuns,
+            MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
+            'redo log disk group'
+        )
+    );
+    if (fraEnabled === 'yes') {
+        result.push(
+            prepareASMLunLayoutAssessment(
+                storageGoldenConfigData.fraDiskLunLayout,
+                fraLuns,
+                MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
+                'fra disk group'
+            )
+        );
+    } else {
+        result.push(
+            prepareASMLunLayoutAssessment(
+                storageGoldenConfigData.archivelogDiskLunLayout,
+                archiveLogLuns,
+                MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
+                'archive log disk group'
+            )
+        );
+    }
+    return result;
 }
 
 function calculateStorageDrift(
@@ -509,8 +613,12 @@ function calculateStorageDrift(
     storageDriftData.configuration.volumes = getVolumeConfigDrift(volumeTypeMap, storageAssessmentData);
 
     const protocol = mappedOntapVolumes[fsxFileSystemId]?.protocol;
+    const isASMManaged = mappedOntapVolumes[fsxFileSystemId]?.isASMManaged;
     if (protocol === 'iSCSI') {
         storageDriftData.configuration.luns = getLunConfigDrift(storageAssessmentData);
+        if (isASMManaged) {
+            storageDriftData.layout.push(...getLunLayoutDrift(volumeTypeMap, storageAssessmentData));
+        }
     }
 
     return storageDriftData;

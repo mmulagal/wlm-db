@@ -1,6 +1,12 @@
 const SSM_RUN_SHELL_SCRIPT_DOC = 'AWS-RunShellScript';
 const SSM_RUN_SHELL_SCRIPT_DOC_VERSION = '1';
 const ORACLE_DEFAULT_PDB = 'PDB$SEED';
+const MAX_LUNS_PER_DG = 8;
+
+enum MIN_OPTIMAL_LUN_PER_DG {
+    DATA = 4,
+    LOG_RECOVERY = 2
+}
 
 enum OracleDeployment {
     STANDALONE = 'standalone',
@@ -25,5 +31,7 @@ export {
     OracleDeployment,
     OracleDeploymentTenacy,
     OracleSysFileTypes,
-    ORACLE_DEFAULT_PDB
+    ORACLE_DEFAULT_PDB,
+    MIN_OPTIMAL_LUN_PER_DG,
+    MAX_LUNS_PER_DG
 };

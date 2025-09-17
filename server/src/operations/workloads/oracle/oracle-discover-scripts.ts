@@ -115,6 +115,10 @@ const loadStorageDetectionModules = `
                     NVL((SELECT LISTAGG('"' || data_dir || '"', ', ') WITHIN GROUP (ORDER BY data_dir)
                         FROM (SELECT DISTINCT SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1) AS data_dir 
                             FROM dba_data_files WHERE file_name $matching '+%')), '') || 
+                '],' || CHR(10) ||
+                '   "FRA": [' || 
+                        NVL((SELECT LISTAGG('"' || fra_dir || '"', ', ') WITHIN GROUP (ORDER BY fra_dir)
+                            FROM (SELECT DISTINCT name as fra_dir FROM v\\$RECOVERY_FILE_DEST)), '') || 
                 ']' || CHR(10) ||
                 '}'
             AS json_output
@@ -161,7 +165,7 @@ EOF
             SELECT d.name
             FROM v\\$asm_disk d
             JOIN v\\$asm_diskgroup g ON d.group_number = g.group_number
-            WHERE g.name = '$diskgroupName' AND ROWNUM = 1;
+            WHERE g.name = '$diskgroupName';
 EOF
 }
 
@@ -288,7 +292,7 @@ EOF
                 fi
                 
                 # Get first disk from the disk group, all disks in a diskgroup must follow same protocol & storage type. 
-                diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup")
+                diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup" | head -n 1)
                 if [ -n "$diskName" ]; then
                     
                     result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details $diskName)
@@ -511,7 +515,7 @@ EOF
         # Get Oracle DB file paths
         db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO")
         oracleMountDetails="{"
-        for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+        for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
             paths=$(echo "$db_paths_json" | jq -r ".$fileType[]" 2>/dev/null)
             paths_csv=$(echo "$paths" | tr '\n' ',' | sed 's/,$//')
             
@@ -539,32 +543,32 @@ EOF
         # Get Oracle DB file paths
         db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES")
         oracleMountDetails="{"
-        for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+        for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
             diskgroups_csv=$(jq -r --arg ft "$fileType" '.[$ft][]? | split("/") | .[0] | ltrimstr("+")' <<< "$db_paths_json" | sort -u | paste -sd ',' -)
 
             mountDetails="["
-            # Get mount details for these diskgroups
             if [ -n "$diskgroups_csv" ]; then
                 for diskGroup in $(echo "$diskgroups_csv" | tr ',' ' '); do
-                    
-                    # Get first disk from the disk group, all disks in a diskgroup must follow same protocol & storage type. 
-                    diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup")
-                    if [ -n "$diskName" ]; then
-                        result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details $diskName)
-                        if [ $? -ne 0 ]; then
-                            continue
-                        fi
-                        mountIP=$(echo "$result" | cut -d',' -f1)
-                        mountPoint=$(echo "$result" | cut -d',' -f2)
-                        protocol=$(echo "$result" | cut -d',' -f3)
+                    diskNames=$(get_disk_details "$ORACLE_SID" "$diskGroup")
+                    if [ -n "$diskNames" ]; then
+                        while IFS= read -r diskName; do
+                            [ -z "$diskName" ] && continue
+                            result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details "$diskName")
+                            if [ $? -ne 0 ]; then
+                                continue
+                            fi
+                            mountIP=$(echo "$result" | cut -d',' -f1)
+                            mountPoint=$(echo "$result" | cut -d',' -f2)
+                            protocol=$(echo "$result" | cut -d',' -f3)
 
-                        json_obj="{\\"isAsmManaged\\":\\"true\\", \\"mountIP\\":\\"$mountIP\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                            json_obj="{\\"isAsmManaged\\":\\"true\\", \\"mountIP\\":\\"$mountIP\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"diskName\\":\\"$diskName\\", \\"diskGroup\\":\\"$diskGroup\\"}"
 
-                        if [ "$mountDetails" == "[" ]; then
-                            mountDetails+="$json_obj"
-                        else
-                            mountDetails+=", $json_obj"
-                        fi
+                            if [ "$mountDetails" == "[" ]; then
+                                mountDetails+="$json_obj"
+                            else
+                                mountDetails+=", $json_obj"
+                            fi
+                        done <<< "$diskNames"
                     fi
                 done
                 mountDetails+="]"
@@ -1308,6 +1312,8 @@ const getMappedOntapDataVolumeForInstance = (
         local volumeEntry
         local lunExists
         local lunRecord
+        local diskName
+        local diskGroup
 
         
         if [ -z "$protocol" ]; then
@@ -1316,6 +1322,8 @@ const getMappedOntapDataVolumeForInstance = (
         
         if [ "$isAsm" == "true" ]; then
             isASMManaged="true"
+            diskName=$(echo "$mountDetail" | jq -r '.diskName')
+            diskGroup=$(echo "$mountDetail" | jq -r '.diskGroup')
         fi
 
         ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
@@ -1338,6 +1346,11 @@ const getMappedOntapDataVolumeForInstance = (
             volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\",\\"svmId\\": \\"$svmId\\"}"
         fi
         
+        if [ "$isASMManaged" == "true" ]; then
+            volumeEntry=$(echo "$volumeEntry" | jq --arg diskName "$diskName" '. + {diskName: $diskName}')
+            volumeEntry=$(echo "$volumeEntry" | jq --arg diskGroup "$diskGroup" '. + {diskGroup: $diskGroup}')
+        fi
+        
         fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
         echo "$fileTypeVolumes"
     }
@@ -1355,7 +1368,7 @@ const getMappedOntapDataVolumeForInstance = (
         if [ "$isCDB" == "false" ]; then
             # Single tenant instance
             ontapVolumes='{}'
-            for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+            for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
                 fileTypeVolumes="[]"
                 mountDetails=$(echo "$sidData" | jq -c --arg ft "$fileType" '.mountDetails[$ft] // []')
                 # Check if mountDetails is empty
@@ -1385,7 +1398,7 @@ const getMappedOntapDataVolumeForInstance = (
             for pdb in $(echo "$sidData" | jq -r '.pdbMountDetails | keys[]'); do
                 pdbOntapVolumes='{}'
                 
-                for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES"; do
+                for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
                     fileTypeVolumes="[]"
                     mountDetails=$(echo "$sidData" | jq -c --arg pdb "$pdb" --arg ft "$fileType" '.pdbMountDetails[$pdb][$ft] // []')
                     

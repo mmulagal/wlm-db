@@ -12,22 +12,26 @@ interface MountPointDetails {
     mountIP?: string;
     mountPoint?: string;
     protocol?: string;
+    diskName?: string;
 }
 enum OracleSysFileTypes {
     REDO_LOGS = 'REDO_LOGS',
     ARCHIVE_LOGS = 'ARCHIVE_LOGS',
     DATA_FILES = 'DATA_FILES',
     TEMP_FILES = 'TEMP_FILES',
-    CONTROL_FILES = 'CONTROL_FILES'
+    CONTROL_FILES = 'CONTROL_FILES',
+    FRA = 'FRA'
 }
 
 interface OracleVolumeRecord {
     volumeId: string;
     volumeName: string;
-    svmUuid: string;
-    svmName: string;
-    lunName: string;
-    lunId: string;
+    svmUuid?: string;
+    svmName?: string;
+    lunName?: string;
+    lunId?: string;
+    diskName?: string;
+    diskGroup?: string;
 }
 interface OracleMappedOntapVolumeRecord {
     isCDB?: boolean;

@@ -10,7 +10,10 @@ import {
     fetchOracleDriftAssessmentPerHost,
     onDemandTriggerOracleDriftAssessment
 } from '../../../../src/operations/continuous-optimization/oracle/assessment-operations';
-import { AssessmentTriggeredBy } from '../../../../src/utils/continous-optimization-consts';
+import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../../src/utils/continous-optimization-consts';
+import { oracleAssessmentMetadata, storageAssessmnetMetadata, oracleInstanceMappedVolMetadata } from './oracle-assessment-metadata';
+import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
+import { StorageParameterDriftResponseType } from '../../../../src/routes/types/mssql-continuous-optimisation.types';
 
 const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
 const region = DEFAULT_AWS_REGION;
@@ -46,10 +49,36 @@ beforeAll(async () => {
         sqlDeploymentType: 'Standalone',
         fsxSvmId: { [fsxNId]: 'svm-0123456789abcdef0' },
         fsxnIds: fsxNId,
-        databaseType: 'Oracle'
+        databaseType: 'Oracle',
+        metadata: oracleAssessmentMetadata
     };
 
     await upsertDatabaseInstance(ACCOUNT_ID, DATABASE_INSTANCE_RECORD);
+
+    const DatabaseInstanceStorageConfigData = {
+        account_id: ACCOUNT_ID,
+        credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+        region: DEFAULT_AWS_REGION,
+        resource_id: '6cbdabbfe3fb147e',
+        database_instance_id: dbInstanceSid,
+        creation_time: new Date(),
+        last_updated: new Date(),
+        config_data: storageAssessmnetMetadata,
+        config_data_type: AssessmentCategoriesOracle.STORAGE
+    };
+
+    const DatabaseInstanceMappedVolConfigData = {
+        account_id: ACCOUNT_ID,
+        credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+        region: DEFAULT_AWS_REGION,
+        resource_id: '6cbdabbfe3fb147e',
+        database_instance_id: dbInstanceSid,
+        creation_time: new Date(),
+        last_updated: new Date(),
+        config_data: oracleInstanceMappedVolMetadata,
+        config_data_type: AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES
+    };
+    await createDatabaseInstanceConfigData([DatabaseInstanceStorageConfigData, DatabaseInstanceMappedVolConfigData]);
 });
 
 afterAll(async () => {
@@ -74,11 +103,13 @@ describe('Oracle assessment operations', () => {
             region,
             '6cbdabbfe3fb147e',
             dbInstanceSid,
-            AssessmentTriggeredBy.SYSTEM
+            'storage'
         );
         expect(assessmentData).toBeDefined();
         expect(assessmentData.fileSystemId).toBe('fs-0f53fbecdd3d85fb2');
         expect(assessmentData.ec2InstanceId).toBe(node1InstanceId);
+        expect((assessmentData.storage as StorageParameterDriftResponseType)?.configuration?.volumes.length).toBeGreaterThan(0);
+        expect((assessmentData.storage as StorageParameterDriftResponseType)?.layout?.length).toBeGreaterThan(0);
     });
     it('should return drift assessment data at host level', async () => {
         const assessmentData = await fetchOracleDriftAssessmentPerHost(
