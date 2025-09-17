@@ -513,7 +513,7 @@ EOF
         local pdbName="$3"
         
         # Get Oracle DB file paths
-        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO")
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO" | tr -d '\n' | tr -d ' ')
         oracleMountDetails="{"
         for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
             paths=$(echo "$db_paths_json" | jq -r ".$fileType[]" 2>/dev/null)
@@ -541,7 +541,7 @@ EOF
         local pdbName="$3"
 
         # Get Oracle DB file paths
-        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES")
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES" | tr -d '\n' | tr -d ' ')
         oracleMountDetails="{"
         for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
             diskgroups_csv=$(jq -r --arg ft "$fileType" '.[$ft][]? | split("/") | .[0] | ltrimstr("+")' <<< "$db_paths_json" | sort -u | paste -sd ',' -)
