@@ -348,6 +348,40 @@ get_data_directories_without_creds() {
 EOF
 }
 
+get_multipath_device_info() {
+    local device="$1"
+    local dev_name=$(basename "$device")
+    
+    # Get multipath information
+    local multipath_info=$(sudo multipath -ll "$dev_name" 2>/dev/null)
+    echo "$multipath_info"
+}
+
+get_multipath_mount_details() {
+    local device="$1"
+    local multipath_info=$(get_multipath_device_info "$device")
+    local underlying_devices=$(echo "$multipath_info" | grep -oE 'sd[a-z]+' | sort -u)
+    
+    # Try each device until we find one with valid mount information
+    for dev in $underlying_devices; do
+        local path_device="/dev/$dev"
+        local udevInfo=$(udevadm info --query=all --name=$path_device 2>/dev/null)
+        
+        if [ -n "$udevInfo" ]; then
+            # Look for disk/by-path information
+            local mountDevice=$(echo "$udevInfo" | grep "disk/by-path" | grep "ip-" | head -n1 | awk '{print $2}')
+            
+            if [ -n "$mountDevice" ]; then
+                local mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
+                local iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
+                local protocol="iSCSI"
+                echo "$mountIp,$iscsiSerialNumber,$protocol"
+                return 0
+            fi
+        fi
+    done
+}
+
         get_directory_mount_details() {
         dataDirectory="$1"
         dataDirectories=$(echo "$dataDirectory" | tr ',' '\n' | sort -u)
@@ -368,19 +402,32 @@ EOF
 
                 if [ -n "$source" ]; then
                     if [[ "$fstype" != nfs* ]]; then
-                        udevInfo=$(udevadm info --query=all --name=$source)
-                        mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
-                        mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
-                        iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
-                        mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
-                        if echo "$mountPoint" | grep -q "iscsi"; then
-                            protocol="iSCSI"
-                        else
-                            protocol="others"
-                        fi
+                        # Check if it's a multipath device
+                        if echo "$source" | grep -q "^/dev/mapper/" || echo "$source" | grep -q "^/dev/dm-"; then
+                            # Multipath device - use first available underlying device
+                            multipathMountPointDetails=$(get_multipath_mount_details "$source")
 
-                        mountPoint=$iscsiSerialNumber
-                        jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                            mountIp=$(echo "$multipathMountPointDetails" | cut -d',' -f1)
+                            iscsiSerialNumber=$(echo "$multipathMountPointDetails" | cut -d',' -f2)
+                            protocol=$(echo "$multipathMountPointDetails" | cut -d',' -f3)
+                            mountPoint="$iscsiSerialNumber"
+                            jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                            
+                        else
+                            udevInfo=$(udevadm info --query=all --name=$source)
+                            mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
+                            mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
+                            iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
+                            mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
+                            if echo "$mountPoint" | grep -q "iscsi"; then
+                                protocol="iSCSI"
+                            else
+                                protocol="others"
+                            fi
+
+                            mountPoint=$iscsiSerialNumber
+                            jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                        fi
                     elif [[ "$fstype" == nfs* ]]; then
                         dns_name=$(echo "$source" | cut -d':' -f1)
                         mountPoint=$(echo "$source" | cut -d':' -f2-)
