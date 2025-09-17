@@ -328,9 +328,10 @@ async function invokeMarketingApi(
             ]
         }) as ManualModeMarketingRequestBody;
 
-        const { ebsTotal, instanceEbs, fsx, single, multi, fsx_optimized, fsx_optimized_single } =
+        const { ebsTotal, instanceEbs, fsx, single, multi } =
             await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(accountId, marketingRequestBody);
 
+        const { fsx_optimized, fsx_optimized_single } = generateOptimizedValuesForDemo(fsx, single ?? multi);
         return {
             ebs: ebsTotal,
             ebsClassification: instanceEbs[0],
@@ -1168,6 +1169,32 @@ async function formatManualStorageSavingsCalculationMetrics(
         fsxwSnapshotCalculation
     };
 }
+
+function generateOptimizedValuesForDemo(fsx: StorageSummary, fsxCalculations: FsxCostCalculations) {
+    // Optimization rate - 5%
+    // throughput and iops are reduced by OPT_RATE percent
+    const OPT_RATE = 5;
+    const fsx_optimized = {
+        ...fsx,
+        iops: Number(fsx.iops ?? 0) * (1 - OPT_RATE / 100),
+        throughput: Number(fsx.throughput ?? 0) * (1 - OPT_RATE / 100),
+        total: Number(fsx.total ?? 0) * (1 - OPT_RATE / 100)
+    };
+    const fsx_optimized_single = {
+        ...fsxCalculations,
+        fsx_calculation: {
+            ...fsxCalculations.fsx_calculation,
+            throughput: Number(fsxCalculations?.fsx_calculation?.throughput ?? 0) * (1 - OPT_RATE / 100),
+            ssdIop: Number(fsxCalculations?.fsx_calculation?.ssdIop ?? 0) * (1 - OPT_RATE / 100)
+        }
+    };
+
+    return {
+        fsx_optimized,
+        fsx_optimized_single
+    };
+}
+
 export {
     invokeMarketingApi,
     handleMarketingApiFsxCalculationObject,
