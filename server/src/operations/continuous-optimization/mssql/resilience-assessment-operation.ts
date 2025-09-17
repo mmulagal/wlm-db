@@ -442,7 +442,7 @@ async function initiateAWSBackupAssessment(
             );
         }
     } catch (error) {
-        errorMessage = `Error while assessing Scheduled FSx for ONTAP backup: ${error}.`;
+        errorMessage = `Error while assessing backup configuration: ${error}.`;
         logger.error(errorMessage);
         jobStatus = JOBSTATUS.FAILED;
     } finally {
@@ -501,10 +501,10 @@ async function getAwsBackupDriftData(
         ...storageGoldenConfigData.resiliency.awsBackup,
         name: 'backup-configuration',
         status: isAWSBackupEnabled ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-        totalObjectsInViolation: isAWSBackupEnabled ? 0 : volumesWithoutBackup.length || 1,
+        totalObjectsInViolation: isAWSBackupEnabled ? 0 : volumesWithoutBackup?.length || 1,
         recommended: 'aws-backup-enabled',
         objectsInViolation: isAWSBackupEnabled ? [] : volumesWithoutBackup || [fileSystemId],
-        totalObjectsAssessed: volumeBackupDetails.length || 1
+        totalObjectsAssessed: volumeBackupDetails?.length || 1
     };
     return awsBackupAssesmentData;
 }
