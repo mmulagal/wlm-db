@@ -848,7 +848,7 @@ export const GETWELL_CONFIG: any = {
     'mssql-patch': 'microsoft_sql_patch',
     maxdop: 'maxdop',
     'snapshot-policy': 'scheduled_local_snapshot',
-    'aws-backup-policy': 'scheduled_fsx_for_ontap_backups',
+    'scheduled-fsx-for-ontap-backups': 'scheduled_fsx_for_ontap_backups',
     crr: 'crr',
     mssqlhighavailability: 'mssql_high_availability',
     'shared-storage': 'Shared storage',
