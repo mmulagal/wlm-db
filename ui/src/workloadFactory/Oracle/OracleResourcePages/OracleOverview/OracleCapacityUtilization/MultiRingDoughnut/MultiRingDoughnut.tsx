@@ -35,9 +35,9 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading }: MRDProps) => {
                 },
                 {
                     data: [
-                        byteToGiB(data?.ssd),
-                        byteToGiB(data?.capacityPool),
-                        byteToGiB(data?.physicalUsed) - (byteToGiB(data?.ssd) + byteToGiB(data?.capacityPool))
+                        byteToGiB(data?.ssdUsed),
+                        byteToGiB(data?.capacityPoolUsed),
+                        byteToGiB(data?.physicalUsed) - (byteToGiB(data?.ssdUsed) + byteToGiB(data?.capacityPoolUsed))
                     ],
                     backgroundColor: ['#0BAFFC', '#A815F3', '#FFF']
                 }

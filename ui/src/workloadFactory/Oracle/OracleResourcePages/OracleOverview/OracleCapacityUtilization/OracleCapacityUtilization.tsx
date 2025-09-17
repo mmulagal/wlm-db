@@ -45,7 +45,7 @@ const OracleCapacityUtilization = ({ resourceDetails, resourceLoading }: OCUProp
                         {resourceLoading && <DsFlashingDotsLoader />}
                         {!resourceLoading && (
                             <DsTypography variant="Semibold_14">
-                                {byteToGiB(data?.ssd)} {t('databases.oracle-inner-page.gib')}
+                                {byteToGiB(data?.ssdUsed)} {t('databases.oracle-inner-page.gib')}
                             </DsTypography>
                         )}
                         <div className={styles.itemBottom}>
@@ -62,7 +62,7 @@ const OracleCapacityUtilization = ({ resourceDetails, resourceLoading }: OCUProp
                         {resourceLoading && <DsFlashingDotsLoader />}
                         {!resourceLoading && (
                             <DsTypography variant="Semibold_14">
-                                {byteToGiB(data?.capacityPool)} {t('databases.oracle-inner-page.gib')}
+                                {byteToGiB(data?.capacityPoolUsed)} {t('databases.oracle-inner-page.gib')}
                             </DsTypography>
                         )}
                         <div className={styles.itemBottom}>
