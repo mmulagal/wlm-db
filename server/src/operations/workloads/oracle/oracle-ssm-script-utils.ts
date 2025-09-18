@@ -1110,53 +1110,114 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
 
     resultObject=$(echo "$resultObject" | jq --argjson permissions "$(echo "$missingOracleUserPermissions" | jq '.')" '.missingOracleUserPermissions += [$permissions]')
 `;
-
-const GET_ORACLE_SERVER_DETAILS = (oracleSid: string, ec2InstanceId: string) => `
-# Get Oracle server details
-${getOracleDefaultOrUserAuthCommand(ec2InstanceId, oracleSid)}
-isDefaultAuth=$(is_default_auth ${oracleSid})
-
-prettyName=$(grep PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
-osName=$(grep ^NAME= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
-osVersion=$(grep ^VERSION= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
-
-# Execute all SQL queries in a single connection
-sqlResults=$(sudo -i -u oracle bash <<EOF 2>/dev/null
-export ORACLE_SID="$oracleSid"
-$sqlplus_command <<'EOSQL'
-SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
-SELECT REGEXP_SUBSTR(BANNER, '(Standard|Enterprise) Edition') AS edition, 
-    REGEXP_SUBSTR(BANNER, '[0-9]{2}c') AS version 
-FROM v\\$version 
-WHERE BANNER LIKE 'Oracle%';
-SELECT COUNT(*) FROM v\\$session WHERE status = 'ACTIVE';
-SELECT to_char(created, 'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') FROM v\\$database;
-EXIT
+const isASMManagedCheck = `
+    check_asm_managed() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command <<'EOSQL'
+            SET HEADING OFF;
+            SET FEEDBACK OFF;
+            SET VERIFY OFF;
+            SET PAGESIZE 0;
+            SELECT CASE 
+                    WHEN COUNT(*) > 0 THEN 'TRUE'
+                    ELSE 'FALSE'
+                END
+            FROM dba_data_files
+            WHERE file_name LIKE '+%';
+            EXIT;
 EOSQL
 EOF
-)
+}
 
-serverEdition=$(echo "$sqlResults" | sed -n '1p' | xargs 2>/dev/null || echo "")
-serverVersion=$(echo "$sqlResults" | sed -n '2p' | xargs 2>/dev/null || echo "")
-activeConnections=$(echo "$sqlResults" | sed -n '4p' | xargs 2>/dev/null || echo "0")
-creationDate=$(echo "$sqlResults" | sed -n '5p' | xargs 2>/dev/null || echo "")
-activeNode=$ec2InstanceId
+    is_setup_asm_managed() {
+        if pgrep -lf '^asm_pmon_+' >/dev/null 2>&1 ; then
+            echo "true"
+        else
+            echo "false"
+        fi
+    }
+`;
 
-if ! [[ "$activeConnections" =~ ^[0-9]+$ ]]; then
-    activeConnections="0"
-fi
+const isStorageASMmanaged = (dbSid: string) => `
+    ${isASMManagedCheck}
+    isASMManaged='false'
+    if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
+        if [[ "$(check_asm_managed "${dbSid}"  | tr -d '\n' | tr -d ' ')" == "TRUE" ]]; then
+            isASMManaged='true'
+        else
+            isASMManaged='false'
+        fi
+    else
+        if [[ "$is_setup_asm_managed" == "true" ]]; then  
+            isASMManaged='true'
+        else
+            isASMManaged='false'
+        fi
+    fi
+`;
 
-jq -n     --arg prettyName "$prettyName"     --arg name "$osName"     --arg version "$osVersion"     --arg serverEdition "$serverEdition"     --arg serverVersion "$serverVersion"     --arg activeNode "$activeNode"     --arg activeConnections "$activeConnections"     --arg creationDate "$creationDate"     '{
-    prettyName: $prettyName,
-    name: $name,
-    version: $version,
-    serverEdition: $serverEdition,
-    serverVersion: $serverVersion,
-    activeNode: $activeNode,
-    nodeNames: $activeNode,
-    activeConnections: ($activeConnections | tonumber),
-    creationDate: $creationDate
-}'
+const GET_ORACLE_SERVER_DETAILS = (oracleSids: string[], ec2InstanceId: string) => `
+oracleSids=(${oracleSids.map(sid => `"${sid}"`).join(' ')})
+ec2InstanceId="${ec2InstanceId}"
+resultObject="{}"
+for oracleSid in "\${oracleSids[@]}"; do
+    # Get Oracle server details
+${getOracleDefaultOrUserAuthCommand('$ec2InstanceId', '$oracleSid')}
+${isStorageASMmanaged('$oracleSid')}
+    isDefaultAuth=$(is_default_auth "$oracleSid")
+
+    prettyName=$(grep PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
+    osName=$(grep ^NAME= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
+    osVersion=$(grep ^VERSION= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
+
+    # Execute all SQL queries in a single connection
+    sqlResults=$(sudo -i -u oracle bash <<EOF 2>/dev/null
+    export ORACLE_SID="$oracleSid"
+    $sqlplus_command <<'EOSQL'
+    SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+    SELECT REGEXP_SUBSTR(BANNER, '(Standard|Enterprise) Edition') AS edition, 
+        REGEXP_SUBSTR(BANNER, '[0-9]{2}c') AS version 
+    FROM v\\$version 
+    WHERE BANNER LIKE 'Oracle%';
+    SELECT COUNT(*) FROM v\\$session WHERE status = 'ACTIVE';
+    SELECT to_char(created, 'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') FROM v\\$database;
+    EXIT
+EOSQL
+EOF
+    )
+
+    serverEdition=$(echo "$sqlResults" | sed -n '1p' | xargs 2>/dev/null || echo "")
+    serverVersion=$(echo "$sqlResults" | sed -n '2p' | xargs 2>/dev/null || echo "")
+    activeConnections=$(echo "$sqlResults" | sed -n '4p' | xargs 2>/dev/null || echo "0")
+    creationDate=$(echo "$sqlResults" | sed -n '5p' | xargs 2>/dev/null || echo "")
+    activeNode=$ec2InstanceId
+
+    if ! [[ "$activeConnections" =~ ^[0-9]+$ ]]; then
+        activeConnections="0"
+    fi
+    sidResponse=$(jq -n     --arg prettyName "$prettyName"     --arg name "$osName"     --arg version "$osVersion"     --arg serverEdition "$serverEdition"     --arg serverVersion "$serverVersion"     --arg activeNode "$activeNode"     --arg activeConnections "$activeConnections"     --arg creationDate "$creationDate"    --arg isASMManaged "$isASMManaged" '{
+        prettyName: $prettyName,
+        name: $name,
+        version: $version,
+        serverEdition: $serverEdition,
+        serverVersion: $serverVersion,
+        activeNode: $activeNode,
+        nodeNames: $activeNode,
+        activeConnections: ($activeConnections | tonumber),
+        creationDate: $creationDate,
+        isASMManaged: $isASMManaged
+    }')
+
+    if [ $? -eq 0 ]; then
+        resultObject=$(echo "$resultObject" | jq --arg key "$oracleSid" --argjson val "$sidResponse" '. + {($key): $val}')
+    else
+        echo "Error processing SID $oracleSid"
+    fi
+
+done
+echo "$resultObject"
 `;
 
 const getFsxCredentials = `
@@ -1426,5 +1487,7 @@ export {
     ontapRestApiScript,
     logFileCheck,
     getOracleHomePath,
-    oracleStorageInfoFromOntap
+    oracleStorageInfoFromOntap,
+    isASMManagedCheck,
+    isStorageASMmanaged
 };

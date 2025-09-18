@@ -3843,7 +3843,7 @@
                     "space": {
                         "size": 21223178240,
                         "used": 16949751808,
-                        "capacity_tier_footprint": 0,
+                        "capacity_tier_footprint": 4611809,
                         "performance_tier_footprint": 127311872,
                         "physical_used": 153726976,
                         "snapshot": {
@@ -3857,7 +3857,7 @@
                     "space": {
                         "size": 21223178240,
                         "used": 16124792832,
-                        "capacity_tier_footprint": 0,
+                        "capacity_tier_footprint": 86821109,
                         "performance_tier_footprint": 4002406400,
                         "physical_used": 2894036992,
                         "snapshot": {
@@ -3871,7 +3871,7 @@
                     "space": {
                         "size": 21223178240,
                         "used": 16930557952,
-                        "capacity_tier_footprint": 0,
+                        "capacity_tier_footprint": 6930677,
                         "performance_tier_footprint": 213917696,
                         "physical_used": 231022592,
                         "snapshot": {

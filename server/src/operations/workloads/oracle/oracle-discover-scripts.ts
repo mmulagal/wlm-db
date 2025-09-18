@@ -4,36 +4,9 @@ import {
     getOracleDefaultOrUserAuthCommand,
     getOracleHomePath,
     loadOracleUserPermissionsDetectionModule,
-    oracleUserAuthLoginCommand
+    oracleUserAuthLoginCommand,
+    isASMManagedCheck
 } from './oracle-ssm-script-utils';
-
-const isASMManagedCheck = `
-    check_asm_managed() {
-        local ORACLE_SID="$1"
-        sudo -i -u oracle bash <<EOF
-            export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command <<'EOSQL'
-            SET HEADING OFF;
-            SET FEEDBACK OFF;
-            SET VERIFY OFF;
-            SET PAGESIZE 0;
-            SELECT CASE 
-                    WHEN COUNT(*) > 0 THEN 'TRUE'
-                    ELSE 'FALSE'
-                END
-            FROM dba_data_files
-            WHERE file_name LIKE '+%';
-            EXIT;
-EOSQL
-EOF
-}
-`;
-
-const isStorageASMmanaged = (dbSid: string, ec2InstanceId: string) => `
-    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
-    ${isASMManagedCheck}
-    echo $(check_asm_managed "${dbSid}")  | tr -d '\n' | tr -d ' ';
-`;
 
 const loadStorageDetectionModules = `
 
@@ -292,7 +265,7 @@ EOF
                 fi
                 
                 # Get first disk from the disk group, all disks in a diskgroup must follow same protocol & storage type. 
-                diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup" | head -n 1)
+                diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup" | head -n 2 | tail -n 1)
                 if [ -n "$diskName" ]; then
                     
                     result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details $diskName)
@@ -1490,8 +1463,6 @@ const getMappedOntapDataVolumeForInstance = (
 `;
 
 export {
-    isASMManagedCheck,
-    isStorageASMmanaged,
     discoverOracleHosts,
     getStorageDetailsForRegisteredInstances,
     fetchOracleDatabasesCount,

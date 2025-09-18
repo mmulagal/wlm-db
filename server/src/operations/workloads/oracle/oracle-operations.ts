@@ -45,8 +45,7 @@ import {
     fetchOracleDatabasesCount,
     fetchOracleDatabasesDetails,
     getMappedOntapDataVolumeForInstance,
-    getStorageDetailsForRegisteredInstances,
-    isStorageASMmanaged
+    getStorageDetailsForRegisteredInstances
 } from './oracle-discover-scripts';
 import { getSqlInstanceUtilizationAndPerformance } from '../../aws/cloud-watch-operations';
 import { listResources } from '../../../lib/database/db';
@@ -64,41 +63,6 @@ import { PDB_DETAILS } from '../../../utils/demo-utils/demoInventoryData';
 const logger = getLogger();
 const isDemoFlow = isDemo();
 
-async function checkASMmanagedStorage(
-    accountId: string,
-    credentialId: string,
-    region: string,
-    nodeId: string,
-    oracleSid: string
-) {
-    logger.info('Checking if storage is ASM managed', { accountId, credentialId, region, nodeId, oracleSid });
-    try {
-        const command = isStorageASMmanaged(oracleSid, nodeId);
-        const comment = 'Check if storage is ASM managed';
-        const response = await callSsmExecution(
-            credentialId,
-            region,
-            [command],
-            nodeId,
-            comment,
-            accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
-        if (response) {
-            return response === 'TRUE';
-        }
-        const errorMessage = `Error checking if storage is ASM managed from host: ${nodeId}, ${response}`;
-        throw createError(errorMessage);
-    } catch (err) {
-        const errorMessage = `Error checking if storage is ASM managed: ${err}, ${credentialId}, ${region}`;
-        logger.error(errorMessage);
-        throw createError(errorMessage);
-    }
-}
 type ontapStorageSummary = {
     size: number;
     used: number;
@@ -113,13 +77,13 @@ async function getOracleInstanceDetails(
     credentialId: string,
     region: string,
     node1InstanceId: string,
-    options: { fetchServerDetails?: boolean; oracleSid?: string } = { fetchServerDetails: false, oracleSid: '' }
+    options: { fetchServerDetails?: boolean; oracleSids?: string[] } = { fetchServerDetails: false, oracleSids: [] }
 ) {
     logger.info('Fetching Oracle instance details', { accountId, credentialId, region, node1InstanceId });
-    const { fetchServerDetails = false, oracleSid = '' } = options;
+    const { fetchServerDetails = false, oracleSids = [] } = options;
     const ssmResponse = await getOracleInstanceInfo(accountId, credentialId, region, [node1InstanceId], {
         fetchServerDetails,
-        oracleSid
+        oracleSids
     });
     const [parsedResponse, activeNodeDetails] = parseMultipleCommandResponse(ssmResponse || '[]');
 
@@ -153,13 +117,13 @@ async function getOracleInstanceInfo(
     credentialsId: string,
     region: string,
     nodeIds: string[],
-    options: { fetchServerDetails?: boolean; oracleSid?: string } = { fetchServerDetails: false, oracleSid: '' }
+    options: { fetchServerDetails?: boolean; oracleSids: string[] } = { fetchServerDetails: false, oracleSids: [] }
 ) {
     logger.info('Fetching oracle instance info', { accountId, nodeIds });
-    const { fetchServerDetails = false, oracleSid = '' } = options;
+    const { fetchServerDetails = false, oracleSids } = options;
     const commands = [getOracleInstanceData(nodeIds[0])];
     if (fetchServerDetails) {
-        commands.push(GET_ORACLE_SERVER_DETAILS(oracleSid, nodeIds[0]));
+        commands.push(GET_ORACLE_SERVER_DETAILS(oracleSids, nodeIds[0]));
     }
     const comment = 'oracle instance info';
     let response;
@@ -172,7 +136,7 @@ async function getOracleInstanceInfo(
                 nodeId,
                 comment,
                 accountId,
-                undefined,
+                false,
                 undefined,
                 undefined,
                 SSM_RUN_SHELL_SCRIPT_DOC,
@@ -650,8 +614,12 @@ async function getOracleDatabaseInstancesSummary(
     const getDbNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
 
     // Run getOracleStorageInfoFromOntap concurrently with databaseInstances.map
-    const [storageInfoFromOntap, results] = await Promise.all([
+    const [storageInfoFromOntap, hostInfo, results] = await Promise.all([
         getStorage ? getOracleStorageInfoFromOntap(activeNodeInstanceId, databaseInstances) : Promise.resolve(),
+        getOracleInstanceDetails(accountId, credentialsId, region, activeNodeInstanceId, {
+            fetchServerDetails: true,
+            oracleSids: databaseInstances.map(db => db.database_instance_id)
+        }),
         Promise.all(
             databaseInstances.map(async databaseInstance => {
                 let performanceData: any;
@@ -662,7 +630,6 @@ async function getOracleDatabaseInstancesSummary(
                 let resourceTrendsData: any;
                 let storage: any;
                 let nodeTopology: any;
-                let activeNodeDetails: any;
                 let isASMManaged: boolean = false;
                 const errormessages: { [index: string]: string } = {};
                 const dbInstanceSid = databaseInstance.database_instance_name; // In Oracle database instance name is same as sid
@@ -683,32 +650,21 @@ async function getOracleDatabaseInstancesSummary(
                 let pdbNames: string[] = [];
 
                 // Get the storage & mount point details for registered Oracle database instances
-                if (!mountPointDetails) {
-                    if (getProtectionStatus || getDatabasesWithProtection || isDemoFlow) {
-                        const storageDetails = await getRegisteredOracleInstanceStorageDetails(
-                            accountId,
-                            credentialsId,
-                            region,
-                            activeNodeInstanceId,
-                            databaseInstance.fsxn_ids,
-                            dbInstanceSid
-                        );
-                        if (storageDetails) {
-                            mountPointDetails = storageDetails.mountPointDetails;
-                            isCDB = storageDetails.isCDB;
-                            pdbNames = storageDetails.pdbNames;
-                            isASMManaged = storageDetails?.mountPointDetails?.some(
-                                (m: MountPointDetails) => m.isAsmManaged
-                            );
-                        }
-                    } else {
-                        isASMManaged = await checkASMmanagedStorage(
-                            accountId,
-                            credentialsId,
-                            region,
-                            activeNodeInstanceId,
-                            dbInstanceSid
-                        );
+                if (!mountPointDetails && (getProtectionStatus || getDatabasesWithProtection || isDemoFlow)) {
+                    const storageDetails = await getRegisteredOracleInstanceStorageDetails(
+                        accountId,
+                        credentialsId,
+                        region,
+                        activeNodeInstanceId,
+                        databaseInstance.fsxn_ids,
+                        dbInstanceSid
+                    );
+                    if (storageDetails) {
+                        mountPointDetails = storageDetails.mountPointDetails;
+                        isCDB = storageDetails.isCDB;
+                        pdbNames = storageDetails.pdbNames;
+                        isASMManaged =
+                            storageDetails?.mountPointDetails?.some((m: MountPointDetails) => m.isAsmManaged) ?? false;
                     }
                 }
 
@@ -721,8 +677,7 @@ async function getOracleDatabaseInstancesSummary(
                         databases,
                         resourceTrendsData,
                         storage,
-                        nodeTopology,
-                        { activeNodeDetails }
+                        nodeTopology
                     ] = await Promise.all(
                         [
                             ...(shouldQueryDatabaseTopology
@@ -810,13 +765,7 @@ async function getOracleDatabaseInstancesSummary(
                                           standbyNodeInstanceId
                                       )
                                   ]
-                                : [Promise.resolve()]),
-                            ...[
-                                getOracleInstanceDetails(accountId, credentialsId, region, activeNodeInstanceId, {
-                                    fetchServerDetails: true,
-                                    oracleSid: databaseInstance.database_instance_name
-                                })
-                            ]
+                                : [Promise.resolve()])
                         ].map((p, index) =>
                             p.catch(error => {
                                 if (ORACLE_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
@@ -930,25 +879,6 @@ async function getOracleDatabaseInstancesSummary(
                         'activeDirectoryDetails'
                     ]) as NodeTopologyResponseType;
                 }
-
-                if (activeNodeDetails) {
-                    if (getOracleHostSummary) {
-                        databaseInstanceDetails.databaseServer = {
-                            operatingSystem:
-                                activeNodeDetails?.prettyName ??
-                                `${activeNodeDetails?.name} ${activeNodeDetails?.version}`,
-                            serverEdition: `Oracle ${activeNodeDetails?.serverEdition}`,
-                            serverVersion: activeNodeDetails?.serverVersion,
-                            activeNode: activeNodeDetails?.activeNode,
-                            nodeNames: [activeNodeDetails?.nodeNames],
-                            activeConnections: activeNodeDetails?.activeConnections,
-                            creationDate: activeNodeDetails?.creationDate
-                        };
-                    } else {
-                        databaseInstanceDetails.platform =
-                            activeNodeDetails?.prettyName ?? `${activeNodeDetails?.name} ${activeNodeDetails?.version}`;
-                    }
-                }
                 databaseInstanceDetails.isInstanceStorageAsmManaged = isASMManaged;
                 return databaseInstanceDetails;
             })
@@ -968,6 +898,30 @@ async function getOracleDatabaseInstancesSummary(
                     }
                 }
             };
+        });
+    }
+    if (hostInfo && !isEmpty(hostInfo)) {
+        const { activeNodeDetails } = hostInfo;
+        results.forEach(result => {
+            if (result.databaseInstanceId && Object.keys(activeNodeDetails).includes(result.databaseInstanceId)) {
+                const nodeDetails = activeNodeDetails[result.databaseInstanceId];
+                if (nodeDetails) {
+                    if (getOracleHostSummary) {
+                        result.databaseServer = {
+                            operatingSystem: nodeDetails?.prettyName ?? `${nodeDetails?.name} ${nodeDetails?.version}`,
+                            serverEdition: `Oracle ${nodeDetails?.serverEdition}`,
+                            serverVersion: nodeDetails?.serverVersion,
+                            activeNode: nodeDetails?.activeNode,
+                            nodeNames: [nodeDetails?.nodeNames],
+                            activeConnections: nodeDetails?.activeConnections,
+                            creationDate: nodeDetails?.creationDate
+                        };
+                    } else {
+                        result.platform = nodeDetails?.prettyName ?? `${nodeDetails?.name} ${nodeDetails?.version}`;
+                    }
+                    result.isInstanceStorageAsmManaged = nodeDetails?.isASMManaged === 'true';
+                }
+            }
         });
     }
 
