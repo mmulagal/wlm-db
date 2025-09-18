@@ -21,8 +21,10 @@ const WellArchitectTabs = () => {
         let isBedRockAvailable = true;
         if (
             regionMapping &&
-            'bedrockAvailable' in regionMapping?.[selectedGwInstanceRegionId] &&
-            !regionMapping?.[selectedGwInstanceRegionId]?.bedrockAvailable
+            selectedGwInstanceRegionId &&
+            regionMapping.hasOwnProperty(selectedGwInstanceRegionId) &&
+            regionMapping[selectedGwInstanceRegionId]?.hasOwnProperty('bedrockAvailable') &&
+            !regionMapping[selectedGwInstanceRegionId]?.bedrockAvailable
         ) {
             isBedRockAvailable = false;
         }

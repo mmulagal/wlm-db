@@ -729,8 +729,10 @@ const InstancesTable = () => {
                 let isBedRockAvailable = true;
                 if (
                     regionMapping &&
-                    'bedrockAvailable' in regionMapping?.[rowData?.regionId] &&
-                    !regionMapping?.[rowData?.regionId]?.bedrockAvailable
+                    rowData?.regionId &&
+                    regionMapping.hasOwnProperty(rowData?.regionId) &&
+                    regionMapping[rowData?.regionId]?.hasOwnProperty('bedrockAvailable') &&
+                    !regionMapping[rowData?.regionId]?.bedrockAvailable
                 ) {
                     isBedRockAvailable = false;
                 }
