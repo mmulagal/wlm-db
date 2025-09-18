@@ -126,7 +126,7 @@ function prepareASMLunLayoutAssessment(
     } else {
         if (luns.length < minLunType || luns.length > MAX_LUNS_PER_DG) {
             goldenConfig.status = AssessmentStatus.NOT_OPTIMIZED;
-            goldenConfig.objectsInViolation = luns.map(lun => lun.diskGroup);
+            goldenConfig.objectsInViolation = luns.map(lun => lun.diskGroup).filter(diskGroup => diskGroup != null);
             goldenConfig.totalObjectsInViolation = luns.length;
         } else {
             goldenConfig.status = AssessmentStatus.OPTIMIZED;
