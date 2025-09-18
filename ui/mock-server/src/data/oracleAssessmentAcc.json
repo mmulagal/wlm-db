@@ -659,6 +659,39 @@
                             },
                             "layout": [
                                 {
+                                    "name": "data-dg-lun-layout",
+                                    "status": "not-optimized",
+                                    "recommended": "associated-lun-count",
+                                    "severity": "warning",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.",
+                                    "tags": ["Operational excellence", "Performance efficiency"],
+                                    "objectsInViolation": ["test"],
+                                    "totalObjectsAssessed": 1,
+                                    "totalObjectsInViolation": 1
+                                },
+                                {
+                                    "name": "log-dg-lun-layout",
+                                    "status": "not-optimized",
+                                    "recommended": "associated-lun-count",
+                                    "severity": "warning",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.",
+                                    "tags": ["Operational excellence", "Performance efficiency"],
+                                    "objectsInViolation": ["test"],
+                                    "totalObjectsAssessed": 1,
+                                    "totalObjectsInViolation": 1
+                                },
+                                {
+                                    "name": "fra-dg-lun-layout",
+                                    "status": "not-optimized",
+                                    "recommended": "associated-lun-count",
+                                    "severity": "warning",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
+                                    "tags": ["Operational excellence", "Performance efficiency"],
+                                    "objectsInViolation": ["test"],
+                                    "totalObjectsAssessed": 1,
+                                    "totalObjectsInViolation": 1
+                                },
+                                {
                                     "name": "archive-placement",
                                     "status": "not-optimized",
                                     "recommended": "separate-volume",
@@ -730,7 +763,7 @@
                         "fileSystemId": "fs-0d5efc3057c4f12cb",
                         "ec2InstanceId": "i-05fbc9747d558cf12",
                         "databaseInstanceName": "pdb21cnas1",
-                        "deploymentType": "Standalone"
+                        "isASMManaged": true
                     }
                 }
             ]
@@ -1393,6 +1426,39 @@
                             },
                             "layout": [
                                 {
+                                    "name": "data-dg-lun-layout",
+                                    "status": "not-optimized",
+                                    "recommended": "associated-lun-count",
+                                    "severity": "warning",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.",
+                                    "tags": ["Operational excellence", "Performance efficiency"],
+                                    "objectsInViolation": ["test"],
+                                    "totalObjectsAssessed": 1,
+                                    "totalObjectsInViolation": 1
+                                },
+                                {
+                                    "name": "log-dg-lun-layout",
+                                    "status": "not-optimized",
+                                    "recommended": "associated-lun-count",
+                                    "severity": "warning",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.",
+                                    "tags": ["Operational excellence", "Performance efficiency"],
+                                    "objectsInViolation": ["test"],
+                                    "totalObjectsAssessed": 1,
+                                    "totalObjectsInViolation": 1
+                                },
+                                {
+                                    "name": "fra-dg-lun-layout",
+                                    "status": "not-optimized",
+                                    "recommended": "associated-lun-count",
+                                    "severity": "warning",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
+                                    "tags": ["Operational excellence", "Performance efficiency"],
+                                    "objectsInViolation": ["test"],
+                                    "totalObjectsAssessed": 1,
+                                    "totalObjectsInViolation": 1
+                                },
+                                {
                                     "name": "archive-placement",
                                     "status": "not-optimized",
                                     "recommended": "separate-volume",
@@ -1464,7 +1530,7 @@
                         "fileSystemId": "fs-0d5efc3057c4f12cb",
                         "ec2InstanceId": "i-05fbc9747d558cf12",
                         "databaseInstanceName": "pdb21cnas1",
-                        "deploymentType": "Standalone"
+                        "isASMManaged": true
                     }
                 }
             ]

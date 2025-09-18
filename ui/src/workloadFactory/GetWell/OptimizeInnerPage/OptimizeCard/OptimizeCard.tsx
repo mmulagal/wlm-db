@@ -53,6 +53,16 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText },
                     data: data?.recommendation
                 };
+            case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+                return {
+                    block_one: { type: 'Impacted disk groups', value: data.impactedCount || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
+                    data: data?.recommendation
+                };
             // Below are storage config
             case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
             case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:

@@ -209,6 +209,38 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagCompone
                         }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+                case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        },
+                        { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+                case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+                case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        }
+                    ]);
+                    break;
                 default:
                     setTagData([{ label: t('databases.well-architect.tags.noTagsAvailable'), value: '' }]);
             }

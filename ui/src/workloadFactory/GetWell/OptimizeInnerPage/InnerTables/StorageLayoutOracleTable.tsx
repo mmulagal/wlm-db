@@ -9,6 +9,7 @@ import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 
 // This component is used in GetWell -> Optimize page -> Inner drawer -> Storage Layout section for Oracle workloads
 const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
@@ -17,8 +18,31 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
 
-    const [colName, setColName] = useState('Volume name');
-    const [tableHeader, setTableHeader] = useState('Volume');
+    const [colName, setColName] = useState(t('databases.well-architect.volume-name'));
+    const [tableHeader, setTableHeader] = useState(t('databases.well-architect.volume'));
+
+    useEffect(() => {
+        switch (type) {
+            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+                setColName(t('databases.well-architect.volume-name'));
+                setTableHeader(t('databases.well-architect.volume'));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+                setColName(t('databases.well-architect.disk-group-name'));
+                setTableHeader(t('databases.well-architect.disk-group'));
+                break;
+            default:
+                setColName(t('databases.well-architect.volume-name'));
+                setTableHeader(t('databases.well-architect.volume'));
+        }
+    }, [type]);
 
     const tableData = useMemo(() => {
         let id = 0;

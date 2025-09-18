@@ -1,10 +1,12 @@
 import { DsAccordion, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 import OracleCardComponent from '../OracleCardComponent/OracleCardComponent';
 import Tag from '../../../../../common/Tag/Tag';
 import RecommendationText from '../../../../GetWell/RecommendationText/RecommendationText';
 import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
+import { useAppSelector } from '../../../../../store/storeHooks';
 
 const StorageLayoutSection = ({
     styles,
@@ -17,6 +19,11 @@ const StorageLayoutSection = ({
     oracleCardData
 }: any) => {
     const { t } = useTranslation();
+
+    const { cardData } = useAppSelector(state => state.getWellOptimize);
+
+    const isASMManaged = useMemo(() => cardData?.isASMManaged, [cardData]);
+
     return (
         <div>
             <div className={styles['header-buttons']}>
@@ -275,6 +282,126 @@ const StorageLayoutSection = ({
                                 </div>
                             ]}
                             children={<RecommendationText data={oracleCardData?.archive_placement?.recommendation} />}
+                        />
+                    </div>
+                )}
+
+                {oracleCardData?.data_dg_lun_layout && isASMManaged && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.data_dg_lun_layout} />
+                        <DsAccordion
+                            id="7"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('7', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('7', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('7')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.data_dg_lun_layout?.tags?.map((perTag: string, index: number) => (
+                                        <div key={index}>
+                                            <Tag text={perTag} />
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={<RecommendationText data={oracleCardData?.data_dg_lun_layout?.recommendation} />}
+                        />
+                    </div>
+                )}
+
+                {oracleCardData?.log_dg_lun_layout && isASMManaged && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.log_dg_lun_layout} />
+                        <DsAccordion
+                            id="8"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('8', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('8', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('8')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.log_dg_lun_layout?.tags?.map((perTag: string, index: number) => (
+                                        <div key={index}>
+                                            <Tag text={perTag} />
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={<RecommendationText data={oracleCardData?.log_dg_lun_layout?.recommendation} />}
+                        />
+                    </div>
+                )}
+
+                {oracleCardData?.fra_dg_lun_layout && isASMManaged && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.fra_dg_lun_layout} />
+                        <DsAccordion
+                            id="9"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('9', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('9', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('9')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.fra_dg_lun_layout?.tags?.map((perTag: string, index: number) => (
+                                        <div key={index}>
+                                            <Tag text={perTag} />
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={<RecommendationText data={oracleCardData?.fra_dg_lun_layout?.recommendation} />}
                         />
                     </div>
                 )}

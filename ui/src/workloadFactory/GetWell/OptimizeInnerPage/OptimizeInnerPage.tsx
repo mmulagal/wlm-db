@@ -143,7 +143,14 @@ const OptimizeInnerPage = () => {
                     tagSection: '304px'
                 });
                 break;
-
+            case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+                setCardHeight({
+                    recommendationSection: '134px',
+                    tagSection: '230px'
+                });
+                break;
             // MSSQL Assessment
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
@@ -307,7 +314,10 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
         ) {
             // Oracle storage layout assessment
             return (
@@ -686,6 +696,9 @@ const OptimizeInnerPage = () => {
             case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
             case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
             case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
                 return (
                     <StorageLayoutOracleTable
                         type={selectedOptimizeConfig?.type}

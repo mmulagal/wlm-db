@@ -9,7 +9,6 @@ import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
-import StorageConfigurationOSSection from './Categories/StorageConfigurationOSSection';
 
 const OracleWellArchitectDashboard = () => {
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -81,7 +80,10 @@ const OracleWellArchitectDashboard = () => {
                         filteredCardData?.archive_placement ||
                         filteredCardData?.datafiles_placement ||
                         filteredCardData?.controlfiles_placement ||
-                        filteredCardData?.oracle_binary_placement) && (
+                        filteredCardData?.oracle_binary_placement ||
+                        filteredCardData?.data_dg_lun_layout ||
+                        filteredCardData?.log_dg_lun_layout ||
+                        filteredCardData?.fra_dg_lun_layout) && (
                         <div className={styles.sectionTwo}>
                             <div className={styles.sectionClass}>
                                 <StorageLayoutSection

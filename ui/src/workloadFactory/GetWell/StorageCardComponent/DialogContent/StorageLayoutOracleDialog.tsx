@@ -1,7 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
-import { createActionOptionSection, createSection } from './DialogContentHelper';
+import {
+    createActionOptionSection,
+    createSection,
+    createStandardDialog,
+    createStandardNotesSection
+} from './DialogContentHelper';
 
 const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
     const { t } = useTranslation();
@@ -147,6 +152,30 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                             t('databases.well-architect.oracle-binary-optimization-step9')
                         ])}
                     </>
+                );
+            case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-data-dg-lun-layout-action-summary'),
+                    t('databases.well-architect.oracle-data-dg-lun-layout-what-will-happen'),
+                    createStandardNotesSection(),
+                    ''
+                );
+            case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-log-dg-lun-layout-action-summary'),
+                    t('databases.well-architect.oracle-log-dg-lun-layout-what-will-happen'),
+                    createStandardNotesSection(),
+                    ''
+                );
+            case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-fra-dg-lun-layout-action-summary'),
+                    t('databases.well-architect.oracle-fra-dg-lun-layout-what-will-happen'),
+                    createStandardNotesSection(),
+                    ''
                 );
         }
     };

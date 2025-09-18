@@ -57,7 +57,7 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading }: MRDProps) => {
         // Only create chart when data is available
         const chartData = buildChartData();
         if (chartData) {
-            //@ts-ignore
+            // @ts-ignore
             const myDoughnut = new Chart(ref.current, {
                 type: 'doughnut',
                 data: chartData,
@@ -87,7 +87,7 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading }: MRDProps) => {
 
                 <DsTypography variant="Regular_14">{t('databases.oracle-inner-page.total-size')}</DsTypography>
             </div>
-            {!resourceLoading && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
+            {!resourceLoading && <canvas ref={ref} id="chart-area" width={184} height={184} />}
             {resourceLoading && <div className={styles.emptyCircle} />}
         </div>
     );

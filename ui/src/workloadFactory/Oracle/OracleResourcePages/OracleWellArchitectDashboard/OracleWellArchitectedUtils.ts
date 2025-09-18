@@ -24,11 +24,11 @@ import {
 import { isOptimized } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
 // Factory function for creating base block structure
-const createBaseBlocks = () => ({
+const createBaseBlocks = (tags: Array<string>, resourceType: string) => ({
     block_two: { type: 'Status', value: '' },
     block_four: { type: 'Severity', value: '' },
-    block_five: { type: 'Resource type', value: 'Volume' },
-    tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization']
+    block_five: { type: 'Resource type', value: resourceType },
+    tags
 });
 
 // Factory function for creating storage layout cards
@@ -37,6 +37,8 @@ const createStorageLayoutCard = (
     configName: string,
     title: string,
     description: string,
+    tags: Array<string>,
+    resourceType: string,
     blockSixType: string,
     smallFont: boolean = false
 ) => ({
@@ -47,7 +49,7 @@ const createStorageLayoutCard = (
         value: configName,
         type: 'Storage layout'
     },
-    ...createBaseBlocks(),
+    ...createBaseBlocks(tags, resourceType),
     block_six: {
         type: blockSixType,
         value: '',
@@ -64,6 +66,9 @@ interface CardConfig {
     id: string;
     configName: string;
     title: string;
+    resourceImpact: string;
+    resourceType: string;
+    tags: Array<string>;
     description: string;
     smallFont?: boolean;
 }
@@ -74,6 +79,9 @@ const cardConfigurations: Record<string, CardConfig> = {
         id: 'redologs-placement',
         configName: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
         title: 'Redo Logs Placement Recommendation',
+        resourceImpact: 'Impacted volumes',
+        resourceType: 'Volume',
+        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
             "Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storage's slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.",
         smallFont: true
@@ -82,6 +90,9 @@ const cardConfigurations: Record<string, CardConfig> = {
         id: 'templogs-placement',
         configName: ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
         title: 'Temp Placement Recommendation',
+        resourceImpact: 'Impacted volumes',
+        resourceType: 'Volume',
+        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
             "Placing temp files on a dedicated volume or with redo/control files isolates their high-write I/O from data files, improving performance. Temp tablespaces change frequently but don't require restoration, so it's best to avoid placing them on snapshotted volumes, such as data volumes, to prevent bloated snapshots. Temp files must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates can degrade database performance.",
         smallFont: true
@@ -90,6 +101,9 @@ const cardConfigurations: Record<string, CardConfig> = {
         id: 'archive-placement',
         configName: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
         title: 'Archive Placement Recommendation',
+        resourceImpact: 'Impacted volumes',
+        resourceType: 'Volume',
+        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
             'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting\nthe performance of redo logs, data files, or control files.',
         smallFont: true
@@ -98,6 +112,9 @@ const cardConfigurations: Record<string, CardConfig> = {
         id: 'datafiles-placement',
         configName: ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
         title: 'Data Files Placement Recommendation',
+        resourceImpact: 'Impacted volumes',
+        resourceType: 'Volume',
+        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
             'Placing data files on a dedicated volume or shared with control files boosts performance by isolating their random I/O from redo or archive log writes, reducing contention. This separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.'
     },
@@ -105,6 +122,9 @@ const cardConfigurations: Record<string, CardConfig> = {
         id: 'controlfiles-placement',
         configName: ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
         title: 'Control Files Placement Recommendation',
+        resourceImpact: 'Impacted volumes',
+        resourceType: 'Volume',
+        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
             'Oracle strongly recommends multiplexing control files to avoid a single point of failure in production environments. Maintain at least two, preferably three, control file copies across separate volumes or disks to enhance redundancy and reduce the risk of losing all copies. Control files can be placed on a dedicated volume or shared with redo logs or data files, but avoid placing them on volumes tiered to object storage, such as archive volumes, as its slower access pattern is incompatible with control file performance needs.'
     },
@@ -112,8 +132,41 @@ const cardConfigurations: Record<string, CardConfig> = {
         id: 'oracle-binary-placement',
         configName: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
         title: 'Oracle Binary Placement Recommendation',
+        resourceImpact: 'Impacted volumes',
+        resourceType: 'Volume',
+        tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
             'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files.\nThis separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.'
+    },
+    data_dg_lun_layout: {
+        id: 'data-dg-lun-layout',
+        configName: ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
+        title: 'DATA ASM Disk Group LUNs layout recommendation',
+        resourceImpact: 'Impacted disk groups',
+        resourceType: 'Disk group',
+        tags: ['Performance efficiency', 'Operational excellence'],
+        description:
+            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.\nIt is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.'
+    },
+    log_dg_lun_layout: {
+        id: 'log-dg-lun-layout',
+        configName: ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
+        title: 'LOGS ASM Disk Group LUNs layout recommendation',
+        resourceImpact: 'Impacted disk groups',
+        resourceType: 'Disk group',
+        tags: ['Performance efficiency', 'Operational excellence'],
+        description:
+            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.\nIt is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.'
+    },
+    fra_dg_lun_layout: {
+        id: 'fra-dg-lun-layout',
+        configName: ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
+        title: 'FRA ASM diskgroup LUNs layout recommendation',
+        resourceImpact: 'Impacted disk groups',
+        resourceType: 'Disk group',
+        tags: ['Performance efficiency', 'Operational excellence'],
+        description:
+            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.\nIt is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.'
     }
 };
 
@@ -127,7 +180,9 @@ const generateStorageLayoutCards = () => {
             config.configName,
             config.title,
             config.description,
-            'Impacted volumes',
+            config.tags,
+            config.resourceType,
+            config.resourceImpact,
             config.smallFont || false
         );
     });
@@ -191,7 +246,8 @@ export const oracleCardData: any = {
         },
 
         tags: ['Reliability', 'Operational excellence', 'Performance efficiency', 'Security']
-    }
+    },
+    isASMManaged: false
 };
 
 // Helper functions for card formatting
@@ -204,7 +260,10 @@ const isPlacementConfig = (itemName: string): boolean =>
         'archive_placement',
         'datafiles_placement',
         'controlfiles_placement',
-        'oracle_binary_placement'
+        'oracle_binary_placement',
+        'data_dg_lun_layout',
+        'log_dg_lun_layout',
+        'fra_dg_lun_layout'
     ].includes(itemName);
 
 const calculateBlockValues = (item: PerConfigInterface, itemName: string, categoryVal: string) => {
@@ -513,7 +572,7 @@ export const getOracleCardsData = (data: AssessmentResponseInterface, optimizing
 
     const cardsData = {
         ...formatIndividualCardMainConfig(data, optimizingData),
-        deploymentType: data?.deploymentType || '',
+        isASMManaged: data?.isASMManaged || false,
         ontap_configuration: createOntapConfigurationBlock(
             ontapOptimizedConfig,
             ontapNotOptimizedConfig,
@@ -562,8 +621,23 @@ export const formatOracleOptimizationBreakDown = (cardsData: Record<string, any>
         percent: 0
     };
 
+    const state = store.getState();
+    const { isInstanceStorageAsmManaged } = state.getWellOptimize.innerPageDetails;
+
     Object.values(cardsData).forEach((cardItem: any) => {
+        if (cardItem === 'isASMManaged' || cardItem === 'deploymentType') {
+            return; // Skip isASMManaged and deploymentType as they are not cards
+        }
         if (cardItem?.category !== 'storage') return;
+
+        if (
+            !cardsData?.isASMManaged &&
+            (cardItem?.id === 'data-dg-lun-layout' ||
+                cardItem?.id === 'log-dg-lun-layout' ||
+                cardItem?.id === 'fra-dg-lun-layout')
+        ) {
+            return;
+        }
 
         const { isDismissed, isOptimized, isCritical, isWarning } = processStorageCardItem(cardItem);
 
@@ -639,8 +713,8 @@ export const oracleApplyFilter = (cardData: any, optimizeFilterTags: any) => {
     };
 
     Object.keys(cardData)?.forEach((key: any) => {
-        if (key === 'deploymentType') {
-            return; // Skip deploymentType as it is not a card
+        if (key === 'deploymentType' || key === 'isASMManaged') {
+            return; // Skip deploymentType and isASMManaged as they are not cards
         }
 
         const checkCategory =

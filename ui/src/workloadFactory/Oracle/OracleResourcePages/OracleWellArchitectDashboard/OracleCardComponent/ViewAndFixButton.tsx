@@ -33,13 +33,38 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
             type === ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT ||
             type === ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT ||
             type === ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT
+            type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
         ) {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
             dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.ORACLE }));
         } else {
             handleDialog(setDialog, cardData?.block_one?.value, () => {}, closeDialog, cardData, '', {}, DBType.ORACLE);
         }
+    };
+
+    const viewButtonText = () => {
+        const type = cardData?.block_one?.value;
+        if (
+            type === ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT
+        ) {
+            return t('databases.oracle-inner-page.view');
+        }
+        if (
+            type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+        ) {
+            return t('databases.oracle-inner-page.view-and-fix');
+        }
+        return t('databases.oracle-inner-page.view');
     };
 
     return (
@@ -53,7 +78,7 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
                             isDisabled={loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED}
                             onClick={() => handleDifferentNavigation()}
                         >
-                            {t('databases.oracle-inner-page.view')}
+                            {viewButtonText()}
                         </DsButton>
                     </div>
                 )}

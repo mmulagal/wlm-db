@@ -103,6 +103,7 @@ export interface AssessmentResponseInterface {
     databaseInstanceName: string;
     lastAssessmentTimestamp?: string;
     deploymentType?: string;
+    isASMManaged?: boolean;
     storage?: {
         timestamp?: string;
         optimisedCount?: {
