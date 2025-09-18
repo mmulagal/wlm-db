@@ -2,7 +2,6 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import throat from 'throat';
 import { isEmpty } from 'lodash-es';
-import moment from 'moment';
 import getLogger from '../../../utils/logger';
 import {
     getInstanceInfo,
@@ -409,6 +408,7 @@ async function fetchOracleDriftAssessment(
         OracleMappedOntapVolumesResponse
     >;
     const storageProtocol = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.protocol : '';
+    const isASMManaged = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.isASMManaged : false;
 
     const storageDriftData = assessmentFlags.storage
         ? calculateStorageDrift(
@@ -431,8 +431,9 @@ async function fetchOracleDriftAssessment(
         ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId,
         deploymentType: databaseDeploymentType,
         lastAssessmentTimestamp:
-            latestInstanceAssessmentTime instanceof Date ? moment(latestInstanceAssessmentTime).valueOf() : undefined,
-        storageProtocol
+            latestInstanceAssessmentTime instanceof Date ? new Date(latestInstanceAssessmentTime).valueOf() : undefined,
+        storageProtocol,
+        isASMManaged
     };
 
     return driftAssessmentData;
