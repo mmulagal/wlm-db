@@ -112,6 +112,7 @@
                     "fsx:DescribeStorageVirtualMachines",
                     "fsx:DescribeVolumes",
                     "fsx:DescribeFileSystemAliases",
+                    "fsx:DescribeBackups",
                     "fsx:ListTagsForResource",
                     "kms:CreateGrant",
                     "kms:DescribeKey",
