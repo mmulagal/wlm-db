@@ -3,13 +3,13 @@ import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { Chart, registerables } from 'chart.js';
 import { useTranslation } from 'react-i18next';
 import styles from './MultiRingDoughnut.module.scss';
-import { byteToGiB } from '../../../../../../utils/utilityFunctions';
+import { bytesToTB, byteToGiB } from '../../../../../../utils/utilityFunctions';
 
 Chart.register(...registerables);
 
-type MRDProps = { resourceDetails: any; resourceLoading: boolean };
+type MRDProps = { resourceDetails: any; resourceLoading: boolean; resourceType?: string };
 
-const MultiRingDoughnut = ({ resourceDetails, resourceLoading }: MRDProps) => {
+const MultiRingDoughnut = ({ resourceDetails, resourceLoading, resourceType }: MRDProps) => {
     const { t } = useTranslation();
     const data = resourceDetails?.storage?.fsxn;
     const ref = useRef<HTMLCanvasElement>(null);
@@ -76,11 +76,16 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading }: MRDProps) => {
                 {resourceLoading && <DsFlashingDotsLoader />}
                 {!resourceLoading && (
                     <div className={styles.textTop}>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            {byteToGiB(data?.size)}
+                        <DsTypography
+                            variant={resourceType === 'mssql' ? 'Regular_24' : 'Regular_32'}
+                            style={{ lineHeight: 'unset' }}
+                        >
+                            {resourceType === 'mssql' ? bytesToTB(data?.size) : byteToGiB(data?.size)}
                         </DsTypography>
                         <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
-                            {t('databases.oracle-inner-page.gib')}
+                            {resourceType === 'mssql'
+                                ? t('databases.resource-overview.tib')
+                                : t('databases.oracle-inner-page.gib')}
                         </DsTypography>
                     </div>
                 )}

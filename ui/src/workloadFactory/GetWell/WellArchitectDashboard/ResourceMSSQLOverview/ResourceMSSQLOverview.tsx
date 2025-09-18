@@ -13,6 +13,7 @@ import { getAggrStorageSavings, isPartialData } from '../../../../utils/utilityF
 import DatabaseHostOverviewApiV2 from '../../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
 import ResourceMSSQLPartialContainer from './ResourceMSSQLPartailContainer/ResourceMSSQLPartailContainer';
 import { DBType, MS_PER_HOUR } from '../../../../utils/consts';
+import MSSQLCapacityUtilization from './CapacityUtilizationCard/MSSQLCapacityUtilization';
 
 const PARTIAL_DATA_THRESHOLD = 6 * MS_PER_HOUR; // 6 hours in milliseconds
 
@@ -53,7 +54,7 @@ const ResourceMSSQLOverview = () => {
 
                     <div className={styles.commonBlock}>
                         <ProtectedDatabases />
-                        <CapacityUtilization />
+                        <MSSQLCapacityUtilization />
                     </div>
 
                     <div className={styles.commonBlock}>

@@ -22,7 +22,11 @@ const OracleCapacityUtilization = ({ resourceDetails, resourceLoading }: OCUProp
                 </div>
             </div>
             <div className={styles.mainSection}>
-                <MultiRingDoughnut resourceDetails={resourceDetails} resourceLoading={resourceLoading} />
+                <MultiRingDoughnut
+                    resourceDetails={resourceDetails}
+                    resourceLoading={resourceLoading}
+                    resourceType="oracle"
+                />
                 <div className={styles.detailsSection}>
                     <div className={styles.itemContainer}>
                         {resourceLoading && <DsFlashingDotsLoader />}

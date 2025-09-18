@@ -689,7 +689,8 @@
             "available": "Available",
             "size-allocated": "Size allocated",
             "tib": "TiB",
-            "ssd-capacity": "SSD capacity"
+            "ssd-capacity": "SSD capacity",
+            "capacity": "Capacity"
         },
         "inventory": {
             "windows-auth-text": "Registering Microsoft SQL Server hosts in NetApp backup and recovery requires Windows credentials with administrative access.",

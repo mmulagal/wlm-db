@@ -157,6 +157,11 @@ export interface WorkloadFactoryResourceDetails {
             spaceSavings?: number;
             spaceSavingsPercent?: number;
             protocol?: Array<string>;
+
+            physicalUsed: number;
+            ssdUsed: number;
+            capacityPoolUsed: number;
+            snapshotUsed: number;
         };
         fsxw?: {
             size?: number;

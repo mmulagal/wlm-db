@@ -630,6 +630,12 @@ export const customErrorMessages = (inputString: string, endpoint: string) => {
     return inputString;
 };
 
+// function to convert byte to TiB
+export const bytesToTB = (bytes: number) => {
+    const TB = bytes / 1024 ** 4;
+    return TB.toFixed(2);
+};
+
 // function to convert byte to GiB
 export const byteToGiB = (value: number) => {
     if (value === null || value === undefined) return 0;
