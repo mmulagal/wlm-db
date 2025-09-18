@@ -202,6 +202,7 @@ const exploreSavingsSlice = createSlice({
                 optimizeLoading: false,
                 showCalcMode: false
             };
+            state.selectedCalculatorMode = TCO_CALCULATOR_MODE.OPTIMIZED;
         },
         setExploreSavingsRouteTab: (state, action: PayloadAction<string>) => {
             state.exploreSavingsRouteTab = action.payload;
