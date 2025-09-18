@@ -1141,7 +1141,7 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "awsBackup": {
-                            "name": "scheduled-fsx-for-ontap-backups",
+                            "name": "backup-configuration",
                             "status": "optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
@@ -1362,7 +1362,7 @@
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configurationName": "backup-configuration",
                                 "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
@@ -1658,7 +1658,7 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "awsBackup": {
-                            "name": "scheduled-fsx-for-ontap-backups",
+                            "name": "backup-configuration",
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
@@ -1879,7 +1879,7 @@
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configurationName": "backup-configuration",
                                 "configState": "DISMISSED",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
@@ -3081,7 +3081,7 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "awsBackup": {
-                            "name": "scheduled-fsx-for-ontap-backups",
+                            "name": "backup-configuration",
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
@@ -3303,7 +3303,7 @@
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configurationName": "backup-configuration",
                                 "configState": "POSTPONED",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER",
@@ -4516,7 +4516,7 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "awsBackup": {
-                            "name": "scheduled-fsx-for-ontap-backups",
+                            "name": "backup-configuration",
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
@@ -4737,7 +4737,7 @@
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configurationName": "backup-configuration",
                                 "configState": "DISMISSED",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
@@ -5939,7 +5939,7 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "awsBackup": {
-                            "name": "scheduled-fsx-for-ontap-backups",
+                            "name": "backup-configuration",
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
@@ -6160,7 +6160,7 @@
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configurationName": "backup-configuration",
                                 "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
@@ -7362,7 +7362,7 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "awsBackup": {
-                            "name": "scheduled-fsx-for-ontap-backups",
+                            "name": "backup-configuration",
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
@@ -7521,7 +7521,7 @@
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configurationName": "backup-configuration",
                                 "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
@@ -8733,7 +8733,7 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "awsBackup": {
-                            "name": "scheduled-fsx-for-ontap-backups",
+                            "name": "backup-configuration",
                             "status": "not-optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
@@ -8892,7 +8892,7 @@
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configurationName": "backup-configuration",
                                 "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
@@ -10094,7 +10094,7 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "awsBackup": {
-                            "name": "scheduled-fsx-for-ontap-backups",
+                            "name": "backup-configuration",
                             "status": "optimized",
                             "recommended": "To have the AWS Backup enabled",
                             "severity": "warning",
@@ -10253,7 +10253,7 @@
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configurationName": "backup-configuration",
                                 "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"

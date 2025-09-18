@@ -844,7 +844,7 @@ export const cardDataDefault: any = {
         tags: ['Reliability']
     },
     scheduled_fsx_for_ontap_backups: {
-        id: 'scheduled-fsx-for-ontap-backups',
+        id: 'backup-configuration',
         mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
         category: 'application',
         block_one: {
@@ -1208,7 +1208,7 @@ export const formatAWSBackUpPolicyCardConfig = (
 ) => {
     const item: any = data?.awsBackup;
     const categoryVal = 'resiliency';
-    let itemName = item?.name || 'scheduled-fsx-for-ontap-backups';
+    let itemName = item?.name || 'backup-configuration';
     let status = item?.status || '';
     const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
@@ -1247,7 +1247,7 @@ export const formatAWSBackUpPolicyCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name || 'scheduled-fsx-for-ontap-backups',
+            id: item?.name || 'backup-configuration',
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             objectsInViolation: item?.objectsInViolation,
@@ -3763,7 +3763,7 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         'rss-config': 'rssConfig',
         'mtu-alignment': 'mtuAlignment',
         'snapshot-policy': 'snapshotPolicy',
-        'scheduled-fsx-for-ontap-backups': 'awsBackup',
+        'backup-configuration': 'awsBackup',
         'mssql-patch': 'mssqlPatch',
         'host-os-patch': 'hostOsPatch',
         crr: 'crr',

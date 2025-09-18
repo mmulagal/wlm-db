@@ -40,7 +40,7 @@ const getPayloadType = (type: string) => {
             type = 'snapshot-policy';
             break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-            type = 'scheduled-fsx-for-ontap-backups';
+            type = 'backup-configuration';
             break;
         case ASSESSMENT_CONFIG_NAMES.MAXDOP:
             type = 'maxdop';
