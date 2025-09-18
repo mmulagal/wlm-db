@@ -20,6 +20,7 @@ const WellArchitectTabs = () => {
     const isBedrockSupportedForRegion = useMemo(() => {
         let isBedRockAvailable = true;
         if (
+            regionMapping &&
             'bedrockAvailable' in regionMapping?.[selectedGwInstanceRegionId] &&
             !regionMapping?.[selectedGwInstanceRegionId]?.bedrockAvailable
         ) {

@@ -728,6 +728,7 @@ const InstancesTable = () => {
                 const menu = [];
                 let isBedRockAvailable = true;
                 if (
+                    regionMapping &&
                     'bedrockAvailable' in regionMapping?.[rowData?.regionId] &&
                     !regionMapping?.[rowData?.regionId]?.bedrockAvailable
                 ) {
