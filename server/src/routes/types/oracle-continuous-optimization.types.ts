@@ -22,7 +22,8 @@ type OracleGenericParameterDriftResponseType = Static<typeof OracleGenericParame
 const StorageParameterDriftResponse = Type.Object({
     configuration: Type.Object({
         volumes: Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])),
-        luns: Type.Optional(Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])))
+        luns: Type.Optional(Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse]))),
+        os: Type.Optional(Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])))
     }),
     layout: Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse]))
 });

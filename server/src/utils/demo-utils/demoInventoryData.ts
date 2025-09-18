@@ -2849,6 +2849,98 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             }
         ],
         error: ''
+    },
+    os: {
+        selinux: {
+            error: null,
+            'selinux-status': 'permissive',
+            'selinux-disabled': false
+        },
+        'multipath-io': {
+            error: null,
+            'multipath-io-active': true,
+            'multipath-io-status': 'active',
+            'multipath-io-enabled': true,
+            'multipath-io-enabled-status': 'enabled'
+        },
+        'host-utilities': {
+            error: 'sanlun command not found',
+            'sanlun-version': null,
+            'sanlun-installed': false
+        },
+        'oracle-parameters': {
+            error: null,
+            'filesystemio-options': {
+                found: true,
+                value: 'none'
+            },
+            'db-file-multiblock-read-count': {
+                found: true,
+                value: '128'
+            }
+        },
+        'tcp-advanced-options': {
+            error: null,
+            'tcp-features': {
+                'tcp-sack-value': '1',
+                'tcp-sack-enabled': true,
+                'tcp-timestamps-value': '1',
+                'tcp-timestamps-enabled': true,
+                'tcp-window-scaling-value': '1',
+                'tcp-window-scaling-enabled': true
+            }
+        },
+        'transparent-hugepages': {
+            error: null,
+            'thp-status': 'disabled',
+            'thp-disabled': true
+        },
+        'iscsi-targets-sessions': {
+            error: null,
+            'iscsi-targets': [
+                {
+                    portal: '172.31.48.72:3260,1031 iqn.1992-08.com.netapp:sn.b2853ecdb1f911efa8811fbfd81226d0:vs.345',
+                    target_name: '172.31.48.72',
+                    active_sessions: 1
+                },
+                {
+                    portal: '172.31.6.100:3260,1032 iqn.1992-08.com.netapp:sn.b2853ecdb1f911efa8811fbfd81226d0:vs.345',
+                    target_name: '172.31.6.100',
+                    active_sessions: 0
+                }
+            ],
+            'iscsi-targets-found': 2,
+            'total-active-sessions': 1,
+            'iscsi-sessions-per-target': {
+                '172.31.48.72': 1,
+                '172.31.6.100': 0
+            }
+        },
+        'multipath-configuration': {
+            error: null,
+            defaults: {
+                find_multipaths: true,
+                polling_interval: 5,
+                user_friendly_names: true
+            },
+            'netapp-device': {
+                prio: 'ontap',
+                vendor: 'NETAPP',
+                product: 'LUN',
+                failback: 'immediate',
+                features: '2 pg_init_retries 50',
+                dev_loss_tmo: 'infinity',
+                no_path_retry: 'queue',
+                flush_on_last_del: true,
+                user_friendly_names: false,
+                path_grouping_policy: 'group_by_prio'
+            },
+            'multipath-config-found': true
+        },
+        'iscsi-replacement-timeout': {
+            error: null,
+            'replacement-timeout': 120
+        }
     }
 };
 

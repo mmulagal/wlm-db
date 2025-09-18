@@ -238,7 +238,7 @@ async function triggerOracleAssessment(
             cloud_provider_account_id: cloudProviderAccountId,
             metadata
         } = resource as ResourceDetails;
-        const { node1InstanceId: activeNodeInstanceId } = metadata as Metadata;
+        const { node1InstanceId: activeNodeInstanceId, storageProtocol } = metadata as Metadata;
         const instanceRecord: WorkloadInstance = {
             id: databaseInstanceId,
             name: databaseInstanceName,
@@ -250,7 +250,8 @@ async function triggerOracleAssessment(
             cloudProviderAccountId: cloudProviderAccountId || '',
             resourceName: resourceName || '',
             svmId: (fsxSvmId as Record<string, string>)[fsxFileSystem!] || '',
-            databaseInstanceObject: managedInstance
+            databaseInstanceObject: managedInstance,
+            storageProtocol
         };
 
         const shouldRunInstanceLevelAssessment = fields.some(field =>
@@ -378,6 +379,8 @@ async function fetchOracleDriftAssessment(
         resource: { metadata: resourceMetadata }
     } = instanceDetail as DatabaseInstance;
 
+    const { node1InstanceId } = resourceMetadata as Metadata;
+
     const fieldsValues =
         fields?.toLowerCase().replace(/\s+/g, '').split(',') ||
         Object.values(AssessmentCategoriesOracle).map(category => category.toLowerCase());
@@ -416,6 +419,7 @@ async function fetchOracleDriftAssessment(
               credentialsId,
               region,
               databaseHostId,
+              node1InstanceId,
               databaseInstanceId,
               databaseInstanceName,
               fileSystemId,
@@ -428,7 +432,7 @@ async function fetchOracleDriftAssessment(
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
         fileSystemId,
         databaseInstanceName,
-        ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId,
+        ec2InstanceId: node1InstanceId,
         deploymentType: databaseDeploymentType,
         lastAssessmentTimestamp:
             latestInstanceAssessmentTime instanceof Date ? new Date(latestInstanceAssessmentTime).valueOf() : undefined,

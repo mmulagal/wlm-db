@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { isEmpty, uniqBy } from 'lodash-es';
+import { compact, isEmpty, uniqBy } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
@@ -9,7 +9,7 @@ import {
     AssessmentCategories,
     AssessmentStatus
 } from '../../../utils/continous-optimization-consts';
-import { isDemo, sqlResponseParsing } from '../../../utils/utils';
+import { isDemo, parseMultipleCommandResponse } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob } from '../../database/job-operations';
 import { VOLUME_LUN_CONFIGURATION } from '../../workloads/oracle/storage-assessment-scripts';
@@ -27,12 +27,77 @@ import {
     OracleSysFileTypes,
     OracleVolumeRecord
 } from '../../workloads/oracle/common-types';
+import { OS_ASSESSMENT } from '../../workloads/oracle/os-assessment-scripts';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
 
 const volumeConfigData = storageGoldenConfigData.configuration.volume;
 const lunConfigData = storageGoldenConfigData.configuration.lun;
+const osConfigData = storageGoldenConfigData.configuration.os;
+
+interface OSAssessment {
+    'host-utilities'?: {
+        error?: string | null;
+        'sanlun-version'?: string | null;
+        'sanlun-installed'?: boolean;
+    };
+    selinux?: {
+        error?: string | null;
+        'selinux-value'?: string;
+        'selinux-disabled'?: boolean;
+    };
+    'multipath-io'?: {
+        error?: string | null;
+        'multipath-io-is-active'?: boolean;
+        'multipath-io-active-value'?: string;
+        'multipath-io-is-enabled'?: boolean;
+        'multipath-io-enabled-value'?: string;
+    };
+    'tcp-advanced-options'?: {
+        error?: string | null;
+        'tcp-features'?: {
+            'tcp-sack-value'?: string;
+            'tcp-sack-enabled'?: boolean;
+            'tcp-timestamps-value'?: string;
+            'tcp-timestamps-enabled'?: boolean;
+            'tcp-window-scaling-value'?: string;
+            'tcp-window-scaling-enabled'?: boolean;
+        };
+    };
+    'transparent-hugepages'?: {
+        error?: string | null;
+        'thp-value'?: string;
+        'thp-disabled'?: boolean;
+    };
+    'iscsi-targets-sessions'?: {
+        error?: string | null;
+        'iscsi-targets-found'?: number;
+        'total-active-sessions'?: number;
+        'iscsi-sessions-per-target'?: Record<string, any>;
+    };
+
+    'iscsi-replacement-timeout'?: {
+        error?: string | null;
+        'replacement-timeout'?: number;
+    };
+    'oracle-parameters'?: {
+        error?: string | null;
+        'filesystemio-options'?: {
+            value?: string;
+            found?: boolean;
+        };
+        'db-file-multiblock-read-count'?: {
+            value?: string;
+            found?: boolean;
+        };
+    };
+    'multipath-configuration'?: {
+        error?: string | null;
+        defaults?: Record<string, string | number | boolean>;
+        'netapp-device'?: Record<string, string | number | boolean>;
+    };
+}
 
 interface StorageAssessment {
     fraEnabled?: string;
@@ -50,7 +115,29 @@ interface StorageAssessment {
         error?: string;
         data?: { volumeId: string; volumeName: string }[];
     };
+    os?: OSAssessment;
 }
+
+const defaultMultipathExpected = { find_multipaths: true, polling_interval: 5 };
+
+const netappMultipathExpected = {
+    path_grouping_policy: 'group_by_prio',
+    path_selector: 'service-time 0',
+    prio: 'ontap',
+    features: '3 queue_if_no_path pg_init_retries 50',
+    hardware_handler: '0',
+    failback: 'immediate',
+    rr_weight: 'uniform',
+    no_path_retry: 'queue',
+    fast_io_fail_tmo: 5,
+    dev_loss_tmo: 'infinity',
+    detect_prio: 'yes',
+    flush_on_last_del: 'yes',
+    retain_attached_hw_handler: 'yes',
+    path_checker: 'tur',
+    polling_interval: 5,
+    max_sectors_kb: 4096
+};
 
 function mapVolumeTypesToIdName(
     databaseInstanceName: string,
@@ -107,6 +194,315 @@ function createEmptyVolumeAssessment(configData: any, volumeType: string) {
     };
 }
 
+function createAssessment(
+    config: any,
+    objectName: string,
+    objectType: string,
+    status: AssessmentStatus,
+    violationValue?: string,
+    customViolationDetails?: any[]
+) {
+    const violationDetails =
+        customViolationDetails ||
+        (status === AssessmentStatus.NOT_OPTIMIZED && violationValue
+            ? [
+                  {
+                      objectName,
+                      objectType,
+                      value: violationValue
+                  }
+              ]
+            : []);
+
+    return {
+        ...config,
+        status,
+        objectsInViolation:
+            status === AssessmentStatus.NOT_OPTIMIZED
+                ? customViolationDetails
+                    ? customViolationDetails.map(d => d.objectName)
+                    : [objectName]
+                : [],
+        totalObjectsAssessed: 1,
+        totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? 1 : 0,
+        violationDetails
+    };
+}
+
+function getOSConfigDrift(
+    ec2InstanceId: string,
+    databaseInstanceName: string,
+    storageAssessmentData: StorageAssessment
+) {
+    logger.info('Fetching OS configuration drift', { ec2InstanceId, databaseInstanceName });
+    const { os } = storageAssessmentData;
+    const osDrift: StorageParameterDriftResponseType['configuration']['os'] = [];
+
+    if (!os || isEmpty(os)) {
+        osDrift.push({ errorMessage: 'No OS assessment data found.' });
+        return osDrift;
+    }
+
+    osConfigData.forEach(config => {
+        let status = AssessmentStatus.OPTIMIZED;
+        let violationValue: string | undefined;
+
+        switch (config.parameter) {
+            case 'multipath-io': {
+                const multipathData = os?.['multipath-io'];
+                const isActive = multipathData?.['multipath-io-is-active'];
+                const isEnabled = multipathData?.['multipath-io-is-enabled'];
+
+                if (isActive === false || isEnabled === false) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    violationValue = `active:${multipathData?.['multipath-io-active-value']}-enabled:${multipathData?.['multipath-io-enabled-value']}`;
+                }
+                osDrift.push(
+                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
+                );
+                break;
+            }
+
+            case 'host-utilities': {
+                const hostUtilsData = os?.['host-utilities'];
+                if (hostUtilsData?.['sanlun-installed'] === false) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    violationValue = 'sanlun not installed';
+                }
+                osDrift.push(
+                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
+                );
+                break;
+            }
+
+            case 'selinux': {
+                const selinuxData = os?.selinux;
+                if (selinuxData?.['selinux-disabled'] === false) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    violationValue = selinuxData?.['selinux-value'] || 'enabled';
+                }
+                osDrift.push(
+                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
+                );
+                break;
+            }
+
+            case 'transparent-hugepages': {
+                const thpData = os?.['transparent-hugepages'];
+                if (thpData?.['thp-disabled'] === false) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    violationValue = thpData?.['thp-value'] || 'enabled';
+                }
+                osDrift.push(
+                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
+                );
+                break;
+            }
+
+            case 'multipath-friendly-names': {
+                const multipathConfigData = os?.['multipath-configuration'];
+                const defaultsFriendlyNames = multipathConfigData?.defaults?.user_friendly_names;
+                const netappFriendlyNames = multipathConfigData?.['netapp-device']?.user_friendly_names;
+
+                if (defaultsFriendlyNames === false || netappFriendlyNames === false) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                }
+
+                const violationDetails = [
+                    ...(defaultsFriendlyNames === false
+                        ? [{ objectName: 'user_friendly_names', objectType: 'default configuration', value: 'false' }]
+                        : []),
+                    ...(netappFriendlyNames === false
+                        ? [
+                              {
+                                  objectName: 'user_friendly_names',
+                                  objectType: 'netapp device configuration',
+                                  value: 'false'
+                              }
+                          ]
+                        : [])
+                ];
+
+                osDrift.push(
+                    createAssessment(
+                        config,
+                        ec2InstanceId,
+                        ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+                        status,
+                        violationValue,
+                        violationDetails
+                    )
+                );
+
+                break;
+            }
+
+            case 'multipath-configuration': {
+                const multipathConfigData = os?.['multipath-configuration'];
+                const defaultsData = multipathConfigData?.defaults;
+                const netappDeviceData = multipathConfigData?.['netapp-device'];
+
+                const defaultsViolations = Object.entries(defaultMultipathExpected)
+                    .filter(([key, expectedValue]) => defaultsData?.[key] !== expectedValue)
+                    .map(([key]) => ({
+                        objectName: key,
+                        objectType: 'default configuration',
+                        value: defaultsData?.[key]?.toString() || 'not found'
+                    }));
+
+                const netappDeviceViolations = Object.entries(netappMultipathExpected)
+                    .filter(([key, expectedValue]) => netappDeviceData?.[key] !== expectedValue)
+                    .map(([key]) => ({
+                        objectName: key,
+                        objectType: 'netapp device configuration',
+                        value: netappDeviceData?.[key]?.toString() || 'not found'
+                    }));
+
+                if (defaultsViolations.length > 0 || netappDeviceViolations.length > 0) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                }
+
+                const violationDetails = [...netappDeviceViolations, ...defaultsViolations];
+                osDrift.push(
+                    createAssessment(
+                        config,
+                        ec2InstanceId,
+                        ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+                        status,
+                        violationValue,
+                        violationDetails
+                    )
+                );
+
+                break;
+            }
+
+            case 'iscsi-replacement-timeout': {
+                const timeoutData = os?.['iscsi-replacement-timeout'];
+                if (timeoutData?.error || timeoutData?.['replacement-timeout'] !== 5) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    violationValue =
+                        timeoutData?.['replacement-timeout']?.toString() || timeoutData?.error || 'unknown';
+                }
+                osDrift.push(
+                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
+                );
+                break;
+            }
+
+            case 'tcp-advanced-options': {
+                const tcpData = os?.['tcp-advanced-options'];
+                const tcpFeatures = tcpData?.['tcp-features'] || {};
+                const requiredFeatures = ['tcp-sack-enabled', 'tcp-window-scaling-enabled', 'tcp-timestamps-enabled'];
+                const disabledFeatures = requiredFeatures.filter(
+                    feature => !tcpFeatures[feature as keyof typeof tcpFeatures]
+                );
+
+                if (tcpData?.error || disabledFeatures.length > 0) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                }
+
+                const violationDetails = disabledFeatures.map(feature => ({
+                    objectName: feature.replace('-enabled', ''),
+                    objectType: 'configuration',
+                    value: 'disabled'
+                }));
+
+                osDrift.push(
+                    createAssessment(
+                        config,
+                        ec2InstanceId,
+                        ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+                        status,
+                        violationValue,
+                        violationDetails
+                    )
+                );
+
+                break;
+            }
+
+            case 'filesystems-io-options': {
+                const oracleParamsData = os?.['oracle-parameters']?.['filesystemio-options'];
+                if (oracleParamsData?.found === false || oracleParamsData?.value !== 'SETALL') {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    violationValue =
+                        (!oracleParamsData?.found ? 'filesystemio_options not found' : '') || oracleParamsData?.value;
+                }
+                osDrift.push(
+                    createAssessment(
+                        config,
+                        databaseInstanceName,
+                        ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                        status,
+                        violationValue
+                    )
+                );
+                break;
+            }
+
+            case 'multipath-readcount': {
+                const oracleParamsData = os?.['oracle-parameters']?.['db-file-multiblock-read-count'];
+                if (oracleParamsData?.found === true) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    violationValue = oracleParamsData?.value;
+                }
+                osDrift.push(
+                    createAssessment(
+                        config,
+                        databaseInstanceName,
+                        ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                        status,
+                        violationValue
+                    )
+                );
+                break;
+            }
+
+            case 'multipath-io-sessions': {
+                const iscsiTargetSessions = os?.['iscsi-targets-sessions'];
+                if (iscsiTargetSessions?.error) {
+                    status = AssessmentStatus.NOT_OPTIMIZED;
+                    violationValue = iscsiTargetSessions.error;
+                } else {
+                    const targetSessions = iscsiTargetSessions?.['iscsi-sessions-per-target'] || {};
+                    const violations = Object.entries(targetSessions)
+                        .filter(([, sessions]) => sessions !== 4)
+                        .map(([target, sessions]) => ({
+                            objectName: target,
+                            objectType: 'iscsi target',
+                            value: sessions.toString()
+                        }));
+
+                    if (violations.length > 0) {
+                        status = AssessmentStatus.NOT_OPTIMIZED;
+                        const assessment = createAssessment(
+                            config,
+                            ec2InstanceId,
+                            ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+                            status,
+                            violationValue,
+                            violations
+                        );
+                        assessment.totalObjectsAssessed = Object.keys(targetSessions).length;
+                        assessment.totalObjectsInViolation = violations.length;
+                        assessment.objectsInViolation = violations.map(detail => detail.objectName);
+                        osDrift.push(assessment);
+                    } else {
+                        osDrift.push(createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.VOLUME, status));
+                    }
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+    });
+
+    return osDrift;
+}
+
 function prepareASMLunLayoutAssessment(
     goldenConfig: any,
     lunMap: OracleVolumeRecord[],
@@ -126,7 +522,7 @@ function prepareASMLunLayoutAssessment(
     } else {
         if (luns.length < minLunType || luns.length > MAX_LUNS_PER_DG) {
             goldenConfig.status = AssessmentStatus.NOT_OPTIMIZED;
-            goldenConfig.objectsInViolation = luns.map(lun => lun.diskGroup).filter(diskGroup => diskGroup != null);
+            goldenConfig.objectsInViolation = compact(luns.map(lun => lun.diskGroup));
             goldenConfig.totalObjectsInViolation = luns.length;
         } else {
             goldenConfig.status = AssessmentStatus.OPTIMIZED;
@@ -136,7 +532,7 @@ function prepareASMLunLayoutAssessment(
 
         // remove duplicates
         goldenConfig.totalObjectsAssessed = uniqBy(luns, 'diskGroup').length;
-        goldenConfig.objectsInViolation = [...new Set(goldenConfig.objectsInViolation)];
+        goldenConfig.objectsInViolation = [...new Set(goldenConfig.objectsInViolation || [])];
     }
     return goldenConfig;
 }
@@ -586,6 +982,7 @@ function calculateStorageDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
+    ec2InstanceId: string,
     databaseInstanceId: string,
     databaseInstanceName: string,
     fsxFileSystemId: string,
@@ -616,6 +1013,11 @@ function calculateStorageDrift(
     const isASMManaged = mappedOntapVolumes[fsxFileSystemId]?.isASMManaged;
     if (protocol === 'iSCSI') {
         storageDriftData.configuration.luns = getLunConfigDrift(storageAssessmentData);
+        storageDriftData.configuration.os = getOSConfigDrift(
+            ec2InstanceId,
+            databaseInstanceName,
+            storageAssessmentData
+        );
         if (isASMManaged) {
             storageDriftData.layout.push(...getLunLayoutDrift(volumeTypeMap, storageAssessmentData));
         }
@@ -651,7 +1053,8 @@ async function initiateStorageAssessmentCollection(
         name: databaseInstanceName,
         activeNodeInstanceid,
         mappedVolumesUuids,
-        fsxFileSystem
+        fsxFileSystem,
+        storageProtocol
     } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
@@ -685,6 +1088,9 @@ async function initiateStorageAssessmentCollection(
     }
     try {
         const command = [VOLUME_LUN_CONFIGURATION(instanceRecord)];
+        if (storageProtocol === 'iSCSI') {
+            command.push(OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName));
+        }
         const ssmComment = 'Get Storage Configuration Assessment for Oracle instance';
 
         const response = await callSsmExecution(
@@ -701,7 +1107,8 @@ async function initiateStorageAssessmentCollection(
             SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
 
-        const parsedResponse = response ? sqlResponseParsing(response) : {};
+        const parsedResponse = parseMultipleCommandResponse(response);
+        const [storageAssessment, osAssessment] = parsedResponse;
 
         await createDatabaseInstanceConfigData([
             {
@@ -712,7 +1119,8 @@ async function initiateStorageAssessmentCollection(
                 database_instance_id: databaseInstanceId,
                 creation_time: new Date(Date.now()),
                 config_data_type: AssessmentCategories.STORAGE,
-                config_data: parsedResponse
+                config_data:
+                    storageProtocol === 'iSCSI' ? { ...storageAssessment, ...osAssessment } : { ...storageAssessment }
             }
         ]);
 
