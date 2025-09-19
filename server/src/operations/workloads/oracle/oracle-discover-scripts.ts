@@ -73,8 +73,8 @@ const loadStorageDetectionModules = `
                         FROM (SELECT DISTINCT substr(member,1,instr(member,'/',-1)-1) as redo_dir FROM v\\$logfile)), '') || 
                 '],' || CHR(10) ||
                 '    "ARCHIVE_LOGS": [' || 
-                    NVL((SELECT LISTAGG('"' || archive_dir || '"', ', ') WITHIN GROUP (ORDER BY archive_dir)
-                        FROM (SELECT DISTINCT substr(name,1,instr(name,'/',-1)-1) as archive_dir FROM v\\$archived_log)), '') || 
+                    NVL(( SELECT LISTAGG('"' || archive_dir || '"', ', ') WITHIN GROUP (ORDER BY archive_dir) 
+                        FROM (SELECT DISTINCT destination as archive_dir FROM v\\$archive_dest WHERE destination IS NOT NULL )), '') || 
                 '],' || CHR(10) ||
                 '    "CONTROL_FILES": [' || 
                     NVL((SELECT LISTAGG('"' || ctrlfile_dir || '"', ', ') WITHIN GROUP (ORDER BY ctrlfile_dir)
