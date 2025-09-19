@@ -66,7 +66,10 @@ enum OptimizeStorageConfigs {
     TIERING_POLICY = 'tiering-policy',
     SPACE_RESERVATION = 'space-reservation-enabled',
     SPACE_ALLOCATION = 'space-allocation-allocated',
-    MOST_RECENT_SNAPSHOT_TIMESTAMP = 'most-recent-snapshot-timestamp'
+    MOST_RECENT_SNAPSHOT_TIMESTAMP = 'most-recent-snapshot-timestamp',
+    COMPRESSION = 'compression',
+    DEDUPLICATION = 'deduplication',
+    COMPACTION = 'compaction'
 }
 
 enum OptimizeStorageConfigsJobNames {
@@ -80,7 +83,10 @@ enum OptimizeStorageConfigsJobNames {
     TIERING_MINIMUM_COOLING_DAYS = 'tiering minimum cooling days',
     TIERING_POLICY = 'tiering policy',
     SPACE_RESERVATION = 'space reservation enabled',
-    SPACE_ALLOCATION = 'space allocation'
+    SPACE_ALLOCATION = 'space allocation',
+    COMPRESSION = 'compression',
+    DEDUPLICATION = 'deduplication',
+    COMPACTION = 'compaction'
 }
 
 enum OptimizeOperatingSystemParams {
@@ -155,56 +161,74 @@ const SEVERITY = {
 };
 
 const OptimizeStorageApiData = {
-    THIN_PROVISIONING: {
+    THIN_PROVISIONING: () => ({
         api: '/private/cli/volume',
         body: { 'space-guarantee': 'none' },
         type: VOLUME
-    },
-    AUTOSIZE: {
+    }),
+    AUTOSIZE: () => ({
         api: '/private/cli/volume',
         body: { 'autosize-mode': 'grow' },
         type: VOLUME
-    },
-    AUTOSIZE_MODE: {
+    }),
+    AUTOSIZE_MODE: () => ({
         api: '/private/cli/volume',
         body: { 'autosize-mode': 'grow' },
         type: VOLUME
-    },
-    FRACTIONAL_RESERVE: {
+    }),
+    FRACTIONAL_RESERVE: () => ({
         api: '/private/cli/volume',
         body: { 'fractional-reserve': '0' },
         type: VOLUME
-    },
-    SNAPSHOT_COPY_RESERVE: {
+    }),
+    SNAPSHOT_COPY_RESERVE: () => ({
         api: '/private/cli/volume',
         body: { 'percent-snapshot-space': '0' },
         type: VOLUME
-    },
-    SNAPSHOT_AUTO_DELETE: {
+    }),
+    SNAPSHOT_AUTO_DELETE: () => ({
         api: '/private/cli/volume/snapshot/autodelete',
         body: { enabled: 'true' },
         type: VOLUME
-    },
-    TIERING_MINIMUM_COOLING_DAYS: {
+    }),
+    TIERING_MINIMUM_COOLING_DAYS: (value?: string, tieringPolicy?: string) => ({
         api: '/private/cli/volume',
-        body: { 'tiering-policy': 'snapshot-only', 'tiering-minimum-cooling-days': '7' },
+        body: { 'tiering-policy': tieringPolicy || 'snapshot-only', 'tiering-minimum-cooling-days': value || '7' },
         type: VOLUME
-    },
-    TIERING_POLICY: {
+    }),
+    TIERING_POLICY: (value?: string) => ({
         api: '/private/cli/volume',
-        body: { 'tiering-policy': 'snapshot-only' },
+        body: { 'tiering-policy': value || 'snapshot-only' },
         type: VOLUME
-    },
-    SPACE_RESERVATION: {
+    }),
+    COMPRESSION: (value?: string) => ({
+        api: '/private/cli/volume/efficiency',
+        body: {
+            inline_compression: value === 'adaptive',
+            compression: value === 'adaptive'
+        },
+        type: VOLUME
+    }),
+    DEDUPLICATION: (value?: string) => ({
+        api: '/private/cli/volume/efficiency',
+        body: { inline_dedupe: value === 'none' ? 'false' : true },
+        type: VOLUME
+    }),
+    COMPACTION: () => ({
+        api: '/private/cli/volume/efficiency',
+        body: { data_compaction: 'true' },
+        type: VOLUME
+    }),
+    SPACE_RESERVATION: () => ({
         api: '/private/cli/lun',
         body: { 'space-reserve': 'enabled' },
         type: LUN
-    },
-    SPACE_ALLOCATION: {
+    }),
+    SPACE_ALLOCATION: () => ({
         api: '/private/cli/lun',
         body: { 'space-allocation': 'enabled' },
         type: LUN
-    }
+    })
 };
 
 interface OptimizeStorageRequestParams {

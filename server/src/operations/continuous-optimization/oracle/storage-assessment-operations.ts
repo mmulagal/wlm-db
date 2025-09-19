@@ -1171,4 +1171,10 @@ async function initiateStorageAssessmentCollection(
     }
 }
 
-export { initiateStorageAssessmentCollection, calculateStorageDrift, StorageAssessment };
+export {
+    initiateStorageAssessmentCollection,
+    calculateStorageDrift,
+    StorageAssessment,
+    getVolumeConfigDrift,
+    mapVolumeTypesToIdName
+};

@@ -682,5 +682,6 @@ export {
     onDemandTriggerOracleDriftAssessment,
     fetchOracleDriftAssessment,
     fetchOracleDriftAssessmentPerHost,
-    fetchOracleDriftAssessmentPerAccount
+    fetchOracleDriftAssessmentPerAccount,
+    initiateInstanceLevelAssessmentDataCollection
 };

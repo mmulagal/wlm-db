@@ -57,7 +57,8 @@ import {
     OptimizeOperatingSystemParams,
     AssessmentTriggeredBy,
     OptimizeStorageConfigsJobNames,
-    STORAGE_OPTIMIZE_JOB_PARAM
+    STORAGE_OPTIMIZE_JOB_PARAM,
+    AssessmentCategoriesOracle
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
@@ -99,6 +100,17 @@ import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } 
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import { optimizeStorageParamsOracle } from './workloads/oracle/storage-optimize-scripts';
 import { onDemandTriggerOracleDriftAssessment } from './continuous-optimization/oracle/assessment-operations';
+import {
+    calculateStorageDrift,
+    StorageAssessment as StorageAssessmentType
+} from './continuous-optimization/oracle/storage-assessment-operations';
+import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { OracleMappedOntapVolumesResponse } from './workloads/oracle/common-types';
+import {
+    OracleGenericParameterDriftResponseType,
+    StorageParameterDriftResponseType
+} from '../routes/types/oracle-continuous-optimization.types';
+import { getOracleDatabaseMappedVolumes } from './workloads/oracle/oracle-operations';
 
 const isDemoFlow = isDemo();
 
@@ -117,6 +129,7 @@ interface OptimizeStorageAttributeParams {
     svmName: string;
     serverNameWithHostName: string;
     resourceType: RESOURCESTYPE;
+    recommendationMap?: { [key: string]: Record<string, string[]> };
 }
 
 interface OptimizeStorageOperationParams {
@@ -160,7 +173,29 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             optimizationTargets,
             instanceMetadata
         } = params;
+        let recommendationMap;
         if (optimizationTargets && optimizationTargets.length > 0) {
+            if (
+                databaseType === RESOURCESTYPE.ORACLE &&
+                optimizationTargets.some(target =>
+                    specialConfigNames.includes(target.configurationName as unknown as OptimizeStorageConfigs)
+                )
+            ) {
+                recommendationMap = await getRecommendationMap(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    instanceId,
+                    instanceName,
+                    activeNodeInstanceId,
+                    fsxId,
+                    optimizationTargets,
+                    serverNameWithHostName,
+                    parentJobId
+                );
+            }
+
             await optimizeOntapStorage({
                 accountId,
                 region,
@@ -173,7 +208,8 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
                 apiRequestData: OptimizeStorageApiData,
                 svmName,
                 serverNameWithHostName,
-                resourceType: databaseType as RESOURCESTYPE
+                resourceType: databaseType as RESOURCESTYPE,
+                recommendationMap
             });
         }
 
@@ -217,6 +253,141 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
     }
 }
 
+const specialConfigNames = [
+    OptimizeStorageConfigs.TIERING_POLICY,
+    OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS,
+    OptimizeStorageConfigs.COMPRESSION,
+    OptimizeStorageConfigs.DEDUPLICATION
+];
+
+async function getRecommendationMap(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    databaseInstanceName: string,
+    activeNodeInstanceId: string,
+    fileSystemId: string,
+    optimizationTargets: OptimizeStorageRequestParamsType[],
+    serverNameWithHostName: string,
+    parentJobId: string
+) {
+    logger.info('Getting fresh recommendation', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        fileSystemId,
+        optimizationTargets
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Fix storage for ${serverNameWithHostName}`,
+        description: `Getting fresh recommendation map for ${serverNameWithHostName}`,
+        startTime: Date.now(),
+        type: JOBTYPE.WELL_ARCHITECTED,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: serverNameWithHostName,
+        parentJobId
+    });
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    try {
+        await getOracleDatabaseMappedVolumes(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
+
+        const databaseInstanceConfigData = await listDatabaseInstanceConfigData({
+            accountId,
+            region,
+            credentialsId,
+            resourceId: databaseHostId,
+            databaseInstanceIds: [databaseInstanceId]
+        });
+
+        const assessmentDataMap = databaseInstanceConfigData.reduce(
+            (acc: Record<string, unknown>, config: { config_data_type: string; config_data: unknown }) => {
+                acc[config.config_data_type] = acc[config.config_data_type] || config.config_data;
+                return acc;
+            },
+            {} as Record<string, unknown>
+        );
+
+        const mappedOntapVolumes = assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as Record<
+            string,
+            OracleMappedOntapVolumesResponse
+        >;
+
+        const storageDrift = calculateStorageDrift(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            activeNodeInstanceId,
+            databaseInstanceId,
+            databaseInstanceName,
+            fileSystemId,
+            mappedOntapVolumes,
+            assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessmentType
+        );
+
+        // recommendation map: config -> {recommendedValue -> [objectName]}
+        const recommendationMap: { [key in OptimizeStorageConfigs]?: Record<string, string[]> } = {};
+
+        const storageDriftTyped = storageDrift as StorageParameterDriftResponseType;
+        if (isEmpty(storageDriftTyped.configuration)) {
+            return;
+        }
+
+        const { volumes } = storageDriftTyped.configuration;
+        if (isEmpty(volumes)) {
+            return;
+        }
+
+        volumes
+            .filter(({ name }) => name && specialConfigNames.includes(name as OptimizeStorageConfigs))
+            .forEach(volume => {
+                const { name: configKey, violationDetails } = volume as OracleGenericParameterDriftResponseType;
+                if (!violationDetails) {
+                    return;
+                }
+
+                optimizationTargets
+                    .filter(({ configurationName }) => configurationName === configKey)
+                    .forEach(({ objectsToOptimize }) => {
+                        violationDetails
+                            .filter(
+                                ({ objectName, recommended }) =>
+                                    objectName && recommended && objectsToOptimize.includes(objectName)
+                            )
+                            .forEach(({ objectName, recommended }) => {
+                                if (!recommended) {
+                                    return;
+                                }
+                                const key = configKey as OptimizeStorageConfigs;
+                                recommendationMap[key] ??= {};
+                                recommendationMap[key][recommended] ??= [];
+                                recommendationMap[key][recommended].push(objectName);
+                            });
+                    });
+            });
+
+        logger.info('Got optimization recommendations', { recommendationMap });
+        return recommendationMap;
+    } catch (error) {
+        logger.error('Failed to refresh assessment data', { error });
+        jobStatus = JOBSTATUS.FAILED;
+        jobError = error;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get recommendation map');
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            error: jobStatus === JOBSTATUS.FAILED ? `Failed to get recommendation map; Error: ${jobError}` : undefined,
+            endTime: Date.now()
+        });
+    }
+}
+
 async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
     const {
         accountId,
@@ -230,7 +401,8 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
         apiRequestData,
         svmName,
         serverNameWithHostName,
-        resourceType
+        resourceType,
+        recommendationMap
     } = params;
     logger.info(
         `Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${JSON.stringify(
@@ -262,82 +434,52 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                     key => optimizationConfigs[key as keyof typeof optimizationConfigs] === configurationName
                 );
 
-                if (!configKey) {
+                if (!configurationName) {
                     throw new Error('Storage configuration not found');
                 }
 
-                const apiData = apiRequestData[configKey as keyof typeof apiRequestData];
-                if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
-                    throw new Error('objectsToOptimize must be an array with non-empty string elements.');
+                const recommendedValues: Record<string, string[]> = {};
+                if (specialConfigNames.includes(configurationName as OptimizeStorageConfigs)) {
+                    if (!recommendationMap?.[configurationName]) {
+                        throw new Error('Recommendation map not found');
+                    }
+                    const map = recommendationMap[configurationName];
+                    Object.entries(map).forEach(([recommendedValue, objectNames]) => {
+                        recommendedValues[recommendedValue] = objectNames;
+                    });
+                } else {
+                    recommendedValues[''] = objectsToOptimize;
                 }
-                const apiBody = JSON.stringify(apiData.body);
-                const optimizeType = apiData.type;
-                const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
-                const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
-                const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
-                const apiEndpoint = apiData.api;
 
-                let commands: string[] = [];
-                let ssmDocument: string;
-                let ssmVersion: string;
+                let objectsOptimized = 0;
+                let jobParamKey = '';
+                let parsedResp: any;
 
-                switch (resourceType) {
-                    case RESOURCESTYPE.MSSQL:
-                        commands = [
-                            OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+                const apiResults = await Promise.all(
+                    Object.entries(recommendedValues).map(
+                        throat(3, async ([value, objects]) => {
+                            const result = await callOntapApi(
+                                apiRequestData,
+                                configKey!,
+                                objects,
+                                svmName,
+                                resourceType,
                                 fsxId,
                                 region,
-                                apiEndpoint,
-                                apiQueryFilter,
-                                apiBody
-                            })
-                        ];
-                        ssmDocument = SSM_RUN_POWERSHELL_SCRIPT_DOC;
-                        ssmVersion = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION;
-                        break;
-                    case RESOURCESTYPE.ORACLE:
-                        commands = [
-                            optimizeStorageParamsOracle({
-                                fsxId,
-                                region,
-                                apiEndpoint,
-                                apiQueryFilter,
-                                apiBody
-                            })
-                        ];
-                        ssmDocument = SSM_RUN_SHELL_SCRIPT_DOC;
-                        ssmVersion = SSM_RUN_SHELL_SCRIPT_DOC_VERSION;
-                        break;
-                    default:
-                        throw new Error(`Unsupported resourceType for SSM command: ${resourceType}`);
-                }
-
-                if (commands.length === 0 || !ssmDocument || !ssmVersion) {
-                    logger.error('Invalid SSM command configuration', commands, ssmDocument, ssmVersion);
-                    throw new Error('Invalid SSM command configuration');
-                }
-
-                const resp = await retryWithDelay(
-                    callSsmExecution.bind(
-                        null,
-                        credentialsId,
-                        region,
-                        commands,
-                        activeNodeInstanceId,
-                        jobDescription,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        ssmDocument,
-                        ssmVersion
-                    ),
-                    3,
-                    5000
+                                credentialsId,
+                                activeNodeInstanceId,
+                                jobDescription,
+                                value
+                            );
+                            return result;
+                        })
+                    )
                 );
 
-                const parsedResp = sqlResponseParsing(resp);
-                let objectsOptimized = parsedResp.num_records || 0;
+                apiResults.forEach(result => {
+                    ({ parsedResp, jobParamKey } = result);
+                    objectsOptimized += parsedResp?.num_records || 0;
+                });
 
                 objectsOptimized = isDemoFlow ? objectsToOptimize.length : objectsOptimized;
                 // with bulk optimization of volumes, user can send 1/2/3 vol ids to optimize but ssm response will hardcoded to reply with 3 as optimized.
@@ -345,7 +487,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 const optimizeMessage = `Optimized ${objectsOptimized}/${
                     objectsToOptimize.length
                 } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${
-                    OptimizeStorageConfigsJobNames[configKey as keyof typeof OptimizeStorageConfigsJobNames]
+                    OptimizeStorageConfigsJobNames[configurationName as keyof typeof OptimizeStorageConfigsJobNames]
                 }'`;
 
                 if (objectsOptimized !== objectsToOptimize.length) {
@@ -381,6 +523,106 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
             }
         })
     );
+}
+
+async function callOntapApi(
+    apiRequestData: typeof OptimizeStorageApiData,
+    configKey: string,
+    objectsToOptimize: string[],
+    svmName: string,
+    resourceType: RESOURCESTYPE,
+    fsxId: string,
+    region: string,
+    credentialsId: string,
+    activeNodeInstanceId: string,
+    jobDescription: string,
+    value?: string
+) {
+    let apiData;
+    if (specialConfigNames.includes(OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs])) {
+        if (
+            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs] ===
+            OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS
+        ) {
+            apiData = apiRequestData[configKey as unknown as keyof typeof apiRequestData](value, 'auto');
+        } else {
+            apiData = apiRequestData[configKey as keyof typeof apiRequestData](value);
+        }
+    } else {
+        apiData = apiRequestData[configKey as keyof typeof apiRequestData]();
+    }
+
+    if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
+        throw new Error('objectsToOptimize must be an array with non-empty string elements.');
+    }
+    const apiBody = JSON.stringify(apiData.body);
+    const optimizeType = apiData.type;
+    const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
+    const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
+    const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
+    const apiEndpoint = apiData.api;
+
+    let commands: string[] = [];
+    let ssmDocument: string;
+    let ssmVersion: string;
+
+    switch (resourceType) {
+        case RESOURCESTYPE.MSSQL:
+            commands = [
+                OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+                    fsxId,
+                    region,
+                    apiEndpoint,
+                    apiQueryFilter,
+                    apiBody
+                })
+            ];
+            ssmDocument = SSM_RUN_POWERSHELL_SCRIPT_DOC;
+            ssmVersion = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION;
+            break;
+        case RESOURCESTYPE.ORACLE:
+            commands = [
+                optimizeStorageParamsOracle({
+                    fsxId,
+                    region,
+                    apiEndpoint,
+                    apiQueryFilter,
+                    apiBody
+                })
+            ];
+            ssmDocument = SSM_RUN_SHELL_SCRIPT_DOC;
+            ssmVersion = SSM_RUN_SHELL_SCRIPT_DOC_VERSION;
+            break;
+        default:
+            throw new Error(`Unsupported resourceType for SSM command: ${resourceType}`);
+    }
+
+    if (commands.length === 0 || !ssmDocument || !ssmVersion) {
+        logger.error('Invalid SSM command configuration', commands, ssmDocument, ssmVersion);
+        throw new Error('Invalid SSM command configuration');
+    }
+
+    const resp = await retryWithDelay(
+        callSsmExecution.bind(
+            null,
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceId,
+            jobDescription,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            ssmDocument,
+            ssmVersion
+        ),
+        3,
+        5000
+    );
+
+    const parsedResp = sqlResponseParsing(resp);
+    return { parsedResp, jobParamKey };
 }
 
 async function activeSqlNodeDetails(
