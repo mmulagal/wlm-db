@@ -256,7 +256,8 @@ const ASSESSMENT_RESOURCE_TYPE = {
     NETWORK_ADAPTER: 'Network Adapter',
     LUN: 'Lun',
     SQL_INSTANCE: 'SQL instance',
-    NETWORK_INTERFACE: 'Network Interface'
+    NETWORK_INTERFACE: 'Network Interface',
+    DISK_GROUP: 'Disk Group'
 };
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];

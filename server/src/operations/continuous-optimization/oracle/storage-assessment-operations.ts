@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { compact, isEmpty, uniqBy } from 'lodash-es';
+import { isEmpty, uniqBy } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
@@ -517,22 +517,34 @@ function prepareASMLunLayoutAssessment(
         return acc;
     }, [] as OracleVolumeRecord[]);
 
+    const lunsGroupedByDiskGroup = Object.groupBy(luns, lun => lun.diskGroup!);
+
     if (isEmpty(luns)) {
         goldenConfig = createEmptyVolumeAssessment(goldenConfig, diskGroupLabel);
     } else {
-        if (luns.length < minLunType || luns.length > MAX_LUNS_PER_DG) {
+        goldenConfig.status = AssessmentStatus.OPTIMIZED;
+        goldenConfig.totalObjectsInViolation = 0;
+        goldenConfig.objectsInViolation = [];
+        goldenConfig.violationDetails = [];
+        Object.keys(lunsGroupedByDiskGroup).forEach(diskGrp => {
+            const associatedLuns = lunsGroupedByDiskGroup[diskGrp]?.length ?? NaN;
+            if (associatedLuns < minLunType || associatedLuns > MAX_LUNS_PER_DG) {
+                goldenConfig.objectsInViolation.push(diskGrp);
+                const violationDetails: GenericViolationResponseType = {
+                    objectName: diskGrp,
+                    value: associatedLuns.toString(),
+                    objectType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP,
+                    recommended: minLunType.toString(),
+                    dataCategory: diskGroupLabel
+                };
+                goldenConfig.violationDetails.push(violationDetails);
+            }
+        });
+        if (goldenConfig.objectsInViolation.length > 0) {
             goldenConfig.status = AssessmentStatus.NOT_OPTIMIZED;
-            goldenConfig.objectsInViolation = compact(luns.map(lun => lun.diskGroup));
-            goldenConfig.totalObjectsInViolation = luns.length;
-        } else {
-            goldenConfig.status = AssessmentStatus.OPTIMIZED;
-            goldenConfig.totalObjectsInViolation = 0;
-            goldenConfig.objectsInViolation = [];
+            goldenConfig.totalObjectsInViolation = goldenConfig.objectsInViolation.length;
         }
-
-        // remove duplicates
-        goldenConfig.totalObjectsAssessed = uniqBy(luns, 'diskGroup').length;
-        goldenConfig.objectsInViolation = [...new Set(goldenConfig.objectsInViolation || [])];
+        goldenConfig.totalObjectsAssessed = Object.keys(lunsGroupedByDiskGroup).length;
     }
     return goldenConfig;
 }
@@ -944,7 +956,7 @@ function getLunLayoutDrift(
             storageGoldenConfigData.dataDiskLunLayout,
             dataFileLuns,
             MIN_OPTIMAL_LUN_PER_DG.DATA,
-            'data disk group'
+            'Data'
         )
     );
     result.push(
@@ -952,7 +964,7 @@ function getLunLayoutDrift(
             storageGoldenConfigData.redoLogDiskLunLayout,
             redoLogLuns,
             MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
-            'redo log disk group'
+            'Redo Log'
         )
     );
     if (fraEnabled === 'yes') {
@@ -961,7 +973,7 @@ function getLunLayoutDrift(
                 storageGoldenConfigData.fraDiskLunLayout,
                 fraLuns,
                 MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
-                'fra disk group'
+                'FRA'
             )
         );
     } else {
@@ -970,7 +982,7 @@ function getLunLayoutDrift(
                 storageGoldenConfigData.archivelogDiskLunLayout,
                 archiveLogLuns,
                 MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
-                'archive log disk group'
+                'Archive Log'
             )
         );
     }
