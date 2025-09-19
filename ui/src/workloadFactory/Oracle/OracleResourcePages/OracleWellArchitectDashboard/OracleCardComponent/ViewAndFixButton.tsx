@@ -36,7 +36,8 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
             type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT ||
             type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
-            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
         ) {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
             dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.ORACLE }));
@@ -60,7 +61,8 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
         if (
             type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
-            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
         ) {
             return t('databases.oracle-inner-page.view-and-fix');
         }

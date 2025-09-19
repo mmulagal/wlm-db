@@ -230,6 +230,7 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagCompone
                 case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
                 case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
                 case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+                case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
                     setTagData([
                         {
                             label: t('databases.well-architect.tags.performanceEfficiency'),

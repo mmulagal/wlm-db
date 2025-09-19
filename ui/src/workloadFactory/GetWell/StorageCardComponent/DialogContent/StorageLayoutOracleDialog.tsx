@@ -170,6 +170,7 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                     ''
                 );
             case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-fra-dg-lun-layout-action-summary'),

@@ -35,6 +35,7 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
             case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
                 setColName(t('databases.well-architect.disk-group-name'));
                 setTableHeader(t('databases.well-architect.disk-group'));
                 break;
@@ -49,7 +50,8 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
         if (
             type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
-            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
         ) {
             return data?.violationDetails?.map((row: any) => ({
                 id: String(id++),
@@ -79,7 +81,8 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
         // Conditional column for Oracle
         ...(type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
         type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
-        type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+        type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
+        type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
             ? [
                   {
                       Header: t('databases.well-architect.type'),

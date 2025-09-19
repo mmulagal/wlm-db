@@ -146,6 +146,7 @@ const OptimizeInnerPage = () => {
             case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
                 setCardHeight({
                     recommendationSection: '134px',
                     tagSection: '230px'
@@ -317,7 +318,8 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
         ) {
             // Oracle storage layout assessment
             return (
@@ -699,6 +701,7 @@ const OptimizeInnerPage = () => {
             case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
                 return (
                     <StorageLayoutOracleTable
                         type={selectedOptimizeConfig?.type}

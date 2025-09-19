@@ -104,6 +104,7 @@ export interface AssessmentResponseInterface {
     lastAssessmentTimestamp?: string;
     deploymentType?: string;
     isASMManaged?: boolean;
+    isStorageLayoutFra?: boolean;
     storage?: {
         timestamp?: string;
         optimisedCount?: {

@@ -83,7 +83,8 @@ const OracleWellArchitectDashboard = () => {
                         filteredCardData?.oracle_binary_placement ||
                         filteredCardData?.data_dg_lun_layout ||
                         filteredCardData?.log_dg_lun_layout ||
-                        filteredCardData?.fra_dg_lun_layout) && (
+                        filteredCardData?.fra_dg_lun_layout ||
+                        filteredCardData?.archivelog_dg_lun_layout) && (
                         <div className={styles.sectionTwo}>
                             <div className={styles.sectionClass}>
                                 <StorageLayoutSection

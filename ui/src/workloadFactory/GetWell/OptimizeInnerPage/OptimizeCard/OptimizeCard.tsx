@@ -56,6 +56,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
             case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
                 return {
                     block_one: { type: 'Impacted disk groups', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },

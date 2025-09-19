@@ -141,7 +141,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     data_dg_lun_layout: {
         id: 'data-dg-lun-layout',
         configName: ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
-        title: 'DATA ASM Disk Group LUNs layout recommendation',
+        title: 'ASM Data Disk Group LUNs layout recommendation',
         resourceImpact: 'Impacted disk groups',
         resourceType: 'Disk group',
         tags: ['Performance efficiency', 'Operational excellence'],
@@ -149,9 +149,9 @@ const cardConfigurations: Record<string, CardConfig> = {
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.\nIt is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.'
     },
     log_dg_lun_layout: {
-        id: 'log-dg-lun-layout',
+        id: 'redolog-dg-lun-layout',
         configName: ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
-        title: 'LOGS ASM Disk Group LUNs layout recommendation',
+        title: 'ASM Logs Disk Group LUNs layout recommendation',
         resourceImpact: 'Impacted disk groups',
         resourceType: 'Disk group',
         tags: ['Performance efficiency', 'Operational excellence'],
@@ -161,12 +161,22 @@ const cardConfigurations: Record<string, CardConfig> = {
     fra_dg_lun_layout: {
         id: 'fra-dg-lun-layout',
         configName: ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
-        title: 'FRA ASM diskgroup LUNs layout recommendation',
+        title: 'ASM FRA Disk Group LUNs layout recommendation',
         resourceImpact: 'Impacted disk groups',
         resourceType: 'Disk group',
         tags: ['Performance efficiency', 'Operational excellence'],
         description:
-            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.\nIt is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.'
+            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.\nIt is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.'
+    },
+    archivelog_dg_lun_layout: {
+        id: 'archivelog-dg-lun-layout',
+        configName: ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
+        title: 'ASM Archive Disk Group LUNs layout recommendation',
+        resourceImpact: 'Impacted disk groups',
+        resourceType: 'Disk group',
+        tags: ['Performance efficiency', 'Operational excellence'],
+        description:
+            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.\nIt is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.'
     }
 };
 
@@ -247,7 +257,8 @@ export const oracleCardData: any = {
 
         tags: ['Reliability', 'Operational excellence', 'Performance efficiency', 'Security']
     },
-    isASMManaged: false
+    isASMManaged: false,
+    isStorageLayoutFra: false
 };
 
 // Helper functions for card formatting
@@ -263,7 +274,8 @@ const isPlacementConfig = (itemName: string): boolean =>
         'oracle_binary_placement',
         'data_dg_lun_layout',
         'log_dg_lun_layout',
-        'fra_dg_lun_layout'
+        'fra_dg_lun_layout',
+        'archivelog_dg_lun_layout'
     ].includes(itemName);
 
 const calculateBlockValues = (item: PerConfigInterface, itemName: string, categoryVal: string) => {
@@ -570,9 +582,12 @@ export const getOracleCardsData = (data: AssessmentResponseInterface, optimizing
     const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
         formatOSConfig(data, optimizingData);
 
+    const isFraCheck = data?.storage?.layout?.some((item: any) => item?.name === 'fra-dg-lun-layout') || false;
+
     const cardsData = {
         ...formatIndividualCardMainConfig(data, optimizingData),
         isASMManaged: data?.isASMManaged || false,
+        isStorageLayoutFra: isFraCheck,
         ontap_configuration: createOntapConfigurationBlock(
             ontapOptimizedConfig,
             ontapNotOptimizedConfig,
@@ -621,21 +636,26 @@ export const formatOracleOptimizationBreakDown = (cardsData: Record<string, any>
         percent: 0
     };
 
-    const state = store.getState();
-    const { isInstanceStorageAsmManaged } = state.getWellOptimize.innerPageDetails;
-
     Object.values(cardsData).forEach((cardItem: any) => {
-        if (cardItem === 'isASMManaged' || cardItem === 'deploymentType') {
-            return; // Skip isASMManaged and deploymentType as they are not cards
+        if (cardItem === 'isASMManaged' || cardItem === 'deploymentType' || cardItem === 'isStorageLayoutFra') {
+            return; // Skip isASMManaged, deploymentType and isStorageLayoutFra as they are not cards
         }
         if (cardItem?.category !== 'storage') return;
 
         if (
             !cardsData?.isASMManaged &&
             (cardItem?.id === 'data-dg-lun-layout' ||
-                cardItem?.id === 'log-dg-lun-layout' ||
+                cardItem?.id === 'redolog-dg-lun-layout' ||
                 cardItem?.id === 'fra-dg-lun-layout')
         ) {
+            return;
+        }
+
+        if (!cardsData?.isStorageLayoutFra && cardItem?.id === 'fra-dg-lun-layout') {
+            return;
+        }
+
+        if (cardsData?.isStorageLayoutFra && cardItem?.id === 'archivelog-dg-lun-layout') {
             return;
         }
 
@@ -713,8 +733,8 @@ export const oracleApplyFilter = (cardData: any, optimizeFilterTags: any) => {
     };
 
     Object.keys(cardData)?.forEach((key: any) => {
-        if (key === 'deploymentType' || key === 'isASMManaged') {
-            return; // Skip deploymentType and isASMManaged as they are not cards
+        if (key === 'deploymentType' || key === 'isASMManaged' || key === 'isStorageLayoutFra') {
+            return; // Skip deploymentType, isASMManaged and isStorageLayoutFra as they are not cards
         }
 
         const checkCategory =

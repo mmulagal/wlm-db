@@ -23,6 +23,7 @@ const StorageLayoutSection = ({
     const { cardData } = useAppSelector(state => state.getWellOptimize);
 
     const isASMManaged = useMemo(() => cardData?.isASMManaged, [cardData]);
+    const isStorageLayoutFra = useMemo(() => cardData?.isStorageLayoutFra, [cardData]);
 
     return (
         <div>
@@ -366,7 +367,7 @@ const StorageLayoutSection = ({
                     </div>
                 )}
 
-                {oracleCardData?.fra_dg_lun_layout && isASMManaged && (
+                {oracleCardData?.fra_dg_lun_layout && isASMManaged && isStorageLayoutFra && (
                     <div>
                         <OracleCardComponent cardData={oracleCardData.fra_dg_lun_layout} />
                         <DsAccordion
@@ -402,6 +403,50 @@ const StorageLayoutSection = ({
                                 </div>
                             ]}
                             children={<RecommendationText data={oracleCardData?.fra_dg_lun_layout?.recommendation} />}
+                        />
+                    </div>
+                )}
+
+                {oracleCardData?.archivelog_dg_lun_layout && isASMManaged && !isStorageLayoutFra && (
+                    <div>
+                        <OracleCardComponent cardData={oracleCardData.archivelog_dg_lun_layout} />
+                        <DsAccordion
+                            id="12"
+                            variant="Default"
+                            isDisabled={false} // Todo add condition
+                            isExpanded={isAccordionExpanded('12', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('12', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('12')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.archivelog_dg_lun_layout?.tags?.map(
+                                        (perTag: string, index: number) => (
+                                            <div key={index}>
+                                                <Tag text={perTag} />
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ? <LightDisabled /> : <Light />}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={
+                                <RecommendationText data={oracleCardData?.archivelog_dg_lun_layout?.recommendation} />
+                            }
                         />
                     </div>
                 )}

@@ -681,7 +681,7 @@
                                     "totalObjectsInViolation": 1
                                 },
                                 {
-                                    "name": "log-dg-lun-layout",
+                                    "name": "redolog-dg-lun-layout",
                                     "status": "not-optimized",
                                     "recommended": "associated-lun-count",
                                     "severity": "warning",
@@ -707,7 +707,7 @@
                                     "status": "not-optimized",
                                     "recommended": "associated-lun-count",
                                     "severity": "warning",
-                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
                                     "tags": ["Operational excellence", "Performance efficiency"],
                                     "objectsInViolation": [
                                         "DATARG"
@@ -719,6 +719,28 @@
                                             "objectType": "Disk Group",
                                             "recommended": "2",
                                             "dataCategory": "Fra"
+                                        }
+                                    ],
+                                    "totalObjectsAssessed": 1,
+                                    "totalObjectsInViolation": 1
+                                },
+                                {
+                                    "name": "archivelog-dg-lun-layout",
+                                    "status": "not-optimized",
+                                    "recommended": "associated-lun-count",
+                                    "severity": "warning",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
+                                    "tags": ["Operational excellence", "Performance efficiency"],
+                                    "objectsInViolation": [
+                                        "DATARG"
+                                    ],
+                                    "violationDetails": [
+                                        {
+                                            "objectName": "DATARG",
+                                            "value": "1",
+                                            "objectType": "Disk Group",
+                                            "recommended": "2",
+                                            "dataCategory": "Archive log"
                                         }
                                     ],
                                     "totalObjectsAssessed": 1,
@@ -1481,7 +1503,7 @@
                                     "totalObjectsInViolation": 1
                                 },
                                 {
-                                    "name": "log-dg-lun-layout",
+                                    "name": "redolog-dg-lun-layout",
                                     "status": "not-optimized",
                                     "recommended": "associated-lun-count",
                                     "severity": "warning",
@@ -1507,7 +1529,7 @@
                                     "status": "not-optimized",
                                     "recommended": "associated-lun-count",
                                     "severity": "warning",
-                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
                                     "tags": ["Operational excellence", "Performance efficiency"],
                                     "objectsInViolation": [
                                         "DATARG"
@@ -1519,6 +1541,28 @@
                                             "objectType": "Disk Group",
                                             "recommended": "2",
                                             "dataCategory": "Fra"
+                                        }
+                                    ],
+                                    "totalObjectsAssessed": 1,
+                                    "totalObjectsInViolation": 1
+                                },
+                                {
+                                    "name": "archivelog-dg-lun-layout",
+                                    "status": "not-optimized",
+                                    "recommended": "associated-lun-count",
+                                    "severity": "warning",
+                                    "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
+                                    "tags": ["Operational excellence", "Performance efficiency"],
+                                    "objectsInViolation": [
+                                        "DATARG"
+                                    ],
+                                    "violationDetails": [
+                                        {
+                                            "objectName": "DATARG",
+                                            "value": "1",
+                                            "objectType": "Disk Group",
+                                            "recommended": "2",
+                                            "dataCategory": "Archive log"
                                         }
                                     ],
                                     "totalObjectsAssessed": 1,
