@@ -46,6 +46,19 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
 
     const tableData = useMemo(() => {
         let id = 0;
+        if (
+            type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+        ) {
+            return data?.violationDetails?.map((row: any) => ({
+                id: String(id++),
+                name: row?.objectName,
+                type: row?.dataCategory,
+                value: row?.value,
+                recommended: row?.recommended
+            }));
+        }
         return data?.objectsInViolation?.map((row: any) => ({
             id: String(id++),
             name: row
@@ -63,6 +76,43 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
             width: 'auto',
             renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
+        // Conditional column for Oracle
+        ...(type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
+        type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
+        type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+            ? [
+                  {
+                      Header: t('databases.well-architect.type'),
+                      accessor: 'type',
+                      id: '2',
+                      isSortable: false,
+                      filterOptions: 'auto',
+                      isSticky: false,
+                      width: 'auto',
+                      renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+                  },
+                  {
+                      Header: t('databases.well-architect.existing-lun-count'),
+                      accessor: 'value',
+                      id: '3',
+                      isSortable: false,
+                      filterOptions: 'auto',
+                      isSticky: false,
+                      width: 'auto',
+                      renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+                  },
+                  {
+                      Header: t('databases.well-architect.recommended-lun-count'),
+                      accessor: 'recommended',
+                      id: '4',
+                      isSortable: false,
+                      filterOptions: 'auto',
+                      isSticky: false,
+                      width: 'auto',
+                      renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+                  }
+              ]
+            : []),
         lastColDetails(type, {})
     ];
 
