@@ -262,11 +262,6 @@ const ASSESSMENT_RESOURCE_TYPE = {
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
 
-const STORAGE_ASSESMENT_CONFIGS_MAP = {
-    sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size', 'headroom'],
-    layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
-};
-
 const HIGH_AVAILABILITY = [
     'shared-storage',
     'heartbeat-settings',
@@ -275,7 +270,18 @@ const HIGH_AVAILABILITY = [
     'drive-letter'
 ];
 
-const STORAGE_CONFIGURATION_ASSESMENT_MAP = {
+const ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS = [
+    'data-dg-lun-layout',
+    'redolog-dg-lun-layout',
+    'fra-dg-lun-layout',
+    'archivelog-dg-lun-layout'
+];
+const MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP = {
+    sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size', 'headroom'],
+    layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
+};
+
+const MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
     volumes: [
         'thin-provision',
         'autosize',
@@ -289,6 +295,53 @@ const STORAGE_CONFIGURATION_ASSESMENT_MAP = {
     ],
     luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
     os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size', 'mpio-timeout']
+};
+
+const ORACLE_STORAGE_LAYOUT_CONFIGS_MAP = {
+    layout: [
+        'archive-placement',
+        'datafiles-placement',
+        'controlfiles-placement',
+        'redologs-placement',
+        'templogs-placement',
+        'oracle-binary-placement',
+        'data-dg-lun-layout',
+        'redolog-dg-lun-layout',
+        'fra-dg-lun-layout',
+        'archivelog-dg-lun-layout'
+    ]
+};
+
+const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
+    volumes: [
+        'thin-provision',
+        'autosize',
+        'autosize-mode',
+        'fractional-reserve',
+        'snapshot-policy',
+        'snapshot-copy-reserve',
+        'snapshot-autodelete',
+        'space-mgmt-try-first',
+        'tiering-policy',
+        'tiering-min-cooling-days',
+        'compression',
+        'deduplication',
+        'compaction'
+    ],
+    luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
+    os: [
+        'multipath-io',
+        'host-utilities',
+        'iscsi-targets-sessions',
+        'transparent-hugepages',
+        'selinux',
+        'iscsi-replacement-timeout',
+        'multipath-friendly-names',
+        'tcp-advanced-options',
+        'filesystems-io-options',
+        'multipath-readcount',
+        'multipath-configuration'
+    ]
 };
 
 const ASSESSMENT_CONFIGS = {
@@ -364,7 +417,33 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     'headroom',
     'tempdb-files-location',
     'data-files-location',
-    'log-files-location'
+    'log-files-location',
+    // Oracle-specific configurations
+    'compression',
+    'deduplication',
+    'compaction',
+    'archive-placement',
+    'datafiles-placement',
+    'controlfiles-placement',
+    'redologs-placement',
+    'templogs-placement',
+    'oracle-binary-placement',
+    'data-dg-lun-layout',
+    'redolog-dg-lun-layout',
+    'fra-dg-lun-layout',
+    'archivelog-dg-lun-layout',
+    'multipath-io',
+    'host-utilities',
+    'iscsi-targets-sessions',
+    'transparent-hugepages',
+    'selinux',
+    'iscsi-replacement-timeout',
+    'multipath-friendly-names',
+    'tcp-advanced-options',
+    'filesystems-io-options',
+    'multipath-readcount',
+    'multipath-configuration',
+    'snapshot-policy'
 ];
 
 const HOST_LEVEL_CONFIGURATIONS = [
@@ -416,18 +495,21 @@ export {
     OptimizeComputeJobNames,
     OptimizeCloneParams,
     ASSESSMENT_CONFIGS,
-    STORAGE_ASSESMENT_CONFIGS_MAP,
+    MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP,
     DISMISS_DEACTIVATION_REASON,
     DISMISS_STATUS,
     DISMISS_UPDATE_STATUS,
     INSTANCE_LEVEL_CONFIGURATIONS,
     HOST_LEVEL_CONFIGURATIONS,
-    STORAGE_CONFIGURATION_ASSESMENT_MAP,
+    MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     HIGH_AVAILABILITY,
     DISMISS_STATUS_ENUM,
     DEFAULT_MPIO_TIMEOUT,
     OptimizeHighAvailabilityParams,
     AssessmentCategoriesOracle,
     DEFAULT_FSX_MTU_VALUE,
-    OptimizeStorageApiData
+    OptimizeStorageApiData,
+    ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,
+    ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS
 };

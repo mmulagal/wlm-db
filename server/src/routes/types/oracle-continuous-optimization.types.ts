@@ -1,6 +1,11 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { AssessmentStatus, AwsWellArchitecturedPillars } from '../../utils/continous-optimization-consts';
-import { OntapVolume, GenericViolationResponse, ErrorResponse } from './continuous-optimization.types';
+import {
+    OntapVolume,
+    GenericViolationResponse,
+    ErrorResponse,
+    DismissedConfigurationsResponse
+} from './continuous-optimization.types';
 
 const OracleGenericParameterDriftResponse = Type.Object({
     name: Type.String(),
@@ -32,6 +37,7 @@ type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResp
 
 const OracleDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
+    dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     fileSystemId: Type.Optional(Type.String()),
     ec2InstanceId: Type.Optional(Type.String()),

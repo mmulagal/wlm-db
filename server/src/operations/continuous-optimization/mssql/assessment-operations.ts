@@ -31,7 +31,8 @@ import {
     HttpErrorCodes,
     RESOURCESTYPE,
     SqlServerDeploymentModel,
-    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
+    DatabaseTypes
 } from '../../../utils/consts';
 import {
     AssessmentCategories,
@@ -65,9 +66,9 @@ import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operation
 import { getInstanceDetails } from '../../database-hosts-operations';
 import { getLatestInstanceAssessmentTime } from '../assessment-utils';
 import {
-    checkAndUpdatePostponedEndTime,
     updateFieldsBasedOnDismissedConfigurations,
-    mergeDismissConfigurations
+    mergeDismissConfigurations,
+    processDismissedConfigurations
 } from '../assessment-dismiss-operations';
 import {
     ParameterDriftResponseType,
@@ -246,7 +247,11 @@ async function fetchMssqlDriftAssessment(
     );
 
     if (!isEmpty(dismissedConfigurations)) {
-        fieldsValues = updateFieldsBasedOnDismissedConfigurations(fieldsValues, dismissedConfigurations);
+        fieldsValues = updateFieldsBasedOnDismissedConfigurations(
+            fieldsValues,
+            dismissedConfigurations,
+            DatabaseTypes.MS_SQL_SERVER
+        );
     }
 
     const assessmentFlags = {
@@ -1042,7 +1047,7 @@ async function triggerMssqlAssessment(
         database_instance_id: databaseInstanceId
     } = managedInstance;
 
-    logger.info('Triggering drift assessment', {
+    logger.info('Triggering drift assessment for MSSQL managed instance', {
         accountId,
         credentialsId,
         region,
@@ -1073,22 +1078,28 @@ async function triggerMssqlAssessment(
             newDatabaseInstanceDetails as DatabaseInstance;
         const { configurations: hostConfigurations, resource_name: resourceName } = resourceDetail as ResourceDetails;
 
-        const { dismissedInstanceConfigurations, dismissedHostConfigurations } = await checkAndUpdatePostponedEndTime(
+        const instanceDismissedConfigs = (instanceConfigurations as DatabaseInstanceConfigurations)
+            ?.dismissedConfigurations;
+        const hostDismissedConfigs = (hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations;
+
+        // Process dismissed configurations using common method
+        const finalDismissedConfigurations = await processDismissedConfigurations(
             accountId,
             credentialsId,
             region,
             databaseHostId,
-            {
-                instance: (instanceConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations,
-                host: (hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
-            },
+            instanceDismissedConfigs,
+            hostDismissedConfigs,
             databaseInstanceId
         );
 
-        const dismissedConfigurations = mergeDismissConfigurations(
-            dismissedInstanceConfigurations,
-            dismissedHostConfigurations
-        );
+        if (!isEmpty(finalDismissedConfigurations)) {
+            fields = updateFieldsBasedOnDismissedConfigurations(
+                fields,
+                finalDismissedConfigurations,
+                DatabaseTypes.MS_SQL_SERVER
+            );
+        }
 
         const {
             database_instance_name: savedInstanceName,
@@ -1111,10 +1122,6 @@ async function triggerMssqlAssessment(
             svmId: (fsxSvmId as Record<string, string>)[fileSystemId!] || '',
             databaseInstanceObject: newDatabaseInstanceDetails
         };
-
-        if (!isEmpty(dismissedConfigurations)) {
-            fields = updateFieldsBasedOnDismissedConfigurations(fields, dismissedConfigurations);
-        }
 
         if (
             deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&

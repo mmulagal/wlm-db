@@ -10,12 +10,13 @@ import {
 } from '../../database/database-operations';
 import {
     DatabaseInstance,
+    DatabaseInstanceConfigurations,
     DatabaseInstancesIncludingResource,
     Metadata,
     ResourceDetails,
     WorkloadInstance
 } from '../../../utils/common-types';
-import { AuditStatus, HttpErrorCodes, RESOURCESTYPE } from '../../../utils/consts';
+import { AuditStatus, HttpErrorCodes, RESOURCESTYPE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
@@ -44,6 +45,11 @@ import {
 import { isDemo } from '../../../utils/utils';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoInventoryData';
 import { getLatestInstanceAssessmentTime } from '../assessment-utils';
+import {
+    updateFieldsBasedOnDismissedConfigurations,
+    processDismissedConfigurations,
+    mergeDismissConfigurations
+} from '../assessment-dismiss-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -145,7 +151,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
             databaseInstanceRecord.mappedLunNames = [...new Set(lunData.map(lun => lun.name))];
         }
     } catch (error: any) {
-        const errorMessage = error.message;
+        const errorMessage = error instanceof Error ? error.message : String(error);
         logger.error('Error while fetching mapped ontap volumes data', {
             accountId,
             credentialsId,
@@ -216,6 +222,7 @@ async function triggerOracleAssessment(
         database_instance_name: databaseInstanceName,
         fsx_svm_id: fsxSvmId,
         fsxn_ids: fsxFileSystem,
+        storage_protocol: storageProtocol,
         resource = {}
     } = managedInstance;
 
@@ -236,9 +243,39 @@ async function triggerOracleAssessment(
         const {
             resource_name: resourceName,
             cloud_provider_account_id: cloudProviderAccountId,
-            metadata
+            metadata,
+            configurations: hostConfigurations
         } = resource as ResourceDetails;
-        const { node1InstanceId: activeNodeInstanceId, storageProtocol } = metadata as Metadata;
+
+        const { node1InstanceId: activeNodeInstanceId } = metadata as Metadata;
+
+        const { configurations: instanceConfigurations } = managedInstance;
+
+        const instanceDismissedConfigs = (instanceConfigurations as unknown as DatabaseInstanceConfigurations)
+            ?.dismissedConfigurations;
+        const hostDismissedConfigs = (hostConfigurations as unknown as DatabaseInstanceConfigurations)
+            ?.dismissedConfigurations;
+
+        // Process dismissed configurations using common method
+        const finalDismissedConfigurations = await processDismissedConfigurations(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceDismissedConfigs,
+            hostDismissedConfigs,
+            databaseInstanceId
+        );
+
+        if (!isEmpty(finalDismissedConfigurations)) {
+            fields = updateFieldsBasedOnDismissedConfigurations(
+                fields,
+                finalDismissedConfigurations,
+                DatabaseTypes.ORACLE,
+                storageProtocol ?? STORAGE_PROTOCOLS.ISCSI
+            );
+        }
+
         const instanceRecord: WorkloadInstance = {
             id: databaseInstanceId,
             name: databaseInstanceName,
@@ -251,7 +288,7 @@ async function triggerOracleAssessment(
             resourceName: resourceName || '',
             svmId: (fsxSvmId as Record<string, string>)[fsxFileSystem!] || '',
             databaseInstanceObject: managedInstance,
-            storageProtocol
+            storageProtocol: storageProtocol ?? STORAGE_PROTOCOLS.ISCSI
         };
 
         const shouldRunInstanceLevelAssessment = fields.some(field =>
@@ -372,22 +409,24 @@ async function fetchOracleDriftAssessment(
     const instanceDetail =
         databaseInstance ?? (await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId));
 
-    const {
+    let {
         database_instance_name: databaseInstanceName,
         fsxn_ids: fileSystemId,
+        configurations: instanceConfigurations,
         database_deployment_type: databaseDeploymentType,
-        resource: { metadata: resourceMetadata }
+        storage_protocol: storageProtocol,
+        resource: { configurations: hostConfigurations, metadata: resourceMetadata }
     } = instanceDetail as DatabaseInstance;
+
+    const instanceDismissedConfigs = (instanceConfigurations as DatabaseInstanceConfigurations)
+        ?.dismissedConfigurations;
+    const hostDismissedConfigs = (hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations;
 
     const { node1InstanceId } = resourceMetadata as Metadata;
 
-    const fieldsValues =
+    let fieldsValues =
         fields?.toLowerCase().replace(/\s+/g, '').split(',') ||
         Object.values(AssessmentCategoriesOracle).map(category => category.toLowerCase());
-
-    const assessmentFlags = {
-        storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase())
-    };
 
     const databaseInstanceConfigData = await listDatabaseInstanceConfigData({
         accountId,
@@ -410,7 +449,24 @@ async function fetchOracleDriftAssessment(
         string,
         OracleMappedOntapVolumesResponse
     >;
-    const storageProtocol = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.protocol : '';
+
+    storageProtocol = storageProtocol || (mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.protocol : '');
+
+    const dismissedConfigurations = mergeDismissConfigurations(instanceDismissedConfigs, hostDismissedConfigs);
+
+    if (!isEmpty(dismissedConfigurations)) {
+        fieldsValues = updateFieldsBasedOnDismissedConfigurations(
+            fieldsValues,
+            dismissedConfigurations,
+            DatabaseTypes.ORACLE,
+            storageProtocol ?? STORAGE_PROTOCOLS.ISCSI
+        );
+    }
+
+    const assessmentFlags = {
+        storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase())
+    };
+
     const isASMManaged = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.isASMManaged : false;
 
     const storageDriftData = assessmentFlags.storage
@@ -430,6 +486,7 @@ async function fetchOracleDriftAssessment(
 
     const driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
+        dismissedConfigurations,
         fileSystemId,
         databaseInstanceName,
         ec2InstanceId: node1InstanceId,
@@ -542,11 +599,12 @@ async function fetchOracleDriftAssessmentPerHost(
                         { ...instance, resource: resourceDetail } as DatabaseInstancesIncludingResource
                     );
                     return { databaseInstanceId, databaseInstanceName, assessments: driftAssessment };
-                } catch (error: any) {
+                } catch (error: unknown) {
+                    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
                     logger.error(
-                        `Error while fetching oracle drift assessment for ${databaseInstanceId}: ${error.message}`
+                        `Error while fetching oracle drift assessment for ${databaseInstanceId}: ${errorMessage}`
                     );
-                    return { databaseInstanceId, databaseInstanceName, error: error.message };
+                    return { databaseInstanceId, databaseInstanceName, error: errorMessage };
                 }
             })
         )

@@ -1,7 +1,10 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
-import { TriggerDriftAssessmentSchema } from './schemas/mssql-continuous-optimization-schema';
+import {
+    TriggerDriftAssessmentSchema,
+    BulkDismissConfigurationSchema
+} from './schemas/mssql-continuous-optimization-schema';
 import castRequest from './utils';
 import {
     fetchOracleDriftAssessment,
@@ -16,8 +19,11 @@ import {
     OracleOptimizeStorageSchema
 } from './schemas/oracle-continuous-optimization-schema';
 import { optimizeStorage } from '../operations/cont-opt-optimize-operations';
+import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
+import { DatabaseTypes } from '../utils/consts';
 
 const API_PREFIX_PATH = '/v1/oracle/credentials/:credentialsId/regions/:region';
+const ORACLE_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/oracle';
 
 export default function oracleContinuousOptimizationRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -113,5 +119,21 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                 pageSize
             );
             return reply.send(response);
-        });
+        })
+        .post(
+            `${ORACLE_BULK_OPTIMIZATION_API_PREFIX_PATH}/assessment/dismiss`,
+            { schema: BulkDismissConfigurationSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { configurationsToDismiss }
+                } = castRequest(request);
+                const response = await updateDismissConfigurations(
+                    accountId,
+                    configurationsToDismiss,
+                    DatabaseTypes.ORACLE
+                );
+                return reply.send(response);
+            }
+        );
 }

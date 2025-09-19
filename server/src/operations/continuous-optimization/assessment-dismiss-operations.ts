@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import ms from 'ms';
+import throat from 'throat';
 import {
     ASSESSMENT_CONFIGS,
     DISMISS_DEACTIVATION_REASON,
@@ -7,8 +8,11 @@ import {
     DISMISS_UPDATE_STATUS,
     HOST_LEVEL_CONFIGURATIONS,
     INSTANCE_LEVEL_CONFIGURATIONS,
-    STORAGE_ASSESMENT_CONFIGS_MAP,
-    STORAGE_CONFIGURATION_ASSESMENT_MAP
+    MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP,
+    MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,
+    ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import {
@@ -24,10 +28,11 @@ import {
     DatabaseHostConfigurations,
     DismissHostGroup,
     DismissInstanceGroup,
-    BulkDismissConfigurationResponseItem
+    BulkDismissConfigurationResponseItem,
+    StorageDismissConfigs
 } from '../../utils/common-types';
 import { listResources } from '../../lib/database/db';
-import { HttpErrorCodes, POSTPONE_AGE } from '../../utils/consts';
+import { HttpErrorCodes, POSTPONE_AGE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../utils/consts';
 import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
@@ -150,30 +155,22 @@ function updateConfig({
     return updatedConfigs;
 }
 
-async function formatDismissConfigurations(
+function formatDismissConfigurations(
     currentConfigs: DatabaseInstanceDismissConfigs,
-    newConfigs: InstanceDismissParams
+    newConfigs: InstanceDismissParams,
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
-    logger.info('Formatting dismiss configurations', { currentConfigs, newConfigs });
+    logger.info('Formatting dismiss configurations', { currentConfigs, newConfigs, databaseType });
     const { configurationName, startTime, configState, endTime } = newConfigs;
 
-    const matchingKey = Object.keys(ASSESSMENT_CONFIGS).find(
-        key => ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === configurationName
-    );
-    if (matchingKey) {
-        return updateConfig({
-            currentConfigs,
-            configKey: matchingKey,
-            configType: DismissConfigType.Common,
-            configurationName,
-            configState,
-            startTime,
-            endTime
-        });
-    }
+    // Check for storage assessment configs (sizing, layout) based on database type
+    const storageAssessmentMap =
+        databaseType === DatabaseTypes.ORACLE
+            ? ORACLE_STORAGE_LAYOUT_CONFIGS_MAP
+            : MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP;
 
-    const storageKey = Object.keys(STORAGE_ASSESMENT_CONFIGS_MAP).find(key =>
-        STORAGE_ASSESMENT_CONFIGS_MAP[key as keyof typeof STORAGE_ASSESMENT_CONFIGS_MAP].includes(configurationName)
+    const storageKey = Object.keys(storageAssessmentMap).find(key =>
+        storageAssessmentMap[key as keyof typeof storageAssessmentMap].includes(configurationName)
     );
     if (storageKey) {
         return updateConfig({
@@ -187,10 +184,14 @@ async function formatDismissConfigurations(
         });
     }
 
-    const storageConfigKey = Object.keys(STORAGE_CONFIGURATION_ASSESMENT_MAP).find(key =>
-        STORAGE_CONFIGURATION_ASSESMENT_MAP[key as keyof typeof STORAGE_CONFIGURATION_ASSESMENT_MAP].includes(
-            configurationName
-        )
+    // Use appropriate storage configuration map based on database type
+    const storageConfigMap =
+        databaseType === DatabaseTypes.ORACLE
+            ? ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP
+            : MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP;
+
+    const storageConfigKey = Object.keys(storageConfigMap).find(key =>
+        storageConfigMap[key as keyof typeof storageConfigMap].includes(configurationName)
     );
     if (storageConfigKey) {
         return updateConfig({
@@ -204,16 +205,34 @@ async function formatDismissConfigurations(
         });
     }
 
-    const highAvailabilitySubkey = Object.keys(ASSESSMENT_CONFIGS.highAvailability).find(
-        key =>
-            ASSESSMENT_CONFIGS.highAvailability[key as keyof typeof ASSESSMENT_CONFIGS.highAvailability] ===
-            configurationName
+    // High availability is only supported for MSSQL
+    if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
+        const highAvailabilitySubkey = Object.keys(ASSESSMENT_CONFIGS.highAvailability).find(
+            key =>
+                ASSESSMENT_CONFIGS.highAvailability[key as keyof typeof ASSESSMENT_CONFIGS.highAvailability] ===
+                configurationName
+        );
+        if (highAvailabilitySubkey) {
+            return updateConfig({
+                currentConfigs,
+                configKey: highAvailabilitySubkey,
+                configType: DismissConfigType.HighAvailability,
+                configurationName,
+                configState,
+                startTime,
+                endTime
+            });
+        }
+    }
+
+    const matchingKey = Object.keys(ASSESSMENT_CONFIGS).find(
+        key => ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === configurationName
     );
-    if (highAvailabilitySubkey) {
+    if (matchingKey) {
         return updateConfig({
             currentConfigs,
-            configKey: highAvailabilitySubkey,
-            configType: DismissConfigType.HighAvailability,
+            configKey: matchingKey,
+            configType: DismissConfigType.Common,
             configurationName,
             configState,
             startTime,
@@ -309,10 +328,14 @@ function markGroupAsFailed(
     });
 }
 
-async function updateDismissConfigurations(accountId: string, configurations: BulkDismissConfigurationType[]) {
+async function updateDismissConfigurations(
+    accountId: string,
+    configurations: BulkDismissConfigurationType[],
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
+) {
     logger.info('Updating dismiss configurations for account:', { accountId, configurations });
 
-    const expandedConfigurations = expandConfigurations(configurations);
+    const expandedConfigurations = expandConfigurations(configurations, databaseType);
 
     const hostGroups = new Map<string, DismissHostGroup>();
     const instanceGroups = new Map<string, DismissInstanceGroup>();
@@ -407,33 +430,33 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         }
     });
 
-    // Process host-level groups in parallel
     logger.info(`Processing ${hostGroups.size} host groups and ${instanceGroups.size} instance groups`);
-    const hostPromises = Array.from(hostGroups.values()).map(async group => {
-        try {
-            await processHostGroup(accountId, group, finalResponse);
-        } catch (error) {
-            logger.error('Error processing host group:', error);
-            markGroupAsFailed(group, finalResponse, false);
-        }
-    });
 
-    // Process instance-level groups in parallel
-    const instancePromises = Array.from(instanceGroups.values()).map(async group => {
-        try {
-            await processInstanceGroup(accountId, group, finalResponse);
-        } catch (error) {
-            logger.error('Error processing instance group:', error);
-            markGroupAsFailed(group, finalResponse, true);
-        }
-    });
+    await Promise.all(
+        Array.from(hostGroups.values()).map(
+            throat(2, async (group: DismissHostGroup) => {
+                try {
+                    await processHostGroup(accountId, group, finalResponse, databaseType);
+                } catch (error) {
+                    logger.error('Error processing host group:', error);
+                    markGroupAsFailed(group, finalResponse, false);
+                }
+            })
+        )
+    );
 
-    try {
-        await Promise.all([...hostPromises, ...instancePromises]);
-    } catch (err) {
-        logger.error('Error updating host/instance dismiss status', err);
-    }
-
+    await Promise.all(
+        Array.from(instanceGroups.values()).map(
+            throat(2, async (group: DismissInstanceGroup) => {
+                try {
+                    await processInstanceGroup(accountId, group, finalResponse, databaseType);
+                } catch (error) {
+                    logger.error('Error processing instance group:', error);
+                    markGroupAsFailed(group, finalResponse, true);
+                }
+            })
+        )
+    );
     return { dismissedConfigurations: finalResponse };
 }
 
@@ -458,26 +481,30 @@ function markGroupAsSuccessful(
     });
 }
 
-async function buildMergedConfigs(
+function buildMergedConfigs(
     currentConfigs: DatabaseInstanceDismissConfigs,
     configs: Array<{
         configName: string;
         configState: string;
         startTime: number;
         endTime: number | undefined;
-    }>
-): Promise<DatabaseInstanceDismissConfigs> {
+    }>,
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
+): DatabaseInstanceDismissConfigs {
     let mergedConfigs = currentConfigs;
 
     for (const config of configs) {
         const { configName, configState, startTime, endTime } = config;
-        // eslint-disable-next-line no-await-in-loop
-        mergedConfigs = await formatDismissConfigurations(mergedConfigs, {
-            configurationName: configName,
-            startTime,
-            endTime,
-            configState
-        });
+        mergedConfigs = formatDismissConfigurations(
+            mergedConfigs,
+            {
+                configurationName: configName,
+                startTime,
+                endTime,
+                configState
+            },
+            databaseType
+        );
     }
 
     return mergedConfigs;
@@ -486,7 +513,8 @@ async function buildMergedConfigs(
 async function processHostGroup(
     accountId: string,
     group: DismissHostGroup,
-    finalResponse: BulkDismissConfigurationResponseItem[]
+    finalResponse: BulkDismissConfigurationResponseItem[],
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
     const { credentialsId, region, hostId, configs } = group;
 
@@ -510,7 +538,11 @@ async function processHostGroup(
     }
 
     const currentConfigs = resourceDetails.configurations as unknown as DatabaseHostConfigurations;
-    const mergedDismissConfigs = await buildMergedConfigs(currentConfigs?.dismissedConfigurations || {}, configs);
+    const mergedDismissConfigs = buildMergedConfigs(
+        currentConfigs?.dismissedConfigurations || {},
+        configs,
+        databaseType
+    );
 
     await updateDatabaseHostConfigurations(accountId, credentialsId, region, hostId, {
         dismissedConfigurations: mergedDismissConfigs
@@ -529,7 +561,8 @@ async function processHostGroup(
 async function processInstanceGroup(
     accountId: string,
     group: DismissInstanceGroup,
-    finalResponse: BulkDismissConfigurationResponseItem[]
+    finalResponse: BulkDismissConfigurationResponseItem[],
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
     const { credentialsId, region, hostId, instanceId, configs } = group;
 
@@ -546,7 +579,11 @@ async function processInstanceGroup(
     }
 
     const currentConfigs = instance.configurations as unknown as DatabaseInstanceConfigurations;
-    const mergedDismissConfigs = await buildMergedConfigs(currentConfigs?.dismissedConfigurations || {}, configs);
+    const mergedDismissConfigs = buildMergedConfigs(
+        currentConfigs?.dismissedConfigurations || {},
+        configs,
+        databaseType
+    );
 
     // Make single DB call for all configurations on this instance
     await updateDatabaseInstanceConfigurations(accountId, credentialsId, region, hostId, instanceId, {
@@ -581,47 +618,56 @@ function updateHostStatus(response: BulkDismissConfigurationType, hostIndex: num
     response.databaseHosts[hostIndex].status = updatedStatus;
 }
 
-function areAllStorageConfigurationsDismissed(storageData: {
-    configuration?:
-        | {
-              volumes?: InstanceDismissParams[] | undefined;
-              luns?: InstanceDismissParams[] | undefined;
-              os?: InstanceDismissParams[] | undefined;
-          }
-        | undefined;
-    sizing?: InstanceDismissParams[] | undefined;
-    layout?: InstanceDismissParams[] | undefined;
-}): boolean {
-    // Check STORAGE_CONFIGURATION_ASSESMENT_MAP (volumes, luns, os in configuration)
-    const allConfigurationMapsDismissed = Object.entries(STORAGE_CONFIGURATION_ASSESMENT_MAP).every(
-        ([category, expectedConfigs]) => {
-            const categoryConfigs = storageData.configuration?.[category as keyof typeof storageData.configuration];
-            if (!Array.isArray(categoryConfigs) || categoryConfigs.length !== expectedConfigs.length) {
-                return false;
-            }
+function areAllConfigsDismissed(expectedConfigs: string[], categoryConfigs?: InstanceDismissParams[]): boolean {
+    if (!Array.isArray(categoryConfigs)) {
+        return false;
+    }
 
-            return expectedConfigs.every(expectedConfig =>
-                categoryConfigs.some(
-                    config => config.configurationName === expectedConfig && isConfigDismissed(config.configState)
-                )
-            );
-        }
+    return expectedConfigs.every(expectedConfig =>
+        categoryConfigs.some(
+            config => config.configurationName === expectedConfig && isConfigDismissed(config.configState)
+        )
     );
+}
 
-    const allAssessmentConfigsDismissed = Object.entries(STORAGE_ASSESMENT_CONFIGS_MAP).every(
-        ([category, expectedConfigs]) => {
-            const categoryConfigs = storageData[category as keyof typeof storageData];
-            if (!Array.isArray(categoryConfigs) || categoryConfigs.length !== expectedConfigs.length) {
-                return false;
-            }
+function areAllStorageConfigurationsDismissed(
+    storageData: StorageDismissConfigs,
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER,
+    isOracleWithNFS: boolean = false
+): boolean {
+    const storageConfigMap =
+        databaseType === DatabaseTypes.ORACLE
+            ? ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP
+            : MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP;
 
-            return expectedConfigs.every(expectedConfig =>
-                categoryConfigs.some(
-                    config => config.configurationName === expectedConfig && isConfigDismissed(config.configState)
-                )
-            );
+    const storageAssessmentMap =
+        databaseType === DatabaseTypes.ORACLE
+            ? ORACLE_STORAGE_LAYOUT_CONFIGS_MAP
+            : MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP;
+
+    const allConfigurationMapsDismissed = Object.entries(storageConfigMap).every(([category, expectedConfigs]) => {
+        if (isOracleWithNFS && category === 'luns') {
+            return true;
         }
-    );
+
+        const categoryConfigs = storageData.configuration?.[category as keyof typeof storageData.configuration];
+        return areAllConfigsDismissed(expectedConfigs, categoryConfigs);
+    });
+
+    const allAssessmentConfigsDismissed = Object.entries(storageAssessmentMap).every(([category, expectedConfigs]) => {
+        const categoryConfigs = storageData[category as keyof typeof storageData] as
+            | InstanceDismissParams[]
+            | undefined;
+
+        if (isOracleWithNFS && category === 'layout') {
+            const nfsRelevantConfigs = expectedConfigs.filter(
+                config => !ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS.includes(config)
+            );
+            return areAllConfigsDismissed(nfsRelevantConfigs, categoryConfigs);
+        }
+
+        return areAllConfigsDismissed(expectedConfigs, categoryConfigs);
+    });
 
     return allConfigurationMapsDismissed && allAssessmentConfigsDismissed;
 }
@@ -638,27 +684,44 @@ function createSubConfigs(
     }));
 }
 
-function expandConfigurations(configurations: BulkDismissConfigurationType[]): BulkDismissConfigurationType[] {
+function expandConfigurations(
+    configurations: BulkDismissConfigurationType[],
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
+): BulkDismissConfigurationType[] {
     return configurations.flatMap(config => {
         const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
 
         switch (configName) {
             case 'high-availability': {
-                // Expand into all high-availability subcategories dynamically
-                const haSubcategories = Object.values(ASSESSMENT_CONFIGS.highAvailability);
-                return createSubConfigs(haSubcategories, configState, hostsToDismiss);
+                if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
+                    const haSubcategories = Object.values(ASSESSMENT_CONFIGS.highAvailability);
+                    return createSubConfigs(haSubcategories, configState, hostsToDismiss);
+                }
+                return [config];
             }
             case 'ontap-volumes': {
-                // Expand into all ONTAP volume and LUN subcategories
+                if (databaseType === DatabaseTypes.ORACLE) {
+                    const allOracleVolumeConfigs = [
+                        ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
+                        ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns
+                    ];
+                    return createSubConfigs(allOracleVolumeConfigs, configState, hostsToDismiss);
+                }
                 const allOntapConfigs = [
-                    ...STORAGE_CONFIGURATION_ASSESMENT_MAP.volumes,
-                    ...STORAGE_CONFIGURATION_ASSESMENT_MAP.luns
+                    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
+                    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns
                 ];
                 return createSubConfigs(allOntapConfigs, configState, hostsToDismiss);
             }
             case 'operating-system': {
-                // Expand into all operating system subcategories
-                return createSubConfigs(STORAGE_CONFIGURATION_ASSESMENT_MAP.os, configState, hostsToDismiss);
+                if (databaseType === DatabaseTypes.ORACLE) {
+                    return createSubConfigs(
+                        ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
+                        configState,
+                        hostsToDismiss
+                    );
+                }
+                return createSubConfigs(MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os, configState, hostsToDismiss);
             }
             default:
                 return [config];
@@ -668,27 +731,46 @@ function expandConfigurations(configurations: BulkDismissConfigurationType[]): B
 
 function updateFieldsBasedOnDismissedConfigurations(
     fieldsValues: string[],
-    dismissedConfigurations: DatabaseInstanceDismissConfigs
+    dismissedConfigurations: DatabaseInstanceDismissConfigs,
+    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER,
+    storageProtocol?: string
 ) {
-    logger.info('Updating fields based on dismissed configurations', { fieldsValues, dismissedConfigurations });
+    logger.info('Updating fields based on dismissed configurations', {
+        fieldsValues,
+        dismissedConfigurations,
+        storageProtocol
+    });
 
-    const updatedFieldsValues = fieldsValues.filter(fieldValue => {
-        if (fieldValue === 'high-availability' && dismissedConfigurations.highAvailability) {
+    const isOracleWithNFS = databaseType === DatabaseTypes.ORACLE && storageProtocol === STORAGE_PROTOCOLS.NFS;
+
+    return fieldsValues.filter(fieldValue => {
+        if (
+            fieldValue === 'high-availability' &&
+            dismissedConfigurations.highAvailability &&
+            databaseType === DatabaseTypes.MS_SQL_SERVER
+        ) {
             const haConfigs = dismissedConfigurations.highAvailability;
             const allSupportedHAKeys = Object.values(ASSESSMENT_CONFIGS.highAvailability);
             const allHAConfigsDismissed = allSupportedHAKeys.every(configName => {
                 const config = haConfigs.find(c => c.configurationName === configName);
                 return config && isConfigDismissed(config.configState);
             });
-            if (allHAConfigsDismissed) {
-                return false;
-            }
+            return !allHAConfigsDismissed;
         }
+
         if (fieldValue === 'storage' && dismissedConfigurations.storage) {
-            if (areAllStorageConfigurationsDismissed(dismissedConfigurations.storage)) {
-                return false;
-            }
+            return !areAllStorageConfigurationsDismissed(
+                dismissedConfigurations.storage,
+                databaseType,
+                isOracleWithNFS
+            );
         }
+
+        // Skip Oracle iSCSI-specific layout configs for NFS protocol
+        if (isOracleWithNFS && ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS.includes(fieldValue)) {
+            return false;
+        }
+
         return !Object.entries(dismissedConfigurations).some(
             ([keyName, config]) =>
                 (keyName === fieldValue ||
@@ -697,8 +779,6 @@ function updateFieldsBasedOnDismissedConfigurations(
                 config.configurationType !== 'storage'
         );
     });
-
-    return updatedFieldsValues;
 }
 
 function processConfigForExpiration(configDetails: InstanceDismissParams) {
@@ -789,11 +869,9 @@ function processConfigEntries(
                     updatedConfigs.highAvailability = updatedHAConfigs;
                 }
             }
-        } else if (key !== 'highAvailability' && key !== 'storage') {
-            // Handle single configuration properties (not arrays)
+        } else {
             const { updatedStorageConfig, isConfigExpired } = processConfigForExpiration(config);
             if (isConfigExpired) {
-                // Type assertion for properties we know are single InstanceDismissParams
                 (updatedConfigs as Record<string, InstanceDismissParams | InstanceDismissParams[]>)[key] =
                     updatedStorageConfig;
                 isConfigUpdated = true;
@@ -882,14 +960,45 @@ function mergeDismissConfigurations(
     };
 }
 
+async function processDismissedConfigurations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    instanceDismissedConfigs: DatabaseInstanceDismissConfigs | undefined,
+    hostDismissedConfigs: DatabaseInstanceDismissConfigs | undefined,
+    databaseInstanceId?: string
+): Promise<DatabaseInstanceDismissConfigs> {
+    logger.debug('Processing dismissed configuration');
+    const updatedDismissedConfigurations = await checkAndUpdatePostponedEndTime(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        {
+            instance: instanceDismissedConfigs,
+            host: hostDismissedConfigs
+        },
+        databaseInstanceId
+    );
+
+    // Merge and return final dismissed configurations
+    return mergeDismissConfigurations(
+        updatedDismissedConfigurations.dismissedInstanceConfigurations,
+        updatedDismissedConfigurations.dismissedHostConfigurations
+    );
+}
+
 export {
     formatDismissConfigurations,
     updateDismissConfigurations,
     updateFieldsBasedOnDismissedConfigurations,
     checkAndUpdatePostponedEndTime,
     mergeDismissConfigurations,
+    processDismissedConfigurations,
     updateConfig,
     getOrCreateGroup,
     DismissGroupType,
-    DismissConfigType
+    DismissConfigType,
+    areAllStorageConfigurationsDismissed
 };

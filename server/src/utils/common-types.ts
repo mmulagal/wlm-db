@@ -784,16 +784,18 @@ interface InstanceDismissParams {
     reactivationReason?: string;
 }
 
-interface DatabaseInstanceDismissConfigs {
-    storage?: {
-        configuration?: {
-            volumes?: InstanceDismissParams[];
-            luns?: InstanceDismissParams[];
-            os?: InstanceDismissParams[];
-        };
-        sizing?: InstanceDismissParams[];
-        layout?: InstanceDismissParams[];
+interface StorageDismissConfigs {
+    configuration?: {
+        volumes?: InstanceDismissParams[];
+        luns?: InstanceDismissParams[];
+        os?: InstanceDismissParams[];
     };
+    sizing?: InstanceDismissParams[];
+    layout?: InstanceDismissParams[];
+}
+
+interface DatabaseInstanceDismissConfigs {
+    storage?: StorageDismissConfigs;
     rssConfig?: InstanceDismissParams;
     maxDop?: InstanceDismissParams;
     mssqlPatch?: InstanceDismissParams;
@@ -983,5 +985,6 @@ export {
     DismissInstanceGroup,
     BulkDismissConfigurationResponseItem,
     PerHostJobMetadata,
-    JobMetadata
+    JobMetadata,
+    StorageDismissConfigs
 };

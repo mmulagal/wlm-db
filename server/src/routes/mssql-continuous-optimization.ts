@@ -56,6 +56,7 @@ import {
     BulkOptimizeCloneInHostRequestBodyType
 } from './types/mssql-continuous-optimisation.types';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
+import { DatabaseTypes } from '../utils/consts';
 import {
     fetchMssqlDriftAssessment,
     fetchMssqlDriftAssessmentPerAccount,
@@ -385,7 +386,11 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     params: { accountId },
                     body: { configurationsToDismiss }
                 } = castRequest(request);
-                const response = await updateDismissConfigurations(accountId, configurationsToDismiss);
+                const response = await updateDismissConfigurations(
+                    accountId,
+                    configurationsToDismiss,
+                    DatabaseTypes.MS_SQL_SERVER
+                );
                 return reply.send(response);
             }
         )
