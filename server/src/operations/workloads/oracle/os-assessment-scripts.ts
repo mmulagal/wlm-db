@@ -110,8 +110,9 @@ EXIT;
             cmd_parts,
             input=sql_query,
             env=env,
-            capture_output=True,
-            text=True,
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE, 
+            universal_newlines=True,
             timeout=30
         )
         
@@ -158,8 +159,8 @@ def check_multipath_io():
     try:
         # Single command to check if multipathd service is active and enabled
         result = subprocess.run(['bash', '-c', 'systemctl is-active multipathd && systemctl is-enabled multipathd'], 
-                              capture_output=True, text=True, timeout=5)
-        
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
+
         output_lines = result.stdout.strip().split('\\n')
         is_active = len(output_lines) > 0 and output_lines[0] == 'active'
         is_enabled = len(output_lines) > 1 and output_lines[1] == 'enabled'
@@ -190,8 +191,8 @@ def check_sanlun():
     log('Checking ONTAP sanlun installation and version')
     try:
         result = subprocess.run(['sanlun', 'version'], 
-                              capture_output=True, text=True, timeout=10)
-        
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
+
         if result.returncode == 0:
             version_output = result.stdout.strip()
             log(f'ONTAP sanlun version: {version_output}')
@@ -236,7 +237,7 @@ def check_iscsi_targets_sessions():
         # Get configured targets (use the IP as the target_name)
         try:
             targets_result = subprocess.run(['iscsiadm', '-m', 'node'],
-                                          capture_output=True, text=True, timeout=10)
+                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
 
             if targets_result.returncode == 0 and targets_result.stdout.strip():
                 for line in targets_result.stdout.strip().split('\\n'):
@@ -260,7 +261,7 @@ def check_iscsi_targets_sessions():
         # Count active sessions per IP (session lines may contain the portal IP)
         try:
             sessions_result = subprocess.run(['iscsiadm', '-m', 'session'],
-                                           capture_output=True, text=True, timeout=10)
+                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
 
             if sessions_result.returncode == 0 and sessions_result.stdout.strip():
                 for line in sessions_result.stdout.strip().split('\\n'):
@@ -332,7 +333,7 @@ def check_selinux():
     try:
         # Use getenforce command
         try:
-            result = subprocess.run(['getenforce'], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(['getenforce'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
             if result.returncode == 0:
                 status = result.stdout.strip().lower()
                 if status == 'disabled':
@@ -381,7 +382,7 @@ def check_tcp_features():
         # Check TCP timestamps
         try:
             result = subprocess.run(['sysctl', '-n', 'net.ipv4.tcp_timestamps'], 
-                                      capture_output=True, text=True, timeout=5)
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
             if(result.returncode != 0):
                 raise Exception(f'sysctl command failed: {result.stderr.strip()}')
             tcp_timestamps = result.stdout.strip()
@@ -396,7 +397,7 @@ def check_tcp_features():
         # Check TCP SACK
         try:
             result = subprocess.run(['sysctl', '-n', 'net.ipv4.tcp_sack'], 
-                                      capture_output=True, text=True, timeout=5)
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
             if(result.returncode != 0):
                 raise Exception(f'sysctl command failed: {result.stderr.strip()}')
             tcp_sack = result.stdout.strip()
@@ -411,7 +412,7 @@ def check_tcp_features():
         # Check TCP window scaling
         try:
             result = subprocess.run(['sysctl', '-n', 'net.ipv4.tcp_window_scaling'], 
-                                      capture_output=True, text=True, timeout=5)
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
             if(result.returncode != 0):
                 raise Exception(f'sysctl command failed: {result.stderr.strip()}')
             tcp_window_scaling = result.stdout.strip()
@@ -439,8 +440,7 @@ ${CONVERT_TO_JSON}
 def check_multipath_configuration():
     log('Checking multipath configuration')
     try:
-        response = subprocess.run(['multipathd', 'show', 'config'],
-                                  capture_output=True, text=True, timeout=10)
+        response = subprocess.run(['multipathd', 'show', 'config'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
         if response.returncode != 0:
             return {"multipath-config-found": False, "error": response.stderr.strip(), "config": None}
 
