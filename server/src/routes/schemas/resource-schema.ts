@@ -53,7 +53,7 @@ const CreateDemoDataSchema = {
     summary: 'Create Demo default resources',
     description: 'Create Demo default resources for the given region',
     response: {
-        200: Type.Object({
+        201: Type.Object({
             message: Type.String()
         })
     }

@@ -7,7 +7,7 @@ import {
     UploadMetricsFileBody,
     OnPremDatabaseResourceObject
 } from '../types/onprem-tco.types';
-import { NextTokenQueryString } from '../types/generic.types';
+import { JobIdResponse, NextTokenQueryString } from '../types/generic.types';
 
 const GeneratePayloadInternal = {
     tags: [RouteTags.ONPREM_TCO],
@@ -62,9 +62,7 @@ const UploadOnPremTcoDataSchema = {
     description: 'Upload OnPremises metrics collector data',
     body: UploadMetricsFileBody,
     response: {
-        202: Type.Object({
-            jobId: Type.String()
-        })
+        202: JobIdResponse
     }
 };
 

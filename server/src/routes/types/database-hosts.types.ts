@@ -393,11 +393,6 @@ const CreateDatabseRequestBody = Type.Object({
     databaseInstanceId: Type.Optional(Type.String())
 });
 
-const DatabasesCreateResponse = Type.Object({
-    jobId: Type.String()
-});
-
-type DatabaseCreateResponseType = Static<typeof DatabasesCreateResponse>;
 type FileConfigType = Static<typeof FileConfig>;
 
 const DriveInfoResponseBody = Type.Object({
@@ -658,8 +653,6 @@ export {
     RWPerformanceResponse,
     RWPerformanceResponseType,
     CreateDatabseRequestBody,
-    DatabasesCreateResponse,
-    DatabaseCreateResponseType,
     CreateDatabaseParams,
     CreateDatabaseParamsV2,
     DriveInfoResponseBody,

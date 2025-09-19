@@ -16,7 +16,7 @@ const internalUpdateRecommendationPreferenceSchema = {
     description: 'Internal API to update recommendation preference',
     querystring: InternalUpdateInstRecQueryString,
     response: {
-        200: {}
+        202: {}
     }
 };
 

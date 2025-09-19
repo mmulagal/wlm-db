@@ -5,7 +5,6 @@ import {
     DatabaseHostSummaryParams,
     DatabasesListResponse,
     CreateDatabseRequestBody,
-    DatabasesCreateResponse,
     CreateDatabaseParams,
     DriveInfoResponseBody,
     CollationInfoResponseBody,
@@ -20,7 +19,7 @@ import {
     OracleDbHostsSummaryResponse,
     OracleDbHostSummaryListResponse
 } from '../types/database-hosts.types';
-import { CredentialsIdParams } from '../types/generic.types';
+import { CredentialsIdParams, JobIdResponse } from '../types/generic.types';
 
 // Base Request for resource with credential and region Routes
 const resourceRequest = {
@@ -76,7 +75,7 @@ const DatabasesCreateSchema = {
     description: 'Create a new user database in a server',
     body: CreateDatabseRequestBody,
     response: {
-        202: DatabasesCreateResponse
+        202: JobIdResponse
     }
 };
 

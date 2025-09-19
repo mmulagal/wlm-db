@@ -70,7 +70,7 @@ const PgSqlDeployTemplateSchema = {
     description: 'Deploy CloudFormation template to provision PGSQL',
     body: PgSqlCloudFormationTemplateRequestBody,
     response: {
-        200: PgSqlCloudFormationDeploymentResponse
+        202: PgSqlCloudFormationDeploymentResponse
     }
 };
 
@@ -136,7 +136,7 @@ const PgSqlTerraformSetupSchema = {
     description: 'Create Terraform setup in URL for pgsql user deploymen',
     body: PgSqlCloudFormationTemplateRequestBody,
     response: {
-        200: TerraformSetupResponse
+        202: TerraformSetupResponse
     }
 };
 

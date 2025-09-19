@@ -18,7 +18,8 @@ const emailSchema = {
     consumes: ['multipart/form-data'],
     body: EmailRequestBody,
     response: {
-        200: EmailResponse
+        200: EmailResponse,
+        400: Type.Object({ message: Type.String() })
     }
 };
 

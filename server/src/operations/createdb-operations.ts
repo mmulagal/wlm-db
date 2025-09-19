@@ -40,11 +40,8 @@ import {
     updateResourceMetaData
 } from './database/database-operations';
 import { getFsxStorageCapacity } from './aws/fsx-operations';
-import {
-    DatabaseCreateResponseType,
-    DriveInfoResponseBodyType,
-    FileConfigType
-} from '../routes/types/database-hosts.types';
+import { JobIdResponseType } from '../routes/types/generic.types';
+import { DriveInfoResponseBodyType, FileConfigType } from '../routes/types/database-hosts.types';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import { DatabaseInstance, Metadata, DatabaseInstanceMetadata } from '../utils/common-types';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -471,7 +468,7 @@ async function deployDatabase(
     logFileConfig: FileConfigType,
     collation: string,
     databaseInstanceId?: string
-): Promise<DatabaseCreateResponseType> {
+): Promise<JobIdResponseType> {
     logger.info('Deploy new database', {
         accountId,
         databaseHostId,

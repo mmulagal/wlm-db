@@ -75,6 +75,12 @@ const NextTokenQueryString = Type.Object({
     pageSize: Type.Optional(Type.Integer())
 });
 
+const JobIdResponse = Type.Object({
+    jobId: Type.String()
+});
+
+type JobIdResponseType = Static<typeof JobIdResponse>;
+
 export {
     GenericHeaders,
     GenericHeadersType,
@@ -88,5 +94,7 @@ export {
     CredentialsIdRegionParams,
     CredentialsIdRegionQueryParams,
     NextTokenQueryString,
-    CredentialsIdParamsType
+    CredentialsIdParamsType,
+    JobIdResponse,
+    JobIdResponseType
 };

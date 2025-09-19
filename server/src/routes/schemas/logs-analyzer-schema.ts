@@ -9,7 +9,7 @@ import {
     RemediationRecommendationObject,
     ReportIdentifier
 } from '../types/logs-analyzer.types';
-import { CredentialsIdParams } from '../types/generic.types';
+import { CredentialsIdParams, JobIdResponse } from '../types/generic.types';
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
@@ -18,9 +18,7 @@ const LogsAnalyzerSchema = {
     body: LogsAnalyzerBody,
     summary: 'Trigger logs analysis for a specific database instance in a remote database host machine',
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 

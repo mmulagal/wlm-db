@@ -1,4 +1,3 @@
-import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
 import { DatabaseHostOptionalInstanceSummaryParams, DatabaseHostSummaryParams } from '../types/database-hosts.types';
 
@@ -13,7 +12,7 @@ import {
     OracleDriftAssessmentResponse
 } from '../types/oracle-continuous-optimization.types';
 import { resourceRequest } from './database-hosts-schemas';
-import { CredentialsIdParams } from '../types/generic.types';
+import { CredentialsIdParams, JobIdResponse } from '../types/generic.types';
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
@@ -35,9 +34,7 @@ const OracleOptimizeStorageSchema = {
     tags: [RouteTags.ORACLE_ASSESSMENT],
     body: OptimizeStorageRequestBody,
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 

@@ -1,6 +1,6 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
-import { CredentialsIdParams, NextTokenQueryString } from '../types/generic.types';
+import { CredentialsIdParams, JobIdResponse, NextTokenQueryString } from '../types/generic.types';
 import {
     CreateSandboxBody,
     DatabaseMountPointRequestQueryParam,
@@ -25,9 +25,7 @@ const baseAsyncJobSchema = {
     ...resourceRequest,
     params: SandboxParams,
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -36,7 +34,10 @@ const CreateSandboxSchema = {
     params: CredentialsIdParams,
     summary: 'Create sandbox',
     description: 'Create sandbox in same or alternate host',
-    body: CreateSandboxBody
+    body: CreateSandboxBody,
+    response: {
+        202: JobIdResponse
+    }
 };
 
 const GetSandboxSavingsSchema = {
@@ -96,14 +97,20 @@ const GetSandboxSplitEstimateSchema = {
 const DeleteSandboxSchema = {
     ...baseAsyncJobSchema,
     summary: 'Delete sandbox',
-    description: 'Delete sandbox within a database host'
+    description: 'Delete sandbox within a database host',
+    response: {
+        202: JobIdResponse
+    }
 };
 
 const SandboxLifeCycleSchema = {
     ...baseAsyncJobSchema,
     summary: 'Sandbox lifecycle',
     description: 'Sandbox lifecycle operations',
-    body: SandboxLifeCycleBody
+    body: SandboxLifeCycleBody,
+    response: {
+        202: JobIdResponse
+    }
 };
 
 const SandboxSplitSchema = {

@@ -1,6 +1,5 @@
-import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
-import { AccountIdParams, CredentialsIdParams } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams, JobIdResponse } from '../types/generic.types';
 import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
@@ -64,9 +63,7 @@ const TriggerDriftAssessmentSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
     response: {
-        202: Type.Object({
-            jobId: Type.String()
-        })
+        202: JobIdResponse
     }
 };
 
@@ -81,9 +78,7 @@ const OptimizeStorageSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: OptimizeStorageRequestBody,
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -95,9 +90,7 @@ const OptimizeSizingSchema = {
     body: OptimizeGenericRequestBody,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -109,9 +102,7 @@ const OptimizeComputeSchema = {
     body: OptimizeComputeRequestBody,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -123,9 +114,7 @@ const OptimizeOperatingSystemSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: OptimizeOperatingSystemRequestBody,
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -137,9 +126,7 @@ const OptimizeStorageTierSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: OptimizeGenericRequestBody,
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -175,9 +162,7 @@ const OptimizeResilienceSchema = {
     body: OptimizeResiliencyBody,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -187,9 +172,7 @@ const BulkOptimizeGeneralSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeGeneralRequestBody,
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -219,9 +202,7 @@ const BulkOptimizeComputeSchema = {
     summary: 'Fix compute',
     description: 'Fix compute parameters as per the best practice for selected database instances.',
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -239,9 +220,7 @@ const BulkOptimizeAwsBackupSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeBackupRequestBody,
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -263,9 +242,7 @@ const BulkOptimizeCloneSchema = {
     body: BulkOptimizeCloneBody,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
@@ -277,9 +254,7 @@ const BulkOptimizeSharedStorageSchema = {
     summary: 'Fix shared storage parameters as part of High Availability Cluster configuration',
     description: 'Fix shared storage parameters as per the best practice for selected database instances.',
     response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
+        200: JobIdResponse
     }
 };
 
