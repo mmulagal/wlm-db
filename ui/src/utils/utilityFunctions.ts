@@ -642,10 +642,8 @@ export const byteToGiB = (value: number) => {
     if (isNaN(value)) return 0;
     if (value <= 0) return 0;
     const gib = value / 1024 ** 3;
-    // Use higher precision for small numbers, less for large
-    if (gib < 1) return +gib.toFixed(3); // show more detail for sub-1 GiB
-    if (gib < 10) return +gib.toFixed(2);
-    return +gib.toFixed(1);
+
+    return +gib.toFixed(2);
 };
 
 export const formatDateAssess = (date: string | number) => {
