@@ -226,7 +226,7 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
         };
 
         if (isDemoFlow) {
-            // update metadata in nstances table to mark optimized configuration
+            // update metadata in instances table to mark optimized configuration
             const configurationNames: string[] = optimizationTargets.map(config => config.configurationName);
 
             await updateOptimizedConfigNameInInstanceTable(
@@ -439,9 +439,12 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 }
 
                 const recommendedValues: Record<string, string[]> = {};
-                if (specialConfigNames.includes(configurationName as OptimizeStorageConfigs)) {
+                if (
+                    resourceType === RESOURCESTYPE.ORACLE &&
+                    specialConfigNames.includes(configurationName as OptimizeStorageConfigs)
+                ) {
                     if (!recommendationMap?.[configurationName]) {
-                        throw new Error('Recommendation map not found');
+                        throw new Error('Failed to fetch latest well-architected recommendations');
                     }
                     const map = recommendationMap[configurationName];
                     Object.entries(map).forEach(([recommendedValue, objectNames]) => {
@@ -487,7 +490,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 const optimizeMessage = `Optimized ${objectsOptimized}/${
                     objectsToOptimize.length
                 } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${
-                    OptimizeStorageConfigsJobNames[configurationName as keyof typeof OptimizeStorageConfigsJobNames]
+                    OptimizeStorageConfigsJobNames[configKey as keyof typeof OptimizeStorageConfigsJobNames]
                 }'`;
 
                 if (objectsOptimized !== objectsToOptimize.length) {

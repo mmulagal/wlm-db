@@ -5,6 +5,7 @@ const oracleStorageConfigurationPythonTemplate = (params: OptimizeStorageParams)
 ${getFsxCredentials}
 ${ontapRestApiScript}
 
+# Optimize Oracle storage configuration using ONTAP REST API
 fsxId = '${params.fsxId}'
 region = '${params.region}'
 apiPath = '${params.apiEndpoint}'[1:]

@@ -83,7 +83,7 @@ import {
     DriftAssessmentResponsePerHostType
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
-import { handleGetAssessmentForDemo } from '../../demo-operations';
+import { handleGetMssqlAssessmentForDemo } from '../../demo-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -381,7 +381,7 @@ async function fetchMssqlDriftAssessment(
     };
 
     if (isDemoFlow) {
-        driftAssessmentData = handleGetAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
+        driftAssessmentData = handleGetMssqlAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
     }
 
     return driftAssessmentData;

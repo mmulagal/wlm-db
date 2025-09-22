@@ -89,6 +89,7 @@ import {
     StorageParameterDriftResponseType
 } from '../routes/types/mssql-continuous-optimisation.types';
 import { OracleDeploymentTenacy } from './workloads/oracle/consts';
+import { OracleDriftAssessmentResponseType } from '../routes/types/oracle-continuous-optimization.types';
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
@@ -1243,7 +1244,7 @@ function prepareDemoSandboxMetadata(
     return hostMetadata;
 }
 
-function handleGetAssessmentForDemo(
+function handleGetMssqlAssessmentForDemo(
     accountId: string,
     instanceDetail: DatabaseInstance,
     assessmentData: MSSQLDriftAssessmentResponseType
@@ -1417,6 +1418,70 @@ function getMssqlStorageDataForDemo(totalUsed: number) {
     };
 }
 
+function handleGetOracleAssessmentForDemo(
+    accountId: string,
+    instanceDetail: DatabaseInstance,
+    assessmentData: OracleDriftAssessmentResponseType
+) {
+    logger.info('Handling Oracle demo for assessment', { accountId });
+    const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+
+    // Handle Oracle storage assessment
+    const storageAssessmentResponse = assessmentData.storage as StorageParameterDriftResponseType;
+    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
+        const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+        const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
+        const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+
+        if (storageConfigsOptimized.length > 0) {
+            const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
+                configArray?.map(config => {
+                    if (optimizedConfigs.includes(config.name)) {
+                        config.status = AssessmentStatus.OPTIMIZED;
+                        config.objectsInViolation = [];
+                    }
+                    return config;
+                });
+
+            storageAssessmentResponse.configuration.volumes = optimizeConfig(
+                storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
+                storageConfigsOptimized
+            );
+
+            storageAssessmentResponse.configuration.luns = optimizeConfig(
+                storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
+                storageConfigsOptimized
+            );
+        }
+
+        if (osConfigsOptimized.length > 0) {
+            storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(osConfig => {
+                const os = osConfig as ParameterDriftResponseType;
+                if (osConfigsOptimized.includes(os.name)) {
+                    os.status = AssessmentStatus.OPTIMIZED;
+                }
+                return os;
+            });
+        }
+
+        if (sizingConfigsOptimized.length > 0) {
+            storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
+                const sizing = sizingConfig as ParameterDriftResponseType;
+                if (sizingConfigsOptimized.includes(sizing.name)) {
+                    sizing.status = AssessmentStatus.OPTIMIZED;
+                    sizing.objectsInViolation = [];
+                    sizing.totalObjectsInViolation = 0;
+                }
+                return sizing;
+            });
+        }
+
+        assessmentData.storage = storageAssessmentResponse;
+    }
+
+    return assessmentData;
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -1439,7 +1504,8 @@ export {
     createAssessmentData,
     prepareDemoSandboxMetadata,
     updateOptimizedConfigMetaData,
-    handleGetAssessmentForDemo,
+    handleGetMssqlAssessmentForDemo,
+    handleGetOracleAssessmentForDemo,
     createDeploymentMockDataInDBForOracle,
     createAssessmentDataForOracle,
     updateAllOptimizedClonesDemoFlow,

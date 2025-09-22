@@ -50,6 +50,7 @@ import {
     processDismissedConfigurations,
     mergeDismissConfigurations
 } from '../assessment-dismiss-operations';
+import { handleGetOracleAssessmentForDemo } from '../../demo-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -484,7 +485,7 @@ async function fetchOracleDriftAssessment(
           )
         : {};
 
-    const driftAssessmentData: OracleDriftAssessmentResponseType = {
+    let driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
         dismissedConfigurations,
         fileSystemId,
@@ -496,6 +497,10 @@ async function fetchOracleDriftAssessment(
         storageProtocol,
         isASMManaged
     };
+
+    if (isDemoFlow) {
+        driftAssessmentData = handleGetOracleAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
+    }
 
     return driftAssessmentData;
 }

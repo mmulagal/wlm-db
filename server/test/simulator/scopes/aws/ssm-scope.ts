@@ -976,7 +976,12 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'oracle database count')
     .resolves(getSampleCommandResponse('oracleDatabaseCount'))
     .on(SendCommandCommand, params => params.Comment === 'Get Oracle storage data from ONTAP')
-    .resolves(getSampleCommandResponse('getOracleStorageDataFromOntap'));
+    .resolves(getSampleCommandResponse('getOracleStorageDataFromOntap'))
+    .on(SendCommandCommand, params => {
+        const commentString = /# Optimize Oracle storage configuration using ONTAP REST API/;
+        return commentString.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('optimizeOracleStorageConfiguration'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1546,6 +1551,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'getOracleStorageDataFromOntap',
             JSON.stringify(getCommandInvocationResponse.getOracleStorageDataFromOntapResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeOracleStorageConfiguration'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeOracleStorageConfiguration',
+            JSON.stringify(getCommandInvocationResponse.oracleStorageConfigurationOptimizationResponse)
         )
     );
 
