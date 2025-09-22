@@ -26,6 +26,13 @@ enum OracleSysFileTypes {
     CONTROL_FILES = 'CONTROL_FILES',
     FRA = 'FRA'
 }
+
+const pythonRelativePaths = [
+    'wlmdb/oracle/packages/rhel8.9_8.10_python311_rpms.tar.gz',
+    'wlmdb/oracle/packages/suse12_python36_rpms.tar.gz',
+    'wlmdb/oracle/packages/suse15_python311_rpms.tar.gz'
+];
+
 export {
     SSM_RUN_SHELL_SCRIPT_DOC,
     SSM_RUN_SHELL_SCRIPT_DOC_VERSION,
@@ -34,5 +41,6 @@ export {
     OracleSysFileTypes,
     ORACLE_DEFAULT_PDB,
     MIN_OPTIMAL_LUN_PER_DG,
-    MAX_LUNS_PER_DG
+    MAX_LUNS_PER_DG,
+    pythonRelativePaths
 };

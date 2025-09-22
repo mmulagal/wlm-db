@@ -12,6 +12,8 @@ type ontapRequestParams = {
     }[];
 };
 
+const CLOUDFARE_DNS_IP = '1.1.1.1';
+
 const checkCommandStatus = `
     check_status() {
         if [ $? -ne 0 ]; then
@@ -652,6 +654,7 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
     awsCliSignedUrl="${signedUrls[0]}"
     jqSignedUrl="${signedUrls[1]}"
     makeSignedUrl="${signedUrls[2]}"
+    pythonSignedUrls=(${signedUrls.map(url => `"${url}"`).join(' ')})
     moduleNames=("\${${modulesToInstall}[@]}")
 
     installationResults="["
@@ -719,6 +722,89 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
                 fi
             fi
             installationResults="$installationResults{\\"success\\": \\"$successMsg\\", \\"error\\": \\"$errorMsg\\"},"
+        elif [ "$moduleName" == "Python3" ]; then
+            # Detect OS and version for RPM selection
+            if [ -f /etc/os-release ]; then
+                . /etc/os-release
+                OS_NAME="$ID"
+                OS_VERSION="$VERSION_ID"
+            elif [ -f /etc/redhat-release ]; then
+                OS_NAME="rhel"
+                OS_VERSION=$(cat /etc/redhat-release | sed 's/.*release \\([0-9]\\+\\).*/\\1/')
+            elif [ -f /etc/SuSE-release ]; then
+                OS_NAME="suse"
+                OS_VERSION=$(head -n1 /etc/SuSE-release | sed 's/.*\\([0-9]\\+\\).*/\\1/')
+            else
+                errorMsg="Unable to detect OS for Python RPM installation."
+            fi
+
+            # Only proceed if we successfully detected the OS
+            if [ -z "$errorMsg" ]; then
+                pythonRpmUrl=""
+                for url in "\${pythonSignedUrls[@]}"; do
+                    filename=$(basename "$url" | cut -d'?' -f1)  # Remove query parameters
+                    case "$OS_NAME" in
+                        "rhel")
+                            if [[ "$filename" =~ rhel.*python.*\\.tar\\.gz$ ]]; then
+                                pythonRpmUrl="$url"
+                                break
+                            fi
+                            ;;
+                        "sles"|"opensuse"|"suse")
+                            if [[ "$filename" =~ suse.*python.*\\.tar\\.gz$ ]]; then
+                                # Check version compatibility
+                                if [[ "$OS_VERSION" =~ ^12 && "$filename" =~ suse12 ]]; then
+                                    pythonRpmUrl="$url"
+                                    break
+                                elif [[ "$OS_VERSION" =~ ^15 && "$filename" =~ suse15 ]]; then
+                                    pythonRpmUrl="$url"
+                                    break
+                                fi
+                            fi
+                            ;;
+                    esac
+                done
+
+                if [ -z "$pythonRpmUrl" ]; then
+                    errorMsg="No matching Python RPM found for OS: $OS_NAME $OS_VERSION"
+                else
+                    download_dir=$(pwd)
+                    # Create a dedicated folder for Python downloads
+                    python_download_dir="/tmp/python_install_$$"
+                    mkdir -p "$python_download_dir"
+                    cd "$python_download_dir"
+                    
+                    pythonTarFile=$(basename "$pythonRpmUrl" | cut -d'?' -f1)
+                    
+                    # Download and extract Python RPMs
+                    curl -sS -fSL "$pythonRpmUrl" -o "$pythonTarFile"
+                    if [ $? -ne 0 ]; then
+                        errorMsg="Failed to download Python RPMs from $pythonRpmUrl."
+                    else
+                        tar -xzf "$pythonTarFile" > /dev/null 2>&1
+                        if [ $? -ne 0 ]; then
+                            errorMsg="Failed to extract Python RPM archive."
+                        else
+                            if ls *.rpm >/dev/null 2>&1; then
+                                # RPMs extracted directly to current directory
+                                sudo rpm -ivh *.rpm > /dev/null 2>&1
+                                if [ $? -ne 0 ]; then
+                                    errorMsg="Failed to install Python RPMs. There may be missing dependencies. Please check the system logs and install required dependencies before retrying."
+                                else
+                                    successMsg="Python3 installed from RPMs."
+                                    isPythonInstalled=true
+                                fi
+                            else
+                                errorMsg="RPM files not found after extraction."
+                            fi
+                        fi
+                        # Cleanup - go back to original directory and remove download folder
+                        cd "$download_dir"
+                        sudo rm -rf "$python_download_dir"
+                    fi
+                fi  # End of: if [ -z "$pythonRpmUrl" ]
+            fi  # End of: if [ -z "$errorMsg" ] (OS detection check)
+            installationResults="$installationResults{\\"success\\": \\"$successMsg\\", \\"error\\": \\"$errorMsg\\"},"
         else
             errorMsg="Unknown module: $moduleName."
             installationResults="$installationResults{\\"success\\": \\"\\", \\"error\\": \\"$errorMsg\\"},"
@@ -772,7 +858,7 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
         resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$missingModules" | jq '.')" '.missingModules = $res')
 `;
 
-const installPythonOnLinuxHost = `
+const installPythonOnLinuxHost = (pythonSignedUrls?: string[]) => `
     ${checkOracleModuleAvailability}    
     modulesAvailability=$(check_oracle_module_availability)
     isPythonInstalled=$(echo "$modulesAvailability" | grep -o '"isPythonInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
@@ -780,11 +866,17 @@ const installPythonOnLinuxHost = `
     if [ "$isPythonInstalled" == "true" ]; then
         installationSucessful=true
     else
-        sudo yum install -y python3.12 > /dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            installationSucessful=false
+        # ping cloudflare to check internet connectivity
+        if ping -c 1 -W 1 ${CLOUDFARE_DNS_IP} > /dev/null 2>&1; then
+            sudo yum install -y python3.12 > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                installationSucessful=false
+            else
+                installationSucessful=true
+            fi
         else
-            installationSucessful=true
+            modulesToInstall=('Python3')
+            ${installOracleDependentModules(pythonSignedUrls ?? [], 'modulesToInstall')}
         fi
     fi
     results="{\\"installationSuccessful\\": \\"$installationSucessful\\"}"

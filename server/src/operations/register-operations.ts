@@ -85,7 +85,11 @@ import {
     validateSQLInstanceConnectivity
 } from './workloads/mssql/ssm-script-utils';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
-import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
+import {
+    pythonRelativePaths,
+    SSM_RUN_SHELL_SCRIPT_DOC,
+    SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+} from './workloads/oracle/consts';
 import {
     checkAndInstallRequiredOracleDependentModules,
     checkIfValidLinuxUser,
@@ -1646,12 +1650,17 @@ async function installPythonModules(
     let errorMessage = '';
     let status = '';
 
+    const bucketname = getArtifactsRegionBucketName(region);
+    const pythonSignedUrls = await Promise.all(
+        pythonRelativePaths.map(relativePath => getPreSignedUrl(region, bucketname, relativePath))
+    );
+
     try {
         let parsedResponse;
         const ssmresponse = await callSsmExecution(
             credentialsId,
             region,
-            [installPythonOnLinuxHost],
+            [installPythonOnLinuxHost(pythonSignedUrls)],
             instanceId,
             'Install python on linux host',
             accountId,
