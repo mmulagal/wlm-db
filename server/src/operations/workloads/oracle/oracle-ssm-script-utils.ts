@@ -753,10 +753,7 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
                         "sles"|"opensuse"|"suse")
                             if [[ "$filename" =~ suse.*python.*\\.tar\\.gz$ ]]; then
                                 # Check version compatibility
-                                if [[ "$OS_VERSION" =~ ^12 && "$filename" =~ suse12 ]]; then
-                                    pythonRpmUrl="$url"
-                                    break
-                                elif [[ "$OS_VERSION" =~ ^15 && "$filename" =~ suse15 ]]; then
+                                if [[ "$OS_VERSION" =~ ^15 && "$filename" =~ suse15 ]]; then
                                     pythonRpmUrl="$url"
                                     break
                                 fi
