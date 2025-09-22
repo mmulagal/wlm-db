@@ -171,9 +171,28 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
                     return 'Install host utilities';
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
-                    return '--------';
+                    return [
+                        'path_grouping_policy: group_by_prio',
+                        'path_selector: service-time 0',
+                        'prio: ontap',
+                        'features: 3 queue_if_no_path pg_init_retries 50',
+                        'hardware_handler: 0',
+                        'failback: immediate',
+                        'rr_weight: uniform',
+                        'no_path_retry: queue',
+                        'fast_io_fail_tmo: 5',
+                        'dev_loss_tmo: infinity',
+                        'detect_prio: yes',
+                        'flush_on_last_del: yes',
+                        'retain_attached_hw_handler: yes',
+                        'path_checker: tur',
+                        'polling_interval: 5',
+                        'max_sectors_kb: 4096',
+                        'find_multipaths: true',
+                        'polling_interval: 5'
+                    ];
                 case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
-                    return 'Transparent HugePages disabled (enabled=never, defrag=never)';
+                    return 'Transparent Hugepages disabled (enabled=never, defrag=never)';
                 case ASSESSMENT_CONFIG_NAMES.SELINUX:
                     return 'SELINUX=disabled';
                 case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
