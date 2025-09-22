@@ -3326,7 +3326,7 @@ export const applyFilter = (
         }
         const checkConfigState = !filters.configState || filters.configState?.includes(configVal);
 
-        let resourceType = cardData[key].block_five.value;
+        let resourceType = cardData[key]?.block_five?.value;
         if (
             key === 'ontap_configuration' &&
             filters.resourceType &&
