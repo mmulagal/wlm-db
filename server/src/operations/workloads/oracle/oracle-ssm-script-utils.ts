@@ -643,6 +643,16 @@ const checkOracleModuleAvailability = `
     }
 `;
 
+const determinePlatform = `
+        if [ -f /etc/os-release ]; then
+            . /etc/os-release
+            OS_NAME="$ID"
+            OS_VERSION="$VERSION_ID"
+        else
+            errorMsg="Unable to detect OS for Python RPM installation."
+        fi
+`;
+
 const installOracleDependentModules = (signedUrls: string[], modulesToInstall: string) => `
     
     signedUrlsLen=${signedUrls.length}
@@ -723,21 +733,6 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
             fi
             installationResults="$installationResults{\\"success\\": \\"$successMsg\\", \\"error\\": \\"$errorMsg\\"},"
         elif [ "$moduleName" == "Python3" ]; then
-            # Detect OS and version for RPM selection
-            if [ -f /etc/os-release ]; then
-                . /etc/os-release
-                OS_NAME="$ID"
-                OS_VERSION="$VERSION_ID"
-            elif [ -f /etc/redhat-release ]; then
-                OS_NAME="rhel"
-                OS_VERSION=$(cat /etc/redhat-release | sed 's/.*release \\([0-9]\\+\\).*/\\1/')
-            elif [ -f /etc/SuSE-release ]; then
-                OS_NAME="suse"
-                OS_VERSION=$(head -n1 /etc/SuSE-release | sed 's/.*\\([0-9]\\+\\).*/\\1/')
-            else
-                errorMsg="Unable to detect OS for Python RPM installation."
-            fi
-
             # Only proceed if we successfully detected the OS
             if [ -z "$errorMsg" ]; then
                 pythonRpmUrl=""
@@ -750,7 +745,7 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
                                 break
                             fi
                             ;;
-                        "sles"|"opensuse"|"suse")
+                        "sles")
                             if [[ "$filename" =~ suse.*python.*\\.tar\\.gz$ ]]; then
                                 # Check version compatibility
                                 if [[ "$OS_VERSION" =~ ^15 && "$filename" =~ suse15 ]]; then
@@ -863,9 +858,14 @@ const installPythonOnLinuxHost = (pythonSignedUrls?: string[]) => `
     if [ "$isPythonInstalled" == "true" ]; then
         installationSucessful=true
     else
+        ${determinePlatform}
         # ping cloudflare to check internet connectivity
         if ping -c 1 -W 1 ${CLOUDFARE_DNS_IP} > /dev/null 2>&1; then
-            sudo yum install -y python3.12 > /dev/null 2>&1
+            if [ "$OS_NAME" == "rhel" ]; then
+                sudo yum install -y python3.12 > /dev/null 2>&1
+            elif [[ "$OS_NAME" == "sles" && "$OS_VERSION" =~ ^15 ]]; then
+                sudo zypper install -y python311 > /dev/null 2>&1
+            fi
             if [ $? -ne 0 ]; then
                 installationSucessful=false
             else
