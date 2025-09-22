@@ -852,7 +852,7 @@ export const GETWELL_CONFIG: any = {
     'backup-configuration': 'scheduled_fsx_for_ontap_backups',
     crr: 'crr',
     mssqlhighavailability: 'mssql_high_availability',
-    mssqlhighavailabilityWithoutUnderscore: 'mssqlhighavailability',
+    mssqlhighavailabilityWithoutUnderscore: 'mssqlHighAvailability',
     'shared-storage': 'Shared storage',
     'drive-letter': 'Drive Letter',
     'heartbeat-settings': 'Heartbeat Settings',

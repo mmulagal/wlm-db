@@ -1868,6 +1868,8 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         // MSSQL High Availability configurations
         'Shared Storage': 'shared-storage',
         'SQL Server Service': 'sqlserver-service',
+        'Shared storage': 'shared-storage',
+        'SQL Server Services': 'sqlserver-service',
         'Drive Letter': 'drive-letter',
         'Heartbeat Settings': 'heartbeat-settings',
         'Cluster Quorum': 'cluster-quorum',

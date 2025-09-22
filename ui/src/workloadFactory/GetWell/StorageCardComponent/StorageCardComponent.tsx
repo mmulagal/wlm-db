@@ -66,7 +66,8 @@ import {
     handleSingleAction as handleSingleActionHelper,
     addSuccessNotification as addSuccessNotificationHelper,
     handleDismissResponse as handleDismissResponseHelper,
-    handleDismissError as handleDismissErrorHelper
+    handleDismissError as handleDismissErrorHelper,
+    areSubConfigurationsNotActive
 } from './StorageCardComponentHelper';
 
 const StorageCardComponent = ({
@@ -92,7 +93,8 @@ const StorageCardComponent = ({
         optimizingInstanceData,
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId,
-        cardData: cardDataFromStore
+        cardData: cardDataFromStore,
+        driftAssessmentData
     } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
@@ -251,7 +253,15 @@ const StorageCardComponent = ({
             // Condition to show n/a if state is not active
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {GENERAL.NOT_AVAILABLE}
+                    {t('databases.general.not-available-table-columns')}
+                </DsTypography>
+            );
+        }
+        // For ONTAP, OS, and HA cards: show N/A if sub-configurations are not active
+        if (areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {t('databases.general.not-available-table-columns')}
                 </DsTypography>
             );
         }
@@ -345,6 +355,14 @@ const StorageCardComponent = ({
                 </div>
             );
         }
+        // For ONTAP and OS cards: show N/A if sub-configurations are not active
+        if (areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {t('databases.general.not-available-table-columns')}
+                </DsTypography>
+            );
+        }
         if (cardData?.block_five?.count) {
             return (
                 <DsTypography
@@ -375,11 +393,11 @@ const StorageCardComponent = ({
         return (
             <DsTypography
                 variant="Semibold_14"
-                title={cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
+                title={cardData?.block_five?.value || t('databases.general.not-available-table-columns')}
                 isDisabled={disableText}
                 className={styles.titleText}
             >
-                {cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
+                {cardData?.block_five?.value || t('databases.general.not-available-table-columns')}
             </DsTypography>
         );
     };
@@ -396,7 +414,15 @@ const StorageCardComponent = ({
             // Condition to show n/a if state is not active
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {GENERAL.NOT_AVAILABLE}
+                    {t('databases.general.not-available-table-columns')}
+                </DsTypography>
+            );
+        }
+        // For HA cards: show N/A if sub-configurations are not active
+        if (areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {t('databases.general.not-available-table-columns')}
                 </DsTypography>
             );
         }
@@ -452,7 +478,7 @@ const StorageCardComponent = ({
             return (
                 <div className={styles.warningMsg}>
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {GENERAL.NOT_AVAILABLE}
+                        {t('databases.general.not-available-table-columns')}
                     </DsTypography>
                 </div>
             );
@@ -478,7 +504,7 @@ const StorageCardComponent = ({
                         </div>
                     )}
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                        {cardData?.block_six?.value || t('databases.general.not-available-table-columns')}
                     </DsTypography>
                 </div>
             );
@@ -503,7 +529,7 @@ const StorageCardComponent = ({
                         </div>
                     )}
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                        {cardData?.block_six?.value || t('databases.general.not-available-table-columns')}
                     </DsTypography>
                 </div>
             );
@@ -511,13 +537,13 @@ const StorageCardComponent = ({
         if (cardData?.block_six?.smallFont || !cardData?.block_six?.value) {
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                    {cardData?.block_six?.value || t('databases.general.not-available-table-columns')}
                 </DsTypography>
             );
         }
         return (
             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} isDisabled={disableText}>
-                {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                {cardData?.block_six?.value || t('databases.general.not-available-table-columns')}
             </DsTypography>
         );
     };
@@ -852,7 +878,8 @@ const StorageCardComponent = ({
         if (
             cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
             cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
-            cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING
+            cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING ||
+            !cardData?.block_two?.value // Disable dismiss when there's no valid assessment data
         ) {
             return true;
         }
@@ -875,7 +902,7 @@ const StorageCardComponent = ({
 
     // Dismiss button component
     const renderDismissButton = () => {
-        if (!showDismissButton) return null;
+        if (!showDismissButton || !cardData?.block_two?.value) return null;
 
         return (
             <div className={styles.buttonSection}>
@@ -930,9 +957,9 @@ const StorageCardComponent = ({
                             variant="Semibold_14"
                             className={styles.titleText}
                             isDisabled={disableText}
-                            title={cardData?.block_four?.value || GENERAL.NOT_AVAILABLE}
+                            title={cardData?.block_four?.value || t('databases.general.not-available-table-columns')}
                         >
-                            {cardData?.block_four?.value || GENERAL.NOT_AVAILABLE}
+                            {cardData?.block_four?.value || t('databases.general.not-available-table-columns')}
                         </DsTypography>
                     )}
                     <DsTypography variant="Regular_14" className={styles.label} isDisabled={disableText}>
@@ -970,7 +997,9 @@ const StorageCardComponent = ({
                 {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
                     cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
                     cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) &&
-                !showDismissedConfigurations ? (
+                !showDismissedConfigurations &&
+                !areSubConfigurationsNotActive(cardData, driftAssessmentData) &&
+                cardData?.block_two?.value ? (
                     <div className={`${styles.column} ${styles.lastColumnAlignment}`}>
                         {/* Dismiss Button - Show for ONTAP, Operating system, and MSSQL High Availability in last grid column */}
                         {renderDismissButton()}
@@ -988,8 +1017,6 @@ const StorageCardComponent = ({
                     (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
                     cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                         <div className={styles.buttonGroup}>
-                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                            {renderDismissButton()}
                             <div
                                 className={styles.buttonSection}
                                 // style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
@@ -1025,8 +1052,6 @@ const StorageCardComponent = ({
                         </TooltipComponent>
                     ) : disableOptimizeButtonTooltip ? (
                         <div className={styles.buttonGroup}>
-                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                            {renderDismissButton()}
                             <Popover
                                 popoverClass={CommonStyles.popover}
                                 isAppendedToBody
@@ -1052,7 +1077,7 @@ const StorageCardComponent = ({
                     ) : (
                         <div className={styles.buttonGroup}>
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                            {renderDismissButton()}
+                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
                             {/* View and Fix Action Button */}
                             <div
                                 className={

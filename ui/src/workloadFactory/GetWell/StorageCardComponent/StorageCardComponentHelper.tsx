@@ -5,6 +5,51 @@ import { NOTIFICATION_TYPES, addNotification } from '../../../store/notification
 import { setDriftAssessmentData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, updateConfigStatePerInstance, updateConfigStateStatus } from '../GetWellUtils';
 
+// Helper function to check if sub-configurations are not in active state for ONTAP, OS, and HA cards
+export const areSubConfigurationsNotActive = (cardData: any, driftAssessmentData: any) => {
+    if (!driftAssessmentData?.dismissedConfigurations) {
+        return false;
+    }
+
+    if (cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
+        // For ONTAP, check if any sub-configurations are in DISMISSED, POSTPONED, or ACTIVATING state
+        const storageConfig = driftAssessmentData.dismissedConfigurations.storage?.configuration;
+        const volumes = storageConfig?.volumes || [];
+        const luns = storageConfig?.luns || [];
+        const allOntapConfigs = [...volumes, ...luns];
+        
+        return allOntapConfigs.some((config: any) => 
+            config.configState === CONFIG_STATES.DISMISSED || 
+            config.configState === CONFIG_STATES.POSTPONED || 
+            config.configState === CONFIG_STATES.ACTIVATING
+        );
+    }
+    
+    if (cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) {
+        // For OS, check if any sub-configurations are in DISMISSED, POSTPONED, or ACTIVATING state
+        const osConfigs = driftAssessmentData.dismissedConfigurations.storage?.configuration?.os || [];
+        
+        return osConfigs.some((config: any) => 
+            config.configState === CONFIG_STATES.DISMISSED || 
+            config.configState === CONFIG_STATES.POSTPONED || 
+            config.configState === CONFIG_STATES.ACTIVATING
+        );
+    }
+    
+    if (cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
+        // For HA, check if any sub-configurations are in DISMISSED, POSTPONED, or ACTIVATING state
+        const haConfigs = driftAssessmentData.dismissedConfigurations.highAvailability || [];
+        
+        return haConfigs.some((config: any) => 
+            config.configState === CONFIG_STATES.DISMISSED || 
+            config.configState === CONFIG_STATES.POSTPONED || 
+            config.configState === CONFIG_STATES.ACTIVATING
+        );
+    }
+    
+    return false;
+};
+
 export const getSubConfigurationData = (cardData: any) => {
     // Check if this is ONTAP or OS configuration with sub-tables
     const configName = cardData?.block_one?.value;
