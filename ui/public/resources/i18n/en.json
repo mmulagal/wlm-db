@@ -600,6 +600,7 @@
             "oracle-filesystem-io-options-what-will-happen": "Workload Factory will update the Oracle initialization file to set filesystemio_options = setall. If switching from buffered I/O, an increase in Oracle SGA memory may be required to compensate for the loss of OS buffer cache.",
             "oracle-tcp-action-summary": "Workload Factory recommends enabling TCP timestamps, selective acknowledgment (SACK), and TCP window scaling on Oracle database hosts to ensure optimal network performance.",
             "oracle-tcp-what-will-happen": "Workload Factory will verify and enable TCP timestamps, SACK, and window scaling in the host’s network configuration.",
+            "optimization-breakdown-category-heading": "Configuration categories",
             "dismiss": {
                 "header": "Dismiss configuration",
                 "content": "Select the dismiss option for ",
@@ -617,7 +618,7 @@
                 "dismissed-configuration-tooltip-header": "Dismissed configuration",
                 "dismiss-notification-content1": "Dismissed",
                 "dismiss-notification-content2": "configuration.",
-                "activating-info-content1": "Active:",
+                "activating-info-content1": "Active",
                 "activating-info-content2": "Will be analyzed in the next analysis.",
                 "reactivate-notification-message": "Reactivated configuration.",
                 "configuration": "Configuration",

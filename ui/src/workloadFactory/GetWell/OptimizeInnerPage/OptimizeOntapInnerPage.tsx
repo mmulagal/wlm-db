@@ -293,7 +293,7 @@ const OptimizeOntapInnerPage = () => {
             (rowData?.type === 'volume' || rowData?.type === 'lun')
         ) {
             // For Oracle storage configuration ontap
-            statusType = 'ontap';
+            statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
             apiCall = optimizeOracleStorageConfig;
             payload = getVolumeOrLunPayload(operation, singleRowData, selectedRowsForOptimizeInnerPage, rowData);
             apiInput = {
@@ -311,7 +311,7 @@ const OptimizeOntapInnerPage = () => {
             apiInput = { configName: 'shared-storage', payload };
         } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
             // For MSSQL storage configuration ontap
-            statusType = 'ontap';
+            statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
             apiCall = optimizeStorageConfig;
             payload = getVolumeOrLunPayload(operation, singleRowData, selectedRowsForOptimizeInnerPage, rowData);
             apiInput = {
@@ -323,7 +323,7 @@ const OptimizeOntapInnerPage = () => {
             };
         } else {
             // For MSSQL storage configuration OS
-            statusType = 'os';
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOs;
             payload = getOsPayload(operation, singleRowData, selectedRowsForOptimizeInnerPage, rowData);
             apiInput = {

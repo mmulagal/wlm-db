@@ -72,7 +72,7 @@ export const getCategoryData = () => ({
     microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
     maxdop: { category: 'Application', subCategory: 'Application_sub' },
     scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
-    scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
+    scheduled_fsx_for_ontap_backups: { category: 'Resiliency', subCategory: 'Protection' },
     crr: { category: 'Resiliency', subCategory: 'Protection' },
     clone_management: { category: 'Cloning', subCategory: 'Cloning' },
     mssql_high_availability: { category: 'Resiliency', subCategory: 'Protection' }
@@ -1799,28 +1799,503 @@ export const formatIndividualCardMainConfig = (
     return cardsData;
 };
 
+// Helper function to get individual configuration dismiss state
+const getIndividualConfigDismissState = (
+    configName: string,
+    type: 'volume' | 'lun' | 'os' | 'mssqlHighAvailability',
+    dismissedConfigurations: any
+): any => {
+    let dismissedConfigs: any[] = [];
+
+    if (type === 'mssqlHighAvailability') {
+        if (!dismissedConfigurations?.highAvailability && !dismissedConfigurations?.['high-availability'])
+            return undefined;
+        dismissedConfigs =
+            dismissedConfigurations?.highAvailability || dismissedConfigurations?.['high-availability'] || [];
+    } else {
+        if (!dismissedConfigurations?.storage?.configuration) return undefined;
+        if (type === 'volume') {
+            dismissedConfigs = dismissedConfigurations.storage.configuration.volumes || [];
+        } else if (type === 'lun') {
+            dismissedConfigs = dismissedConfigurations.storage.configuration.luns || [];
+        } else if (type === 'os') {
+            dismissedConfigs = dismissedConfigurations.storage.configuration.os || [];
+        }
+    }
+
+    const technicalName = getConfigurationTechnicalName(GETWELL_CONFIG?.[configName] || configName, type);
+    const dismissedConfig = dismissedConfigs.find((config: any) => config.configurationName === technicalName);
+
+    // Only return the dismiss state if the config is actually dismissed or postponed
+    if (
+        dismissedConfig &&
+        (dismissedConfig.configState === CONFIG_STATE_ACTIONS.DISMISS ||
+            dismissedConfig.configState === CONFIG_STATE_ACTIONS.POSTPONED)
+    ) {
+        return dismissedConfig;
+    }
+
+    return undefined;
+};
+
+// Helper function to map display names to technical names for ONTAP/OS/Sizing configurations
+export const getConfigurationTechnicalName = (displayName: string, type: string): string => {
+    // Mapping from display names to technical names based on STORAGE_CONFIG_MAP
+    const nameMapping: { [key: string]: string } = {
+        // Volume configurations
+        'Thin provisioning': 'thin-provision',
+        Autosize: 'autosize',
+        'Autosize-mode': 'autosize-mode',
+        'Fractional reserve': 'fractional-reserve',
+        'Snapshot copy reserve': 'snapshot-copy-reserve',
+        'Snapshot autodelete': 'snapshot-autodelete',
+        'Space management': 'space-mgmt-try-first',
+        'Tiering policy': 'tiering-policy',
+        'Tiering minimum cooling days': 'tiering-min-cooling-days',
+
+        // LUN configurations
+        'OS type': 'os-type',
+        'Space reservation': 'space-reservation-enabled',
+        'Space allocation': 'space-allocation-allocated',
+
+        // OS configurations
+        'Multipath I/O Policy': 'mpio-load-balance-policy',
+        'Multipath I/O Sessions': 'mpio-iscsi-count',
+        'Multipath I/O Status': 'mpio-enabled',
+        'Multipath I/O Timeout': 'mpio-timeout',
+        'NTFS allocation unit size': 'ntfs-allocation-unit-size',
+
+        // MSSQL High Availability configurations
+        'Shared Storage': 'shared-storage',
+        'SQL Server Service': 'sqlserver-service',
+        'Drive Letter': 'drive-letter',
+        'Heartbeat Settings': 'heartbeat-settings',
+        'Cluster Quorum': 'cluster-quorum',
+
+        // Storage sizing configurations
+        file_system_headroom: 'headroom',
+        storage_tier: 'performance-tier',
+        transaction_log_drive_size: 'log-drive-size',
+        tempdb_drive_size: 'tempdb-drive-size'
+    };
+
+    return nameMapping[displayName] || displayName;
+};
+
+// Helper function to filter individual ONTAP/OS configurations based on dismissed state
+export const filterIndividualOntapOsConfigurations = (
+    tableData: any[],
+    assessmentData: any,
+    showDismissedView: boolean = false
+): any[] => {
+    if (!Array.isArray(tableData)) return [];
+
+    const filteredResult = tableData.filter((item: any) => {
+        if (!item || !item.name || !item.type) return true; // Keep non-ontap/os items
+
+        // Get dismissed configurations for the subcategory
+        let dismissedConfigs: any[] = [];
+
+        if (item.type === 'volume') {
+            dismissedConfigs = assessmentData?.dismissedConfigurations?.storage?.configuration?.volumes || [];
+        } else if (item.type === 'lun') {
+            dismissedConfigs = assessmentData?.dismissedConfigurations?.storage?.configuration?.luns || [];
+        } else if (item.type === 'os') {
+            dismissedConfigs = assessmentData?.dismissedConfigurations?.storage?.configuration?.os || [];
+        } else {
+            return true; // Keep non-ontap/os items
+        }
+
+        // Map display name to technical name for comparison
+        const technicalName = getConfigurationTechnicalName(item.name, item.type);
+
+        // Find if this specific configuration is dismissed or postponed using technical name
+        const dismissedConfig = dismissedConfigs.find((config: any) => config.configurationName === technicalName);
+        const isConfigDismissed = dismissedConfig?.configState === CONFIG_STATE_ACTIONS.DISMISS;
+        const isConfigPostponed = dismissedConfig?.configState === CONFIG_STATE_ACTIONS.POSTPONED;
+        const isConfigDismissedOrPostponed = isConfigDismissed || isConfigPostponed;
+
+        // In dismissed view, show only dismissed or postponed configurations
+        // In normal view, show only active (non-dismissed, non-postponed) configurations
+        return showDismissedView ? isConfigDismissedOrPostponed : !isConfigDismissedOrPostponed;
+    });
+
+    return filteredResult;
+};
+
+// Helper function to determine if ONTAP/OS cards should be shown based on dismissal state
+export const shouldShowOntapOsCard = (
+    cardKey: 'ontap_configuration' | 'os_configuration',
+    assessmentData: any,
+    showDismissedView: boolean = false
+): boolean => {
+    if (!assessmentData || !assessmentData.dismissedConfigurations) return true;
+
+    const dismissedConfig = assessmentData.dismissedConfigurations;
+
+    if (cardKey === 'ontap_configuration') {
+        // Check volumes and luns
+        const volumeConfigs = assessmentData?.storage?.configuration?.volumes || [];
+        const lunConfigs = assessmentData?.storage?.configuration?.luns || [];
+        const dismissedVolumeConfigs = dismissedConfig?.storage?.configuration?.volumes || [];
+        const dismissedLunConfigs = dismissedConfig?.storage?.configuration?.luns || [];
+
+        const allVolumesAreDismissed =
+            volumeConfigs.length > 0 &&
+            areAllSubcategoryConfigurationsDismissed(volumeConfigs, dismissedVolumeConfigs, 'volumes');
+        const allLunsAreDismissed =
+            lunConfigs.length > 0 && areAllSubcategoryConfigurationsDismissed(lunConfigs, dismissedLunConfigs, 'luns');
+
+        // Check if there are any dismissed or postponed configurations in volumes or luns
+        const hasAnyDismissedVolumes = dismissedVolumeConfigs.some(
+            (c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS
+        );
+        const hasAnyDismissedLuns = dismissedLunConfigs.some(
+            (c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS
+        );
+        const hasAnyPostponedVolumes = dismissedVolumeConfigs.some(
+            (c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED
+        );
+        const hasAnyPostponedLuns = dismissedLunConfigs.some(
+            (c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED
+        );
+
+        // Show ONTAP card in dismissed view if any subcategory has dismissed or postponed configurations
+        // Show ONTAP card in normal view if not all subcategories are fully dismissed/postponed
+        if (showDismissedView) {
+            return hasAnyDismissedVolumes || hasAnyDismissedLuns || hasAnyPostponedVolumes || hasAnyPostponedLuns;
+        }
+        return !(allVolumesAreDismissed && allLunsAreDismissed);
+    }
+    if (cardKey === 'os_configuration') {
+        // Check OS configurations
+        const osConfigs = assessmentData?.storage?.configuration?.os || [];
+        const dismissedOsConfigs = dismissedConfig?.storage?.configuration?.os || [];
+
+        const allOsAreDismissed =
+            osConfigs.length > 0 &&
+            areAllSubcategoryConfigurationsDismissed(osConfigs, dismissedOsConfigs, ASSESSMENT_CONFIG_NAMES.OS);
+
+        // Check if there are any dismissed or postponed OS configurations
+        const hasAnyDismissedOs = dismissedOsConfigs.some((c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS);
+        const hasAnyPostponedOs = dismissedOsConfigs.some((c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED);
+
+        // Show OS card in dismissed view if there are any dismissed or postponed OS configs
+        // Show OS card in normal view if not all OS configs are dismissed/postponed
+        if (showDismissedView) {
+            return hasAnyDismissedOs || hasAnyPostponedOs;
+        }
+        return !allOsAreDismissed;
+    }
+
+    return true;
+};
+
+// Helper function to filter individual MSSQL High Availability configurations based on dismissed state
+export const filterIndividualMssqlHighAvailabilityConfigurations = (
+    tableData: any[],
+    assessmentData: any,
+    showDismissedView: boolean
+): any[] => {
+    if (!tableData || tableData.length === 0) return [];
+
+    return tableData.filter((item: any) => {
+        const dismissedConfig = assessmentData?.dismissedConfigurations;
+        const dismissedMssqlHAConfigs =
+            dismissedConfig?.highAvailability || dismissedConfig?.['high-availability'] || [];
+
+        // Find the dismissed configuration for this specific item
+        // Match by either configurationName directly or through technical name mapping
+        const dismissedItemConfig = dismissedMssqlHAConfigs.find((config: any) => {
+            // Try direct match with configurationName
+            if (config.configurationName === item.id) return true;
+
+            // Try matching with display name to technical name conversion
+            const technicalName = getConfigurationTechnicalName(item.name || '', 'mssqlHighAvailability');
+            if (config.configurationName === technicalName) return true;
+
+            return false;
+        });
+
+        const isConfigDismissed = dismissedItemConfig?.configState === CONFIG_STATE_ACTIONS.DISMISS;
+        const isConfigPostponed = dismissedItemConfig?.configState === CONFIG_STATE_ACTIONS.POSTPONED;
+        const isConfigDismissedOrPostponed = isConfigDismissed || isConfigPostponed;
+
+        // In dismissed view: show dismissed/postponed items
+        // In normal view: show non-dismissed items
+        return showDismissedView ? isConfigDismissedOrPostponed : !isConfigDismissedOrPostponed;
+    });
+};
+
+// Helper function to determine if MSSQL High Availability cards should be shown based on dismissal state
+export const shouldShowMssqlHighAvailabilityCard = (assessmentData: any, showDismissedView: boolean): boolean => {
+    if (!assessmentData) return false;
+
+    const dismissedConfig = assessmentData.dismissedConfigurations;
+    if (!dismissedConfig) return true;
+
+    const mssqlHAConfigs = assessmentData?.highAvailability || assessmentData?.['high-availability'] || [];
+    const dismissedMssqlHAConfigs = dismissedConfig?.highAvailability || dismissedConfig?.['high-availability'] || [];
+
+    // If there are no active configs but we have dismissed configs, we should show in dismissed view
+    if (mssqlHAConfigs.length === 0 && dismissedMssqlHAConfigs.length === 0) return false;
+
+    const allMssqlHAAreDismissed =
+        mssqlHAConfigs.length === 0
+            ? true
+            : areAllSubcategoryConfigurationsDismissed(
+                  mssqlHAConfigs,
+                  dismissedMssqlHAConfigs,
+                  'mssqlHighAvailability'
+              );
+
+    const hasAnyDismissedMssqlHA = dismissedMssqlHAConfigs.some(
+        (c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS
+    );
+    const hasAnyPostponedMssqlHA = dismissedMssqlHAConfigs.some(
+        (c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED
+    );
+
+    // Show MSSQL HA card in dismissed view if there are any dismissed or postponed MSSQL HA configs
+    // Show MSSQL HA card in normal view if not all MSSQL HA configs are dismissed/postponed
+    if (showDismissedView) {
+        return hasAnyDismissedMssqlHA || hasAnyPostponedMssqlHA;
+    }
+    return !allMssqlHAAreDismissed;
+};
+
+// Helper function to get the dismiss state for ONTAP/OS cards based on subcategory logic
+export const getOntapOsCardDismissState = (
+    cardKey: 'ontap_configuration' | 'os_configuration',
+    assessmentData: any
+): { configState?: string; startTime?: string; endTime?: string } | undefined => {
+    if (!assessmentData || !assessmentData.dismissedConfigurations) return undefined;
+
+    const dismissedConfig = assessmentData.dismissedConfigurations;
+
+    if (cardKey === 'ontap_configuration') {
+        // Check volumes and luns
+        const volumeConfigs = assessmentData?.storage?.configuration?.volumes || [];
+        const lunConfigs = assessmentData?.storage?.configuration?.luns || [];
+        const dismissedVolumeConfigs = dismissedConfig?.storage?.configuration?.volumes || [];
+        const dismissedLunConfigs = dismissedConfig?.storage?.configuration?.luns || [];
+
+        const allVolumesAreDismissed =
+            volumeConfigs.length > 0 &&
+            areAllSubcategoryConfigurationsDismissed(volumeConfigs, dismissedVolumeConfigs, 'volumes');
+        const allLunsAreDismissed =
+            lunConfigs.length > 0 && areAllSubcategoryConfigurationsDismissed(lunConfigs, dismissedLunConfigs, 'luns');
+
+        // If all subcategories are dismissed, the card should be dismissed
+        if (
+            (volumeConfigs.length === 0 || allVolumesAreDismissed) &&
+            (lunConfigs.length === 0 || allLunsAreDismissed)
+        ) {
+            // Check if we have any specific dismiss state from the dismissed configurations
+            const volumeDismissStates = dismissedVolumeConfigs.map((config: any) => config.configState);
+            const lunDismissStates = dismissedLunConfigs.map((config: any) => config.configState);
+            const allDismissStates = [...volumeDismissStates, ...lunDismissStates];
+
+            // If we have dismiss states, use the most common one, otherwise default to DISMISSED
+            if (allDismissStates.length > 0) {
+                const dismissedCount = allDismissStates.filter(
+                    (state: any) => state === CONFIG_STATES.DISMISSED
+                ).length;
+                const postponedCount = allDismissStates.filter(
+                    (state: any) => state === CONFIG_STATES.POSTPONED
+                ).length;
+
+                const finalState = dismissedCount >= postponedCount ? CONFIG_STATES.DISMISSED : CONFIG_STATES.POSTPONED;
+
+                // If the final state is postponed, get the timestamp from one of the postponed configurations
+                if (finalState === CONFIG_STATES.POSTPONED) {
+                    const postponedConfig = [...dismissedVolumeConfigs, ...dismissedLunConfigs].find(
+                        (config: any) => config.configState === CONFIG_STATES.POSTPONED
+                    );
+
+                    return {
+                        configState: finalState,
+                        startTime: postponedConfig?.startTime,
+                        endTime: postponedConfig?.endTime
+                    };
+                }
+
+                return {
+                    configState: finalState
+                };
+            }
+        }
+    } else if (cardKey === 'os_configuration') {
+        // Check OS configurations
+        const osConfigs = assessmentData?.storage?.configuration?.os || [];
+        const dismissedOsConfigs = dismissedConfig?.storage?.configuration?.os || [];
+
+        const allOsAreDismissed =
+            osConfigs.length > 0 &&
+            areAllSubcategoryConfigurationsDismissed(osConfigs, dismissedOsConfigs, ASSESSMENT_CONFIG_NAMES.OS);
+
+        // If all OS configs are dismissed, the card should be dismissed
+        if (allOsAreDismissed) {
+            const osDismissStates = dismissedOsConfigs.map((config: any) => config.configState);
+            if (osDismissStates.length > 0) {
+                const dismissedCount = osDismissStates.filter((state: any) => state === CONFIG_STATES.DISMISSED).length;
+                const postponedCount = osDismissStates.filter((state: any) => state === CONFIG_STATES.POSTPONED).length;
+
+                const finalState = dismissedCount >= postponedCount ? CONFIG_STATES.DISMISSED : CONFIG_STATES.POSTPONED;
+
+                // If the final state is postponed, get the timestamp from one of the postponed configurations
+                if (finalState === CONFIG_STATES.POSTPONED) {
+                    const postponedConfig = dismissedOsConfigs.find(
+                        (config: any) => config.configState === CONFIG_STATES.POSTPONED
+                    );
+
+                    return {
+                        configState: finalState,
+                        startTime: postponedConfig?.startTime,
+                        endTime: postponedConfig?.endTime
+                    };
+                }
+
+                return {
+                    configState: finalState
+                };
+            }
+        }
+    }
+
+    return undefined;
+};
+
+// Helper function to get MSSQL High Availability card dismiss state
+export const getMssqlHighAvailabilityCardDismissState = (
+    assessmentData: any
+): { configState?: string; startTime?: string; endTime?: string } | undefined => {
+    if (!assessmentData || !assessmentData.dismissedConfigurations) return undefined;
+
+    const dismissedConfig = assessmentData.dismissedConfigurations;
+    const mssqlHAConfigs = assessmentData?.highAvailability || assessmentData?.['high-availability'] || [];
+    const dismissedMssqlHAConfigs = dismissedConfig?.highAvailability || dismissedConfig?.['high-availability'] || [];
+
+    // If there are no active configs but no dismissed configs either, return undefined
+    if (mssqlHAConfigs.length === 0 && dismissedMssqlHAConfigs.length === 0) return undefined;
+
+    const allMssqlHAAreDismissed =
+        mssqlHAConfigs.length === 0
+            ? true
+            : areAllSubcategoryConfigurationsDismissed(
+                  mssqlHAConfigs,
+                  dismissedMssqlHAConfigs,
+                  'mssqlHighAvailability'
+              );
+
+    // If all MSSQL HA configs are dismissed, the card should be dismissed
+    if (allMssqlHAAreDismissed) {
+        const mssqlHADismissStates = dismissedMssqlHAConfigs.map((config: any) => config.configState);
+        if (mssqlHADismissStates.length > 0) {
+            const dismissedCount = mssqlHADismissStates.filter(
+                (state: any) => state === CONFIG_STATES.DISMISSED
+            ).length;
+            const postponedCount = mssqlHADismissStates.filter(
+                (state: any) => state === CONFIG_STATES.POSTPONED
+            ).length;
+
+            const finalState = dismissedCount >= postponedCount ? CONFIG_STATES.DISMISSED : CONFIG_STATES.POSTPONED;
+
+            // If the final state is postponed, get the timestamp from one of the postponed configurations
+            if (finalState === CONFIG_STATES.POSTPONED) {
+                const postponedConfig = dismissedMssqlHAConfigs.find(
+                    (config: any) => config.configState === CONFIG_STATES.POSTPONED
+                );
+
+                return {
+                    configState: finalState,
+                    startTime: postponedConfig?.startTime,
+                    endTime: postponedConfig?.endTime
+                };
+            }
+
+            return {
+                configState: finalState
+            };
+        }
+    }
+
+    return undefined;
+};
+
+// Helper function to check if all configurations in a subcategory are dismissed or postponed
+export const areAllSubcategoryConfigurationsDismissed = (
+    configurations: any[],
+    dismissedConfigurations: any[],
+    subcategory: string
+): boolean => {
+    if (!configurations || configurations.length === 0) return false;
+    if (!dismissedConfigurations || dismissedConfigurations.length === 0) return false;
+
+    const dismissedOrPostponedConfigNames = dismissedConfigurations
+        .filter(
+            config =>
+                config.configState === CONFIG_STATE_ACTIONS.DISMISS ||
+                config.configState === CONFIG_STATE_ACTIONS.POSTPONED
+        )
+        .map(config => config.configurationName);
+
+    return configurations.every(config => dismissedOrPostponedConfigNames.includes(config.name));
+};
+
+// Helper function to check if we should filter storage subcategory based on view
+export const shouldFilterStorageSubcategory = (
+    configurations: any[],
+    dismissedConfigurations: any[],
+    subcategory: string,
+    showDismissedView: boolean
+): boolean => {
+    if (!configurations || configurations.length === 0) return true; // Hide if no configs
+
+    const allDismissed = areAllSubcategoryConfigurationsDismissed(configurations, dismissedConfigurations, subcategory);
+
+    // If we're in dismissed view, show only if all are dismissed
+    // If we're in normal view, show only if not all are dismissed
+    return showDismissedView ? !allDismissed : allDismissed;
+};
+
 // This function is used to format the ONTAP configuration data.
-export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
+export const formatOntapConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    showDismissedView: boolean = false
+) => {
     let ontapTagsList: Array<string> = [];
     let highestOntapSeverity = 'None';
     const formatOntapConfigList: PerConfigInterface[] = [];
     let ontapCritical = 0;
     let ontapWarning = 0;
     const volumesList = data?.storage?.configuration?.volumes;
-    if (volumesList && !volumesList?.[0]?.errorMessage) {
+    // Check if we should include volumes based on dismissal state
+    const volumeConfigs = data?.storage?.configuration?.volumes || [];
+    const dismissedVolumeConfigs = data?.dismissedConfigurations?.storage?.configuration?.volumes || [];
+    // For ONTAP/OS configurations, we always include all configurations
+    // and let the RecommendationTable handle individual filtering
+    const shouldIncludeVolumes = true; // Always include - filtering handled at table level
+
+    if (volumesList && !volumesList?.[0]?.errorMessage && shouldIncludeVolumes) {
         data?.storage?.configuration?.volumes?.map((item: PerConfigInterface) => {
+            // For subcategory-level filtering, we include all items from the subcategory
+            // Individual filtering will be handled at the table level
             let status = item?.status || '';
             if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
                 status = optimizingData?.[item?.name || ''];
             }
-            formatOntapConfigList.push({
+            const configItem = {
                 ...item,
                 id: item?.name,
                 type: 'volume',
                 name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
                 status: GETWELL_VALUES?.[status] || status,
-                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
-            });
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity,
+                dismissedObj: getIndividualConfigDismissState(item?.name || '', 'volume', data?.dismissedConfigurations)
+            } as any;
+            formatOntapConfigList.push(configItem);
             if (item?.severity === 'critical') {
                 ontapCritical = 1;
             } else if (item?.severity === 'warning') {
@@ -1831,8 +2306,17 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
     }
 
     const lunsList = data?.storage?.configuration?.luns;
-    if (lunsList && !lunsList?.[0]?.errorMessage) {
+    // Check if we should include luns based on dismissal state
+    const lunConfigs = data?.storage?.configuration?.luns || [];
+    const dismissedLunConfigs = data?.dismissedConfigurations?.storage?.configuration?.luns || [];
+    // For ONTAP/OS configurations, we always include all configurations
+    // and let the RecommendationTable handle individual filtering
+    const shouldIncludeLuns = true; // Always include - filtering handled at table level
+
+    if (lunsList && !lunsList?.[0]?.errorMessage && shouldIncludeLuns) {
         data?.storage?.configuration?.luns?.map((item: PerConfigInterface) => {
+            // For subcategory-level filtering, we include all items from the subcategory
+            // Individual filtering will be handled at the table level
             let status = item?.status || '';
             if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
                 status = optimizingData?.[item?.name || ''];
@@ -1843,8 +2327,9 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
                 type: 'lun',
                 name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
                 status: GETWELL_VALUES?.[status] || status,
-                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
-            });
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity,
+                dismissedObj: getIndividualConfigDismissState(item?.name || '', 'lun', data?.dismissedConfigurations)
+            } as any);
             if (item?.severity === 'critical') {
                 ontapCritical = 1;
             } else if (item?.severity === 'warning') {
@@ -1883,6 +2368,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
             }
         });
     });
+
     return {
         formatOntapConfigList,
         ontapTagsList,
@@ -1893,15 +2379,29 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 };
 
 // This function is used to format the OS configuration data.
-export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
+export const formatOsConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    showDismissedView: boolean = false
+) => {
     let osTagsList: Array<string> = [];
     let highestOsSeverity = 'None';
     let formatOsConfigList: PerConfigInterface[] = [];
     let osCritical = 0;
     let osWarning = 0;
     const osList = data?.storage?.configuration?.os;
-    if (osList && !osList?.[0]?.errorMessage) {
+    // Check if we should include os based on dismissal state
+    const osConfigs = data?.storage?.configuration?.os || [];
+    const dismissedOsConfigs = data?.dismissedConfigurations?.storage?.configuration?.os || [];
+
+    // For ONTAP/OS configurations, we always include all configurations
+    // and let the RecommendationTable handle individual filtering
+    const shouldIncludeOs = true; // Always include - filtering handled at table level
+
+    if (osList && !osList?.[0]?.errorMessage && shouldIncludeOs) {
         data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+            // For subcategory-level filtering, we include all items from the subcategory
+            // Individual filtering will be handled at the table level
             let status = item?.status || '';
             if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
                 status = optimizingData?.[item?.name || ''];
@@ -1909,11 +2409,12 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
             formatOsConfigList.push({
                 ...item,
                 id: item?.name,
-                type: 'os',
+                type: ASSESSMENT_CONFIG_NAMES.OS,
                 name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
                 status: GETWELL_VALUES?.[status] || status,
-                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
-            });
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity,
+                dismissedObj: getIndividualConfigDismissState(item?.name || '', 'os', data?.dismissedConfigurations)
+            } as any);
             if (item?.severity === 'critical') {
                 osCritical = 1;
             } else if (item?.severity === 'warning') {
@@ -1946,13 +2447,15 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
             }
         });
     }
+
     return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity };
 };
 
 // This function is used to format the MSSQL High Availability configuration data.
 export const formatMssqlHighAvailabilityConfig = (
     data: AssessmentResponseInterface,
-    optimizingData: { [key: string]: string }
+    optimizingData: { [key: string]: string },
+    showDismissedView: boolean = false
 ) => {
     let mssqlHATagsList: Array<string> = [];
     let highestMssqlHASeverity = 'None';
@@ -1963,28 +2466,84 @@ export const formatMssqlHighAvailabilityConfig = (
     // Check for data in both possible structures
     const mssqlHAData = data?.highAvailability || (data as any)?.['high-availability'];
 
-    mssqlHAData?.forEach((item: PerConfigInterface) => {
-        let status = item?.status || '';
-        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-            status = optimizingData?.[item?.name || ''];
-        }
+    // For MSSQL HA configurations, we always include all configurations
+    // and let the RecommendationTable handle individual filtering (like OS does)
+    const shouldIncludeMssqlHA = true; // Always include - filtering handled at table level
 
-        formatMssqlHighAvailabilityConfigList.push({
-            ...item,
-            id: item?.name,
-            type: 'mssqlHighAvailability',
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[status] || status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+    // Process MSSQL HA configurations (active only, like OS does)
+    if (mssqlHAData && shouldIncludeMssqlHA) {
+        mssqlHAData?.forEach((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+
+            formatMssqlHighAvailabilityConfigList.push({
+                ...item,
+                id: item?.name,
+                type: 'mssqlHighAvailability',
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[status] || status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity,
+                dismissedObj: getIndividualConfigDismissState(
+                    item?.name || '',
+                    'mssqlHighAvailability',
+                    data?.dismissedConfigurations
+                )
+            } as any);
+
+            if (item?.severity === 'critical') {
+                mssqlHACritical = 1;
+            } else if (item?.severity === 'warning') {
+                mssqlHAWarning = 1;
+            }
+            mssqlHATagsList = [...mssqlHATagsList, ...(item?.tags || [])];
         });
+    }
 
-        if (item?.severity === 'critical') {
-            mssqlHACritical = 1;
-        } else if (item?.severity === 'warning') {
-            mssqlHAWarning = 1;
+    // Add postponed MSSQL HA configurations that might not be in active data
+    const dismissedMssqlHAConfigs =
+        data?.dismissedConfigurations?.highAvailability ||
+        (data?.dismissedConfigurations as any)?.['high-availability'] ||
+        [];
+
+    dismissedMssqlHAConfigs?.forEach((dismissedConfig: any) => {
+        if (dismissedConfig.configState === CONFIG_STATES.POSTPONED) {
+            const configName = dismissedConfig.configurationName;
+
+            // Check if this config is not already in the active list
+            const existsInActive = formatMssqlHighAvailabilityConfigList.some(
+                config =>
+                    config.id === configName ||
+                    getConfigurationTechnicalName(config.name || '', 'mssqlHighAvailability') === configName
+            );
+
+            if (!existsInActive) {
+                // Map technical names to display names for MSSQL HA
+                const displayNameMapping: { [key: string]: string } = {
+                    'shared-storage': 'Shared Storage',
+                    'sqlserver-service': 'SQL Server Service',
+                    'drive-letter': 'Drive Letter',
+                    'heartbeat-settings': 'Heartbeat Settings',
+                    'cluster-quorum': 'Cluster Quorum'
+                };
+
+                const displayName = displayNameMapping[configName] || configName;
+
+                formatMssqlHighAvailabilityConfigList.push({
+                    id: configName,
+                    name: displayName,
+                    type: 'mssqlHighAvailability',
+                    status: 'N/A', // Postponed configs don't have active status
+                    severity: dismissedConfig?.severity || 'info',
+                    dismissedObj: dismissedConfig // Use the dismissed config directly since we already have it
+                } as any);
+            }
         }
-        mssqlHATagsList = [...mssqlHATagsList, ...(item?.tags || [])];
     });
+
+    // Sort the list after adding all configurations
+    formatMssqlHighAvailabilityConfigList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
     if (mssqlHACritical === 1) {
         highestMssqlHASeverity = 'Critical';
@@ -1995,18 +2554,20 @@ export const formatMssqlHighAvailabilityConfig = (
     let mssqlHAOptimizedConfig = 0;
     let mssqlHANotOptimizedConfig = 0;
 
-    // Count optimized vs not optimized configurations
-    mssqlHAData?.forEach((item: PerConfigInterface) => {
-        let status = item?.status || '';
-        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-            status = optimizingData?.[item?.name || ''];
-        }
-        if (status === 'optimized') {
-            mssqlHAOptimizedConfig++;
-        } else {
-            mssqlHANotOptimizedConfig++;
-        }
-    });
+    // Count optimized vs not optimized configurations from active configs
+    if (mssqlHAData && !mssqlHAData?.[0]?.errorMessage) {
+        mssqlHAData?.forEach((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            if (status === 'optimized') {
+                mssqlHAOptimizedConfig++;
+            } else {
+                mssqlHANotOptimizedConfig++;
+            }
+        });
+    }
 
     return {
         formatMssqlHighAvailabilityConfigList,
@@ -2018,7 +2579,7 @@ export const formatMssqlHighAvailabilityConfig = (
 };
 
 // This function is used to format the optimization breakdown data.
-export const formatOptimizationBreakDown = (cardsData: any) => {
+export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any) => {
     let optimizedStorage = 0;
     let notOptimizedStorage = 0;
     let optimizedCompute = 0;
@@ -2073,7 +2634,14 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedStorage++;
                 hasDismissedOrPostponedStorage = true;
-                dismissedStorageIds.push(nestedObject?.mapName);
+                // Use proper display names for parent cards
+                if (key === 'ontap_configuration') {
+                    dismissedStorageIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
+                } else if (key === 'os_configuration') {
+                    dismissedStorageIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
+                } else {
+                    dismissedStorageIds.push(nestedObject?.mapName);
+                }
             } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedStorage++;
                 if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
@@ -2134,7 +2702,12 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedResiliency++;
                 hasDismissedOrPostponedResiliency = true;
-                dismissedResiliencyIds.push(nestedObject?.mapName);
+                // Use proper display name for MSSQL High Availability
+                if (key === GETWELL_CONFIG.mssqlhighavailability) {
+                    dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
+                } else {
+                    dismissedResiliencyIds.push(nestedObject?.mapName);
+                }
             } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
                 if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
@@ -2166,6 +2739,77 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             }
         }
     });
+
+    // Count sub-configurations from assessment data
+    if (assessmentData?.dismissedConfigurations) {
+        const dismissedConfigs = assessmentData.dismissedConfigurations;
+
+        // Handle ONTAP sub-configurations (Storage category)
+        const ontapSubConfigs = [
+            ...(dismissedConfigs.storage?.configuration?.volumes || []),
+            ...(dismissedConfigs.storage?.configuration?.luns || [])
+        ];
+
+        const ontapCardDismissed =
+            cardsData?.ontap_configuration?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            cardsData?.ontap_configuration?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
+
+        if (ontapCardDismissed) {
+            // Bulk dismissal - parent card name is already added in the main loop above
+            // Don't add individual sub-config names
+        } else {
+            // Individual sub-config dismissals - add individual names
+            ontapSubConfigs.forEach((config: any) => {
+                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                    dismissedOrPostponedStorage++;
+                    hasDismissedOrPostponedStorage = true;
+                    dismissedStorageIds.push(config.configurationName);
+                }
+            });
+        }
+
+        // Handle OS sub-configurations (Storage category)
+        const osSubConfigs = dismissedConfigs.storage?.configuration?.os || [];
+
+        const osCardDismissed =
+            cardsData?.os_configuration?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            cardsData?.os_configuration?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
+
+        if (osCardDismissed) {
+            // Bulk dismissal - parent card name is already added in the main loop above
+            // Don't add individual sub-config names
+        } else {
+            // Individual sub-config dismissals - add individual names
+            osSubConfigs.forEach((config: any) => {
+                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                    dismissedOrPostponedStorage++;
+                    hasDismissedOrPostponedStorage = true;
+                    dismissedStorageIds.push(config.configurationName);
+                }
+            });
+        }
+
+        // Handle High Availability sub-configurations (Resiliency category)
+        const haSubConfigs = dismissedConfigs.highAvailability || [];
+
+        const haCardDismissed =
+            cardsData?.mssql_high_availability?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            cardsData?.mssql_high_availability?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
+
+        if (haCardDismissed) {
+            // Bulk dismissal - parent card name is already added in the main loop above
+            // Don't add individual sub-config names
+        } else {
+            // Individual sub-config dismissals - add individual names
+            haSubConfigs.forEach((config: any) => {
+                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                    dismissedOrPostponedResiliency++;
+                    hasDismissedOrPostponedResiliency = true;
+                    dismissedResiliencyIds.push(config.configurationName);
+                }
+            });
+        }
+    }
 
     const storageCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedStorage,
@@ -2313,14 +2957,18 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     return optBreakDown;
 };
 
-export const getCardsData = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
+export const getCardsData = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    showDismissedView: boolean = false
+) => {
     const {
         formatOntapConfigList,
         ontapTagsList,
         ontapOptimizedConfig,
         ontapNotOptimizedConfig,
         highestOntapSeverity
-    } = formatOntapConfig(data, optimizingData);
+    } = formatOntapConfig(data, optimizingData, showDismissedView);
 
     let cardsData = formatIndividualCardMainConfig(data, optimizingData);
 
@@ -2349,113 +2997,186 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatCloneCardConfig(data, optimizingData, cardsData);
 
-    cardsData = {
-        ...cardsData,
-        ontap_configuration: {
-            ...cardDataDefault?.ontap_configuration,
-            block_two: {
-                ...cardDataDefault?.ontap_configuration?.block_two,
-                value:
-                    (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0) !== 0
+    // Conditionally add ONTAP configuration card based on dismissed state and view
+    const hasVolumeConfigs = (data?.storage?.configuration?.volumes?.length || 0) > 0;
+    const hasLunConfigs = (data?.storage?.configuration?.luns?.length || 0) > 0;
+    const shouldShowOntapCard = hasVolumeConfigs || hasLunConfigs;
+
+    if (
+        shouldShowOntapCard &&
+        (!showDismissedView ||
+            (showDismissedView &&
+                (formatOntapConfigList.length > 0 ||
+                    areAllSubcategoryConfigurationsDismissed(
+                        data?.storage?.configuration?.volumes || [],
+                        data?.dismissedConfigurations?.storage?.configuration?.volumes,
+                        'volumes'
+                    ) ||
+                    areAllSubcategoryConfigurationsDismissed(
+                        data?.storage?.configuration?.luns || [],
+                        data?.dismissedConfigurations?.storage?.configuration?.luns,
+                        'luns'
+                    ))))
+    ) {
+        const ontapDismissedObj = getOntapOsCardDismissState('ontap_configuration', data);
+        const isOntapDismissedOrPostponed =
+            ontapDismissedObj?.configState && ontapDismissedObj.configState !== CONFIG_STATES.ACTIVE;
+
+        cardsData = {
+            ...cardsData,
+            ontap_configuration: {
+                ...cardDataDefault?.ontap_configuration,
+                block_two: {
+                    ...cardDataDefault?.ontap_configuration?.block_two,
+                    value: isOntapDismissedOrPostponed
+                        ? GENERAL.NOT_AVAILABLE
+                        : (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0) !== 0
                         ? ontapNotOptimizedConfig > 0
                             ? 'Not optimized'
                             : 'Optimized'
                         : ''
-            },
-            block_three: {
-                ...cardDataDefault?.ontap_configuration?.block_three,
-                value:
-                    ontapNotOptimizedConfig !== 0
+                },
+                block_three: {
+                    ...cardDataDefault?.ontap_configuration?.block_three,
+                    value: isOntapDismissedOrPostponed
+                        ? GENERAL.NOT_AVAILABLE
+                        : ontapNotOptimizedConfig !== 0
                         ? `${formatNumberWithCustomComma(
                               (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
                           )}%`
                         : '0%'
-            },
-            block_four: {
-                ...cardDataDefault?.ontap_configuration?.block_four,
-                value: highestOntapSeverity
-            },
-            block_five: {
-                ...cardDataDefault?.ontap_configuration?.block_five,
-                value: `${ontapNotOptimizedConfig || 0} out of ${
-                    (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0)
-                }`,
-                count: {
-                    totalObjectsAssessed: (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0),
-                    totalObjectsInViolation: ontapNotOptimizedConfig || 0
-                }
-            },
-            tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
-            category: 'storage'
-        }
-    };
+                },
+                block_four: {
+                    ...cardDataDefault?.ontap_configuration?.block_four,
+                    value: highestOntapSeverity
+                },
+                block_five: {
+                    ...cardDataDefault?.ontap_configuration?.block_five,
+                    value: isOntapDismissedOrPostponed
+                        ? GENERAL.NOT_AVAILABLE
+                        : `${ontapNotOptimizedConfig || 0} out of ${
+                              (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0)
+                          }`,
+                    count: {
+                        totalObjectsAssessed: (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0),
+                        totalObjectsInViolation: ontapNotOptimizedConfig || 0
+                    }
+                },
+                tags: ontapTagsList.filter(
+                    (value: any, index: any, self: string | any[]) => self.indexOf(value) === index
+                ),
+                category: 'storage',
+                dismissedObj: ontapDismissedObj
+            }
+        };
+    }
 
     const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
-        formatOsConfig(data, optimizingData);
+        formatOsConfig(data, optimizingData, showDismissedView);
     const {
         formatMssqlHighAvailabilityConfigList,
         mssqlHATagsList,
         mssqlHAOptimizedConfig,
         mssqlHANotOptimizedConfig,
         highestMssqlHASeverity
-    } = formatMssqlHighAvailabilityConfig(data, optimizingData);
+    } = formatMssqlHighAvailabilityConfig(data, optimizingData, showDismissedView);
 
-    cardsData = {
-        ...cardsData,
-        os_configuration: {
-            ...cardDataDefault?.os_configuration,
-            block_two: {
-                ...cardDataDefault?.os_configuration?.block_two,
-                value:
-                    (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0) !== 0
+    // Conditionally add OS configuration card based on dismissed state and view
+    const hasOsConfigs = (data?.storage?.configuration?.os?.length || 0) > 0;
+    const shouldShowOsCard = hasOsConfigs;
+
+    if (
+        shouldShowOsCard &&
+        (!showDismissedView ||
+            (showDismissedView &&
+                (formatOsConfigList.length > 0 ||
+                    areAllSubcategoryConfigurationsDismissed(
+                        data?.storage?.configuration?.os || [],
+                        data?.dismissedConfigurations?.storage?.configuration?.os,
+                        ASSESSMENT_CONFIG_NAMES.OS
+                    ))))
+    ) {
+        const osDismissedObj = getOntapOsCardDismissState('os_configuration', data);
+        const isOsDismissedOrPostponed =
+            osDismissedObj?.configState && osDismissedObj.configState !== CONFIG_STATES.ACTIVE;
+
+        cardsData = {
+            ...cardsData,
+            os_configuration: {
+                ...cardDataDefault?.os_configuration,
+                block_two: {
+                    ...cardDataDefault?.os_configuration?.block_two,
+                    value: isOsDismissedOrPostponed
+                        ? GENERAL.NOT_AVAILABLE
+                        : (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0) !== 0
                         ? osNotOptimizedConfig > 0
                             ? 'Not optimized'
                             : 'Optimized'
                         : ''
-            },
-            block_three: {
-                ...cardDataDefault?.os_configuration?.block_three,
-                value:
-                    osNotOptimizedConfig !== 0
+                },
+                block_three: {
+                    ...cardDataDefault?.os_configuration?.block_three,
+                    value: isOsDismissedOrPostponed
+                        ? GENERAL.NOT_AVAILABLE
+                        : osNotOptimizedConfig !== 0
                         ? `${formatNumberWithCustomComma(
                               (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
                           )}%`
                         : '0%'
-            },
-            block_four: {
-                ...cardDataDefault?.os_configuration?.block_four,
-                value: highestOsSeverity
-            },
-            block_five: {
-                ...cardDataDefault?.os_configuration?.block_five,
-                value: `${osNotOptimizedConfig || 0} out of ${(osOptimizedConfig || 0) + (osNotOptimizedConfig || 0)}`,
-                count: {
-                    totalObjectsAssessed: (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0),
-                    totalObjectsInViolation: osNotOptimizedConfig || 0
-                }
-            },
-            tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
-            category: 'storage'
-        },
+                },
+                block_four: {
+                    ...cardDataDefault?.os_configuration?.block_four,
+                    value: highestOsSeverity
+                },
+                block_five: {
+                    ...cardDataDefault?.os_configuration?.block_five,
+                    value: isOsDismissedOrPostponed
+                        ? GENERAL.NOT_AVAILABLE
+                        : `${osNotOptimizedConfig || 0} out of ${
+                              (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0)
+                          }`,
+                    count: {
+                        totalObjectsAssessed: (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0),
+                        totalObjectsInViolation: osNotOptimizedConfig || 0
+                    }
+                },
+                tags: osTagsList.filter(
+                    (value: any, index: any, self: string | any[]) => self.indexOf(value) === index
+                ),
+                category: 'storage',
+                dismissedObj: osDismissedObj
+            }
+        };
+    }
+
+    // Get MSSQL High Availability dismiss state
+    const mssqlHADismissedObj = getMssqlHighAvailabilityCardDismissState(data);
+    const isMssqlHADismissedOrPostponed =
+        mssqlHADismissedObj?.configState && mssqlHADismissedObj.configState !== CONFIG_STATES.ACTIVE;
+
+    cardsData = {
+        ...cardsData,
         mssql_high_availability: {
             ...cardDataDefault?.mssql_high_availability,
             block_two: {
                 ...cardDataDefault?.mssql_high_availability?.block_two,
-                value:
-                    (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0) !== 0
-                        ? mssqlHANotOptimizedConfig > 0
-                            ? 'Not optimized'
-                            : 'Optimized'
-                        : ''
+                value: isMssqlHADismissedOrPostponed
+                    ? GENERAL.NOT_AVAILABLE
+                    : (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0) !== 0
+                    ? mssqlHANotOptimizedConfig > 0
+                        ? 'Not optimized'
+                        : 'Optimized'
+                    : ''
             },
             block_three: {
                 ...cardDataDefault?.mssql_high_availability?.block_three,
-                value:
-                    mssqlHANotOptimizedConfig !== 0
-                        ? `${formatNumberWithCustomComma(
-                              (mssqlHANotOptimizedConfig / (mssqlHAOptimizedConfig + mssqlHANotOptimizedConfig)) * 100
-                          )}%`
-                        : '0%'
+                value: isMssqlHADismissedOrPostponed
+                    ? GENERAL.NOT_AVAILABLE
+                    : mssqlHANotOptimizedConfig !== 0
+                    ? `${formatNumberWithCustomComma(
+                          (mssqlHANotOptimizedConfig / (mssqlHAOptimizedConfig + mssqlHANotOptimizedConfig)) * 100
+                      )}%`
+                    : '0%'
             },
             block_four: {
                 ...cardDataDefault?.mssql_high_availability?.block_four,
@@ -2467,9 +3188,11 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             },
             block_six: {
                 ...cardDataDefault?.mssql_high_availability?.block_six,
-                value: `${mssqlHANotOptimizedConfig || 0} out of ${
-                    (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0)
-                }`,
+                value: isMssqlHADismissedOrPostponed
+                    ? GENERAL.NOT_AVAILABLE
+                    : `${mssqlHANotOptimizedConfig || 0} out of ${
+                          (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0)
+                      }`,
                 count: {
                     totalObjectsAssessed: (mssqlHAOptimizedConfig || 0) + (mssqlHANotOptimizedConfig || 0),
                     totalObjectsInViolation: mssqlHANotOptimizedConfig || 0
@@ -2478,7 +3201,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             tags: mssqlHATagsList.filter(
                 (value: any, index: any, self: string | any[]) => self.indexOf(value) === index
             ),
-            category: 'resiliency'
+            category: 'resiliency',
+            dismissedObj: mssqlHADismissedObj
         }
     };
 
@@ -2486,16 +3210,20 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 };
 
 // This function is used to format the get well data.
-export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterface | undefined) => {
+export const formatGetWellData = (
+    dispatch: any,
+    data?: AssessmentResponseInterface | undefined,
+    showDismissedView: boolean = false
+) => {
     const state = store.getState();
     const optimizingData = state.getWellOptimize.optimizingData || {};
     if (!data) {
         data = state.getWellOptimize.driftAssessmentData || undefined;
     }
     const { cardsData, formatOntapConfigList, formatOsConfigList, formatMssqlHighAvailabilityConfigList } =
-        getCardsData(data || ({} as AssessmentResponseInterface), optimizingData);
+        getCardsData(data || ({} as AssessmentResponseInterface), optimizingData, showDismissedView);
 
-    const optBreakDown = formatOptimizationBreakDown(cardsData);
+    const optBreakDown = formatOptimizationBreakDown(cardsData, data);
 
     // For Reset Password data
     dispatch(
@@ -2551,7 +3279,8 @@ export const applyFilter = (
     cardData: any,
     optimizeFilterTags: any,
     selectedDatabaseStorageType?: string,
-    showDismissedConfigurations?: boolean
+    showDismissedConfigurations?: boolean,
+    driftAssessmentData?: any
 ) => {
     const filteredCardData: any = {};
     let configCount = 0;
@@ -2576,7 +3305,7 @@ export const applyFilter = (
             !filters['sub-catagories'] ||
             filters['sub-catagories']?.includes(categoryData[key as keyof typeof categoryData]?.subCategory);
 
-        const isOptmized = isOptimized(cardData[key].block_two.value, cardData[key].dismissedObj?.configState);
+        const isOptmized = isOptimized(cardData[key]?.block_two?.value, cardData[key].dismissedObj?.configState);
         const checkStatus =
             !filters.status ||
             (filters.status?.includes(GETWELL_VALUES.optimized) && isOptmized) ||
@@ -2618,14 +3347,32 @@ export const applyFilter = (
         let checkDismissedFilter = true;
 
         if (showDismissedConfigurations !== undefined) {
-            if (showDismissedConfigurations) {
-                // Show only dismissed and postponed configurations
-                checkDismissedFilter =
-                    configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED;
+            // Special handling for ONTAP and OS configurations with subcategory logic
+            if (key === 'ontap_configuration' || key === 'os_configuration') {
+                checkDismissedFilter = shouldShowOntapOsCard(
+                    key as 'ontap_configuration' | 'os_configuration',
+                    driftAssessmentData,
+                    showDismissedConfigurations
+                );
+            } else if (key === 'mssql_high_availability') {
+                // Special handling for MSSQL High Availability configurations with subcategory logic
+                checkDismissedFilter = shouldShowMssqlHighAvailabilityCard(
+                    driftAssessmentData,
+                    showDismissedConfigurations
+                );
             } else {
-                // Show only active configurations (excluding dismissed and postponed)
-                checkDismissedFilter =
-                    !configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING;
+                // Standard logic for other configurations
+                if (showDismissedConfigurations) {
+                    // Show only dismissed and postponed configurations
+                    checkDismissedFilter =
+                        configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED;
+                } else {
+                    // Show only active configurations (excluding dismissed and postponed)
+                    checkDismissedFilter =
+                        !configState ||
+                        configState === CONFIG_STATES.ACTIVE ||
+                        configState === CONFIG_STATES.ACTIVATING;
+                }
             }
         }
 
@@ -2640,7 +3387,9 @@ export const applyFilter = (
             checkDismissedFilter
         ) {
             filteredCardData[key] = cardData[key];
-            if (categoryData[key as keyof typeof categoryData] && cardData[key].block_two.value) {
+            // Count configurations based on category mapping, not block_two.value as in error condition it will fail
+            // This ensures consistency with calculateTotalConfigCount
+            if (categoryData[key as keyof typeof categoryData]) {
                 configCount++;
             }
         }
@@ -3461,20 +4210,57 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
 
-export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any) => {
+export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any, apiResponseData?: any) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
         setAction = CONFIG_STATES.DISMISSED;
     } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
         setAction = CONFIG_STATES.POSTPONED;
-    } else if (action === CONFIG_STATE_ACTIONS.ACTIVE) {
+    } else if (action === CONFIG_STATE_ACTIONS.ACTIVE || action === CONFIG_STATES.ACTIVATING) {
         setAction = CONFIG_STATES.ACTIVATING;
     }
+
     const state = store.getState();
     const { allmssqlHostAssessmentData } = state.inventoryV2;
     let updatedAsessmentData = [...allmssqlHostAssessmentData]; // Clone the original data
 
     rowList?.forEach((rowData: any) => {
+        // Special handling for MSSQL HA card-level operations
+        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
+            const currentState = store.getState();
+
+            // Extract timestamp from API response if available
+            const endTime = apiResponseData?.dismissedConfigurations?.[0]?.endTime || null;
+
+            // Call the special card-level handling
+            const updatedData = updateConfigStatePerInstance(setAction, rowData.name, endTime);
+            if (updatedData) {
+                dispatch(setDriftAssessmentData(updatedData));
+                formatGetWellData(dispatch, updatedData);
+                return; // Skip the normal bulk processing for this card-level operation
+            }
+        }
+
+        // Special handling for OS card-level operations
+        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.OS) {
+            const currentState = store.getState();
+
+            // Extract timestamp from API response if available
+            const endTime = apiResponseData?.dismissedConfigurations?.[0]?.endTime || null;
+
+            // Call the special card-level handling
+            const updatedData = updateConfigStatePerInstance(
+                setAction,
+                ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
+                endTime
+            );
+            if (updatedData) {
+                dispatch(setDriftAssessmentData(updatedData));
+                formatGetWellData(dispatch, updatedData);
+                return; // Skip the normal bulk processing for this card-level operation
+            }
+        }
+
         updatedAsessmentData = updatedAsessmentData?.map((hostData: any) => {
             if (
                 hostData?.databaseHostId === rowData?.hostId &&
@@ -3754,7 +4540,13 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
     const { driftAssessmentData } = state.getWellOptimize;
     const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size'];
     const storageLayoutMap: any = ['data-files-location', 'log-files-location', 'tempdb-files-location'];
-    const haMssqlMap: any = ['shared-storage', 'cluster-quorum', 'heartbeat-settings', 'sqlserver-service'];
+    const haMssqlMap: any = [
+        'shared-storage',
+        'cluster-quorum',
+        'heartbeat-settings',
+        'sqlserver-service',
+        'drive-letter'
+    ];
     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
     const otherConfigMap: any = {
         'compute-rightsizing': 'compute',
@@ -3769,6 +4561,85 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         crr: 'crr',
         'sql-license': 'license'
     };
+
+    // Special handling for ONTAP card dismissal (dismiss all ONTAP configurations)
+    if (name === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
+        const volumeConfigs = driftAssessmentData?.storage?.configuration?.volumes || [];
+        const lunConfigs = driftAssessmentData?.storage?.configuration?.luns || [];
+
+        const dismissedVolumeConfigs = volumeConfigs.map((config: any) => ({
+            configurationName: config.name,
+            configState: setAction,
+            endTime
+        }));
+
+        const dismissedLunConfigs = lunConfigs.map((config: any) => ({
+            configurationName: config.name,
+            configState: setAction,
+            endTime
+        }));
+
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: {
+                ...driftAssessmentData?.dismissedConfigurations,
+                storage: {
+                    ...driftAssessmentData?.dismissedConfigurations?.storage,
+                    configuration: {
+                        ...driftAssessmentData?.dismissedConfigurations?.storage?.configuration,
+                        volumes: dismissedVolumeConfigs,
+                        luns: dismissedLunConfigs
+                    }
+                }
+            }
+        };
+    }
+
+    // Special handling for OS card dismissal (dismiss all OS configurations)
+    if (name === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) {
+        const osConfigs = driftAssessmentData?.storage?.configuration?.os || [];
+
+        const dismissedOsConfigs = osConfigs.map((config: any) => ({
+            configurationName: config.name,
+            configState: setAction,
+            endTime
+        }));
+
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: {
+                ...driftAssessmentData?.dismissedConfigurations,
+                storage: {
+                    ...driftAssessmentData?.dismissedConfigurations?.storage,
+                    configuration: {
+                        ...driftAssessmentData?.dismissedConfigurations?.storage?.configuration,
+                        os: dismissedOsConfigs
+                    }
+                }
+            }
+        };
+    }
+
+    // Special handling for MSSQL High Availability card dismissal (dismiss all MSSQL HA configurations)
+    if (name === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY || name === 'high-availability') {
+        const mssqlHAConfigs =
+            driftAssessmentData?.highAvailability || (driftAssessmentData as any)?.['high-availability'] || [];
+
+        const dismissedMssqlHAConfigs = mssqlHAConfigs.map((config: any) => ({
+            configurationName: config.name,
+            configState: setAction,
+            endTime
+        }));
+
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: {
+                ...driftAssessmentData?.dismissedConfigurations,
+                highAvailability: dismissedMssqlHAConfigs
+            }
+        };
+    }
+
     if (storageSizingMap.includes(name)) {
         return {
             ...driftAssessmentData,
@@ -3935,7 +4806,32 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
     }
     if (storageConfigurationMap[name]) {
         const key = storageConfigurationMap[name];
-        return {
+
+        // Get existing dismissed configurations for this subcategory
+        const existingConfigs = driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key] || [];
+
+        // Find if this configuration already exists in dismissed list
+        const existingIndex = existingConfigs.findIndex((item: any) => item?.configurationName === name);
+
+        let updatedConfigs;
+        if (existingIndex !== -1) {
+            // Update existing configuration
+            updatedConfigs = existingConfigs.map((item: any, index: number) =>
+                index === existingIndex ? { ...item, configState: setAction, endTime } : item
+            );
+        } else {
+            // Add new configuration to the list
+            updatedConfigs = [
+                ...existingConfigs,
+                {
+                    configurationName: name,
+                    configState: setAction,
+                    endTime
+                }
+            ];
+        }
+
+        const result = {
             ...driftAssessmentData,
             dismissedConfigurations: {
                 ...driftAssessmentData?.dismissedConfigurations,
@@ -3943,26 +4839,13 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                     ...driftAssessmentData?.dismissedConfigurations?.storage,
                     configuration: {
                         ...driftAssessmentData?.dismissedConfigurations?.storage?.configuration,
-                        [key]: driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key]
-                            ? driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key].map(
-                                  (item: any) => {
-                                      if (item?.configurationName === key) {
-                                          return { ...item, configState: setAction, endTime };
-                                      }
-                                      return item;
-                                  }
-                              )
-                            : [
-                                  {
-                                      configurationName: key,
-                                      configState: setAction,
-                                      endTime
-                                  }
-                              ]
+                        [key]: updatedConfigs
                     }
                 }
             }
         };
+
+        return result;
     }
     if (otherConfigMap[name]) {
         const key = otherConfigMap[name];

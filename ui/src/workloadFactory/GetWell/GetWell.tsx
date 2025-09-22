@@ -25,12 +25,19 @@ import { ReactComponent as Error } from '../../assets/error-icon.svg';
 import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
+import { ReactComponent as Activating } from '../../assets/action-required.svg';
 
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
-import { generateDate, applyFilter, resetGwValuesOnRefresh, generateDynamicFilterOptions } from './GetWellUtils';
+import {
+    generateDate,
+    applyFilter,
+    resetGwValuesOnRefresh,
+    generateDynamicFilterOptions,
+    formatGetWellData
+} from './GetWellUtils';
 import { setDefaultFilterOptions, setOptimizeFilterTags } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
 import GetWellApi from './GetWellApi';
@@ -61,7 +68,10 @@ import {
     PostponeInfo,
     checkHasDismissedConfigurations,
     calculateTotalConfigCount,
-    calculatePostponeInfo
+    calculatePostponeInfo,
+    areAllOntapSubConfigurationsActivating,
+    areAllOsSubConfigurationsActivating,
+    areAllHaSubConfigurationsActivating
 } from './GetWellHelper';
 
 const GetWell = () => {
@@ -85,7 +95,8 @@ const GetWell = () => {
         isInnerPageOptimize,
         gwTimestamp,
         gwAdhocError,
-        optimizationBreakDown
+        optimizationBreakDown,
+        driftAssessmentData
     } = useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -188,12 +199,15 @@ const GetWell = () => {
     };
 
     // Helper function to check if there are any dismissed configurations
-    const hasDismissedConfigurations = useMemo(() => checkHasDismissedConfigurations(cardData), [cardData]);
+    const hasDismissedConfigurations = useMemo(() => {
+        const result = checkHasDismissedConfigurations(cardData, driftAssessmentData);
+        return result;
+    }, [cardData, driftAssessmentData]);
 
     // Helper function to get total count based on dismissed configuration state
     const getTotalConfigCount = useMemo(
-        () => calculateTotalConfigCount(cardData, showDismissedConfigurations),
-        [cardData, showDismissedConfigurations]
+        () => calculateTotalConfigCount(cardData, showDismissedConfigurations, driftAssessmentData),
+        [cardData, showDismissedConfigurations, driftAssessmentData]
     );
 
     // Helper function to calculate postpone information for configurations
@@ -205,7 +219,8 @@ const GetWell = () => {
             cardData,
             optimizeFilterTags,
             selectedDatabaseStorageType,
-            showDismissedConfigurations
+            showDismissedConfigurations,
+            driftAssessmentData
         );
         setFilteredCardData(data);
         setInstanceDeploymentType(cardData?.deploymentType || '');
@@ -216,8 +231,16 @@ const GetWell = () => {
         ontapConfigTableData,
         osConfigTableData,
         selectedDatabaseStorageType,
-        showDismissedConfigurations
+        showDismissedConfigurations,
+        driftAssessmentData
     ]);
+
+    // Update table data when dismissed view state changes
+    useEffect(() => {
+        if (driftAssessmentData) {
+            formatGetWellData(dispatch, driftAssessmentData, showDismissedConfigurations);
+        }
+    }, [showDismissedConfigurations, driftAssessmentData]);
 
     const handleFilterClearAll = useCallback(() => {
         dispatch(setOptimizeFilterTags([]));
@@ -309,13 +332,44 @@ const GetWell = () => {
     // Helper function to render PostponeInfo/ActivatingInfo based on showDismissedConfigurations
     const renderPostponeActivatingInfo = (configKey: string) => (
         <>
-            {showDismissedConfigurations && <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} />}
+            {showDismissedConfigurations && (
+                <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
+            )}
 
             {!showDismissedConfigurations && (
                 <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
             )}
         </>
     );
+
+    // Helper function to render ActivatingInfo for sub-configurations when all are in ACTIVATING state
+    const renderSubConfigActivatingInfo = (configType: 'ontap' | 'os' | 'ha') => {
+        if (showDismissedConfigurations) return null;
+
+        let areAllActivating = false;
+
+        switch (configType) {
+            case ASSESSMENT_CONFIG_NAMES.ONTAP:
+                areAllActivating = areAllOntapSubConfigurationsActivating(driftAssessmentData);
+                break;
+            case ASSESSMENT_CONFIG_NAMES.OS:
+                areAllActivating = areAllOsSubConfigurationsActivating(driftAssessmentData);
+                break;
+            case ASSESSMENT_CONFIG_NAMES.HA:
+                areAllActivating = areAllHaSubConfigurationsActivating(driftAssessmentData);
+                break;
+        }
+
+        if (!areAllActivating) return null;
+
+        return (
+            <ActivatingInfo
+                configKey={configType}
+                cardData={{ [configType]: { dismissedObj: { configState: CONFIG_STATES.ACTIVATING } } }}
+                translation={t}
+            />
+        );
+    };
 
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
@@ -500,6 +554,7 @@ const GetWell = () => {
                                                                 : toggleDismissedConfiguration
                                                         }
                                                         title="Dismissed configuration"
+                                                        value={showDismissedConfigurations}
                                                     />
                                                 )}
                                             </div>
@@ -763,12 +818,7 @@ const GetWell = () => {
                                                     </div>
                                                 </div>
 
-                                                <div
-                                                    className={styles.filtersOption}
-                                                    style={{
-                                                        marginBottom: optimizeFilterTags.length > 0 ? '18px' : '16px'
-                                                    }}
-                                                >
+                                                <div className={styles.filtersOption}>
                                                     <div className={styles.tagsContainer}>
                                                         {optimizeFilterTags.map((item: any, index: number) => (
                                                             <div className={styles.filterTag} key={index}>
@@ -979,6 +1029,9 @@ const GetWell = () => {
                                     />
                                 </div>
                             </div>
+
+                            {/* Adding dummy div to have consistent spacing after filters */}
+                            <div style={{ marginTop: '40px' }} />
 
                             {/* Section one */}
                             {(filteredCardData?.storage_tier ||
@@ -1351,8 +1404,8 @@ const GetWell = () => {
                             {(filteredCardData?.user_data_files ||
                                 filteredCardData?.transaction_log_files ||
                                 filteredCardData?.tempdb_files) && (
-                                <div className={styles.sectionClass}>
-                                    <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
+                                    <div className={styles['header-buttons']}>
                                         <DsTypography
                                             style={{
                                                 padding: '0 0 8px'
@@ -1624,8 +1677,8 @@ const GetWell = () => {
 
                             {/* Section three */}
                             {(filteredCardData?.ontap_configuration || filteredCardData?.os_configuration) && (
-                                <div className={styles.sectionClass}>
-                                    <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
+                                    <div className={styles['header-buttons']}>
                                         <DsTypography
                                             style={{
                                                 padding: '0 0 8px'
@@ -1644,6 +1697,9 @@ const GetWell = () => {
                                                     optimizePrintState={optimizePrintState}
                                                     showDismissedConfigurations={showDismissedConfigurations}
                                                     setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                                    isAllSubConfigActivating={areAllOntapSubConfigurationsActivating(
+                                                        driftAssessmentData
+                                                    )}
                                                 />
                                                 <DsAccordion
                                                     id="9"
@@ -1678,33 +1734,50 @@ const GetWell = () => {
                                                         <div className={styles.headerAction}>
                                                             {renderPostponeActivatingInfo('ontap_configuration')}
 
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading ||
-                                                                !cardData?.ontap_configuration?.block_two?.value ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading ||
-                                                                        !cardData?.ontap_configuration?.block_two?.value
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendations-optimizations'
-                                                                )}
-                                                            </div>
+                                                            {/* Show full ActivatingInfo if all sub-configs are activating */}
+                                                            {areAllOntapSubConfigurationsActivating(
+                                                                driftAssessmentData
+                                                            ) &&
+                                                                !showDismissedConfigurations &&
+                                                                renderSubConfigActivatingInfo('ontap')}
+
+                                                            {/* Show normal view button if not all sub-configs are activating or in dismissed view */}
+                                                            {(!areAllOntapSubConfigurationsActivating(
+                                                                driftAssessmentData
+                                                            ) ||
+                                                                showDismissedConfigurations) && (
+                                                                <>
+                                                                    <div
+                                                                        className={
+                                                                            isDarkTheme && !loading
+                                                                                ? styles['dark-theme-light']
+                                                                                : ''
+                                                                        }
+                                                                    >
+                                                                        {loading ||
+                                                                        !cardData?.ontap_configuration?.block_two
+                                                                            ?.value ? (
+                                                                            <LightDisabled />
+                                                                        ) : (
+                                                                            <Light />
+                                                                        )}
+                                                                    </div>
+                                                                    <div
+                                                                        style={{
+                                                                            color:
+                                                                                loading ||
+                                                                                !cardData?.ontap_configuration
+                                                                                    ?.block_two?.value
+                                                                                    ? 'var(--text-disabled)'
+                                                                                    : 'var(--text-button-primary)'
+                                                                        }}
+                                                                    >
+                                                                        {t(
+                                                                            'databases.well-architect.actions.view-recommendations-optimizations'
+                                                                        )}
+                                                                    </div>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     ]}
                                                     children={
@@ -1717,6 +1790,7 @@ const GetWell = () => {
                                                             setShowDismissedConfigurations={
                                                                 setShowDismissedConfigurations
                                                             }
+                                                            driftAssessmentData={driftAssessmentData}
                                                         />
                                                     }
                                                 />
@@ -1730,6 +1804,9 @@ const GetWell = () => {
                                                     optimizePrintState={optimizePrintState}
                                                     showDismissedConfigurations={showDismissedConfigurations}
                                                     setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                                    isAllSubConfigActivating={areAllOsSubConfigurationsActivating(
+                                                        driftAssessmentData
+                                                    )}
                                                 />
                                                 <DsAccordion
                                                     id="10"
@@ -1764,33 +1841,48 @@ const GetWell = () => {
                                                         <div className={styles.headerAction}>
                                                             {renderPostponeActivatingInfo('os_configuration')}
 
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading ||
-                                                                !cardData?.os_configuration?.block_two?.value ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading ||
-                                                                        !cardData?.os_configuration?.block_two?.value
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendations-optimizations'
-                                                                )}
-                                                            </div>
+                                                            {/* Show full ActivatingInfo if all sub-configs are activating */}
+                                                            {areAllOsSubConfigurationsActivating(driftAssessmentData) &&
+                                                                !showDismissedConfigurations &&
+                                                                renderSubConfigActivatingInfo('os')}
+
+                                                            {/* Show normal view button if not all sub-configs are activating or in dismissed view */}
+                                                            {(!areAllOsSubConfigurationsActivating(
+                                                                driftAssessmentData
+                                                            ) ||
+                                                                showDismissedConfigurations) && (
+                                                                <>
+                                                                    <div
+                                                                        className={
+                                                                            isDarkTheme && !loading
+                                                                                ? styles['dark-theme-light']
+                                                                                : ''
+                                                                        }
+                                                                    >
+                                                                        {loading ||
+                                                                        !cardData?.os_configuration?.block_two
+                                                                            ?.value ? (
+                                                                            <LightDisabled />
+                                                                        ) : (
+                                                                            <Light />
+                                                                        )}
+                                                                    </div>
+                                                                    <div
+                                                                        style={{
+                                                                            color:
+                                                                                loading ||
+                                                                                !cardData?.os_configuration?.block_two
+                                                                                    ?.value
+                                                                                    ? 'var(--text-disabled)'
+                                                                                    : 'var(--text-button-primary)'
+                                                                        }}
+                                                                    >
+                                                                        {t(
+                                                                            'databases.well-architect.actions.view-recommendations-optimizations'
+                                                                        )}
+                                                                    </div>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     ]}
                                                     children={
@@ -1803,9 +1895,9 @@ const GetWell = () => {
                                                             setShowDismissedConfigurations={
                                                                 setShowDismissedConfigurations
                                                             }
+                                                            driftAssessmentData={driftAssessmentData}
                                                         />
                                                     }
-                                                    style={{ marginBottom: '40px' }}
                                                 />
                                             </div>
                                         )}
@@ -1818,7 +1910,7 @@ const GetWell = () => {
                                 filteredCardData?.host_os_patch ||
                                 filteredCardData?.rss_config ||
                                 filteredCardData?.mtu) && (
-                                <div className={styles.sectionClass}>
+                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
                                     <div className={styles['header-buttons']}>
                                         <DsTypography
                                             style={{
@@ -2205,8 +2297,8 @@ const GetWell = () => {
                             {(filteredCardData?.sql_licenses ||
                                 filteredCardData?.microsoft_sql_patch ||
                                 filteredCardData?.maxdop) && (
-                                <div className={styles.sectionClass}>
-                                    <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
+                                    <div className={styles['header-buttons']}>
                                         <DsTypography
                                             style={{
                                                 padding: '0 0 8px'
@@ -2478,8 +2570,8 @@ const GetWell = () => {
                                 filteredCardData?.crr ||
                                 (instanceDeploymentType === GENERAL.FCI &&
                                     filteredCardData?.mssql_high_availability)) && (
-                                <div className={styles.sectionClass}>
-                                    <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
+                                    <div className={styles['header-buttons']}>
                                         <DsTypography
                                             style={{
                                                 padding: '0 0 8px'
@@ -2753,6 +2845,9 @@ const GetWell = () => {
                                                         type={GENERAL.MSSQL_HIGH_AVAILABILITY}
                                                         showDismissedConfigurations={showDismissedConfigurations}
                                                         setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                                        isAllSubConfigActivating={areAllHaSubConfigurationsActivating(
+                                                            driftAssessmentData
+                                                        )}
                                                     />
                                                     <DsAccordion
                                                         id="22"
@@ -2790,35 +2885,50 @@ const GetWell = () => {
                                                                     'mssql_high_availability'
                                                                 )}
 
-                                                                <div
-                                                                    className={
-                                                                        isDarkTheme && !loading
-                                                                            ? styles['dark-theme-light']
-                                                                            : ''
-                                                                    }
-                                                                >
-                                                                    {loading ||
-                                                                    !cardData?.mssql_high_availability?.block_two
-                                                                        ?.value ? (
-                                                                        <LightDisabled />
-                                                                    ) : (
-                                                                        <Light />
-                                                                    )}
-                                                                </div>
-                                                                <div
-                                                                    style={{
-                                                                        color:
-                                                                            loading ||
+                                                                {/* Show full ActivatingInfo if all sub-configs are activating */}
+                                                                {areAllHaSubConfigurationsActivating(
+                                                                    driftAssessmentData
+                                                                ) &&
+                                                                    !showDismissedConfigurations &&
+                                                                    renderSubConfigActivatingInfo('ha')}
+
+                                                                {/* Show normal view button if not all sub-configs are activating or in dismissed view */}
+                                                                {(!areAllHaSubConfigurationsActivating(
+                                                                    driftAssessmentData
+                                                                ) ||
+                                                                    showDismissedConfigurations) && (
+                                                                    <>
+                                                                        <div
+                                                                            className={
+                                                                                isDarkTheme && !loading
+                                                                                    ? styles['dark-theme-light']
+                                                                                    : ''
+                                                                            }
+                                                                        >
+                                                                            {loading ||
                                                                             !cardData?.mssql_high_availability
-                                                                                ?.block_two?.value
-                                                                                ? 'var(--text-disabled)'
-                                                                                : 'var(--text-button-primary)'
-                                                                    }}
-                                                                >
-                                                                    {t(
-                                                                        'databases.well-architect.actions.view-recommendations-optimizations'
-                                                                    )}
-                                                                </div>
+                                                                                ?.block_two?.value ? (
+                                                                                <LightDisabled />
+                                                                            ) : (
+                                                                                <Light />
+                                                                            )}
+                                                                        </div>
+                                                                        <div
+                                                                            style={{
+                                                                                color:
+                                                                                    loading ||
+                                                                                    !cardData?.mssql_high_availability
+                                                                                        ?.block_two?.value
+                                                                                        ? 'var(--text-disabled)'
+                                                                                        : 'var(--text-button-primary)'
+                                                                            }}
+                                                                        >
+                                                                            {t(
+                                                                                'databases.well-architect.actions.view-recommendations-optimizations'
+                                                                            )}
+                                                                        </div>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         ]}
                                                         children={
@@ -2833,6 +2943,7 @@ const GetWell = () => {
                                                                 setShowDismissedConfigurations={
                                                                     setShowDismissedConfigurations
                                                                 }
+                                                                driftAssessmentData={driftAssessmentData}
                                                             />
                                                         }
                                                     />
@@ -2843,8 +2954,8 @@ const GetWell = () => {
                             )}
                             {/* Section seven */}
                             {filteredCardData?.clone_management && (
-                                <div className={styles.sectionClass}>
-                                    <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
+                                    <div className={styles['header-buttons']}>
                                         <DsTypography
                                             style={{
                                                 padding: '0 0 8px'

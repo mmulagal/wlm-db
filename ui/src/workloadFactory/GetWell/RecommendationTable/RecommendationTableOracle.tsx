@@ -147,7 +147,7 @@ const RecommendationTableOracle = ({
             payload = getHaPayload('sqlserver-service');
             apiInput = { configName: 'sqlserver-service', payload };
         } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
-            statusType = 'ontap';
+            statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
             apiCall = optimizeStorageConfig;
             apiInput = {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
@@ -164,7 +164,7 @@ const RecommendationTableOracle = ({
                 }
             };
         } else {
-            statusType = 'os';
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOs;
             apiInput = {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,

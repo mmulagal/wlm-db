@@ -848,9 +848,11 @@ export const GETWELL_CONFIG: any = {
     'mssql-patch': 'microsoft_sql_patch',
     maxdop: 'maxdop',
     'snapshot-policy': 'scheduled_local_snapshot',
+    'scheduled-fsx-for-ontap-backups': 'scheduled_fsx_for_ontap_backups',
     'backup-configuration': 'scheduled_fsx_for_ontap_backups',
     crr: 'crr',
     mssqlhighavailability: 'mssql_high_availability',
+    mssqlhighavailabilityWithoutUnderscore: 'mssqlhighavailability',
     'shared-storage': 'Shared storage',
     'drive-letter': 'Drive Letter',
     'heartbeat-settings': 'Heartbeat Settings',
@@ -915,6 +917,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     CRR: 'Crr',
     ONTAP: 'ontap',
     OS: 'os',
+    HA: 'ha',
     RSS_CONFIGURATION: 'Network adapter settings',
     MTU: 'MTU alignment',
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Backup Configuration',
@@ -952,7 +955,8 @@ export const ASSESSMENT_CONFIG_NAMES = {
     FILESYSTEMS_IO_OPTIONS: 'Filesystem I/O Options',
     MULTIPATH_READCOUNT: 'Multiblock Read Count',
     MULTIPATH_IO_SESSIONS: 'Multipath I/O Sessions',
-    MULTIPATH_CONFIGURATION: 'Multipath Config File'
+    MULTIPATH_CONFIGURATION: 'Multipath Config File',
+    HIGH_AVAILABILITY: 'highAvailability'
 };
 
 export const CONFIG_STATES = {

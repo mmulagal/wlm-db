@@ -16,6 +16,12 @@ import RecommendationTooltip from '../RecommendationTooltip/RecommendationToolti
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
 import { DismissDialog } from '../StorageCardComponent/DismissDialog/DismissDialog';
+import {
+    calculatePostponeInfo,
+    PostponeInfo,
+    isTableRowConfigurationActivating,
+    ActivatingInfo
+} from '../GetWellHelper';
 import { GENERAL } from '../../../utils/appConstants';
 import {
     useDismissMssqlAssessmentMutation,
@@ -33,7 +39,12 @@ import {
 } from '../StorageCardComponent/StorageCardComponentHelper';
 
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import {
+    formatGetWellData,
+    handleOptimizeStorageJob,
+    filterIndividualOntapOsConfigurations,
+    filterIndividualMssqlHighAvailabilityConfigurations
+} from '../GetWellUtils';
 import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATE_ACTIONS,
@@ -66,7 +77,8 @@ const RecommendationTable = ({
     engineType = DBType.MSSQL,
     // Adding undefined by default to stop showing dismiss button in Dashboard
     showDismissedConfigurations = undefined,
-    setShowDismissedConfigurations
+    setShowDismissedConfigurations,
+    driftAssessmentData
 }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -169,7 +181,7 @@ const RecommendationTable = ({
             payload = getHaPayload('sqlserver-service');
             apiInput = { configName: 'sqlserver-service', payload };
         } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
-            statusType = 'ontap';
+            statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
             apiCall = optimizeStorageConfig;
             apiInput = {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
@@ -186,7 +198,7 @@ const RecommendationTable = ({
                 }
             };
         } else {
-            statusType = 'os';
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOs;
             apiInput = {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
@@ -325,6 +337,10 @@ const RecommendationTable = ({
         return 'View and fix';
     };
 
+    // Function to check if configuration is activating
+    const isRowConfigurationActivating = (rowData: any) =>
+        isTableRowConfigurationActivating(rowData, fullCardData, driftAssessmentData);
+
     const handleOntapDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
@@ -383,6 +399,9 @@ const RecommendationTable = ({
         [showDismissedConfigurations]
     );
 
+    // Function to check if row should be disabled until the next analysis is completed for Activating Status
+    const shouldApplyDisabledRowStyle = (rowData: any) => isRowConfigurationActivating(rowData);
+
     // Common cell wrapper component for consistent styling and click handling
     const CellWrapper = ({
         children,
@@ -394,17 +413,21 @@ const RecommendationTable = ({
         rowData: any;
         onMouseEnter?: (event?: React.MouseEvent) => void;
         onMouseLeave?: (event?: React.MouseEvent) => void;
-    }) => (
-        <div
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
-            role="button"
-            tabIndex={0}
-            className={styles.cellClickable}
-        >
-            {children}
-        </div>
-    );
+    }) => {
+        const isDisabled = shouldApplyDisabledRowStyle(rowData);
+
+        return (
+            <div
+                onMouseEnter={isDisabled ? undefined : onMouseEnter}
+                onMouseLeave={isDisabled ? undefined : onMouseLeave}
+                role="button"
+                tabIndex={0}
+                className={`${styles.cellClickable} ${isDisabled ? styles.disabledCell : ''}`}
+            >
+                {children}
+            </div>
+        );
+    };
 
     // Function For Dismiss
     const handleSingleAction = (action: string) => {
@@ -471,17 +494,54 @@ const RecommendationTable = ({
     const dismissDisableButton = () => {
         if (!selectedRowData) return true;
 
+        // Disable button if configuration is already dismissed or postponed
         return (
             selectedRowData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-            selectedRowData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
-            selectedRowData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING
+            selectedRowData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED
+        );
+    };
+
+    // Helper function to check if a configuration is postponed
+    const isConfigurationPostponed = (rowData: any) => rowData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
+
+    // Helper function to calculate postpone info for a specific configuration using existing logic
+    const calculateConfigPostponeInfo = (rowData: any) => {
+        if (!isConfigurationPostponed(rowData)) return null;
+
+        // Create a structure that matches what calculatePostponeInfo expects
+        const mockCardData = {
+            config: {
+                dismissedObj: rowData.dismissedObj
+            }
+        };
+
+        // Reuse the existing calculatePostponeInfo function
+        return calculatePostponeInfo(mockCardData, 'config');
+    };
+
+    // Component to render postpone indicator for individual configurations
+    const renderConfigPostponeInfo = (rowData: any) => {
+        if (!isConfigurationPostponed(rowData)) return null;
+
+        // Create a getPostponeInfo function that returns the calculated postpone info
+        const getPostponeInfo = () => calculateConfigPostponeInfo(rowData);
+
+        return (
+            <div className={styles.postponeInfoContainer}>
+                <PostponeInfo configKey="config" getPostponeInfo={getPostponeInfo} translation={t} placement="right" />
+            </div>
         );
     };
 
     // Dismiss button component
     const renderDismissButton = (rowData: any) => {
-        // Don't show dismiss button when in dismissed configuration mode
-        if (showDismissedConfigurations === undefined || showDismissedConfigurations) return null;
+        // Don't show dismiss button when in dismissed configuration mode or when row is activating
+        if (
+            showDismissedConfigurations === undefined ||
+            showDismissedConfigurations ||
+            shouldApplyDisabledRowStyle(rowData)
+        )
+            return null;
 
         if (activeRowId !== rowData?.id) return null;
         if (showDismissButton) {
@@ -549,21 +609,31 @@ const RecommendationTable = ({
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
-                    {rowData?.errorMessage && showUnavailableWithTooltip(rowData)}
+                    {/* Show "n/a" when viewing dismissed configurations or when the category is in Activating state */}
+                    {showDismissedConfigurations === true || isRowConfigurationActivating(rowData) ? (
+                        GENERAL.NOT_AVAILABLE
+                    ) : (
+                        <>
+                            {rowData?.errorMessage && showUnavailableWithTooltip(rowData)}
 
-                    {cellData && !rowData?.errorMessage && (
-                        <div className={styles.statusCol}>
-                            <div>
-                                {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
-                                {cellData === GETWELL_STATUS.NOT_OPTIMIZED && (
-                                    <NotActive className={styles.statusIcon} />
-                                )}
-                                {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
-                                    <InProgress className={styles.statusIcon} />
-                                )}
-                            </div>
-                            <div>{statusValue(cellData)}</div>
-                        </div>
+                            {cellData && !rowData?.errorMessage && (
+                                <div className={styles.statusCol}>
+                                    <div>
+                                        {cellData === GETWELL_STATUS.OPTIMIZED && (
+                                            <Active className={styles.statusIcon} />
+                                        )}
+                                        {cellData === GETWELL_STATUS.NOT_OPTIMIZED && (
+                                            <NotActive className={styles.statusIcon} />
+                                        )}
+                                        {(cellData === GETWELL_STATUS.OPTIMIZING ||
+                                            cellData === GETWELL_STATUS.ANALYZING) && (
+                                            <InProgress className={styles.statusIcon} />
+                                        )}
+                                    </div>
+                                    <div>{statusValue(cellData)}</div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </CellWrapper>
             )
@@ -651,22 +721,29 @@ const RecommendationTable = ({
 
                 return (
                     <CellWrapper rowData={rowData}>
-                        {(engineType === DBType.MSSQL &&
-                            rowData?.name !== 'Multipath I/O Sessions' &&
-                            rowData?.name !== 'Multipath I/O Status' &&
-                            rowData?.name !== 'Multipath I/O Timeout') ||
-                        engineType === DBType.ORACLE ? (
-                            <div>
-                                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                                    {`${rowData?.totalObjectsInViolation || 0} out of ${
-                                        rowData?.totalObjectsAssessed || 0
-                                    } ${type}`}
-                                </DsTypography>
-                            </div>
+                        {/* Show "n/a" when viewing dismissed configurations or when the category is in Activating state */}
+                        {showDismissedConfigurations === true || isRowConfigurationActivating(rowData) ? (
+                            GENERAL.NOT_AVAILABLE
                         ) : (
-                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                                Storage multipath
-                            </DsTypography>
+                            <>
+                                {(engineType === DBType.MSSQL &&
+                                    rowData?.name !== 'Multipath I/O Sessions' &&
+                                    rowData?.name !== 'Multipath I/O Status' &&
+                                    rowData?.name !== 'Multipath I/O Timeout') ||
+                                engineType === DBType.ORACLE ? (
+                                    <div>
+                                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                            {`${rowData?.totalObjectsInViolation || 0} out of ${
+                                                rowData?.totalObjectsAssessed || 0
+                                            } ${type}`}
+                                        </DsTypography>
+                                    </div>
+                                ) : (
+                                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                        Storage multipath
+                                    </DsTypography>
+                                )}
+                            </>
                         )}
                     </CellWrapper>
                 );
@@ -752,7 +829,17 @@ const RecommendationTable = ({
             Header: '',
             accessor: '',
             isSticky: true,
-            width: windowSize.width > 1700 ? '22%' : from === WLF_TABS.INVENTORY ? '350px' : '200px',
+            width: showDismissedConfigurations
+                ? windowSize.width > 1700
+                    ? '30%'
+                    : from === WLF_TABS.INVENTORY
+                    ? '500px'
+                    : '200px'
+                : windowSize.width > 1700
+                ? '22%'
+                : from === WLF_TABS.INVENTORY
+                ? '350px'
+                : '200px',
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
                     <div className={styles.buttonGroup}>
@@ -760,32 +847,37 @@ const RecommendationTable = ({
 
                         {/* Reactivate button for dismissed configurations */}
                         {showDismissedConfigurations && (
-                            <div
-                                className={styles.buttonSection}
-                                style={{
-                                    position: 'relative',
-                                    zIndex: 1000,
-                                    pointerEvents: 'auto'
-                                }}
-                                onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    setSelectedRowData(rowData);
-                                    handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
-                                }}
-                            >
-                                <DsButton
-                                    variant="secondary"
+                            <div className={styles.reactivateButtonContainer}>
+                                {/* Show postpone indicator if configuration is postponed */}
+                                {renderConfigPostponeInfo(rowData)}
+
+                                <div
+                                    className={styles.buttonSection}
+                                    style={{
+                                        position: 'relative',
+                                        zIndex: 1000,
+                                        pointerEvents: 'auto'
+                                    }}
                                     onClick={(e: any) => {
                                         e.stopPropagation();
                                         e.preventDefault();
                                         setSelectedRowData(rowData);
                                         handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
                                     }}
-                                    isDisabled={isLoading || dismissAction}
                                 >
-                                    {t('databases.well-architect.dismiss.reactivate')}
-                                </DsButton>
+                                    <DsButton
+                                        variant="secondary"
+                                        onClick={(e: any) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            setSelectedRowData(rowData);
+                                            handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
+                                        }}
+                                        isDisabled={isLoading || dismissAction}
+                                    >
+                                        {t('databases.well-architect.dismiss.reactivate')}
+                                    </DsButton>
+                                </div>
                             </div>
                         )}
 
@@ -793,8 +885,17 @@ const RecommendationTable = ({
                         {!showDismissedConfigurations && (
                             <div className={styles.recommendation}>
                                 {!optimizePrintState &&
-                                    (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
-                                    rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
+                                    (isRowConfigurationActivating(rowData) ? (
+                                        // Show activating info instead of View and fix buttons
+                                        // As we known this configuration is in activating state as we have called isRowConfigurationActivating so can send dummy configKey with activation status
+                                        <ActivatingInfo
+                                            configKey="dummy"
+                                            cardData={{ dummy: { dismissedObj: { configState: 'ACTIVATING' } } }}
+                                            translation={t}
+                                            showFullContent={false}
+                                        />
+                                    ) : GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
+                                      rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
                                         <TooltipComponent
                                             title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
                                             placement="bottom"
@@ -850,7 +951,50 @@ const RecommendationTable = ({
     const filteredTableData = React.useMemo(() => {
         if (!tableData) return [];
 
-        return tableData.filter((row: any) => {
+        // First apply ONTAP/OS/MSSQL HA subcategory filtering if applicable
+        let filtered = tableData;
+        let isOntapOrOsTable = false;
+        let isMssqlHighAvailabilityTable = false;
+
+        if (showDismissedConfigurations !== undefined) {
+            // Apply ONTAP/OS subcategory filtering for ONTAP and OS configurations
+            isOntapOrOsTable = tableData.some(
+                (row: any) => row?.type === 'volume' || row?.type === 'lun' || row?.type === 'os'
+            );
+
+            // Apply MSSQL High Availability subcategory filtering
+            isMssqlHighAvailabilityTable = tableData.some((row: any) => row?.type === 'mssqlHighAvailability');
+
+            if (isOntapOrOsTable) {
+                // Use driftAssessmentData if available, otherwise fallback to fullCardData
+                const assessmentData = driftAssessmentData || fullCardData;
+                // Use individual configuration filtering
+                filtered = filterIndividualOntapOsConfigurations(
+                    tableData,
+                    assessmentData,
+                    showDismissedConfigurations
+                );
+                // For ONTAP/OS tables, return the filtered result without additional filtering
+                // since individual configuration filtering has already been applied
+                return filtered;
+            }
+            if (isMssqlHighAvailabilityTable) {
+                // Use driftAssessmentData if available, otherwise fallback to fullCardData
+                const assessmentData = driftAssessmentData || fullCardData;
+                // Use individual configuration filtering for MSSQL HA
+                filtered = filterIndividualMssqlHighAvailabilityConfigurations(
+                    tableData,
+                    assessmentData,
+                    showDismissedConfigurations
+                );
+                // For MSSQL HA tables, return the filtered result without additional filtering
+                // since individual configuration filtering has already been applied
+                return filtered;
+            }
+        }
+
+        // Apply standard dismissed configuration filtering for non-ONTAP/OS/MSSQL HA tables
+        return filtered.filter((row: any) => {
             const isDismissed =
                 row?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
                 row?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
@@ -862,7 +1006,7 @@ const RecommendationTable = ({
             // Show non-dismissed rows in normal mode
             return !isDismissed;
         });
-    }, [tableData, showDismissedConfigurations]);
+    }, [tableData, showDismissedConfigurations, fullCardData, driftAssessmentData]);
 
     const tableProps = useTable({
         isSorting: false,
@@ -873,8 +1017,15 @@ const RecommendationTable = ({
         isLazyLoading: isLoading
     });
 
+    const getTableClassName = () => {
+        const baseClass =
+            from === WLF_TABS.INVENTORY ? styles.recommendationTable : styles.recommendationTableDashboard;
+        const dismissedClass = showDismissedConfigurations === true ? styles.dismissedTableBackground : '';
+        return `${baseClass} ${dismissedClass}`.trim();
+    };
+
     return (
-        <div className={from === WLF_TABS.INVENTORY ? styles.recommendationTable : styles.recommendationTableDashboard}>
+        <div className={getTableClassName()}>
             <Table
                 // @ts-expect-error - Table props type mismatch
                 tableProps={tableProps}

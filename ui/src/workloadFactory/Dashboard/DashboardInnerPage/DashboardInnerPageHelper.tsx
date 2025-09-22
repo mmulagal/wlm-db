@@ -252,7 +252,7 @@ export const callDashboardDismissApi = (
         .then((res: any) => {
             if (!res.error) {
                 const { successList, failedList } = categorizeStateInstances(res?.data, type);
-                updateConfigStateStatus(successList, dispatch, action);
+                updateConfigStateStatus(successList, dispatch, action, res?.data);
                 dispatch(
                     setInProgressStateData({
                         ...inProgressStateData,

@@ -74,7 +74,8 @@ const StorageCardComponent = ({
     optimizePrintState,
     type,
     showDismissedConfigurations,
-    setShowDismissedConfigurations
+    setShowDismissedConfigurations,
+    isAllSubConfigActivating
 }: any) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
@@ -97,6 +98,21 @@ const StorageCardComponent = ({
 
     // Get the full card data to check dismissed configurations count
     const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
+
+    // Function to determine if dismissed style should be applied
+    const shouldApplyDismissedStyle = () => {
+        // For ONTAP, OS, and HA cards: apply dismissed style if all sub-configs are activating
+        if (
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
+        ) {
+            return showDismissedConfigurations || isAllSubConfigActivating;
+        }
+
+        // For other normal cards: keep the existing logic
+        return showDismissedConfigurations || cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
+    };
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
@@ -875,13 +891,7 @@ const StorageCardComponent = ({
     };
 
     return (
-        <div
-            className={`${styles.card} ${
-                showDismissedConfigurations || cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING
-                    ? styles.dismissed
-                    : ''
-            }`}
-        >
+        <div className={`${styles.card} ${shouldApplyDismissedStyle() ? styles.dismissed : ''}`}>
             <div
                 className={styles.cardContent}
                 onMouseEnter={handleCardHoverMouseEnter}

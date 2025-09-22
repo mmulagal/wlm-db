@@ -18,7 +18,7 @@ export const getSubConfigurationData = (cardData: any) => {
             storageTier: configName
         };
     }
-    if (configName === 'Microsoft SQL Server High Availability') {
+    if (configName === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
         const count = cardData?.block_six?.count?.totalObjectsAssessed;
         return {
             isSubConfiguration: false,
@@ -37,13 +37,13 @@ export const getSubConfigurationData = (cardData: any) => {
 export const getConfigurationName = (cardData: any) => {
     let configName = '';
     switch (cardData?.mapName) {
-        case 'ontap':
+        case ASSESSMENT_CONFIG_NAMES.ONTAP:
             configName = 'ontap-volumes';
             break;
-        case 'os':
+        case ASSESSMENT_CONFIG_NAMES.OS:
             configName = 'operating-system';
             break;
-        case 'Microsoft SQL Server High Availability':
+        case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
             configName = 'high-availability';
             break;
         default:
@@ -190,7 +190,7 @@ export const handleDismissResponse = (
             {};
         dispatch(setDriftAssessmentData(newData));
         // @ts-ignore
-        formatGetWellData(dispatch, newData);
+        formatGetWellData(dispatch, newData, showDismissedConfigurations);
 
         // Below code is to reset dashboard level assessment value also
         const perObj = {
@@ -202,7 +202,7 @@ export const handleDismissResponse = (
             id: targetId,
             name: cardData?.mapName
         };
-        updateConfigStateStatus([perObj], dispatch, updatedState);
+        updateConfigStateStatus([perObj], dispatch, updatedState, res?.data);
 
         // Check if we're reactivating and this is the last dismissed configuration
         if (action === CONFIG_STATE_ACTIONS.ACTIVE && showDismissedConfigurations && setShowDismissedConfigurations) {

@@ -12,7 +12,8 @@ import {
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
     DETECT_HOST_VAR,
-    RESET_PASSWORD_TYPE
+    RESET_PASSWORD_TYPE,
+    CONFIG_STATES
 } from './consts';
 
 interface Dispatch {
@@ -102,11 +103,19 @@ export const handleSelectForFilter = (
 export const mapDismissedValues = (data: any, itemName: string | any) => {
     for (const key in data) {
         const section = data[key];
+
         if (Array.isArray(section)) {
             // For sizing and layout
             for (const item of section) {
                 if (item?.configurationName === itemName) {
-                    return item;
+                    // Only return if the configuration is actually dismissed, postponed, or activating
+                    if (
+                        item?.configState === CONFIG_STATES.DISMISSED ||
+                        item?.configState === CONFIG_STATES.POSTPONED ||
+                        item?.configState === CONFIG_STATES.ACTIVATING
+                    ) {
+                        return item;
+                    }
                 }
             }
         } else if (typeof section === 'object') {
@@ -116,7 +125,14 @@ export const mapDismissedValues = (data: any, itemName: string | any) => {
                 if (Array.isArray(subSection)) {
                     for (const item of subSection) {
                         if (item?.configurationName === itemName) {
-                            return item;
+                            // Only return if the configuration is actually dismissed, postponed, or activating
+                            if (
+                                item?.configState === CONFIG_STATES.DISMISSED ||
+                                item?.configState === CONFIG_STATES.POSTPONED ||
+                                item?.configState === CONFIG_STATES.ACTIVATING
+                            ) {
+                                return item;
+                            }
                         }
                     }
                 }

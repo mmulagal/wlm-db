@@ -64,6 +64,7 @@
     [class*='dsButtons'] {
         height: 32px !important;
         min-width: 140px !important;
+        border-radius: 14px !important;
     }
 
     [class*='Table-module_header-row'] {
@@ -75,6 +76,11 @@
     }
     [class*='Table-module_cell'] {
         border-left: unset !important;
+
+        /* Apply background to table cells containing disabled content */
+        &:has(.disabledCell) {
+            background-color: var(--main-background) !important;
+        }
     }
 
     [class*='Popover-module_base'] {
@@ -104,6 +110,15 @@
         gap: 8px;
         justify-content: flex-end;
         align-items: center;
+
+        .postponeInfoContainer {
+            margin-right: 20px;
+        }
+
+        .reactivateButtonContainer {
+            display: flex;
+            align-items: center;
+        }
     }
 
     .buttonSection {
@@ -120,6 +135,15 @@
         .disabled {
             background-color: var(--button-primary-bg-disabled);
             color: var(--text-primary);
+        }
+    }
+
+    .disabledCell {
+        color: var(--text-disabled) !important;
+        pointer-events: none;
+
+        [class*='Typography'] {
+            color: var(--text-disabled) !important;
         }
     }
 }
@@ -199,5 +223,11 @@
 .colorSet {
     div {
         color: var(--text-primary);
+    }
+}
+
+.dismissedTableBackground {
+    [class*='Table-module_cell'] {
+        background-color: var(--main-background) !important;
     }
 }

@@ -1491,7 +1491,7 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 const { cardsData } = getCardsData(instance?.assessments, {});
-                const optBreakDown = formatOptimizationBreakDown(cardsData);
+                const optBreakDown = formatOptimizationBreakDown(cardsData, instance?.assessments);
                 let score = '';
                 score = `${optBreakDown?.total?.percent || '0'}%`;
                 const optimized = optBreakDown?.total?.optimized || 0;

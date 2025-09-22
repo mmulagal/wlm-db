@@ -3365,7 +3365,7 @@ export const getOptimizationStatus = (
                     : ACTION_CTA.WELL_ARCHITECTED;
         } else {
             const { cardsData } = getCardsData(instanceRow?.assessments, {});
-            const optBreakDown = formatOptimizationBreakDown(cardsData);
+            const optBreakDown = formatOptimizationBreakDown(cardsData, instanceRow?.assessments);
             optimizationStatus =
                 optBreakDown?.total?.notOptimized !== 0
                     ? optBreakDown?.total?.notOptimized === 1
