@@ -1322,8 +1322,13 @@ def getFsxCredentials(fileSystemId):
         return None, f"SSM param {name} not found or empty: {e}"
 
     txt = re.sub(r"'", '"', raw)
-    txt = re.sub(r'(?<!")(\b\\w+\b)(?=\\s*:)', r'"\\1"', txt)
-    creds = json.loads(txt)
+    txt = re.sub(r'([{,])\\s*([a-zA-Z0-9_]+)\\s*:', r'\\1"\\2":', txt)
+    try:
+        creds = json.loads(txt)
+    except Exception:
+        log(f"Failed to parse FSx credentials JSON for {fileSystemId}")
+        return None, f"Failed to parse FSx credentials for {fileSystemId}"
+
     return creds.get("fsx"), None
 `;
 
