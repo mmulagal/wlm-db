@@ -181,6 +181,11 @@ const OptimizeStorageApiData = {
         body: { 'fractional-reserve': '0' },
         type: VOLUME
     }),
+    SNAPSHOT_POLICY: () => ({
+        api: '/private/cli/volume',
+        body: { snapshot_policy: 'none' },
+        type: VOLUME
+    }),
     SNAPSHOT_COPY_RESERVE: () => ({
         api: '/private/cli/volume',
         body: { 'percent-snapshot-space': '0' },
@@ -228,6 +233,11 @@ const OptimizeStorageApiData = {
         api: '/private/cli/lun',
         body: { 'space-allocation': 'enabled' },
         type: LUN
+    }),
+    SPACE_MANAGEMENT: () => ({
+        api: '/private/cli/volume',
+        body: { space_mgmt_try_first: 'volume_grow' },
+        type: VOLUME
     })
 };
 

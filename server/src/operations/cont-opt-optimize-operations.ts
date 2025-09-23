@@ -552,7 +552,12 @@ async function callOntapApi(
             apiData = apiRequestData[configKey as keyof typeof apiRequestData](value);
         }
     } else {
-        apiData = apiRequestData[configKey as keyof typeof apiRequestData]();
+        const api = apiRequestData[configKey as keyof typeof apiRequestData];
+        if (!api) {
+            logger.error(`Storage-Optimization type ${configKey} is not supported yet`);
+            throw new Error(`API configuration not found for key: ${configKey}`);
+        }
+        apiData = api();
     }
 
     if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
