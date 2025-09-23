@@ -220,6 +220,7 @@ const GOLDEN_CONFIG = {
                 name: 'multipath-io',
                 recommended: 'enabled',
                 severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
@@ -229,6 +230,7 @@ const GOLDEN_CONFIG = {
                 name: 'host-utilities',
                 recommended: 'installed',
                 severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends installing host utilities for LUN and multipath management on systems hosting Oracle databases. These utilities ensure optimal compatibility, performance, and reliability when connecting to enterprise storage systems. Proper installation of host utilities helps streamline storage operations and supports best practices for Oracle deployments.',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
@@ -238,6 +240,7 @@ const GOLDEN_CONFIG = {
                 name: 'multipath-io-sessions',
                 recommended: '4',
                 severity: SEVERITY.WARNING,
+                resourceType: 'Disk target',
                 recommendation:
                     'Workload Factory recommends configuring host with four iSCSI sessions to each FSx ONTAP iSCSI endpoint in order to fully leverage multipath I/O',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
@@ -247,6 +250,7 @@ const GOLDEN_CONFIG = {
                 name: 'transparent-hugepages',
                 recommended: 'disabled',
                 severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. Disabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.',
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
@@ -256,6 +260,7 @@ const GOLDEN_CONFIG = {
                 name: 'selinux',
                 recommended: 'disabled',
                 severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled in the system configuration. Disabling SELinux can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. After this change, SELinux will no longer enforce access controls, so ensure that your environment is otherwise secured.',
                 tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
@@ -265,6 +270,7 @@ const GOLDEN_CONFIG = {
                 name: 'iscsi-replacement-timeout',
                 recommended: '5',
                 severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends setting node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf for Oracle database hosts using multipath I/O. This adjustment reduces the time required to detect and recover from iSCSI path failures, ensuring that database operations remain highly available and responsive. After applying this change and restarting the iSCSI service, the host will be able to fail over to alternate paths within 5 seconds of a path failure, minimizing the risk of application downtime.',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
@@ -274,6 +280,7 @@ const GOLDEN_CONFIG = {
                 name: 'multipath-friendly-names',
                 recommended: 'enabled',
                 severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends enabling Multipath Friendly Names in the multipath configuration for Oracle database hosts. This setting simplifies device identification by assigning human-readable names to multipath devices, making storage management and troubleshooting more efficient and reducing the risk of configuration errors.',
                 tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
@@ -283,6 +290,7 @@ const GOLDEN_CONFIG = {
                 name: 'tcp-advanced-options',
                 recommended: 'enabled',
                 severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends enabling TCP timestamps, SACK, and window scaling for best network performance and reliability.',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]

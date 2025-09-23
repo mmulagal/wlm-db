@@ -194,37 +194,37 @@ function createEmptyVolumeAssessment(configData: any, volumeType: string) {
     };
 }
 
-function createAssessment(
-    config: any,
+function createViolationDetail(
     objectName: string,
     objectType: string,
-    status: AssessmentStatus,
-    violationValue?: string,
-    customViolationDetails?: any[]
+    value: string,
+    recommended: string,
+    dataCategory?: string
+): GenericViolationResponseType {
+    return {
+        objectName,
+        objectType,
+        value,
+        recommended,
+        ...(dataCategory && { dataCategory })
+    };
+}
+
+function createAssessment(
+    config: any,
+    totalObjectsAssessed: number,
+    objectsInViolation: string[],
+    violationDetails: GenericViolationResponseType[]
 ) {
-    const violationDetails =
-        customViolationDetails ||
-        (status === AssessmentStatus.NOT_OPTIMIZED && violationValue
-            ? [
-                  {
-                      objectName,
-                      objectType,
-                      value: violationValue
-                  }
-              ]
-            : []);
+    const status = violationDetails.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+    objectsInViolation = status === AssessmentStatus.NOT_OPTIMIZED ? objectsInViolation : [];
 
     return {
         ...config,
         status,
-        objectsInViolation:
-            status === AssessmentStatus.NOT_OPTIMIZED
-                ? customViolationDetails
-                    ? customViolationDetails.map(d => d.objectName)
-                    : [objectName]
-                : [],
-        totalObjectsAssessed: 1,
-        totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? 1 : 0,
+        objectsInViolation,
+        totalObjectsAssessed,
+        totalObjectsInViolation: [...new Set(objectsInViolation)].length,
         violationDetails
     };
 }
@@ -244,8 +244,7 @@ function getOSConfigDrift(
     }
 
     osConfigData.forEach(config => {
-        let status = AssessmentStatus.OPTIMIZED;
-        let violationValue: string | undefined;
+        let violationDetails: GenericViolationResponseType[] = [];
 
         switch (config.parameter) {
             case 'multipath-io': {
@@ -254,86 +253,83 @@ function getOSConfigDrift(
                 const isEnabled = multipathData?.['multipath-io-is-enabled'];
 
                 if (isActive === false || isEnabled === false) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    violationValue = `active:${multipathData?.['multipath-io-active-value']}-enabled:${multipathData?.['multipath-io-enabled-value']}`;
+                    violationDetails.push(
+                        createViolationDetail(
+                            'multipathd',
+                            'service',
+                            `active: ${isActive ? 'true' : 'false'}, enabled: ${isEnabled ? 'true' : 'false'}`,
+                            'multipathd is installed, active and enabled'
+                        )
+                    );
                 }
-                osDrift.push(
-                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
-                );
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'host-utilities': {
                 const hostUtilsData = os?.['host-utilities'];
                 if (hostUtilsData?.['sanlun-installed'] === false) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    violationValue = 'sanlun not installed';
+                    violationDetails.push(
+                        createViolationDetail('sanlun', 'package', 'not installed', 'sanlun is installed')
+                    );
                 }
-                osDrift.push(
-                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
-                );
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'selinux': {
                 const selinuxData = os?.selinux;
                 if (selinuxData?.['selinux-disabled'] === false) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    violationValue = selinuxData?.['selinux-value'] || 'enabled';
+                    violationDetails.push(
+                        createViolationDetail(
+                            'selinux',
+                            'configuration',
+                            selinuxData?.['selinux-value'] || '',
+                            'SELINUX=disabled'
+                        )
+                    );
                 }
-                osDrift.push(
-                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
-                );
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'transparent-hugepages': {
                 const thpData = os?.['transparent-hugepages'];
                 if (thpData?.['thp-disabled'] === false) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    violationValue = thpData?.['thp-value'] || 'enabled';
+                    violationDetails.push(
+                        createViolationDetail(
+                            'transparent-hugepages',
+                            'configuration',
+                            `${thpData?.['thp-value'] || 'enabled'}`,
+                            'always madvise [never]'
+                        )
+                    );
                 }
-                osDrift.push(
-                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
-                );
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'multipath-friendly-names': {
                 const multipathConfigData = os?.['multipath-configuration'];
+                const error = multipathConfigData?.error;
                 const defaultsFriendlyNames = multipathConfigData?.defaults?.user_friendly_names;
                 const netappFriendlyNames = multipathConfigData?.['netapp-device']?.user_friendly_names;
-
-                if (defaultsFriendlyNames === false || netappFriendlyNames === false) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                }
-
-                const violationDetails = [
-                    ...(defaultsFriendlyNames === false
+                violationDetails = [
+                    ...(error || defaultsFriendlyNames === false
                         ? [{ objectName: 'user_friendly_names', objectType: 'default configuration', value: 'false' }]
                         : []),
-                    ...(netappFriendlyNames === false
+                    ...(error || netappFriendlyNames === false
                         ? [
-                              {
-                                  objectName: 'user_friendly_names',
-                                  objectType: 'netapp device configuration',
-                                  value: 'false'
-                              }
+                              createViolationDetail(
+                                  'user_friendly_names',
+                                  'netapp device configuration',
+                                  'false',
+                                  'user_friendly_names "yes" for both default and netapp-device sections'
+                              )
                           ]
                         : [])
                 ];
-
-                osDrift.push(
-                    createAssessment(
-                        config,
-                        ec2InstanceId,
-                        ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                        status,
-                        violationValue,
-                        violationDetails
-                    )
-                );
-
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
@@ -341,52 +337,49 @@ function getOSConfigDrift(
                 const multipathConfigData = os?.['multipath-configuration'];
                 const defaultsData = multipathConfigData?.defaults;
                 const netappDeviceData = multipathConfigData?.['netapp-device'];
-
-                const defaultsViolations = Object.entries(defaultMultipathExpected)
-                    .filter(([key, expectedValue]) => defaultsData?.[key] !== expectedValue)
-                    .map(([key]) => ({
-                        objectName: key,
-                        objectType: 'default configuration',
-                        value: defaultsData?.[key]?.toString() || 'not found'
-                    }));
-
-                const netappDeviceViolations = Object.entries(netappMultipathExpected)
-                    .filter(([key, expectedValue]) => netappDeviceData?.[key] !== expectedValue)
-                    .map(([key]) => ({
-                        objectName: key,
-                        objectType: 'netapp device configuration',
-                        value: netappDeviceData?.[key]?.toString() || 'not found'
-                    }));
-
-                if (defaultsViolations.length > 0 || netappDeviceViolations.length > 0) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                }
-
-                const violationDetails = [...netappDeviceViolations, ...defaultsViolations];
-                osDrift.push(
-                    createAssessment(
-                        config,
-                        ec2InstanceId,
-                        ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                        status,
-                        violationValue,
-                        violationDetails
-                    )
-                );
-
+                violationDetails = [
+                    ...Object.entries(defaultMultipathExpected)
+                        .filter(([key, expectedValue]) => defaultsData?.[key] !== expectedValue)
+                        .map(([key]) =>
+                            createViolationDetail(
+                                key,
+                                'default configuration',
+                                defaultsData?.[key]?.toString() || 'not found',
+                                `${key} ${defaultMultipathExpected[
+                                    key as keyof typeof defaultMultipathExpected
+                                ].toString()}`
+                            )
+                        ),
+                    ...Object.entries(netappMultipathExpected)
+                        .filter(([key, expectedValue]) => netappDeviceData?.[key] !== expectedValue)
+                        .map(([key]) =>
+                            createViolationDetail(
+                                key,
+                                'netapp device configuration',
+                                netappDeviceData?.[key]?.toString() || 'not found',
+                                `${key} ${netappMultipathExpected[
+                                    key as keyof typeof netappMultipathExpected
+                                ].toString()}`
+                            )
+                        )
+                ];
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'iscsi-replacement-timeout': {
                 const timeoutData = os?.['iscsi-replacement-timeout'];
                 if (timeoutData?.error || timeoutData?.['replacement-timeout'] !== 5) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    violationValue =
-                        timeoutData?.['replacement-timeout']?.toString() || timeoutData?.error || 'unknown';
+                    violationDetails = [
+                        createViolationDetail(
+                            'iscsi-replacement-timeout',
+                            'configuration',
+                            `${timeoutData?.['replacement-timeout']?.toString() || 'unknown'}`,
+                            '5'
+                        )
+                    ];
                 }
-                osDrift.push(
-                    createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.INSTANCE, status, violationValue)
-                );
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
@@ -397,100 +390,64 @@ function getOSConfigDrift(
                 const disabledFeatures = requiredFeatures.filter(
                     feature => !tcpFeatures[feature as keyof typeof tcpFeatures]
                 );
-
-                if (tcpData?.error || disabledFeatures.length > 0) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                }
-
-                const violationDetails = disabledFeatures.map(feature => ({
-                    objectName: feature.replace('-enabled', ''),
-                    objectType: 'configuration',
-                    value: 'disabled'
-                }));
-
-                osDrift.push(
-                    createAssessment(
-                        config,
-                        ec2InstanceId,
-                        ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                        status,
-                        violationValue,
-                        violationDetails
-                    )
+                violationDetails = disabledFeatures.map(feature =>
+                    createViolationDetail(feature.replace('-enabled', ''), 'configuration', '0', '1')
                 );
-
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'filesystems-io-options': {
                 const oracleParamsData = os?.['oracle-parameters']?.['filesystemio-options'];
                 if (oracleParamsData?.found === false || oracleParamsData?.value !== 'SETALL') {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    violationValue =
-                        (!oracleParamsData?.found ? 'filesystemio_options not found' : '') || oracleParamsData?.value;
+                    violationDetails = [
+                        createViolationDetail(
+                            'filesystemio_options',
+                            'oracle parameter',
+                            `${oracleParamsData?.value || 'unknown'}`,
+                            'SETALL'
+                        )
+                    ];
                 }
-                osDrift.push(
-                    createAssessment(
-                        config,
-                        databaseInstanceName,
-                        ASSESSMENT_RESOURCE_TYPE.DATABASE,
-                        status,
-                        violationValue
-                    )
-                );
+                osDrift.push(createAssessment(config, 1, [databaseInstanceName], violationDetails));
                 break;
             }
 
             case 'multipath-readcount': {
                 const oracleParamsData = os?.['oracle-parameters']?.['db-file-multiblock-read-count'];
                 if (oracleParamsData?.found === true) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    violationValue = oracleParamsData?.value;
+                    violationDetails = [
+                        createViolationDetail(
+                            'db_file_multiblock_read_count',
+                            'oracle parameter',
+                            `${oracleParamsData?.value || 'unknown'}`,
+                            'db_file_multiblock_read_count should not be set'
+                        )
+                    ];
                 }
-                osDrift.push(
-                    createAssessment(
-                        config,
-                        databaseInstanceName,
-                        ASSESSMENT_RESOURCE_TYPE.DATABASE,
-                        status,
-                        violationValue
-                    )
-                );
+                osDrift.push(createAssessment(config, 1, [databaseInstanceName], violationDetails));
                 break;
             }
 
             case 'multipath-io-sessions': {
                 const iscsiTargetSessions = os?.['iscsi-targets-sessions'];
                 if (iscsiTargetSessions?.error) {
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    violationValue = iscsiTargetSessions.error;
+                    osDrift.push({ name: config.name, errorMessage: iscsiTargetSessions.error });
                 } else {
                     const targetSessions = iscsiTargetSessions?.['iscsi-sessions-per-target'] || {};
-                    const violations = Object.entries(targetSessions)
+                    violationDetails = Object.entries(targetSessions)
                         .filter(([, sessions]) => sessions !== 4)
-                        .map(([target, sessions]) => ({
-                            objectName: target,
-                            objectType: 'iscsi target',
-                            value: sessions.toString()
-                        }));
-
-                    if (violations.length > 0) {
-                        status = AssessmentStatus.NOT_OPTIMIZED;
-                        const assessment = createAssessment(
-                            config,
-                            ec2InstanceId,
-                            ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                            status,
-                            violationValue,
-                            violations
+                        .map(([target, sessions]) =>
+                            createViolationDetail(target, 'iscsi target', sessions.toString(), '4')
                         );
-                        assessment.totalObjectsAssessed = Object.keys(targetSessions).length;
-                        assessment.totalObjectsInViolation = violations.length;
-                        assessment.objectsInViolation = violations.map(detail => detail.objectName);
-                        osDrift.push(assessment);
-                    } else {
-                        osDrift.push(createAssessment(config, ec2InstanceId, ASSESSMENT_RESOURCE_TYPE.VOLUME, status));
-                    }
+                    osDrift.push(
+                        createAssessment(
+                            config,
+                            Object.keys(targetSessions).length,
+                            violationDetails.map(d => d.objectName),
+                            violationDetails
+                        )
+                    );
                 }
                 break;
             }
