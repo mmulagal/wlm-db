@@ -9,10 +9,6 @@ def coerce_value(val):
     if s == "":
         return ""
     low = s.lower()
-    if low in ("yes","y","true","on"):
-        return True
-    if low in ("no","n","false","off"):
-        return False
     if low == "infinity":
         return s
     if re.fullmatch(r'-?\\d+', s):

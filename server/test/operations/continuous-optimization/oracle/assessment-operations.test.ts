@@ -154,8 +154,8 @@ describe('Oracle assessment operations', () => {
         expect(multipathSessions.status).toBe('not-optimized');
         expect(multipathSessions.recommended).toBe('4');
         expect(multipathSessions.severity).toBe('warning');
-        expect(multipathSessions.totalObjectsInViolation).toBe(2);
-        expect(multipathSessions.objectsInViolation).toEqual(['172.31.48.72', '172.31.6.100']);
+        expect(multipathSessions.totalObjectsInViolation).toBe(1);
+        expect(multipathSessions.objectsInViolation).toEqual([node1InstanceId]);
 
         // Test transparent-hugepages assessment
         const hugepages = osAssessment.find(
@@ -197,7 +197,7 @@ describe('Oracle assessment operations', () => {
         expect(friendlyNames.status).toBe('not-optimized');
         expect(friendlyNames.recommended).toBe('enabled');
         expect(friendlyNames.violationDetails?.[0]?.objectName).toBe('user_friendly_names');
-        expect(friendlyNames.violationDetails?.[0]?.value).toBe('false');
+        expect(friendlyNames.violationDetails?.[0]?.value).toBe('no');
 
         // Test tcp-advanced-options assessment
         const tcpOptions = osAssessment.find(
@@ -217,7 +217,7 @@ describe('Oracle assessment operations', () => {
 
         expect(filesystemIo.status).toBe('not-optimized');
         expect(filesystemIo.recommended).toBe('setall');
-        expect((filesystemIo as any).resourceType).toBe('Database');
+        expect((filesystemIo as any).resourceType).toBe('EC2 Instance');
         expect(filesystemIo.violationDetails?.[0]?.value).toBe('none');
 
         // Test multipath-readcount assessment (Database specific)
@@ -228,7 +228,7 @@ describe('Oracle assessment operations', () => {
 
         expect(multipathReadcount.status).toBe('not-optimized');
         expect(multipathReadcount.recommended).toBe('disabled');
-        expect((multipathReadcount as any).resourceType).toBe('Database');
+        expect((multipathReadcount as any).resourceType).toBe('EC2 Instance');
         expect(multipathReadcount.violationDetails?.[0]?.value).toBe('128');
 
         // Test multipath-configuration assessment

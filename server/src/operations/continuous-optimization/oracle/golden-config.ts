@@ -240,7 +240,7 @@ const GOLDEN_CONFIG = {
                 name: 'multipath-io-sessions',
                 recommended: '4',
                 severity: SEVERITY.WARNING,
-                resourceType: 'Disk target',
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends configuring host with four iSCSI sessions to each FSx ONTAP iSCSI endpoint in order to fully leverage multipath I/O',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
@@ -300,7 +300,7 @@ const GOLDEN_CONFIG = {
                 name: 'filesystems-io-options',
                 recommended: 'setall',
                 severity: SEVERITY.WARNING,
-                resourceType: 'Database',
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. Adjust SGA size if needed when moving away from buffered I/O.',
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
@@ -310,7 +310,7 @@ const GOLDEN_CONFIG = {
                 name: 'multipath-readcount',
                 recommended: 'disabled',
                 severity: SEVERITY.WARNING,
-                resourceType: 'Database',
+                resourceType: 'EC2 Instance',
                 recommendation:
                     'Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.',
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]

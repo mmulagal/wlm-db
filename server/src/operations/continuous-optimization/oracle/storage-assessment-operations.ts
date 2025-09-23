@@ -315,15 +315,15 @@ function getOSConfigDrift(
                 const defaultsFriendlyNames = multipathConfigData?.defaults?.user_friendly_names;
                 const netappFriendlyNames = multipathConfigData?.['netapp-device']?.user_friendly_names;
                 violationDetails = [
-                    ...(error || defaultsFriendlyNames === false
-                        ? [{ objectName: 'user_friendly_names', objectType: 'default configuration', value: 'false' }]
+                    ...(error || defaultsFriendlyNames === 'no'
+                        ? [{ objectName: 'user_friendly_names', objectType: 'default configuration', value: 'no' }]
                         : []),
-                    ...(error || netappFriendlyNames === false
+                    ...(error || netappFriendlyNames === 'no'
                         ? [
                               createViolationDetail(
                                   'user_friendly_names',
                                   'netapp device configuration',
-                                  'false',
+                                  'no',
                                   'user_friendly_names "yes" for both default and netapp-device sections'
                               )
                           ]
@@ -409,7 +409,7 @@ function getOSConfigDrift(
                         )
                     ];
                 }
-                osDrift.push(createAssessment(config, 1, [databaseInstanceName], violationDetails));
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
@@ -425,7 +425,7 @@ function getOSConfigDrift(
                         )
                     ];
                 }
-                osDrift.push(createAssessment(config, 1, [databaseInstanceName], violationDetails));
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
@@ -440,14 +440,7 @@ function getOSConfigDrift(
                         .map(([target, sessions]) =>
                             createViolationDetail(target, 'iscsi target', sessions.toString(), '4')
                         );
-                    osDrift.push(
-                        createAssessment(
-                            config,
-                            Object.keys(targetSessions).length,
-                            violationDetails.map(d => d.objectName),
-                            violationDetails
-                        )
-                    );
+                    osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 }
                 break;
             }

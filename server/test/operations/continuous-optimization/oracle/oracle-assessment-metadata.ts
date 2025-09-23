@@ -719,12 +719,12 @@ const oracleAssessmentMetadata = {
                     {
                         objectName: 'asm04y',
                         value: 'none',
-                        objectType: 'Database'
+                        objectType: 'EC2 Instance'
                     }
                 ],
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: 1,
-                resourceType: 'Database'
+                resourceType: 'EC2 Instance'
             },
             {
                 name: 'multipath-readcount',
@@ -739,12 +739,12 @@ const oracleAssessmentMetadata = {
                     {
                         objectName: 'asm04y',
                         value: '128',
-                        objectType: 'Database'
+                        objectType: 'EC2 Instance'
                     }
                 ],
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: 1,
-                resourceType: 'Database'
+                resourceType: 'EC2 Instance'
             },
             {
                 name: 'multipath-configuration',
@@ -994,9 +994,9 @@ const storageAssessmnetMetadata = {
         'multipath-configuration': {
             error: null,
             defaults: {
-                find_multipaths: true,
+                find_multipaths: 'yes',
                 polling_interval: 5,
-                user_friendly_names: true
+                user_friendly_names: 'yes'
             },
             'netapp-device': {
                 prio: 'ontap',
@@ -1006,8 +1006,8 @@ const storageAssessmnetMetadata = {
                 features: '2 pg_init_retries 50',
                 dev_loss_tmo: 'infinity',
                 no_path_retry: 'queue',
-                flush_on_last_del: true,
-                user_friendly_names: false,
+                flush_on_last_del: 'yes',
+                user_friendly_names: 'no',
                 path_grouping_policy: 'group_by_prio'
             },
             'multipath-config-found': true
