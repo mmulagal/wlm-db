@@ -516,7 +516,8 @@ function getVolumeConfigDrift(
         DATA_FILES: dataFileVolumes,
         REDO_LOGS: redoLogVolumes,
         ARCHIVE_LOGS: archiveLogVolumes,
-        TEMP_FILES: tempFileVolumes
+        TEMP_FILES: tempFileVolumes,
+        FRA: fraVolumes
     } = volumeTypeMap;
 
     const allVolumeNames = Object.values(volumeTypeMap).flat();
@@ -555,7 +556,10 @@ function getVolumeConfigDrift(
         ...redoLogVolumes.map(volume => volume.volumeId),
         ...tempFileVolumes.map(volume => volume.volumeId)
     ];
-    const archiveLogVolumeIds = [...archiveLogVolumes.map(volume => volume.volumeId)];
+    const archiveLogVolumeIds = [
+        ...archiveLogVolumes.map(volume => volume.volumeId),
+        ...fraVolumes.map(volume => volume.volumeId)
+    ];
     const isIn = (list: string[], id: string) => list.includes(id);
 
     return volumeConfigData.map(config => {
@@ -719,18 +723,19 @@ function getVolumeLayoutDrift(
         DATA_FILES: dataFileVolumes,
         REDO_LOGS: redoLogVolumes,
         ARCHIVE_LOGS: archiveLogVolumes,
-        TEMP_FILES: tempFileVolumes
+        TEMP_FILES: tempFileVolumes,
+        FRA: fraVolumes
     } = volumeTypeMap;
 
     let status = AssessmentStatus.OPTIMIZED;
 
-    if (isEmpty(archiveLogVolumes)) {
+    const archiveFraLogVolumes = [...archiveLogVolumes, ...fraVolumes];
+    if (isEmpty(archiveFraLogVolumes)) {
         volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.archivePlacement, 'archive log'));
     } else {
-        // Archive logs should be on separate volume
         const archiveLogConflicts = [
             ...new Set(
-                archiveLogVolumes.filter(archiveVolume =>
+                archiveFraLogVolumes.filter(archiveVolume =>
                     [controlFileVolumes, dataFileVolumes, redoLogVolumes, tempFileVolumes]
                         .flat()
                         .map(volume => volume.volumeId)
@@ -746,7 +751,7 @@ function getVolumeLayoutDrift(
                 status === AssessmentStatus.NOT_OPTIMIZED
                     ? archiveLogConflicts.map(conflict => conflict.volumeName)
                     : [],
-            totalObjectsAssessed: archiveLogVolumes.length,
+            totalObjectsAssessed: archiveFraLogVolumes.length,
             totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.length : 0
         });
     }
