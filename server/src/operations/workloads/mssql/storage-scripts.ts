@@ -1,7 +1,29 @@
 import { WorkloadInstance, OntapRequestParams } from '../../../utils/common-types';
+import { INSTANCE_DRIVE_DETAILS_TEMPLATE } from './assessment-scripts';
 import { ontapRestRequest } from './common-templates';
 import { SIZING_OPERATIONS_LOG_PATH, STORAGE_ASSESSMENT_LOG_PATH } from './const';
 import { compressResponse, slqcmdExecutionTemplate } from './ssm-script-utils';
+
+const JSON_CHECK = `
+        function Test-ValidJson {
+            param (
+            [Parameter(Mandatory = $true)]
+            [object]$JsonString
+        )
+
+        try {
+            # Ensure the input is a string
+            $JsonString = [string]$JsonString
+
+            # Attempt to convert the string to a JSON object
+            $null = $JsonString | ConvertFrom-Json
+            return $true
+        }
+        catch {
+            return $false
+        }
+        }
+    `;
 
 // This function is used to get the MSSQL instance volume and lun details for data,log and tempdb drives
 const FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS = (instanceRecord: WorkloadInstance) => `
@@ -318,25 +340,7 @@ function Test-IscsiSessions {
 const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     `#Get Storage Configuration Assessment
 
-    # Add JSON validation function
-    function Test-ValidJson {
-        param (
-        [Parameter(Mandatory = $true)]
-        [object]$JsonString
-    )
-
-    try {
-        # Ensure the input is a string
-        $JsonString = [string]$JsonString
-
-        # Attempt to convert the string to a JSON object
-        $null = $JsonString | ConvertFrom-Json
-        return $true
-    }
-    catch {
-        return $false
-    }
-    }
+    ${JSON_CHECK}
 
     ${slqcmdExecutionTemplate}
 
@@ -495,39 +499,84 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     Write-Information "Gathering storage layout data"
     $consolidatedDriveDetails = @()
     try{
-        # Include drive details template inline for assessment
-        $sqlInstance = "${instanceRecord.name}"
-        $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
-        $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
-
-        # Build sql instance service name
-        $instanceServiceName = "$env:COMPUTERNAME"
-        if ($sqlInstance -ne 'MSSQLSERVER') {
-            $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
-        }
-
-        
-        if($sqlAuthEnabled) {
-            $PasswordSsmPath = "/workload-lifecycle-management/netapp/mssql/$sqlInstance/password"
-            $UsernameSsmPath = "/workload-lifecycle-management/netapp/mssql/$sqlInstance/username"
-            try{
-                $SsmPassword = Get-SSMParameter -Name $PasswordSsmPath -WithDecryption $true
-                $SsmUsername = Get-SSMParameter -Name $UsernameSsmPath -WithDecryption $true
-                $securePassword = ConvertTo-SecureString $SsmPassword.Value -AsPlainText -Force
-                $sqlCredential = New-Object PSCredential($SsmUsername.Value, $securePassword)
-                $sqlCredential = @{'useSqlAuth' = $true; 'credential' = $sqlCredential}
-            } catch {
-                Write-Information "Error occurred while retrieving SQL credentials from SSM. Error: $_.Exception.Message"
-            }
-        }
+        ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
 
         ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
         
-        $DriftAssessmentData['layout'] = @{}
+        $consolidatedDriveDetails = @()
+        foreach ($drive in $allDriveDetails) {
+            $logVolumeLunDetails = $responseObject.log | Where-Object { $_.name -eq $drive.databaseName }
+            $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }  
+            # Case when database has multiple drives
+            if(-Not ($dataVolumeLunDetails -is [array])) { $dataVolumeLunDetails = @($dataVolumeLunDetails)}
+            if ($logVolumeLunDetails) {
+                if(-Not ($logVolumeLunDetails -is [array])) { $logVolumeLunDetails = @($logVolumeLunDetails)}
+                foreach($logVolumeLunDetail in $logVolumeLunDetails) {
+                    
+                    $driveObject = New-Object PSObject
+                    # Copy each property from the source object to the new object
+                    foreach ($property in $drive.PSObject.Properties) {
+                        $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
+                        }
+                    # When database has data files in multiple different drives, pick dataaccess path for the data drive currently being considered
+                    $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0 -and $_.accessPaths[0].startswith($drive.dataDriveLetter)) {$_.accessPaths[0]} }
+                    # When database has multiple data files in the same drive, filter out the duplicate data access paths
+                    $dataAccessPaths = $dataAccessPaths | Select -unique
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetail.ontapVolumeUuid 
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetail.ontapVolumeName
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetail.lunUuid
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetail.svmName
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetail.diskNumber
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetail.lunSerialNumber
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths   
+                    if($logVolumeLunDetail.accessPaths -and $logVolumeLunDetail.accessPaths.Count -gt 0) {
+                        $driveObject | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logVolumeLunDetail.accessPaths[0]
+                        }
+                    $consolidatedDriveDetails += $driveObject
+                    }
+                }
+            else {
+                $consolidatedDriveDetails += $drive
+                }
+            }
+            
+            
         
-        $DriftAssessmentData['layout']['tempdb-files-location'] = 'shared-drive'
-        $DriftAssessmentData['layout']['default-data-files-location'] = 'shared-drive'
-        $DriftAssessmentData['layout']['default-log-files-location'] = 'shared-drive'
+        foreach ($drive in $defaultTempDBDriveDetails) {
+            $tempdbVolumeLunDetails = $responseObject.tempDb
+            if ($tempdbVolumeLunDetails) {
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $tempdbVolumeLunDetails.ontapVolumeUuid 
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $tempdbVolumeLunDetails.ontapVolumeName
+                $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $tempdbVolumeLunDetails.lunUuid
+                $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $tempdbVolumeLunDetails.svmName
+                $drive | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $tempdbVolumeLunDetails.diskNumber
+                $drive | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $tempdbVolumeLunDetails.lunSerialNumber
+                }
+                
+            }
+        
+        
+        $DriftAssessmentData['layout'] = @{}
+        if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
+            $DriftAssessmentData['errors']['tempdb-files-location'] = $driveDetailsErrors["instanceTempDBDriveError"]
+        }
+        else {
+            $DriftAssessmentData['layout']['tempdb-files-location'] = $tempdbDrive
+        }
+        
+        if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceDataDrivesError"] ))) {
+            $DriftAssessmentData['errors']['default-data-files-location'] = $driveDetailsErrors["instanceDataDrivesError"]
+        }
+        else {
+            $DriftAssessmentData['layout']['default-data-files-location'] =  $defaultDataDrive;
+        }
+
+        if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceLogDrivesError"] ))) {
+            $DriftAssessmentData['errors']['default-log-files-location'] = $driveDetailsErrors["instanceLogDrivesError"]
+        }
+        else {
+            $DriftAssessmentData['layout']['default-log-files-location'] =  $defaultLogDrive;
+        }
 
         $SimplifiedDataDriveDetails = @()
         foreach($drive in $responseObject.data) {
@@ -572,7 +621,26 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $DriftAssessmentData['layout']['user-database-layout'] = $($userDatabaseLayout)
 
         $DriftAssessmentData['sizing'] = @{}
+        if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
+            $DriftAssessmentData['errors']['data-tempdb-drive-details'] = $driveDetailsErrors["instanceTempDBDriveError"]
+        }
+        else {
+            $DriftAssessmentData['sizing']['data-tempdb-drive-details'] = $($defaultTempDBDriveDetails);
+        }
+
         $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierDetails);
+
+        $SimplifiedDriveDetails = @()
+        foreach($drive in $consolidatedDriveDetails) {
+            $Detail = $SimplifiedDriveDetails | Where-Object { $_.logAccessPath -eq $drive.logAccessPath -and $_.dataAccessPath -eq $drive.dataAccessPath }
+            if($null -eq $Detail) {
+                $SimplifiedDriveDetails += $drive
+            }  else {
+                $Detail.databaseName =  $Detail.databaseName + ',' + $drive.databaseName
+            }
+        }
+
+        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($SimplifiedDriveDetails));
         
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
@@ -652,8 +720,15 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         } catch {$DriftAssessmentData['errors']['iscsi-sessions'] = $_.Exception.Message}
     
     try{
-        # Simplified NTFS allocation unit size checking
+        $filteredDataDrives = $instanceAllDataDrivesSizes | ForEach-Object -MemberName dataDriveLetter
+        $filteredLogDrives =  $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
+        $filteredTempDbDrives =  $defaultTempDBDriveDetails | ForEach-Object -MemberName tempdbDriveLetter
+        $AllDrives = $($filteredDataDrives; $filteredLogDrives;  $filteredTempDbDrives)
+        $AllDrives = $AllDrives | select -Unique
+        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$AllDrives -contains $_.DriveLetter}  | Select-Object DriveLetter, BlockSize 
         $ntfsUnitSize = 65536
+        $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
+        $DriftAssessmentData['os']['ntfs-allocation-details'] = $($ntfsAllocationUnit)
         $DriftAssessmentData['os']['ntfs-allocation-unit-size'] = $($ntfsUnitSize)
     } catch {$DriftAssessmentData['errors']['ntfs-allocation'] = $_.Exception.Message}
 

@@ -353,7 +353,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     });
     const totalObjectsInViolation = [...new Set(overProvisionedDrives.concat(underProvisionedDrives, ignoredDrives))]
         .length;
-    key = 'log-drive-size';
+
     status =
         !isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
             ? AssessmentStatus.NOT_OPTIMIZED
@@ -364,7 +364,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             : !isEmpty(ignoredDrives)
             ? AssessmentStatus.NOT_OPTIMIZED
             : AssessmentStatus.OPTIMIZED;
-
+    key = 'log-drive-size';
     return {
         key,
         status,
@@ -873,9 +873,9 @@ async function calculateStorageDrift(
                 errorMessage: errors['data-tempdb-drive-details']
             });
         }
-        Object.entries(sizing).forEach(async ([key, value]) => {
-            let goldenData = sizingConfigData.find(data => data.parameter === key);
 
+        for (let [key, value] of Object.entries(sizing)) {
+            let goldenData = sizingConfigData.find(data => data.parameter === key);
             let overProvisionedDrives;
             let underProvisionedDrives;
             let ignoredDrives;
@@ -968,6 +968,7 @@ async function calculateStorageDrift(
                     status !== AssessmentStatus.OPTIMIZED
                 ) {
                     missingPermissions =
+                        // eslint-disable-next-line no-await-in-loop
                         (await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateVolume'])) || [];
                 }
 
@@ -1000,7 +1001,7 @@ async function calculateStorageDrift(
                     resourceType
                 });
             }
-        });
+        }
     }
 
     // Headroom drift assessment
