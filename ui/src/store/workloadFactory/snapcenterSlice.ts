@@ -93,6 +93,9 @@ const snapCenterSlice = createSlice({
             if (state.dataMap[key]) {
                 state.dataMap[key].cancelled = true;
             }
+        },
+        clearDataMap: state => {
+            state.dataMap = {};
         }
     }
 });
@@ -109,7 +112,8 @@ export const {
     cancelProtectionForRow,
     resetProtectionProcess,
     completeProtectionStep1,
-    completeProtectionStep2
+    completeProtectionStep2,
+    clearDataMap
 } = snapCenterSlice.actions;
 
 export default snapCenterSlice;

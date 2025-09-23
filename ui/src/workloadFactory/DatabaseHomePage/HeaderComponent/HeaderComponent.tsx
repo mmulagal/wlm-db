@@ -127,6 +127,7 @@ import WellArchitectDashboard from '../../GetWell/WellArchitectDashboard/WellArc
 import RegisterWizard from '../../InventoryV2/InventoryTablesComponent/ManageInstanceWizard/RegisterWizard';
 import DummySelect from '../../../common/DummySelect/DummySelect';
 import OracleResourcePages from '../../Oracle/OracleResourcePages/OracleResourcePages';
+import { clearDataMap } from '../../../store/workloadFactory/snapcenterSlice';
 
 type Tab = {
     tab: string;
@@ -853,6 +854,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
+            dispatch(clearDataMap());
             fetchOnPremData(true);
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
             dispatch(setRefreshTime(getCurrentDateTime()));
