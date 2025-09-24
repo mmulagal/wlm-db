@@ -158,6 +158,7 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
                             type="button"
                             isDisabled={loading || scanInProgress?.[instKey]}
                             onClick={handleScan}
+                            data-testid="wlm-db-error-investigation-investigate-now-button"
                         >
                             {t('databases.log-analyzer.scan-now')}
                         </DsButton>
