@@ -2315,7 +2315,7 @@
                 "host_name": "ip-172-31-48-50.ap-southeast-1.compute.internal",
                 "version": "19.0.0.0.0",
                 "instance_state": "OPEN",
-                "instance_id": "28096904"
+                "instance_id": "7450008296037943419"
             },
             "is_default_auth": true,
             "database_details": {
@@ -2357,7 +2357,7 @@
                 "host_name": "ip-172-31-48-50.ap-southeast-1.compute.internal",
                 "version": "19.0.0.0.0",
                 "instance_state": "OPEN",
-                "instance_id": "28096914"
+                "instance_id": "7450008296037943419"
             },
             "is_default_auth": false,
             "database_details": {
