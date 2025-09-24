@@ -1804,6 +1804,11 @@ const GET_FQDN = `
     @{ fqdn = $fqdn } | ConvertTo-Json -Compress
 `;
 
+const GET_CLUSTER_NAME = `
+    $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
+    @{ clusterName = $clusterName } | ConvertTo-Json -Compress
+`;
+
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -1826,5 +1831,6 @@ export {
     GET_FCI_NAME,
     trendGraphCreateScriptForMssql,
     GET_NODE_IP_ADDRESS,
-    GET_FQDN
+    GET_FQDN,
+    GET_CLUSTER_NAME
 };

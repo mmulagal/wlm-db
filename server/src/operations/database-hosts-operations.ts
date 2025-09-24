@@ -803,7 +803,7 @@ async function getDatabaseHostSummaryV2(
     });
     let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = activeSqlNodeResult;
     // fqdn and ipAddress may not exist on all return types, so use optional chaining
-    const { fqdn, ipAddress } = activeSqlNodeResult as any;
+    const { fqdn, ipAddress, clusterName } = activeSqlNodeResult as any;
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
         name: resourceName || '',
@@ -880,7 +880,8 @@ async function getDatabaseHostSummaryV2(
                         activeNodeInstanceId || node1InstanceId,
                         standbyNodeInstanceId || node2InstanceId,
                         fqdn,
-                        ipAddress
+                        ipAddress,
+                        clusterName
                     ).catch(error => {
                         logger.error(`Error while fetching data: ${error}.`);
                         if (DATABASE_HOSTS_INDEX_MAPPING_V2[promises.length - 1]) {

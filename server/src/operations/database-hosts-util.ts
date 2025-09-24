@@ -199,7 +199,8 @@ async function getNodeTopology(
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string,
     fqdn?: string,
-    ipAddress?: string
+    ipAddress?: string,
+    clusterName?: string
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', {
         accountId,
@@ -346,7 +347,8 @@ async function getNodeTopology(
                     }
                 ],
                 fqdn: fqdn ?? activeNode?.PrivateDnsName ?? '',
-                nodeIpAddress: ipAddress ?? activeNode?.PublicIpAddress ?? ''
+                nodeIpAddress: ipAddress ?? activeNode?.PublicIpAddress ?? '',
+                ...(clusterName && { windowsClusterName: clusterName })
             }),
             ...(activeDirectoryDetails && { activeDirectoryDetails })
         };

@@ -63,6 +63,7 @@ import {
     VolumeSpaceRecord
 } from '../../../utils/common-types';
 import {
+    GET_CLUSTER_NAME,
     GET_FQDN,
     GET_NODE_IP_ADDRESS,
     getMappedOntapVolumesScript,
@@ -782,7 +783,7 @@ async function getActiveSqlInstanceName(
 ) {
     logger.info('Fetch active MSSQL instance Name', { credentialsId, region });
 
-    const commands = [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS];
+    const commands = [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME];
     try {
         for await (const nodeId of nodeIds) {
             const response = await callSsmExecution(
@@ -796,7 +797,7 @@ async function getActiveSqlInstanceName(
             );
             if (response) {
                 const parsedResponse = parseMultipleCommandResponse(response);
-                const [parsedInstancesDetails, { fqdn }, { ipAddress }] = parsedResponse;
+                const [parsedInstancesDetails, { fqdn }, { ipAddress }, { clusterName }] = parsedResponse;
                 const instancesDetails = Array.isArray(parsedInstancesDetails)
                     ? parsedInstancesDetails
                     : [parsedInstancesDetails];
@@ -828,10 +829,10 @@ async function getActiveSqlInstanceName(
                 }
                 if (selectedInstance !== undefined) {
                     const instanceName = getDatabaseInstanceName(selectedInstance, isDefaultInstance);
-                    return { instanceName, instancesDetails, fqdn, ipAddress };
+                    return { instanceName, instancesDetails, fqdn, ipAddress, clusterName };
                 }
 
-                return { instanceName: selectedInstance, instancesDetails, fqdn, ipAddress };
+                return { instanceName: selectedInstance, instancesDetails, fqdn, ipAddress, clusterName };
             }
         }
     } catch (error) {
@@ -1091,7 +1092,8 @@ async function getActiveSqlNode(
                 instanceName,
                 instancesDetails = [],
                 fqdn,
-                ipAddress
+                ipAddress,
+                clusterName
             } = (await getActiveSqlInstanceName(credentialsId, region, {
                 nodeIds: [node1InstanceId],
                 sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
@@ -1105,7 +1107,8 @@ async function getActiveSqlNode(
                     ssmConnectionStatus: connectionStatus.Status,
                     instancesDetails,
                     fqdn,
-                    ipAddress
+                    ipAddress,
+                    clusterName
                 };
             }
         } else {
@@ -1122,7 +1125,8 @@ async function getActiveSqlNode(
                     instanceName,
                     instancesDetails = [],
                     fqdn,
-                    ipAddress
+                    ipAddress,
+                    clusterName
                 } = (await getActiveSqlInstanceName(credentialsId, region, {
                     nodeIds: [node2InstanceId],
                     sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
@@ -1136,7 +1140,8 @@ async function getActiveSqlNode(
                         ssmConnectionStatus: connectionStatus.Status,
                         instancesDetails,
                         fqdn,
-                        ipAddress
+                        ipAddress,
+                        clusterName
                     };
                 }
             }

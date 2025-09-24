@@ -52,7 +52,8 @@ import {
     CHECK_SCRIPT_AVAILABILITY_AND_VERSION,
     sqlQueryExecutionWithAuth,
     GET_FQDN,
-    GET_NODE_IP_ADDRESS
+    GET_NODE_IP_ADDRESS,
+    GET_CLUSTER_NAME
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
     SERVER_DETAILS,
@@ -369,7 +370,7 @@ const instanceDetails = {
 };
 
 const instanceDetailsWithFqdnAndIp = {
-    commands: [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS]
+    commands: [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME]
 };
 
 const getVolumeLunMappingsCommand = {
@@ -1434,6 +1435,8 @@ ssmMock
                 fqdn: 'dev.wlm.com'
             })},${JSON.stringify({
                 ipAddress: '168.154.0.0'
+            })},${JSON.stringify({
+                clusterName: 'WLMWSFC-51927'
             })}`
         )
     )

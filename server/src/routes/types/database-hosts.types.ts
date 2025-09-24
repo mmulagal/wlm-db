@@ -472,7 +472,8 @@ const NodeTopologyResponse = Type.Object({
     ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse),
     fqdn: Type.Optional(Type.String({ description: 'FQDN of the active node' })),
-    nodeIpAddress: Type.Optional(Type.String({ description: 'IP address of the active node' }))
+    nodeIpAddress: Type.Optional(Type.String({ description: 'IP address of the active node' })),
+    windowsClusterName: Type.Optional(Type.String({ description: 'Name of the Windows cluster', minLength: 1 }))
 });
 type NodeTopologyResponseType = Static<typeof NodeTopologyResponse>;
 
