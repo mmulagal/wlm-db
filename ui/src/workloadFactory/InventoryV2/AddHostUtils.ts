@@ -1,6 +1,7 @@
 import { updateOrgId } from '../../store/authSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
 import store from '../../store/store';
+import { setDialogErrorWithTooltip } from '../../store/workloadFactory/dialogComponentSlice';
 import { setAlreadyExistAgentId, setDataForRow, setWorkSpaceData } from '../../store/workloadFactory/snapcenterSlice';
 import { PRODUCTION, RBAC_PROD_ROLE_ID, RBAC_STAGE_ROLE_ID } from '../../utils/consts';
 
@@ -75,6 +76,14 @@ export const handleProtectionUtil = async (
         getOrganizationIds
     }: any
 ) => {
+    dispatch(
+        setDialogErrorWithTooltip({
+            showDialogError: false,
+            errorMessage: '',
+            showTooltipInfo: false,
+            tooltipText: ''
+        })
+    );
     if (isDemoMode) {
         return showSingleAgentDialog([], true, rowData);
     }

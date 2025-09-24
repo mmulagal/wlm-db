@@ -93,7 +93,11 @@ const rootReducer = combineReducers({
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
-        let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
+        let errorMsg =
+            action.payload.error ||
+            action.payload.data?.message ||
+            action.payload.data?.responseMessage ||
+            action.payload.data?.errorMessage;
 
         // This error msg is blocked to have in notification. This error will be part of detect host dialog error.
         // getMssqlInstanceData - it is for each row in unmanaged host so not adding
@@ -111,6 +115,10 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
                 errorMsg?.includes('already exist'))
         ) {
             return;
+        }
+
+        if (action?.meta?.arg?.endpointName === 'addHostSc' && errorMsg?.includes('already exist')) {
+            return errorMsg;
         }
 
         if (

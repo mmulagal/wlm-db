@@ -4201,11 +4201,11 @@ export const addHostHandlerSc = async (
                     setDialogErrorWithTooltip({
                         showDialogError: true,
                         errorMessage:
-                            addHostResponse?.data?.errorMessage ||
+                            addHostResponse?.error?.data?.errorMessage ||
                             errorMapping(addHostResponse?.error?.message, rowData),
                         showTooltipInfo: true,
                         tooltipText:
-                            addHostResponse?.data?.errorMessage ||
+                            addHostResponse?.error?.data?.errorMessage ||
                             errorMapping(addHostResponse?.error?.message, rowData)
                     })
                 );
@@ -4216,6 +4216,7 @@ export const addHostHandlerSc = async (
         }
     } catch (error) {
         dispatch(resetProtectionProcess(dialogKey));
+
         dispatch(setActionsDisabled(false));
     }
 };
