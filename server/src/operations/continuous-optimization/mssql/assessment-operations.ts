@@ -64,7 +64,7 @@ import {
 } from './resilience-assessment-operation';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
-import { getLatestInstanceAssessmentTime } from '../assessment-utils';
+import { getLatestInstanceAssessmentTime, validateAssessment } from '../assessment-utils';
 import {
     updateFieldsBasedOnDismissedConfigurations,
     mergeDismissConfigurations,
@@ -80,7 +80,8 @@ import {
     MSSQLPatchDriftResponseType,
     MSSQLDriftAssessmentResponseType,
     StorageParameterDriftResponseType,
-    DriftAssessmentResponsePerHostType
+    DriftAssessmentResponsePerHostType,
+    MSSQLDriftAssessmentResponse
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetMssqlAssessmentForDemo } from '../../demo-operations';
@@ -384,6 +385,12 @@ async function fetchMssqlDriftAssessment(
         driftAssessmentData = handleGetMssqlAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
     }
 
+    const { isValid, errors: validationErrors } = validateAssessment(MSSQLDriftAssessmentResponse, driftAssessmentData);
+    if (!isValid) {
+        logger.error('Assessment data validation failed for', { databaseHostId, databaseInstanceId, validationErrors });
+        return {};
+    }
+
     return driftAssessmentData;
 }
 
@@ -450,6 +457,12 @@ async function fetchMssqlDriftAssessmentPerHost(
             hostLevelAssessmentData as ResourceAssessmentData,
             hostFieldsToQuery
         );
+
+        const { isValid, errors: validationErrors } = validateAssessment(MSSQLDriftAssessmentResponse, hostLevelData);
+        if (!isValid) {
+            logger.error('Host level assessment validation failed for :', { databaseHostId, validationErrors });
+            hostLevelData = {};
+        }
     }
 
     const driftAssessments = await Promise.all(

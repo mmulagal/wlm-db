@@ -1,3 +1,4 @@
+import Ajv, { ValidateFunction } from 'ajv';
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
 import { getJobs, registerJob } from '../database/job-operations';
@@ -8,6 +9,9 @@ import getLogger from '../../utils/logger';
 import type { JobMetadata } from '../../utils/common-types';
 
 const logger = getLogger();
+
+const ajv = new Ajv();
+const validatorCache = new WeakMap<object, ValidateFunction>();
 
 function getMatchingAssessmentStatus(finding: string) {
     logger.info('Getting matching assessment status for finding:', finding);
@@ -103,11 +107,28 @@ function getLatestInstanceAssessmentTime(
         }, new Date(0));
 }
 
+function validateAssessment(schema: object, assessmentData: unknown) {
+    let validate = validatorCache.get(schema);
+
+    if (!validate) {
+        validate = ajv.compile(schema);
+        validatorCache.set(schema, validate);
+    }
+
+    const isValid = validate(assessmentData);
+
+    return {
+        isValid,
+        errors: validate.errors || []
+    };
+}
+
 export {
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
     hasNotOptimizedStatus,
-    getLatestInstanceAssessmentTime
+    getLatestInstanceAssessmentTime,
+    validateAssessment
 };
 
 // Re-export type for external usage without creating a runtime export

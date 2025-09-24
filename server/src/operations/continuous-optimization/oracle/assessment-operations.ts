@@ -39,12 +39,13 @@ import {
 import {
     DriftAssessmentResponsePerAccountType,
     DriftAssessmentResponsePerHostType,
+    OracleDriftAssessmentResponse,
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { isDemo } from '../../../utils/utils';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoInventoryData';
-import { getLatestInstanceAssessmentTime } from '../assessment-utils';
+import { getLatestInstanceAssessmentTime, validateAssessment } from '../assessment-utils';
 import {
     updateFieldsBasedOnDismissedConfigurations,
     processDismissedConfigurations,
@@ -500,6 +501,15 @@ async function fetchOracleDriftAssessment(
 
     if (isDemoFlow) {
         driftAssessmentData = handleGetOracleAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
+    }
+
+    const { isValid, errors: validationErrors } = validateAssessment(
+        OracleDriftAssessmentResponse,
+        driftAssessmentData
+    );
+    if (!isValid) {
+        logger.error('Assessment data validation failed for', { databaseHostId, databaseInstanceId, validationErrors });
+        return {};
     }
 
     return driftAssessmentData;
