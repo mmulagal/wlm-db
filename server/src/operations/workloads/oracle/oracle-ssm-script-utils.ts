@@ -733,69 +733,72 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
             fi
             installationResults="$installationResults{\\"success\\": \\"$successMsg\\", \\"error\\": \\"$errorMsg\\"},"
         elif [ "$moduleName" == "Python3" ]; then
-            # Only proceed if we successfully detected the OS
-            if [ -z "$errorMsg" ]; then
-                pythonRpmUrl=""
-                for url in "\${pythonSignedUrls[@]}"; do
-                    filename=$(basename "$url" | cut -d'?' -f1)  # Remove query parameters
-                    case "$OS_NAME" in
-                        "rhel")
-                            if [[ "$filename" =~ rhel.*python.*\\.tar\\.gz$ ]]; then
+            pythonRpmUrl=""
+            for url in "\${pythonSignedUrls[@]}"; do
+                filename=$(basename "$url" | cut -d'?' -f1)  # Remove query parameters
+                case "$OS_NAME" in
+                    "rhel")
+                        if [[ "$filename" =~ rhel.*python.*\\.tar\\.gz$ ]]; then
+                            pythonRpmUrl="$url"
+                            break
+                        fi
+                        ;;
+                    "sles")
+                        if [[ "$filename" =~ suse.*python.*\\.tar\\.gz$ ]]; then
+                            # Check version compatibility
+                            if [[ "$OS_VERSION" =~ ^15 && "$filename" =~ suse15 ]]; then
                                 pythonRpmUrl="$url"
                                 break
                             fi
-                            ;;
-                        "sles")
-                            if [[ "$filename" =~ suse.*python.*\\.tar\\.gz$ ]]; then
-                                # Check version compatibility
-                                if [[ "$OS_VERSION" =~ ^15 && "$filename" =~ suse15 ]]; then
-                                    pythonRpmUrl="$url"
-                                    break
-                                fi
-                            fi
-                            ;;
-                    esac
-                done
-
-                if [ -z "$pythonRpmUrl" ]; then
-                    errorMsg="No matching Python RPM found for OS: $OS_NAME $OS_VERSION"
-                else
-                    download_dir=$(pwd)
-                    # Create a dedicated folder for Python downloads
-                    python_download_dir="/tmp/python_install_$$"
-                    mkdir -p "$python_download_dir"
-                    cd "$python_download_dir"
-                    
-                    pythonTarFile=$(basename "$pythonRpmUrl" | cut -d'?' -f1)
-                    
-                    # Download and extract Python RPMs
-                    curl -sS -fSL "$pythonRpmUrl" -o "$pythonTarFile"
-                    if [ $? -ne 0 ]; then
-                        errorMsg="Failed to download Python RPMs from $pythonRpmUrl."
-                    else
-                        tar -xzf "$pythonTarFile" > /dev/null 2>&1
-                        if [ $? -ne 0 ]; then
-                            errorMsg="Failed to extract Python RPM archive."
-                        else
-                            if ls *.rpm >/dev/null 2>&1; then
-                                # RPMs extracted directly to current directory
-                                sudo rpm -ivh *.rpm > /dev/null 2>&1
-                                if [ $? -ne 0 ]; then
-                                    errorMsg="Failed to install Python RPMs. There may be missing dependencies. Please check the system logs and install required dependencies before retrying."
-                                else
-                                    successMsg="Python3 installed from RPMs."
-                                    isPythonInstalled=true
-                                fi
-                            else
-                                errorMsg="RPM files not found after extraction."
-                            fi
                         fi
-                        # Cleanup - go back to original directory and remove download folder
-                        cd "$download_dir"
-                        sudo rm -rf "$python_download_dir"
+                        ;;
+                esac
+            done
+
+            if [ -z "$pythonRpmUrl" ]; then
+                errorMsg="No matching Python RPM found for OS: $OS_NAME $OS_VERSION"
+                installationSuccessful=false
+            else
+                download_dir=$(pwd)
+                # Create a dedicated folder for Python downloads
+                python_download_dir="/tmp/python_install_$$"
+                mkdir -p "$python_download_dir"
+                cd "$python_download_dir"
+
+                pythonTarFile=$(basename "$pythonRpmUrl" | cut -d'?' -f1)
+
+                # Download and extract Python RPMs
+                curl -sS -fSL "$pythonRpmUrl" -o "$pythonTarFile"
+                if [ $? -ne 0 ]; then
+                    errorMsg="Failed to download Python RPMs from $pythonRpmUrl."
+                    installationSuccessful=false
+                else
+                    tar -xzf "$pythonTarFile" > /dev/null 2>&1
+                    if [ $? -ne 0 ]; then
+                        errorMsg="Failed to extract Python RPM archive."
+                        installationSuccessful=false
+                    else
+                        if ls *.rpm >/dev/null 2>&1; then
+                            # RPMs extracted directly to current directory
+                            sudo rpm -ivh --replacepkgs *.rpm > /dev/null 2>&1
+                            if [ $? -ne 0 ]; then
+                                errorMsg="Failed to install Python RPMs. There may be missing dependencies. Please check the system logs and install required dependencies before retrying."
+                                installationSuccessful=false
+                            else
+                                successMsg="Python3 installed from RPMs."
+                                isPythonInstalled=true
+                                installationSuccessful=true
+                            fi
+                        else
+                            errorMsg="RPM files not found after extraction."
+                            installationSuccessful=false
+                        fi
                     fi
-                fi  # End of: if [ -z "$pythonRpmUrl" ]
-            fi  # End of: if [ -z "$errorMsg" ] (OS detection check)
+                    # Cleanup - go back to original directory and remove download folder
+                    cd "$download_dir"
+                    sudo rm -rf "$python_download_dir"
+                fi
+            fi  # End of: if [ -z "$pythonRpmUrl" ]
             installationResults="$installationResults{\\"success\\": \\"$successMsg\\", \\"error\\": \\"$errorMsg\\"},"
         else
             errorMsg="Unknown module: $moduleName."
@@ -856,7 +859,7 @@ const installPythonOnLinuxHost = (pythonSignedUrls?: string[]) => `
     isPythonInstalled=$(echo "$modulesAvailability" | grep -o '"isPythonInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
 
     if [ "$isPythonInstalled" == "true" ]; then
-        installationSucessful=true
+        installationSuccessful=true
     else
         ${determinePlatform}
         # ping cloudflare to check internet connectivity
@@ -867,16 +870,16 @@ const installPythonOnLinuxHost = (pythonSignedUrls?: string[]) => `
                 sudo zypper install -y python311 > /dev/null 2>&1
             fi
             if [ $? -ne 0 ]; then
-                installationSucessful=false
+                installationSuccessful=false
             else
-                installationSucessful=true
+                installationSuccessful=true
             fi
         else
             modulesToInstall=('Python3')
             ${installOracleDependentModules(pythonSignedUrls ?? [], 'modulesToInstall')}
         fi
     fi
-    results="{\\"installationSuccessful\\": \\"$installationSucessful\\"}"
+    results="{\\"installationSuccessful\\": \\"$installationSuccessful\\"}"
     echo $results
 `;
 

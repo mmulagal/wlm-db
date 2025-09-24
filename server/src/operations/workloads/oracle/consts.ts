@@ -29,7 +29,6 @@ enum OracleSysFileTypes {
 
 const pythonRelativePaths = [
     'wlmdb/oracle/packages/rhel8.9_8.10_python311_rpms.tar.gz',
-    'wlmdb/oracle/packages/suse12_python36_rpms.tar.gz',
     'wlmdb/oracle/packages/suse15_python311_rpms.tar.gz'
 ];
 
