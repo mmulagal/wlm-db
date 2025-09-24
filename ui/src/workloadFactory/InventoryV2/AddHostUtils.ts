@@ -144,8 +144,12 @@ export const handleProtectionUtil = async (
 
         if (hostsRes?.data?.hosts?.length > 0) {
             const foundHost = hostsRes?.data?.hosts?.find((host: any) => {
-                const hostNameBeforeDot = host.name.split('.')[0];
-                return hostNameBeforeDot === rowData.hostRow.name;
+                if (rowData.sqlServerDeploymentType === 'FCI') {
+                    return host.name === rowData?.hostRow?.windowsClusterName;
+                } else {
+                    const hostNameBeforeDot = host.name.split('.')[0];
+                    return hostNameBeforeDot === rowData?.hostRow?.name;
+                }
             });
 
             if (foundHost && foundHost?.overallStatus !== 'NoPlugins' && foundHost?.overallStatus !== 'Stopped') {
@@ -316,8 +320,12 @@ export const handleFsxFlow = async (
 
         if (hostsRes?.data?.hosts?.length > 0) {
             const hostExists = hostsRes.data.hosts.some((host: any) => {
-                const hostNameBeforeDot = host.name.split('.')[0];
-                return hostNameBeforeDot === rowData.hostRow.name;
+                if (rowData.sqlServerDeploymentType === 'FCI') {
+                    return host.name === rowData.hostRow.windowsClusterName;
+                } else {
+                    const hostNameBeforeDot = host.name.split('.')[0];
+                    return hostNameBeforeDot === rowData.hostRow.name;
+                }
             });
             dispatch(setDataForRow({ key, stepData: { hostChecked: true, isHostManaged: hostExists } }));
         } else {

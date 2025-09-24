@@ -369,6 +369,7 @@ export interface ManagedHostsRowInterface {
         ec2InstanceName?: string;
     }>;
     nodeTopology?: {
+        windowsClusterName?: string;
         fqdn?: string;
         nodeIpAddress?: string;
         awsAccount?: string;

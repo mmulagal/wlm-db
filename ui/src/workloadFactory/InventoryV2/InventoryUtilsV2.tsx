@@ -167,6 +167,7 @@ export const formatManagedRows = (
         vpcCidr: managedRow?.nodeTopology?.vpcCidr,
         platform: getPlatformForManagedHost(managedRow, managedRow?.hostType),
         fqdn: managedRow?.nodeTopology?.fqdn,
+        windowsClusterName: managedRow?.nodeTopology?.windowsClusterName,
         nodeIpAddress: managedRow?.nodeTopology?.nodeIpAddress,
         action: ssmState === INVENTORY_STATUS.ONLINE && totalInstanceCount > 0 ? INVENTORY_ACTIONS.MANAGE : '', // This is default for managed rows,
         actionDisable: totalInstanceCount === managedInstanceCount,
