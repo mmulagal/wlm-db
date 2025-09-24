@@ -302,7 +302,7 @@ describe('MSSQL Assessment Dismiss Operations', () => {
 
             // Verify other HA subcategories are not set
             const clusterQuorumConfig = haConfigs3?.find(config => config.configurationName === 'cluster-quorum');
-            const sqlserverServiceConfig = haConfigs3?.find(config => config.configurationName === 'sqlserver-service');
+            const sqlserverServiceConfig = haConfigs3?.find(config => config.configurationName === 'sqlServer-service');
             expect(clusterQuorumConfig).toBeUndefined();
             expect(sqlserverServiceConfig).toBeUndefined();
         });
@@ -360,7 +360,7 @@ describe('MSSQL Assessment Dismiss Operations', () => {
                         configState: 'DISMISSED'
                     },
                     {
-                        configurationName: 'sqlserver-service',
+                        configurationName: 'sqlServer-service',
                         endTime: undefined,
                         startTime: Date.now(),
                         configState: 'DISMISSED'

@@ -100,7 +100,7 @@ enum OptimizeHighAvailabilityParams {
     SHARED_STORAGE = 'shared-storage',
     HEARTBEAT_SETTINGS = 'heartbeat-settings',
     CLUSTER_QUORUM = 'cluster-quorum',
-    SQLSERVER_SERVICE = 'sqlserver-service'
+    SQLSERVER_SERVICE = 'sqlServer-service'
 }
 
 enum OptimizeStorageTierParams {
@@ -300,7 +300,7 @@ const HIGH_AVAILABILITY = [
     'shared-storage',
     'heartbeat-settings',
     'cluster-quorum',
-    'sqlserver-service',
+    'sqlServer-service',
     'drive-letter'
 ];
 
@@ -394,7 +394,7 @@ const ASSESSMENT_CONFIGS = {
         heartbeatSettings: 'heartbeat-settings',
         clusterQuorum: 'cluster-quorum',
         sharedStorage: 'shared-storage',
-        sqlserverService: 'sqlserver-service',
+        sqlserverService: 'sqlServer-service',
         driveLetter: 'drive-letter'
     }
 };
@@ -426,7 +426,7 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     'snapshot-policy',
     'crr',
     'shared-storage',
-    'sqlserver-service',
+    'sqlServer-service',
     'drive-letter',
     'thin-provision',
     'autosize',
@@ -452,6 +452,7 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     'tempdb-files-location',
     'data-files-location',
     'log-files-location',
+    'clone-management',
     // Oracle-specific configurations
     'compression',
     'deduplication',
@@ -481,7 +482,7 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
 ];
 
 const HOST_LEVEL_CONFIGURATIONS = [
-    'license',
+    'sql-license',
     'host-os-patch',
     'rss-config',
     'compute-rightsizing',
