@@ -72,8 +72,8 @@ const StorageConfigOracleDialog = ({
             case 'Space management':
                 return createStandardDialog(
                     t,
-                    t('databases.well-architect.oracle-space-management-action-summary'),
-                    t('databases.well-architect.oracle-space-management-what-will-happen'),
+                    t('databases.well-architect.oracle-space-mgmt-action-summary'),
+                    t('databases.well-architect.oracle-space-mgmt-what-will-happen'),
                     createStandardNotesSection(),
                     createONTAPConfigSection()
                 );
