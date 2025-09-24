@@ -1544,9 +1544,10 @@ async function registerOracleInstance(
         const { awsAccountId } =
             derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn || '') || {};
 
-        const ec2InstanceTags = ec2Details?.Reservations?.[0]?.Instances?.[0].Tags;
+        const [{ Tags: ec2InstanceTags, PrivateDnsName: ec2PrivateDnsName }] =
+            ec2Details?.Reservations?.[0]?.Instances || [];
 
-        const ec2HostName = getEc2Hostname(DatabaseTypes.ORACLE, ec2InstanceTags);
+        const ec2HostName = ec2PrivateDnsName || getEc2Hostname(DatabaseTypes.ORACLE, ec2InstanceTags);
 
         const [{ databaseInstanceDetails: oracleServerInstances } = {}] = discoverDetails.items || [];
         resourceId = isDemoFlow && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
