@@ -1282,6 +1282,13 @@ export const getWellApi = createApi({
                 body: payload
             })
         }),
+        optimizeOracleStorageLayoutAsm: builder.mutation({
+            query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-layout`,
+                method: 'POST',
+                body: payload
+            })
+        }),
         optimizeOperatingSystem: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-operating-system`,
@@ -1570,6 +1577,7 @@ export const {
     useGetMssqlAssessmentDataForHostMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeOracleStorageConfigMutation,
+    useOptimizeOracleStorageLayoutAsmMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeStorageSizingMutation,
     useOptimizeOperatingSystemMutation,

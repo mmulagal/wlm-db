@@ -55,7 +55,7 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
         ) {
             return data?.violationDetails?.map((row: any) => ({
                 id: String(id++),
-                name: row?.objectName,
+                objectName: row?.objectName,
                 type: row?.dataCategory,
                 value: row?.value,
                 recommended: row?.recommended
@@ -63,14 +63,14 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
         }
         return data?.objectsInViolation?.map((row: any) => ({
             id: String(id++),
-            name: row
+            objectName: row
         }));
     }, [data]);
 
     const TableColDefs: ColumnProps[] = [
         {
             Header: colName,
-            accessor: 'name',
+            accessor: 'objectName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',

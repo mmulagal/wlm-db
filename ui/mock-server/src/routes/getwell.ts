@@ -99,6 +99,15 @@ router.post(
 );
 
 router.post(
+    `${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-layout`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 202, { jobId: '1234' });
+        }, 20);
+    }
+);
+
+router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-sizing`,
     async (req: {}, res: any) => {
         setTimeout(() => {

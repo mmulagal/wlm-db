@@ -33,6 +33,7 @@ import {
     useOptimizeComputeConfigForBulkMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeMTUConfigForBulkMutation,
+    useOptimizeOracleStorageLayoutAsmMutation,
     useOptimizeResiliencyMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
@@ -50,6 +51,7 @@ import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 import MTUOptimizeTable from './InnerTables/MTUOptimizeTable';
 import StorageLayoutOracleTable from './InnerTables/StorageLayoutOracleTable';
+import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -79,6 +81,7 @@ const OptimizeInnerPage = () => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [optimizeOracleStorageLayoutAsm] = useOptimizeOracleStorageLayoutAsmMutation();
     const [optimizeResiliency] = useOptimizeResiliencyMutation();
     const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
     const [optimizeMTUConfigForBulk] = useOptimizeMTUConfigForBulkMutation();
@@ -538,6 +541,58 @@ const OptimizeInnerPage = () => {
                     ]
                 };
             }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT) {
+            apiCall = optimizeOracleStorageLayoutAsm;
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'data-dg-lun-layout',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                };
+            } else {
+                payload = {
+                    configurationName: 'data-dg-lun-layout',
+                    objectsToOptimize: [singleRowData?.objectName]
+                };
+            }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT) {
+            apiCall = optimizeOracleStorageLayoutAsm;
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'redolog-dg-lun-layout',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                };
+            } else {
+                payload = {
+                    configurationName: 'redolog-dg-lun-layout',
+                    objectsToOptimize: [singleRowData?.objectName]
+                };
+            }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT) {
+            apiCall = optimizeOracleStorageLayoutAsm;
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'fra-dg-lun-layout',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                };
+            } else {
+                payload = {
+                    configurationName: 'fra-dg-lun-layout',
+                    objectsToOptimize: [singleRowData?.objectName]
+                };
+            }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT) {
+            apiCall = optimizeOracleStorageLayoutAsm;
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'archivelog-dg-lun-layout',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                };
+            } else {
+                payload = {
+                    configurationName: 'archivelog-dg-lun-layout',
+                    objectsToOptimize: [singleRowData?.objectName]
+                };
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -574,7 +629,13 @@ const OptimizeInnerPage = () => {
                 [type]: [...(inProgressHostData[type] || []), selectedResourceId]
             })
         );
-        formatGetWellData(dispatch);
+        if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
+            // Format data call for oracle
+            formatOracleWellArchitectedData(dispatch);
+        } else {
+            // Format data call for MSSQL
+            formatGetWellData(dispatch);
+        }
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
@@ -648,7 +709,13 @@ const OptimizeInnerPage = () => {
 
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
-                        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
+                            // Redirect to oracle well architect page
+                            dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+                        } else {
+                            // Redirect to MSSQL well architect page
+                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        }
                         dispatch(setLandingFromInnerPage(true));
                     }
                 }, 1000);

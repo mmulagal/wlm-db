@@ -3,6 +3,22 @@ import { GENERAL } from '../../../utils/appConstants';
 import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG } from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
 
+const primaryButtonDisable = (engineType, type) => {
+    // oracle storage layout 6 configs fix are disabled
+    if (
+        engineType === DBType.ORACLE &&
+        (type === ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT)
+    ) {
+        return true;
+    }
+    return false;
+};
+
 // Function for handling the dialog from getwell page
 export const handleDialog = (
     setDialog,
@@ -64,7 +80,7 @@ export const handleDialog = (
                     closeDialog();
                 }}
                 customClass="innerPage"
-                primaryButtonDisabled={engineType === DBType.ORACLE}
+                primaryButtonDisabled={primaryButtonDisable(engineType, type)}
                 hidePrimaryButton={
                     (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
