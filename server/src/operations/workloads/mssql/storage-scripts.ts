@@ -2,7 +2,7 @@ import { WorkloadInstance, OntapRequestParams } from '../../../utils/common-type
 import { INSTANCE_DRIVE_DETAILS_TEMPLATE } from './assessment-scripts';
 import { ontapRestRequest } from './common-templates';
 import { SIZING_OPERATIONS_LOG_PATH, STORAGE_ASSESSMENT_LOG_PATH } from './const';
-import { compressResponse, slqcmdExecutionTemplate } from './ssm-script-utils';
+import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 const JSON_CHECK = `
         function Test-ValidJson {
@@ -223,17 +223,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
     
         $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
         if($sqlAuthEnabled) {
-            $PasswordSsmPath = "/workload-lifecycle-management/netapp/mssql/$sqlInstance/password"
-            $UsernameSsmPath = "/workload-lifecycle-management/netapp/mssql/$sqlInstance/username"
-            try{
-                $SsmPassword = Get-SSMParameter -Name $PasswordSsmPath -WithDecryption $true
-                $SsmUsername = Get-SSMParameter -Name $UsernameSsmPath -WithDecryption $true
-                $securePassword = ConvertTo-SecureString $SsmPassword.Value -AsPlainText -Force
-                $sqlCredential = New-Object PSCredential($SsmUsername.Value, $securePassword)
-                $sqlCredential = @{'useSqlAuth' = $true; 'credential' = $sqlCredential}
-            } catch {
-                Write-Information "Error occurred while retrieving SQL credentials from SSM. Error: $_.Exception.Message"
-            }
+            ${readSsmParameter(instanceRecord.name)}
         }
 
         $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
