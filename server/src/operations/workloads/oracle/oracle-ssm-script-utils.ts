@@ -1,3 +1,5 @@
+import { CLOUDFLARE_DNS_IP } from '../../../utils/consts';
+
 type ontapRequestParams = {
     fsxId?: string;
     region: string;
@@ -11,8 +13,6 @@ type ontapRequestParams = {
         volumes?: string[];
     }[];
 };
-
-const CLOUDFARE_DNS_IP = '1.1.1.1';
 
 const checkCommandStatus = `
     check_status() {
@@ -123,10 +123,8 @@ const ontapRestApi = `
     
     certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
 
-    # Check for public IP
-    token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
-    public_ip=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/public-ipv4)
-    if [ -n "$public_ip" ]; then
+    # Check for public network
+    if ping -c 1 -W 1 ${CLOUDFLARE_DNS_IP} > /dev/null 2>&1; then
         # Public network: download the certificate
         if [ ! -f /tmp/fsx_bundle.pem ]; then
             curl -sS -o /tmp/fsx_bundle.pem "$certsUrl"
@@ -141,7 +139,7 @@ const ontapRestApi = `
         management_ip=management.$filesystemid.fsx.$region.amazonaws.com
         if ! ping -c 1 -W 2 "$management_ip" > /dev/null 2>&1; then
             management_ip=$(aws fsx describe-file-systems --file-system-id $filesystemid --region $region --query "FileSystems[0].OntapConfiguration.Endpoints.Management.IpAddresses[0]" --output text)
-            USE_INSECURE=true
+            cert_option="--insecure"
         fi
         auth=$(printf '%s:%s' $fsxusername $fsxpassword | base64)
         method=$1
@@ -863,7 +861,7 @@ const installPythonOnLinuxHost = (pythonSignedUrls?: string[]) => `
     else
         ${determinePlatform}
         # ping cloudflare to check internet connectivity
-        if ping -c 1 -W 1 ${CLOUDFARE_DNS_IP} > /dev/null 2>&1; then
+        if ping -c 1 -W 1 ${CLOUDFLARE_DNS_IP} > /dev/null 2>&1; then
             if [ "$OS_NAME" == "rhel" ]; then
                 sudo yum install -y python3.12 > /dev/null 2>&1
             elif [[ "$OS_NAME" == "sles" && "$OS_VERSION" =~ ^15 ]]; then
@@ -1371,30 +1369,21 @@ def ontapRestApiRequest(fileSystemId, region, method, url, body=None):
         "Accept": "application/json",
     }
 
-    # Check for public IP
     cert_option = ""
     cert_url = f"https://fsx-aws-Certificates.s3.amazonaws.com/bundle-{region}.pem"
     cert_path = "/tmp/fsx_bundle.pem"
     try:
-        token = urlopen(
-            Request(
-                "http://169.254.169.254/latest/api/token",
-                method="PUT",
-                headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"}
-            ), timeout=2
-        ).read().decode()
-        public_ip = urlopen(
-            Request(
-                "http://169.254.169.254/latest/meta-data/public-ipv4",
-                headers={"X-aws-ec2-metadata-token": token}
-            ), timeout=2
-        ).read().decode()
+        result = subprocess.run(
+            ["ping", "-c", "1", "-W", "1", "${CLOUDFLARE_DNS_IP}"],
+            stdout=subprocess.DEVNULL,
+        )
+        public_network = result.returncode == 0
     except Exception as e:
-        public_ip = ""
-        log(f"Failed to get public IP; Exception:{e}")
+        public_network = False
+        log(f"Failed to get public network; Exception:{e}")
 
 
-    if public_ip:
+    if public_network:
         if not os.path.isfile(cert_path):
             try: urlretrieve(cert_url, cert_path)
             except: pass

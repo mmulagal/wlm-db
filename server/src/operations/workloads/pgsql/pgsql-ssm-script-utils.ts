@@ -1,3 +1,5 @@
+import { CLOUDFLARE_DNS_IP } from '../../../utils/consts';
+
 const checkCommandStatus = `
     check_status() {
         if [ $? -ne 0 ]; then
@@ -90,10 +92,8 @@ const ontapRestApi = `
  
     # Check if the certificate file exists
     if [ ! -f $cert_path ]; then
-        # Check for public IP to determine if we are in a public or private network
-        token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
-        public_ip=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/public-ipv4)
-        if [ -n "$public_ip" ]; then
+        # Check for public network to determine if we are in a public or private network
+        if ping -c 1 -W 1 ${CLOUDFLARE_DNS_IP} > /dev/null 2>&1; then
             # Public network: download the certificate
             certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
             if [ ! -f /tmp/fsx_bundle.pem ]; then
