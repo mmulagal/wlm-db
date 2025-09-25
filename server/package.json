@@ -18,7 +18,7 @@
         "unused": "npx depcheck",
         "build:dev": "npm run build && npm run start",
         "test": "cross-env NODE_ENV=simulator vitest --coverage",
-        "test:nowatch": "cross-env NODE_ENV=simulator vitest --run --silent",
+        "test:nowatch": "cross-env NODE_ENV=simulator vitest --run --silent --no-coverage",
         "postinstall": "patch-package",
         "apidoc": "node --import tsx src/utils/generate-documentation.ts && spectral lint documentation.yaml"
     },
