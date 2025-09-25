@@ -306,7 +306,7 @@ async function getOracleProtectionStatus(
 
         const command = [];
         if (isCDB === 'YES' && pdbNames?.length > 0) {
-            mountPointDetails.forEach(mountPointDetail => {
+            mountPointDetails?.forEach(mountPointDetail => {
                 const [{ mountIP, mountPoint, protocol }] = mountPointDetail;
                 if (!mountIP || !mountPoint || !protocol) {
                     throw createError(
@@ -367,7 +367,7 @@ async function getOracleProtectionStatus(
                     parseProtectionDetails(credentialsId, region, fsxnId, protectionDetail)
                 );
                 const allParsedDetails = await Promise.all(parsedDetailsPromises);
-                allParsedDetails.forEach((parsedDetails, idx) => {
+                allParsedDetails?.forEach((parsedDetails, idx) => {
                     protectionResponse[pdbNames[idx]] = parsedDetails;
                     commonIsAwsBackupEnabled = parsedDetails.isAwsBackupEnabled.fsxn || commonIsAwsBackupEnabled;
                     commonIsSqlNativeBackupEnabled =
@@ -777,7 +777,7 @@ async function getOracleDatabaseInstancesSummary(
                         )
                     );
                     if (isDemoFlow && databases?.length && databaseInstance?.metadata) {
-                        databases.forEach((database: DatabasesResponseType) => {
+                        databases?.forEach((database: DatabasesResponseType) => {
                             database.type =
                                 (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType ===
                                 OracleDeploymentTenacy.MULTI_TENANT
@@ -827,7 +827,7 @@ async function getOracleDatabaseInstancesSummary(
 
                 if (getDatabasesWithoutProtection || getDatabasesWithProtection) {
                     if (getDatabasesWithProtection) {
-                        databases.forEach((database: DatabasesResponseType) => {
+                        databases?.forEach((database: DatabasesResponseType) => {
                             if (database.type === 'CDB') {
                                 database.protection = protectionData?.[dbInstanceSid];
                             } else {
@@ -886,7 +886,7 @@ async function getOracleDatabaseInstancesSummary(
     ]);
 
     if (getStorage && storageInfoFromOntap) {
-        results.forEach(result => {
+        results?.forEach(result => {
             const { storage_protocol: storageProtocol } =
                 databaseInstances.find(db => db.database_instance_id === result.databaseInstanceId) || {};
             result.storage = {
@@ -902,7 +902,7 @@ async function getOracleDatabaseInstancesSummary(
     }
     if (hostInfo && !isEmpty(hostInfo)) {
         const { activeNodeDetails } = hostInfo;
-        results.forEach(result => {
+        results?.forEach(result => {
             if (result.databaseInstanceId && Object.keys(activeNodeDetails).includes(result.databaseInstanceId)) {
                 const nodeDetails = activeNodeDetails[result.databaseInstanceId];
                 if (nodeDetails) {
