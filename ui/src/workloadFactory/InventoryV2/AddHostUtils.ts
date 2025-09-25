@@ -154,7 +154,7 @@ export const handleProtectionUtil = async (
         if (hostsRes?.data?.hosts?.length > 0) {
             const foundHost = hostsRes?.data?.hosts?.find((host: any) => {
                 if (rowData.sqlServerDeploymentType === 'FCI') {
-                    return host.name === rowData?.hostRow?.windowsClusterName;
+                    return host.clusterName === rowData?.hostRow?.windowsClusterName;
                 } else {
                     const hostNameBeforeDot = host.name.split('.')[0];
                     return hostNameBeforeDot === rowData?.hostRow?.name;
@@ -330,7 +330,7 @@ export const handleFsxFlow = async (
         if (hostsRes?.data?.hosts?.length > 0) {
             const hostExists = hostsRes.data.hosts.some((host: any) => {
                 if (rowData.sqlServerDeploymentType === 'FCI') {
-                    return host.name === rowData.hostRow.windowsClusterName;
+                    return host.clusterName === rowData.hostRow.windowsClusterName;
                 } else {
                     const hostNameBeforeDot = host.name.split('.')[0];
                     return hostNameBeforeDot === rowData.hostRow.name;
