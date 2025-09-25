@@ -1171,9 +1171,9 @@ async function formatManualStorageSavingsCalculationMetrics(
 }
 
 function generateOptimizedValuesForDemo(fsx: StorageSummary, fsxCalculations: FsxCostCalculations) {
-    // Optimization rate - 5%
+    // Optimization rate - 75%
     // throughput and iops are reduced by OPT_RATE percent
-    const OPT_RATE = 5;
+    const OPT_RATE = 75;
     const fsx_optimized = {
         ...fsx,
         iops: Number(fsx.iops ?? 0) * (1 - OPT_RATE / 100),

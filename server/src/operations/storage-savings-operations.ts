@@ -260,9 +260,13 @@ async function aoagStorageSavingsCalculations(
                           existingComputeMonthlyPrice! +
                           existingLicenseMonthlyPrice!
                         : 0,
-                recommended:
-                    (fsxOptimized as StorageSummary)?.total ||
-                    fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
+                recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!,
+                ...(fsxOptimized && {
+                    optimized:
+                        (fsxOptimized as StorageSummary).total +
+                        recommendedComputeMonthlyPrice! +
+                        recommendedLicenseMonthlyPrice!
+                })
             },
             ...(singleFsxCalculationData && {
                 single: {
@@ -340,7 +344,7 @@ async function aoagStorageSavingsMetrics(
         );
 
         // Consider all EBS volumes for storage, iops and throughput calculation
-        let {
+        const {
             ebs,
             fsx,
             fsxOptimized,
@@ -372,7 +376,6 @@ async function aoagStorageSavingsMetrics(
         );
         const existingComputeLicensePrice = Number(existingComputeCalculation?.instanceMonthlyPrice || 0);
         const recommendedComputeLicensePrice = Number(recommendedComputeCalculation?.instanceMonthlyPrice || 0);
-        fsx = (fsxOptimized as StorageSummary) || fsx;
 
         return {
             recommendedComputeCalculation,
@@ -387,7 +390,10 @@ async function aoagStorageSavingsMetrics(
             ebsSnapshotCalculation: uniqueVolumesEbsSnapshotCalculation,
             totalSummary: {
                 existing: ebs ? ebs.total + existingComputeLicensePrice : existingComputeLicensePrice,
-                recommended: fsx ? fsx.total + recommendedComputeLicensePrice : recommendedComputeLicensePrice
+                recommended: fsx ? fsx.total + recommendedComputeLicensePrice : recommendedComputeLicensePrice,
+                ...(fsxOptimized && {
+                    optimized: (fsxOptimized as StorageSummary).total + recommendedComputeLicensePrice
+                })
             }
         };
     }
@@ -664,7 +670,10 @@ async function performStorageSavingsCalculations(
         ...(fsxOptimized && { fsxOptimized }),
         totalSummary: {
             existing: Number(ebs?.total || 0) + existingComputeLicensePrice,
-            recommended: (fsxOptimized as StorageSummary)?.total || fsx.total + recommendedComputeLicensePrice
+            recommended: fsx.total + recommendedComputeLicensePrice,
+            ...(fsxOptimized && {
+                optimized: (fsxOptimized as StorageSummary).total + recommendedComputeLicensePrice
+            })
         },
         ...(singleFsxCalculationData && {
             single: {
@@ -834,7 +843,7 @@ async function getStorageSavingsCalculationMetrics(
         compute: { existing: existingComputeCalculation, recommended: recommendedComputeCalculation },
         license: { existing: existingLicenseCalculation, recommended: recommendedLicenseCalculation }
     } = currentNodeComputeLicenseDetails;
-    let {
+    const {
         ebs,
         ebsCalculation,
         ebsCloneCalculation,
@@ -856,7 +865,6 @@ async function getStorageSavingsCalculationMetrics(
 
     const existingComputeLicensePrice = Number(existingComputeCalculation?.instanceMonthlyPrice || 0);
     const recommendedComputeLicensePrice = Number(recommendedComputeCalculation?.instanceMonthlyPrice || 0);
-    fsx = (fsxOptimized as StorageSummary) || fsx;
     return {
         recommendedComputeCalculation,
         recommendedLicenseCalculation,
@@ -870,7 +878,8 @@ async function getStorageSavingsCalculationMetrics(
         ...(fsxOptimizedSingle && { fsxOptimizedSingle }),
         totalSummary: {
             existing: ebs ? ebs.total + existingComputeLicensePrice : existingComputeLicensePrice,
-            recommended: fsx ? fsx.total + recommendedComputeLicensePrice : recommendedComputeLicensePrice
+            recommended: fsx ? fsx.total + recommendedComputeLicensePrice : recommendedComputeLicensePrice,
+            ...(fsxOptimized && { optimized: (fsxOptimized as StorageSummary).total + recommendedComputeLicensePrice })
         }
     };
 }

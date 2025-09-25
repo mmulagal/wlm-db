@@ -185,7 +185,8 @@ const StorageSavingsResponse = Type.Object({
     fsx: StorageMetrics,
     totalSummary: Type.Object({
         existing: Type.Number(),
-        recommended: Type.Number()
+        recommended: Type.Number(),
+        optimized: Type.Optional(Type.Number())
     }),
     single: Type.Optional(fsxCalculationData),
     multi: Type.Optional(fsxCalculationData),
