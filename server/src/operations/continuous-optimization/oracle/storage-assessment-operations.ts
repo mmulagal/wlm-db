@@ -782,20 +782,33 @@ function getVolumeLayoutDrift(
         );
     } else {
         // Control files can be on separate volume or shared with data/redo/temp and maintain at least two, preferably three, control file copies across separate volumes
+        const conflictVolumeIds = [...archiveLogVolumes].map(volume => volume.volumeId);
         const controlFileConflicts = [
-            ...new Set(
-                controlFileVolumes.filter(controlVolume =>
-                    archiveLogVolumes.map(volume => volume.volumeId).includes(controlVolume.volumeId)
-                )
-            )
+            ...new Set(controlFileVolumes.filter(controlVolume => conflictVolumeIds.includes(controlVolume.volumeId)))
         ];
 
         hasConflicts = controlFileConflicts.length > 0;
-        insufficientMultiplexing = controlFileVolumes.length < 2;
-        status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
 
+        const uniqueControlFileVolumesWithoutSharingViolation = [
+            ...new Set(
+                controlFileVolumes
+                    .filter(controlVolume => !conflictVolumeIds.includes(controlVolume.volumeId))
+                    .map(volume => volume.volumeId)
+            )
+        ];
+        // Best practice is to have at least two multiplexed control files on separate volumes. So we need at least three separate volumes if there are multiplexed control files
+        insufficientMultiplexing = uniqueControlFileVolumesWithoutSharingViolation.length < 3;
+
+        status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const recommended =
+            hasConflicts && insufficientMultiplexing
+                ? 'separate-volume-or-shared-with-data-redo-temp-with-three-multiplexed-volumes'
+                : hasConflicts
+                ? 'separate-volume-or-shared-with-data-redo-temp'
+                : 'three-multiplexed-volumes';
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.controlfilesPlacement,
+            recommended,
             status,
             objectsInViolation: hasConflicts
                 ? controlFileConflicts.map(conflict => conflict.volumeName)
@@ -815,21 +828,33 @@ function getVolumeLayoutDrift(
         volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.redologsPlacement, 'redo log'));
     } else {
         // Redo logs can be on separate or shared with temp/control and maintain at least 1 redo file copies across separate volumes
+        const conflictVolumeIds = [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.volumeId);
         const redoFileConflicts = [
-            ...new Set(
-                redoLogVolumes.filter(redoVolume =>
-                    [...dataFileVolumes, ...archiveLogVolumes]
-                        .map(volume => volume.volumeId)
-                        .includes(redoVolume.volumeId)
-                )
-            )
+            ...new Set(redoLogVolumes.filter(redoVolume => conflictVolumeIds.includes(redoVolume.volumeId)))
         ];
 
         hasConflicts = redoFileConflicts.length > 0;
-        insufficientMultiplexing = redoLogVolumes.length < 1;
+
+        const uniqueRedoLogVolumesWithoutSharingViolation = [
+            ...new Set(
+                redoLogVolumes
+                    .filter(redoVolume => !conflictVolumeIds.includes(redoVolume.volumeId))
+                    .map(volume => volume.volumeId)
+            )
+        ];
+        // Best practice is to have at least two multiplexed redo log groups on separate volumes. So we need at least two separate volumes if there are multiplexed redo log groups
+        insufficientMultiplexing = uniqueRedoLogVolumesWithoutSharingViolation.length < 2;
+
         status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const recommended =
+            hasConflicts && insufficientMultiplexing
+                ? 'separate-volume-or-shared-with-temp-control-with-two-multiplexed-volumes'
+                : hasConflicts
+                ? 'separate-volume-or-shared-with-temp-control'
+                : 'two-multiplexed-volumes';
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.redologsPlacement,
+            recommended,
             status,
             objectsInViolation: hasConflicts
                 ? redoFileConflicts.map(conflict => conflict.volumeName)
