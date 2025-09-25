@@ -86,7 +86,8 @@
     },
     "totalSummary": {
         "existing": 18377.6,
-        "recommended": 7959.596799999999
+        "recommended": 7959.596799999999,
+        "optimized": 6829.596799999999
     },
     "single": {
         "fsxCalculation": {

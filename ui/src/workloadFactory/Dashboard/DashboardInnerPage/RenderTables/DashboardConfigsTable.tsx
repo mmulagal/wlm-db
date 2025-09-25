@@ -287,7 +287,8 @@ const CONFIG_MAPPING: Record<string, any> = {
             });
             return {
                 totalObjectsAssessed: obj?.rssAdapters?.length || 0,
-                totalObjectsInViolation: nonOptimizedAdapters
+                totalObjectsInViolation: nonOptimizedAdapters,
+                networkAdapters: obj?.rssAdapters?.map((adapter: any) => adapter?.adapterName)
             };
         },
         isFixSupported: true,

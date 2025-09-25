@@ -215,7 +215,10 @@ const GetWell = () => {
     const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
 
     // Helper function to check if all configurations are dismissed
-    const allConfigurationsDismissed = useMemo(() => checkAllConfigurationsDismissed(cardData, driftAssessmentData), [cardData, driftAssessmentData]);
+    const allConfigurationsDismissed = useMemo(
+        () => checkAllConfigurationsDismissed(cardData, driftAssessmentData),
+        [cardData, driftAssessmentData]
+    );
 
     // Automatically enable dismissed toggle when all configurations are dismissed
     useEffect(() => {

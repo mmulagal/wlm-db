@@ -935,8 +935,8 @@
             "select-calculator-mode": "Select calculator mode",
             "optimized-based-on-usage": "Optimized (based on usage)",
             "standard": "Standard (based on provisioned data)",
-            "optimize-dialog-title": "Optimize the FSx for ONTAP and save more",
-            "optimize-dialog-description": "Workload Factory can analyze your performance usage and then suggest the best and more cost-efficient configuration for FSx for ONTAP so that you can save more.",
+            "optimize-dialog-title": "Optimize savings with FSx for ONTAP",
+            "optimize-dialog-description": "Workload Factory can analyze your performance usage and then suggest the best and most cost-efficient configuration for FSx for ONTAP so that you can save more.",
             "maybe-later": "Maybe later",
             "optimize-savings": "Optimize savings",
             "optimize-your-calculation": "Optimize your calculation"

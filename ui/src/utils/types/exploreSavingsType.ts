@@ -130,6 +130,7 @@ export interface StorageSavingsInterface {
         existing?: number | string;
         recommended?: number | string;
         recommendedTotal?: number | string;
+        optimized?: number | string;
     };
     compute?: {
         existing?: RecommendedCompute;

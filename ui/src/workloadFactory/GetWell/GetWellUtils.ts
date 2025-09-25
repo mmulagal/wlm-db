@@ -1885,10 +1885,9 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
 };
 
 // Helper function to map technical configuration names to display names
-export const getConfigurationDisplayName = (technicalName: string): string => 
+export const getConfigurationDisplayName = (technicalName: string): string =>
     // Use existing GETWELL_CONFIG mappings which already contain the technical to display name mappings
-     GETWELL_CONFIG?.[technicalName] || technicalName
-;
+    GETWELL_CONFIG?.[technicalName] || technicalName;
 
 // Helper function to filter individual ONTAP/OS configurations based on dismissed state
 export const filterIndividualOntapOsConfigurations = (
@@ -4100,6 +4099,15 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                             }
                         };
                     }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                rssConfig: { ...instance.assessments.rssConfig, status: 'optimized' }
+                            }
+                        };
+                    }
                     if (rowData?.name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
                         return {
                             ...instance,
@@ -5124,6 +5132,8 @@ export const nameToIdConfigMapping = (name: string) =>
         ? 'max-dop'
         : name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
         ? 'clone'
+        : name === ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION
+        ? 'rss-config'
         : '';
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {

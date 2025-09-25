@@ -2108,7 +2108,9 @@ export const prepareStorageSavingsData = (apiResponse: StorageSavingsInterface, 
             fsx: apiResponse?.fsxOptimized,
             totalSummary: {
                 ...apiResponse?.totalSummary,
-                recommended: Number(apiResponse?.totalSummary?.recommended) - recommendedDiff
+                recommended:
+                    apiResponse?.totalSummary?.optimized ||
+                    Number(apiResponse?.totalSummary?.recommended) - recommendedDiff
             }
         };
         if (apiResponse?.single) {

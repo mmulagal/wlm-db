@@ -408,7 +408,8 @@ export const isTableRowConfigurationInState = (
     return false;
 };
 
-export const isTableRowConfigurationActivating = (rowData: any, cardData: any, driftAssessmentData?: any): boolean => isTableRowConfigurationInState(rowData, cardData, [CONFIG_STATES.ACTIVATING], driftAssessmentData);
+export const isTableRowConfigurationActivating = (rowData: any, cardData: any, driftAssessmentData?: any): boolean =>
+    isTableRowConfigurationInState(rowData, cardData, [CONFIG_STATES.ACTIVATING], driftAssessmentData);
 
 // Helper function to check if all configurations are dismissed (dismissed or postponed)
 export const checkAllConfigurationsDismissed = (cardData: any, assessmentData?: any): boolean => {
