@@ -186,7 +186,13 @@ const CHECK_SANLUN = `
 def check_sanlun():
     log('Checking ONTAP sanlun installation and version')
     try:
-        result = subprocess.run(['sanlun', 'version'], 
+        # Set up environment with additional PATH entries
+        env = os.environ.copy()
+        current_path = env.get('PATH', '')
+        additional_paths = ':/usr/sbin:/usr/bin:/opt/netapp:/opt/netapp/sanlun/bin'
+        env['PATH'] = current_path + additional_paths
+        
+        result = subprocess.run(['sanlun', 'version'], env=env,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
 
         if result.returncode == 0:

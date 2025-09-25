@@ -124,7 +124,6 @@ const netappMultipathExpected = {
     path_grouping_policy: 'group_by_prio',
     path_selector: 'service-time 0',
     prio: 'ontap',
-    features: '3 queue_if_no_path pg_init_retries 50',
     hardware_handler: '0',
     failback: 'immediate',
     rr_weight: 'uniform',
@@ -311,24 +310,23 @@ function getOSConfigDrift(
 
             case 'multipath-friendly-names': {
                 const multipathConfigData = os?.['multipath-configuration'];
-                const error = multipathConfigData?.error;
                 const defaultsFriendlyNames = multipathConfigData?.defaults?.user_friendly_names;
                 const netappFriendlyNames = multipathConfigData?.['netapp-device']?.user_friendly_names;
-                violationDetails = [
-                    ...(error || defaultsFriendlyNames === 'no'
-                        ? [{ objectName: 'user_friendly_names', objectType: 'default configuration', value: 'no' }]
-                        : []),
-                    ...(error || netappFriendlyNames === 'no'
-                        ? [
-                              createViolationDetail(
-                                  'user_friendly_names',
-                                  'netapp device configuration',
-                                  'no',
-                                  'user_friendly_names "yes" for both default and netapp-device sections'
-                              )
-                          ]
-                        : [])
-                ];
+                violationDetails = [];
+                // If netapp-device section exists, it takes precedence over defaults section
+                const friendlyNamesValue = netappFriendlyNames ?? defaultsFriendlyNames;
+                if (friendlyNamesValue !== 'yes') {
+                    const isNetappConfig = netappFriendlyNames != null;
+                    const configType = isNetappConfig ? 'netapp device configuration' : 'default configuration';
+                    const recommendedText = isNetappConfig
+                        ? 'user_friendly_names "yes" for netapp device section'
+                        : 'user_friendly_names "yes" for default section';
+                    const currentValue = friendlyNamesValue == null ? 'not found' : friendlyNamesValue.toString();
+
+                    violationDetails.push(
+                        createViolationDetail('user_friendly_names', configType, currentValue, recommendedText)
+                    );
+                }
                 osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }

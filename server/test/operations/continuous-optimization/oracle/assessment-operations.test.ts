@@ -245,9 +245,6 @@ describe('Oracle assessment operations', () => {
         // Verify specific multipath configuration violations
         const pathSelectorViolation = multipathConfig.violationDetails?.find(v => v.objectName === 'path_selector');
         expect(pathSelectorViolation?.value).toBe('not found');
-
-        const featuresViolation = multipathConfig.violationDetails?.find(v => v.objectName === 'features');
-        expect(featuresViolation?.value).toBe('2 pg_init_retries 50');
     });
     it('should return drift assessment data at host level', async () => {
         const assessmentData = await fetchOracleDriftAssessmentPerHost(
