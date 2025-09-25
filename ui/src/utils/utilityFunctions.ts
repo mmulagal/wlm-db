@@ -51,6 +51,7 @@ import {
 } from '../store/workloadFactory/databaseHomeSlice';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
 import { PgsqlInstancesDiscovered } from './types/inventoryV2Types';
+import { addNotification, NOTIFICATION_TYPES } from '../store/notificationSlice';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -201,6 +202,7 @@ export const bxpRedirect = async (
 ) => {
     const stageURL = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
     const prodURL = 'https://console.bluexp.netapp.com/unified-backup-restore';
+    const dispatch = store.dispatch;
     const { selectedAgent, alreadyExistAgentId, workSpaceData } = store.getState().snapCenter;
     const { isDemoMode, orgId } = store.getState().auth;
 
@@ -264,6 +266,13 @@ export const bxpRedirect = async (
 
             // Check for API errors
             if (searchResult.errorMessage || !searchResult.instances || searchResult.instances.length === 0) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message:
+                            'Discover resources on Unified Backup & Recovery(UBR)  is taking longer time than expected, please check in UBR Job Monitor for more details.'
+                    })
+                );
                 return;
             }
 
