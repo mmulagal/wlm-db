@@ -113,21 +113,6 @@ const oracleAssessmentMetadata = {
         configuration: {
             luns: [
                 {
-                    name: 'os-type',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
-                    value: 'linux',
-                    status: 'optimized',
-                    severity: 'critical',
-                    parameter: 'osType',
-                    recommended: 'linux',
-                    recommendation:
-                        'Workload Factory recommends ensuring that the ONTAP LUN operating system (OS) type value matches the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration might reduce performance.',
-                    violationDetails: [],
-                    objectsInViolation: [],
-                    totalObjectsAssessed: 3,
-                    totalObjectsInViolation: 0
-                },
-                {
                     name: 'space-reservation-enabled',
                     tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: true,

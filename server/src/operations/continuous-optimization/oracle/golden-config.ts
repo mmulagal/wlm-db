@@ -175,19 +175,6 @@ const GOLDEN_CONFIG = {
         ],
         lun: [
             {
-                name: 'os-type',
-                parameter: 'osType',
-                value: 'linux',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends ensuring that the ONTAP LUN operating system (OS) type value matches the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration might reduce performance.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
                 name: 'space-reservation-enabled',
                 parameter: 'spaceReservationEnabled',
                 value: true,
