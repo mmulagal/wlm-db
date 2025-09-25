@@ -44,7 +44,8 @@ import {
     mockPGSqlStandaloneDeploymentStack,
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
-    enableMPIOJobData
+    enableMPIOJobData,
+    demoFsxId
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -1188,7 +1189,7 @@ async function createAssessmentDataForOracle(
     const instanceConfigMappedOntapDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
-        config_data: ORACLE_MAPPED_ONTAP_VOLUMES_DATA
+        config_data: ORACLE_MAPPED_ONTAP_VOLUMES_DATA(demoFsxId, STORAGE_PROTOCOLS.ISCSI, 'oradb', true)
     };
 
     const configDataRecords = [instanceConfigDataRecord, instanceConfigMappedOntapDataRecord];
@@ -1428,56 +1429,59 @@ function handleGetOracleAssessmentForDemo(
 
     // Handle Oracle storage assessment
     const storageAssessmentResponse = assessmentData.storage as StorageParameterDriftResponseType;
-    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
-        const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
-        const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
-        const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
 
-        if (storageConfigsOptimized.length > 0) {
-            const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
-                configArray?.map(config => {
-                    if (optimizedConfigs.includes(config.name)) {
-                        config.status = AssessmentStatus.OPTIMIZED;
-                        config.objectsInViolation = [];
-                    }
-                    return config;
-                });
-
-            storageAssessmentResponse.configuration.volumes = optimizeConfig(
-                storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
-                storageConfigsOptimized
-            );
-
-            storageAssessmentResponse.configuration.luns = optimizeConfig(
-                storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
-                storageConfigsOptimized
-            );
-        }
-
-        if (osConfigsOptimized.length > 0) {
-            storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(osConfig => {
-                const os = osConfig as ParameterDriftResponseType;
-                if (osConfigsOptimized.includes(os.name)) {
-                    os.status = AssessmentStatus.OPTIMIZED;
-                }
-                return os;
-            });
-        }
-
-        if (sizingConfigsOptimized.length > 0) {
-            storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
-                const sizing = sizingConfig as ParameterDriftResponseType;
-                if (sizingConfigsOptimized.includes(sizing.name)) {
-                    sizing.status = AssessmentStatus.OPTIMIZED;
-                    sizing.objectsInViolation = [];
-                    sizing.totalObjectsInViolation = 0;
-                }
-                return sizing;
-            });
-        }
-
-        assessmentData.storage = storageAssessmentResponse;
+    if (isEmpty(storageAssessmentResponse) || 'errorMessage' in storageAssessmentResponse) {
+        return assessmentData;
     }
+
+    const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+    const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
+    const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+
+    if (storageConfigsOptimized.length > 0) {
+        const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
+            configArray?.map(config => {
+                if (optimizedConfigs.includes(config.name)) {
+                    config.status = AssessmentStatus.OPTIMIZED;
+                    config.objectsInViolation = [];
+                }
+                return config;
+            });
+
+        storageAssessmentResponse.configuration.volumes = optimizeConfig(
+            storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
+            storageConfigsOptimized
+        );
+
+        storageAssessmentResponse.configuration.luns = optimizeConfig(
+            storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
+            storageConfigsOptimized
+        );
+    }
+
+    if (osConfigsOptimized.length > 0) {
+        storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(osConfig => {
+            const os = osConfig as ParameterDriftResponseType;
+            if (osConfigsOptimized.includes(os.name)) {
+                os.status = AssessmentStatus.OPTIMIZED;
+            }
+            return os;
+        });
+    }
+
+    if (sizingConfigsOptimized.length > 0) {
+        storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
+            const sizing = sizingConfig as ParameterDriftResponseType;
+            if (sizingConfigsOptimized.includes(sizing.name)) {
+                sizing.status = AssessmentStatus.OPTIMIZED;
+                sizing.objectsInViolation = [];
+                sizing.totalObjectsInViolation = 0;
+            }
+            return sizing;
+        });
+    }
+
+    assessmentData.storage = storageAssessmentResponse;
 
     return assessmentData;
 }

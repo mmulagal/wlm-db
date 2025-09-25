@@ -3728,9 +3728,9 @@
         },
         "multipath-io": {
             "error": null,
-            "multipath-io-active": true,
+            "multipath-io-is-active": true,
             "multipath-io-status": "active",
-            "multipath-io-enabled": true,
+            "multipath-io-is-enabled": true,
             "multipath-io-enabled-status": "enabled"
         },
         "host-utilities": {

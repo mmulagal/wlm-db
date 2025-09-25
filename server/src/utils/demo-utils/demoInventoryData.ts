@@ -517,71 +517,89 @@ const PDB_DETAILS = {
     service: 'ip-172-31-48-50.ap-southeast-1.compute.internal:1521'
 };
 
-const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = {
-    'fs-0d5efc3057c4f12cb': {
-        protocol: '',
-        lunRecords: [],
-        isASMManaged: false,
-        volumeMappings: [
-            {
-                ordbsdl: {
-                    isCDB: false,
-                    ontapVolumes: {
-                        REDO_LOGS: [
-                            {
-                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
-                                svmName: 'wlmdb_sqlsvm_1735809893269',
-                                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
-                                volumeName: 'oracleredo2',
-                                lunName: '/vol/wlmdb_oracleredo_1735809893269/lun1',
-                                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7a'
-                            }
-                        ],
-                        DATA_FILES: [
-                            {
-                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
-                                svmName: 'wlmdb_sqlsvm_1735809893269',
-                                volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
-                                volumeName: 'oracledata2',
-                                lunName: '/vol/wlmdb_oracledata_1735809893269/lun2',
-                                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7b'
-                            }
-                        ],
-                        TEMP_FILES: [
-                            {
-                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
-                                svmName: 'wlmdb_sqlsvm_1735809893269',
-                                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
-                                volumeName: 'oracleredo2',
-                                lunName: '/vol/wlmdb_oracletemp_1735809893269/lun3',
-                                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7c'
-                            }
-                        ],
-                        ARCHIVE_LOGS: [
-                            {
-                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
-                                svmName: 'wlmdb_sqlsvm_1735809893269',
-                                volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
-                                volumeName: 'oraclearch2',
-                                lunName: '/vol/wlmdb_oraclearch_1735809893269/lun4',
-                                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d'
-                            }
-                        ],
-                        CONTROL_FILES: [
-                            {
-                                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
-                                svmName: 'wlmdb_sqlsvm_1735809893269',
-                                volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
-                                volumeName: 'oracledata2',
-                                lunName: '/vol/wlmdb_oraclectrl_1735809893269/lun5',
-                                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7e'
-                            }
-                        ]
+const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracleSid: string, isCDB: boolean) => {
+    if (isCDB) {
+        oracleSid = 'PDB1';
+    }
+
+    const mappedVolData = {
+        [fsxId]: {
+            protocol,
+            lunRecords: [],
+            isASMManaged: false,
+            volumeMappings: [
+                {
+                    [oracleSid]: {
+                        isCDB,
+                        ontapVolumes: {}
                     }
                 }
+            ]
+        }
+    };
+
+    const volData = {
+        REDO_LOGS: [
+            {
+                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oracleredo2',
+                lunName: '/vol/wlmdb_oracleredo_1735809893269/lun1',
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7a'
+            }
+        ],
+        DATA_FILES: [
+            {
+                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oracledata2',
+                lunName: '/vol/wlmdb_oracledata_1735809893269/lun2',
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7b'
+            }
+        ],
+        TEMP_FILES: [
+            {
+                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oracleredo2',
+                lunName: '/vol/wlmdb_oracletemp_1735809893269/lun3',
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7c'
+            }
+        ],
+        ARCHIVE_LOGS: [
+            {
+                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oraclearch2',
+                lunName: '/vol/wlmdb_oraclearch_1735809893269/lun4',
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d'
+            }
+        ],
+        CONTROL_FILES: [
+            {
+                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oracledata2',
+                lunName: '/vol/wlmdb_oraclectrl_1735809893269/lun5',
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7e'
             }
         ]
+    };
+
+    if (isCDB) {
+        mappedVolData[fsxId].volumeMappings[0][oracleSid].ontapVolumes = {
+            PDB1: volData
+        };
+    } else {
+        mappedVolData[fsxId].volumeMappings[0][oracleSid].ontapVolumes = volData;
     }
+
+    return mappedVolData;
 };
 
 const ASSESMENT_CONFIG_DATA = {
@@ -2858,9 +2876,9 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         },
         'multipath-io': {
             error: null,
-            'multipath-io-active': true,
+            'multipath-io-is-active': true,
             'multipath-io-status': 'active',
-            'multipath-io-enabled': true,
+            'multipath-io-is-enabled': true,
             'multipath-io-enabled-status': 'enabled'
         },
         'host-utilities': {
