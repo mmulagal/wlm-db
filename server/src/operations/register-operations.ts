@@ -14,7 +14,7 @@ import {
     retryWithDelay
 } from '../utils/utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
-import { SqlServerInstanceInfoType } from '../routes/types/discover.types';
+import { DiscoverOracleInstanceType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import {
     AWS_CLI_LINUX_RELATIVE_PATH,
@@ -86,6 +86,7 @@ import {
 } from './workloads/mssql/ssm-script-utils';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
+    OracleDeploymentTenacy,
     pythonRelativePaths,
     SSM_RUN_SHELL_SCRIPT_DOC,
     SSM_RUN_SHELL_SCRIPT_DOC_VERSION
@@ -1329,21 +1330,15 @@ async function registerOracleInstancesData(
         status: ''
     };
 
-    let {
-        resourceId,
-        dbInst,
-        oracleServerInstances,
-        node1InstanceId,
-        hostJobId,
-        awsAccountId,
-        isResourceTobeCreated,
-        ec2HostName
-    } = oracleInstanceConfig;
+    const { resourceId, dbInst, oracleServerInstances, node1InstanceId, hostJobId, awsAccountId } =
+        oracleInstanceConfig;
 
     let instanceJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
     let instanceErrorMessage = '';
-    const oracleInstanceInfo = oracleServerInstances?.find(
-        (oracleInst: { instanceName: string }) => oracleInst.instanceName === dbInst
+
+    const { storageInfo, oracleInstanceInfo, storageProtocols } = extractOracleStorageInfo(
+        oracleServerInstances || [],
+        dbInst
     );
 
     if (!oracleInstanceInfo || !oracleInstanceInfo.instanceId || !oracleInstanceInfo.instanceType) {
@@ -1357,20 +1352,7 @@ async function registerOracleInstancesData(
 
     try {
         // ToDo: Add oracle server auth field here
-        const { instanceId, storage } = oracleInstanceInfo;
-        const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
-        const storageProtocols = [
-            ...new Set(
-                storage
-                    ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
-                    .flatMap((elem: any) =>
-                        Array.isArray(elem.mountDetails)
-                            ? elem.mountDetails.map((mountDetail: any) => mountDetail.protocol)
-                            : []
-                    )
-                    .filter(Boolean) // remove undefined/null
-            )
-        ];
+        const { instanceId } = oracleInstanceInfo;
 
         // Combine all failure conditions for early exit
         let failureReason: string | undefined;
@@ -1394,39 +1376,16 @@ async function registerOracleInstancesData(
                 throw new Error(`Error while verifying or adding FSx ONTAP credentials: ${error.message}`);
             }
 
-            if (isResourceTobeCreated) {
-                await createResource(accountId, {
-                    resourceId,
-                    credentialsId,
-                    storageType: STORAGE_TYPE.FSXN,
-                    resourceName: ec2HostName,
-                    cloudProviderAccountId: awsAccountId!,
-                    cloudProviderName: CloudProviders.AWS,
-                    resourceType: RESOURCESTYPE.ORACLE,
-                    coRelationId: storageInfo.id,
-                    region,
-                    metadata: {
-                        creationDate: Date.now(),
-                        node1InstanceId,
-                        oracleDeploymentType: oracleInstanceInfo.instanceType,
-                        source: RESOURCE_SOURCE.DISCOVER,
-                        fsxSvmId: storageInfo.svmId,
-                        storageProtocol: storageProtocols ? storageProtocols.join() : ''
-                    }
-                });
-                isResourceTobeCreated = false;
-            }
-
             tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo.id, node1InstanceId);
 
-            const dbInstanceName = oracleInstanceInfo.instanceName;
+            const { instanceName: databaseInstanceName, instanceType: oracleDeploymentType } = oracleInstanceInfo;
 
             await upsertDatabaseInstance(accountId, {
                 credentialsId,
                 resourceId,
                 region,
                 databaseInstanceId: instanceId,
-                databaseInstanceName: dbInstanceName,
+                databaseInstanceName,
                 fsxnIds: storageInfo.id,
                 isDefault: false, // Oracle instances do not have a default instance concept
                 source: RESOURCE_SOURCE.DISCOVER,
@@ -1435,7 +1394,7 @@ async function registerOracleInstancesData(
                 storageProtocol: storageProtocols ? storageProtocols.join() : '',
                 databaseType: DatabaseTypes.ORACLE,
                 metaData: {
-                    oracleDeploymentType: oracleInstanceInfo.instanceType
+                    oracleDeploymentType: oracleDeploymentType as OracleDeploymentTenacy
                 }
             });
 
@@ -1552,7 +1511,7 @@ async function registerOracleInstance(
         const [{ databaseInstanceDetails: oracleServerInstances } = {}] = discoverDetails.items || [];
         resourceId = isDemoFlow && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
 
-        let isResourceTobeCreated = !(isDemoFlow && databaseHostId);
+        let isResourceToBeCreated = !(isDemoFlow && databaseHostId);
         let alreadyRegisteredDatabaseInstances: DatabaseInstance[] = [];
 
         if (!isDemoFlow || !databaseHostId) {
@@ -1563,15 +1522,42 @@ async function registerOracleInstance(
                 resourceId,
                 credentialsId,
                 region,
-                includeDatabaseInstances: true
+                includeDatabaseInstances: true,
+                resourceType: [RESOURCESTYPE.ORACLE]
             });
-            isResourceTobeCreated = !resourceDetails;
+            isResourceToBeCreated = !resourceDetails;
             if (resourceDetails && Array.isArray(resourceDetails.database_instances)) {
                 alreadyRegisteredDatabaseInstances = resourceDetails.database_instances;
             }
         }
 
         await installPythonModules(accountId, region, credentialsId, ec2InstanceId, hostJobId);
+
+        if (isResourceToBeCreated) {
+            const { storageInfo, oracleInstanceInfo, storageProtocols } = extractOracleStorageInfo(
+                oracleServerInstances || [],
+                databaseInstanceNames[0]
+            );
+            await createResource(accountId, {
+                resourceId,
+                credentialsId,
+                storageType: STORAGE_TYPE.FSXN,
+                resourceName: ec2HostName,
+                cloudProviderAccountId: awsAccountId!,
+                cloudProviderName: CloudProviders.AWS,
+                resourceType: RESOURCESTYPE.ORACLE,
+                coRelationId: storageInfo?.id,
+                region,
+                metadata: {
+                    creationDate: Date.now(),
+                    node1InstanceId,
+                    oracleDeploymentType: oracleInstanceInfo?.instanceType,
+                    source: RESOURCE_SOURCE.DISCOVER,
+                    fsxSvmId: storageInfo?.svmId,
+                    storageProtocol: storageProtocols ? storageProtocols.join() : ''
+                }
+            });
+        }
 
         instanceManagementStatus = await Promise.all(
             databaseInstanceNames.map(
@@ -1583,7 +1569,6 @@ async function registerOracleInstance(
                         node1InstanceId,
                         hostJobId,
                         awsAccountId,
-                        isResourceTobeCreated,
                         ec2HostName
                     };
                     return registerOracleInstancesData(
@@ -1628,6 +1613,30 @@ async function registerOracleInstance(
         };
         await updateParentJobStatus(accountId, hostJobId, false, errorMessage, jobMetadata);
     }
+}
+
+function extractOracleStorageInfo(oracleServerInstances: DiscoverOracleInstanceType[], databaseInstanceName: string) {
+    logger.debug('Extract Oracle storage info', { databaseInstanceName });
+
+    const oracleInstanceInfo = oracleServerInstances?.find(
+        (oracleInst: { instanceName: string }) => oracleInst.instanceName === databaseInstanceName
+    );
+    const { storage } = oracleInstanceInfo || {};
+    const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
+    const storageProtocols = [
+        ...new Set(
+            compact(
+                storage
+                    ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
+                    .flatMap((elem: any) =>
+                        Array.isArray(elem.mountDetails)
+                            ? elem.mountDetails.map((mountDetail: any) => mountDetail.protocol)
+                            : []
+                    )
+            )
+        )
+    ];
+    return { storageInfo, oracleInstanceInfo, storageProtocols };
 }
 
 async function installPythonModules(

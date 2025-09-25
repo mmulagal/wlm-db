@@ -357,74 +357,77 @@ async function isFsxnAwsBackupEnabled(
         activeNodeInstanceId,
         accountId
     });
-
-    if (!isEmpty(volumeUuids)) {
-        const { volumeIds, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
-            credentialsId,
-            region,
-            fileSystemId,
-            volumeUuids,
-            accountId
-        );
-        let volumeDBMapWithBackupFlag;
-        const backups: Backup[] = [];
-        if (!isEmpty(volumeIds)) {
-            const volumeChunks = divideArrayIntoChunks(volumeIds, 20);
-            await Promise.all(
-                volumeChunks.map(
-                    throat(3, async volumeIdsChunk => {
-                        const input: DescribeBackupsCommandInput = {
-                            Filters: [
-                                {
-                                    Name: 'volume-id',
-                                    Values: volumeIdsChunk
-                                }
-                            ]
-                        };
-                        const { Backups } = await describeFSxBackups(credentialsId, region, input, accountId, {
-                            useCache: true
-                        });
-                        backups.push(...Backups!);
-                    })
-                )
+    try {
+        if (!isEmpty(volumeUuids)) {
+            const { volumeIds, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
+                credentialsId,
+                region,
+                fileSystemId,
+                volumeUuids,
+                accountId
             );
+            let volumeDBMapWithBackupFlag;
+            const backups: Backup[] = [];
+            if (!isEmpty(volumeIds)) {
+                const volumeChunks = divideArrayIntoChunks(volumeIds, 20);
+                await Promise.all(
+                    volumeChunks.map(
+                        throat(3, async volumeIdsChunk => {
+                            const input: DescribeBackupsCommandInput = {
+                                Filters: [
+                                    {
+                                        Name: 'volume-id',
+                                        Values: volumeIdsChunk
+                                    }
+                                ]
+                            };
+                            const { Backups } = await describeFSxBackups(credentialsId, region, input, accountId, {
+                                useCache: true
+                            });
+                            backups.push(...Backups!);
+                        })
+                    )
+                );
 
-            // Update the volumeDBMap to mark the volumes that have backups.
-            // And the Backup is latest by 2 days
-            const volumeUuidsInBackups: string[] = [];
-            const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
-            const now = new Date();
+                // Update the volumeDBMap to mark the volumes that have backups.
+                // And the Backup is latest by 2 days
+                const volumeUuidsInBackups: string[] = [];
+                const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+                const now = new Date();
 
-            backups?.forEach(backup => {
-                const volumeId = backup.Volume?.VolumeId;
-                const volumeUuid = volumeId && uuidVolumeIdMap[volumeId];
-                if (volumeUuid && uuidVolumeIdMap[volumeId]) {
-                    if (backup.CreationTime) {
-                        const backupTime = new Date(backup.CreationTime);
-                        const isLatest = now.getTime() - backupTime.getTime() < twoDaysInMs;
-                        if (isLatest && !volumeUuidsInBackups.includes(volumeUuid)) {
-                            volumeUuidsInBackups.push(volumeUuid);
-                        } else if (!isLatest) {
-                            logger.debug('Found old backup', volumeUuid, backup.BackupId, backupTime);
+                backups?.forEach(backup => {
+                    const volumeId = backup.Volume?.VolumeId;
+                    const volumeUuid = volumeId && uuidVolumeIdMap[volumeId];
+                    if (volumeUuid && uuidVolumeIdMap[volumeId]) {
+                        if (backup.CreationTime) {
+                            const backupTime = new Date(backup.CreationTime);
+                            const isLatest = now.getTime() - backupTime.getTime() < twoDaysInMs;
+                            if (isLatest && !volumeUuidsInBackups.includes(volumeUuid)) {
+                                volumeUuidsInBackups.push(volumeUuid);
+                            } else if (!isLatest) {
+                                logger.debug('Found old backup', volumeUuid, backup.BackupId, backupTime);
+                            }
                         }
                     }
+                });
+
+                if (volumeDBMap) {
+                    // This function maps the volumes in the volumeDBMap to their backup status,
+                    // indicating whether they have backups or not. {master: true, model: true, msdb: true};
+                    volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
+                        const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
+                        acc[volume.databaseName] = fsxbackup;
+                        return acc;
+                    }, {});
                 }
-            });
 
-            if (volumeDBMap) {
-                // This function maps the volumes in the volumeDBMap to their backup status,
-                // indicating whether they have backups or not. {master: true, model: true, msdb: true};
-                volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
-                    const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
-                    acc[volume.databaseName] = fsxbackup;
-                    return acc;
-                }, {});
+                logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
+                return { volumeDBMapWithBackupFlag, volumeUuidsInBackups };
             }
-
-            logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
-            return { volumeDBMapWithBackupFlag, volumeUuidsInBackups };
+            return { volumeDBMapWithBackupFlag: {}, volumeUuidsInBackups: [] };
         }
-        return { volumeDBMapWithBackupFlag: {}, volumeUuidsInBackups: [] };
+    } catch (error) {
+        logger.error(`Error while fetching FSX for NetApp ONTAP AWS backup enabled status: ${error}`);
     }
 }
 
@@ -892,8 +895,7 @@ async function isInstanceAppConsistentBackupEnabled(
 
         return appConsistentBackupMap;
     } catch (error) {
-        const errorMsg = `Error while fetching app consistent backup details: ${error}`;
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+        logger.error(`Error while fetching app consistent backup details: ${error}`);
     }
 }
 

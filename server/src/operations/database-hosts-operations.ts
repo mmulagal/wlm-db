@@ -203,9 +203,7 @@ async function getProtectionStatus(
             ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
         ]);
 
-        const awsBackup = protectionResponse ? protectionResponse.awsBackup : {};
-        const ontapBackup = protectionResponse ? protectionResponse.ontapBackup : {};
-        const crrBackup = protectionResponse ? protectionResponse.crrBackup : {};
+        const { awsBackup = {}, ontapBackup = {}, crrBackup = {} } = protectionResponse || {};
 
         const commonResult = instanceNames.reduce((acc, instName) => {
             acc[instName] = {
@@ -1181,11 +1179,7 @@ async function getDatabasesV2(
     }
 }
 
-async function fetchCrrBackupDetails(
-    instanceDetails: DatabaseInstance[],
-    volumeRecords: VolumeRecord[],
-    volumeDBMap: any
-) {
+function fetchCrrBackupDetails(instanceDetails: DatabaseInstance[], volumeRecords: VolumeRecord[], volumeDBMap: any) {
     logger.info('Fetching CRR backup details', {
         instanceNames: instanceDetails.map(instance => instance?.database_instance_name),
         volumeRecordsLength: volumeRecords?.length
@@ -1194,13 +1188,12 @@ async function fetchCrrBackupDetails(
         logger.warn('Instance details array is empty. Returning an empty mapping.');
         return [];
     }
-    const { crrConfigData } = instanceDetails[0];
-    const crrDetails = crrConfigData?.crrDetails || [];
+    const [{ crrConfigData: { crrDetails } = {} }] = instanceDetails;
     const crrMapping = Object.entries(volumeDBMap).map(([, dbMap]: [string, any]) => {
         const { databaseName, ontapVolumeuuid: volumeUuid } = dbMap;
-        const volumeRecord = volumeRecords.find(vr => vr.uuid === volumeUuid);
+        const { name: volumeNameFromVolumeRecords } = volumeRecords.find(vr => vr.uuid === volumeUuid) || {};
         const crrDetail = Array.isArray(crrDetails)
-            ? crrDetails.find((detail: { volumeName: string }) => detail.volumeName === volumeRecord?.name)
+            ? crrDetails.find(({ volumeName }: { volumeName: string }) => volumeName === volumeNameFromVolumeRecords)
             : undefined;
         return {
             databaseName,

@@ -274,7 +274,7 @@ const DiscoverPgSqlResponseBody = Type.Object({
     )
 });
 
-const oracleDatabaseInstance = Type.Object({
+const OracleDatabaseInstance = Type.Object({
     instanceName: Type.String({ description: 'Oracle instance name' }),
     instanceId: Type.String({ description: 'Oracle instance ID' }),
     instanceState: Type.String({
@@ -390,7 +390,7 @@ const DiscoverOracleResponseInfo = Type.Intersect([
                 enum: ['Standalone', 'HA']
             })
         ),
-        databaseInstanceDetails: Type.Optional(Type.Array(oracleDatabaseInstance)),
+        databaseInstanceDetails: Type.Optional(Type.Array(OracleDatabaseInstance)),
         error: Type.Optional(Type.String({ description: 'Error details, if any.' }))
     })
 ]);
@@ -409,7 +409,7 @@ type DiscoverPgSqlResponseBodyType = Static<typeof DiscoverPgSqlResponseBody>;
 type DiscoverPgSqlResponseType = Static<typeof DiscoverPgSqlResponseInfo>;
 type PgSqlServerInstaceType = Static<typeof pgSqlServerInstance>;
 type pgsqlNodeDetailsType = Static<typeof pgSqlServerNode>;
-type DiscoverOracleInstanceType = Static<typeof oracleDatabaseInstance>;
+type DiscoverOracleInstanceType = Static<typeof OracleDatabaseInstance>;
 type DiscoverOracleResponseBodyType = Static<typeof DiscoverOracleResponseBody>;
 type DiscoverOracleResponseType = Static<typeof DiscoverOracleResponseInfo>;
 

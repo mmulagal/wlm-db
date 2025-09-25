@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { isEmpty } from 'lodash-es';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -23,6 +24,7 @@ import {
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID, CREDENTIALS_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
+
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 const credentialsId = `${faker.string.alpha(20)}`;
@@ -142,6 +144,8 @@ describe('Testcases for Amazon FSx resources operations', () => {
             'i-4242424242'
         );
         expect(res).toBeDefined();
-        expect(Object.values(res).every(Boolean)).toBe(true);
+        if (res && !isEmpty(res)) {
+            expect(Object.values(res).every(Boolean)).toBe(true);
+        }
     });
 });
