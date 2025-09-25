@@ -123,7 +123,7 @@ export const handleSingleAction = (
     selectedDatabaseInstance: string,
     selectedGwInstanceCredId: string,
     selectedGwInstanceRegionId: string,
-    dismissMssqlAssessment: any,
+    dismissAssessment: any,
     setDismissAction: (value: boolean) => void,
     handleDismissResponse: (res: any, action: string) => void,
     handleDismissError: (err: any) => void
@@ -146,7 +146,7 @@ export const handleSingleAction = (
         ]
     };
 
-    dismissMssqlAssessment({ payload })
+    dismissAssessment({ payload })
         .then((res: any) => {
             setDismissAction(false);
             handleDismissResponse(res, action);
@@ -206,7 +206,8 @@ export const handleDismissResponse = (
     fullCardData: any,
     dispatch: any,
     addSuccessNotification: (action: string, cardName: string, dispatch: any, t: any) => void,
-    t: TFunction
+    t: TFunction,
+    formatDataFunction?: (dispatch: any, data?: any, showDismissedView?: boolean) => void
 ) => {
     const dismissedConfigs = res?.data?.dismissedConfigurations;
     const databaseHosts = dismissedConfigs?.[0]?.databaseHosts;
@@ -233,12 +234,20 @@ export const handleDismissResponse = (
 
         if (!targetId || !updatedState) return;
 
+        // Update configuration state for the instance
         const newData =
             updateConfigStatePerInstance(updatedState, targetId, res?.data?.dismissedConfigurations?.[0]?.endTime) ||
             {};
+        // Set drift assessment data (used by both MSSQL and Oracle)
         dispatch(setDriftAssessmentData(newData));
-        // @ts-ignore
-        formatGetWellData(dispatch, newData, showDismissedConfigurations);
+
+        // Use the provided format function, or default to formatGetWellData
+        if (formatDataFunction) {
+            formatDataFunction(dispatch, newData, showDismissedConfigurations);
+        } else {
+            // @ts-ignore
+            formatGetWellData(dispatch, newData, showDismissedConfigurations);
+        }
 
         // Below code is to reset dashboard level assessment value also
         const perObj = {

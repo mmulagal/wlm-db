@@ -13,12 +13,14 @@ export const PostponeInfo = ({
     configKey,
     getPostponeInfo,
     translation,
-    placement = 'bottom'
+    placement = 'bottom',
+    customStyles
 }: {
     configKey: string;
     getPostponeInfo: (key: string) => any;
     translation: TFunction;
     placement?: string;
+    customStyles?: any;
 }) => {
     const postponeInfo = getPostponeInfo(configKey);
 
@@ -26,15 +28,18 @@ export const PostponeInfo = ({
         return null;
     }
 
+    // Use custom styles if provided, otherwise fallback to default styles
+    const componentStyles = customStyles || styles;
+
     return (
-        <div className={styles.postponeInfo}>
-            <div className={styles.postponeContent}>
-                <DsTypography variant="Regular_14" className={styles.postponeTypography}>
-                    <Postpone className={styles.postponeIcon} />
+        <div className={componentStyles.postponeInfo}>
+            <div className={componentStyles.postponeContent}>
+                <DsTypography variant="Regular_14" className={componentStyles.postponeTypography}>
+                    <Postpone className={componentStyles.postponeIcon} />
                     {translation('databases.well-architect.postponed-for-30-days')}
                 </DsTypography>
             </div>
-            <div className={styles.postponeTooltip}>
+            <div className={componentStyles.postponeTooltip}>
                 {/* @ts-ignore */}
                 <TooltipInfo placement={placement} trigger="hover">
                     <div>
@@ -56,25 +61,30 @@ export const ActivatingInfo = ({
     configKey,
     cardData,
     translation,
-    showFullContent = true
+    showFullContent = true,
+    customStyles
 }: {
     configKey: string;
     cardData: any;
     translation: TFunction;
     showFullContent?: boolean;
+    customStyles?: any;
 }) => {
     const configState = cardData[configKey]?.dismissedObj?.configState;
     if (configState !== CONFIG_STATES.ACTIVATING) {
         return null;
     }
 
+    // Use custom styles if provided, otherwise fallback to default styles
+    const componentStyles = customStyles || styles;
+
     return (
-        <div className={styles.activatingInfo}>
-            <div className={styles.activatingContent}>
-                <DsTypography variant="Regular_14" className={styles.activatingTypography}>
-                    <Activating className={styles.activatingIcon} />
-                    <span className={styles.textContent}>
-                        <span className={styles.boldText}>
+        <div className={componentStyles.activatingInfo}>
+            <div className={componentStyles.activatingContent}>
+                <DsTypography variant="Regular_14" className={componentStyles.activatingTypography}>
+                    <Activating className={componentStyles.activatingIcon} />
+                    <span className={componentStyles.textContent}>
+                        <span className={componentStyles.boldText}>
                             {translation('databases.well-architect.dismiss.activating-info-content1')}
                         </span>
                         {showFullContent && (
@@ -323,8 +333,13 @@ export const areAllHaSubConfigurationsActivating = (driftAssessmentData: any): b
     return areAllSubConfigurationsActivating(haConfigs, ASSESSMENT_CONFIG_NAMES.HIGH_AVAILABILITY);
 };
 
-// Helper function to check if a table row configuration is in ACTIVATING state
-export const isTableRowConfigurationActivating = (rowData: any, cardData: any, driftAssessmentData?: any): boolean => {
+// Helper function to check if a table row configuration is in specific state(s)
+export const isTableRowConfigurationInState = (
+    rowData: any,
+    cardData: any,
+    targetStates: string[],
+    driftAssessmentData?: any
+): boolean => {
     const configName = rowData?.name;
     const configType = rowData?.type;
 
@@ -349,7 +364,7 @@ export const isTableRowConfigurationActivating = (rowData: any, cardData: any, d
         // Find the specific configuration by technical name
         const specificConfig = dismissedConfigs.find((config: any) => config.configurationName === technicalName);
 
-        return specificConfig?.configState === CONFIG_STATES.ACTIVATING;
+        return targetStates.includes(specificConfig?.configState);
     }
 
     // Check for MSSQL High Availability sub-configurations
@@ -365,12 +380,17 @@ export const isTableRowConfigurationActivating = (rowData: any, cardData: any, d
 
         const specificConfig = haConfigs.find((config: any) => config.configurationName === technicalName);
 
-        return specificConfig?.configState === CONFIG_STATES.ACTIVATING;
+        return targetStates.includes(specificConfig?.configState);
     }
 
     // Check for regular configurations using their config key
     const configKey = rowData?.id || rowData?.configKey;
-    if (configKey && cardData[configKey]?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING) {
+    if (configKey && targetStates.includes(cardData[configKey]?.dismissedObj?.configState)) {
+        return true;
+    }
+
+    // Check individual row dismissed state
+    if (targetStates.includes(rowData?.dismissedObj?.configState)) {
         return true;
     }
 
@@ -381,9 +401,98 @@ export const isTableRowConfigurationActivating = (rowData: any, cardData: any, d
         const mappedConfigName = getConfigurationTechnicalName(configKey, 'sizing');
         if (mappedConfigName) {
             const specificConfig = sizingConfigs.find((config: any) => config.configurationName === mappedConfigName);
-            return specificConfig?.configState === CONFIG_STATES.ACTIVATING;
+            return targetStates.includes(specificConfig?.configState);
         }
     }
 
     return false;
+};
+
+export const isTableRowConfigurationActivating = (rowData: any, cardData: any, driftAssessmentData?: any): boolean => isTableRowConfigurationInState(rowData, cardData, [CONFIG_STATES.ACTIVATING], driftAssessmentData);
+
+// Helper function to check if all configurations are dismissed (dismissed or postponed)
+export const checkAllConfigurationsDismissed = (cardData: any, assessmentData?: any): boolean => {
+    if (!cardData) {
+        return false;
+    }
+
+    let totalConfigs = 0;
+    let dismissedConfigs = 0;
+
+    // Check standard configurations (using dismissedObj)
+    Object.keys(cardData).forEach((key: string) => {
+        if (key === 'deploymentType') return;
+
+        // Skip MSSQL High Availability for non-FCI instances
+        const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
+        if (isMSSQLHighAvailability && cardData?.deploymentType !== GENERAL.FCI) {
+            return;
+        }
+
+        totalConfigs++;
+        const configState = cardData[key]?.dismissedObj?.configState;
+        if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
+            dismissedConfigs++;
+        }
+    });
+
+    // Check storage sizing configurations (they use a different approach)
+    if (assessmentData?.dismissedConfigurations?.storage?.sizing) {
+        const sizingConfigs = assessmentData.dismissedConfigurations.storage.sizing;
+        const storageSizingKeys = [
+            'transaction_log_drive_size',
+            'tempdb_drive_size',
+            'file_system_headroom',
+            'storage_tier'
+        ];
+
+        storageSizingKeys.forEach(cardKey => {
+            const mappedConfigName = getConfigurationTechnicalName(cardKey, 'sizing');
+            if (mappedConfigName) {
+                const specificConfig = sizingConfigs.find(
+                    (config: any) => config.configurationName === mappedConfigName
+                );
+                if (specificConfig) {
+                    totalConfigs++;
+                    if (
+                        specificConfig.configState === CONFIG_STATES.DISMISSED ||
+                        specificConfig.configState === CONFIG_STATES.POSTPONED
+                    ) {
+                        dismissedConfigs++;
+                    }
+                }
+            }
+        });
+    }
+
+    // Check sub-configurations for OS/ONTAP and High Availability cards
+    if (assessmentData?.dismissedConfigurations) {
+        const dismissedConfigurationsData = assessmentData.dismissedConfigurations;
+
+        // Check ONTAP/OS sub-configurations
+        const storageSubConfigs = [
+            ...(dismissedConfigurationsData.storage?.configuration?.volumes || []),
+            ...(dismissedConfigurationsData.storage?.configuration?.luns || []),
+            ...(dismissedConfigurationsData.storage?.configuration?.os || [])
+        ];
+
+        storageSubConfigs.forEach((config: any) => {
+            totalConfigs++;
+            if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                dismissedConfigs++;
+            }
+        });
+
+        // Check High Availability sub-configurations
+        const haSubConfigs = dismissedConfigurationsData.highAvailability || [];
+        haSubConfigs.forEach((config: any) => {
+            totalConfigs++;
+            if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                dismissedConfigs++;
+            }
+        });
+    }
+
+    // Return true only if there are configurations and ALL of them are dismissed
+    return totalConfigs > 0 && dismissedConfigs === totalConfigs;
 };

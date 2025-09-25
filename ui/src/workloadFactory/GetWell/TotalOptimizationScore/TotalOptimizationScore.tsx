@@ -2,12 +2,18 @@ import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as WellArchitect } from '../../../assets/well-architect.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
+import { ReactComponent as AllDismissedConfiguration } from '../../../assets/All_Dismissed_Configuration.svg';
 import styles from './TotalOptimizationScore.module.scss';
 import OptimizationChart from './OptimizationChart/OptimizationChart';
 
 import { GENERAL } from '../../../utils/appConstants';
 
-const TotalOptimizationScore = ({ loading, optimizationBreakDown, isAssessmentAvailable }: any) => {
+const TotalOptimizationScore = ({
+    loading,
+    optimizationBreakDown,
+    isAssessmentAvailable,
+    allConfigurationsDismissed
+}: any) => {
     const { t } = useTranslation();
 
     return (
@@ -19,7 +25,38 @@ const TotalOptimizationScore = ({ loading, optimizationBreakDown, isAssessmentAv
                 {loading && <DsFlashingDotsLoader />}
             </div>
 
-            {!loading && Number(optimizationBreakDown?.total?.percent) === 100 && (
+            {!loading && allConfigurationsDismissed && (
+                <div className={styles.mainSection}>
+                    <div className={styles.chartSection}>
+                        <AllDismissedConfiguration />
+                    </div>
+                    <div className={styles.text}>
+                        <div className={styles.firstBlock}>
+                            <DsTypography variant="Semibold_16">
+                                {t('databases.well-architect.dismiss.all-configurations-dismissed-title')}
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles.secondBlockDismissed}>
+                            <DsTypography variant="Regular_14">
+                                <span>
+                                    {t(
+                                        'databases.well-architect.dismiss.all-configurations-dismissed-description-content-1'
+                                    )}
+                                </span>
+                                <br />
+                                <span className={styles.secondBlockDismissedSectionTwo}>
+                                    {t(
+                                        'databases.well-architect.dismiss.all-configurations-dismissed-description-content-2'
+                                    )}
+                                </span>
+                            </DsTypography>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {!loading && !allConfigurationsDismissed && Number(optimizationBreakDown?.total?.percent) === 100 && (
                 <div className={styles.perfectScore}>
                     <div className={styles.image}>
                         <WellArchitect />
@@ -41,7 +78,7 @@ const TotalOptimizationScore = ({ loading, optimizationBreakDown, isAssessmentAv
                 </div>
             )}
 
-            {(loading || Number(optimizationBreakDown?.total?.percent) !== 100) && (
+            {(loading || (!allConfigurationsDismissed && Number(optimizationBreakDown?.total?.percent) !== 100)) && (
                 <div className={styles.mainSection}>
                     <div className={styles.chartSection}>
                         <OptimizationChart hostData={optimizationBreakDown?.total} />

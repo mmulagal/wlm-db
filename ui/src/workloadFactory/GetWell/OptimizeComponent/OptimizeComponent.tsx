@@ -11,9 +11,17 @@ type OptimizeComponentType = {
     data?: { optimized?: number; total?: number; hasDismissedOrPostponed?: boolean };
     image: any;
     isComingSoon: boolean;
+    allConfigurationsDismissed?: boolean;
 };
 
-const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeComponentType) => {
+const OptimizeComponent = ({
+    text,
+    value,
+    data,
+    image,
+    isComingSoon,
+    allConfigurationsDismissed
+}: OptimizeComponentType) => {
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const isAssessmentAvailable = useAppSelector(state => state.getWellOptimize.isAssessmentAvailable);
 
@@ -24,7 +32,7 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
             <div className={styles.rightSection}>
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
-                        {!isAssessmentAvailable && !loading ? (
+                        {(!isAssessmentAvailable && !loading) || allConfigurationsDismissed ? (
                             <DsTypography variant="Semibold_14" isDisabled>
                                 {text}
                             </DsTypography>
@@ -37,13 +45,13 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
 
                     <div className={styles.optimizeText}>
                         {!isComingSoon &&
-                            (!isAssessmentAvailable && !loading ? (
+                            ((!isAssessmentAvailable && !loading) || allConfigurationsDismissed ? (
                                 <DsTypography
                                     variant="Regular_14"
                                     style={{ lineHeight: 'unset', marginTop: '5px' }}
                                     isDisabled
                                 >
-                                    {GENERAL.NOT_AVAILABLE}
+                                    {allConfigurationsDismissed ? 'Dismissed' : GENERAL.NOT_AVAILABLE}
                                 </DsTypography>
                             ) : (
                                 <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
@@ -61,10 +69,14 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
                 </div>
 
                 <div className={styles.bottomSection}>
-                    <GetWellBar barValue={value} isComingSoon={isComingSoon} />
+                    <GetWellBar
+                        barValue={value}
+                        isComingSoon={isComingSoon}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
+                    />
                 </div>
 
-                {!isComingSoon && (
+                {!isComingSoon && !allConfigurationsDismissed && (
                     <div className={styles.bottomTextSection}>
                         {!loading && !isAssessmentAvailable ? (
                             <div style={{ height: '24px' }} />

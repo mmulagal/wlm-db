@@ -49,6 +49,20 @@
             padding: 32px 40px 0 40px;
         }
 
+        .text {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+
+            .secondBlockDismissed {
+                margin-left: 24px;
+
+                .secondBlockDismissedSectionTwo {
+                    margin-left: 40px;
+                }
+            }
+        }
+
         .tileSection {
             display: flex;
             gap: 24px;

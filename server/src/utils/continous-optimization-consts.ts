@@ -387,7 +387,7 @@ const ASSESSMENT_CONFIGS = {
     rssConfig: 'rss-config',
     snapshotPolicy: 'snapshot-policy',
     crr: 'crr',
-    awsBackup: 'scheduled-fsx-for-ontap-backups',
+    awsBackup: 'backup-configuration',
     clone: 'clone-management',
     mtuAlignment: 'mtu-alignment',
     highAvailability: {
@@ -486,7 +486,7 @@ const HOST_LEVEL_CONFIGURATIONS = [
     'host-os-patch',
     'rss-config',
     'compute-rightsizing',
-    'scheduled-fsx-for-ontap-backups',
+    'backup-configuration',
     'mtu-alignment',
     'heartbeat-settings',
     'cluster-quorum'

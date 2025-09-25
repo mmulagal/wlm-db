@@ -11,7 +11,7 @@ import OptimizeComponent from '../OptimizeComponent/OptimizeComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
-const OptimizationBreakdown = () => {
+const OptimizationBreakdown = ({ allConfigurationsDismissed }: { allConfigurationsDismissed?: boolean }) => {
     const { t } = useTranslation();
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const optimizationBreakDown = useAppSelector(state => state.getWellOptimize.optimizationBreakDown);
@@ -62,6 +62,7 @@ const OptimizationBreakdown = () => {
                         text="Storage"
                         image={<Storage />}
                         isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
                     />
                     <OptimizeComponent
                         value={optimizationBreakDown?.compute?.percent || 0}
@@ -69,6 +70,7 @@ const OptimizationBreakdown = () => {
                         text="Compute"
                         image={<Compute />}
                         isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
                     />
                     <OptimizeComponent
                         value={optimizationBreakDown?.application?.percent || 0}
@@ -76,6 +78,7 @@ const OptimizationBreakdown = () => {
                         text={GENERAL.APPLICATION}
                         image={<Applications />}
                         isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
                     />
                 </div>
 
@@ -86,6 +89,7 @@ const OptimizationBreakdown = () => {
                         text="Resiliency"
                         image={<Resiliency />}
                         isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
                     />
                     <OptimizeComponent
                         value={optimizationBreakDown?.cloning?.percent || 0}
@@ -93,6 +97,7 @@ const OptimizationBreakdown = () => {
                         text="Cloning"
                         image={<Cloning />}
                         isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
                     />
                 </div>
             </div>

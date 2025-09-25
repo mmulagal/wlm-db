@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
@@ -20,6 +20,7 @@ import {
     calculatePostponeInfo,
     PostponeInfo,
     isTableRowConfigurationActivating,
+    isTableRowConfigurationInState,
     ActivatingInfo
 } from '../GetWellHelper';
 import { GENERAL } from '../../../utils/appConstants';
@@ -399,8 +400,14 @@ const RecommendationTable = ({
         [showDismissedConfigurations]
     );
 
-    // Function to check if row should be disabled until the next analysis is completed for Activating Status
-    const shouldApplyDisabledRowStyle = (rowData: any) => isRowConfigurationActivating(rowData);
+    // Function to check if row should be disabled (activating, dismissed, or postponed)
+    const shouldApplyDisabledRowStyle = (rowData: any) =>
+        isTableRowConfigurationInState(
+            rowData,
+            fullCardData,
+            [CONFIG_STATES.ACTIVATING, CONFIG_STATES.DISMISSED, CONFIG_STATES.POSTPONED],
+            driftAssessmentData
+        );
 
     // Common cell wrapper component for consistent styling and click handling
     const CellWrapper = ({
@@ -467,7 +474,8 @@ const RecommendationTable = ({
             fullCardData,
             dispatch,
             addSuccessNotification,
-            t
+            t,
+            formatGetWellData
         );
     };
 

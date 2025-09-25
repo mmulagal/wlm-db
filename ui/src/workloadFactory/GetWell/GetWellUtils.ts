@@ -1884,6 +1884,12 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
     return nameMapping[displayName] || displayName;
 };
 
+// Helper function to map technical configuration names to display names
+export const getConfigurationDisplayName = (technicalName: string): string => 
+    // Use existing GETWELL_CONFIG mappings which already contain the technical to display name mappings
+     GETWELL_CONFIG?.[technicalName] || technicalName
+;
+
 // Helper function to filter individual ONTAP/OS configurations based on dismissed state
 export const filterIndividualOntapOsConfigurations = (
     tableData: any[],
@@ -2765,7 +2771,7 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
                     dismissedOrPostponedStorage++;
                     hasDismissedOrPostponedStorage = true;
-                    dismissedStorageIds.push(config.configurationName);
+                    dismissedStorageIds.push(getConfigurationDisplayName(config.configurationName));
                 }
             });
         }
@@ -2786,7 +2792,7 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
                     dismissedOrPostponedStorage++;
                     hasDismissedOrPostponedStorage = true;
-                    dismissedStorageIds.push(config.configurationName);
+                    dismissedStorageIds.push(getConfigurationDisplayName(config.configurationName));
                 }
             });
         }
@@ -2807,7 +2813,7 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
                     dismissedOrPostponedResiliency++;
                     hasDismissedOrPostponedResiliency = true;
-                    dismissedResiliencyIds.push(config.configurationName);
+                    dismissedResiliencyIds.push(getConfigurationDisplayName(config.configurationName));
                 }
             });
         }
@@ -4541,7 +4547,22 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
     const state = store.getState();
     const { driftAssessmentData } = state.getWellOptimize;
     const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size'];
-    const storageLayoutMap: any = ['data-files-location', 'log-files-location', 'tempdb-files-location'];
+    const storageLayoutMap: any = [
+        'data-files-location',
+        'log-files-location',
+        'tempdb-files-location',
+        // Oracle storage layout configurations
+        'oracle-binary-placement',
+        'datafiles-placement',
+        'controlfiles-placement',
+        'redologs-placement',
+        'templogs-placement',
+        'archive-placement',
+        'data-dg-lun-layout',
+        'redolog-dg-lun-layout',
+        'fra-dg-lun-layout',
+        'archivelog-dg-lun-layout'
+    ];
     const haMssqlMap: any = [
         'shared-storage',
         'cluster-quorum',

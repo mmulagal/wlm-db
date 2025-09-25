@@ -71,7 +71,8 @@ import {
     calculatePostponeInfo,
     areAllOntapSubConfigurationsActivating,
     areAllOsSubConfigurationsActivating,
-    areAllHaSubConfigurationsActivating
+    areAllHaSubConfigurationsActivating,
+    checkAllConfigurationsDismissed
 } from './GetWellHelper';
 
 const GetWell = () => {
@@ -212,6 +213,16 @@ const GetWell = () => {
 
     // Helper function to calculate postpone information for configurations
     const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
+
+    // Helper function to check if all configurations are dismissed
+    const allConfigurationsDismissed = useMemo(() => checkAllConfigurationsDismissed(cardData, driftAssessmentData), [cardData, driftAssessmentData]);
+
+    // Automatically enable dismissed toggle when all configurations are dismissed
+    useEffect(() => {
+        if (allConfigurationsDismissed) {
+            setShowDismissedConfigurations(true);
+        }
+    }, [allConfigurationsDismissed]);
 
     // To apply filters on change of filters or card data
     useEffect(() => {
@@ -486,8 +497,9 @@ const GetWell = () => {
                                 loading={loading}
                                 optimizationBreakDown={optimizationBreakDown}
                                 isAssessmentAvailable={isAssessmentAvailable}
+                                allConfigurationsDismissed={allConfigurationsDismissed}
                             />
-                            <OptimizationBreakdown />
+                            <OptimizationBreakdown allConfigurationsDismissed={allConfigurationsDismissed} />
                         </div>
 
                         <div className={styles.sectionTwo}>
@@ -540,14 +552,34 @@ const GetWell = () => {
                                                     >
                                                         <DsToggleSwitch
                                                             id="dismissed-configuration-toggle"
+                                                            data-testid="dismissed-configuration-toggle"
                                                             onClick={() => {}}
                                                             title="Dismissed configuration"
                                                             isDisabled
                                                         />
                                                     </DsPopover>
+                                                ) : allConfigurationsDismissed ? (
+                                                    <DsPopover
+                                                        trigger="hover"
+                                                        title={t(
+                                                            'databases.well-architect.dismiss.all-configurations-dismissed-tooltip'
+                                                        )}
+                                                        monitorPosition="all"
+                                                        placement="bottom"
+                                                    >
+                                                        <DsToggleSwitch
+                                                            id="dismissed-configuration-toggle"
+                                                            data-testid="dismissed-configuration-toggle"
+                                                            onClick={() => {}}
+                                                            title="Dismissed configuration"
+                                                            isDisabled
+                                                            value
+                                                        />
+                                                    </DsPopover>
                                                 ) : (
                                                     <DsToggleSwitch
                                                         id="dismissed-configuration-toggle"
+                                                        data-testid="dismissed-configuration-toggle"
                                                         onClick={
                                                             loading || !isAssessmentAvailable
                                                                 ? () => {}

@@ -622,7 +622,11 @@
                 "activating-info-content2": "Will be analyzed in the next analysis.",
                 "reactivate-notification-message": "Reactivated configuration.",
                 "configuration": "Configuration",
-                "dismissed-configuration": "Dismissed Configuration"
+                "dismissed-configuration": "Dismissed Configuration",
+                "all-configurations-dismissed-tooltip": "All configurations are dismissed",
+                "all-configurations-dismissed-title": "All well-architected configurations are dismissed",
+                "all-configurations-dismissed-description-content-1": "To enable well-architected capabilities ",
+                "all-configurations-dismissed-description-content-2": "reactivate configurations."
             },
             "recommendation-table": {
                 "headers": {

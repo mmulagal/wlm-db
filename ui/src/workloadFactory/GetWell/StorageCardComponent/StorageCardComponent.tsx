@@ -848,7 +848,8 @@ const StorageCardComponent = ({
             fullCardData,
             dispatch,
             addSuccessNotification,
-            t
+            t,
+            formatGetWellData
         );
     };
 
@@ -1017,6 +1018,8 @@ const StorageCardComponent = ({
                     (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
                     cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                         <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
                             <div
                                 className={styles.buttonSection}
                                 // style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
@@ -1052,6 +1055,8 @@ const StorageCardComponent = ({
                         </TooltipComponent>
                     ) : disableOptimizeButtonTooltip ? (
                         <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
                             <Popover
                                 popoverClass={CommonStyles.popover}
                                 isAppendedToBody

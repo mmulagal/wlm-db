@@ -145,6 +145,32 @@
         [class*='Typography'] {
             color: var(--text-disabled) !important;
         }
+
+        /* Exception for reactivate button in dismissed state - allow normal appearance and interactions */
+        .reactivateButtonContainer {
+            pointer-events: auto;
+
+            /* Ensure postpone info maintains its styling */
+            .postponeInfoContainer {
+                [class*='Typography'] {
+                    color: var(--text-primary) !important;
+                }
+
+                /* Ensure icons maintain their proper colors */
+                svg {
+                    fill: var(--icon-primary) !important;
+                }
+            }
+
+            /* Ensure button maintains proper styling */
+            .buttonSection {
+                [class*='Typography'],
+                [class*='dsButtons'],
+                button {
+                    color: var(--button-secondary) !important;
+                }
+            }
+        }
     }
 }
 
