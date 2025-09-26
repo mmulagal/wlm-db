@@ -307,10 +307,11 @@ const CONFIG_MAPPING: Record<string, any> = {
         assessmentPath: [], // Empty array means direct access to instanceData?.assessments?.mtuAlignment
         configName: 'mtuAlignment', // Direct property name
         dismissConfigName: 'mtuAlignment', // Direct property name
-        dataMapping: (obj: any) => ({
+        dataMapping: (obj: any, instanceData: any) => ({
             current: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0
+            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
+            objectsInViolation: obj?.objectsInViolation || [instanceData?.databaseInstanceId]
         }),
         isFixSupported: true,
         customColumns: [

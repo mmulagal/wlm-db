@@ -2804,6 +2804,7 @@ const GetWell = () => {
                                                     variant="Default"
                                                     isDisabled={
                                                         loading ||
+                                                        showDismissedConfigurations ||
                                                         !cardData?.scheduled_fsx_for_ontap_backups?.block_two?.value
                                                     }
                                                     isExpanded={isAccordionExpanded('19', optimizePrintState)}
@@ -2825,7 +2826,7 @@ const GetWell = () => {
                                                     headerActions={[
                                                         <div className={styles.headerAction}>
                                                             {renderPostponeActivatingInfo(
-                                                                'scheduled_FSx_for_ONTAP_backups'
+                                                                'scheduled_fsx_for_ontap_backups'
                                                             )}
 
                                                             <div
@@ -2847,6 +2848,7 @@ const GetWell = () => {
                                                                 style={{
                                                                     color:
                                                                         loading ||
+                                                                        showDismissedConfigurations ||
                                                                         !cardData?.scheduled_fsx_for_ontap_backups
                                                                             ?.block_two?.value
                                                                             ? 'var(--text-disabled)'
