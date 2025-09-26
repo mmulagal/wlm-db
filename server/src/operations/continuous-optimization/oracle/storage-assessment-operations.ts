@@ -794,38 +794,30 @@ function getVolumeLayoutDrift(
                     .map(volume => volume.volumeId)
             )
         ];
-        // Best practice is to have at least two multiplexed control files on separate volumes. So we need at least three separate volumes if there are multiplexed control files
-        insufficientMultiplexing = uniqueControlFileVolumesWithoutSharingViolation.length < 3;
+        // Best practice is to have at least two multiplexed control files on separate volumes. So we need at least two separate volumes if there are multiplexed control files
+        insufficientMultiplexing = uniqueControlFileVolumesWithoutSharingViolation.length < 2;
 
         status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
         const recommended =
             hasConflicts && insufficientMultiplexing
-                ? 'separate-volume-or-shared-with-data-redo-temp-with-three-multiplexed-volumes'
+                ? 'separate-volume-or-shared-with-data-redo-temp-with-two-multiplexed-volumes'
                 : hasConflicts
                 ? 'separate-volume-or-shared-with-data-redo-temp'
-                : 'three-multiplexed-volumes';
+                : 'two-multiplexed-volumes';
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.controlfilesPlacement,
             recommended,
             status,
-            objectsInViolation: hasConflicts
-                ? controlFileConflicts.map(conflict => conflict.volumeName)
-                : insufficientMultiplexing
-                ? controlFileVolumes.map(volume => volume.volumeName)
-                : [],
+            objectsInViolation: hasConflicts ? controlFileConflicts.map(conflict => conflict.volumeName) : [],
             totalObjectsAssessed: controlFileVolumes.length,
-            totalObjectsInViolation: hasConflicts
-                ? controlFileConflicts.length
-                : insufficientMultiplexing
-                ? controlFileVolumes.length
-                : 0
+            totalObjectsInViolation: hasConflicts ? controlFileConflicts.length : 0
         });
     }
 
     if (isEmpty(redoLogVolumes)) {
         volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.redologsPlacement, 'redo log'));
     } else {
-        // Redo logs can be on separate or shared with temp/control and maintain at least 1 redo file copies across separate volumes
+        // Redo logs can be on separate or shared with temp/control
         const conflictVolumeIds = [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.volumeId);
         const redoFileConflicts = [
             ...new Set(redoLogVolumes.filter(redoVolume => conflictVolumeIds.includes(redoVolume.volumeId)))
@@ -840,31 +832,16 @@ function getVolumeLayoutDrift(
                     .map(volume => volume.volumeId)
             )
         ];
-        // Best practice is to have at least two multiplexed redo log groups on separate volumes. So we need at least two separate volumes if there are multiplexed redo log groups
-        insufficientMultiplexing = uniqueRedoLogVolumesWithoutSharingViolation.length < 2;
+        // To correctly identify multiplexing problem we need copiespervolume data which we don't have at the moment.
+        insufficientMultiplexing = uniqueRedoLogVolumesWithoutSharingViolation.length < 1;
 
         status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-        const recommended =
-            hasConflicts && insufficientMultiplexing
-                ? 'separate-volume-or-shared-with-temp-control-with-two-multiplexed-volumes'
-                : hasConflicts
-                ? 'separate-volume-or-shared-with-temp-control'
-                : 'two-multiplexed-volumes';
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.redologsPlacement,
-            recommended,
             status,
-            objectsInViolation: hasConflicts
-                ? redoFileConflicts.map(conflict => conflict.volumeName)
-                : insufficientMultiplexing
-                ? redoLogVolumes.map(volume => volume.volumeName)
-                : [],
+            objectsInViolation: hasConflicts ? redoFileConflicts.map(conflict => conflict.volumeName) : [],
             totalObjectsAssessed: redoLogVolumes.length,
-            totalObjectsInViolation: hasConflicts
-                ? redoFileConflicts.length
-                : insufficientMultiplexing
-                ? redoLogVolumes.length
-                : 0
+            totalObjectsInViolation: hasConflicts ? redoFileConflicts.length : 0
         });
     }
 
