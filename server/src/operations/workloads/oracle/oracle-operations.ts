@@ -638,11 +638,13 @@ async function getOracleDatabaseInstancesSummary(
                     | undefined;
 
                 const demoMountPointDetails = [
-                    {
-                        mountIp: '10.0.0.0',
-                        mountPoint: '/oradata',
-                        protocol: 'iSCSI'
-                    }
+                    [
+                        {
+                            mountIP: '10.0.0.0',
+                            mountPoint: '/oradata',
+                            protocol: 'iSCSI'
+                        }
+                    ]
                 ];
                 let mountPointDetails = isDemoFlow ? demoMountPointDetails : metadata?.mountPointDetails;
                 databaseInstance.storage_type = resourceDetails?.storage_type;
