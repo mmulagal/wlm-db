@@ -699,7 +699,8 @@ export const formatOracleOptimizationBreakDown = (
             !cardsData?.isASMManaged &&
             (cardItem?.id === 'data-dg-lun-layout' ||
                 cardItem?.id === 'redolog-dg-lun-layout' ||
-                cardItem?.id === 'fra-dg-lun-layout')
+                cardItem?.id === 'fra-dg-lun-layout' ||
+                cardItem?.id === 'archivelog-dg-lun-layout')
         ) {
             return;
         }
@@ -949,7 +950,10 @@ export const oracleApplyFilter = (
         ) {
             filteredCardData[key] = cardData[key];
             const categoryInfo = categoryData[key as keyof typeof categoryData];
-            if (categoryInfo && cardData[key].block_two.value) {
+            if (
+                categoryInfo &&
+                (cardData[key].block_two.value || key === 'ontap_configuration' || key === 'os_configuration')
+            ) {
                 configCount++;
             }
         }
