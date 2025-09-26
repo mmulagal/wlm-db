@@ -252,7 +252,7 @@ const DialogContent = ({
                     : t('databases.well-architect.drive-letter-no-violation');
             case 'Cluster Quorum':
                 return 'Quorum will be set to disk witness with node majority';
-            case 'SQL Server Services':
+            case 'SQL Server Service':
                 return objectsInViolation && objectsInViolation.length > 0
                     ? [
                           `${t('databases.well-architect.sql-service-startup-type-config')}${objectsInViolation.join(
@@ -662,7 +662,7 @@ const DialogContent = ({
                     <></>,
                     createClusterQuorumSQLNotesSection(t)
                 );
-            case 'SQL Server Services':
+            case 'SQL Server Service':
                 return createFailoverClusterDialog(
                     t,
                     [

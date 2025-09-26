@@ -102,10 +102,9 @@ const StorageLayoutSection = ({
         if (showDismissedConfigurations) {
             // In dismissed view, show header if there are dismissed/postponed cards
             return storageLayoutCardStates.hasDismissedCards;
-        } 
-            // In normal view, show header if there are active/activating cards
-            return storageLayoutCardStates.hasActiveCards;
-        
+        }
+        // In normal view, show header if there are active/activating cards
+        return storageLayoutCardStates.hasActiveCards;
     }, [showDismissedConfigurations, storageLayoutCardStates]);
 
     return (

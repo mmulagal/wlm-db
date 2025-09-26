@@ -1867,9 +1867,8 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
 
         // MSSQL High Availability configurations
         'Shared Storage': 'shared-storage',
-        'SQL Server Service': 'sqlserver-service',
+        'SQL Server Service': 'sqlServer-service',
         'Shared storage': 'shared-storage',
-        'SQL Server Services': 'sqlserver-service',
         'Drive Letter': 'drive-letter',
         'Heartbeat Settings': 'heartbeat-settings',
         'Cluster Quorum': 'cluster-quorum',
@@ -2529,7 +2528,7 @@ export const formatMssqlHighAvailabilityConfig = (
                 // Map technical names to display names for MSSQL HA
                 const displayNameMapping: { [key: string]: string } = {
                     'shared-storage': 'Shared Storage',
-                    'sqlserver-service': 'SQL Server Service',
+                    'sqlServer-service': 'SQL Server Service',
                     'drive-letter': 'Drive Letter',
                     'heartbeat-settings': 'Heartbeat Settings',
                     'cluster-quorum': 'Cluster Quorum'
@@ -2712,9 +2711,11 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 // Use proper display name for MSSQL High Availability
                 if (key === GETWELL_CONFIG.mssqlhighavailability) {
                     dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
-                } else {
-                    dismissedResiliencyIds.push(nestedObject?.mapName);
-                }
+                } else if (nestedObject?.mapName === ASSESSMENT_CONFIG_NAMES.CRR) {
+                        dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.CRR_DISPLAY_NAME);
+                    } else {
+                        dismissedResiliencyIds.push(nestedObject?.mapName);
+                    }
             } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
                 if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
@@ -4575,7 +4576,7 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         'shared-storage',
         'cluster-quorum',
         'heartbeat-settings',
-        'sqlserver-service',
+        'sqlServer-service',
         'drive-letter'
     ];
     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
