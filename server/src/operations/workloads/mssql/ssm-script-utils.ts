@@ -1805,7 +1805,12 @@ const GET_FQDN = `
 `;
 
 const GET_CLUSTER_NAME = `
-    $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
+    Try {
+        $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
+    }
+    Catch {
+        $clusterName = $null
+    }
     @{ clusterName = $clusterName } | ConvertTo-Json -Compress
 `;
 
