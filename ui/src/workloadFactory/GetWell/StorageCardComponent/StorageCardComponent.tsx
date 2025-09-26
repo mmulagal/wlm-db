@@ -67,7 +67,8 @@ import {
     addSuccessNotification as addSuccessNotificationHelper,
     handleDismissResponse as handleDismissResponseHelper,
     handleDismissError as handleDismissErrorHelper,
-    areSubConfigurationsNotActive
+    areSubConfigurationsNotActive,
+    areAllSubConfigurationsActivating as areAllSubConfigurationsActivatingHelper
 } from './StorageCardComponentHelper';
 
 const StorageCardComponent = ({
@@ -257,8 +258,17 @@ const StorageCardComponent = ({
                 </DsTypography>
             );
         }
-        // For ONTAP, OS, and HA cards: show N/A if sub-configurations are not active
-        if (areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
+        // For ONTAP and OS cards: show N/A if sub-configurations are not active and in Dismissed view
+        if (showDismissedConfigurations && areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {t('databases.general.not-available-table-columns')}
+                </DsTypography>
+            );
+        }
+
+        // Only show N/A when all the subConfiguration are in activating state
+        if (!showDismissedConfigurations && areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData)) {
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
                     {t('databases.general.not-available-table-columns')}
@@ -356,7 +366,16 @@ const StorageCardComponent = ({
             );
         }
         // For ONTAP and OS cards: show N/A if sub-configurations are not active
-        if (areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
+        if (showDismissedConfigurations && areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {t('databases.general.not-available-table-columns')}
+                </DsTypography>
+            );
+        }
+
+        // Only show N/A when all the subConfiguration are in activating state
+        if (!showDismissedConfigurations && areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData)) {
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
                     {t('databases.general.not-available-table-columns')}
@@ -419,13 +438,23 @@ const StorageCardComponent = ({
             );
         }
         // For HA cards: show N/A if sub-configurations are not active
-        if (areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
+        if (showDismissedConfigurations && areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
                     {t('databases.general.not-available-table-columns')}
                 </DsTypography>
             );
         }
+
+        // Only show N/A when all the subConfiguration are in activating state
+        if (!showDismissedConfigurations && areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData)) {
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {t('databases.general.not-available-table-columns')}
+                </DsTypography>
+            );
+        }
+
         if (cardData?.block_six?.count) {
             return (
                 <div className={styles.warningMsg}>
@@ -999,7 +1028,7 @@ const StorageCardComponent = ({
                     cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
                     cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) &&
                 !showDismissedConfigurations &&
-                !areSubConfigurationsNotActive(cardData, driftAssessmentData) &&
+                !areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData) &&
                 cardData?.block_two?.value ? (
                     <div className={`${styles.column} ${styles.lastColumnAlignment}`}>
                         {/* Dismiss Button - Show for ONTAP, Operating system, and MSSQL High Availability in last grid column */}

@@ -2712,10 +2712,10 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 if (key === GETWELL_CONFIG.mssqlhighavailability) {
                     dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
                 } else if (nestedObject?.mapName === ASSESSMENT_CONFIG_NAMES.CRR) {
-                        dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.CRR_DISPLAY_NAME);
-                    } else {
-                        dismissedResiliencyIds.push(nestedObject?.mapName);
-                    }
+                    dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.CRR_DISPLAY_NAME);
+                } else {
+                    dismissedResiliencyIds.push(nestedObject?.mapName);
+                }
             } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
                 if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;

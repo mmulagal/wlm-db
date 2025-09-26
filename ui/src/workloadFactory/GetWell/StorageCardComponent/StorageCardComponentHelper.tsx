@@ -53,6 +53,51 @@ export const areSubConfigurationsNotActive = (cardData: any, driftAssessmentData
     return false;
 };
 
+// Helper function to check if all sub-configurations are in ACTIVATING state for ONTAP, OS, and HA cards
+export const areAllSubConfigurationsActivating = (cardData: any, driftAssessmentData: any) => {
+    if (!driftAssessmentData?.dismissedConfigurations) {
+        return false;
+    }
+
+    if (cardData?.mapName === ASSESSMENT_CONFIG_NAMES.ONTAP) {
+        // For ONTAP, check if all sub-configurations are in ACTIVATING state
+        const storageConfig = driftAssessmentData.dismissedConfigurations.storage?.configuration;
+        const volumes = storageConfig?.volumes || [];
+        const luns = storageConfig?.luns || [];
+        const allOntapConfigs = [...volumes, ...luns];
+
+        if (allOntapConfigs.length === 0) {
+            return false;
+        }
+
+        return allOntapConfigs.every((config: any) => config.configState === CONFIG_STATES.ACTIVATING);
+    }
+
+    if (cardData?.mapName === ASSESSMENT_CONFIG_NAMES.OS) {
+        // For OS, check if all sub-configurations are in ACTIVATING state
+        const osConfigs = driftAssessmentData.dismissedConfigurations.storage?.configuration?.os || [];
+
+        if (osConfigs.length === 0) {
+            return false;
+        }
+
+        return osConfigs.every((config: any) => config.configState === CONFIG_STATES.ACTIVATING);
+    }
+
+    if (cardData?.mapName === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
+        // For HA, check if all sub-configurations are in ACTIVATING state
+        const haConfigs = driftAssessmentData.dismissedConfigurations.highAvailability || [];
+
+        if (haConfigs.length === 0) {
+            return false;
+        }
+
+        return haConfigs.every((config: any) => config.configState === CONFIG_STATES.ACTIVATING);
+    }
+
+    return false;
+};
+
 export const getSubConfigurationData = (cardData: any) => {
     // Check if this is ONTAP or OS configuration with sub-tables
     const configName = cardData?.block_one?.value;
