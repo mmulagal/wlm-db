@@ -57,9 +57,7 @@ const getMappedOntapDataVolume = (
     filesystemid="${fsxnId}"
     region="${region}"
     ipAddress="${mountIp}"
-    #  For iSCSI protocol, junction paths used as LUN serial numbers may contain shell metacharacters ($, quotes, backticks) that could cause variable expansion or command injection, 
-    # so we use single quotes in the template literal to ensure literal assignment without shell interpretation.
-    junctionPath='${mountPath}'
+    junctionPath="${mountPath}"
     storageProtocol="${protocol}"
 
     svmEndpoint='svm/svms?fields=ip_interfaces'

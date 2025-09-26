@@ -246,10 +246,11 @@ EOF
     get_asm_iscsi_details() {
         local diskName="$1"
         
-        udevInfo=$(udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
-        mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
+        rawUdevInfo=$(udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
+        serialUdevInfo=$(printf '%b' "$rawUdevInfo")
+        mountDevice=$(echo "$serialUdevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
         mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
-        iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
+        iscsiSerialNumber=$(echo "$serialUdevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
         mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
 
         if echo "$mountPoint" | grep -q "iscsi"; then
@@ -351,15 +352,16 @@ get_multipath_mount_details() {
     # Try each device until we find one with valid mount information
     for dev in $underlying_devices; do
         local path_device="/dev/$dev"
-        local udevInfo=$(udevadm info --query=all --name=$path_device 2>/dev/null)
-        
-        if [ -n "$udevInfo" ]; then
+        local rawUdevInfo=$(udevadm info --query=all --name=$path_device 2>/dev/null)
+        local serialUdevInfo=$(printf '%b' "$rawUdevInfo")
+
+        if [ -n "$serialUdevInfo" ]; then
             # Look for disk/by-path information
-            local mountDevice=$(echo "$udevInfo" | grep "disk/by-path" | grep "ip-" | head -n1 | awk '{print $2}')
-            
+            local mountDevice=$(echo "$serialUdevInfo" | grep "disk/by-path" | grep "ip-" | head -n1 | awk '{print $2}')
+
             if [ -n "$mountDevice" ]; then
                 local mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
-                local iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
+                local iscsiSerialNumber=$(echo "$serialUdevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
                 local protocol="iSCSI"
                 echo "$mountIp,$iscsiSerialNumber,$protocol"
                 return 0
@@ -400,10 +402,11 @@ get_multipath_mount_details() {
                             jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
                             
                         else
-                            udevInfo=$(udevadm info --query=all --name=$source)
-                            mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
+                            rawUdevInfo=$(udevadm info --query=all --name=$source)
+                            serialUdevInfo=$(printf '%b' "$rawUdevInfo")
+                            mountDevice=$(echo "$serialUdevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
                             mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
-                            iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
+                            iscsiSerialNumber=$(echo "$serialUdevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
                             mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
                             if echo "$mountPoint" | grep -q "iscsi"; then
                                 protocol="iSCSI"
@@ -492,10 +495,11 @@ get_multipath_mount_details() {
                 continue
             fi
             source="/dev/disk/by-path/$device"
-            udevInfo=$(sudo udevadm info --query=all --name="$source")
-            mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
+            rawUdevInfo=$(sudo udevadm info --query=all --name="$source")
+            serialUdevInfo=$(printf '%b' "$rawUdevInfo")
+            mountDevice=$(echo "$serialUdevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
             mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
-            iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
+            iscsiSerialNumber=$(echo "$serialUdevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
             mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
             if echo "$mountPoint" | grep -q "iscsi"; then
                 protocol="iSCSI"
