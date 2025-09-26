@@ -17,10 +17,39 @@ import { CONFIG_STATES } from '../../../../../utils/consts';
 import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../../../../utils/resourceUtils';
 import { oracleApplyFilter } from '../OracleWellArchitectedUtils';
 
-const OracleFilterComponent = ({ setFilteredCardData }: any) => {
+interface OracleFilterComponentProps {
+    setFilteredCardData: (data: any) => void;
+    showDismissedConfigurations: boolean;
+    driftAssessmentData: any;
+    dynamicFilterOptions?: {
+        categories: any[];
+        subCategories: any[];
+        severities: any[];
+        tags: any[];
+        resourceTypes: any[];
+        statuses: any[];
+    };
+}
+
+const OracleFilterComponent = ({
+    setFilteredCardData,
+    showDismissedConfigurations,
+    driftAssessmentData,
+    dynamicFilterOptions
+}: OracleFilterComponentProps) => {
     const dispatch = useDispatch();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { oracleDefaultFilterOptions, oracleOptimizeFilterTags } = useAppSelector(state => state.oracleSlice);
+
+    // Provide fallback for dynamic filter options
+    const safeFilterOptions = dynamicFilterOptions || {
+        categories: [],
+        subCategories: [],
+        severities: [],
+        tags: [],
+        resourceTypes: [],
+        statuses: []
+    };
     // This might be pass from parent
     const [configCount, setConfigCount] = useState(0);
 
@@ -34,47 +63,57 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
 
     // To apply filters on change of filters or card data
     useEffect(() => {
-        const { data, configCount } = oracleApplyFilter(cardData, oracleOptimizeFilterTags);
+        const { data, configCount } = oracleApplyFilter(
+            cardData,
+            oracleOptimizeFilterTags,
+            showDismissedConfigurations,
+            driftAssessmentData
+        );
         setFilteredCardData(data);
         setConfigCount(configCount);
-    }, [cardData, oracleOptimizeFilterTags, ontapConfigTableData]);
+    }, [cardData, oracleOptimizeFilterTags, ontapConfigTableData, showDismissedConfigurations, driftAssessmentData]);
 
     const generateSubCategoryOptions = useMemo(() => {
         const selectedCategories = oracleOptimizeFilterTags
             .filter((tag: any) => tag && tag.type === 'all-catagories')
             .map((tag: any) => tag.value);
-        const options = [
-            {
-                id: 0,
-                label: 'Storage layout',
-                value: 'Storage layout',
-                category: 'Storage'
-            },
-            {
-                id: 1,
-                label: 'Storage configuration',
-                value: 'Storage configuration',
-                category: 'Storage'
-            }
-        ];
+
+        // Use dynamic subcategories filtered by selected categories
         const filteredOptions = selectedCategories.length
-            ? options.filter((option: any) => selectedCategories.includes(option.category))
-            : options;
+            ? safeFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
+            : safeFilterOptions.subCategories;
+
+        return filteredOptions;
+    }, [oracleOptimizeFilterTags, safeFilterOptions.subCategories]);
+
+    // Handle subcategory filter updates in useEffect to avoid setState during render
+    useEffect(() => {
+        const selectedCategories = oracleOptimizeFilterTags
+            .filter((tag: any) => tag && tag.type === 'all-catagories')
+            .map((tag: any) => tag.value);
+
+        const filteredOptions = selectedCategories.length
+            ? safeFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
+            : safeFilterOptions.subCategories;
+
         const selectedSubCategories =
             oracleDefaultFilterOptions['sub-catagories']?.filter((id: any) =>
                 filteredOptions.find((option: any) => option.id === id)
             ) || [];
+
         const selectedOptimizeTags = oracleOptimizeFilterTags.filter(
             (tag: any) => tag.type !== 'sub-catagories' || filteredOptions.find((option: any) => option.id === tag.id)
         );
+
         if (oracleOptimizeFilterTags.length !== selectedOptimizeTags.length) {
             dispatch(setOracleOptimizeFilterTags(selectedOptimizeTags));
         }
-        dispatch(
-            setOracleDefaultFilterOptions({ ...oracleDefaultFilterOptions, 'sub-catagories': selectedSubCategories })
-        );
-        return filteredOptions;
-    }, [oracleOptimizeFilterTags]);
+
+        const newDefaultFilterOptions = { ...oracleDefaultFilterOptions, 'sub-catagories': selectedSubCategories };
+        if (JSON.stringify(oracleDefaultFilterOptions['sub-catagories']) !== JSON.stringify(selectedSubCategories)) {
+            dispatch(setOracleDefaultFilterOptions(newDefaultFilterOptions));
+        }
+    }, [oracleOptimizeFilterTags, safeFilterOptions.subCategories, oracleDefaultFilterOptions, dispatch]);
 
     const handleSelect = (filters: any, filterLabel: any) => {
         handleSelectForFilter(
@@ -115,23 +154,17 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             formatLabel={() =>
                 `Categories: ${
                     !oracleDefaultFilterOptions['all-catagories']?.length ||
-                    oracleDefaultFilterOptions['all-catagories'].length === 1
+                    oracleDefaultFilterOptions['all-catagories'].length === safeFilterOptions.categories.length
                         ? 'All'
                         : ''
                 }(${
                     oracleDefaultFilterOptions['all-catagories']?.length > 0
                         ? oracleDefaultFilterOptions['all-catagories']?.length
-                        : 1
+                        : safeFilterOptions.categories.length
                 })`
             }
             placeholder="Placeholder text"
-            options={[
-                {
-                    id: 0,
-                    label: 'Storage ',
-                    value: 'Storage'
-                }
-            ]}
+            options={safeFilterOptions.categories}
             selectionType="multi"
             isWithActions
             onSelect={(option: any) => handleSelect(option, 'all-catagories')}
@@ -180,24 +213,18 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             isCleanable={false}
             formatLabel={() =>
                 `Status: ${
-                    !oracleDefaultFilterOptions.status?.length || oracleDefaultFilterOptions.status.length === 2
+                    !oracleDefaultFilterOptions.status?.length ||
+                    oracleDefaultFilterOptions.status.length === safeFilterOptions.statuses.length
                         ? 'All'
                         : ''
-                }(${oracleDefaultFilterOptions.status?.length > 0 ? oracleDefaultFilterOptions.status?.length : 2})`
+                }(${
+                    oracleDefaultFilterOptions.status?.length > 0
+                        ? oracleDefaultFilterOptions.status?.length
+                        : safeFilterOptions.statuses.length
+                })`
             }
             placeholder="Placeholder text"
-            options={[
-                {
-                    id: 0,
-                    label: 'Optimized',
-                    value: 'Optimized'
-                },
-                {
-                    id: 1,
-                    label: 'Not optimized',
-                    value: 'Not optimized'
-                }
-            ]}
+            options={safeFilterOptions.statuses}
             selectionType="multi"
             isWithActions
             onSelect={(option: any) => handleSelect(option, 'status')}
@@ -229,24 +256,18 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             isCleanable={false}
             formatLabel={() =>
                 `Severity: ${
-                    !oracleDefaultFilterOptions.severity?.length || oracleDefaultFilterOptions.severity.length === 2
+                    !oracleDefaultFilterOptions.severity?.length ||
+                    oracleDefaultFilterOptions.severity.length === safeFilterOptions.severities.length
                         ? 'All'
                         : ''
-                }(${oracleDefaultFilterOptions.severity?.length > 0 ? oracleDefaultFilterOptions.severity?.length : 2})`
+                }(${
+                    oracleDefaultFilterOptions.severity?.length > 0
+                        ? oracleDefaultFilterOptions.severity?.length
+                        : safeFilterOptions.severities.length
+                })`
             }
             placeholder="Placeholder text"
-            options={[
-                {
-                    id: 0,
-                    label: 'Critical',
-                    value: 'Critical'
-                },
-                {
-                    id: 1,
-                    label: 'Warning',
-                    value: 'Warning'
-                }
-            ]}
+            options={safeFilterOptions.severities}
             selectionType="multi"
             isWithActions
             onSelect={(option: any) => handleSelect(option, 'severity')}
@@ -264,39 +285,18 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             isCleanable={false}
             formatLabel={() =>
                 `Tags: ${
-                    !oracleDefaultFilterOptions.tags?.length || oracleDefaultFilterOptions.tags.length === 5
+                    !oracleDefaultFilterOptions.tags?.length ||
+                    oracleDefaultFilterOptions.tags.length === safeFilterOptions.tags.length
                         ? 'All'
                         : ''
-                }(${oracleDefaultFilterOptions.tags?.length > 0 ? oracleDefaultFilterOptions.tags?.length : 5})`
+                }(${
+                    oracleDefaultFilterOptions.tags?.length > 0
+                        ? oracleDefaultFilterOptions.tags?.length
+                        : safeFilterOptions.tags.length
+                })`
             }
             placeholder="Placeholder text"
-            options={[
-                {
-                    id: 0,
-                    label: 'Cost optimization',
-                    value: 'Cost optimization'
-                },
-                {
-                    id: 1,
-                    label: 'Performance efficiency',
-                    value: 'Performance efficiency'
-                },
-                {
-                    id: 2,
-                    label: 'Operational excellence',
-                    value: 'Operational excellence'
-                },
-                {
-                    id: 3,
-                    label: 'Reliability',
-                    value: 'Reliability'
-                },
-                {
-                    id: 4,
-                    label: 'Security',
-                    value: 'Security'
-                }
-            ]}
+            options={safeFilterOptions.tags}
             selectionType="multi"
             isWithActions
             onSelect={(option: any) => handleSelect(option, 'tags')}
@@ -360,38 +360,17 @@ const OracleFilterComponent = ({ setFilteredCardData }: any) => {
             formatLabel={() =>
                 `Resource type: ${
                     !oracleDefaultFilterOptions.resourceType?.length ||
-                    oracleDefaultFilterOptions.resourceType.length === 4
+                    oracleDefaultFilterOptions.resourceType.length === safeFilterOptions.resourceTypes.length
                         ? 'All'
                         : ''
                 }(${
                     oracleDefaultFilterOptions.resourceType?.length > 0
                         ? oracleDefaultFilterOptions.resourceType?.length
-                        : 4
+                        : safeFilterOptions.resourceTypes.length
                 })`
             }
             placeholder="Placeholder text"
-            options={[
-                {
-                    id: 0,
-                    label: 'Database',
-                    value: 'Database'
-                },
-                {
-                    id: 1,
-                    label: 'Volume',
-                    value: 'Volume'
-                },
-                {
-                    id: 2,
-                    label: 'LUN path',
-                    value: 'LUN path'
-                },
-                {
-                    id: 3,
-                    label: 'EC2 instance',
-                    value: 'EC2 instance'
-                }
-            ]}
+            options={safeFilterOptions.resourceTypes}
             selectionType="multi"
             isWithActions
             onSelect={(option: any) => handleSelect(option, 'resourceType')}

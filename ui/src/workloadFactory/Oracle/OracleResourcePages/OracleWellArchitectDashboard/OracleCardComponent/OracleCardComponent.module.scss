@@ -5,6 +5,67 @@
     width: 100%;
     border-bottom: 1px solid var(--border);
 
+    /* Disabled state for dismissed configurations */
+    &.dismissed {
+        .itemContainer {
+            * {
+                color: var(--text-disabled);
+            }
+        }
+    }
+
+    .buttonSection {
+        width: auto;
+        display: flex;
+        justify-content: flex-end;
+        flex-shrink: 0;
+        [class*='dsButtons'] {
+            height: 32px !important;
+            min-width: 140px !important;
+        }
+
+        .disabled {
+            background-color: var(--grey-15);
+            color: var(--text-primary);
+        }
+    }
+
+    /* Button container that holds both dismiss and main action buttons */
+    .buttonContainer {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        width: 100%;
+        align-items: center;
+    }
+
+    /* Wrapper for button group containing dismiss and View/View and Fix */
+    .buttonGroup {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    /* Last column alignment for (ONTAP, Operating system, MSSQL HA) cards*/
+    .lastColumnAlignment {
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-start;
+    }
+
+    .dismissSection {
+        width: 274px;
+        min-width: 170px;
+        .dismissContainer {
+            display: flex;
+            gap: 8px;
+            svg {
+                position: relative;
+                top: 2px;
+            }
+        }
+    }
+
     .loadingSection {
         height: 24px;
         display: flex;
@@ -13,9 +74,11 @@
 
     .cardContainer {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1.3fr;
+        align-items: center;
         gap: 24px;
         padding: 18px 40px;
+        overflow-x: hidden;
 
         > div:not(:last-child) {
             border-right: 1px solid var(--border);
@@ -66,6 +129,18 @@
         }
     }
 
+    .column {
+        min-width: 0;
+        overflow: hidden;
+        border-right: 1px solid var(--border);
+    }
+
+    /* Remove border from the last column */
+    .column:last-child,
+    .cardContent > div:last-child {
+        border-right: none;
+    }
+
     .titleText {
         white-space: nowrap;
         overflow: hidden;
@@ -107,6 +182,26 @@
         .centerText {
             position: relative;
             top: 4.5px;
+        }
+    }
+}
+
+/* Media Queries */
+@media (max-width: 1500px) {
+    .oracle-card {
+        .cardContainer {
+            gap: 16px;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 2fr;
+        }
+    }
+}
+
+@media (max-width: 1200px) {
+    .oracle-card {
+        .buttonSection {
+            [class*='dsButtons'] {
+                min-width: 120px !important;
+            }
         }
     }
 }

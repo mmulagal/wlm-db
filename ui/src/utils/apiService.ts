@@ -1254,6 +1254,13 @@ export const getWellApi = createApi({
                 body: payload
             })
         }),
+        dismissOracleAssessment: builder.mutation({
+            query: ({ payload }) => ({
+                url: 'v1/oracle/assessment/dismiss',
+                method: 'POST',
+                body: payload
+            })
+        }),
         optimizeStorageSizing: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-sizing`,
@@ -1593,6 +1600,7 @@ export const {
     useOptimizeAwsBackupMutation,
     useOptimizeCloneCleanupMutation,
     useDismissMssqlAssessmentMutation,
+    useDismissOracleAssessmentMutation,
     useOptimizeHAMssqlMutation
 } = getWellApi;
 

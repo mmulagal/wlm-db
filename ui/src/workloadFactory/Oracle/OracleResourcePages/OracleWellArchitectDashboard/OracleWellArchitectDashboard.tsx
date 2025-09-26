@@ -1,28 +1,50 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DsPopover, DsToggleSwitch, DsTypography } from '@tlveng/wlm-ds';
+import { useAppSelector, useAppDispatch } from '../../../../store/storeHooks';
 import TotalOptimizationScore from '../../../GetWell/TotalOptimizationScore/TotalOptimizationScore';
 import OracleConfigureCategory from './OracleConfigureCategory/OracleConfigureCategory';
 import styles from './OracleWellArchitectDashboard.module.scss';
-import { useAppSelector } from '../../../../store/storeHooks';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
+import {
+    checkHasDismissedConfigurations,
+    calculateTotalConfigCount,
+    calculatePostponeInfo
+} from '../../../GetWell/GetWellHelper';
+import { generateOracleDynamicFilterOptions, oracleApplyFilter } from './OracleWellArchitectedUtils';
+import {
+    setOracleOptimizeFilterTags,
+    setOracleDefaultFilterOptions
+} from '../../../../store/workloadFactory/oracleSlice';
+import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../../../utils/resourceUtils';
 
 const OracleWellArchitectDashboard = () => {
+    const { t } = useTranslation();
+    const dispatch = useAppDispatch();
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const [expandedValue, setExpandedValue] = useState(undefined);
     const [clickedAccordionId, setClickedAccordionId] = useState<string | undefined>(undefined);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
+    const [showDismissedConfigurations, setShowDismissedConfigurations] = useState(false);
+    const [configCount, setConfigCount] = useState(0);
+    const [instanceDeploymentType, setInstanceDeploymentType] = useState<string>('');
+
+    const { oracleOptimizeFilterTags, oracleDefaultFilterOptions } = useAppSelector(state => state.oracleSlice);
 
     const {
         optimizationBreakDown,
         isAssessmentAvailable,
-        // cardData,
+        cardData,
         optimizePageLoading: loading,
-        gwTimestamp
+        gwTimestamp,
+        driftAssessmentData,
+        selectedDatabaseStorageType
     } = useAppSelector(state => state.getWellOptimize);
 
     const [showChartArea, setShowChartArea] = useState(true);
@@ -49,6 +71,123 @@ const OracleWellArchitectDashboard = () => {
         }
     }, [loading]);
 
+    useEffect(() => {
+        handleFilterClearAll();
+        setShowDismissedConfigurations(false);
+    }, []);
+
+    const toggleDismissedConfiguration = () => {
+        setShowDismissedConfigurations(!showDismissedConfigurations);
+    };
+
+    // Helper function to check if there are any dismissed configurations
+    const hasDismissedConfigurations = useMemo(() => {
+        const result = checkHasDismissedConfigurations(cardData, driftAssessmentData);
+        return result;
+    }, [cardData, driftAssessmentData]);
+
+    // Helper function to calculate postpone information for configurations
+    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
+
+    // Helper function to get total count based on dismissed configuration state
+    const getTotalConfigCount = useMemo(
+        () => calculateTotalConfigCount(cardData, showDismissedConfigurations, driftAssessmentData),
+        [cardData, showDismissedConfigurations, driftAssessmentData]
+    );
+
+    const handleSelect = (filters: any, filterLabel: any) => {
+        handleSelectForFilter(
+            filters,
+            filterLabel,
+            oracleOptimizeFilterTags,
+            dispatch,
+            setOracleOptimizeFilterTags,
+            setOracleDefaultFilterOptions
+        );
+    };
+
+    // To apply filters on change of filters or card data
+    useEffect(() => {
+        const { data, configCount } = oracleApplyFilter(
+            cardData,
+            oracleOptimizeFilterTags,
+            showDismissedConfigurations,
+            driftAssessmentData
+        );
+        setFilteredCardData(data);
+        setInstanceDeploymentType(cardData?.deploymentType || '');
+        setConfigCount(configCount);
+    }, [
+        cardData,
+        oracleOptimizeFilterTags,
+        selectedDatabaseStorageType,
+        showDismissedConfigurations,
+        driftAssessmentData
+    ]);
+
+    const handleFilterClearAll = useCallback(() => {
+        dispatch(setOracleOptimizeFilterTags([]));
+        dispatch(setOracleDefaultFilterOptions({}));
+        setShowDismissedConfigurations(false);
+    }, [dispatch]);
+
+    // Generate dynamic filter options based on actual card data
+    const dynamicFilterOptions = useMemo(() => {
+        if (!filteredCardData || Object.keys(filteredCardData).length === 0) {
+            return {
+                categories: [],
+                subCategories: [],
+                severities: [],
+                tags: [],
+                resourceTypes: [],
+                statuses: []
+            };
+        }
+        return generateOracleDynamicFilterOptions(filteredCardData, instanceDeploymentType);
+    }, [filteredCardData, instanceDeploymentType]);
+
+    const generateSubCategoryOptions = useMemo(() => {
+        const selectedCategories = oracleOptimizeFilterTags
+            .filter((tag: any) => tag && tag.type === 'all-catagories')
+            .map((tag: any) => tag.value);
+
+        // Use dynamic subcategories filtered by selected categories
+        const filteredOptions = selectedCategories.length
+            ? dynamicFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
+            : dynamicFilterOptions.subCategories;
+
+        return filteredOptions;
+    }, [oracleOptimizeFilterTags, dynamicFilterOptions.subCategories]);
+
+    // Handle subcategory filter updates in useEffect to avoid setState during render
+    useEffect(() => {
+        const selectedCategories = oracleOptimizeFilterTags
+            .filter((tag: any) => tag && tag.type === 'all-catagories')
+            .map((tag: any) => tag.value);
+
+        const filteredOptions = selectedCategories.length
+            ? dynamicFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
+            : dynamicFilterOptions.subCategories;
+
+        const selectedSubCategories =
+            oracleDefaultFilterOptions['sub-catagories']?.filter((id: any) =>
+                filteredOptions.find((option: any) => option.id === id)
+            ) || [];
+
+        const selectedOptimizeTags = oracleOptimizeFilterTags.filter(
+            (tag: any) => tag.type !== 'sub-catagories' || filteredOptions.find((option: any) => option.id === tag.id)
+        );
+
+        if (oracleOptimizeFilterTags.length !== selectedOptimizeTags.length) {
+            dispatch(setOracleOptimizeFilterTags(selectedOptimizeTags));
+        }
+
+        const newDefaultFilterOptions = { ...oracleDefaultFilterOptions, 'sub-catagories': selectedSubCategories };
+        if (JSON.stringify(oracleDefaultFilterOptions['sub-catagories']) !== JSON.stringify(selectedSubCategories)) {
+            dispatch(setOracleDefaultFilterOptions(newDefaultFilterOptions));
+        }
+    }, [oracleOptimizeFilterTags, dynamicFilterOptions.subCategories, oracleDefaultFilterOptions, dispatch]);
+
     return (
         <div className={styles['well-architected']} id="export-oracle-optimize-pdf">
             <OracleWellArchitectBanner />
@@ -65,15 +204,76 @@ const OracleWellArchitectDashboard = () => {
                     </div>
 
                     <div className={styles.sectionTwo}>
-                        <OracleExportPDF
-                            optimizePrintState={optimizePrintState}
-                            setOptimizePrintState={setOptimizePrintState}
-                            loading={loading}
-                            isAssessmentAvailable={isAssessmentAvailable}
-                        />
+                        <div className={styles.downloadSectionHeader}>
+                            {!optimizePrintState && (
+                                <div
+                                    className={
+                                        loading || !isAssessmentAvailable
+                                            ? styles.downloadSectionDisable
+                                            : styles.downloadSection
+                                    }
+                                >
+                                    <div className={styles.configurationText}>
+                                        <DsTypography variant="Semibold_16">
+                                            {showDismissedConfigurations
+                                                ? t('databases.well-architect.dismiss.dismissed-configuration')
+                                                : t('databases.well-architect.dismiss.configuration')}
+                                        </DsTypography>
+                                    </div>
 
-                        <OracleFilterComponent setFilteredCardData={setFilteredCardData} />
+                                    <div className={styles.rightSection}>
+                                        <OracleExportPDF
+                                            optimizePrintState={optimizePrintState}
+                                            setOptimizePrintState={setOptimizePrintState}
+                                            loading={loading}
+                                            isAssessmentAvailable={isAssessmentAvailable}
+                                        />
+                                        {/* Dismissed configurations toggle */}
+                                        <div>
+                                            {!hasDismissedConfigurations ? (
+                                                <DsPopover
+                                                    trigger="hover"
+                                                    title={t(
+                                                        'databases.well-architect.dismiss.no-dismissed-configurations'
+                                                    )}
+                                                    monitorPosition="all"
+                                                    placement="bottom"
+                                                >
+                                                    <DsToggleSwitch
+                                                        id="dismissed-configuration-toggle"
+                                                        onClick={() => {}}
+                                                        title="Dismissed configuration"
+                                                        isDisabled
+                                                    />
+                                                </DsPopover>
+                                            ) : (
+                                                <DsToggleSwitch
+                                                    id="dismissed-configuration-toggle"
+                                                    onClick={
+                                                        loading || !isAssessmentAvailable
+                                                            ? () => {}
+                                                            : toggleDismissedConfiguration
+                                                    }
+                                                    title="Dismissed configuration"
+                                                    value={showDismissedConfigurations}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <OracleFilterComponent
+                            setFilteredCardData={setFilteredCardData}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                            dynamicFilterOptions={dynamicFilterOptions}
+                        />
                     </div>
+
+                    {/* Adding dummy div to have consistent spacing after filters */}
+                    <div style={{ marginBottom: '20px' }} />
 
                     {(filteredCardData?.redologs_placement ||
                         filteredCardData?.templogs_placement ||
@@ -96,6 +296,9 @@ const OracleWellArchitectDashboard = () => {
                                     isDarkTheme={isDarkTheme}
                                     optimizePrintState={optimizePrintState}
                                     oracleCardData={filteredCardData}
+                                    showDismissedConfigurations={showDismissedConfigurations}
+                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                    driftAssessmentData={driftAssessmentData}
                                 />
                             </div>
                         </div>
@@ -113,6 +316,9 @@ const OracleWellArchitectDashboard = () => {
                                     isDarkTheme={isDarkTheme}
                                     optimizePrintState={optimizePrintState}
                                     oracleCardData={filteredCardData}
+                                    showDismissedConfigurations={showDismissedConfigurations}
+                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                    driftAssessmentData={driftAssessmentData}
                                 />
                             </div>
                         </div>

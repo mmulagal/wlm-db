@@ -147,6 +147,31 @@ router.post(`${BASE_URL}/v1/mssql/assessment/dismiss`, async (req: {}, res: any)
     }, 1000);
 });
 
+router.post(`${BASE_URL}/v1/oracle/assessment/dismiss`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, {
+            dismissedConfigurations: [
+                {
+                    configurationName: 'oracle-binary-placement',
+                    configState: 'DISMISSED',
+                    startTime: 1744588921000,
+                    endTime: 1744588921000,
+                    databaseHosts: [
+                        {
+                            id: 'resource-id-4',
+                            sqlServerInstances: ['41', '42'],
+                            credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd5',
+                            region: 'us-east-1',
+                            status: 'Success', // If only some instances are updated successfully, the status will be marked as 'partial', and the error message will indicate how many instances succeeded versus failed.
+                            failedInstances: {}
+                        }
+                    ]
+                }
+            ]
+        });
+    }, 1000);
+});
+
 router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-operating-system`,
     async (req: {}, res: any) => {

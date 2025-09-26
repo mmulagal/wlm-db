@@ -1,6 +1,7 @@
 import store from '../../../../store/store';
 import {
     setCardData,
+    setDriftAssessmentData,
     setGwRefreshTimestamp,
     setGwTimestamp,
     setOntapConfigTableData,
@@ -21,7 +22,35 @@ import {
     formatNumberWithCustomComma,
     getCurrentDateTime
 } from '../../../../utils/utilityFunctions';
-import { isOptimized } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import { shouldShowOntapOsCard } from '../../../GetWell/GetWellUtils';
+
+// Helper function to get individual configuration dismiss state (similar to MSSQL version)
+const getIndividualConfigDismissState = (
+    configName: string,
+    type: 'volume' | 'lun' | 'os',
+    dismissedConfigurations: any
+): any => {
+    let dismissedConfigs: any[] = [];
+
+    if (type === 'volume' || type === 'lun') {
+        dismissedConfigs =
+            dismissedConfigurations?.storage?.configuration?.[type === 'volume' ? 'volumes' : 'luns'] || [];
+    } else if (type === 'os') {
+        dismissedConfigs = dismissedConfigurations?.storage?.configuration?.os || [];
+    }
+
+    const dismissedConfig = dismissedConfigs.find((config: any) => config.configurationName === configName);
+
+    if (dismissedConfig) {
+        return {
+            configState: dismissedConfig.configState,
+            startTime: dismissedConfig.startTime,
+            endTime: dismissedConfig.endTime
+        };
+    }
+
+    return null;
+};
 
 // Factory function for creating base block structure
 const createBaseBlocks = (tags: Array<string>, resourceType: string) => ({
@@ -369,7 +398,8 @@ const getHighestSeverity = (hasCritical: boolean, hasWarning: boolean): string =
 const processStorageConfigItem = (
     item: PerConfigInterface,
     optimizingData: Record<string, string>,
-    type: 'volume' | 'lun' | 'os'
+    type: 'volume' | 'lun' | 'os',
+    dismissedConfigurations?: any
 ) => {
     let name = item?.name;
     if (item?.name === 'snapshot-policy') {
@@ -383,12 +413,17 @@ const processStorageConfigItem = (
         name: GETWELL_CONFIG?.[name || ''] || name,
         status: formatValue(status),
         severity: formatValue(item?.severity || ''),
-        originalStatus: status
+        originalStatus: status,
+        dismissedObj: getIndividualConfigDismissState(item?.name || '', type, dismissedConfigurations)
     };
 };
 
 // Optimized function to format ONTAP configuration data
-export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: Record<string, string>) => {
+export const formatOntapConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>,
+    showDismissedView: boolean = false
+) => {
     const volumesList = data?.storage?.configuration?.volumes;
     const lunsList = data?.storage?.configuration?.luns;
     const fullList = [volumesList, lunsList];
@@ -412,7 +447,12 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 
     fullList?.forEach((list: any, index: number) => {
         list?.forEach((item: PerConfigInterface) => {
-            const processedItem = processStorageConfigItem(item, optimizingData, index === 0 ? 'volume' : 'lun');
+            const processedItem = processStorageConfigItem(
+                item,
+                optimizingData,
+                index === 0 ? 'volume' : 'lun',
+                data?.dismissedConfigurations
+            );
             formatOntapConfigList.push(processedItem);
 
             // Count optimized vs not optimized
@@ -441,7 +481,11 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 };
 
 // Optimized function to format OS configuration data
-export const formatOSConfig = (data: AssessmentResponseInterface, optimizingData: Record<string, string>) => {
+export const formatOSConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>,
+    showDismissedView: boolean = false
+) => {
     const osList = data?.storage?.configuration?.os;
 
     if (!osList?.length || osList[0]?.errorMessage) {
@@ -462,7 +506,7 @@ export const formatOSConfig = (data: AssessmentResponseInterface, optimizingData
     let hasWarning = false;
 
     osList?.forEach((item: PerConfigInterface) => {
-        const processedItem = processStorageConfigItem(item, optimizingData, 'os');
+        const processedItem = processStorageConfigItem(item, optimizingData, 'os', data?.dismissedConfigurations);
         formatOsConfigList.push(processedItem);
 
         // Count optimized vs not optimized
@@ -570,17 +614,21 @@ const createOsConfigurationBlock = (
 };
 
 // Optimized function to get cards data
-export const getOracleCardsData = (data: AssessmentResponseInterface, optimizingData: Record<string, string>) => {
+export const getOracleCardsData = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>,
+    showDismissedView: boolean = false
+) => {
     const {
         formatOntapConfigList,
         ontapTagsList,
         ontapOptimizedConfig,
         ontapNotOptimizedConfig,
         highestOntapSeverity
-    } = formatOntapConfig(data, optimizingData);
+    } = formatOntapConfig(data, optimizingData, showDismissedView);
 
     const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
-        formatOSConfig(data, optimizingData);
+        formatOSConfig(data, optimizingData, showDismissedView);
 
     const isFraCheck = data?.storage?.layout?.some((item: any) => item?.name === 'fra-dg-lun-layout') || false;
 
@@ -605,19 +653,19 @@ export const getOracleCardsData = (data: AssessmentResponseInterface, optimizing
     return { cardsData, formatOntapConfigList, formatOsConfigList };
 };
 
-// Helper function to check if item is optimized via dismissal
-const isOptimizedViaDismissal = (dismissedState: string): boolean =>
-    [CONFIG_STATES.DISMISSED, CONFIG_STATES.POSTPONED, CONFIG_STATES.ACTIVATING].includes(dismissedState);
-
 // Helper function to process storage card item
 const processStorageCardItem = (cardItem: any) => {
     const dismissedState = cardItem?.dismissedObj?.configState;
-    const isDismissed = isOptimizedViaDismissal(dismissedState);
-    const isOptimized = cardItem?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isDismissed;
+    const isDismissed = dismissedState === CONFIG_STATES.DISMISSED;
+    const isPostponed = dismissedState === CONFIG_STATES.POSTPONED;
+    const isOptimizedViaDismissal = dismissedState === CONFIG_STATES.ACTIVATING;
+    const isOptimized = cardItem?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal;
     const severity = cardItem?.block_four?.value;
 
     return {
         isDismissed,
+        isPostponed,
+        isOptimizedViaDismissal,
         isOptimized,
         isCritical: severity === GETWELL_STATUS.CRITICAL,
         isWarning: severity === GETWELL_STATUS.WARNING
@@ -625,7 +673,10 @@ const processStorageCardItem = (cardItem: any) => {
 };
 
 // Optimized function to format optimization breakdown data
-export const formatOracleOptimizationBreakDown = (cardsData: Record<string, any>) => {
+export const formatOracleOptimizationBreakDown = (
+    cardsData: Record<string, any>,
+    assessmentData?: AssessmentResponseInterface
+) => {
     const storageCount = {
         hasDismissedOrPostponed: false,
         total: 0,
@@ -633,6 +684,8 @@ export const formatOracleOptimizationBreakDown = (cardsData: Record<string, any>
         warning: 0,
         optimized: 0,
         notOptimized: 0,
+        dismissedOrPostponed: 0,
+        dismissedIds: [] as string[],
         percent: 0
     };
 
@@ -659,18 +712,81 @@ export const formatOracleOptimizationBreakDown = (cardsData: Record<string, any>
             return;
         }
 
-        const { isDismissed, isOptimized, isCritical, isWarning } = processStorageCardItem(cardItem);
+        const { isDismissed, isPostponed, isOptimizedViaDismissal, isOptimized, isCritical, isWarning } =
+            processStorageCardItem(cardItem);
 
-        if (isDismissed) storageCount.hasDismissedOrPostponed = true;
-
-        if (isOptimized) {
+        if (isDismissed || isPostponed) {
+            storageCount.dismissedOrPostponed++;
+            storageCount.hasDismissedOrPostponed = true;
+            // Use proper display names for parent cards
+            if (cardItem?.id === 'ontap_configuration') {
+                storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
+            } else if (cardItem?.id === 'os_configuration') {
+                storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
+            } else {
+                storageCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+            }
+        } else if (isOptimized) {
             storageCount.optimized++;
+            if (isOptimizedViaDismissal) {
+                storageCount.hasDismissedOrPostponed = true;
+            }
         } else {
             storageCount.notOptimized++;
             if (isCritical) storageCount.critical++;
             else if (isWarning) storageCount.warning++;
         }
     });
+
+    // Count sub-configurations from assessment data
+    if (assessmentData?.dismissedConfigurations) {
+        const dismissedConfigs = assessmentData.dismissedConfigurations;
+
+        // Handle ONTAP sub-configurations (Storage category)
+        const ontapSubConfigs = [
+            ...(dismissedConfigs.storage?.configuration?.volumes || []),
+            ...(dismissedConfigs.storage?.configuration?.luns || [])
+        ];
+
+        const ontapCardDismissed =
+            cardsData?.ontap_configuration?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            cardsData?.ontap_configuration?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
+
+        if (ontapCardDismissed) {
+            // Bulk dismissal - parent card name is already added in the main loop above
+            // Don't add individual sub-config names
+        } else {
+            // Individual sub-config dismissals - add individual names
+            ontapSubConfigs.forEach((config: any) => {
+                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                    storageCount.dismissedOrPostponed++;
+                    storageCount.hasDismissedOrPostponed = true;
+                    storageCount.dismissedIds.push(config.configurationName);
+                }
+            });
+        }
+
+        // Handle OS sub-configurations (Storage category)
+        const osSubConfigs = dismissedConfigs.storage?.configuration?.os || [];
+
+        const osCardDismissed =
+            cardsData?.os_configuration?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            cardsData?.os_configuration?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
+
+        if (osCardDismissed) {
+            // Bulk dismissal - parent card name is already added in the main loop above
+            // Don't add individual sub-config names
+        } else {
+            // Individual sub-config dismissals - add individual names
+            osSubConfigs.forEach((config: any) => {
+                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                    storageCount.dismissedOrPostponed++;
+                    storageCount.hasDismissedOrPostponed = true;
+                    storageCount.dismissedIds.push(config.configurationName);
+                }
+            });
+        }
+    }
 
     storageCount.total = storageCount.optimized + storageCount.notOptimized;
     storageCount.percent =
@@ -680,7 +796,11 @@ export const formatOracleOptimizationBreakDown = (cardsData: Record<string, any>
 
     return {
         storage: storageCount,
-        total: { ...storageCount } // Same as storage for Oracle
+        total: {
+            ...storageCount,
+            dismissedOrPostponed: storageCount.dismissedOrPostponed,
+            dismissedIds: storageCount.dismissedIds
+        }
     };
 };
 
@@ -691,7 +811,11 @@ const formatTimestamp = (timestamp: any): any => {
 };
 
 // Optimized main function to format Oracle Well Architected data
-export const formatOracleWellArchitectedData = (dispatch: any, data?: AssessmentResponseInterface) => {
+export const formatOracleWellArchitectedData = (
+    dispatch: any,
+    data?: AssessmentResponseInterface,
+    showDismissedView: boolean = false
+) => {
     const state = store.getState();
     const optimizingData = state.getWellOptimize.optimizingData || {};
     const assessmentData = data || state.getWellOptimize.driftAssessmentData;
@@ -699,8 +823,12 @@ export const formatOracleWellArchitectedData = (dispatch: any, data?: Assessment
     if (!assessmentData) return;
 
     // Process data and get formatted results
-    const { cardsData, formatOntapConfigList, formatOsConfigList } = getOracleCardsData(assessmentData, optimizingData);
-    const optBreakDown = formatOracleOptimizationBreakDown(cardsData);
+    const { cardsData, formatOntapConfigList, formatOsConfigList } = getOracleCardsData(
+        assessmentData,
+        optimizingData,
+        showDismissedView
+    );
+    const optBreakDown = formatOracleOptimizationBreakDown(cardsData, assessmentData);
 
     // Batch dispatch all data to store
     const dispatchActions = [
@@ -709,40 +837,40 @@ export const formatOracleWellArchitectedData = (dispatch: any, data?: Assessment
         () => dispatch(setOsConfigTableData(formatOsConfigList)),
         () => dispatch(setOptimizationBreakDown(optBreakDown)),
         () => dispatch(setGwTimestamp(formatTimestamp(assessmentData?.lastAssessmentTimestamp))),
-        () => dispatch(setGwRefreshTimestamp(getCurrentDateTime()))
+        () => dispatch(setGwRefreshTimestamp(getCurrentDateTime())),
+        () => dispatch(setDriftAssessmentData(assessmentData))
     ];
 
     dispatchActions.forEach(action => action());
 };
 
 // filters card data based on filter tags
-export const oracleApplyFilter = (cardData: any, optimizeFilterTags: any) => {
+export const oracleApplyFilter = (
+    cardData: any,
+    optimizeFilterTags: any,
+    showDismissedConfigurations?: boolean,
+    driftAssessmentData?: any
+) => {
     const filteredCardData: any = {};
     let configCount = 0;
     const filters = groupByType(optimizeFilterTags, 'value');
 
-    const categoryData: any = {
-        redologs_placement: { category: 'Storage', subCategory: 'Storage layout' },
-        templogs_placement: { category: 'Storage', subCategory: 'Storage layout' },
-        archive_placement: { category: 'Storage', subCategory: 'Storage layout' },
-        datafiles_placement: { category: 'Storage', subCategory: 'Storage layout' },
-        controlfiles_placement: { category: 'Storage', subCategory: 'Storage layout' },
-        oracle_binary_placement: { category: 'Storage', subCategory: 'Storage layout' },
-        ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-        os_configuration: { category: 'Storage', subCategory: 'Storage configuration' }
-    };
+    const categoryData = getOracleCategoryData();
 
     Object.keys(cardData)?.forEach((key: any) => {
         if (key === 'deploymentType' || key === 'isASMManaged' || key === 'isStorageLayoutFra') {
             return; // Skip deploymentType, isASMManaged and isStorageLayoutFra as they are not cards
         }
 
-        const checkCategory =
-            !filters['all-catagories'] || filters['all-catagories']?.includes(categoryData[key]?.category);
+        const categoryInfo = categoryData[key as keyof typeof categoryData];
+        const checkCategory = !filters['all-catagories'] || filters['all-catagories']?.includes(categoryInfo?.category);
         const checkSubCategory =
-            !filters['sub-catagories'] || filters['sub-catagories']?.includes(categoryData[key]?.subCategory);
+            !filters['sub-catagories'] || filters['sub-catagories']?.includes(categoryInfo?.subCategory);
 
-        const isOptmized = isOptimized(cardData[key].block_two.value, cardData[key].dismissedObj?.configState);
+        const isOptmized = isOracleConfigOptimized(
+            cardData[key].block_two.value,
+            cardData[key].dismissedObj?.configState
+        );
         const checkStatus =
             !filters.status ||
             (filters.status?.includes(GETWELL_VALUES.optimized) && isOptmized) ||
@@ -781,6 +909,34 @@ export const oracleApplyFilter = (cardData: any, optimizeFilterTags: any) => {
         }
         const checkResourceType = !filters.resourceType || filters.resourceType?.includes(resourceType);
 
+        // Handle dismissed configuration toggle filtering
+        const configState = cardData[key].dismissedObj?.configState;
+        let checkDismissedFilter = true;
+
+        if (showDismissedConfigurations !== undefined) {
+            // Special handling for ONTAP and OS configurations with subcategory logic
+            if (key === 'ontap_configuration' || key === 'os_configuration') {
+                checkDismissedFilter = shouldShowOntapOsCard(
+                    key as 'ontap_configuration' | 'os_configuration',
+                    driftAssessmentData,
+                    showDismissedConfigurations
+                );
+            } else {
+                // Standard logic for other Oracle configurations
+                if (showDismissedConfigurations) {
+                    // Show only dismissed and postponed configurations
+                    checkDismissedFilter =
+                        configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED;
+                } else {
+                    // Show only active configurations (excluding dismissed and postponed)
+                    checkDismissedFilter =
+                        !configState ||
+                        configState === CONFIG_STATES.ACTIVE ||
+                        configState === CONFIG_STATES.ACTIVATING;
+                }
+            }
+        }
+
         if (
             checkCategory &&
             checkSubCategory &&
@@ -788,13 +944,141 @@ export const oracleApplyFilter = (cardData: any, optimizeFilterTags: any) => {
             checkSeverity &&
             checkTags &&
             checkConfigState &&
-            checkResourceType
+            checkResourceType &&
+            checkDismissedFilter
         ) {
             filteredCardData[key] = cardData[key];
-            if (categoryData[key] && cardData[key].block_two.value) {
+            const categoryInfo = categoryData[key as keyof typeof categoryData];
+            if (categoryInfo && cardData[key].block_two.value) {
                 configCount++;
             }
         }
     });
     return { data: filteredCardData, configCount };
+};
+
+// Oracle-specific category data mapping
+export const getOracleCategoryData = () => ({
+    // Storage Layout cards
+    oracle_binary_placement: { category: 'Storage', subCategory: 'Storage layout' },
+    datafiles_placement: { category: 'Storage', subCategory: 'Storage layout' },
+    controlfiles_placement: { category: 'Storage', subCategory: 'Storage layout' },
+    redologs_placement: { category: 'Storage', subCategory: 'Storage layout' },
+    templogs_placement: { category: 'Storage', subCategory: 'Storage layout' },
+    archive_placement: { category: 'Storage', subCategory: 'Storage layout' },
+    // ASM LUN Layout cards (Storage Layout)
+    data_dg_lun_layout: { category: 'Storage', subCategory: 'Storage layout' },
+    log_dg_lun_layout: { category: 'Storage', subCategory: 'Storage layout' },
+    fra_dg_lun_layout: { category: 'Storage', subCategory: 'Storage layout' },
+    archivelog_dg_lun_layout: { category: 'Storage', subCategory: 'Storage layout' },
+    // Storage Configuration cards
+    ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
+    os_configuration: { category: 'Storage', subCategory: 'Storage configuration' }
+});
+
+// Check if configuration is optimized (Oracle version)
+const isOracleConfigOptimized = (blockTwoValue: string, configState?: string): boolean => {
+    // If dismissed/postponed, it's not optimized
+    if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
+        return false;
+    }
+
+    // If activating, consider it optimized (being worked on)
+    if (configState === CONFIG_STATES.ACTIVATING) {
+        return true;
+    }
+
+    // Based on block_two value for active configs
+    return blockTwoValue === GETWELL_VALUES.OPTIMIZED || blockTwoValue === 'Optimized';
+};
+
+// Generate dynamic filter options for Oracle cards
+export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploymentType?: string) => {
+    const categoryData = getOracleCategoryData();
+    const availableCategories = new Set();
+    const availableSubCategories = new Set();
+    const availableSeverities = new Set();
+    const availableTags = new Set();
+    const availableResourceTypes = new Set();
+    const availableStatuses = new Set();
+
+    Object.keys(cardData).forEach((key: any) => {
+        // Skip non-card keys
+        if (['deploymentType', 'isASMManaged', 'isStorageLayoutFra'].includes(key)) {
+            return;
+        }
+
+        const config = cardData[key];
+        const categoryInfo = categoryData[key as keyof typeof categoryData];
+
+        // Only process cards that have actual assessment data (block_two.value exists)
+        if (!config?.block_two?.value) {
+            return;
+        }
+
+        if (categoryInfo) {
+            availableCategories.add(categoryInfo.category);
+            availableSubCategories.add(categoryInfo.subCategory);
+        }
+
+        // Add severity if available
+        if (config.block_four?.value) {
+            availableSeverities.add(config.block_four.value);
+        }
+
+        // Add tags if available
+        if (config.tags) {
+            config.tags.forEach((tag: string) => availableTags.add(tag));
+        }
+
+        // Add resource type if available
+        if (config.block_five?.value) {
+            availableResourceTypes.add(config.block_five.value);
+        }
+
+        // Add status based on optimization state
+        const isOptimizedStatus = isOracleConfigOptimized(config.block_two?.value, config.dismissedObj?.configState);
+        availableStatuses.add(isOptimizedStatus ? GETWELL_STATUS.OPTIMIZED : GETWELL_STATUS.NOT_OPTIMIZED);
+    });
+
+    return {
+        categories: Array.from(availableCategories).map((category, index) => ({
+            id: index,
+            label: category as string,
+            value: category as string
+        })),
+        subCategories: Array.from(availableSubCategories).map((subCategory, index) => ({
+            id: index,
+            label: subCategory as string,
+            value: subCategory as string,
+            category: getOracleCategoryForSubCategory(subCategory as string)
+        })),
+        severities: Array.from(availableSeverities).map((severity, index) => ({
+            id: index,
+            label: severity as string,
+            value: severity as string
+        })),
+        tags: Array.from(availableTags).map((tag, index) => ({
+            id: index,
+            label: tag as string,
+            value: tag as string
+        })),
+        resourceTypes: Array.from(availableResourceTypes).map((resourceType, index) => ({
+            id: index,
+            label: resourceType as string,
+            value: resourceType as string
+        })),
+        statuses: Array.from(availableStatuses).map((status, index) => ({
+            id: index,
+            label: status as string,
+            value: status as string
+        }))
+    };
+};
+
+// Helper function to get category for a subcategory (Oracle version)
+const getOracleCategoryForSubCategory = (subCategory: string) => {
+    const categoryData = getOracleCategoryData();
+    const entry = Object.values(categoryData).find((item: any) => item.subCategory === subCategory);
+    return entry ? entry.category : '';
 };

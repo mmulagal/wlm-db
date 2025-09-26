@@ -7,6 +7,8 @@ import RecommendationText from '../../../../GetWell/RecommendationText/Recommend
 import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { ActivatingInfo, PostponeInfo, calculatePostponeInfo } from '../../../../GetWell/GetWellHelper';
+import { CONFIG_STATES } from '../../../../../utils/consts';
 
 const StorageLayoutSection = ({
     styles,
@@ -16,7 +18,10 @@ const StorageLayoutSection = ({
     handleAccordionExpanded,
     isDarkTheme,
     optimizePrintState,
-    oracleCardData
+    oracleCardData,
+    showDismissedConfigurations,
+    setShowDismissedConfigurations,
+    driftAssessmentData
 }: any) => {
     const { t } = useTranslation();
 
@@ -25,27 +30,114 @@ const StorageLayoutSection = ({
     const isASMManaged = useMemo(() => cardData?.isASMManaged, [cardData]);
     const isStorageLayoutFra = useMemo(() => cardData?.isStorageLayoutFra, [cardData]);
 
+    // Helper function to calculate postpone information for configurations
+    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
+
+    // Helper function to render PostponeInfo/ActivatingInfo based on showDismissedConfigurations
+    const renderPostponeActivatingInfo = (configKey: string) => (
+        <>
+            {showDismissedConfigurations && (
+                <PostponeInfo
+                    configKey={configKey}
+                    getPostponeInfo={getPostponeInfo}
+                    translation={t}
+                    customStyles={styles}
+                />
+            )}
+
+            {!showDismissedConfigurations && (
+                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} customStyles={styles} />
+            )}
+        </>
+    );
+
+    // Helper function to check storage layout card states
+    const storageLayoutCardStates = useMemo(() => {
+        if (!oracleCardData) return { hasActiveCards: false, hasDismissedCards: false };
+
+        // Define all storage layout card keys
+        const storageLayoutKeys = [
+            'oracle_binary_placement',
+            'datafiles_placement',
+            'controlfiles_placement',
+            'redologs_placement',
+            'templogs_placement',
+            'archive_placement',
+            'data_dg_lun_layout',
+            'log_dg_lun_layout',
+            'fra_dg_lun_layout',
+            'archivelog_dg_lun_layout'
+        ];
+
+        let hasActiveCards = false;
+        let hasDismissedCards = false;
+
+        storageLayoutKeys.forEach(key => {
+            const card = oracleCardData[key];
+            if (!card) return;
+
+            const configState = card.dismissedObj?.configState;
+            const hasValidAssessment = card.block_two?.value; // Check if card has actual assessment data
+
+            // Only consider cards with valid assessment data
+            if (!hasValidAssessment) return;
+
+            // Check for active/activating cards (normal view)
+            // If dismissedObj is null/undefined or configState is ACTIVE/ACTIVATING, it's an active card
+            if (!configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING) {
+                hasActiveCards = true;
+            }
+
+            // Check for dismissed/postponed cards (dismissed view)
+            if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
+                hasDismissedCards = true;
+            }
+        });
+
+        return { hasActiveCards, hasDismissedCards };
+    }, [oracleCardData]);
+
+    // Determine if header should be shown based on current view mode
+    const shouldShowHeader = useMemo(() => {
+        if (showDismissedConfigurations) {
+            // In dismissed view, show header if there are dismissed/postponed cards
+            return storageLayoutCardStates.hasDismissedCards;
+        } 
+            // In normal view, show header if there are active/activating cards
+            return storageLayoutCardStates.hasActiveCards;
+        
+    }, [showDismissedConfigurations, storageLayoutCardStates]);
+
     return (
         <div>
-            <div className={styles['header-buttons']}>
-                <DsTypography
-                    style={{
-                        padding: '0 0 8px'
-                    }}
-                    variant="Semibold_16"
-                >
-                    {t('databases.oracle-inner-page.storage-layout')}
-                </DsTypography>
-            </div>
+            {shouldShowHeader && (
+                <div className={styles['header-buttons']}>
+                    <DsTypography
+                        style={{
+                            padding: '0 0 8px'
+                        }}
+                        variant="Semibold_16"
+                    >
+                        {t('databases.oracle-inner-page.storage-layout')}
+                    </DsTypography>
+                </div>
+            )}
 
             <div className={styles.accordionGroups}>
                 {oracleCardData?.oracle_binary_placement && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.oracle_binary_placement} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.oracle_binary_placement}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="1"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('1', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('1', isExpanded);
@@ -55,7 +147,10 @@ const StorageLayoutSection = ({
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.oracle_binary_placement?.tags?.map(
                                         (perTag: string, index: number) => (
-                                            <div key={index}>
+                                            <div
+                                                key={index}
+                                                className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                            >
                                                 <Tag text={perTag} />
                                             </div>
                                         )
@@ -64,12 +159,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('oracle_binary_placement')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -85,11 +192,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.datafiles_placement && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.datafiles_placement} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.datafiles_placement}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="2"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('2', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('2', isExpanded);
@@ -98,7 +212,10 @@ const StorageLayoutSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.datafiles_placement?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}
@@ -106,12 +223,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('datafiles_placement')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -125,11 +254,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.controlfiles_placement && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.controlfiles_placement} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.controlfiles_placement}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="3"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('3', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('3', isExpanded);
@@ -139,7 +275,10 @@ const StorageLayoutSection = ({
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.controlfiles_placement?.tags?.map(
                                         (perTag: string, index: number) => (
-                                            <div key={index}>
+                                            <div
+                                                key={index}
+                                                className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                            >
                                                 <Tag text={perTag} />
                                             </div>
                                         )
@@ -148,12 +287,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('controlfiles_placement')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -169,11 +320,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.redologs_placement && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.redologs_placement} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.redologs_placement}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="4"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('4', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('4', isExpanded);
@@ -182,7 +340,10 @@ const StorageLayoutSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.redologs_placement?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}
@@ -190,12 +351,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('redologs_placement')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -209,11 +382,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.templogs_placement && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.templogs_placement} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.templogs_placement}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="5"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('5', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('5', isExpanded);
@@ -222,7 +402,10 @@ const StorageLayoutSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.templogs_placement?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}
@@ -230,12 +413,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('templogs_placement')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -249,11 +444,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.archive_placement && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.archive_placement} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.archive_placement}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="6"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('6', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('6', isExpanded);
@@ -262,7 +464,10 @@ const StorageLayoutSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.archive_placement?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}
@@ -270,12 +475,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('archive_placement')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -289,11 +506,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.data_dg_lun_layout && isASMManaged && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.data_dg_lun_layout} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.data_dg_lun_layout}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="7"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('7', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('7', isExpanded);
@@ -302,7 +526,10 @@ const StorageLayoutSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.data_dg_lun_layout?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}
@@ -310,12 +537,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('data_dg_lun_layout')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -329,11 +568,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.log_dg_lun_layout && isASMManaged && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.log_dg_lun_layout} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.log_dg_lun_layout}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="8"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('8', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('8', isExpanded);
@@ -342,7 +588,10 @@ const StorageLayoutSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.log_dg_lun_layout?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}
@@ -350,12 +599,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('log_dg_lun_layout')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -369,11 +630,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.fra_dg_lun_layout && isASMManaged && isStorageLayoutFra && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.fra_dg_lun_layout} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.fra_dg_lun_layout}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="9"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('9', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('9', isExpanded);
@@ -382,7 +650,10 @@ const StorageLayoutSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.fra_dg_lun_layout?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}
@@ -390,12 +661,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('fra_dg_lun_layout')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}
@@ -409,11 +692,18 @@ const StorageLayoutSection = ({
 
                 {oracleCardData?.archivelog_dg_lun_layout && isASMManaged && !isStorageLayoutFra && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.archivelog_dg_lun_layout} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.archivelog_dg_lun_layout}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
                         <DsAccordion
                             id="12"
                             variant="Default"
-                            isDisabled={false} // Todo add condition
+                            isDisabled={
+                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                            }
                             isExpanded={isAccordionExpanded('12', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('12', isExpanded);
@@ -423,7 +713,10 @@ const StorageLayoutSection = ({
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData.archivelog_dg_lun_layout?.tags?.map(
                                         (perTag: string, index: number) => (
-                                            <div key={index}>
+                                            <div
+                                                key={index}
+                                                className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                            >
                                                 <Tag text={perTag} />
                                             </div>
                                         )
@@ -432,12 +725,24 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('archivelog_dg_lun_layout')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ? <LightDisabled /> : <Light />}
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !cardData?.storage_tier?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
-                                            color: loading ? 'var(--text-disabled)' : 'var(--text-button-primary)'
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !cardData?.storage_tier?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
                                         }}
                                     >
                                         {t('databases.oracle-inner-page.view-recommendation')}

@@ -1,19 +1,50 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, DsButton, useDialog } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import styles from './OracleCardComponent.module.scss';
-import { useAppSelector } from '../../../../../store/storeHooks';
+import { useAppSelector, useAppDispatch } from '../../../../../store/storeHooks';
 import StatusSection from './StatusSection';
 import SectionSix from './SectionSix';
 import SectionFive from './SectionFive';
 import ViewAndFixButton from './ViewAndFixButton';
-import { ASSESSMENT_CONFIG_NAMES } from '../../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES } from '../../../../../utils/consts';
+import { useDismissOracleAssessmentMutation } from '../../../../../utils/apiService';
+import { DismissDialog } from '../../../../GetWell/StorageCardComponent/DismissDialog/DismissDialog';
+import {
+    getSubConfigurationData,
+    handleSingleAction as handleSingleActionHelper,
+    addSuccessNotification as addSuccessNotificationHelper,
+    handleDismissResponse as handleDismissResponseHelper,
+    handleDismissError as handleDismissErrorHelper,
+    areSubConfigurationsNotActive
+} from '../../../../GetWell/StorageCardComponent/StorageCardComponentHelper';
+import { formatOracleWellArchitectedData } from '../OracleWellArchitectedUtils';
 
-const OracleCardComponent = ({ cardData }: any) => {
+const OracleCardComponent = ({
+    cardData,
+    showDismissedConfigurations,
+    setShowDismissedConfigurations,
+    driftAssessmentData
+}: any) => {
     const { t } = useTranslation();
+    const dispatch = useAppDispatch();
+    const [dismissAction, setDismissAction] = useState(false);
+    const [showDismissButton, setShowDismissButton] = useState(false);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
-    const { isAssessmentAvailable, optimizePageLoading: loading } = useAppSelector(state => state.getWellOptimize);
+    const {
+        isAssessmentAvailable,
+        optimizePageLoading: loading,
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        cardData: cardDataFromStore
+    } = useAppSelector(state => state.getWellOptimize);
+
+    const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
+    const { setDialog, closeDialog } = useDialog();
 
     const [disableText, setDisableText] = useState(false);
 
@@ -25,9 +56,131 @@ const OracleCardComponent = ({ cardData }: any) => {
         }
     }, [isAssessmentAvailable, loading]);
 
+    // Function to determine if dismissed style should be applied
+    const shouldApplyDismissedStyle = () => {
+        // For ONTAP and OS cards: apply dismissed style if all sub-configs are activating
+        if (
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
+        ) {
+            return showDismissedConfigurations || areSubConfigurationsNotActive(cardData, driftAssessmentData);
+        }
+
+        // For other normal cards: keep the existing logic
+        return showDismissedConfigurations || cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
+    };
+
+    // Function For Dismiss
+    const handleSingleAction = (action: string) => {
+        handleSingleActionHelper(
+            action,
+            cardData,
+            selectedResourceId,
+            selectedDatabaseInstance,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId,
+            dismissOracleAssessment,
+            setDismissAction,
+            handleDismissResponse,
+            handleDismissError
+        );
+    };
+
+    const addSuccessNotification = (action: string, cardName?: string) => {
+        addSuccessNotificationHelper(action, cardName || '', dispatch, t);
+    };
+
+    const handleDismissResponse = (res: any, action: string) => {
+        handleDismissResponseHelper(
+            res,
+            action,
+            cardData,
+            selectedGwInstanceCredId,
+            selectedResourceId,
+            selectedDatabaseInstance,
+            selectedGwInstanceRegionId,
+            showDismissedConfigurations,
+            setShowDismissedConfigurations,
+            cardDataFromStore,
+            dispatch,
+            addSuccessNotification,
+            t,
+            formatOracleWellArchitectedData
+        );
+    };
+
+    const handleDismissError = (err: any) => {
+        handleDismissErrorHelper(err, dispatch, setDismissAction);
+    };
+
+    const handleDismissButtonClick = () => {
+        const { isSubConfiguration, subConfigurationCount, storageTier } = getSubConfigurationData(cardData);
+
+        setDialog(
+            <DismissDialog
+                type="single"
+                storageTier={storageTier}
+                isSubConfiguration={isSubConfiguration}
+                subConfigurationCount={subConfigurationCount}
+                callback={(selectedAction: string) => {
+                    handleSingleAction(selectedAction);
+                }}
+                closeCallback={closeDialog}
+            />
+        );
+    };
+
+    const dismissDisableButton = () => {
+        if (
+            cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
+            cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING ||
+            !cardData?.block_two?.value // Disable dismiss when there's no valid assessment data
+        ) {
+            return true;
+        }
+        return false;
+    };
+
+    const handleCardHoverMouseLeave = () => {
+        // Hide dismiss button when mouse leaves the card
+        if (!showDismissedConfigurations) {
+            setShowDismissButton(false);
+        }
+    };
+
+    const handleCardHoverMouseEnter = () => {
+        // Show dismiss button when mouse enters the card
+        if (!showDismissedConfigurations) {
+            setShowDismissButton(true);
+        }
+    };
+
+    // Dismiss button component
+    const renderDismissButton = () => {
+        if (!showDismissButton || !cardData?.block_two?.value) return null;
+
+        return (
+            <div className={styles.buttonSection}>
+                <DsButton
+                    type="text"
+                    onClick={handleDismissButtonClick}
+                    isDisabled={loading || dismissAction || dismissDisableButton()}
+                >
+                    {t('databases.well-architect.dismiss-text')}
+                </DsButton>
+            </div>
+        );
+    };
+
     return (
-        <div className={styles['oracle-card']}>
-            <div className={styles.cardContainer}>
+        <div className={`${styles['oracle-card']} ${shouldApplyDismissedStyle() ? styles.dismissed : ''}`}>
+            <div
+                className={styles.cardContainer}
+                onMouseEnter={handleCardHoverMouseEnter}
+                onMouseLeave={handleCardHoverMouseLeave}
+                style={{ cursor: 'pointer' }}
+            >
                 <div className={styles.itemContainer}>
                     <div className={styles.item}>
                         <div className={styles.summaryValue}>
@@ -44,7 +197,6 @@ const OracleCardComponent = ({ cardData }: any) => {
                         </DsTypography>
                     </div>
                 </div>
-
                 <div className={styles.itemContainer}>
                     <div className={styles.item}>
                         <div className={styles.summaryValue}>
@@ -55,7 +207,6 @@ const OracleCardComponent = ({ cardData }: any) => {
                         </DsTypography>
                     </div>
                 </div>
-
                 <div className={styles.itemContainer}>
                     <div className={styles.item}>
                         <div className={styles.summaryValue}>
@@ -75,7 +226,6 @@ const OracleCardComponent = ({ cardData }: any) => {
                         </DsTypography>
                     </div>
                 </div>
-
                 <div className={styles.itemContainer}>
                     <div className={styles.item}>
                         <div className={styles.summaryValue}>
@@ -86,7 +236,6 @@ const OracleCardComponent = ({ cardData }: any) => {
                         </DsTypography>
                     </div>
                 </div>
-
                 {cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS &&
                     cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM && (
                         <div className={styles.itemContainer}>
@@ -100,7 +249,51 @@ const OracleCardComponent = ({ cardData }: any) => {
                             </div>
                         </div>
                     )}
-                <ViewAndFixButton cardData={cardData} loading={loading ?? undefined} />
+
+                {/* Empty Column for ONTAP and Operating System so that dismiss button is aligned at last column */}
+                {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) && (
+                    <div className={`${styles.column} ${styles.emptyColumn}`} />
+                )}
+
+                {/* Buttons - Handling for ONTAP and Operating system cards */}
+                {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) &&
+                !showDismissedConfigurations &&
+                !areSubConfigurationsNotActive(cardData, driftAssessmentData) &&
+                cardData?.block_two?.value
+                    ? // Will be activated once the bulk and sub table dismissed implemenattion is added
+                      // <div className={`${styles.column} ${styles.lastColumnAlignment}`}>
+                      //     {/* Dismiss Button - Show for ONTAP and Operating system in last grid column */}
+                      //     {renderDismissButton()}
+                      // </div>
+                      null
+                    : null}
+                {/* Buttons for regular cards */}
+                {!showDismissedConfigurations &&
+                    !(
+                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
+                    ) && (
+                        <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                            {/* View and Fix Action Button */}
+                            <ViewAndFixButton cardData={cardData} loading={loading ?? undefined} />
+                        </div>
+                    )}
+                {/* Reactivate button for dismissed configurations */}
+                {showDismissedConfigurations && (
+                    <div className={styles.buttonSection} id={`${cardData?.id}-reactivate`}>
+                        <DsButton
+                            variant="secondary"
+                            onClick={() => handleSingleAction(CONFIG_STATES.ACTIVE)}
+                            isDisabled={loading || false}
+                        >
+                            {t('databases.well-architect.dismiss.reactivate')}
+                        </DsButton>
+                    </div>
+                )}
             </div>
         </div>
     );
