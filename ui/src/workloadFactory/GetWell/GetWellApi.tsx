@@ -10,7 +10,7 @@ import {
     setGwSelectedRowFsxId
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
-import { formatGetWellData, resetGwValuesOnRefresh } from './GetWellUtils';
+import { formatGetWellData, resetGwValuesOnRefresh, storageMockData } from './GetWellUtils';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
@@ -54,6 +54,9 @@ const GetWellApi = () => {
                 instanceId: selectedDatabaseInstance
             });
             if (result && !result?.error && result?.data) {
+                if (!result.data.storage) {
+                    result.data = { ...result.data, ...storageMockData };
+                }
                 dispatch(setDriftAssessmentData(result.data));
                 formatGetWellData(dispatch, result.data);
                 dispatch(setOptimizePageLoading(false));

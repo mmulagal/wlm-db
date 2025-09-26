@@ -5240,3 +5240,93 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         })
     );
 };
+
+// storageMockData used when all the storage configurations are dismissed then storage object will not be coming in the Assessment response so will add mock storage object
+export const storageMockData = {
+    storage: {
+        configuration: {
+            volumes: [
+                {
+                    name: 'thin-provision'
+                },
+                {
+                    name: 'autosize'
+                },
+                {
+                    name: 'autosize-mode'
+                },
+                {
+                    name: 'fractional-reserve'
+                },
+                {
+                    name: 'snapshot-copy-reserve'
+                },
+                {
+                    name: 'snapshot-autodelete'
+                },
+                {
+                    name: 'space-mgmt-try-first'
+                },
+                {
+                    name: 'tiering-policy'
+                },
+                {
+                    name: 'tiering-min-cooling-days'
+                }
+            ],
+            luns: [
+                {
+                    name: 'os-type'
+                },
+                {
+                    name: 'space-reservation-enabled'
+                },
+                {
+                    name: 'space-allocation-allocated'
+                }
+            ],
+            os: [
+                {
+                    name: 'mpio-enabled'
+                },
+                {
+                    name: 'mpio-timeout'
+                },
+                {
+                    name: 'mpio-iscsi-count'
+                },
+                {
+                    name: 'ntfs-allocation-unit-size'
+                },
+                {
+                    name: 'mpio-load-balance-policy'
+                }
+            ]
+        },
+        sizing: [
+            {
+                name: 'performance-tier'
+            },
+            {
+                name: 'log-drive-size'
+            },
+            {
+                name: 'tempdb-drive-size'
+            },
+            {
+                name: 'headroom'
+            }
+        ],
+        layout: [
+            {
+                name: 'tempdb-files-location'
+            },
+            {
+                name: 'data-files-location'
+            },
+            {
+                name: 'log-files-location'
+            }
+        ]
+    }
+};

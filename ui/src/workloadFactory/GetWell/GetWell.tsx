@@ -2603,6 +2603,7 @@ const GetWell = () => {
                             {/* Section six */}
                             {(filteredCardData?.scheduled_local_snapshot ||
                                 filteredCardData?.crr ||
+                                filteredCardData?.scheduled_fsx_for_ontap_backups ||
                                 (instanceDeploymentType === GENERAL.FCI &&
                                     filteredCardData?.mssql_high_availability)) && (
                                 <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
@@ -2816,7 +2817,14 @@ const GetWell = () => {
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.scheduled_fsx_for_ontap_backups?.tags?.map(
                                                                 (perTag: string, index: number) => (
-                                                                    <div key={index}>
+                                                                    <div
+                                                                        className={`${
+                                                                            showDismissedConfigurations
+                                                                                ? styles.dismissed
+                                                                                : ''
+                                                                        }`}
+                                                                        key={index}
+                                                                    >
                                                                         <Tag text={perTag} />
                                                                     </div>
                                                                 )
@@ -2837,6 +2845,7 @@ const GetWell = () => {
                                                                 }
                                                             >
                                                                 {loading ||
+                                                                showDismissedConfigurations ||
                                                                 !cardData?.scheduled_fsx_for_ontap_backups?.block_two
                                                                     ?.value ? (
                                                                     <LightDisabled />
