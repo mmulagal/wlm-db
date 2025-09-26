@@ -1,5 +1,12 @@
 .well-architected {
     width: 100%;
+
+    .loader {
+        height: inherit;
+        overflow: auto;
+        background-color: var(--main-background);
+    }
+
     .cards {
         width: 100%;
         margin-top: 24px;

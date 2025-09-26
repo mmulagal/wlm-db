@@ -135,7 +135,9 @@ const StorageLayoutSection = ({
                             id="1"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.oracle_binary_placement?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('1', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -162,7 +164,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.oracle_binary_placement?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -173,7 +175,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.oracle_binary_placement?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -201,7 +203,9 @@ const StorageLayoutSection = ({
                             id="2"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.datafiles_placement?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('2', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -226,7 +230,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.datafiles_placement?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -237,7 +241,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.datafiles_placement?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -263,7 +267,9 @@ const StorageLayoutSection = ({
                             id="3"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.controlfiles_placement?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('3', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -290,7 +296,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.controlfiles_placement?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -301,7 +307,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.controlfiles_placement?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -329,7 +335,9 @@ const StorageLayoutSection = ({
                             id="4"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.redologs_placement?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('4', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -354,7 +362,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.redologs_placement?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -365,7 +373,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.redologs_placement?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -391,7 +399,9 @@ const StorageLayoutSection = ({
                             id="5"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.templogs_placement?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('5', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -416,7 +426,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.templogs_placement?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -427,7 +437,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.templogs_placement?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -453,7 +463,9 @@ const StorageLayoutSection = ({
                             id="6"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.archive_placement?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('6', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -478,7 +490,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.archive_placement?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -489,7 +501,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.archive_placement?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -515,7 +527,9 @@ const StorageLayoutSection = ({
                             id="7"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.data_dg_lun_layout?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('7', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -540,7 +554,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.data_dg_lun_layout?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -551,7 +565,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.data_dg_lun_layout?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -577,7 +591,9 @@ const StorageLayoutSection = ({
                             id="8"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.log_dg_lun_layout?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('8', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -602,7 +618,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.log_dg_lun_layout?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -613,7 +629,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.log_dg_lun_layout?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -639,7 +655,9 @@ const StorageLayoutSection = ({
                             id="9"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.fra_dg_lun_layout?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('9', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -664,7 +682,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.fra_dg_lun_layout?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -675,7 +693,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.fra_dg_lun_layout?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -701,7 +719,9 @@ const StorageLayoutSection = ({
                             id="12"
                             variant="Default"
                             isDisabled={
-                                loading || showDismissedConfigurations || !cardData?.storage_tier?.block_two?.value
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.archivelog_dg_lun_layout?.block_two?.value
                             }
                             isExpanded={isAccordionExpanded('12', optimizePrintState)}
                             onExpandChange={isExpanded => {
@@ -728,7 +748,7 @@ const StorageLayoutSection = ({
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !cardData?.storage_tier?.block_two?.value ? (
+                                        !oracleCardData?.archivelog_dg_lun_layout?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -739,7 +759,7 @@ const StorageLayoutSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !cardData?.storage_tier?.block_two?.value
+                                                !oracleCardData?.archivelog_dg_lun_layout?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}

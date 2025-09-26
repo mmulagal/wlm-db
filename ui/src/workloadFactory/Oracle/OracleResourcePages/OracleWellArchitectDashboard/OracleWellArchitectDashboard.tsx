@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DsPopover, DsToggleSwitch, DsTypography } from '@tlveng/wlm-ds';
+import { DsPopover, DsSpinner, DsToggleSwitch, DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector, useAppDispatch } from '../../../../store/storeHooks';
 import TotalOptimizationScore from '../../../GetWell/TotalOptimizationScore/TotalOptimizationScore';
 import OracleConfigureCategory from './OracleConfigureCategory/OracleConfigureCategory';
 import styles from './OracleWellArchitectDashboard.module.scss';
+import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
@@ -189,142 +190,152 @@ const OracleWellArchitectDashboard = () => {
     }, [oracleOptimizeFilterTags, dynamicFilterOptions.subCategories, oracleDefaultFilterOptions, dispatch]);
 
     return (
-        <div className={styles['well-architected']} id="export-oracle-optimize-pdf">
-            <OracleWellArchitectBanner />
-
-            {showChartArea && (
+        <div className={styles['well-architected__loader']}>
+            {optimizePrintState && (
                 <>
-                    <div className={styles.cards}>
-                        <TotalOptimizationScore
-                            loading={loading}
-                            optimizationBreakDown={optimizationBreakDown}
-                            isAssessmentAvailable={isAssessmentAvailable}
-                        />
-                        <OracleConfigureCategory />
+                    <div className={commonStyles.loaderOverlay} />
+                    <div className={commonStyles.spinnerPlacement}>
+                        <DsSpinner isLarge />
                     </div>
-
-                    <div className={styles.sectionTwo}>
-                        <div className={styles.downloadSectionHeader}>
-                            {!optimizePrintState && (
-                                <div
-                                    className={
-                                        loading || !isAssessmentAvailable
-                                            ? styles.downloadSectionDisable
-                                            : styles.downloadSection
-                                    }
-                                >
-                                    <div className={styles.configurationText}>
-                                        <DsTypography variant="Semibold_16">
-                                            {showDismissedConfigurations
-                                                ? t('databases.well-architect.dismiss.dismissed-configuration')
-                                                : t('databases.well-architect.dismiss.configuration')}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.rightSection}>
-                                        <OracleExportPDF
-                                            optimizePrintState={optimizePrintState}
-                                            setOptimizePrintState={setOptimizePrintState}
-                                            loading={loading}
-                                            isAssessmentAvailable={isAssessmentAvailable}
-                                        />
-                                        {/* Dismissed configurations toggle */}
-                                        <div>
-                                            {!hasDismissedConfigurations ? (
-                                                <DsPopover
-                                                    trigger="hover"
-                                                    title={t(
-                                                        'databases.well-architect.dismiss.no-dismissed-configurations'
-                                                    )}
-                                                    monitorPosition="all"
-                                                    placement="bottom"
-                                                >
-                                                    <DsToggleSwitch
-                                                        id="dismissed-configuration-toggle"
-                                                        onClick={() => {}}
-                                                        title="Dismissed configuration"
-                                                        isDisabled
-                                                    />
-                                                </DsPopover>
-                                            ) : (
-                                                <DsToggleSwitch
-                                                    id="dismissed-configuration-toggle"
-                                                    onClick={
-                                                        loading || !isAssessmentAvailable
-                                                            ? () => {}
-                                                            : toggleDismissedConfiguration
-                                                    }
-                                                    title="Dismissed configuration"
-                                                    value={showDismissedConfigurations}
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <OracleFilterComponent
-                            setFilteredCardData={setFilteredCardData}
-                            showDismissedConfigurations={showDismissedConfigurations}
-                            driftAssessmentData={driftAssessmentData}
-                            dynamicFilterOptions={dynamicFilterOptions}
-                        />
-                    </div>
-
-                    {/* Adding dummy div to have consistent spacing after filters */}
-                    <div style={{ marginBottom: '20px' }} />
-
-                    {(filteredCardData?.redologs_placement ||
-                        filteredCardData?.templogs_placement ||
-                        filteredCardData?.archive_placement ||
-                        filteredCardData?.datafiles_placement ||
-                        filteredCardData?.controlfiles_placement ||
-                        filteredCardData?.oracle_binary_placement ||
-                        filteredCardData?.data_dg_lun_layout ||
-                        filteredCardData?.log_dg_lun_layout ||
-                        filteredCardData?.fra_dg_lun_layout ||
-                        filteredCardData?.archivelog_dg_lun_layout) && (
-                        <div className={styles.sectionTwo}>
-                            <div className={styles.sectionClass}>
-                                <StorageLayoutSection
-                                    styles={styles}
-                                    isAccordionExpanded={isAccordionExpanded}
-                                    setClickedAccordionId={setClickedAccordionId}
-                                    loading={loading}
-                                    handleAccordionExpanded={handleAccordionExpanded}
-                                    isDarkTheme={isDarkTheme}
-                                    optimizePrintState={optimizePrintState}
-                                    oracleCardData={filteredCardData}
-                                    showDismissedConfigurations={showDismissedConfigurations}
-                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                    driftAssessmentData={driftAssessmentData}
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {(filteredCardData?.ontap_configuration || filteredCardData?.os_configuration) && (
-                        <div className={styles.sectionTwo}>
-                            <div className={styles.sectionClass}>
-                                <StorageConfigurationSection
-                                    styles={styles}
-                                    isAccordionExpanded={isAccordionExpanded}
-                                    setClickedAccordionId={setClickedAccordionId}
-                                    loading={loading}
-                                    handleAccordionExpanded={handleAccordionExpanded}
-                                    isDarkTheme={isDarkTheme}
-                                    optimizePrintState={optimizePrintState}
-                                    oracleCardData={filteredCardData}
-                                    showDismissedConfigurations={showDismissedConfigurations}
-                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                    driftAssessmentData={driftAssessmentData}
-                                />
-                            </div>
-                        </div>
-                    )}
                 </>
             )}
+            <div className={styles['well-architected']} id="export-oracle-optimize-pdf">
+                <OracleWellArchitectBanner />
+
+                {showChartArea && (
+                    <>
+                        <div className={styles.cards}>
+                            <TotalOptimizationScore
+                                loading={loading}
+                                optimizationBreakDown={optimizationBreakDown}
+                                isAssessmentAvailable={isAssessmentAvailable}
+                            />
+                            <OracleConfigureCategory />
+                        </div>
+
+                        <div className={styles.sectionTwo}>
+                            <div className={styles.downloadSectionHeader}>
+                                {!optimizePrintState && (
+                                    <div
+                                        className={
+                                            loading || !isAssessmentAvailable
+                                                ? styles.downloadSectionDisable
+                                                : styles.downloadSection
+                                        }
+                                    >
+                                        <div className={styles.configurationText}>
+                                            <DsTypography variant="Semibold_16">
+                                                {showDismissedConfigurations
+                                                    ? t('databases.well-architect.dismiss.dismissed-configuration')
+                                                    : t('databases.well-architect.dismiss.configuration')}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={styles.rightSection}>
+                                            <OracleExportPDF
+                                                optimizePrintState={optimizePrintState}
+                                                setOptimizePrintState={setOptimizePrintState}
+                                                loading={loading}
+                                                isAssessmentAvailable={isAssessmentAvailable}
+                                            />
+                                            {/* Dismissed configurations toggle */}
+                                            <div>
+                                                {!hasDismissedConfigurations ? (
+                                                    <DsPopover
+                                                        trigger="hover"
+                                                        title={t(
+                                                            'databases.well-architect.dismiss.no-dismissed-configurations'
+                                                        )}
+                                                        monitorPosition="all"
+                                                        placement="bottom"
+                                                    >
+                                                        <DsToggleSwitch
+                                                            id="dismissed-configuration-toggle"
+                                                            onClick={() => {}}
+                                                            title="Dismissed configuration"
+                                                            isDisabled
+                                                        />
+                                                    </DsPopover>
+                                                ) : (
+                                                    <DsToggleSwitch
+                                                        id="dismissed-configuration-toggle"
+                                                        onClick={
+                                                            loading || !isAssessmentAvailable
+                                                                ? () => {}
+                                                                : toggleDismissedConfiguration
+                                                        }
+                                                        title="Dismissed configuration"
+                                                        value={showDismissedConfigurations}
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <OracleFilterComponent
+                                setFilteredCardData={setFilteredCardData}
+                                showDismissedConfigurations={showDismissedConfigurations}
+                                driftAssessmentData={driftAssessmentData}
+                                dynamicFilterOptions={dynamicFilterOptions}
+                            />
+                        </div>
+
+                        {/* Adding dummy div to have consistent spacing after filters */}
+                        <div style={{ marginBottom: '20px' }} />
+
+                        {(filteredCardData?.redologs_placement ||
+                            filteredCardData?.templogs_placement ||
+                            filteredCardData?.archive_placement ||
+                            filteredCardData?.datafiles_placement ||
+                            filteredCardData?.controlfiles_placement ||
+                            filteredCardData?.oracle_binary_placement ||
+                            filteredCardData?.data_dg_lun_layout ||
+                            filteredCardData?.log_dg_lun_layout ||
+                            filteredCardData?.fra_dg_lun_layout ||
+                            filteredCardData?.archivelog_dg_lun_layout) && (
+                            <div className={styles.sectionTwo}>
+                                <div className={styles.sectionClass}>
+                                    <StorageLayoutSection
+                                        styles={styles}
+                                        isAccordionExpanded={isAccordionExpanded}
+                                        setClickedAccordionId={setClickedAccordionId}
+                                        loading={loading}
+                                        handleAccordionExpanded={handleAccordionExpanded}
+                                        isDarkTheme={isDarkTheme}
+                                        optimizePrintState={optimizePrintState}
+                                        oracleCardData={filteredCardData}
+                                        showDismissedConfigurations={showDismissedConfigurations}
+                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                        driftAssessmentData={driftAssessmentData}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {(filteredCardData?.ontap_configuration || filteredCardData?.os_configuration) && (
+                            <div className={styles.sectionTwo}>
+                                <div className={styles.sectionClass}>
+                                    <StorageConfigurationSection
+                                        styles={styles}
+                                        isAccordionExpanded={isAccordionExpanded}
+                                        setClickedAccordionId={setClickedAccordionId}
+                                        loading={loading}
+                                        handleAccordionExpanded={handleAccordionExpanded}
+                                        isDarkTheme={isDarkTheme}
+                                        optimizePrintState={optimizePrintState}
+                                        oracleCardData={filteredCardData}
+                                        showDismissedConfigurations={showDismissedConfigurations}
+                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                        driftAssessmentData={driftAssessmentData}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
         </div>
     );
 };
