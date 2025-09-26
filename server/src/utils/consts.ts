@@ -544,6 +544,8 @@ const AWS_REGIONS = new Map<string, string>([
     ['ap-southeast-3', 'Asia Pacific (Jakarta)'],
     ['ap-southeast-4', 'Asia Pacific (Melbourne)'],
     ['ap-southeast-7', 'Asia Pacific (Thailand)'],
+    // Newly added region
+    ['ap-east-2', 'Asia Pacific (Taipei)'],
     ['ca-central-1', 'Canada (Central)'],
     ['cn-north-1', 'China (Beijing)'],
     ['cn-northwest-1', 'China (Ningxia)'],

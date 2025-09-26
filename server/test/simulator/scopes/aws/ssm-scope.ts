@@ -39,6 +39,7 @@ import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-pa
 import describeAvailablePatchesResponse from '../../responses/aws/ssm-describe-available-patches.json';
 import listCommandsCommandResponse from '../../responses/aws/list-commands-command.json';
 import getSsmInstanceInformationResponse from '../../responses/aws/ssm-instance-information.json';
+import listAmazonLinuxAmiResponse from '../../responses/aws/list-amazon-linux-amis.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
     restGetUtilForOntap,
@@ -1569,6 +1570,9 @@ ssmMock
 ssmMock.on(GetParametersByPathCommand).callsFake(input => {
     if (input.Path && input.Path.includes('/aws/service/global-infrastructure/services/bedrock/regions')) {
         return Promise.resolve(listBedrockRegionsResponse);
+    }
+    if (input.Path && input.Path.includes('/aws/service/ami-amazon-linux-latest')) {
+        return Promise.resolve(listAmazonLinuxAmiResponse);
     }
     return Promise.resolve(listFsxOntapRegionsResponse);
 });

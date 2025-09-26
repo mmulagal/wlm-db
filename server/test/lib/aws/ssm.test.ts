@@ -13,7 +13,7 @@ import {
     listSsmCommands,
     describeInstanceInformation
 } from '../../../src/lib/aws/ssm';
-import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { SSM_PARAMS } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
 import ssmResponse from '../../simulator/responses/aws/ssm-response.json';
 import fsxOntapRegions from '../../simulator/responses/aws/list-fsx-ontap-regions.json';
@@ -47,12 +47,12 @@ describe('sendSSMCommand', () => {
     });
 
     it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
-        const response = await getParametersByPath(DEFAULT_AWS_CREDENTIALS_TYPE);
+        const response = await getParametersByPath();
         expect(response).toEqual(fsxOntapRegions.Parameters);
     });
 
     it('List of AWS AL2023 AMIs', async () => {
-        const response = await getParametersByPath(DEFAULT_AWS_CREDENTIALS_TYPE);
+        const response = await getParametersByPath(undefined, undefined, '/aws/service/ami-amazon-linux-latest');
         const isAMIPresent = response?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
         expect(isAMIPresent).toBeTruthy();
     });

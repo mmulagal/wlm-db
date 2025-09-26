@@ -1,0 +1,19 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "371fa21a-261b-4a0f-8cdf-e5d5ea6c3cbf",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Parameters": [
+        {
+            "Name": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
+            "Type": "String",
+            "Value": "ami-012967cc5a8c9f891",
+            "Version": 94,
+            "LastModifiedDate": "2024-11-15T01:04:56.373000+05:30",
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
+            "DataType": "text"
+        }
+    ]
+}
