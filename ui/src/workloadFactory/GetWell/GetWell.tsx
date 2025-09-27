@@ -291,30 +291,6 @@ const GetWell = () => {
         return generateDynamicFilterOptions(filteredCardData, instanceDeploymentType);
     }, [filteredCardData, instanceDeploymentType]);
 
-    const generateSubCategoryOptions = useMemo(() => {
-        const selectedCategories = optimizeFilterTags
-            .filter((tag: any) => tag && tag.type === 'all-catagories')
-            .map((tag: any) => tag.value);
-
-        // Use dynamic subcategories filtered by selected categories
-        const filteredOptions = selectedCategories.length
-            ? dynamicFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
-            : dynamicFilterOptions.subCategories;
-
-        const selectedSubCategories =
-            defaultFilterOptions['sub-catagories']?.filter((id: any) =>
-                filteredOptions.find((option: any) => option.id === id)
-            ) || [];
-        const selectedOptimizeTags = optimizeFilterTags.filter(
-            (tag: any) => tag.type !== 'sub-catagories' || filteredOptions.find((option: any) => option.id === tag.id)
-        );
-        if (optimizeFilterTags.length !== selectedOptimizeTags.length) {
-            dispatch(setOptimizeFilterTags(selectedOptimizeTags));
-        }
-        dispatch(setDefaultFilterOptions({ ...defaultFilterOptions, 'sub-catagories': selectedSubCategories }));
-        return filteredOptions;
-    }, [optimizeFilterTags, dynamicFilterOptions.subCategories]);
-
     GetWellApi();
 
     const handleLearnHowClick = () => {
@@ -688,18 +664,18 @@ const GetWell = () => {
                                                                 `Sub categories: ${
                                                                     !defaultFilterOptions['sub-catagories']?.length ||
                                                                     defaultFilterOptions['sub-catagories'].length ===
-                                                                        generateSubCategoryOptions.length
+                                                                        dynamicFilterOptions.subCategories.length
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
                                                                     defaultFilterOptions['sub-catagories']?.length > 0
                                                                         ? defaultFilterOptions['sub-catagories']?.length
-                                                                        : generateSubCategoryOptions.length
+                                                                        : dynamicFilterOptions.subCategories.length
                                                                 })`
                                                             }
                                                             placeholder="Placeholder text"
                                                             isCleanable={false}
-                                                            options={generateSubCategoryOptions}
+                                                            options={dynamicFilterOptions.subCategories}
                                                             selectionType="multi"
                                                             isWithActions
                                                             onSelect={(option: any) =>
@@ -938,9 +914,9 @@ const GetWell = () => {
                                                     >
                                                         {!defaultFilterOptions['sub-catagories']?.length ||
                                                         defaultFilterOptions['sub-catagories']?.length ===
-                                                            generateSubCategoryOptions.length
-                                                            ? `All(${generateSubCategoryOptions.length})`
-                                                            : `${defaultFilterOptions['sub-catagories']?.length}/${generateSubCategoryOptions.length}`}
+                                                            dynamicFilterOptions.subCategories.length
+                                                            ? `All(${dynamicFilterOptions.subCategories.length})`
+                                                            : `${defaultFilterOptions['sub-catagories']?.length}/${dynamicFilterOptions.subCategories.length}`}
                                                     </DsTypography>
                                                 </div>
 

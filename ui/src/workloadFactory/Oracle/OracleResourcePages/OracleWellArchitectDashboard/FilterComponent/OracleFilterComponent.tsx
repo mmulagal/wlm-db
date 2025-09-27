@@ -73,48 +73,6 @@ const OracleFilterComponent = ({
         setConfigCount(configCount);
     }, [cardData, oracleOptimizeFilterTags, ontapConfigTableData, showDismissedConfigurations, driftAssessmentData]);
 
-    const generateSubCategoryOptions = useMemo(() => {
-        const selectedCategories = oracleOptimizeFilterTags
-            .filter((tag: any) => tag && tag.type === 'all-catagories')
-            .map((tag: any) => tag.value);
-
-        // Use dynamic subcategories filtered by selected categories
-        const filteredOptions = selectedCategories.length
-            ? safeFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
-            : safeFilterOptions.subCategories;
-
-        return filteredOptions;
-    }, [oracleOptimizeFilterTags, safeFilterOptions.subCategories]);
-
-    // Handle subcategory filter updates in useEffect to avoid setState during render
-    useEffect(() => {
-        const selectedCategories = oracleOptimizeFilterTags
-            .filter((tag: any) => tag && tag.type === 'all-catagories')
-            .map((tag: any) => tag.value);
-
-        const filteredOptions = selectedCategories.length
-            ? safeFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
-            : safeFilterOptions.subCategories;
-
-        const selectedSubCategories =
-            oracleDefaultFilterOptions['sub-catagories']?.filter((id: any) =>
-                filteredOptions.find((option: any) => option.id === id)
-            ) || [];
-
-        const selectedOptimizeTags = oracleOptimizeFilterTags.filter(
-            (tag: any) => tag.type !== 'sub-catagories' || filteredOptions.find((option: any) => option.id === tag.id)
-        );
-
-        if (oracleOptimizeFilterTags.length !== selectedOptimizeTags.length) {
-            dispatch(setOracleOptimizeFilterTags(selectedOptimizeTags));
-        }
-
-        const newDefaultFilterOptions = { ...oracleDefaultFilterOptions, 'sub-catagories': selectedSubCategories };
-        if (JSON.stringify(oracleDefaultFilterOptions['sub-catagories']) !== JSON.stringify(selectedSubCategories)) {
-            dispatch(setOracleDefaultFilterOptions(newDefaultFilterOptions));
-        }
-    }, [oracleOptimizeFilterTags, safeFilterOptions.subCategories, oracleDefaultFilterOptions, dispatch]);
-
     const handleSelect = (filters: any, filterLabel: any) => {
         handleSelectForFilter(
             filters,
@@ -184,18 +142,18 @@ const OracleFilterComponent = ({
             formatLabel={() =>
                 `Sub categories: ${
                     !oracleDefaultFilterOptions['sub-catagories']?.length ||
-                    oracleDefaultFilterOptions['sub-catagories'].length === generateSubCategoryOptions.length
+                    oracleDefaultFilterOptions['sub-catagories'].length === safeFilterOptions.subCategories.length
                         ? 'All'
                         : ''
                 }(${
                     oracleDefaultFilterOptions['sub-catagories']?.length > 0
                         ? oracleDefaultFilterOptions['sub-catagories']?.length
-                        : generateSubCategoryOptions.length
+                        : safeFilterOptions.subCategories.length
                 })`
             }
             placeholder="Placeholder text"
             isCleanable={false}
-            options={generateSubCategoryOptions}
+            options={safeFilterOptions.subCategories}
             selectionType="multi"
             isWithActions
             onSelect={(option: any) => handleSelect(option, 'sub-catagories')}
@@ -304,51 +262,6 @@ const OracleFilterComponent = ({
         />
     );
 
-    const configStateSelectBox = () => (
-        <DsSelect
-            title=""
-            selectedOptionIds={oracleDefaultFilterOptions.configState ? oracleDefaultFilterOptions.configState : []}
-            dropDown={{
-                isCloseOnClickOutside: true
-            }}
-            isCleanable={false}
-            formatLabel={() =>
-                `Analysis state: ${
-                    !oracleDefaultFilterOptions.configState?.length ||
-                    oracleDefaultFilterOptions.configState.length === 3
-                        ? 'All'
-                        : ''
-                }(${
-                    oracleDefaultFilterOptions.configState?.length > 0
-                        ? oracleDefaultFilterOptions.configState?.length
-                        : 3
-                })`
-            }
-            placeholder="Placeholder text"
-            options={[
-                {
-                    id: 0,
-                    label: 'Active',
-                    value: CONFIG_STATES.ACTIVE
-                },
-                {
-                    id: 1,
-                    label: 'Postponed',
-                    value: CONFIG_STATES.POSTPONED
-                },
-                {
-                    id: 2,
-                    label: 'Dismissed',
-                    value: CONFIG_STATES.DISMISSED
-                }
-            ]}
-            selectionType="multi"
-            isWithActions
-            onSelect={(option: any) => handleSelect(option, 'configState')}
-            variant="underline"
-        />
-    );
-
     const resourceTypeSelectBox = () => (
         <DsSelect
             title=""
@@ -429,7 +342,6 @@ const OracleFilterComponent = ({
                             </div>
                             <div className={styles.dropDown}>{severitySelectBox()}</div>
                             <div className={styles.dropDown}>{tagsSelectBox()}</div>
-                            {/* <div className={styles.dropDown}>{configStateSelectBox()}</div> */}
                             <div className={styles.dropDown}>{resourceTypeSelectBox()}</div>
                         </div>
 
@@ -519,9 +431,9 @@ const OracleFilterComponent = ({
                             >
                                 {!oracleDefaultFilterOptions['sub-catagories']?.length ||
                                 oracleDefaultFilterOptions['sub-catagories']?.length ===
-                                    generateSubCategoryOptions.length
-                                    ? `All(${generateSubCategoryOptions.length})`
-                                    : `${oracleDefaultFilterOptions['sub-catagories']?.length}/${generateSubCategoryOptions.length}`}
+                                    safeFilterOptions.subCategories.length
+                                    ? `All(${safeFilterOptions.subCategories.length})`
+                                    : `${oracleDefaultFilterOptions['sub-catagories']?.length}/${safeFilterOptions.subCategories.length}`}
                             </DsTypography>
                         </div>
 
@@ -608,34 +520,6 @@ const OracleFilterComponent = ({
                                     : `${oracleDefaultFilterOptions.tags?.length}/5`}
                             </DsTypography>
                         </div>
-
-                        {/* <div className={styles.items}>
-                            <DsTypography
-                                style={{
-                                    color:
-                                        loading || !isAssessmentAvailable
-                                            ? 'var(--text-disabled)'
-                                            : 'var(--text-primary)'
-                                }}
-                                variant="Regular_14"
-                            >
-                                Analysis state:
-                            </DsTypography>
-                            <DsTypography
-                                style={{
-                                    color:
-                                        loading || !isAssessmentAvailable
-                                            ? 'var(--text-disabled)'
-                                            : 'var(--text-primary)'
-                                }}
-                                variant="Semibold_14"
-                            >
-                                {!oracleDefaultFilterOptions.configState?.length ||
-                                oracleDefaultFilterOptions.configState?.length === 3
-                                    ? 'All(3)'
-                                    : `${oracleDefaultFilterOptions.configState?.length}/3`}
-                            </DsTypography>
-                        </div> */}
 
                         <div className={styles.items}>
                             <DsTypography

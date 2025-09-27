@@ -2,6 +2,7 @@ import { TFunction } from 'i18next';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHomeSlice';
+import { areAllSubConfigurationsActivating } from './GetWellHelper';
 import {
     setCardData,
     setCloneDashboardData,
@@ -117,9 +118,14 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
             config.tags.forEach((tag: string) => availableTags.add(tag));
         }
 
-        // Add resource type if available
+        // Add resource type if available but do not add for ONTAP and OS as these do not have resource type
         if (config.block_five?.value) {
-            availableResourceTypes.add(config.block_five.value);
+            if (
+                config?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS &&
+                config?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
+            ) {
+                availableResourceTypes.add(config.block_five.value);
+            }
         }
 
         // Add status based on optimization state
@@ -128,13 +134,13 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
     });
 
     return {
-        categories: Array.from(availableCategories).map((category, index) => ({
-            id: index,
+        categories: Array.from(availableCategories).map(category => ({
+            id: category as string,
             label: category as string,
             value: category as string
         })),
-        subCategories: Array.from(availableSubCategories).map((subCategory, index) => ({
-            id: index,
+        subCategories: Array.from(availableSubCategories).map(subCategory => ({
+            id: subCategory as string,
             label:
                 subCategory === 'Compute_sub'
                     ? 'Compute'
@@ -144,23 +150,23 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
             value: subCategory as string,
             category: getCategoryForSubCategory(subCategory as string)
         })),
-        severities: Array.from(availableSeverities).map((severity, index) => ({
-            id: index,
+        severities: Array.from(availableSeverities).map(severity => ({
+            id: severity as string,
             label: severity as string,
             value: severity as string
         })),
-        tags: Array.from(availableTags).map((tag, index) => ({
-            id: index,
+        tags: Array.from(availableTags).map(tag => ({
+            id: tag as string,
             label: tag as string,
             value: tag as string
         })),
-        resourceTypes: Array.from(availableResourceTypes).map((resourceType, index) => ({
-            id: index,
+        resourceTypes: Array.from(availableResourceTypes).map(resourceType => ({
+            id: resourceType as string,
             label: resourceType as string,
             value: resourceType as string
         })),
-        statuses: Array.from(availableStatuses).map((status, index) => ({
-            id: index,
+        statuses: Array.from(availableStatuses).map(status => ({
+            id: status as string,
             label: status as string,
             value: status as string
         }))
@@ -2637,6 +2643,19 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
         const isOptimizedViaDismissal = dismissedState === CONFIG_STATES.ACTIVATING;
 
         if (nestedObject?.category === 'storage') {
+            // Check if all sub-configurations are in ACTIVATING state for ONTAP/OS cards
+            let allSubConfigsActivating = false;
+            if (key === 'ontap_configuration' && assessmentData?.dismissedConfigurations) {
+                const dismissedOntapSubConfigs = [
+                    ...(assessmentData?.dismissedConfigurations?.storage?.configuration?.volumes || []),
+                    ...(assessmentData?.dismissedConfigurations?.storage?.configuration?.luns || [])
+                ];
+                allSubConfigsActivating = areAllSubConfigurationsActivating(dismissedOntapSubConfigs, 'ontap');
+            } else if (key === 'os_configuration' && assessmentData?.dismissedConfigurations) {
+                const dismissedOsSubConfigs = assessmentData?.dismissedConfigurations?.storage?.configuration?.os || [];
+                allSubConfigsActivating = areAllSubConfigurationsActivating(dismissedOsSubConfigs, 'os');
+            }
+
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedStorage++;
                 hasDismissedOrPostponedStorage = true;
@@ -2648,9 +2667,13 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 } else {
                     dismissedStorageIds.push(nestedObject?.mapName);
                 }
-            } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
+            } else if (
+                nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
+                isOptimizedViaDismissal ||
+                allSubConfigsActivating
+            ) {
                 optimizedStorage++;
-                if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
+                if (isOptimizedViaDismissal || allSubConfigsActivating) hasDismissedOrPostponedStorage = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedStorage++;
                 criticalStorage++;
@@ -2705,6 +2728,20 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
             if (isMSSQLHighAvailability && cardsData?.deploymentType !== GENERAL.FCI) {
                 return; // Skip this card for non-FCI instances
             }
+
+            // Check if all sub-configurations are in ACTIVATING state for MSSQL HA
+            let allSubConfigsActivating = false;
+            if (isMSSQLHighAvailability && assessmentData?.dismissedConfigurations) {
+                const dismissedHaSubConfigs =
+                    assessmentData?.dismissedConfigurations?.highAvailability ||
+                    (assessmentData?.dismissedConfigurations as any)?.['high-availability'] ||
+                    [];
+                allSubConfigsActivating = areAllSubConfigurationsActivating(
+                    dismissedHaSubConfigs,
+                    'mssqlHighAvailability'
+                );
+            }
+
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedResiliency++;
                 hasDismissedOrPostponedResiliency = true;
@@ -2716,9 +2753,13 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 } else {
                     dismissedResiliencyIds.push(nestedObject?.mapName);
                 }
-            } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
+            } else if (
+                nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
+                isOptimizedViaDismissal ||
+                allSubConfigsActivating
+            ) {
                 optimizedResiliency++;
-                if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
+                if (isOptimizedViaDismissal || allSubConfigsActivating) hasDismissedOrPostponedResiliency = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedResiliency++;
                 criticalResiliency++;
@@ -3334,21 +3375,13 @@ export const applyFilter = (
         }
         const checkConfigState = !filters.configState || filters.configState?.includes(configVal);
 
-        let resourceType = cardData[key]?.block_five?.value;
-        if (
-            key === 'ontap_configuration' &&
-            filters.resourceType &&
-            (filters.resourceType.includes('Volume') || filters.resourceType.includes('LUN path'))
-        ) {
-            resourceType = filters.resourceType[0];
-        } else if (
-            key === 'os_configuration' &&
-            filters.resourceType &&
-            (filters.resourceType.includes('Drive') || filters.resourceType.includes('Storage multipath'))
-        ) {
-            resourceType = filters.resourceType[0];
+        const resourceType = cardData[key]?.block_five?.value;
+        let checkResourceType: boolean;
+        if ((key === 'ontap_configuration' || key === 'os_configuration') && filters.resourceType) {
+            checkResourceType = false;
+        } else {
+            checkResourceType = !filters.resourceType || filters.resourceType?.includes(resourceType);
         }
-        const checkResourceType = !filters.resourceType || filters.resourceType?.includes(resourceType);
 
         // Handle dismissed configuration toggle filtering
         const configState = cardData[key].dismissedObj?.configState;

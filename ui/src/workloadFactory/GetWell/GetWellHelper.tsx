@@ -262,15 +262,30 @@ export const calculatePostponeInfo = (cardData: any, key: string) => {
     }
 
     // Get the postpone date from startTime or endTime
-    const postponeTimestamp = cardData[key]?.dismissedObj?.startTime || cardData[key]?.dismissedObj?.endTime;
+    const startTime = cardData[key]?.dismissedObj?.startTime;
+    const endTime = cardData[key]?.dismissedObj?.endTime;
+    const postponeTimestamp = startTime || endTime;
+
     if (!postponeTimestamp) {
         return null;
     }
 
-    const postponeDate = new Date(postponeTimestamp);
     const today = new Date();
-    const thirtyDaysFromPostpone = new Date(postponeDate);
-    thirtyDaysFromPostpone.setDate(thirtyDaysFromPostpone.getDate() + 30);
+    let postponeDate: Date;
+    let thirtyDaysFromPostpone: Date;
+
+    if (startTime) {
+        // If we have startTime, add 30 days to it
+        postponeDate = new Date(startTime);
+        thirtyDaysFromPostpone = new Date(postponeDate);
+        thirtyDaysFromPostpone.setDate(thirtyDaysFromPostpone.getDate() + 30);
+    } else {
+        // If we have endTime, subtract 30 days from it to get the postpone date
+        const endTimeDate = new Date(endTime);
+        postponeDate = new Date(endTimeDate);
+        postponeDate.setDate(postponeDate.getDate() - 30);
+        thirtyDaysFromPostpone = new Date(endTimeDate);
+    }
 
     const daysLeft = Math.max(
         0,

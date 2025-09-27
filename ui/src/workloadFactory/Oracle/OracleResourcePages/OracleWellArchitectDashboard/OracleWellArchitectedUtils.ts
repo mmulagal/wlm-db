@@ -892,23 +892,13 @@ export const oracleApplyFilter = (
         }
         const checkConfigState = !filters.configState || filters.configState?.includes(configVal);
 
-        let resourceType = cardData[key].block_five.value;
-        if (
-            key === 'ontap_configuration' &&
-            filters.resourceType &&
-            (filters.resourceType.includes('Volume') || filters.resourceType.includes('LUN path'))
-        ) {
-            resourceType = filters.resourceType[0];
-        } else if (
-            key === 'os_configuration' &&
-            filters.resourceType &&
-            (filters.resourceType.includes('EC2 instance') ||
-                filters.resourceType.includes('Volume') ||
-                filters.resourceType.includes('Database'))
-        ) {
-            resourceType = filters.resourceType[0];
+        const resourceType = cardData[key].block_five.value;
+        let checkResourceType: boolean;
+        if ((key === 'ontap_configuration' || key === 'os_configuration') && filters.resourceType) {
+            checkResourceType = false;
+        } else {
+            checkResourceType = !filters.resourceType || filters.resourceType?.includes(resourceType);
         }
-        const checkResourceType = !filters.resourceType || filters.resourceType?.includes(resourceType);
 
         // Handle dismissed configuration toggle filtering
         const configState = cardData[key].dismissedObj?.configState;
@@ -1037,7 +1027,12 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
 
         // Add resource type if available
         if (config.block_five?.value) {
-            availableResourceTypes.add(config.block_five.value);
+            if (
+                config?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS &&
+                config?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
+            ) {
+                availableResourceTypes.add(config.block_five.value);
+            }
         }
 
         // Add status based on optimization state
@@ -1046,34 +1041,34 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
     });
 
     return {
-        categories: Array.from(availableCategories).map((category, index) => ({
-            id: index,
+        categories: Array.from(availableCategories).map(category => ({
+            id: category as string,
             label: category as string,
             value: category as string
         })),
-        subCategories: Array.from(availableSubCategories).map((subCategory, index) => ({
-            id: index,
+        subCategories: Array.from(availableSubCategories).map(subCategory => ({
+            id: subCategory as string,
             label: subCategory as string,
             value: subCategory as string,
             category: getOracleCategoryForSubCategory(subCategory as string)
         })),
-        severities: Array.from(availableSeverities).map((severity, index) => ({
-            id: index,
+        severities: Array.from(availableSeverities).map(severity => ({
+            id: severity as string,
             label: severity as string,
             value: severity as string
         })),
-        tags: Array.from(availableTags).map((tag, index) => ({
-            id: index,
+        tags: Array.from(availableTags).map(tag => ({
+            id: tag as string,
             label: tag as string,
             value: tag as string
         })),
-        resourceTypes: Array.from(availableResourceTypes).map((resourceType, index) => ({
-            id: index,
+        resourceTypes: Array.from(availableResourceTypes).map(resourceType => ({
+            id: resourceType as string,
             label: resourceType as string,
             value: resourceType as string
         })),
-        statuses: Array.from(availableStatuses).map((status, index) => ({
-            id: index,
+        statuses: Array.from(availableStatuses).map(status => ({
+            id: status as string,
             label: status as string,
             value: status as string
         }))

@@ -12,17 +12,12 @@ import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
-import {
-    checkHasDismissedConfigurations,
-    calculateTotalConfigCount,
-    calculatePostponeInfo
-} from '../../../GetWell/GetWellHelper';
+import { checkHasDismissedConfigurations } from '../../../GetWell/GetWellHelper';
 import { generateOracleDynamicFilterOptions, oracleApplyFilter } from './OracleWellArchitectedUtils';
 import {
     setOracleOptimizeFilterTags,
     setOracleDefaultFilterOptions
 } from '../../../../store/workloadFactory/oracleSlice';
-import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../../../utils/resourceUtils';
 
 const OracleWellArchitectDashboard = () => {
     const { t } = useTranslation();
@@ -87,26 +82,6 @@ const OracleWellArchitectDashboard = () => {
         return result;
     }, [cardData, driftAssessmentData]);
 
-    // Helper function to calculate postpone information for configurations
-    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
-
-    // Helper function to get total count based on dismissed configuration state
-    const getTotalConfigCount = useMemo(
-        () => calculateTotalConfigCount(cardData, showDismissedConfigurations, driftAssessmentData),
-        [cardData, showDismissedConfigurations, driftAssessmentData]
-    );
-
-    const handleSelect = (filters: any, filterLabel: any) => {
-        handleSelectForFilter(
-            filters,
-            filterLabel,
-            oracleOptimizeFilterTags,
-            dispatch,
-            setOracleOptimizeFilterTags,
-            setOracleDefaultFilterOptions
-        );
-    };
-
     // To apply filters on change of filters or card data
     useEffect(() => {
         const { data, configCount } = oracleApplyFilter(
@@ -146,48 +121,6 @@ const OracleWellArchitectDashboard = () => {
         }
         return generateOracleDynamicFilterOptions(filteredCardData, instanceDeploymentType);
     }, [filteredCardData, instanceDeploymentType]);
-
-    const generateSubCategoryOptions = useMemo(() => {
-        const selectedCategories = oracleOptimizeFilterTags
-            .filter((tag: any) => tag && tag.type === 'all-catagories')
-            .map((tag: any) => tag.value);
-
-        // Use dynamic subcategories filtered by selected categories
-        const filteredOptions = selectedCategories.length
-            ? dynamicFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
-            : dynamicFilterOptions.subCategories;
-
-        return filteredOptions;
-    }, [oracleOptimizeFilterTags, dynamicFilterOptions.subCategories]);
-
-    // Handle subcategory filter updates in useEffect to avoid setState during render
-    useEffect(() => {
-        const selectedCategories = oracleOptimizeFilterTags
-            .filter((tag: any) => tag && tag.type === 'all-catagories')
-            .map((tag: any) => tag.value);
-
-        const filteredOptions = selectedCategories.length
-            ? dynamicFilterOptions.subCategories.filter((option: any) => selectedCategories.includes(option.category))
-            : dynamicFilterOptions.subCategories;
-
-        const selectedSubCategories =
-            oracleDefaultFilterOptions['sub-catagories']?.filter((id: any) =>
-                filteredOptions.find((option: any) => option.id === id)
-            ) || [];
-
-        const selectedOptimizeTags = oracleOptimizeFilterTags.filter(
-            (tag: any) => tag.type !== 'sub-catagories' || filteredOptions.find((option: any) => option.id === tag.id)
-        );
-
-        if (oracleOptimizeFilterTags.length !== selectedOptimizeTags.length) {
-            dispatch(setOracleOptimizeFilterTags(selectedOptimizeTags));
-        }
-
-        const newDefaultFilterOptions = { ...oracleDefaultFilterOptions, 'sub-catagories': selectedSubCategories };
-        if (JSON.stringify(oracleDefaultFilterOptions['sub-catagories']) !== JSON.stringify(selectedSubCategories)) {
-            dispatch(setOracleDefaultFilterOptions(newDefaultFilterOptions));
-        }
-    }, [oracleOptimizeFilterTags, dynamicFilterOptions.subCategories, oracleDefaultFilterOptions, dispatch]);
 
     return (
         <div className={styles['well-architected__loader']}>
