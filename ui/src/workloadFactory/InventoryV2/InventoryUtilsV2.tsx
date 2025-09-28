@@ -237,8 +237,8 @@ const getMappedDiscoveredData = (managedHostRow: any) => {
 
 export const getPlatformForManagedHost = (managedHostRow: any, engineType: string | undefined) => {
     // try to get platform from nodeTopology
-    if (managedHostRow?.nodeTopology?.platform) {
-        return managedHostRow.nodeTopology.platform;
+    if (managedHostRow?.platform) {
+        return managedHostRow.platform;
     }
 
     // try to get platform from discovered data

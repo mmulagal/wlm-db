@@ -6,6 +6,7 @@
             "name": "oracle19c-normal-nfs-310825235525",
             "databaseHostStatus": "ONLINE",
             "ssmStatus": "connected",
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
             "storageAllocation": {
                 "fsxn": 1099511627776,
                 "fsxw": 0,
