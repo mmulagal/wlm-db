@@ -123,7 +123,7 @@ const OracleWellArchitectDashboard = () => {
     }, [filteredCardData, instanceDeploymentType]);
 
     return (
-        <div className={styles['well-architected__loader']}>
+        <div style={{ width: '100%' }}>
             {optimizePrintState && (
                 <>
                     <div className={commonStyles.loaderOverlay} />
