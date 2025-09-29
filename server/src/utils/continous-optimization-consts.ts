@@ -1,5 +1,7 @@
 import config from 'config';
-import { WLMDB } from './consts';
+import { Static, Type } from '@sinclair/typebox';
+import { RESOURCESTYPE, WLMDB } from './consts';
+import { DatabaseInstanceMetadata } from './common-types';
 
 enum AssessmentCategories {
     STORAGE = 'storage',
@@ -69,7 +71,11 @@ enum OptimizeStorageConfigs {
     MOST_RECENT_SNAPSHOT_TIMESTAMP = 'most-recent-snapshot-timestamp',
     COMPRESSION = 'compression',
     DEDUPLICATION = 'deduplication',
-    COMPACTION = 'compaction'
+    COMPACTION = 'compaction',
+    ARCHIVE_LOG_LAYOUT = 'archivelog-dg-lun-layout',
+    FRA_LAYOUT = 'fra-dg-lun-layout',
+    REDO_LOG_LAYOUT = 'redolog-dg-lun-layout',
+    DATA_LAYOUT = 'data-dg-lun-layout'
 }
 
 enum OptimizeStorageConfigsJobNames {
@@ -253,6 +259,47 @@ interface OptimizeStorageParams {
     databaseHostId: string;
     databaseInstanceId: string;
     optimizationTargets: OptimizeStorageRequestParams[];
+}
+
+const OptimizeStorageRequestParams = Type.Object({
+    configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
+    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
+});
+type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
+
+interface OptimizeStorageAttributeParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    fsxId: string;
+    activeNodeInstanceId: string;
+    parentJobId: string;
+    optimizationTargets: OptimizeStorageRequestParamsType[];
+    optimizationConfigs: Record<string, any>;
+    apiRequestData: typeof OptimizeStorageApiData;
+    svmName: string;
+    serverNameWithHostName: string;
+    resourceType: RESOURCESTYPE;
+}
+
+interface OptimizeStorageOperationParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    awsAccountId: string;
+    fsxId: string;
+    activeNodeInstanceId: string;
+    parentJobId: string;
+    serverNameWithHostName: string;
+    instanceId: string;
+    databaseHostId: string;
+    databaseType: string;
+    instanceName: string;
+    sqlAuthEnabled: boolean;
+    svmName: string;
+    optimizationTargets: OptimizeStorageRequestParamsType[];
+    instanceMetadata?: DatabaseInstanceMetadata;
+    volumeTypeMap?: Map<string, string[]>;
 }
 
 const QUERY_PARAMS = {
@@ -546,5 +593,9 @@ export {
     DEFAULT_FSX_MTU_VALUE,
     OptimizeStorageApiData,
     ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,
-    ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS
+    ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS,
+    OptimizeStorageAttributeParams,
+    OptimizeStorageOperationParams,
+    OptimizeStorageRequestParamsType,
+    OptimizeStorageRequestParams
 };

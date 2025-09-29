@@ -26,7 +26,7 @@ enum OracleSysFileTypes {
 interface OracleVolumeRecord {
     volumeId: string;
     volumeName: string;
-    svmUuid?: string;
+    svmId?: string;
     svmName?: string;
     lunName?: string;
     lunId?: string;

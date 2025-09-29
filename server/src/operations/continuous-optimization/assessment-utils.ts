@@ -13,6 +13,16 @@ const logger = getLogger();
 const ajv = new Ajv();
 const validatorCache = new WeakMap<object, ValidateFunction>();
 
+interface UnOptimizedDiskGroups {
+    diskGroupName: string;
+    svmName?: string;
+    svmId?: string;
+    volumeNames?: string[];
+    lunsToAdd: number;
+    lunSerials?: string[];
+    asmDisks?: string[];
+}
+
 function getMatchingAssessmentStatus(finding: string) {
     logger.info('Getting matching assessment status for finding:', finding);
     switch (finding) {
@@ -128,7 +138,8 @@ export {
     handleOptimizeJobCreation,
     hasNotOptimizedStatus,
     getLatestInstanceAssessmentTime,
-    validateAssessment
+    validateAssessment,
+    UnOptimizedDiskGroups
 };
 
 // Re-export type for external usage without creating a runtime export

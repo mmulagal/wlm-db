@@ -8,7 +8,7 @@ import {
     OptimizeHighAvailabilityParams,
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
-    OptimizeStorageConfigs,
+    OptimizeStorageRequestParams,
     OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
 import {
@@ -294,18 +294,11 @@ const DriftAssessmentResponsePerHost = Type.Object({
 
 type DriftAssessmentResponsePerHostType = Static<typeof DriftAssessmentResponsePerHost>;
 
-const OptimizeStorageRequestParams = Type.Object({
-    configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
-    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
-});
-
 const OptimizeStorageRequestBody = Type.Object({
     assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
 });
 
 type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
-
-type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
 
 const BulkOptimizePerHostRequestBody = Type.Object({
     id: Type.String({ minLength: 1 }),
@@ -632,7 +625,6 @@ export {
     SizingViolationResponseType,
     OptimizeStorageRequestBody,
     OptimizeStorageRequestBodyType,
-    OptimizeStorageRequestParamsType,
     OptimizeComputeRequestBody,
     OptimizeComputeRequestBodyType,
     OptimizeSizingRequestBody,

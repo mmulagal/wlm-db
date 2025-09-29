@@ -175,6 +175,8 @@ function mapVolumeTypesToIdName(
                 .map(({ volume }) => ({
                     volumeId: volume.volumeId,
                     volumeName: volume.volumeName,
+                    svmName: volume.svmName,
+                    svmUuid: volume.svmId,
                     ...(volume.lunId && { lunId: volume.lunId }),
                     ...(volume.lunName && { lunName: volume.lunName }),
                     ...(volume.diskName && { diskName: volume.diskName }),

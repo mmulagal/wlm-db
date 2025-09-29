@@ -1344,6 +1344,9 @@ import http.client
 import subprocess
 import re
 import shutil
+import time
+import stat
+import textwrap
 from urllib.parse import urlparse
 from urllib.request import urlopen, Request
 `;

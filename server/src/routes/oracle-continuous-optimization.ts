@@ -21,6 +21,7 @@ import {
 import { optimizeStorage } from '../operations/cont-opt-optimize-operations';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
 import { DatabaseTypes } from '../utils/consts';
+import { optimizeOracleStorageLayout } from '../operations/continuous-optimization/oracle/storage-optimize-operations';
 
 const API_PREFIX_PATH = '/v1/oracle/credentials/:credentialsId/regions/:region';
 const ORACLE_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/oracle';
@@ -134,6 +135,26 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     DatabaseTypes.ORACLE
                 );
                 return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-layout`,
+            { schema: OracleOptimizeStorageSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    body: { assessments }
+                } = castRequest(request);
+
+                const jobId = await optimizeOracleStorageLayout({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    optimizationTargets: assessments
+                } as OptimizeStorageParams);
+                return reply.send({ jobId });
             }
         );
 }

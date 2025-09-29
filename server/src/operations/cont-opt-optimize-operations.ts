@@ -58,13 +58,13 @@ import {
     AssessmentTriggeredBy,
     OptimizeStorageConfigsJobNames,
     STORAGE_OPTIMIZE_JOB_PARAM,
-    AssessmentCategoriesOracle
+    AssessmentCategoriesOracle,
+    OptimizeStorageRequestParamsType
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import {
     OptimizePerHostRequestBodyType,
-    OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/mssql-continuous-optimisation.types';
 import {
@@ -98,7 +98,7 @@ import { onDemandTriggerMssqlDriftAssessment } from './continuous-optimization/m
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
 
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
-import { optimizeStorageParamsOracle } from './workloads/oracle/storage-optimize-scripts';
+import { optimizeStorageConfigParamsOracle } from './workloads/oracle/storage-optimize-scripts';
 import { onDemandTriggerOracleDriftAssessment } from './continuous-optimization/oracle/assessment-operations';
 import {
     calculateStorageDrift,
@@ -590,7 +590,7 @@ async function callOntapApi(
             break;
         case RESOURCESTYPE.ORACLE:
             commands = [
-                optimizeStorageParamsOracle({
+                optimizeStorageConfigParamsOracle({
                     fsxId,
                     region,
                     apiEndpoint,
