@@ -212,22 +212,23 @@ const OptimizeStorageApiData = {
         body: { 'tiering-policy': value || 'snapshot-only' },
         type: VOLUME
     }),
+
     COMPRESSION: (value?: string) => ({
-        api: '/private/cli/volume/efficiency',
-        body: {
-            inline_compression: value === 'adaptive',
-            compression: value === 'adaptive'
-        },
+        api: value === 'none' ? '/storage/volumes' : '/private/cli/volume/efficiency',
+        body:
+            value === 'none'
+                ? { efficiency: { state: 'disabled' } }
+                : { inline_compression: 'true', compression: 'true' }, // using storage/volumes causes an error while setting compression_type to 'adaptive'
         type: VOLUME
     }),
     DEDUPLICATION: (value?: string) => ({
-        api: '/private/cli/volume/efficiency',
-        body: { inline_dedupe: value === 'none' ? 'false' : true },
+        api: '/storage/volumes',
+        body: value === 'none' ? { efficiency: { state: 'disabled' } } : { efficiency: { dedupe: 'inline' } },
         type: VOLUME
     }),
-    COMPACTION: () => ({
-        api: '/private/cli/volume/efficiency',
-        body: { data_compaction: 'true' },
+    COMPACTION: (value?: string) => ({
+        api: '/storage/volumes',
+        body: value === 'none' ? { efficiency: { state: 'disabled' } } : { efficiency: { compaction: 'inline' } },
         type: VOLUME
     }),
     SPACE_RESERVATION: () => ({

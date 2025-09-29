@@ -257,7 +257,8 @@ const specialConfigNames = [
     OptimizeStorageConfigs.TIERING_POLICY,
     OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS,
     OptimizeStorageConfigs.COMPRESSION,
-    OptimizeStorageConfigs.DEDUPLICATION
+    OptimizeStorageConfigs.DEDUPLICATION,
+    OptimizeStorageConfigs.COMPACTION
 ];
 
 async function getRecommendationMap(
@@ -428,6 +429,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
             let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
             let newJobError;
             let newJobDescription;
+
             try {
                 const { configurationName, objectsToOptimize } = data;
                 const configKey = Object.keys(optimizationConfigs).find(
@@ -567,7 +569,10 @@ async function callOntapApi(
     const optimizeType = apiData.type;
     const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
     const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
-    const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
+    const apiQueryFilter =
+        ['DEDUPLICATION', 'COMPACTION'].includes(configKey) || (value === 'none' && configKey === 'COMPRESSION')
+            ? `svm=${svmName}&name=${objectsToOptimize.join('|')}`
+            : `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
     const apiEndpoint = apiData.api;
 
     let commands: string[] = [];

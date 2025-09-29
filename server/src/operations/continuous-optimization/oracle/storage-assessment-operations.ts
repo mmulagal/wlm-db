@@ -541,6 +541,11 @@ function getVolumeConfigDrift(
         others: ['inline', 'both']
     };
 
+    const compactionRecommendations = {
+        'log-files': 'none',
+        others: 'enabled'
+    };
+
     const controlDataFileVolumeIds = [
         ...dataFileVolumes.map(volume => volume.volumeId),
         ...controlFileVolumes.map(volume => volume.volumeId)
@@ -573,8 +578,15 @@ function getVolumeConfigDrift(
 
             switch (config.parameter) {
                 case 'compaction':
-                    isViolated = value === 'none';
-                    recommended = 'enabled';
+                    value = value !== 'none' ? 'enabled' : value;
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                        recommended = compactionRecommendations['log-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                    } else {
+                        recommended = compactionRecommendations.others;
+                        dataCategory = 'non-log-files';
+                    }
+                    isViolated = value !== recommended;
                     break;
 
                 case 'tieringMinCoolingDays':
