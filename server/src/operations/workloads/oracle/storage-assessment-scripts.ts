@@ -1,4 +1,5 @@
 import { WorkloadInstance } from '../../../utils/common-types';
+import { debugLog } from './oracle-discover-scripts';
 import { checkCommandStatus, getOracleDefaultOrUserAuthCommand, ontapRestApi } from './oracle-ssm-script-utils';
 
 const CHECK_ORACLE_FRA_RMAN_STATUS = (ec2InstanceId: string, dbSid: string) => `
@@ -44,7 +45,12 @@ const VOLUME_LUN_CONFIGURATION = (instanceRecord: WorkloadInstance) =>
     `
 # Get Storage Configuration Assessment
 
+${debugLog('/var/log/netapp/storageassessment.log')}
+
 ${checkCommandStatus}
+
+# Ensure log directory exists
+mkdir -p /var/log/netapp
 
 instanceName="${instanceRecord.name}"
 filesystemid="${instanceRecord.fsxFileSystem}"
@@ -52,21 +58,32 @@ region="${instanceRecord.region}"
 ontapSvmUuid="${instanceRecord.svmOntapUuid}"
 storageProtocol="${instanceRecord.storageProtocol}"
 ec2InstanceId="${instanceRecord.activeNodeInstanceid}"
+
+log "Starting storage assessment for instance: $instanceName"
+log "Filesystem ID: $filesystemid, Region: $region, Protocol: $storageProtocol"
+
 IFS=',' read -r -a mappedOntapVolumeNames <<< "${instanceRecord.mappedVolumeNames}"
 IFS=',' read -r -a mappedOntapVolumeUuids <<< "${instanceRecord.mappedVolumesUuids}"
+
+log "Mapped volume names: $mappedOntapVolumeNames"
+log "Mapped volume UUIDs: $mappedOntapVolumeUuids"
 
 if [ "$storageProtocol" != "iSCSI" ]; then
     mappedOntapLunNames=()
     mappedOntapLunUuids=()
+    log "Protocol is not iSCSI, skipping LUN configuration"
 else
     IFS=',' read -r -a mappedOntapLunNames <<< "${instanceRecord.mappedLunNames}"
     IFS=',' read -r -a mappedOntapLunUuids <<< "${instanceRecord.mappedLunUuids}"
+    log "iSCSI protocol detected. LUN names: $mappedOntapLunNames"
+    log "LUN UUIDs: $mappedOntapLunUuids"
 fi
 
 ${ontapRestApi}
 
 if [ -z "\${mappedOntapVolumeUuids[*]}" ]; then
     error="Unable to fetch ONTAP volumes details as the mapped volume UUIDs are either null or empty."
+    log "ERROR: No mapped volume UUIDs found"
     
     # Create error result and exit
     result=$(jq -n \
@@ -84,14 +101,21 @@ if [ -z "\${mappedOntapVolumeUuids[*]}" ]; then
 fi
 
 volumeEndpoint="storage/volumes?uuid=$(IFS='|'; echo "\${mappedOntapVolumeUuids[*]}")&fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,space.snapshot.autodelete.delete_order,snapshot_policy,tiering,guarantee,efficiency"
+log "Calling ONTAP API endpoint: $volumeEndpoint"
+
 response=$(ontap_request 'GET' $volumeEndpoint)
+log "Volume API response status: $?"
 
 volumePrivateCliEndpoint="private/cli/volume?volume=$(IFS='|'; echo "\${mappedOntapVolumeNames[*]}")&fields=space-mgmt-try-first"
+log "Calling ONTAP private CLI endpoint: $volumePrivateCliEndpoint"
+
 privateVolumeResponse=$(ontap_request 'GET' $volumePrivateCliEndpoint)
+log "Private volume API response status: $?"
 
 # Check if response is valid
 if [ -z "$response" ] || ! echo "$response" | jq -e '.records' > /dev/null 2>&1; then
     error="Failed to fetch volume details or invalid response"
+    log "ERROR: Invalid or empty response from volume API"
 
     # Create error result and exit
     result=$(jq -n \
@@ -112,6 +136,7 @@ fi
 volumes=$(echo "$response" | jq -c '.records[]')
 if [ -z "$volumes" ]; then
     error="No volume records found in response"
+    log "ERROR: No volume records found in API response"
 
      # Create error result and exit
     result=$(jq -n \
@@ -127,6 +152,8 @@ if [ -z "$volumes" ]; then
     echo "$result" | jq -c .
     exit 1
 fi
+
+log "Successfully retrieved volume data, processing $(echo "$response" | jq '.records | length') volumes"
 
 # Create proper JSON array of volume objects
 volumesData=$(echo "$response" | jq '[.records[] | {
@@ -153,6 +180,7 @@ volumesData=$(echo "$response" | jq '[.records[] | {
 
 # Add spaceMgmtTryFirst field to volumesData with error handling
 if echo "$privateVolumeResponse" | jq -e '.records' > /dev/null 2>&1; then
+    log "Processing private CLI response for spaceMgmtTryFirst field"
     spaceMgmtLookup=$(echo "$privateVolumeResponse" | jq 'reduce .records[] as $item ({}; .[$item.volume] = $item.space_mgmt_try_first)')
     
     volumesData=$(echo "$volumesData" | jq --argjson lookup "$spaceMgmtLookup" '
@@ -161,6 +189,7 @@ if echo "$privateVolumeResponse" | jq -e '.records' > /dev/null 2>&1; then
         })
     ')
 else
+    log "WARNING: No valid private CLI response, setting spaceMgmtTryFirst to null"
     volumesData=$(echo "$volumesData" | jq 'map(. + {spaceMgmtTryFirst: null})')
 fi
 
@@ -175,13 +204,21 @@ volumes=$(jq -n \
     }')
 
 if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; then
+    log "Processing LUNs for iSCSI protocol"
     lunEndpoint="storage/luns?uuid=$(IFS='|'; echo "\${mappedOntapLunUuids[*]}")&fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
+    log "Calling LUN API endpoint: $lunEndpoint"
+    
     response=$(ontap_request 'GET' $lunEndpoint)
+    log "LUN API response status: $?"
+    
     lunsError=''
     # Check if luns were found
     luns=$(echo "$response" | jq -c '.records[]')
     if [ -z "$luns" ]; then
-    lunsError="No lun records found in response"
+        lunsError="No lun records found in response"
+        log "ERROR: No LUN records found in API response"
+    else
+        log "Successfully retrieved $(echo "$response" | jq '.records | length') LUN records"
     fi
 
     # Create proper JSON array of lun objects
@@ -202,8 +239,11 @@ if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; 
         }')
 fi
 
+log "Starting Oracle binary volumes discovery"
 ${ORACLE_BINARY_VOLUMES_METADATA}
 binaryVolumesData=$(find_oracle_binary_volumes)
+log "Binary volumes discovery completed"
+
 binaryVolumes=$(jq -n \
     --arg error "$error" \
     --argjson binaryVolumesData "$binaryVolumesData" \
@@ -212,15 +252,21 @@ binaryVolumes=$(jq -n \
         data: $binaryVolumesData
     }')
 
+log "Starting Oracle FRA and RMAN status check"
 ${CHECK_ORACLE_FRA_RMAN_STATUS(instanceRecord.activeNodeInstanceid, instanceRecord.id)}
 fra_rman_result=$(check_oracle_fra_rman_status "${instanceRecord.activeNodeInstanceid}" "${instanceRecord.id}")
+log "FRA/RMAN check result: $fra_rman_result"
+
 # Parse the pipe-delimited result
 fra_enabled=$(echo "$fra_rman_result" | sed -n '1p' | tr -d '[:space:]')
 rman_compression_enabled=$(echo "$fra_rman_result" | sed -n '2p' | tr -d '[:space:]')
 
+log "FRA enabled: $fra_enabled, RMAN compression: $rman_compression_enabled"
+
 # Create result with valid JSON
 if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; then
- result=$(jq -n \
+    log "Creating final result with LUNs included"
+    result=$(jq -n \
         --arg fra "$fra_enabled" \\
         --arg rman "$rman_compression_enabled" \\
         --argjson volumes "$volumes" \
@@ -233,8 +279,8 @@ if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; 
             luns: $luns,
             binaryVolumes: $binaryVolumes
         }')
-
 else
+    log "Creating final result without LUNs"
     result=$(jq -n \
         --arg fra "$fra_enabled" \\
         --arg rman "$rman_compression_enabled" \\
@@ -247,8 +293,10 @@ else
             binaryVolumes: $binaryVolumes
         }')
 fi
+
+log "Storage assessment completed successfully for instance: $instanceName: FRA enabled: $fra_enabled, RMAN compression: $rman_compression_enabled, Volumes count: $(echo "$volumes" | jq '.data | length'), LUNs count: $(echo "$luns" | jq '.data | length // 0'), Binary volumes count: $(echo "$binaryVolumes" | jq '.data | length')"
 # Output compact JSON
-echo "$result" | jq -c .
+echo "$result" | jq -c . 
 `;
 
 const ORACLE_BINARY_VOLUMES_METADATA = `

@@ -8,6 +8,12 @@ import {
     isASMManagedCheck
 } from './oracle-ssm-script-utils';
 
+const debugLog = (logFileName: string) => `
+log() {
+    mkdir -p /var/log/netapp
+    echo "[DEBUG $(date '+%Y-%m-%d %H:%M:%S')] $1" >> ${logFileName}
+}
+`;
 const loadStorageDetectionModules = `
 
     # Function to find mount point details for a given file or directory.
@@ -1334,6 +1340,15 @@ const getMappedOntapDataVolumeForInstance = (
     fsxnId: string,
     region: string
 ) => `
+    ${debugLog('/var/log/netapp/mappedontapvolumes.log')}
+
+    # Ensure log directory exists
+    mkdir -p /var/log/netapp
+
+    log "Starting getMappedOntapDataVolumeForInstance"
+    log "Parameters: ec2InstanceId=${ec2InstanceId}, oracleSids=${oracleSids.join()}, fsxnId=${fsxnId}, region=${region}"
+
+
     ${getOracleDbMountDetails(ec2InstanceId, oracleSids)}
     processMountDetail() {
         local mountDetail="$1"
@@ -1352,7 +1367,8 @@ const getMappedOntapDataVolumeForInstance = (
         local diskName
         local diskGroup
 
-        
+        log "Extracted mount details - IP: $mountIP, Point: $mountPoint, Protocol: $mountProtocol, ASM: $isAsm"
+
         if [ -z "$protocol" ]; then
             protocol="$mountProtocol"
         fi
@@ -1362,11 +1378,13 @@ const getMappedOntapDataVolumeForInstance = (
             diskName=$(echo "$mountDetail" | jq -r '.diskName')
             diskGroup=$(echo "$mountDetail" | jq -r '.diskGroup')
         fi
-
+        
+        log "Calling getMappedOntapDataVolume for mountIP: $mountIP, mountPoint: $mountPoint, protocol: $mountProtocol"
         ${getMappedOntapDataVolume(fsxnId, region, '$mountIP', '$mountPoint', '$mountProtocol')}
         
         volumeName="$mountedVolume"
         volumeId="$mountedVolumeId"
+        log "Retrieved volume mapping - Name: $volumeName, ID: $volumeId, SVM: $svmName"
         
         if [ "$mountProtocol" == "iSCSI" ]; then
             # For iSCSI, extract LUN details
@@ -1377,18 +1395,23 @@ const getMappedOntapDataVolumeForInstance = (
             if [ -z "$lunExists" ]; then
                 lunRecord="{\\"name\\": \\"$(echo "$response" | jq -r '.records[0].name')\\", \\"serial\\": \\"$mountPoint\\"}"
                 lunRecords=$(echo "$lunRecords" | jq --argjson lr "$lunRecord" '. += [$lr]')
+                log "Added new LUN record: $lunRecord"
             fi
         else
             # For NFS
+            log "Processing NFS protocol"
             volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\",\\"svmId\\": \\"$svmId\\"}"
+            log "LUN record already exists for serial: $mountPoint"
         fi
         
         if [ "$isASMManaged" == "true" ]; then
+            log "Adding ASM metadata to volume entry"
             volumeEntry=$(echo "$volumeEntry" | jq --arg diskName "$diskName" '. + {diskName: $diskName}')
             volumeEntry=$(echo "$volumeEntry" | jq --arg diskGroup "$diskGroup" '. + {diskGroup: $diskGroup}')
         fi
         
         fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson ve "$volumeEntry" '. += [$ve]')
+        log "Created volume entry: $volumeEntry"
         echo "$fileTypeVolumes"
     }
     filesystemid="${fsxnId}"
@@ -1396,23 +1419,30 @@ const getMappedOntapDataVolumeForInstance = (
     volumeMappings="[]"
     lunRecords="[]"
     protocol=""
+
+    log "Initialized variables - filesystemid: $filesystemid, region: $region"
     
     for sid in $(echo "$mountPointData" | jq -r 'keys[]'); do
+        log "Processing SID: $sid"
         sidData=$(echo "$mountPointData" | jq -r --arg sid "$sid" '.[$sid]')
         isCDB=$(echo "$sidData" | jq -r '.isCDB')
         isASMManaged=$(echo "$sidData" | jq -r '.isASMManaged')
         
         if [ "$isCDB" == "false" ]; then
+            log "Processing single tenant instance for SID: $sid"
             # Single tenant instance
             ontapVolumes='{}'
             for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
+                log "Processing file type: $fileType for SID: $sid"
                 fileTypeVolumes="[]"
                 mountDetails=$(echo "$sidData" | jq -c --arg ft "$fileType" '.mountDetails[$ft] // []')
                 # Check if mountDetails is empty
                 if [ "$(echo "$mountDetails" | jq 'length')" -eq 0 ]; then
+                    log "No mount details found for file type: $fileType"
                     ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" '.[$ft] = []')
                     continue
                 else
+                    log "Processing $mountDetailsCount mount details for file type: $fileType"
                     for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
                         volMappings=$(processMountDetail "$mountDetail")
                         if [ -z "$protocol" ]; then
@@ -1422,28 +1452,35 @@ const getMappedOntapDataVolumeForInstance = (
                     done
                     
                     ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                    log "Completed processing file type: $fileType with $(echo "$fileTypeVolumes" | jq 'length') volumes"
                 fi
             done
 
             sidMapping="{\\"$sid\\": {\\"isCDB\\": false, \\"ontapVolumes\\": $ontapVolumes}}"
             volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+            log "Added single tenant SID mapping for: $sid"
             
         else
+            log "Processing CDB-PDB instance for SID: $sid"
             # CDB-PDB instance
             pdbVolumes='{}'
             
             for pdb in $(echo "$sidData" | jq -r '.pdbMountDetails | keys[]'); do
+                log "Processing PDB: $pdb for SID: $sid"
                 pdbOntapVolumes='{}'
                 
                 for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
+                    log "Processing file type: $fileType for PDB: $pdb"
                     fileTypeVolumes="[]"
                     mountDetails=$(echo "$sidData" | jq -c --arg pdb "$pdb" --arg ft "$fileType" '.pdbMountDetails[$pdb][$ft] // []')
                     
                     # Check if mountDetails is empty
                     if [ "$(echo "$mountDetails" | jq 'length')" -eq 0 ]; then
+                        log "No mount details found for file type: $fileType in PDB: $pdb"
                         pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" '.[$ft] = []')
                         continue
                     else
+                        log "Processing $mountDetailsCount mount details for file type: $fileType in PDB: $pdb"
                         for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
                             volMappings=$(processMountDetail "$mountDetail")
                             if [ -z "$protocol" ]; then
@@ -1453,16 +1490,20 @@ const getMappedOntapDataVolumeForInstance = (
                         done
                         
                         pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                        log "Completed processing file type: $fileType for PDB: $pdb with $(echo "$fileTypeVolumes" | jq 'length') volumes"
                     fi
                 done
                 
                 pdbVolumes=$(echo "$pdbVolumes" | jq --arg pdb "$pdb" --argjson pov "$pdbOntapVolumes" '.[$pdb] = $pov')
+                log "Completed processing PDB: $pdb"
             done
             sidMapping="{\\"$sid\\": {\\"isCDB\\": true, \\"ontapVolumes\\": $pdbVolumes}}"
             volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+            log "Added CDB-PDB SID mapping for: $sid"
         fi
     done
 
+    log "Creating final result JSON"
     result=$(jq -n \
         --arg protocol "$protocol" \
         --argjson lunRecords "$lunRecords" \
@@ -1475,6 +1516,9 @@ const getMappedOntapDataVolumeForInstance = (
             volumeMappings: $volumeMappings
         }')
     
+    log "Final result created with protocol: $protocol, ASM managed: $isASMManaged, volume mappings count: $(echo "$volumeMappings" | jq 'length'), LUN records count: $(echo "$lunRecords" | jq 'length')"
+    log "getMappedOntapDataVolumeForInstance completed successfully"
+    
     echo "$result" | tr -d '\n' | tr -d ' '
 
 `;
@@ -1484,5 +1528,6 @@ export {
     getStorageDetailsForRegisteredInstances,
     fetchOracleDatabasesCount,
     fetchOracleDatabasesDetails,
-    getMappedOntapDataVolumeForInstance
+    getMappedOntapDataVolumeForInstance,
+    debugLog
 };
