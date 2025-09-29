@@ -624,7 +624,10 @@ const InstancesTable = () => {
             errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
         } else if (rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP && !rowData?.fsxId) {
             isDisabled = true;
-            errorMessage = GENERAL.FSXN_MANAGE_SUPPORTED;
+            errorMessage =
+                rowData?.hostType === DBType.ORACLE
+                    ? GENERAL.FSXN_MANAGE_SUPPORTED_ORACLE
+                    : GENERAL.FSXN_MANAGE_SUPPORTED;
         } else if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
             isDisabled = true;
             errorMessage = GENERAL.HOST_DOWN;
@@ -829,7 +832,10 @@ const InstancesTable = () => {
                         rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP &&
                         !rowData?.fsxId
                     ) {
-                        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+                        disableMsg =
+                            selectedHostType === DBType.ORACLE
+                                ? GENERAL.FSXN_MANAGE_SUPPORTED_ORACLE
+                                : GENERAL.FSXN_MANAGE_SUPPORTED;
                         width = '340px';
                         height = '50px';
                         return true;

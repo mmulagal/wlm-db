@@ -501,6 +501,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     ? INVENTORY_STATUS.MANAGED
                     : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
                 isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+                fsxId: statusObj?.[0]?.fsxId,
                 ...authFields
             };
         });
@@ -3749,7 +3750,8 @@ export const manageActionCol = (translation: TFunction, engineType: string, rowD
         rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP &&
         !rowData?.fsxId
     ) {
-        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+        disableMsg =
+            engineType === DBType.ORACLE ? GENERAL.FSXN_MANAGE_SUPPORTED_ORACLE : GENERAL.FSXN_MANAGE_SUPPORTED;
     } else if (
         rowData?.serverInstallationMode === GENERAL.AOAG &&
         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED

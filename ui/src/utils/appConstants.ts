@@ -1206,6 +1206,7 @@ export const GENERAL = {
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     FSXN_MANAGE_SUPPORTED:
         'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be registered.',
+    FSXN_MANAGE_SUPPORTED_ORACLE: 'Only Oracle databases with FSx for ONTAP file system storage can be registered.',
     MANAGE_DISABLE_FOR_UNDETECTED:
         'This instance is currently unauthenticated. To manage the instance, expand the database host name, and then select "authenticate" from the menu.',
     NO_UNMANAGED_TO_MANAGE:
