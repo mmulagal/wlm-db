@@ -1165,7 +1165,8 @@ async function discoverEc2Instances(
         return {
             ec2InstanceId: isDemoFlow ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
             ec2InstanceType: ec2Instance?.InstanceType || '',
-            ec2InstanceName: ec2Instance?.PrivateDnsName || name || '',
+            ec2InstanceName: name || '',
+            ec2HostName: ec2Instance?.PrivateDnsName || '',
             ec2UsageOperation: ec2Instance?.UsageOperation || '',
             ssmState: ssmConnectionMap.get(ec2Instance?.InstanceId) || ConnectionStatus.NOT_CONNECTED,
             ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId),
