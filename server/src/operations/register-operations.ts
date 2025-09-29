@@ -1964,20 +1964,20 @@ async function validateAndStoreDiscoveredParameters(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         if (singleInstanceRegistration) {
-            return DEMO_REGISTER_RESPONSE;
+            return DEMO_REGISTER_RESPONSE(credentials[0].resourceType as RESOURCESTYPE);
         }
         const response: SingleRegisterCredentialsResponseType[] = [];
-        credentials.forEach(cred => {
-            if (cred.resourceType !== RESOURCESTYPE.FSX) {
+        credentials.forEach(({ resourceType, resourceId }) => {
+            if (resourceType !== RESOURCESTYPE.FSX) {
                 response.push({
-                    ...DEMO_REGISTER_RESPONSE,
-                    resourceType: cred.resourceType,
-                    resourceId: cred.resourceId
+                    ...DEMO_REGISTER_RESPONSE(resourceType as RESOURCESTYPE),
+                    resourceType,
+                    resourceId
                 });
             } else {
                 response.push({
-                    resourceId: cred.resourceId,
-                    resourceType: cred.resourceType,
+                    resourceId,
+                    resourceType,
                     fsxnError: ''
                 });
             }
