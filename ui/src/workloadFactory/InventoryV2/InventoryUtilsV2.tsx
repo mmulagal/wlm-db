@@ -3813,19 +3813,18 @@ export const fixIssueDisableMsg = (rowData: any, translation: TFunction) => {
             return disableMsg;
         }
     }
-    if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
-        if (
-            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-            rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
-        ) {
-            disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
-            return disableMsg;
-        }
-        if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-            disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
-            return disableMsg;
-        }
+    if (
+        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+        rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
+    ) {
+        disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+        return disableMsg;
     }
+    if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+        disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
+        return disableMsg;
+    }
+
     return disableMsg;
 };
 

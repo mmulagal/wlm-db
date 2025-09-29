@@ -777,7 +777,8 @@ const InstancesTable = () => {
                 const disableMenu = () => {
                     if (
                         rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED
+                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                        rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS
                     ) {
                         return true;
                     }
