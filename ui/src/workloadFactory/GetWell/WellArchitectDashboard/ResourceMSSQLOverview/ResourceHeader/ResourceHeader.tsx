@@ -4,9 +4,8 @@ import { ReactComponent as DescriptionIcon } from '../../../../../assets/Descrip
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg';
 import styles from './ResourceHeader.module.scss';
-
 import { GENERAL } from '../../../../../utils/appConstants';
-import { DBType, INVENTORY_STATUS, TENANCY } from '../../../../../utils/consts';
+import { DBType, INVENTORY_STATUS, TENANCY, WELL_ARCHITECTED_TABS } from '../../../../../utils/consts';
 
 type ResourceHeaderProps = {
     selectedHostname: string;
@@ -219,7 +218,13 @@ const ResourceHeader = ({
                     {resourceDetails?.tenancy !== TENANCY.SINGLE_TENANT && (
                         <div className={`${styles.column}`} style={{ borderRight: 'none' }}>
                             <DsTypography variant="Semibold_14" className={styles.titleText}>
-                                {resourceLoading ? <DsFlashingDotsLoader /> : resourceDetails.databaseCount}
+                                {resourceLoading ? (
+                                    <DsFlashingDotsLoader />
+                                ) : (
+                                    resourceDetails?.databases?.filter(
+                                        (db: any) => db.type === WELL_ARCHITECTED_TABS.PDB
+                                    )?.length || 0
+                                )}
                             </DsTypography>
 
                             <DsTypography
