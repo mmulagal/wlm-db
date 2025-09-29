@@ -2132,7 +2132,8 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
         case '/fsxdb/dashboard':
             return WLF_TABS.DASHBOARD;
         case '/fsxdb/inventory':
-        case '/fsxdb/inventory/optimize':
+        case '/fsxdb/inventory/optimize/oracle':
+        case '/fsxdb/inventory/optimize/mssql':
             return WLF_TABS.INVENTORY;
         case '/fsxdb/sandbox':
         case '/fsxdb/sandboxes':
@@ -2403,10 +2404,33 @@ export const formatString = (s: string | undefined) => {
 
 // This function is only for BXP
 export const setSelectedTabInformation = (tabInfo: string, pathName: string) => {
-    if (pathName === '/fsxdb/inventory/optimize') {
+    if (pathName === '/fsxdb/inventory/optimize/mssql') {
         return WLF_TABS.OPTIMIZE;
     }
+    if (pathName === '/fsxdb/inventory/optimize/oracle') {
+        return WLF_TABS.ORACLE_WELL_ARCHITECTED;
+    }
     return tabInfo;
+};
+
+export const navigateToInventory = (dbType: string, isWorkloadFactory: boolean) => {
+    if (isWorkloadFactory) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: '../databases/inventory',
+                replace: true
+            }
+        });
+    } else {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: `../fsxdb/inventory/optimize/${dbType}`,
+                replace: true
+            }
+        });
+    }
 };
 
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {

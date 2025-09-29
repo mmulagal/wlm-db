@@ -15,7 +15,7 @@ import {
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../utils/consts';
-import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, jobMonitoringStatusMapping, navigateToInventory } from '../../../utils/utilityFunctions';
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -35,25 +35,6 @@ const TaskTable = ({ taskList = [] }: any) => {
     const dispatch = useDispatch();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
-    const navigateToInventory = () => {
-        if (isWorkloadFactory) {
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: {
-                    pathname: '../databases/inventory',
-                    replace: true
-                }
-            });
-        } else {
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: {
-                    pathname: '../fsxdb/inventory/optimize',
-                    replace: true
-                }
-            });
-        }
-    };
     const navigateToContinuosOptimization = (message: string, rowData: any) => {
         const splitMessage = message.split(';');
 
@@ -73,12 +54,12 @@ const TaskTable = ({ taskList = [] }: any) => {
         if (sqlServerDeploymentType.toLowerCase() === DBType.ORACLE.toLowerCase()) {
             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
             dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
-            navigateToInventory();
+            navigateToInventory('oracle', isWorkloadFactory);
         } else {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
             dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
-            navigateToInventory();
+            navigateToInventory('mssql', isWorkloadFactory);
         }
         dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
 

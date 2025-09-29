@@ -25,6 +25,7 @@ import {
     expandTableRow,
     formatDateWithTime,
     jobMonitoringStatusMapping,
+    navigateToInventory,
     sortListOfDict
 } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
@@ -59,26 +60,6 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         setSubTaskList(sortedSubTaskList);
     }, [subJobsData, isDemoMode]);
 
-    const navigateToInventory = () => {
-        if (isWorkloadFactory) {
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: {
-                    pathname: '../databases/inventory',
-                    replace: true
-                }
-            });
-        } else {
-            postBlueXPMessage({
-                type: BlueXPListeners.navigate,
-                payload: {
-                    pathname: '../fsxdb/inventory/optimize',
-                    replace: true
-                }
-            });
-        }
-    };
-
     const ExpandedRow = useCallback(({ rowData }: any) => <TaskTable taskList={rowData?.subJobs || []} />, []);
 
     const navigateToContinuosOptimization = (message: string, rowData: any) => {
@@ -100,12 +81,12 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         if (sqlServerDeploymentType.toLowerCase() === DBType.ORACLE.toLowerCase()) {
             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
             dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
-            navigateToInventory();
+            navigateToInventory('oracle', isWorkloadFactory);
         } else {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
             dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
-            navigateToInventory();
+            navigateToInventory('mssql', isWorkloadFactory);
         }
         dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
 
