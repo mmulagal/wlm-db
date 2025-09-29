@@ -377,6 +377,30 @@ const OptimizeInnerPage = () => {
         )
     });
 
+    const storageLayoutAsmPayload = (configName: string, operation: string, singleRowData: any) => {
+        let payload = null;
+        if (operation === 'bulk') {
+            payload = {
+                assessments: [
+                    {
+                        configurationName: configName,
+                        objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                    }
+                ]
+            };
+        } else {
+            payload = {
+                assessments: [
+                    {
+                        configurationName: configName,
+                        objectsToOptimize: [singleRowData?.objectName]
+                    }
+                ]
+            };
+        }
+        return payload;
+    };
+
     // This is the function that will be called when the optimize button is clicked from main cards
     const callOptimizeApi = (type: any, operation: string, singleRowData: any) => {
         let payload: null | object = {};
@@ -543,56 +567,16 @@ const OptimizeInnerPage = () => {
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT) {
             apiCall = optimizeOracleStorageLayoutAsm;
-            if (operation === 'bulk') {
-                payload = {
-                    configurationName: 'data-dg-lun-layout',
-                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
-                };
-            } else {
-                payload = {
-                    configurationName: 'data-dg-lun-layout',
-                    objectsToOptimize: [singleRowData?.objectName]
-                };
-            }
+            payload = storageLayoutAsmPayload('data-dg-lun-layout', operation, singleRowData);
         } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT) {
             apiCall = optimizeOracleStorageLayoutAsm;
-            if (operation === 'bulk') {
-                payload = {
-                    configurationName: 'redolog-dg-lun-layout',
-                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
-                };
-            } else {
-                payload = {
-                    configurationName: 'redolog-dg-lun-layout',
-                    objectsToOptimize: [singleRowData?.objectName]
-                };
-            }
+            payload = storageLayoutAsmPayload('redolog-dg-lun-layout', operation, singleRowData);
         } else if (type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT) {
             apiCall = optimizeOracleStorageLayoutAsm;
-            if (operation === 'bulk') {
-                payload = {
-                    configurationName: 'fra-dg-lun-layout',
-                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
-                };
-            } else {
-                payload = {
-                    configurationName: 'fra-dg-lun-layout',
-                    objectsToOptimize: [singleRowData?.objectName]
-                };
-            }
+            payload = storageLayoutAsmPayload('fra-dg-lun-layout', operation, singleRowData);
         } else if (type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT) {
             apiCall = optimizeOracleStorageLayoutAsm;
-            if (operation === 'bulk') {
-                payload = {
-                    configurationName: 'archivelog-dg-lun-layout',
-                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
-                };
-            } else {
-                payload = {
-                    configurationName: 'archivelog-dg-lun-layout',
-                    objectsToOptimize: [singleRowData?.objectName]
-                };
-            }
+            payload = storageLayoutAsmPayload('archivelog-dg-lun-layout', operation, singleRowData);
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
