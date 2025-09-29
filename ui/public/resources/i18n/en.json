@@ -60,7 +60,7 @@
             "pgsql-deployment-content": " Workload Factory automates PostgreSQL deployment, reducing setup time, minimizing errors, and ensuring consistent performance.",
             "deployed-instances": "Deployed instances",
             "well-architected": "Well-architected",
-            "oracle-server": "Oracle Server",
+            "oracle-server": "Oracle Database",
             "oracle-server-content": " The well-architected analysis for Oracle Database on FSx for ONTAP ensures best practices by analyzing configurations and providing recommendations and fixes. Register instances to use this feature.",
             "database-registration": "Database registration",
             "registered-databases": "Registered databases",
