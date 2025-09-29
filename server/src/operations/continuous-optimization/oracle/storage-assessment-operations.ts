@@ -118,23 +118,22 @@ interface StorageAssessment {
     os?: OSAssessment;
 }
 
-const defaultMultipathExpected = { find_multipaths: true, polling_interval: 5 };
+const defaultMultipathExpected = { find_multipaths: ['yes', 'on'], polling_interval: 5 };
 
 const netappMultipathExpected = {
     path_grouping_policy: 'group_by_prio',
     path_selector: 'service-time 0',
     prio: 'ontap',
-    hardware_handler: '0',
+    hardware_handler: 0,
     failback: 'immediate',
     rr_weight: 'uniform',
     no_path_retry: 'queue',
     fast_io_fail_tmo: 5,
     dev_loss_tmo: 'infinity',
     detect_prio: 'yes',
-    flush_on_last_del: 'yes',
+    flush_on_last_del: ['yes', 'always'],
     retain_attached_hw_handler: 'yes',
     path_checker: 'tur',
-    polling_interval: 5,
     max_sectors_kb: 4096
 };
 
@@ -337,32 +336,49 @@ function getOSConfigDrift(
                 const multipathConfigData = os?.['multipath-configuration'];
                 const defaultsData = multipathConfigData?.defaults;
                 const netappDeviceData = multipathConfigData?.['netapp-device'];
-                violationDetails = [
-                    ...Object.entries(defaultMultipathExpected)
-                        .filter(([key, expectedValue]) => defaultsData?.[key] !== expectedValue)
-                        .map(([key]) =>
+                violationDetails = [];
+
+                // Check defaults configuration
+                Object.entries(defaultMultipathExpected).forEach(([key, expectedValue]) => {
+                    const actualValue = defaultsData?.[key];
+                    const isViolated = Array.isArray(expectedValue)
+                        ? !expectedValue.includes(actualValue as string)
+                        : actualValue !== expectedValue;
+
+                    if (isViolated) {
+                        violationDetails.push(
                             createViolationDetail(
                                 key,
                                 'default configuration',
-                                defaultsData?.[key]?.toString() || 'not found',
-                                `${key} ${defaultMultipathExpected[
-                                    key as keyof typeof defaultMultipathExpected
-                                ].toString()}`
+                                actualValue?.toString() || 'not found',
+                                `${key} ${
+                                    Array.isArray(expectedValue) ? expectedValue.join(' or ') : expectedValue.toString()
+                                }`
                             )
-                        ),
-                    ...Object.entries(netappMultipathExpected)
-                        .filter(([key, expectedValue]) => netappDeviceData?.[key] !== expectedValue)
-                        .map(([key]) =>
+                        );
+                    }
+                });
+
+                // Check netapp device configuration
+                Object.entries(netappMultipathExpected).forEach(([key, expectedValue]) => {
+                    const actualValue = netappDeviceData?.[key];
+                    const isViolated = Array.isArray(expectedValue)
+                        ? !expectedValue.includes(actualValue as string)
+                        : actualValue !== expectedValue;
+
+                    if (isViolated) {
+                        violationDetails.push(
                             createViolationDetail(
                                 key,
                                 'netapp device configuration',
-                                netappDeviceData?.[key]?.toString() || 'not found',
-                                `${key} ${netappMultipathExpected[
-                                    key as keyof typeof netappMultipathExpected
-                                ].toString()}`
+                                actualValue?.toString() || 'not found',
+                                `${key} ${
+                                    Array.isArray(expectedValue) ? expectedValue.join(' or ') : expectedValue.toString()
+                                }`
                             )
-                        )
-                ];
+                        );
+                    }
+                });
                 osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
