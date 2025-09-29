@@ -156,7 +156,7 @@ async function getHostAndSqlServerInfo(
 ): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('Get host and SQL Server info:', { accountId, credentialsId, region, nextToken, instances });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return returnInventorydata(instances) as unknown as DiscoverMsSqlResponseBodyType;
+        return returnInventorydata(DatabaseTypes.MS_SQL_SERVER, instances) as unknown as DiscoverMsSqlResponseBodyType;
     }
     let api1StartTime;
     let api1EndTime;
@@ -1648,6 +1648,10 @@ async function discoverOracleResources(
         ec2InstanceIds
     });
 
+    if (isDemoFlow) {
+        return returnInventorydata(DatabaseTypes.ORACLE, ec2InstanceIds) as unknown as DiscoverOracleResponseBodyType;
+    }
+
     const filters = [
         {
             Name: 'platform-details',
@@ -1792,7 +1796,7 @@ async function discoverOracleResources(
                         const isInstanceStorageAsmManaged = flattenedInstanceStorageDetails.some(
                             (storage: { isAsmManaged: string }) => storage.isAsmManaged === 'true'
                         );
-                        let storageDetails = getDiscoveredOracleInstancesStorageDetails(
+                        const storageDetails = getDiscoveredOracleInstancesStorageDetails(
                             ec2Instance.ebsVolumeIDs!,
                             endPointIpWithFsxInfo,
                             fsIdWithFsxInfo,
@@ -1800,27 +1804,6 @@ async function discoverOracleResources(
                             ebsVolumeToAvailabilityZoneMap,
                             flattenedInstanceStorageDetails
                         );
-
-                        if (isDemoFlow) {
-                            storageDetails = [
-                                {
-                                    type: 'FSXN',
-                                    id: 'fs-0d5efc3057c4f12cb',
-                                    svmId: 'svm-0a333def9bfd29537',
-                                    fileSystemStorageType: 'SSD',
-                                    fileSystemName: 'demo-fsx',
-                                    deploymentType: 'MULTI_AZ_1',
-                                    zones: ['ap-southeast-1c', 'ap-southeast-1b'],
-                                    mountDetails: [
-                                        {
-                                            mountPoint: 'lWB23]VAYAWk',
-                                            protocol: 'iSCSI',
-                                            mountIp: '172.31.6.100'
-                                        }
-                                    ]
-                                }
-                            ];
-                        }
 
                         databaseInstanceDetails.push({
                             instanceId,

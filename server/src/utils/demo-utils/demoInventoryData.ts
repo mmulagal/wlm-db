@@ -443,6 +443,180 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
     };
 }
 
+function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
+    return {
+        count: 2,
+        items: [
+            {
+                ec2InstanceId: 'i-25694686',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'oracle-node-64789',
+                ec2UsageOperation: 'RunInstances',
+                ssmState: 'connected',
+                ebsVolumeIDs: ['vol-0e23df37c6089b3c7'],
+                ebsVolumes: [
+                    {
+                        DeviceName: '/dev/xvda',
+                        Ebs: {
+                            AttachTime: '2025-03-07T03:34:27.000Z',
+                            DeleteOnTermination: true,
+                            Status: 'attached',
+                            VolumeId: ebsVolId
+                        }
+                    }
+                ],
+                vpc: {
+                    id: 'vpc-0100cefdf732ef9e9',
+                    name: 'VPC-5',
+                    cidrBlock: '192.168.16.0/20'
+                },
+                error: undefined,
+                platform: 'Linux/UNIX',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceId: '7450008296037943419',
+                        instanceName: 'oracleasm',
+                        version: '19.0.0.0.0',
+                        instanceState: 'OPEN',
+                        instanceType: 'MULTI_TENANT',
+                        databaseCount: 2,
+                        databaseDetails: {
+                            databaseId: '28096914',
+                            name: 'ORADB1',
+                            openMode: 'READ WRITE',
+                            isCDB: 'YES'
+                        },
+                        pluggableDatabases: [
+                            {
+                                pdbId: 3,
+                                pdbName: 'ORCLPDB',
+                                pdbStatus: 'NORMAL'
+                            },
+                            {
+                                pdbId: 2,
+                                pdbName: 'PDB$SEED',
+                                pdbStatus: 'NORMAL'
+                            }
+                        ],
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                svmId: 'svm-0a333def9bfd29537',
+                                fileSystemStorageType: 'SSD',
+                                fileSystemName: 'demo-fsx',
+                                deploymentType: 'MULTI_AZ_1',
+                                zones: ['ap-southeast-1c', 'ap-southeast-1b'],
+                                mountDetails: [
+                                    {
+                                        mountPoint: '/u01/app/oracle',
+                                        protocol: 'iSCSI',
+                                        mountIp: '172.31.6.100'
+                                    }
+                                ]
+                            }
+                        ],
+                        isInstanceStorageAsmManaged: true,
+                        isDefaultAuthentication: false,
+                        oracleServerAuthentication: false,
+                        asmAuthentication: false,
+                        manageReadiness: {
+                            oracle: {
+                                missingModules: [],
+                                missingPermissions: []
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-37030647',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'oracle-node-5716',
+                ec2UsageOperation: 'RunInstances',
+                ssmState: 'connected',
+                ebsVolumeIDs: ['vol-0e23df37c6089b3c7'],
+                ebsVolumes: [
+                    {
+                        DeviceName: '/dev/xvda',
+                        Ebs: {
+                            AttachTime: '2025-03-07T03:34:27.000Z',
+                            DeleteOnTermination: true,
+                            Status: 'attached',
+                            VolumeId: ebsVolId
+                        }
+                    }
+                ],
+                vpc: {
+                    id: 'vpc-0100cefdf732ef9e9',
+                    name: 'VPC-5',
+                    cidrBlock: '192.168.16.0/20'
+                },
+                error: undefined,
+                platform: 'Linux/UNIX',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceId: '7450008296037943419',
+                        instanceName: 'oracle',
+                        version: '19.0.0.0.0',
+                        instanceState: 'OPEN',
+                        instanceType: 'MULTI_TENANT',
+                        databaseCount: 2,
+                        databaseDetails: {
+                            databaseId: '28096904',
+                            name: 'ORADB1SA',
+                            openMode: 'READ WRITE',
+                            isCDB: 'YES'
+                        },
+                        pluggableDatabases: [
+                            {
+                                pdbId: 3,
+                                pdbName: 'ORCLPDB',
+                                pdbStatus: 'NORMAL'
+                            },
+                            {
+                                pdbId: 2,
+                                pdbName: 'PDB$SEED',
+                                pdbStatus: 'NORMAL'
+                            }
+                        ],
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                svmId: 'svm-0a333def9bfd29537',
+                                fileSystemStorageType: 'SSD',
+                                fileSystemName: 'demo-fsx',
+                                deploymentType: 'MULTI_AZ_1',
+                                zones: ['ap-southeast-1c', 'ap-southeast-1b'],
+                                mountDetails: [
+                                    {
+                                        mountPoint: 'lWB23]VAYAWk',
+                                        protocol: 'iSCSI',
+                                        mountIp: '172.31.6.100'
+                                    }
+                                ]
+                            }
+                        ],
+                        isInstanceStorageAsmManaged: true,
+                        isDefaultAuthentication: true,
+                        oracleServerAuthentication: false,
+                        asmAuthentication: false,
+                        manageReadiness: {
+                            oracle: {
+                                missingModules: [],
+                                missingPermissions: []
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    };
+}
+
 const MAPPED_ONTAP_VOLUMES_DATA = {
     SQL1: {
         lunRecords: [
@@ -3067,6 +3241,7 @@ const ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
 
 export {
     inventoryDemoData,
+    discoverDemoDataOracle,
     ASSESMENT_CONFIG_DATA,
     ASSESSMENT_CRR_CONFIG_DATA,
     ASSESSMENT_AWS_BACKUP_DATA,

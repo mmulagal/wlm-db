@@ -6,7 +6,6 @@ import { compressSync } from 'fflate';
 import path from 'path';
 import { AWS_REGIONS, RESOURCESTYPE } from '../consts';
 import { checkAccount, getSubJobDescriptions } from '../utils';
-import { SingleRegisterCredentialsResponseType } from '../../routes/types/register.types';
 
 const DEMO_PRODUCT_RATE = {
     ec2Instance: {
@@ -3277,47 +3276,33 @@ const onPremAOAGAUploadObject = {
     fileName: 'SQLServerDataResponse-GOLDEN-AOAG.json'
 };
 
-function DEMO_REGISTER_RESPONSE(resourceType?: RESOURCESTYPE): SingleRegisterCredentialsResponseType {
-    const response: SingleRegisterCredentialsResponseType = {
-        databaseCount: '10',
-        databaseServerEdition: 'Standard Edition (64-bit)',
-        manageReadiness: {
-            missingSqlCmd: false,
-            assessment: {
-                missingSqlPermissions: [],
-                missingModules: []
-            },
-            remediation: {
-                missingSqlPermissions: [],
-                missingModules: []
-            },
-            dbcreation: {
-                missingSqlPermissions: [],
-                missingModules: []
-            },
-            sandbox: {
-                missingSqlPermissions: [],
-                missingModules: []
-            }
-            // logsanalyzer: {
-            //     missingSqlPermissions: [],
-            //     missingModules: []
-            // }
+const DEMO_REGISTER_RESPONSE = {
+    databaseCount: '10',
+    databaseServerEdition: 'Standard Edition (64-bit)',
+    manageReadiness: {
+        missingSqlCmd: false,
+        assessment: {
+            missingSqlPermissions: [],
+            missingModules: []
+        },
+        remediation: {
+            missingSqlPermissions: [],
+            missingModules: []
+        },
+        dbcreation: {
+            missingSqlPermissions: [],
+            missingModules: []
+        },
+        sandbox: {
+            missingSqlPermissions: [],
+            missingModules: []
+        },
+        oracle: {
+            missingModules: [],
+            missingPermissions: []
         }
-    };
-
-    if (resourceType === RESOURCESTYPE.ORACLE) {
-        response.manageReadiness = {
-            ...response.manageReadiness,
-            oracle: {
-                missingPermissions: [],
-                missingModules: []
-            }
-        };
     }
-
-    return response;
-}
+};
 
 const MockOracleServerDetails = {
     '7450008296037943419': {

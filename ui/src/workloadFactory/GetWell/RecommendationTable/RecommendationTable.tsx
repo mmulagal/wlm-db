@@ -180,7 +180,7 @@ const RecommendationTable = ({
             statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
             apiCall = optimizeHAMssql;
             payload = getHaPayload('sqlServer-service');
-            apiInput = { configName: 'sqlServer-service', payload };
+            apiInput = { configName: 'sqlserver-service', payload };
         } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
             statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
             apiCall = optimizeStorageConfig;

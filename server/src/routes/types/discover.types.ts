@@ -151,6 +151,7 @@ const DiscoverResponseInfo = Type.Object({
     ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
     ec2InstanceType: Type.String({ description: 'EC2 instance type' }),
     ec2InstanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
+    ec2HostName: Type.Optional(Type.String({ description: 'EC2 private DNS name' })),
     ec2UsageOperation: Type.Optional(Type.String({ description: 'EC2 usage operation details' })),
     ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
     vpc: Type.Optional(

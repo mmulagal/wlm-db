@@ -35,9 +35,9 @@ import { listConfig, listResources, updateResource, upsertDatabaseInstance } fro
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { createJobs, listJobs } from '../../lib/database/job';
-import { inventoryDemoData } from './demoInventoryData';
+import { discoverDemoDataOracle, inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
-import { instanceDemoData } from './instancesResponse';
+import { instanceDemoData, oracleInstanceDemoData } from './instancesResponse';
 import { Metadata } from '../common-types';
 
 const logger = getLogger();
@@ -425,11 +425,14 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     }
 }
 
-async function returnInventorydata(instances?: string[]) {
+async function returnInventorydata(databaseType: DatabaseTypes, instances?: string[]) {
     logger.info('Generate and return inventory data for demo', instances);
     const fsxId = `fs-${randomize('0', 8)}`;
-    const ebsVolId = `vol -${randomize('a0', 17)}`;
-    const inventoryData = inventoryDemoData(fsxId, ebsVolId);
+    const ebsVolId = `vol-${randomize('a0', 17)}`;
+    const inventoryData =
+        databaseType === DatabaseTypes.MS_SQL_SERVER
+            ? inventoryDemoData(fsxId, ebsVolId)
+            : discoverDemoDataOracle(fsxId, ebsVolId);
 
     if (instances !== undefined && instances.length > 0) {
         const { items: inventoryItems } = inventoryData;
@@ -443,7 +446,9 @@ async function returnInventorydata(instances?: string[]) {
         const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
         // for random EC2 instance ID need to send generic value will be updated in phase 2
         if (!instanceDetails) {
-            return instanceDemoData(fsxId, instances[0]);
+            return databaseType === DatabaseTypes.MS_SQL_SERVER
+                ? instanceDemoData(fsxId, instances[0])
+                : oracleInstanceDemoData(fsxId, instances[0]);
         }
     }
     return {

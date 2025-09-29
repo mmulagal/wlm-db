@@ -1962,26 +1962,45 @@ async function validateAndStoreDiscoveredParameters(
         checkManageReadiness
     });
 
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        if (singleInstanceRegistration) {
-            return DEMO_REGISTER_RESPONSE(credentials[0].resourceType as RESOURCESTYPE);
-        }
+    if (isDemoFlow) {
         const response: SingleRegisterCredentialsResponseType[] = [];
-        credentials.forEach(({ resourceType, resourceId }) => {
-            if (resourceType !== RESOURCESTYPE.FSX) {
-                response.push({
-                    ...DEMO_REGISTER_RESPONSE(resourceType as RESOURCESTYPE),
-                    resourceType,
-                    resourceId
-                });
+
+        const processCredential = (cred: RegisterCredentialsType) => {
+            if (cred.resourceType === RESOURCESTYPE.FSX) {
+                if (!singleInstanceRegistration) {
+                    response.push({
+                        resourceId: cred.resourceId,
+                        resourceType: cred.resourceType,
+                        fsxnError: ''
+                    });
+                }
+                return;
+            }
+
+            const baseResponse =
+                cred.resourceType === RESOURCESTYPE.ORACLE
+                    ? {
+                          manageReadiness: {
+                              oracle: {
+                                  missingModules: [],
+                                  missingPermissions: []
+                              }
+                          }
+                      }
+                    : { ...DEMO_REGISTER_RESPONSE };
+
+            if (singleInstanceRegistration) {
+                response.push(baseResponse);
             } else {
                 response.push({
-                    resourceId,
-                    resourceType,
-                    fsxnError: ''
+                    ...baseResponse,
+                    resourceId: cred.resourceId,
+                    resourceType: cred.resourceType
                 });
             }
-        });
+        };
+
+        credentials.forEach(processCredential);
         return response;
     }
 

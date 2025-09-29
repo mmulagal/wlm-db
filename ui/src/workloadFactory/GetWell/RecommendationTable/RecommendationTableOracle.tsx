@@ -155,7 +155,7 @@ const RecommendationTableOracle = ({
         } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE) {
             statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
             apiCall = optimizeHAMssql;
-            payload = getHaPayload('sqlserver-service');
+            payload = getHaPayload('sqlServer-service');
             apiInput = { configName: 'sqlserver-service', payload };
         } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
             statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
