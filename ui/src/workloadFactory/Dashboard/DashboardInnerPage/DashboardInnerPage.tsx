@@ -67,8 +67,9 @@ import {
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
-import { backupStartTime, formatDateAssess } from '../../../utils/utilityFunctions';
+import { backupStartTime } from '../../../utils/utilityFunctions';
 import {
+    calculatePostponeInfo,
     callDashboardDismissApi,
     filterNotOptimizedRows,
     getAssessmentStatusConsistency
@@ -1258,14 +1259,6 @@ const DashboardInnerPage = () => {
         }
     }, [selectedConfig, selectedConfigSummary]);
 
-    const daysLeft = (endTime: string) => {
-        const endDate = new Date(endTime);
-        const currentDate = new Date();
-        const diffTime = Math.abs(currentDate.getTime() - endDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
-    };
-
     const lastColDetails = (
         name: string,
         data?: any,
@@ -1296,20 +1289,22 @@ const DashboardInnerPage = () => {
                                     <DsTypography variant="Regular_14">
                                         {t('databases.well-architect.postponed-for-30-days')}
                                     </DsTypography>
-                                    {rowData?.configObj?.endTime && (
-                                        <TooltipInfo isAppendedToBody>
-                                            {rowData?.configObj?.startTime && (
-                                                <DsTypography variant="Regular_13">
-                                                    {t('databases.well-architect.postpone-date')}{' '}
-                                                    {formatDateAssess(rowData?.configObj?.startTime)}.
-                                                </DsTypography>
-                                            )}
-                                            <DsTypography variant="Regular_13">
-                                                {daysLeft(rowData?.configObj?.endTime)}{' '}
-                                                {t('databases.well-architect.days-left')}
-                                            </DsTypography>
-                                        </TooltipInfo>
-                                    )}
+                                    {(rowData?.configObj?.endTime || rowData?.configObj?.startTime) &&
+                                        (() => {
+                                            const postponeInfo = calculatePostponeInfo(rowData?.configObj);
+                                            return postponeInfo ? (
+                                                <TooltipInfo isAppendedToBody>
+                                                    <DsTypography variant="Regular_13">
+                                                        {t('databases.well-architect.postpone-date')}{' '}
+                                                        {postponeInfo.postponeDate}.
+                                                    </DsTypography>
+                                                    <DsTypography variant="Regular_13">
+                                                        {postponeInfo.daysLeft}{' '}
+                                                        {t('databases.well-architect.days-left')}
+                                                    </DsTypography>
+                                                </TooltipInfo>
+                                            ) : null;
+                                        })()}
                                 </div>
                             )}
                             {rowData?.configState !== CONFIG_STATES.POSTPONED && <div style={{ width: '204px' }} />}
