@@ -173,7 +173,7 @@ def escape_to_hex(s, charset=':<>-#$%*+=?@[!]^~/'):
     pattern = r'([{}])'.format(re.escape(charset))
     return re.sub(pattern, lambda m: '\\\\x{:02x}'.format(ord(m.group(1))), s)
 
-def resolve_lun(serial, byid='/dev/disk/by-id', wait=30):
+def resolve_lun(serial, byid='/dev/disk/by-id', wait=60):
     esc = escape_to_hex(serial)
     time.sleep(wait)
     # collect candidates that end with the escaped serial
