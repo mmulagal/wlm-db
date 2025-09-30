@@ -713,22 +713,16 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'multipath-readcount',
-                status: 'not-optimized',
+                status: 'optimized',
                 recommended: 'disabled',
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.',
                 tags: ['Performance efficiency'],
-                objectsInViolation: ['asm04y'],
-                violationDetails: [
-                    {
-                        objectName: 'asm04y',
-                        value: '128',
-                        objectType: 'EC2 Instance'
-                    }
-                ],
+                objectsInViolation: [],
+                violationDetails: [],
                 totalObjectsAssessed: 1,
-                totalObjectsInViolation: 1,
+                totalObjectsInViolation: 0,
                 resourceType: 'EC2 Instance'
             },
             {
@@ -1000,6 +994,23 @@ const storageAssessmnetMetadata = {
         'iscsi-replacement-timeout': {
             error: null,
             'replacement-timeout': 120
+        },
+        'oracle-parameters-from-init': {
+            error: null,
+            'db-file-multiblock-read-count-in-init': [
+                {
+                    path: '/u01/app/oracle/product/19c/db_1/dbs/spfilepdbnas1.ora',
+                    error: null,
+                    'parameter-found': false,
+                    'parameter-value': 'Parameter not found in SPFile'
+                },
+                {
+                    path: '/u01/app/oracle/product/19c/db_1/dbs/init.ora',
+                    error: null,
+                    'parameter-found': false,
+                    'parameter-value': 'Parameter not found or is commented out'
+                }
+            ]
         }
     },
     fraEnabled: 'yes',

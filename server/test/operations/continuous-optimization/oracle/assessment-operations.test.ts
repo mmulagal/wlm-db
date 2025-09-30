@@ -226,10 +226,10 @@ describe('Oracle assessment operations', () => {
         ) as OracleGenericParameterDriftResponseType;
         expect(multipathReadcount).toBeDefined();
 
-        expect(multipathReadcount.status).toBe('not-optimized');
+        expect(multipathReadcount.status).toBe('optimized');
         expect(multipathReadcount.recommended).toBe('disabled');
         expect((multipathReadcount as any).resourceType).toBe('EC2 Instance');
-        expect(multipathReadcount.violationDetails?.[0]?.value).toBe('128');
+        expect(multipathReadcount.totalObjectsInViolation).toBe(0);
 
         // Test multipath-configuration assessment
         const multipathConfig = osAssessment.find(

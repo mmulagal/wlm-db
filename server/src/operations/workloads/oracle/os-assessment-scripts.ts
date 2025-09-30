@@ -68,6 +68,169 @@ def parse(text):
     return root
 `;
 
+const ORACLE_HOME = `
+def find_oracle_home(oracle_sid):
+    """Find Oracle Home by reading /etc/oratab"""
+
+    result = {
+        "oracle-home-found": None,
+        "oracle-home-path": None,
+        "error": None
+    }
+    
+    try:
+        oracle_home = os.environ.get('ORACLE_HOME', '')
+        if oracle_home and os.path.exists(oracle_home):
+            result["oracle-home-path"] = oracle_home
+            return result
+        
+        if not os.path.exists('/etc/oratab'):
+            result["error"] = "/etc/oratab file not found"
+            return result
+        
+        with open('/etc/oratab', 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or line.startswith('+'):
+                    continue
+                # Parse the line: SID:ORACLE_HOME:Y/N
+                parts = line.split(':')
+                if len(parts) < 2:
+                    continue
+                
+                sid = parts[0].strip()
+                home = parts[1].strip()
+                if oracle_sid:
+                    if sid == oracle_sid and os.path.exists(home):
+                        result["oracle-home-path"] = home
+                        return result
+                else:
+                    if os.path.exists(home) and os.path.exists(os.path.join(home, 'bin', 'sqlplus')):
+                        result["oracle-home-path"] = home
+                        return result
+        if oracle_sid:
+            result["error"] = f"Oracle Home not found for SID '{oracle_sid}' in /etc/oratab"
+        else:
+            result["error"] = "No valid Oracle Home found in /etc/oratab"
+    except Exception as e:
+        result["error"] = f"Error reading /etc/oratab: {str(e)}"
+    return result
+`;
+
+const CHECK_INIT_ORA_PARAMETERS = `
+def check_init_ora_parameters():
+
+    oracle_sid = os.environ.get('ORACLE_SID', '')
+    result = {
+        "db-file-multiblock-read-count-in-init": [],
+        "error": None
+    }
+    
+    try:
+        oracle_home_result = find_oracle_home(oracle_sid)
+        oracle_home = oracle_home_result.get("oracle-home-path")
+
+        if not oracle_home or not oracle_sid:
+            result["error"] = "ORACLE_HOME or ORACLE_SID not set"
+            return result
+    
+        # Oracle initialization file search order
+        possible_paths = [
+            (f"{oracle_home}/dbs/spfile{oracle_sid}.ora", "spfile"),
+            (f"{oracle_home}/dbs/spfile.ora", "spfile"),
+            (f"{oracle_home}/dbs/init{oracle_sid}.ora", "init"),
+            (f"{oracle_home}/dbs/init.ora", "init")
+        ]
+        
+        active_file_found = False
+        
+        for init_path, file_type in possible_paths:
+            if os.path.exists(init_path):
+                file_info = {
+                    "path": init_path,
+                    "parameter-found": False,
+                    "parameter-value": None,
+                    "error": None
+                }
+                
+                if not active_file_found:
+                    active_file_found = True
+                    
+                try:
+                    if file_type == "spfile":
+                        try:
+                            grep_result = subprocess.run(
+                                ['grep', '-a', '-i', 'db_file_multiblock_read_count', init_path],
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                universal_newlines=True, 
+                                timeout=10
+                            )
+                            
+                            if grep_result.returncode == 0:
+                                file_info["parameter-found"] = True
+                                grep_output = grep_result.stdout.strip()
+                                
+                                # Try to extract value from grep output
+                                match = re.search(r'db_file_multiblock_read_count[^\\w]*(\\d+)', grep_output, re.IGNORECASE)
+                                if match:
+                                    file_info["parameter-value"] = match.group(1)
+                                else:
+                                    file_info["parameter-value"] = "Parameter found but value unclear from binary search"
+                            else:
+                                file_info["parameter-found"] = False
+                                file_info["parameter-value"] = "Parameter not found in SPFile"
+                        
+                        except subprocess.TimeoutExpired:
+                            file_info["error"] = "SPFile search timed out"
+                        except FileNotFoundError:
+                            file_info["error"] = "grep command not available"
+                        except Exception as e:
+                            file_info["error"] = f"Error searching SPFile: {str(e)}"
+                    
+                    else:  # init file
+                        try:
+                            with open(init_path, 'r') as f:
+                                content = f.read()
+                    
+                            found_parameter = False
+                            for line_num, line in enumerate(content.splitlines(), 1):
+                                line_stripped = line.strip()
+                                
+                                if not line_stripped:
+                                    continue
+                                if re.search(r'db_file_multiblock_read_count', line_stripped, re.IGNORECASE):
+                                    # Check if it's commented out
+                                    is_commented = line_stripped.startswith('#') or line_stripped.startswith('*')
+                                    if not is_commented:
+                                        match = re.search(r'db_file_multiblock_read_count\\s*=\\s*([^\\s#]+)', line_stripped, re.IGNORECASE)
+                                        if match:
+                                            file_info["parameter-found"] = True
+                                            file_info["parameter-value"] = match.group(1).strip()
+                                            found_parameter = True
+                                            break
+                            
+                            if not found_parameter:
+                                file_info["parameter-found"] = False
+                                file_info["parameter-value"] = "Parameter not found or is commented out"
+                        except Exception as e:
+                            file_info["error"] = f"Error reading init file: {str(e)}"
+                    
+                except Exception as e:
+                    file_info["error"] = f"Error processing file: {str(e)}"
+                
+                # Add file info directly to the list
+                result["db-file-multiblock-read-count-in-init"].append(file_info)
+                
+        if not active_file_found:
+            result["error"] = "No initialization file found in Oracle's default search order"
+            
+    except Exception as e:
+        result["error"] = str(e)
+
+    return result
+`;
+
 const CHECK_ORACLE_PARAMETERS = `
 # Check init options for filesystemio_options and db_file_multiblock_read_count
 def get_oracle_parameters():
@@ -533,7 +696,7 @@ import re
 import datetime
 from pathlib import Path
 
-${pythonLogger('storage-assessment.log')}
+${pythonLogger('storageOsAssessment.log')}
 
 ${CHECK_MULTIPATH_IO_STATUS}
 
@@ -581,13 +744,22 @@ $PYTHON_LATEST <<'PYTHON'
 import os
 import json
 import subprocess
+import re
 
 ${CHECK_ORACLE_PARAMETERS}
+
+${ORACLE_HOME}
+
+${CHECK_INIT_ORA_PARAMETERS}
 
 # Run Oracle parameters check
 oracle_params_result = get_oracle_parameters()
 
-print(json.dumps(oracle_params_result))
+# Run init.ora/spfile check
+oracle_init_params = check_init_ora_parameters()
+
+
+print(json.dumps({"oracle-parameters": oracle_params_result, "oracle-init-parameters": oracle_init_params}))
 
 PYTHON
 ORACLE_SHELL
@@ -599,7 +771,7 @@ import json
 import sys
 import datetime
 
-${pythonLogger('storage-assessment.log')}
+${pythonLogger('storageOsAssessment.log')}
 
 log('Combining OS and Oracle results')
 
@@ -608,8 +780,9 @@ try:
     oracle_results = json.loads('$ORACLE_RESULTS')
     
     # Add oracle-parameters to the os section
-    os_results["os"]["oracle-parameters"] = oracle_results
-    
+    os_results["os"]["oracle-parameters"] = oracle_results.get("oracle-parameters", {})
+    os_results["os"]["oracle-parameters-from-init"] = oracle_results.get("oracle-init-parameters", {})
+
     print(json.dumps(os_results))
 except Exception as e:
     log(f'Exception while combining results: {str(e)}')

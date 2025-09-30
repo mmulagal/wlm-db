@@ -97,6 +97,17 @@ interface OSAssessment {
         defaults?: Record<string, string | number | boolean>;
         'netapp-device'?: Record<string, string | number | boolean>;
     };
+    'oracle-parameters-from-init'?: {
+        error?: string | null;
+        'db-file-multiblock-read-count-in-init'?: [
+            {
+                path?: string;
+                error?: string | null;
+                'parameter-found'?: boolean;
+                'parameter-value'?: string;
+            }
+        ];
+    };
 }
 
 interface StorageAssessment {
@@ -430,17 +441,18 @@ function getOSConfigDrift(
             }
 
             case 'multipath-readcount': {
-                const oracleParamsData = os?.['oracle-parameters']?.['db-file-multiblock-read-count'];
-                if (oracleParamsData?.found === true) {
-                    violationDetails = [
+                const oracleParamsData =
+                    os?.['oracle-parameters-from-init']?.['db-file-multiblock-read-count-in-init'] || [];
+                violationDetails = oracleParamsData
+                    .filter(paramRecord => paramRecord['parameter-found'])
+                    .map(paramRecord =>
                         createViolationDetail(
                             'db_file_multiblock_read_count',
                             'oracle parameter',
-                            `${oracleParamsData?.value || 'unknown'}`,
+                            `${paramRecord['parameter-value']}`,
                             'db_file_multiblock_read_count should not be set'
                         )
-                    ];
-                }
+                    );
                 osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }

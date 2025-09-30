@@ -3810,6 +3810,23 @@
         "iscsi-replacement-timeout": {
             "error": null,
             "replacement-timeout": 120
+        },
+        "oracle-parameters-from-init": {
+            "error": null,
+            "db-file-multiblock-read-count-in-init": [
+                {
+                    "path": "/u01/app/oracle/product/19c/db_1/dbs/spfilepdbnas1.ora",
+                    "error": null,
+                    "parameter-found": false,
+                    "parameter-value": "Parameter not found in SPFile"
+                },
+                {
+                    "path": "/u01/app/oracle/product/19c/db_1/dbs/init.ora",
+                    "error": null,
+                    "parameter-found": false,
+                    "parameter-value": "Parameter not found or is commented out"
+                }
+            ]
         }
     }
     },
