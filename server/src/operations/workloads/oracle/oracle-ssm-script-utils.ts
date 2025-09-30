@@ -175,7 +175,8 @@ const getOracleProtectionData = (
 ) => `
     #oracle protection script
  
-    ${getMappedOntapDataVolume(fsxnId, region, mountIp, junctionPath, protocol)}
+    literalJunctionPath='${junctionPath}'
+    ${getMappedOntapDataVolume(fsxnId, region, mountIp, '$literalJunctionPath', protocol)}
 
     endpoint="storage/volumes?fields=snapshot_count&name=$mountedVolume&svm=$svmName"
     ontapProtectionData=$(ontap_request 'GET' $endpoint)
