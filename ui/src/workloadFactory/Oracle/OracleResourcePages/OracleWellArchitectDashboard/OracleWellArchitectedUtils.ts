@@ -367,7 +367,8 @@ const formatCardItem = (
         violationDetails: item?.violationDetails,
         objectsInViolation: item?.objectsInViolation,
         recommendationText: item?.recommendation,
-        dismissedObj: mapDismissedValues(data?.dismissedConfigurations?.storage, item?.name)
+        dismissedObj: mapDismissedValues(data?.dismissedConfigurations?.storage, item?.name),
+        recommendedValue: item?.recommended
     };
 };
 

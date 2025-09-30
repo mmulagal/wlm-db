@@ -244,6 +244,7 @@
             "postpone-bulk-line-1": "Are you sure you want to postpone for 30 days the"
         },
         "well-architect": {
+            "controlfiles-view-disable": "Minimum 2 copies of control files is recommended for multiplexing. Only 1 found.",
             "log-drive-over-provisioned-error": "Over provisioned log drive size can not be optimized",
             "tempdb-drive-over-provisioned-error": "Over provisioned tempDB drive size can not be optimized",
             "file-system-headroom-over-provisioned-error": "Over provisioned headroom can not be optimized",

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { DsButton } from '@tlveng/wlm-ds';
-import { useDialog } from '@netapp/design-system';
+import { DsPopover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import styles from './OracleCardComponent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, DBType, GETWELL_STATUS, WLF_TABS } from '../../../../../utils/consts';
@@ -15,6 +15,8 @@ interface ViewAndFixButtonProps {
         block_two?: {
             value?: string;
         };
+        mapName?: string;
+        recommendedValue?: string;
     };
     loading?: boolean;
 }
@@ -69,19 +71,32 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
         return t('databases.oracle-inner-page.view');
     };
 
+    const viewButtonDisable = () => {
+        if (
+            cardData?.mapName === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT &&
+            cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
+            cardData?.recommendedValue === 'two-multiplexed-volumes'
+        ) {
+            return { isDisable: true, reason: t('databases.well-architect.controlfiles-view-disable') };
+        }
+        return { isDisable: loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED, reason: '' };
+    };
+
     return (
         <>
             {cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS &&
                 cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM && (
                     <div className={styles.lastButton}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            isDisabled={loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED}
-                            onClick={() => handleDifferentNavigation()}
-                        >
-                            {viewButtonText()}
-                        </DsButton>
+                        <DsPopover trigger="hover" title={viewButtonDisable().reason} placement="left">
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                isDisabled={viewButtonDisable().isDisable}
+                                onClick={() => handleDifferentNavigation()}
+                            >
+                                {viewButtonText()}
+                            </DsButton>
+                        </DsPopover>
                     </div>
                 )}
         </>
