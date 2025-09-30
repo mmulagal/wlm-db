@@ -34,7 +34,9 @@ const OracleOptimizeStorageSchema = {
     tags: [RouteTags.ORACLE_ASSESSMENT],
     body: OptimizeStorageRequestBody,
     response: {
-        200: JobIdResponse
+        200: JobIdResponse,
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
     }
 };
 

@@ -49,7 +49,7 @@ if error:
     log(f"Error fetching LUN sizes: {error}")
 else:
     log(f"LUN sizes response: {response}")
-    smallest_size = min(rec["space"]["size"] for rec in records)
+    smallest_size = min(rec["space"]["size"] for rec in response["records"])
 lunSize = smallest_size
 volSize = lunSize * 1.1
 
@@ -111,6 +111,15 @@ for diskGrp in unOptimizedDiskGroups:
             log(f"Successfully created igroup {iGrpResponse['name']} for SVM {diskGrp['svmName']}")
             igrpName = initiator
 
+    iscsiSessionResponse, iscsiSessionError = ontapRestApiRequest(fsxId, region, 'GET', f"network/ip/interfaces?svm.name={diskGrp['svmName']}&services=*iscsi*&fields=ip.address")
+    if iscsiSessionError or iscsiSessionResponse['num_records'] == 0:
+        log(f"Error fetching iSCSI session information: {iscsiSessionError}")
+        result[diskGrp['diskGroupName']]['error'] += str(iscsiSessionError)
+        continue
+    else:
+        log(f"Successfully fetched iSCSI session information: {iscsiSessionResponse}")
+        iscsi_ip = iscsiSessionResponse['records'][0]['ip']['address']
+        result[diskGrp['diskGroupName']]['iscsi_ip'] = iscsi_ip
 
     for volName in diskGrp['volumeNames']:
         log(f"Creating volume {volName} of size {volSize}B in SVM {diskGrp['svmName']}")
@@ -142,34 +151,31 @@ for diskGrp in unOptimizedDiskGroups:
                     failedLuns.append(volName)
                 else:
                     log(f"Successfully mapped LUN in volume {volName} to igroup {igrpName}: response: {lunMapResponse}")
-                    log(f"Fetching LUN serial for  /vol/{volName}/lun1")
-                    lunSerialResponse, lunSerialError = ontapRestApiRequest(fsxId, region, 'GET', '/private/cli/lun?vserver='+str(diskGrp['svmName'])+'&path=/vol/'+str(volName)+'/lun1&fields=serial')
-                    if lunSerialError:
-                        log(f"Error fetching LUN serial for for  /vol/{volName}/lun1: {lunSerialError}")
+                    log(f"Fetching LUN serial for /vol/{volName}/lun1")
+                    lunSerialResponse, lunSerialError = ontapRestApiRequest(fsxId, region, 'GET', f"storage/luns?svm.name={diskGrp['svmName']}&name=/vol/{volName}/lun1&fields=serial_number")
+                    if lunSerialError or lunSerialResponse['num_records'] == 0:
+                        log(f"Error fetching LUN serial for /vol/{volName}/lun1: {lunSerialError}")
                         result[diskGrp['diskGroupName']]['error'] += str(lunSerialError)
                     else:
-                        log(f"Successfully fetched LUN serial for for  /vol/{volName}/lun1: {lunSerialResponse}")
-                        result[diskGrp['diskGroupName']]['luns'].append(lunSerialResponse['records'][0]['serial'])
-                        successfulLuns.append(lunSerialResponse['records'][0]['serial'])
+                        log(f"Successfully fetched LUN serial for /vol/{volName}/lun1: {lunSerialResponse}")
+                        result[diskGrp['diskGroupName']]['luns'].append(lunSerialResponse['records'][0]['serial_number'])
+                        successfulLuns.append(lunSerialResponse['records'][0]['serial_number'])
 
 log(f"Successfully created and mapped LUNs: {successfulLuns}")
 log(f"Failed to create or map LUNs: {failedLuns}")
 print(json.dumps(result))
 `;
 
-const mountLunsToDisksScript = (diskGroups: UnOptimizedDiskGroups[], fsxId: string, region: string) => `
-${getFsxCredentials}
-${ontapRestApiScript}
+const mountLunsToDisksScript = (diskGroups: UnOptimizedDiskGroups[]) => `
 diskGroups = json.loads('${JSON.stringify(diskGroups)}')
-fsxId = '${fsxId}'
-region = '${region}'
 result = {}
 def escape_to_hex(s, charset=':<>-#$%*+=?@[!]^~/'):
     pattern = r'([{}])'.format(re.escape(charset))
-    return re.sub(pattern, lambda m: '\\x{:02x}'.format(ord(m.group(1))), s)
+    return re.sub(pattern, lambda m: '\\\\x{:02x}'.format(ord(m.group(1))), s)
 
-def resolve_lun(serial, byid='/dev/disk/by-id'):
+def resolve_lun(serial, byid='/dev/disk/by-id', wait=30):
     esc = escape_to_hex(serial)
+    time.sleep(wait)
     # collect candidates that end with the escaped serial
     names = [n for n in os.listdir(byid) if n.endswith(esc)]
     if not names:
@@ -178,7 +184,7 @@ def resolve_lun(serial, byid='/dev/disk/by-id'):
     link = os.path.join(byid, names[0])
     return os.path.realpath(link)
 
-def run(cmd, input_str=None):
+def run_shell(cmd, input_str=None):
     return subprocess.run(
         cmd,
         input=input_str,
@@ -186,6 +192,7 @@ def run(cmd, input_str=None):
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        universal_newlines=True
     )
 
 def is_block_device(path):
@@ -217,19 +224,19 @@ def create_partition_and_format(device="/dev/sdd", timeout=30):
     partition = _partition_path(device, 1)
 
     # fdisk script: new (n), primary (p), partition 1, accept defaults, write (w)
-    fdisk_script = "n\np\n1\n\n\nw\n"
+    fdisk_script = "n\\np\\n1\\n\\n\\nw\\n"
     try:
-        run(["fdisk", device], input_str=fdisk_script)
-        run(["partprobe", device])
-        run(["udevadm", "settle"])
+        run_shell(["fdisk", device], input_str=fdisk_script)
+        run_shell(["partprobe", device])
+        run_shell(["udevadm", "settle"])
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Partitioning failed: {' '.join(e.cmd)}\n{e.stderr}") from e
+        raise RuntimeError(f"Partitioning failed: {' '.join(e.cmd)}\\n{e.stderr}") from e
 
     if not wait_for_device(partition, timeout=timeout):
         raise TimeoutError(f"{partition} did not appear within {timeout}s.")
 
     try:
-        run(["mkfs.ext4", "-F", partition])
+        run_shell(["mkfs.ext4", "-F", partition])
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"mkfs.ext4 failed: {e.stderr}") from e
     if not is_block_device(partition):
@@ -243,12 +250,12 @@ def add_oracle_asm_disk(target, diskname, oracleasm_bin="/usr/sbin/oracleasm"):
         raise FileNotFoundError(f"{oracleasm_bin} not found.")
 
     try:
-        run([oracleasm_bin, "init"])
+        run_shell([oracleasm_bin, "init"])
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"oracleasm init failed: {e.stderr}") from e
 
     try:
-        existing = run([oracleasm_bin, "listdisks"]).stdout.splitlines()
+        existing = run_shell([oracleasm_bin, "listdisks"]).stdout.splitlines()
     except subprocess.CalledProcessError:
         existing = []
 
@@ -256,18 +263,18 @@ def add_oracle_asm_disk(target, diskname, oracleasm_bin="/usr/sbin/oracleasm"):
         return {"device": target, "diskname": diskname, "status": "exists"}
 
     try:
-        run([oracleasm_bin, "createdisk", diskname, target])
+        run_shell([oracleasm_bin, "createdisk", diskname, target])
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"oracleasm createdisk failed: {e.stderr}") from e
 
     try:
-        out = run([oracleasm_bin, "listdisks"]).stdout.splitlines()
+        out = run_shell([oracleasm_bin, "listdisks"]).stdout.splitlines()
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"oracleasm listdisks failed: {e.stderr}") from e
 
     if diskname not in out:
         raise RuntimeError(f"ASM disk {diskname} not visible after creation.")
-    if iscsiSessionError or iscsiSessionResponse['num_records'] == 0:
+
     return {"device": target, "diskname": diskname, "status": "created"}
 
 for diskGrp in diskGroups:
@@ -280,21 +287,17 @@ for diskGrp in diskGroups:
     result.setdefault(diskGrp['diskGroupName'], {})
     result[diskGrp['diskGroupName']]['error'] = ""
     result[diskGrp['diskGroupName']]['disks'] = []
-    iscsiSessionResponse, iscsiSessionError = ontapRestApiRequest(fsxId, region, 'GET', 'private/cli/network/interface?vserver='+str(diskGrpName)+'&data-protocol=iscsi&fields=address')
-    if iscsiSessionError or iscsiSessionResponse['num_records'] == 0:
-        log(f"Error fetching ISCSI session IPs for SVM {diskGrpName}: {iscsiSessionError}")
-        result[diskGrp['diskGroupName']]['error'] += str(iscsiSessionError)
-        continue
+
+    iscsiIp = diskGrp.get('iscsiIp')
+    log(f"Found ISCSI IP for SVM {diskGrpName}: {iscsiIp}")
+    cmd = f"sudo iscsiadm -m discovery -t st -p {iscsiIp}:3260 && sudo iscsiadm -m node -p {iscsiIp}:3260 --login && sudo iscsiadm -m session --rescan"
+    iscsi_result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    if iscsi_result.returncode == 0:
+        log(f"Successfully executed ISCSI commands for SVM {diskGrpName}")
     else:
-        iscsiIp = iscsiSessionResponse['records'][0]['address']
-        cmd = f"sudo iscsiadm -m discovery -t st -p {iscsiIp}:3260 && sudo iscsiadm -m node -p {iscsiIp}:3260 --login && sudo iscsiadm -m session --rescan"
-        iscsi_result = subprocess.run(cmd, shell=True, check=True);  
-        if iscsi_result.returncode == 0:
-            log(f"Successfully executed ISCSI commands for SVM {diskGrpName}")
-        else:
-            log(f"Error executing ISCSI commands for SVM {diskGrpName}")
-            result[diskGrp['diskGroupName']]['error'] += f"Error executing ISCSI commands for SVM {diskGrpName}"
-            continue
+        log(f"Error executing ISCSI commands for SVM {diskGrpName}")
+        result[diskGrp['diskGroupName']]['error'] += f"Error executing ISCSI commands for SVM {diskGrpName}"
+        continue
 
     for lunSerial in lunSerials:
         log(f"Resolving LUN with serial {lunSerial}")
@@ -319,7 +322,7 @@ for diskGrp in diskGroups:
             partition = create_partition_and_format(device)
             log(f"Successfully created partition and formatted {device} as ext4: {partition}")
             log(f"Adding {partition} as ASM disk {diskGrpName}_DISK{len(result[diskGrp['diskGroupName']]['disks']) + 1}")
-            diskName = f"wlmdb_{diskGrpName}_DISK{diskCount}"
+            diskName = f"WLMDB_{diskGrpName}_DISK{diskCount}"
             asmResponse = add_oracle_asm_disk(partition, diskName)
 
             result[diskGrp['diskGroupName']]['disks'].append(diskName)
@@ -331,10 +334,8 @@ for diskGrp in diskGroups:
 print(json.dumps(result))
 `;
 
-const addDiskToDiskGroupsScript = (diskGroups: UnOptimizedDiskGroups[], fsxId: string, region: string) => `
+const addDiskToDiskGroupsScript = (diskGroups: UnOptimizedDiskGroups[]) => `
 diskGroups = json.loads('${JSON.stringify(diskGroups)}')
-fsxId = '${fsxId}'
-region = '${region}'
 result = {}
 for diskGrp in diskGroups:
     diskGroupName = diskGrp['diskGroupName']
@@ -350,7 +351,7 @@ for diskGrp in diskGroups:
             EXIT
         """)
         cmd = ["sqlplus", "-s", "/ as sysasm"]
-        result = subprocess.run(
+        command_result = subprocess.run(
             cmd,
             input=sql_text,                 
             stdout=subprocess.PIPE,
@@ -358,12 +359,12 @@ for diskGrp in diskGroups:
             universal_newlines=True,        
             check=False
         )
-        if result.returncode == 0:
-            log(f"Successfully added {diskName} {diskGrpName}")
+        if command_result.returncode == 0:
+            log(f"Successfully added {diskName} to {diskGroupName}")
             result[diskGrp['diskGroupName']]['addedDisks'].append(diskName)
         else:
-            log(f"Error adding {diskName} to {diskGrpName}")
-            result[diskGrp['diskGroupName']]['error'] += f"Error adding {diskName} to {diskGrpName}"
+            log(f"Error adding {diskName} to {diskGroupName}")
+            result[diskGrp['diskGroupName']]['error'] += f"Error adding {diskName} to {diskGroupName}"
             continue
 `;
 
@@ -371,30 +372,9 @@ for diskGrp in diskGroups:
 // ************ PYTHON TEMPLATES END ************* //
 // *********************************************** //
 
-// const getLunSizes = (lunUUIDs: string[], fsxId: string, region: string) => `
-// ${checkCommandStatus}
-// lunUUIDs=(${lunUUIDs.map(id => `"${id}"`).join(' ')})
-// filesystemid="${fsxId}"
-// region="${region}"
-// ${ontapRestApi}
-// res='{}'
-// for uuid in "\${lunUUIDs[@]}"; do
-//     result=$(ontap_request 'GET' "/storage/luns/$uuid?fields=space")
-//     size=$(echo $result | jq -r '.space.size')
-//     if [[ -n "$size" && "$size" != "null" ]]; then
-//         res=$(jq --arg k "$uuid" --argjson v "$size" '. + {($k): $v}' <<<"$res")
-//     fi
-// done
-// echo $res
-// `;
-
-// const getIscsiInitiator = () => `
-// echo "{ \\"initiator\\": \\"$(awk -F'=' '/InitiatorName/ {print $2}' /etc/iscsi/initiatorname.iscsi)\\" }"
-// `;
-
 const optimizeStorageConfigParamsOracle = (params: OptimizeStorageParams) => `
 #!/bin/bash
-${logFileCheck}
+${logFileCheck(true)}
 
 sudo -i -u oracle bash <<'ORACLE_SHELL'
 ${pythonScriptInit(oracleStorageConfigurationPythonTemplate(params), 'wlmdb-oracle-storage-configuration')}
@@ -408,31 +388,27 @@ const createAndMapLunsForDiskGroups = (
     region: string
 ) => `
 #!/bin/bash
-${logFileCheck}
-${pythonScriptInit(createOntapVols(unOptimizedDiskGroups, lunUuids, fsxId, region), 'wlmdb-oracle-storage-layout-fix')}
+${logFileCheck()}
+${pythonScriptInit(
+    createOntapVols(unOptimizedDiskGroups, lunUuids, fsxId, region),
+    'wlmdb-oracle-storage-layout-fix-create-and-map-luns'
+)}
 `;
 
-const mountLunsToDisks = (diskGroups: UnOptimizedDiskGroups[], fsxId: string, region: string) => `
+const mountLunsToDisks = (diskGroups: UnOptimizedDiskGroups[]) => `
 #!/bin/bash
-${logFileCheck}
-${pythonScriptInit(mountLunsToDisksScript(diskGroups, fsxId, region), 'wlmdb-oracle-storage-layout-fix')}
+${logFileCheck()}
+${pythonScriptInit(mountLunsToDisksScript(diskGroups), 'wlmdb-oracle-storage-layout-fix-mount-luns')}
 `;
 
-const addDiskToDiskGroups = (diskGroups: UnOptimizedDiskGroups[], fsxId: string, region: string) => `
+const addDiskToDiskGroups = (diskGroups: UnOptimizedDiskGroups[]) => `
 #!/bin/bash
-${logFileCheck}
+${logFileCheck(true, 'grid')}
 sudo -i -u grid bash <<'ORACLE_SHELL'
 export PATH=$PATH:$ORACLE_HOME/bin
 export ORACLE_SID=+ASM
-${pythonScriptInit(addDiskToDiskGroupsScript(diskGroups, fsxId, region), 'wlmdb-oracle-storage-layout-fix')}
+${pythonScriptInit(addDiskToDiskGroupsScript(diskGroups), 'wlmdb-oracle-storage-layout-fix-add-disks-to-diskgroups')}
 ORACLE_SHELL
 `;
 
-export {
-    optimizeStorageConfigParamsOracle,
-    // getLunSizes,
-    // getIscsiInitiator,
-    createAndMapLunsForDiskGroups,
-    mountLunsToDisks,
-    addDiskToDiskGroups
-};
+export { optimizeStorageConfigParamsOracle, createAndMapLunsForDiskGroups, mountLunsToDisks, addDiskToDiskGroups };

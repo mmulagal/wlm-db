@@ -1446,7 +1446,7 @@ def ontapRestApiRequest(fileSystemId, region, method, url, body=None):
             try:
                 return json.loads(raw.decode("utf-8")), None
             except Exception as je:
-                return None, f"JSON parse error: {je!s}"
+                return None, f"JSON parse error: {je}"
         else:
             return None, raw.decode("utf-8", errors="replace")
     except Exception as e:
@@ -1483,11 +1483,11 @@ ${pythonTemplate}
 PYTHON
 `;
 
-const logFileCheck = `
+const logFileCheck = (changeOwner = false, user = 'oracle', group = 'oinstall') => `
 # Ensure log directory exists
 LOG_DIR="/var/log/netapp"
 sudo mkdir -p "$LOG_DIR"
-sudo chown oracle:oinstall "$LOG_DIR"
+${changeOwner ? `sudo chown ${user}:${group} "$LOG_DIR"` : ''}
 `;
 
 const oracleStorageInfoFromOntapPythonTemplate = (params: ontapRequestParams) => `
@@ -1545,7 +1545,7 @@ print(json.dumps(final_results))
 
 const oracleStorageInfoFromOntap = (params: ontapRequestParams) => `
 #!/bin/bash
-${logFileCheck}
+${logFileCheck()}
 ${pythonScriptInit(oracleStorageInfoFromOntapPythonTemplate(params), 'wlmdb-oracle-storage-information')}
 `;
 

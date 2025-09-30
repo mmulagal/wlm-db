@@ -21,6 +21,7 @@ interface UnOptimizedDiskGroups {
     lunsToAdd: number;
     lunSerials?: string[];
     asmDisks?: string[];
+    iscsiIp?: string;
 }
 
 function getMatchingAssessmentStatus(finding: string) {

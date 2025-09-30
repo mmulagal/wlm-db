@@ -5,7 +5,8 @@ import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
     AssessmentTriggeredBy,
-    OptimizeStorageParams
+    OptimizeStorageParams,
+    OptimizeStorageRequestParams
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
 import GOLDEN_CONFIG from './golden-config';
@@ -30,6 +31,7 @@ import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../.
 import { mapVolumeTypesToIdName } from './storage-assessment-operations';
 import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
 import { UnOptimizedDiskGroups } from '../assessment-utils';
+import { CUSTOM_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -124,7 +126,7 @@ async function handleDiskgroupOptimization(
                 createVolsComment,
                 accountId,
                 undefined,
-                undefined,
+                CUSTOM_SSM_EXECUTION_TIMEOUT,
                 undefined,
                 SSM_RUN_SHELL_SCRIPT_DOC,
                 SSM_RUN_SHELL_SCRIPT_DOC_VERSION
@@ -140,6 +142,7 @@ async function handleDiskgroupOptimization(
                             const dg = unOptimizedDiskGroups.find(d => d.diskGroupName === dgName);
                             if (dg) {
                                 dg.lunSerials = parsedResponse[dgName].luns;
+                                dg.iscsiIp = parsedResponse[dgName].iscsi_ip;
                             }
                         }
                     });
@@ -148,7 +151,7 @@ async function handleDiskgroupOptimization(
                 }
             }
             logger.info('Mounting LUNs to Oracle ASM disks');
-            const addToDiskgroupCommand = mountLunsToDisks(unOptimizedDiskGroups, fsxId, region);
+            const addToDiskgroupCommand = mountLunsToDisks(unOptimizedDiskGroups);
             const addToDiskgroupComment = 'Mount LUNs to Oracle ASM disks';
             const addDiskResponse = await callSsmExecution(
                 credentialsId,
@@ -158,7 +161,7 @@ async function handleDiskgroupOptimization(
                 addToDiskgroupComment,
                 accountId,
                 undefined,
-                undefined,
+                CUSTOM_SSM_EXECUTION_TIMEOUT,
                 undefined,
                 SSM_RUN_SHELL_SCRIPT_DOC,
                 SSM_RUN_SHELL_SCRIPT_DOC_VERSION
@@ -182,7 +185,7 @@ async function handleDiskgroupOptimization(
                 }
             }
             logger.info('Adding disks to Oracle ASM diskgroups');
-            const attachToDiskgroupCommand = addDiskToDiskGroups(unOptimizedDiskGroups, fsxId, region);
+            const attachToDiskgroupCommand = addDiskToDiskGroups(unOptimizedDiskGroups);
             const attachToDiskgroupComment = 'Add disks to Oracle ASM diskgroups';
             const attachDiskResponse = await callSsmExecution(
                 credentialsId,
@@ -192,7 +195,7 @@ async function handleDiskgroupOptimization(
                 attachToDiskgroupComment,
                 accountId,
                 undefined,
-                undefined,
+                CUSTOM_SSM_EXECUTION_TIMEOUT,
                 undefined,
                 SSM_RUN_SHELL_SCRIPT_DOC,
                 SSM_RUN_SHELL_SCRIPT_DOC_VERSION
@@ -226,6 +229,95 @@ async function handleDiskgroupOptimization(
     }
 }
 
+async function triggerAssessmentAndStartOptimization(
+    storageLayoutTargets: OptimizeStorageRequestParams[],
+    managedInstance: DatabaseInstancesIncludingResource,
+    parentJobId: string
+) {
+    logger.info('Starting optimization operation for managed instance', {
+        managedInstance,
+        parentJobId
+    });
+
+    const {
+        region,
+        database_instance_id: databaseInstanceId,
+        account_id: accountId,
+        credentials_id: credentialsId,
+        resource_id: resourceId
+    } = managedInstance;
+
+    let parentJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
+    let parentJobError = '';
+    try {
+        await triggerOracleAssessment(
+            managedInstance,
+            parentJobId,
+            [AssessmentCategoriesOracle.STORAGE],
+            true,
+            AssessmentTriggeredBy.SYSTEM
+        );
+
+        const driftAssessment = await fetchOracleDriftAssessment(
+            accountId,
+            credentialsId,
+            region,
+            resourceId,
+            databaseInstanceId,
+            AssessmentCategoriesOracle.STORAGE,
+            managedInstance
+        );
+        if (!driftAssessment?.storage || !(driftAssessment.storage as StorageParameterDriftResponseType).layout) {
+            throw Error('No drift assessment found after triggering assessment for storage optimization');
+        }
+        const lunLayoutDrift = ((driftAssessment?.storage as StorageParameterDriftResponseType).layout ?? []).filter(
+            target => typeof target.name === 'string' && STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS.includes(target.name)
+        );
+
+        const unOptimizedDiskGroups: UnOptimizedDiskGroups[] = [];
+        lunLayoutDrift.forEach(lunDrift => {
+            const targetConfig = storageLayoutTargets.find(target => target.configurationName === lunDrift.name);
+            if (targetConfig) {
+                targetConfig.objectsToOptimize.forEach(diskGroupName => {
+                    const violationDetails = (
+                        lunDrift as OracleGenericParameterDriftResponseType
+                    ).violationDetails?.find(v => v.objectName === diskGroupName);
+                    if (violationDetails) {
+                        const lunsToAdd = Number(violationDetails?.recommended) - Number(violationDetails?.value);
+                        if (lunsToAdd > 0) {
+                            unOptimizedDiskGroups.push({ diskGroupName, lunsToAdd });
+                        }
+                    }
+                });
+            }
+        });
+
+        if (unOptimizedDiskGroups.length > 0) {
+            await handleDiskgroupOptimization(managedInstance, unOptimizedDiskGroups, parentJobId);
+            parentJobStatus = JOBSTATUS.COMPLETED;
+        }
+    } catch (err) {
+        parentJobStatus = JOBSTATUS.WARNING;
+        parentJobError = err as string;
+        logger.error('Failed optimizing Oracle ASM layout', err);
+    } finally {
+        if (parentJobStatus === JOBSTATUS.COMPLETED && managedInstance) {
+            triggerOracleAssessment(
+                managedInstance,
+                parentJobId,
+                [AssessmentCategoriesOracle.STORAGE],
+                true,
+                AssessmentTriggeredBy.SYSTEM
+            );
+        }
+        updateJobDetails(accountId, parentJobId, {
+            status: parentJobStatus,
+            endTime: Date.now(),
+            error: parentJobError
+        });
+    }
+}
+
 async function optimizeOracleStorageLayout(storageOptimizeParams: OptimizeStorageParams) {
     const { accountId, credentialsId, region, databaseHostId, databaseInstanceId, optimizationTargets } =
         storageOptimizeParams;
@@ -237,7 +329,7 @@ async function optimizeOracleStorageLayout(storageOptimizeParams: OptimizeStorag
         databaseInstanceId
     });
 
-    let parentJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
+    const parentJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
     let parentJobError;
 
     const jobName = `Fix Oracle Storage Layout for DB Instance ${databaseInstanceId}`;
@@ -265,77 +357,24 @@ async function optimizeOracleStorageLayout(storageOptimizeParams: OptimizeStorag
                 region
             )) as DatabaseInstancesIncludingResource;
             if (!managedInstance) {
-                throw Error(`No database instance found for id ${databaseInstanceId}`);
+                return createError(404, `No database instance found for id ${databaseInstanceId}`);
             }
-            await triggerOracleAssessment(
-                managedInstance,
-                parentJobId,
-                [AssessmentCategoriesOracle.STORAGE],
-                true,
-                AssessmentTriggeredBy.SYSTEM
-            );
-            const driftAssessment = await fetchOracleDriftAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId,
-                AssessmentCategoriesOracle.STORAGE,
-                managedInstance
-            );
-            if (!driftAssessment?.storage || !(driftAssessment.storage as StorageParameterDriftResponseType).layout) {
-                throw Error('No drift assessment found after triggering assessment for storage optimization');
-            }
-            const lunLayoutDrift = (
-                (driftAssessment?.storage as StorageParameterDriftResponseType).layout ?? []
-            ).filter(
-                target => typeof target.name === 'string' && STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS.includes(target.name)
-            );
-
-            const unOptimizedDiskGroups: UnOptimizedDiskGroups[] = [];
-            lunLayoutDrift.forEach(lunDrift => {
-                const targetConfig = storageLayoutTargets.find(target => target.configurationName === lunDrift.name);
-                if (targetConfig) {
-                    targetConfig.objectsToOptimize.forEach(diskGroupName => {
-                        const violationDetails = (
-                            lunDrift as OracleGenericParameterDriftResponseType
-                        ).violationDetails?.find(v => v.objectName === diskGroupName);
-                        if (violationDetails) {
-                            const lunsToAdd = Number(violationDetails?.recommended) - Number(violationDetails?.value);
-                            if (lunsToAdd > 0) {
-                                unOptimizedDiskGroups.push({ diskGroupName, lunsToAdd });
-                            }
-                        }
-                    });
-                }
-            });
-            if (unOptimizedDiskGroups.length > 0) {
-                await handleDiskgroupOptimization(managedInstance, unOptimizedDiskGroups, parentJobId);
-            }
-            parentJobStatus = JOBSTATUS.COMPLETED;
+            triggerAssessmentAndStartOptimization(storageLayoutTargets, managedInstance, parentJobId);
         } else {
             parentJobError = 'No valid storage layout optimization configurations found for Oracle database instance.';
-            parentJobStatus = JOBSTATUS.WARNING;
+            logger.warn(parentJobError);
+
+            await updateJobDetails(accountId, parentJobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now(),
+                error: parentJobError
+            });
+            return createError(400, parentJobError);
         }
     } catch (error) {
         const errMsg = `Error optimizing Oracle storage layout: ${(error as Error).message}`;
         logger.error(errMsg);
         throw createError(500, errMsg);
-    } finally {
-        if (parentJobStatus === JOBSTATUS.COMPLETED && managedInstance) {
-            triggerOracleAssessment(
-                managedInstance,
-                parentJobId,
-                [AssessmentCategoriesOracle.STORAGE],
-                true,
-                AssessmentTriggeredBy.SYSTEM
-            );
-        }
-        updateJobDetails(accountId, parentJobId, {
-            status: parentJobStatus,
-            endTime: Date.now(),
-            error: parentJobError
-        });
     }
     return parentJobId;
 }
