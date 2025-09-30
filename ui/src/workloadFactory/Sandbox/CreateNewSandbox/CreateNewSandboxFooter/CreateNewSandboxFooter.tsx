@@ -32,8 +32,16 @@ const CreateNewSandboxFooter = () => {
         dispatch(resetSourceAndTarget());
         if (isWorkloadFactoryStatus) {
             navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: { pathname: '../../databases/sandboxes', replace: true }
+            });
         } else {
             navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES);
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: { pathname: '../../fsxdb/sandboxes', replace: true }
+            });
         }
     };
 
@@ -92,8 +100,16 @@ const CreateNewSandboxFooter = () => {
                     dispatch(resetSourceAndTarget());
                     if (isWorkloadFactoryStatus) {
                         navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: { pathname: '../../databases/sandboxes', replace: true }
+                        });
                     } else {
                         navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES);
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: { pathname: '../../fsxdb/sandboxes', replace: true }
+                        });
                     }
                 }
             } catch (error) {
