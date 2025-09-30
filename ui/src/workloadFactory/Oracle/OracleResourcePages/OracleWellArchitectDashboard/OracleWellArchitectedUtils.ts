@@ -107,7 +107,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     redologs_placement: {
         id: 'redologs-placement',
         configName: ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
-        title: 'Redo Logs Placement Recommendation',
+        title: 'Redo logs placement recommendation',
         resourceImpact: 'Impacted volumes',
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
@@ -118,7 +118,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     templogs_placement: {
         id: 'templogs-placement',
         configName: ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
-        title: 'Temp Placement Recommendation',
+        title: 'Temp placement recommendation',
         resourceImpact: 'Impacted volumes',
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
@@ -129,7 +129,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     archive_placement: {
         id: 'archive-placement',
         configName: ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
-        title: 'Archive Placement Recommendation',
+        title: 'Archive placement recommendation',
         resourceImpact: 'Impacted volumes',
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
@@ -140,7 +140,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     datafiles_placement: {
         id: 'datafiles-placement',
         configName: ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
-        title: 'Data Files Placement Recommendation',
+        title: 'Data files placement recommendation',
         resourceImpact: 'Impacted volumes',
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
@@ -150,7 +150,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     controlfiles_placement: {
         id: 'controlfiles-placement',
         configName: ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
-        title: 'Control Files Placement Recommendation',
+        title: 'Control files placement recommendation',
         resourceImpact: 'Impacted volumes',
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
@@ -160,7 +160,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     oracle_binary_placement: {
         id: 'oracle-binary-placement',
         configName: ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
-        title: 'Oracle Binary Placement Recommendation',
+        title: 'Oracle binary placement recommendation',
         resourceImpact: 'Impacted volumes',
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
@@ -170,7 +170,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     data_dg_lun_layout: {
         id: 'data-dg-lun-layout',
         configName: ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
-        title: 'ASM Data Disk Group LUNs layout recommendation',
+        title: 'ASM data disk group LUNs layout recommendation',
         resourceImpact: 'Impacted disk groups',
         resourceType: 'Disk group',
         tags: ['Performance efficiency', 'Operational excellence'],
@@ -180,7 +180,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     log_dg_lun_layout: {
         id: 'redolog-dg-lun-layout',
         configName: ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
-        title: 'ASM Logs Disk Group LUNs layout recommendation',
+        title: 'ASM logs disk group LUNs layout recommendation',
         resourceImpact: 'Impacted disk groups',
         resourceType: 'Disk group',
         tags: ['Performance efficiency', 'Operational excellence'],
@@ -190,7 +190,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     fra_dg_lun_layout: {
         id: 'fra-dg-lun-layout',
         configName: ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
-        title: 'ASM FRA Disk Group LUNs layout recommendation',
+        title: 'ASM FRA disk group LUNs layout recommendation',
         resourceImpact: 'Impacted disk groups',
         resourceType: 'Disk group',
         tags: ['Performance efficiency', 'Operational excellence'],
@@ -200,7 +200,7 @@ const cardConfigurations: Record<string, CardConfig> = {
     archivelog_dg_lun_layout: {
         id: 'archivelog-dg-lun-layout',
         configName: ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
-        title: 'ASM Archive Disk Group LUNs layout recommendation',
+        title: 'ASM archive disk group LUNs layout recommendation',
         resourceImpact: 'Impacted disk groups',
         resourceType: 'Disk group',
         tags: ['Performance efficiency', 'Operational excellence'],

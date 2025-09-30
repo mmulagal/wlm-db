@@ -172,6 +172,9 @@ const DialogContent = ({
                     return 'Install host utilities';
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
                     return [
+                        'user_friendly_names: yes',
+                        'find_multipaths: yes',
+                        'polling_interval: 5',
                         'path_grouping_policy: group_by_prio',
                         'path_selector: service-time 0',
                         'prio: ontap',
@@ -186,10 +189,7 @@ const DialogContent = ({
                         'flush_on_last_del: yes',
                         'retain_attached_hw_handler: yes',
                         'path_checker: tur',
-                        'polling_interval: 5',
-                        'max_sectors_kb: 4096',
-                        'find_multipaths: true',
-                        'polling_interval: 5'
+                        'max_sectors_kb: 4096'
                     ];
                 case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
                     return 'Transparent Hugepages disabled (enabled=never, defrag=never)';
