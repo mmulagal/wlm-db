@@ -1,5 +1,5 @@
 import { TFunction } from 'i18next';
-import { DBType, DETECT_HOST_VAR } from '../../../../../utils/consts';
+import { DBType, DETECT_HOST_VAR, MANAGE_STATES } from '../../../../../utils/consts';
 import { ReactComponent as InstanceName } from '../../../../../assets/instance-name.svg';
 import { ReactComponent as Database } from '../../../../../assets/Database.svg';
 
@@ -45,4 +45,11 @@ export const authenticationFieldsTexts = {
         usernameLabel: 'databases.register-flow.detect-oracle-asm-username',
         passwordLabel: 'databases.register-flow.detect-oracle-asm-password'
     }
+};
+
+export const readinessString = (cellData: any, t: TFunction) => {
+    if (cellData === MANAGE_STATES.READY) {
+        return t('databases.log-analyzer.readiness-status-complete');
+    }
+    return cellData;
 };

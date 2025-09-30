@@ -7,7 +7,7 @@ import {
     TooltipInfo,
     useDialog
 } from '@netapp/design-system';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector } from '../../store/storeHooks';
@@ -64,15 +64,21 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const { selectedOptimizeConfig } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    const { password, confirmPassword } = useAppSelector(state => {
+
+    // Memoize the password object to prevent unnecessary re-renders
+    const fsxAdminPasswords = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
+    const sqlServerPasswords = useAppSelector(state => state.workloadFactoryResource.sqlServerPasswords);
+
+    const { password, confirmPassword } = useMemo(() => {
         if (dialogFrom === FROM_DIALOG.FSXADMIN) {
-            return state.workloadFactoryResource.fsxAdminPasswords;
+            return fsxAdminPasswords;
         }
         if (dialogFrom === FROM_DIALOG.SQLSERVER) {
-            return state.workloadFactoryResource.sqlServerPasswords;
+            return sqlServerPasswords;
         }
         return { password: '', confirmPassword: '' };
-    });
+    }, [dialogFrom, fsxAdminPasswords, sqlServerPasswords]);
+
     const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
     const { userName: exploreSavingsUserName, password: exploreSavingsPassword } = useAppSelector(

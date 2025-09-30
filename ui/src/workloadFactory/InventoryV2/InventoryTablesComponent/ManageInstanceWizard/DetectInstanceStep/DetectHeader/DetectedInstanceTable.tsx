@@ -9,6 +9,7 @@ import { useAppSelector } from '../../../../../../store/storeHooks';
 import DotComponent from '../../../../../../common/DotComponent/DotComponent';
 import { DBType, MANAGE_STATES } from '../../../../../../utils/consts';
 import TooltipCard from '../../../../../../common/TooltipCard/TooltipCard';
+import { readinessString } from '../DetectInstanceHelper';
 
 interface DetectedInstanceTableProps {
     engineType: string;
@@ -58,7 +59,7 @@ const DetectedInstanceTable = ({ engineType }: DetectedInstanceTableProps) => {
             renderCell: (cellData: any, rowData: any) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {cellData === MANAGE_STATES.READY ? <Success /> : <Cross />}
-                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                    <DsTypography variant="Regular_14">{readinessString(cellData, t)}</DsTypography>
                 </div>
             )
         }
