@@ -1640,6 +1640,9 @@ export const getDetectOptionForInstance = (
         detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
     } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
         detectOption = DETECT_HOST_VAR.SHOW;
+    } else if (!hasStorageTypes) {
+        detectOption = DETECT_HOST_VAR.DISABLE;
+        detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
     }
     return {
         detectOption,
