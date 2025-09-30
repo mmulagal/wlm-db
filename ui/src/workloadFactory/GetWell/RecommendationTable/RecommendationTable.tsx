@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
@@ -87,8 +87,14 @@ const RecommendationTable = ({
     const { setDialog, closeDialog } = useDialog();
     const [dismissAction, setDismissAction] = useState(false);
     const [showDismissButton, setShowDismissButton] = useState(false);
-    const [selectedRowData, setSelectedRowData] = useState<any>(null);
+    const selectedRowDataRef = useRef<any>(null);
     const [activeRowId, setActiveRowId] = useState<string | null>(null);
+
+    // Helper function to update ref
+    const updateSelectedRowData = useCallback((data: any) => {
+        selectedRowDataRef.current = data;
+    }, []);
+
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -383,7 +389,7 @@ const RecommendationTable = ({
         // Hide dismiss button when mouse leaves the card
         if (showDismissedConfigurations !== undefined && !showDismissedConfigurations) {
             setActiveRowId(null);
-            setSelectedRowData(null);
+            updateSelectedRowData(null);
             setShowDismissButton(false);
         }
     }, [showDismissedConfigurations]);
@@ -393,7 +399,7 @@ const RecommendationTable = ({
             // Show dismiss button when mouse enters the card
             if (showDismissedConfigurations !== undefined || !showDismissedConfigurations) {
                 setActiveRowId(rowData?.id);
-                setSelectedRowData(rowData);
+                updateSelectedRowData(rowData);
                 setShowDismissButton(true);
             }
         },
@@ -438,11 +444,11 @@ const RecommendationTable = ({
 
     // Function For Dismiss
     const handleSingleAction = (action: string) => {
-        if (!selectedRowData) return;
+        if (!selectedRowDataRef.current) return;
 
         handleSingleActionHelper(
             action,
-            selectedRowData,
+            selectedRowDataRef.current,
             selectedResourceId || hostId,
             selectedDatabaseInstance || instanceId,
             selectedGwInstanceCredId || credIdFromJM,
@@ -459,12 +465,13 @@ const RecommendationTable = ({
     };
 
     const handleDismissResponse = (res: any, action: string) => {
-        if (!selectedRowData) return;
+        const currentRowData = selectedRowDataRef.current;
+        if (!currentRowData) return;
 
         handleDismissResponseHelper(
             res,
             action,
-            selectedRowData,
+            currentRowData,
             selectedGwInstanceCredId || credIdFromJM,
             selectedResourceId || hostId,
             selectedDatabaseInstance || instanceId,
@@ -484,13 +491,14 @@ const RecommendationTable = ({
     };
 
     const handleDismissButtonClick = () => {
-        if (!selectedRowData) return;
+        const currentRowData = selectedRowDataRef.current;
+        if (!currentRowData) return;
 
         setDialog(
             <DismissDialog
                 type="single"
                 isSubConfiguration
-                subConfigurationName={selectedRowData?.name}
+                subConfigurationName={currentRowData?.name}
                 callback={(selectedAction: string) => {
                     handleSingleAction(selectedAction);
                 }}
@@ -500,12 +508,13 @@ const RecommendationTable = ({
     };
 
     const dismissDisableButton = () => {
-        if (!selectedRowData) return true;
+        const currentRowData = selectedRowDataRef.current;
+        if (!currentRowData) return true;
 
         // Disable button if configuration is already dismissed or postponed
         return (
-            selectedRowData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-            selectedRowData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED
+            currentRowData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            currentRowData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED
         );
     };
 
@@ -869,7 +878,7 @@ const RecommendationTable = ({
                                     onClick={(e: any) => {
                                         e.stopPropagation();
                                         e.preventDefault();
-                                        setSelectedRowData(rowData);
+                                        updateSelectedRowData(rowData);
                                         handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
                                     }}
                                 >
@@ -878,7 +887,7 @@ const RecommendationTable = ({
                                         onClick={(e: any) => {
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            setSelectedRowData(rowData);
+                                            updateSelectedRowData(rowData);
                                             handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
                                         }}
                                         isDisabled={isLoading || dismissAction}
