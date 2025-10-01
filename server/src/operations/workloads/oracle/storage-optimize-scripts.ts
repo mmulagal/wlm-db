@@ -173,7 +173,7 @@ def escape_to_hex(s, charset=':<>-#$%*+=?@[!]^~/'):
     pattern = r'([{}])'.format(re.escape(charset))
     return re.sub(pattern, lambda m: '\\\\x{:02x}'.format(ord(m.group(1))), s)
 
-def resolve_lun(serial, byid='/dev/disk/by-id', wait=60):
+def resolve_lun(serial, byid='/dev/disk/by-id', wait=10):
     esc = escape_to_hex(serial)
     time.sleep(wait)
     # collect candidates that end with the escaped serial
@@ -290,6 +290,7 @@ for diskGrp in diskGroups:
 
     iscsiIp = diskGrp.get('iscsiIp')
     log(f"Found ISCSI IP for SVM {diskGrpName}: {iscsiIp}")
+
     cmd = f"sudo iscsiadm -m discovery -t st -p {iscsiIp}:3260 && sudo iscsiadm -m node -p {iscsiIp}:3260 --login && sudo iscsiadm -m session --rescan"
     iscsi_result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if iscsi_result.returncode == 0:
@@ -299,14 +300,37 @@ for diskGrp in diskGroups:
         result[diskGrp['diskGroupName']]['error'] += f"Error executing ISCSI commands for SVM {diskGrpName}"
         continue
 
+    # Resolve LUNs with retry mechanism (3 attempts with rescan)
     for lunSerial in lunSerials:
         log(f"Resolving LUN with serial {lunSerial}")
-        lunPath = resolve_lun(lunSerial)
+        lunPath = None
+        attempts = 0
+        max_attempts = 3
+        
+        while attempts < max_attempts:
+            attempts += 1
+            log(f"Attempt {attempts} to resolve LUN {lunSerial}")
+            
+            lunPath = resolve_lun(lunSerial)
+            if lunPath:
+                log(f"Successfully resolved LUN {lunSerial} to path {lunPath} on attempt {attempts}")
+                break
+            
+            log(f"Could not resolve LUN with serial {lunSerial} on attempt {attempts}")
+            
+            # If not the last attempt, rescan and wait
+            if attempts < max_attempts:
+                log(f"Rescanning ISCSI sessions before attempt {attempts + 1}")
+                rescan_cmd = "sudo iscsiadm -m session --rescan"
+                subprocess.run(rescan_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                log(f"Waiting 30 seconds before next attempt...")
+                time.sleep(30)
+        
         if not lunPath:
-            log(f"Could not resolve LUN with serial {lunSerial}")
-            result[diskGrp['diskGroupName']]['error'] += f"Could not resolve LUN with serial {lunSerial}"
+            log(f"Could not resolve LUN with serial {lunSerial} after {max_attempts} attempts")
+            result[diskGrp['diskGroupName']]['error'] += f"Could not resolve LUN with serial {lunSerial} after {max_attempts} attempts"
             continue
-        log(f"Resolved LUN {lunSerial} to path {lunPath}")
+        
         targetDevices.append(lunPath)
 
     if len(targetDevices) != len(lunSerials):  
