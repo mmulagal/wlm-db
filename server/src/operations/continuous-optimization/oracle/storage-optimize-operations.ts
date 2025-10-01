@@ -254,7 +254,7 @@ async function triggerAssessmentAndStartOptimization(
             managedInstance,
             parentJobId,
             [AssessmentCategoriesOracle.STORAGE],
-            true,
+            false,
             AssessmentTriggeredBy.SYSTEM
         );
 
@@ -295,6 +295,9 @@ async function triggerAssessmentAndStartOptimization(
         if (unOptimizedDiskGroups.length > 0) {
             await handleDiskgroupOptimization(managedInstance, unOptimizedDiskGroups, parentJobId);
             parentJobStatus = JOBSTATUS.COMPLETED;
+        } else {
+            parentJobStatus = JOBSTATUS.WARNING;
+            parentJobError = 'No unoptimized ASM diskgroups matched the requested optimization targets.';
         }
     } catch (err) {
         parentJobStatus = JOBSTATUS.WARNING;
