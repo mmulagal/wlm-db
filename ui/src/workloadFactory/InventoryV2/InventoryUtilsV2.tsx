@@ -453,39 +453,41 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 (per: StatusObjInterface) => per?.name?.toLowerCase() === perRow?.instanceName?.toLowerCase()
             );
 
-            let authFields = {};
+            let authAndDetectFields = {};
             if (row?.hostType === DBType.ORACLE) {
                 const oracleAuth = statusObj?.[0]?.oracleServerAuthentication;
                 const defaultAuth = statusObj?.[0]?.isDefaultAuthentication;
                 const isThisInstanceManaged = isManagedRow?.[0]?.isManaged;
 
-                authFields = {
+                authAndDetectFields = {
                     oracleServerAuthentication: oracleAuth,
                     isDefaultAuthentication: defaultAuth,
                     isInstanceStorageAsmManaged: statusObj?.[0]?.isInstanceStorageAsmManaged,
-                    asmAuthentication: statusObj?.[0]?.asmAuthentication
+                    asmAuthentication: statusObj?.[0]?.asmAuthentication,
+                    detectOption: statusObj?.[0]?.detectOption,
+                    detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg
                 };
 
                 // Only apply defaults for Oracle instances that are truly missing discovery data
                 if (row?.hostType === DBType.ORACLE && oracleAuth === undefined && defaultAuth === undefined) {
                     if (isThisInstanceManaged) {
                         // Managed instances don't have discovery status by design - assume authenticated
-                        authFields = {
-                            ...authFields,
+                        authAndDetectFields = {
+                            ...authAndDetectFields,
                             oracleServerAuthentication: true,
                             isDefaultAuthentication: true
                         };
                     } else {
                         // Unmanaged instances should have discovery data, but if missing, be conservative
-                        authFields = {
-                            ...authFields,
+                        authAndDetectFields = {
+                            ...authAndDetectFields,
                             oracleServerAuthentication: false,
                             isDefaultAuthentication: false
                         };
                     }
                 }
             } else {
-                authFields = {
+                authAndDetectFields = {
                     windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
                     sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
                     windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
@@ -502,7 +504,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
                 isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
                 fsxId: statusObj?.[0]?.fsxId,
-                ...authFields
+                ...authAndDetectFields
             };
         });
     }
