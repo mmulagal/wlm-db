@@ -169,13 +169,12 @@ print(json.dumps(result))
 const mountLunsToDisksScript = (diskGroups: UnOptimizedDiskGroups[]) => `
 diskGroups = json.loads('${JSON.stringify(diskGroups)}')
 result = {}
-def escape_to_hex(s, charset=':<>-#$%*+=?@[!]^~/'):
+def escape_to_hex(s, charset=':<>#$%*+=?@[!]^~/'):
     pattern = r'([{}])'.format(re.escape(charset))
     return re.sub(pattern, lambda m: '\\\\x{:02x}'.format(ord(m.group(1))), s)
 
-def resolve_lun(serial, byid='/dev/disk/by-id', wait=10):
+def resolve_lun(serial, byid='/dev/disk/by-id'):
     esc = escape_to_hex(serial)
-    time.sleep(wait)
     # collect candidates that end with the escaped serial
     names = [n for n in os.listdir(byid) if n.endswith(esc)]
     if not names:
@@ -188,7 +187,6 @@ def run_shell(cmd, input_str=None):
     return subprocess.run(
         cmd,
         input=input_str,
-        text=True,
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -305,7 +303,7 @@ for diskGrp in diskGroups:
         log(f"Resolving LUN with serial {lunSerial}")
         lunPath = None
         attempts = 0
-        max_attempts = 3
+        max_attempts = 2
         
         while attempts < max_attempts:
             attempts += 1
@@ -323,8 +321,8 @@ for diskGrp in diskGroups:
                 log(f"Rescanning ISCSI sessions before attempt {attempts + 1}")
                 rescan_cmd = "sudo iscsiadm -m session --rescan"
                 subprocess.run(rescan_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-                log(f"Waiting 30 seconds before next attempt...")
-                time.sleep(30)
+                log(f"Waiting 10 seconds before next attempt...")
+                time.sleep(10)
         
         if not lunPath:
             log(f"Could not resolve LUN with serial {lunSerial} after {max_attempts} attempts")
