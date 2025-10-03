@@ -219,7 +219,7 @@ async function handleDiskgroupOptimization(
         jobStatus = JOBSTATUS.FAILED;
         jobError = `Error fixing Oracle Diskgroup: ${(error as Error).message}`;
         logger.error(jobError);
-        throw createError(jobError);
+        throw error;
     } finally {
         updateJobDetails(accountId, jobId, {
             status: jobStatus,
@@ -301,7 +301,7 @@ async function triggerAssessmentAndStartOptimization(
         }
     } catch (err) {
         parentJobStatus = JOBSTATUS.WARNING;
-        parentJobError = err as string;
+        parentJobError = (err as Error).message;
         logger.error('Failed optimizing Oracle ASM layout', err);
     } finally {
         if (parentJobStatus === JOBSTATUS.COMPLETED && managedInstance) {
