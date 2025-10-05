@@ -358,7 +358,10 @@ print(json.dumps(result))
 
 const addDiskToDiskGroupsScript = (diskGroups: UnOptimizedDiskGroups[]) => `
 diskGroups = json.loads('${JSON.stringify(diskGroups)}')
+oracle_home = os.environ.get("ORACLE_HOME")
+asmca_path = os.path.join(oracle_home, "bin", "asmca")
 result = {}
+asmca_path = shutil.which("asmca") or asmca_path
 for diskGrp in diskGroups:
     diskGroupName = diskGrp['diskGroupName']
     asmDisks = diskGrp.get('asmDisks', [])
@@ -366,16 +369,9 @@ for diskGrp in diskGroups:
     result[diskGrp['diskGroupName']]['error'] = ""
     result[diskGrp['diskGroupName']]['addedDisks'] = []
     for diskName in asmDisks:
-        sql_text = textwrap.dedent(f"""
-            SET HEADING OFF
-            SET FEEDBACK OFF
-            ALTER DISKGROUP {diskGroupName} ADD DISK '{diskName}';
-            EXIT
-        """)
-        cmd = ["sqlplus", "-s", "/ as sysasm"]
+        cmd = [asmca_path, "-silent", "-addDisk", "-diskGroupName", diskGroupName, "-diskList", f"ORCL:{diskName}"]
         command_result = subprocess.run(
             cmd,
-            input=sql_text,                 
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,        
