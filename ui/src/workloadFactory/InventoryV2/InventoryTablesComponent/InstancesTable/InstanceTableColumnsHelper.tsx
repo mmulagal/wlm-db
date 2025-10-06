@@ -49,7 +49,7 @@ export const resourceScreenNavigation = (rowData: any, dispatch: any, engineType
             setFSXId({
                 fsxId: rowData?.fsxId,
                 ec2InstanceId: rowData?.ec2InstanceId,
-                isInstanceStorageAsmManaged: rowData?.hostRow?.isInstanceStorageAsmManaged
+                isInstanceStorageAsmManaged: rowData?.isInstanceStorageAsmManaged
             })
         );
     } else if (engineType === DBType.MSSQL) {

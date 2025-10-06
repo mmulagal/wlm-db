@@ -31,7 +31,7 @@ const StorageCompute = ({ handleToggle, openKey, resourceDetails, resourceLoadin
         setDialog(
             <DialogComponent
                 header={
-                    engineType === DBType.ORACLE && resourceDetails?.storage?.fsxn?.protocol?.[0] !== 'iSCSI'
+                    resourceDetails?.storage?.fsxn?.protocol?.[0] !== 'iSCSI'
                         ? t('databases.resource-overview.associated_volumes_2')
                         : t('databases.resource-overview.associated_luns')
                 }
@@ -158,7 +158,9 @@ const StorageCompute = ({ handleToggle, openKey, resourceDetails, resourceLoadin
                             resourceDetails?.databaseInstanceTopology?.storageSummary?.volumes.length ? (
                                 <>
                                     <DsTypography variant="Regular_14">
-                                        {resourceDetails?.databaseInstanceTopology?.storageSummary?.totalLuns}
+                                        {resourceDetails?.storage?.fsxn?.protocol?.[0] !== 'iSCSI'
+                                            ? resourceDetails?.databaseInstanceTopology?.storageSummary?.totalVolumes
+                                            : resourceDetails?.databaseInstanceTopology?.storageSummary?.totalLuns}
                                     </DsTypography>
                                     <Button variant="text" onClick={handleLUNSDialog}>
                                         View
@@ -187,7 +189,9 @@ const StorageCompute = ({ handleToggle, openKey, resourceDetails, resourceLoadin
                             resourceDetails?.databaseInstanceTopology?.storageSummary?.volumes.length ? (
                                 <>
                                     <DsTypography variant="Regular_14">
-                                        {resourceDetails?.databaseInstanceTopology?.storageSummary?.totalLuns}
+                                        {resourceDetails?.storage?.fsxn?.protocol?.[0] !== 'iSCSI'
+                                            ? resourceDetails?.databaseInstanceTopology?.storageSummary?.totalVolumes
+                                            : resourceDetails?.databaseInstanceTopology?.storageSummary?.totalLuns}
                                     </DsTypography>
                                     <Button variant="text" onClick={handleLUNSDialog}>
                                         View

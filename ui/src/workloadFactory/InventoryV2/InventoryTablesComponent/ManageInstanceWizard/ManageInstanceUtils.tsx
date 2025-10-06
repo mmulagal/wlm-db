@@ -1084,3 +1084,31 @@ export const isAlreadyDetectedCheck = (data: any) => {
         (!data.fsxId || (data.fsxId && data.isFsxRegistered))
     );
 };
+
+// Creating different function for bulk selection to not consider asm authentication
+export const isAlreadyDetectedCheckBulkSelection = (data: any) => {
+    if (!data) return false;
+
+    if (data.hostType === DBType.ORACLE) {
+        if (data.isDefaultAuthentication === true) {
+            // If default authentication is true, only check FSx registration and ASM auth
+            const fsxCheck = !data.fsxId || (data.fsxId && data.isFsxRegistered);
+            // used !isAsmAuthRequired as if isInstanceStorageAsmManaged is false we do not need to check asmAuthentication
+            return fsxCheck;
+        }
+        if (data.isDefaultAuthentication === false) {
+            // If default authentication is false, check FSx registration, oracleServerAuthentication, and ASM auth
+            const fsxCheck = !data.fsxId || (data.fsxId && data.isFsxRegistered);
+            const oracleAuthCheck = data.oracleServerAuthentication === true;
+            return fsxCheck && oracleAuthCheck;
+        }
+        // If isDefaultAuthentication is undefined/null, treat as not detected
+        return false;
+    }
+
+    // For MSSQL and others
+    return !!(
+        (data.sqlServerAuthentication || data.windowsAuthentication || data.windowsDomainUserAuthentication) &&
+        (!data.fsxId || (data.fsxId && data.isFsxRegistered))
+    );
+};

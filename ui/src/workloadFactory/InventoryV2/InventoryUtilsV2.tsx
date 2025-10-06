@@ -144,18 +144,13 @@ export const formatManagedRows = (
     const ssmState = getSsmState(managedRow);
     const allocatedCapacity = getAllocatedCapacity(managedRow);
 
-    let result: any = {
+    const result: any = {
         hostType: managedRow?.hostType,
         id: managedRow?.id,
         ec2InstanceId: managedRow?.nodeTopology?.ec2Details?.[0]?.id,
         ec2InstanceName: managedRow?.nodeTopology?.ec2Details?.[0]?.name,
         resourceId: managedRow?.id,
-        // For Oracle hosts, use EC2 instance name (hostname) instead of resource name
-        // to prevent showing database name in the host table
-        name:
-            managedRow?.hostType === DBType.ORACLE
-                ? managedRow?.nodeTopology?.ec2Details?.[0]?.name || managedRow?.name
-                : managedRow?.name,
+        name: managedRow?.name,
         status: getNodeStatus(managedRow),
         ssmState,
         totalInstance: totalInstanceCount,
@@ -189,12 +184,6 @@ export const formatManagedRows = (
         regionName: regionMapping?.[keys?.[2]]?.regionName
     };
 
-    if (managedRow?.hostType === DBType.ORACLE) {
-        result = {
-            ...result,
-            isInstanceStorageAsmManaged: oracleSpecificProperties(managedRow)
-        };
-    }
     return result;
 };
 
@@ -248,9 +237,6 @@ export const getPlatformForManagedHost = (managedHostRow: any, engineType: strin
 
     return undefined;
 };
-
-const oracleSpecificProperties = (managedHostRow: any) =>
-    getMappedDiscoveredData(managedHostRow)?.databaseInstanceDetails?.[0]?.isInstanceStorageAsmManaged;
 
 export const getNodeStatus = (row: ManagedHostsRowInterface) => {
     if (row?.databaseHostStatus && row?.databaseHostStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
@@ -462,7 +448,8 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 authAndDetectFields = {
                     oracleServerAuthentication: oracleAuth,
                     isDefaultAuthentication: defaultAuth,
-                    isInstanceStorageAsmManaged: statusObj?.[0]?.isInstanceStorageAsmManaged,
+                    isInstanceStorageAsmManaged:
+                        perRow?.isInstanceStorageAsmManaged ?? statusObj?.[0]?.isInstanceStorageAsmManaged,
                     asmAuthentication: statusObj?.[0]?.asmAuthentication,
                     detectOption: statusObj?.[0]?.detectOption,
                     detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg
@@ -525,7 +512,8 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 authFields = {
                     oracleServerAuthentication: statusObj?.[0]?.oracleServerAuthentication,
                     isDefaultAuthentication: statusObj?.[0]?.isDefaultAuthentication,
-                    isInstanceStorageAsmManaged: statusObj?.[0]?.isInstanceStorageAsmManaged,
+                    isInstanceStorageAsmManaged:
+                        perRow?.isInstanceStorageAsmManaged ?? statusObj?.[0]?.isInstanceStorageAsmManaged,
                     asmAuthentication: statusObj?.[0]?.asmAuthentication
                 };
                 // Check for the item with type CDB/Single tenant (mostly it is 1st item but can be in the middle also)
@@ -1108,7 +1096,7 @@ export const formatDiscoveredOracleInventoryData = (
             ...result,
             ...{
                 [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
-                    formatOracleDiscoveredRows(perRow, credentialMapping, regionMapping)
+                    formatOracleDiscoveredRows(perRow, credentialMapping, regionMapping, GENERAL.ORACLE_TYPE)
             }
         };
     });
@@ -1228,7 +1216,8 @@ export const formatPgsqlDiscoveredRows = (
 export const formatOracleDiscoveredRows = (
     discoveredRow: DiscoverOracleHostInterface,
     credentialMapping: any,
-    regionMapping: any
+    regionMapping: any,
+    type: string
 ) => {
     const totalInstanceCount = discoveredRow?.databaseInstanceDetails?.length || 0;
     const ssmState = getDiscoverSsmState(discoveredRow);
@@ -1246,7 +1235,7 @@ export const formatOracleDiscoveredRows = (
         ec2InstanceId: discoveredRow?.ec2InstanceId,
         ec2InstanceName: discoveredRow?.ec2InstanceName,
         platform: discoveredRow?.platform,
-        name: discoveredRow?.ec2InstanceName,
+        name: getDiscoverHostname(discoveredRow, type),
         status: ssmState, // discover status will depends on ssmState only
         ssmState,
         totalInstance: totalInstanceCount,
@@ -1308,8 +1297,8 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface, type: 
                 break;
             }
         }
-    } else if (type === GENERAL.ORACLE_TYPE && discoveredRow?.ec2InstanceName) {
-        name = discoveredRow?.ec2InstanceName;
+    } else if (type === GENERAL.ORACLE_TYPE && discoveredRow?.ec2HostName) {
+        name = discoveredRow?.ec2HostName;
     }
     return name;
 };

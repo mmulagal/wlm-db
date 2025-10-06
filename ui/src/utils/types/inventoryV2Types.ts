@@ -151,7 +151,6 @@ export interface InventoryTableData {
     statusColText?: string;
     platform?: string;
     protocol?: string;
-    isInstanceStorageAsmManaged?: boolean;
 }
 
 export interface InventoryTableInstanceDatInterface {
@@ -266,6 +265,7 @@ export interface DatabaseInstancesSummaryInterface {
         type: string;
     }>;
     databaseCount?: number;
+    isInstanceStorageAsmManaged?: boolean;
     statusColText?: string;
     databaseServer?: {
         operatingSystem?: string;
@@ -361,6 +361,7 @@ export interface ManagedHostsRowInterface {
         instanceState?: string;
         isManaged?: boolean;
         databaseInstanceStatus?: string; // up, down
+        isInstanceStorageAsmManaged?: boolean; // will get for Oracle databases
     }>;
     clusterNodeDetails?: Array<{
         ec2InstanceId?: string;

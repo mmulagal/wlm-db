@@ -249,7 +249,7 @@ export const handleInstanceMenuSelection = ({
                         setFSXId({
                             fsxId: rowData?.fsxId,
                             ec2InstanceId: rowData?.ec2InstanceId,
-                            isInstanceStorageAsmManaged: rowData?.hostRow?.isInstanceStorageAsmManaged
+                            isInstanceStorageAsmManaged: rowData?.isInstanceStorageAsmManaged
                         })
                     );
                     optimizeAction(rowData);
@@ -265,7 +265,7 @@ export const handleInstanceMenuSelection = ({
                         setFSXId({
                             fsxId: rowData?.fsxId,
                             ec2InstanceId: rowData?.ec2InstanceId,
-                            isInstanceStorageAsmManaged: rowData?.hostRow?.isInstanceStorageAsmManaged
+                            isInstanceStorageAsmManaged: rowData?.isInstanceStorageAsmManaged
                         })
                     );
                     optimizeAction(rowData);

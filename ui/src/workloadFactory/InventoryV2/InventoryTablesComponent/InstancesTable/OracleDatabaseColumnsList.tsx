@@ -32,6 +32,7 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { manageActionCol } from '../../InventoryUtilsV2';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
+import { setFSXId } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
 export function getOracleDatabaseColumnsList({
     t,
@@ -122,10 +123,10 @@ export function getOracleDatabaseColumnsList({
         },
         {
             Header: t('databases.databases-table.oracle.headers.host-name'),
-            accessor: 'hostRow.ec2InstanceName',
+            accessor: 'hostRow.name',
             id: '3',
             width: '240px',
-            filterOptions: getFilterOptions(updatedTableData, 'hostRow.ec2InstanceName'),
+            filterOptions: getFilterOptions(updatedTableData, 'hostRow.name'),
             renderCell: (cellData: string, rowData: any) => (
                 <DsTypography
                     title={cellData || t('databases.general.not-available-table-columns')}
@@ -522,6 +523,13 @@ export function getOracleDatabaseColumnsList({
                                             colText === ACTION_CTA.FIX_ISSUES ||
                                             colText === ACTION_CTA.WELL_ARCHITECTED
                                         ) {
+                                            dispatch(
+                                                setFSXId({
+                                                    fsxId: rowData?.fsxId,
+                                                    ec2InstanceId: rowData?.ec2InstanceId,
+                                                    isInstanceStorageAsmManaged: rowData?.isInstanceStorageAsmManaged
+                                                })
+                                            );
                                             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
                                             dispatch(
                                                 setSelectedOracleInnerPageTab(

@@ -9,7 +9,7 @@ import { ACTION_CTA, DBType } from '../../../../../../utils/consts';
 import { manageActionCol } from '../../../../InventoryUtilsV2';
 import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
 import { DsSelectFsx } from '../../../../../../common/FsxSelectField/fsxSelectField';
-import { isAlreadyDetectedCheck } from '../../ManageInstanceUtils';
+import { isAlreadyDetectedCheckBulkSelection } from '../../ManageInstanceUtils';
 import { getSelectDropdownLabels } from './DetectContentHelper';
 
 interface OptionType {
@@ -102,7 +102,9 @@ const SelectInstances = ({ engineType }: { engineType: string }) => {
                     const isAlreadySelectedAndAuthorized = selectedMultiDetectInstances.some(
                         (item: any) => item?.id === row?.id && item?.authorized
                     );
-                    const isAuthorized = isAlreadySelectedAndAuthorized ? true : isAlreadyDetectedCheck(row);
+                    const isAuthorized = isAlreadySelectedAndAuthorized
+                        ? true
+                        : isAlreadyDetectedCheckBulkSelection(row);
 
                     const isSelected = selectedOptions.some(opt => opt.id === row.id);
 
