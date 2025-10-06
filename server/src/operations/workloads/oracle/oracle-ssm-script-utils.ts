@@ -309,16 +309,17 @@ const oracleUserAuthLoginCommand = `
         
         # Convert username to lowercase
         usernameLowercase=$(echo "$username" | tr '[:upper:]' '[:lower:]')
-
-        oracleCredsAvailable="true"
-
-        if [ "$usernameLowercase" == "sys" ]; then
-            # For SYS user, we need to use AS SYSDBA
-            sqlplus_command="sqlplus -S $username/$password as sysdba"
+        if [ -z "$username" ] || [ -z "$password" ] || [ "$username" == "null" ] || [ "$password" == "null" ]; then
+            oracleCredsAvailable="false"
         else
-            sqlplus_command="sqlplus -S $username/$password"
+            oracleCredsAvailable="true"
+            if [ "$usernameLowercase" == "sys" ]; then
+                # For SYS user, we need to use AS SYSDBA
+                sqlplus_command="sqlplus -S $username/$password as sysdba"
+            else
+                sqlplus_command="sqlplus -S $username/$password"
+            fi
         fi
-
         echo "$sqlplus_command|$oracleCredsAvailable"
     }
 `;
