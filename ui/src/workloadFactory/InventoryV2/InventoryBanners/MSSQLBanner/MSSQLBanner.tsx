@@ -101,10 +101,10 @@ const MSSQLBanner = ({ loading }: { loading: boolean }) => {
                                 <LogAnalyzer />
                                 <div className={styles.upperRightSection}>
                                     <DsTypography variant="Semibold_16">
-                                        {t('databases.banner.log-analyzer')}
+                                        {t('databases.banner.microsoft-sql-server')}
                                     </DsTypography>
                                     <DsTypography variant="Semibold_16">
-                                        {t('databases.banner.microsoft-sql-server')}
+                                        {t('databases.banner.error-analysis')}
                                     </DsTypography>
                                 </div>
                             </div>

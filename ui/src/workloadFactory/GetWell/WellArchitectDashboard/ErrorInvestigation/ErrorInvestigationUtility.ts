@@ -22,7 +22,11 @@ export const eiSeverityOptionList = {
     '1-8': '1-8'
 };
 
-export const eiErrorCodesOptions = { all: 'All error codes', top10: 'Top 10 error codes', top5: 'Top 5 error codes' };
+export const eiErrorCodesOptions = {
+    all: 'All error codes',
+    top10: 'Top 10 frequent error codes',
+    top5: 'Top 5 frequent error codes'
+};
 
 export const eiTimeOptions = {
     last24: 'Last 24 hours',
