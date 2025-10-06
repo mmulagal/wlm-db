@@ -171,12 +171,14 @@ const OptimizeInnerPage = () => {
                 break;
 
             case 'Data files':
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 setCardHeight({
                     recommendationSection: '208px',
                     tagSection: '304px'
                 });
                 break;
             case 'Log files':
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 setCardHeight({
                     recommendationSection: '208px',
                     tagSection: '304px'
@@ -217,7 +219,12 @@ const OptimizeInnerPage = () => {
     }, [selectedOptimizeConfig]);
 
     const buttonComponent = (rowData: any) => {
-        if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
+        if (
+            selectedOptimizeConfig?.type === 'Data files' ||
+            selectedOptimizeConfig?.type === 'Log files' ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF
+        ) {
             return (
                 <Popover
                     isAppendedToBody
@@ -790,6 +797,7 @@ const OptimizeInnerPage = () => {
                     />
                 );
             case 'Data files':
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 return (
                     <DataFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -799,6 +807,7 @@ const OptimizeInnerPage = () => {
                     />
                 );
             case 'Log files':
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 return (
                     <LogFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -850,10 +859,16 @@ const OptimizeInnerPage = () => {
     };
 
     const setHeading = () => {
-        if (selectedOptimizeConfig?.type === 'Data files') {
+        if (
+            selectedOptimizeConfig?.type === 'Data files' ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF
+        ) {
             return 'Data files (.mdf) placement';
         }
-        if (selectedOptimizeConfig?.type === 'Log files') {
+        if (
+            selectedOptimizeConfig?.type === 'Log files' ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF
+        ) {
             return 'Log files (.ldf) placement';
         }
         return selectedOptimizeConfig?.type;

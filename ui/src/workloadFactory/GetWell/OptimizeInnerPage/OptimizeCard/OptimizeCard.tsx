@@ -137,6 +137,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     data: data?.recommendation
                 };
             case 'Data files':
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
@@ -145,6 +146,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     data: data?.recommendation
                 };
             case 'Log files':
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
