@@ -1174,11 +1174,13 @@ function generateOptimizedValuesForDemo(fsx: StorageSummary, fsxCalculations: Fs
     // Optimization rate - 75%
     // throughput and iops are reduced by OPT_RATE percent
     const OPT_RATE = 75;
+    const iops = Number(fsx.iops ?? 0) * (1 - OPT_RATE / 100);
+    const throughput = Number(fsx.throughput ?? 0) * (1 - OPT_RATE / 100);
     const fsx_optimized = {
         ...fsx,
-        iops: Number(fsx.iops ?? 0) * (1 - OPT_RATE / 100),
-        throughput: Number(fsx.throughput ?? 0) * (1 - OPT_RATE / 100),
-        total: Number(fsx.total ?? 0) * (1 - OPT_RATE / 100)
+        iops,
+        throughput,
+        total: fsx.total - (fsx.iops + fsx.throughput) + (iops + throughput) // Subtract the actual values and add optimized values
     };
     const fsx_optimized_single = {
         ...fsxCalculations,
