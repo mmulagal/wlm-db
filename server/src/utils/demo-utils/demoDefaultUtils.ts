@@ -222,7 +222,7 @@ async function createDemoResourcesPerRegion(
             },
             {
                 resourceId: randomUUID(),
-                hostName: 'oracle-managed-host-1',
+                hostName: 'ip-171-30-40-16.ap-southeast-1.compute.internal',
                 protocol: STORAGE_PROTOCOLS.NFS,
                 sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'oracle-orahost' }],
                 databaseType: DatabaseTypes.ORACLE,
