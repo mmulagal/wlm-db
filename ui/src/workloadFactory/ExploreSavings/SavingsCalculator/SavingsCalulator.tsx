@@ -75,7 +75,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         selectedExploreSavingsTab,
         showOptimizedModal,
         showOptimizeLink,
-        showOptimizeMode
+        showOptimizeMode,
+        selectedCalculatorMode
     } = useAppSelector(state => state.exploreSavings);
 
     const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
@@ -99,7 +100,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         } else {
             dispatch(setViewCalculationsResponse(null));
         }
-    }, [recommendedTargetInstance]);
+    }, [recommendedTargetInstance, selectedCalculatorMode]);
 
     useEffect(() => {
         const requiredNumOfFsx = viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsx;
