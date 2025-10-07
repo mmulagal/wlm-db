@@ -92,6 +92,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4095.4',
                         databaseCount: 8,
+                        sqlServerName: 'SQLServer-PreProd-02',
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
                         windowsDomainUserAuthentication: true,

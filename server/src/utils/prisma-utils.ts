@@ -13,6 +13,7 @@ if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
 const logger = getLogger();
 
 const prisma = { client: new PrismaClient() };
+
 async function initializeDatabase() {
     prisma.client = new PrismaClient();
 }

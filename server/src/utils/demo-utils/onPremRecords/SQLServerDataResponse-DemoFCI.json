@@ -4,7 +4,7 @@
         {
             "instanceGuid": "3CD4B457-0BE9-44F5-A8E5-8E44EB93D1DF",
             "licenceUsageDetails": "[{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has \u003e 128 GB Memory\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has \u003e 48 vCPU\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"Tempdb metadata memory-optimized is enabled\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"User Databases are using Enterprise Level Features\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You are using asynchronous mirroring\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using peer-to-peer replication\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using R or Python extensions\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using Resource Governor\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You have Asynchronous commit Replicas\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You have read-only Replicas\"}]",
-            "memUtilization": "[{\"used\":9992437760,\"total\":17178845184,\"remaining\":7186407424,\"percentUsed\":58}]",
+            "memUtilization": "[{\"used\":28789754540,\"total\":38789754540,\"remaining\":10000000000,\"percentUsed\":72}]",
             "noOfDatabases": "4",
             "ownerNodes": "[{\"nodeName\":\"WLMDBFCINEW12\",\"nodeRole\":\"Primary\"},{\"nodeName\":\"WLMDBFCINEW11\",\"nodeRole\":\"Standby\"}]",
             "sqlInstanceName": "MSSQLSERVER",
@@ -23,7 +23,7 @@
         "clusterNodeNames": ["WLMDBFCINEW11", "WLMDBFCINEW12"],
         "nodeDetails": [
             {
-                "ramSize": 16,
+                "ramSize": 26.306,
                 "hostId": "EFFE1E42-F45B-D755-970E-375B496CF6C1",
                 "networkConfiguration": [
                     {
@@ -48,7 +48,7 @@
                 "osEdition": "Microsoft Windows Server 2022 Datacenter"
             },
             {
-                "ramSize": 16,
+                "ramSize": 26.306,
                 "osEdition": "Microsoft Windows Server 2022 Datacenter",
                 "networkConfiguration": [
                     {

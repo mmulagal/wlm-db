@@ -1085,6 +1085,7 @@ async function createAssessmentData(
     databaseInstanceName: string = DEFAULT_INSTANCE_NAME,
     sqlDeploymentType: string = SqlServerDeploymentModel.SQL_STANDALONE_SHORT
 ) {
+    accountId = checkAccount(accountId);
     const baseConfig = {
         account_id: accountId,
         credentials_id: credentialsId,
