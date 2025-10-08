@@ -57,7 +57,7 @@ import { AssessmentCategories } from '../../../utils/continous-optimization-cons
 import { MountPointDetails, OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getNodeTopology, getStorageData } from '../../database-hosts-util';
-import { demoFsxId, MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
+import { MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
 import { PDB_DETAILS } from '../../../utils/demo-utils/demoInventoryData';
 
 const logger = getLogger();
@@ -144,7 +144,7 @@ async function getOracleInstanceInfo(
             );
             if (response) {
                 if (isDemoFlow) {
-                    response += JSON.stringify(MockOracleServerDetails);
+                    response += JSON.stringify(MockOracleServerDetails(oracleSids));
                 }
                 return response;
             }
@@ -895,7 +895,9 @@ async function getOracleDatabaseInstancesSummary(
                 ...result?.storage,
                 ...{
                     fsxn: {
-                        ...storageInfoFromOntap[result.databaseInstanceId],
+                        ...(isDemoFlow
+                            ? storageInfoFromOntap.demoOracleSid
+                            : storageInfoFromOntap[result.databaseInstanceId]),
                         protocol: storageProtocol?.split(',') ?? []
                     }
                 }
@@ -1068,12 +1070,18 @@ async function getOracleDatabaseMappedVolumes(
                         SSM_RUN_SHELL_SCRIPT_DOC,
                         SSM_RUN_SHELL_SCRIPT_DOC_VERSION
                     );
-                    const parsedMappedVolRes: OracleInstanceMountpointResponse = sqlResponseParsing(ssmResponse);
+                    let parsedMappedVolRes: OracleInstanceMountpointResponse = sqlResponseParsing(ssmResponse);
                     const instanceToFsxnMap = new Map<string, Map<string, OracleInstanceMountpointResponse>>();
                     mappedDatabaseInstances.forEach(instance => {
                         const instanceId = instance.database_instance_id;
                         if (!instanceToFsxnMap.has(instanceId)) {
                             instanceToFsxnMap.set(instanceId, new Map<string, OracleInstanceMountpointResponse>());
+                        }
+                        if (isDemoFlow) {
+                            parsedMappedVolRes = {
+                                ...parsedMappedVolRes,
+                                protocol: instance.storage_protocol
+                            } as OracleInstanceMountpointResponse;
                         }
                         instanceToFsxnMap.get(instanceId)!.set(fsxId, parsedMappedVolRes);
                     });
@@ -1138,7 +1146,6 @@ async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, insta
         })) || [{}];
         const fsxIds = uniq(compact(instanceDetails.map(di => di.fsxn_ids)));
         const mappedVolumesByFsxId = fsxIds.map(fsxId => {
-            fsxId = isDemoFlow ? demoFsxId : fsxId; // Demo flow FSx ID, so that it always matches
             const matchingConfigData = configList
                 .map(cd => cd.config_data)
                 .find(cd => Object.keys(cd as any).includes(fsxId));

@@ -52,7 +52,6 @@ import {
     mergeDismissConfigurations
 } from '../assessment-dismiss-operations';
 import { handleGetOracleAssessmentForDemo } from '../../demo-operations';
-import { demoFsxId } from '../../../utils/demo-utils/demoMockdata';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -106,9 +105,9 @@ async function initiateInstanceLevelAssessmentDataCollection(
 
         if (isDemoFlow) {
             const mappedOntapVolumes = ORACLE_MAPPED_ONTAP_VOLUMES_DATA(
-                demoFsxId,
-                STORAGE_PROTOCOLS.ISCSI,
-                'oradb',
+                fsxFileSystem,
+                protocol!,
+                databaseInstanceId,
                 true
             ) as unknown as Map<string, OracleMappedOntapVolumesResponse>;
             instanceVolumeMapping =

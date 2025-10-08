@@ -19,8 +19,7 @@ import {
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import { isDemo, sqlResponseParsing } from '../../../utils/utils';
-import { demoFsxId } from '../../../utils/demo-utils/demoMockdata';
+import { sqlResponseParsing } from '../../../utils/utils';
 import {
     addDiskToDiskGroups,
     createAndMapLunsForDiskGroups,
@@ -34,7 +33,6 @@ import { UnOptimizedDiskGroups } from '../assessment-utils';
 import { CUSTOM_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 const STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS = [
     GOLDEN_CONFIG.dataDiskLunLayout.name,
     GOLDEN_CONFIG.redoLogDiskLunLayout.name,
@@ -84,7 +82,7 @@ async function handleDiskgroupOptimization(
             databaseInstanceIds: [databaseInstanceId],
             configDataType: AssessmentCategories.MAPPED_ONTAP_VOLUMES
         })) || [{}];
-        const fsxId = isDemoFlow ? demoFsxId : managedInstance.fsxn_ids;
+        const fsxId = managedInstance.fsxn_ids;
         const matchingConfigData = configList
             .map(cd => cd.config_data)
             .find(cd => Object.keys(cd as any).includes(fsxId));

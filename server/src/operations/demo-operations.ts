@@ -44,8 +44,7 @@ import {
     mockPGSqlStandaloneDeploymentStack,
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
-    enableMPIOJobData,
-    demoFsxId
+    enableMPIOJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -918,7 +917,7 @@ async function createDeploymentMockDataInDBForOracle(
         sqlDeploymentMode = 'ha';
     }
 
-    const instanceId = '7450008296037943419';
+    const instanceId = randomize('0', 10);
 
     resourceId = resourceId || randomUUID();
     const fsxId = `fs-${randomize('0', 8)}`;
@@ -966,7 +965,15 @@ async function createDeploymentMockDataInDBForOracle(
     const instanceMetadata = { oracleDeploymentType: OracleDeploymentTenacy.SINGLE_TENANT };
     await updateInstanceMetadata(accountId, instanceId, instanceMetadata);
 
-    await createAssessmentDataForOracle(accountId, credentialsId, region, resourceId, instanceId);
+    await createAssessmentDataForOracle(
+        accountId,
+        credentialsId,
+        region,
+        resourceId,
+        instanceId,
+        fsxId,
+        instanceRecord.storageProtocol
+    );
 }
 
 async function demoGetFsxnVolIdsFromOntapVolIds(
@@ -1172,7 +1179,9 @@ async function createAssessmentDataForOracle(
     credentialsId: string,
     region: string,
     resourceId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    fsxId: string,
+    storageProtocol: string
 ) {
     const baseConfig = {
         account_id: accountId,
@@ -1190,7 +1199,7 @@ async function createAssessmentDataForOracle(
     const instanceConfigMappedOntapDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
-        config_data: ORACLE_MAPPED_ONTAP_VOLUMES_DATA(demoFsxId, STORAGE_PROTOCOLS.ISCSI, 'oradb', true)
+        config_data: ORACLE_MAPPED_ONTAP_VOLUMES_DATA(fsxId, storageProtocol, databaseInstanceId, false)
     };
 
     const configDataRecords = [instanceConfigDataRecord, instanceConfigMappedOntapDataRecord];

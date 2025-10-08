@@ -1422,7 +1422,15 @@ async function registerOracleInstancesData(
             }
 
             if (isDemoFlow) {
-                await createAssessmentDataForOracle(accountId, credentialsId, region, resourceId, instanceId);
+                await createAssessmentDataForOracle(
+                    accountId,
+                    credentialsId,
+                    region,
+                    resourceId,
+                    instanceId,
+                    storageInfo.id,
+                    storageProtocols ? storageProtocols.join() : ''
+                );
             }
         }
     } catch (error: any) {

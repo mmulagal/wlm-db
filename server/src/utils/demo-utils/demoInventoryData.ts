@@ -477,7 +477,7 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                 oracleServerDeploymentType: 'Standalone',
                 databaseInstanceDetails: [
                     {
-                        instanceId: '7450008296037943419',
+                        instanceId: 'oracleasm',
                         instanceName: 'oracleasm',
                         version: '19.0.0.0.0',
                         instanceState: 'OPEN',
@@ -561,7 +561,7 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                 oracleServerDeploymentType: 'Standalone',
                 databaseInstanceDetails: [
                     {
-                        instanceId: '7450008296037943419',
+                        instanceId: 'oracle',
                         instanceName: 'oracle',
                         version: '19.0.0.0.0',
                         instanceState: 'OPEN',
