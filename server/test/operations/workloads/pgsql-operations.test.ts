@@ -171,20 +171,22 @@ describe('PgSql Database Operations', () => {
         const result = await getPgSqlPerformaceMetrics(accountId, credentialsId, region, node1InstanceId);
 
         expect(result).toEqual({
-            assessment: 'Excellent ( <=1 ms )',
+            assessment: 'Excellent ( >=98% cache hit ratio)',
+            cacheHitRatio: 98.04,
             latency: {
-                read: 0,
-                write: 0,
-                serverIo: 0
+                read: 0.6,
+                write: 0.8,
+                serverIo: 0.7
             },
             iops: {
-                read: 0.08,
-                write: 66.59
+                read: 0.49,
+                write: 0.39
             },
             throughput: {
-                read: 0.001,
-                write: 0.545
-            }
+                read: 0.07,
+                write: 0.061
+            },
+            workloadType: 'Balanced'
         });
     });
     it('should return the protection status for a given PGSQL instance', async () => {

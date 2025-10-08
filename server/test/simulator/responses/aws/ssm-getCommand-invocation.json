@@ -2302,7 +2302,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"READ_IOPS\" : 0.08, \"WRITE_IOPS\" : 66.59, \"READ_THROUGHPUT\" : 0.001, \"WRITE_THROUGHPUT\" : 0.545, \"READ_LATENCY\" : 0.00, \"WRITE_LATENCY\" : 0.00, \"SERVER_IO_LATENCY\" : 0.00, \"assessment\" : \"Excellent ( <=1 ms )\"}",
+        "StandardOutputContent": "{\"read_iops\":0.49,\"write_iops\":0.39,\"read_throughput\":0.070,\"write_throughput\":0.061,\"read_latency\":0.60,\"write_latency\":0.80,\"server_io_latency\":0.70,\"cache_hit_ratio\":98.04,\"workload_type\":\"Balanced\",\"assessment\":\"Excellent ( >=98% cache hit ratio)\"}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

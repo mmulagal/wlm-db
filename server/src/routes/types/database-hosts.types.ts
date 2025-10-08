@@ -188,7 +188,9 @@ type RWPerformanceResponseType = Static<typeof RWPerformanceResponse>;
 const DetailedPerformanceResponse = Type.Object({
     latency: LatencyResponse,
     iops: RWPerformanceResponse,
-    throughput: RWPerformanceResponse
+    throughput: RWPerformanceResponse,
+    workloadType: Type.Optional(Type.String({ enum: ['Balanced', 'Read-heavy', 'Write-heavy', 'Unknown'] })), // used only for pgsql,
+    cacheHitRatio: Type.Optional(Type.Number())
 });
 type DetailedPerformanceResponseType = Static<typeof DetailedPerformanceResponse>;
 

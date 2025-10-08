@@ -483,13 +483,15 @@ async function getPgSqlPerformaceMetrics(
             if (parsedResponse) {
                 const {
                     assessment,
-                    READ_LATENCY: read,
-                    WRITE_LATENCY: write,
-                    SERVER_IO_LATENCY: serverIo,
-                    READ_IOPS: readIops,
-                    WRITE_IOPS: writeIops,
-                    READ_THROUGHPUT: readThroughput,
-                    WRITE_THROUGHPUT: writeThroughput
+                    read_latency: read,
+                    write_latency: write,
+                    server_io_latency: serverIo,
+                    read_iops: readIops,
+                    write_iops: writeIops,
+                    read_throughput: readThroughput,
+                    write_throughput: writeThroughput,
+                    cache_hit_ratio: cacheHitRatio,
+                    workload_type: workloadType
                 } = parsedResponse;
                 return {
                     assessment,
@@ -502,7 +504,9 @@ async function getPgSqlPerformaceMetrics(
                     throughput: {
                         read: readThroughput,
                         write: writeThroughput
-                    }
+                    },
+                    cacheHitRatio,
+                    workloadType
                 };
             }
         }
