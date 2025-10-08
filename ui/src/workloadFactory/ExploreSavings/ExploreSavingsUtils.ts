@@ -1117,7 +1117,8 @@ export const handleAuthenticate = async (
             });
         });
         const credList = {
-            credentials: credentialList
+            credentials: credentialList,
+            checkManageReadiness: true
         };
 
         const payload = {
@@ -1148,7 +1149,7 @@ export const handleAuthenticate = async (
                 !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
                 !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
             ) {
-                updateInventoryTable(rowData, selectedExploreSavingsTabFileSystemType, dispatch);
+                updateInventoryTable(rowData, selectedExploreSavingsTabFileSystemType, dispatch, result);
                 // Navigate to the Explore Savings page
                 onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
                 dispatch(
@@ -1200,7 +1201,12 @@ export const handleAuthenticate = async (
     }
 };
 
-const updateInventoryTable = (rowData: any, selectedExploreSavingsTabFileSystemType: string, dispatch: Dispatch) => {
+const updateInventoryTable = (
+    rowData: any,
+    selectedExploreSavingsTabFileSystemType: string,
+    dispatch: Dispatch,
+    result: any
+) => {
     const state = store.getState();
     const { inventoryTableData } = state.inventoryV2;
     const { selectedAuthenticationType } = state.exploreSavings;
@@ -1226,7 +1232,10 @@ const updateInventoryTable = (rowData: any, selectedExploreSavingsTabFileSystemT
                           windowsDomainUserAuthentication:
                               selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
                                   ? true
-                                  : instance.windowsDomainUserAuthentication
+                                  : instance.windowsDomainUserAuthentication,
+                          manageReadiness:
+                              result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness ||
+                              instance?.manageReadiness
                       }
                     : instance
             ) ?? []

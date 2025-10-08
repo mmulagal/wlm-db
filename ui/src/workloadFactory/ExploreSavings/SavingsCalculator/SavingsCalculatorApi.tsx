@@ -368,9 +368,14 @@ const SavingsCalculatorApi = () => {
                     dispatch(setDisableState(false));
                     triggerRefreshApi();
                 } else {
-                    dispatch(setSnapshotLoading(true));
-                    // This is similar to expand row in inventory. It will call instance API to get protection data.
-                    addInstanceIdToGetPerf(selectedHostDetails, dispatch);
+                    // If protection data is not present as of now instance api is not getting called so by default setting to daily as for Unknown Protection we are doing the same
+                    dispatch(setSnapshotLoading(false));
+                    dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
+                    triggerRefreshApi();
+                    // @Todo: check on instance API call
+                    // dispatch(setSnapshotLoading(true));
+                    // // This is similar to expand row in inventory. It will call instance API to get protection data.
+                    // addInstanceIdToGetPerf(selectedHostDetails, dispatch);
                 }
             }
         } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
