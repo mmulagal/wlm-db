@@ -32,6 +32,7 @@ interface OracleVolumeRecord {
     lunId?: string;
     diskName?: string;
     diskGroup?: string;
+    copiesCount?: number;
 }
 interface OracleMappedOntapVolumeRecord {
     isCDB?: boolean;

@@ -181,7 +181,10 @@ function mapVolumeTypesToIdName(
     return Object.values(OracleSysFileTypes).reduce((acc, type) => {
         acc[type] = uniqBy(
             flattenedRecords
-                .filter(record => record.type === type)
+                .filter(
+                    record =>
+                        record.type === type && record.volume?.volumeId != null && record.volume.volumeId !== 'null'
+                )
                 .map(({ volume }) => ({
                     volumeId: volume.volumeId,
                     volumeName: volume.volumeName,
@@ -874,12 +877,26 @@ function getVolumeLayoutDrift(
                     .map(volume => volume.volumeId)
             )
         ];
-        // To correctly identify multiplexing problem we need copiespervolume data which we don't have at the moment.
-        insufficientMultiplexing = uniqueRedoLogVolumesWithoutSharingViolation.length < 1;
+
+        // - Need at least 2 volumes for proper multiplexing
+        // - OR if only 1 volume, it must have copiesCount = 1 (single redo log)
+        const hasMultipleVolumes = uniqueRedoLogVolumesWithoutSharingViolation.length >= 2;
+        const hasSingleVolumeWithSingleCopy =
+            uniqueRedoLogVolumesWithoutSharingViolation.length === 1 &&
+            redoLogVolumes.find(vol => vol.volumeId === uniqueRedoLogVolumesWithoutSharingViolation[0])?.copiesCount ===
+                1;
+        insufficientMultiplexing = !hasMultipleVolumes && !hasSingleVolumeWithSingleCopy;
 
         status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const recommended =
+            hasConflicts && insufficientMultiplexing
+                ? 'separate-volume-or-shared-with-control-temp-with-multiplexed-copies-on-two-or-more-volumes'
+                : hasConflicts
+                ? 'separate-volume-or-shared-with-control-temp'
+                : 'multiplexed-copies-on-two-or-more-volumes';
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.redologsPlacement,
+            recommended,
             status,
             objectsInViolation: hasConflicts ? redoFileConflicts.map(conflict => conflict.volumeName) : [],
             totalObjectsAssessed: redoLogVolumes.length,

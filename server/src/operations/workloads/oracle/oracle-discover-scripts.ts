@@ -74,11 +74,19 @@ const loadStorageDetectionModules = `
             $alter_cmd
             SELECT 
                 '{' || CHR(10) ||
-                '    "REDO_LOGS": [' || 
+                '    "REDO_LOGS": {' || CHR(10) ||
+                '        "directories": [' || 
                     NVL((SELECT LISTAGG('"' || redo_dir || '"', ', ') WITHIN GROUP (ORDER BY redo_dir)
                         FROM (SELECT DISTINCT substr(member,1,instr(member,'/',-1)-1) as redo_dir FROM v\\$logfile)), '') || 
                 '],' || CHR(10) ||
-                '    "ARCHIVE_LOGS": [' || 
+                '        "copies_per_directory": {' ||
+                    NVL((SELECT LISTAGG('"' || redo_dir || '": ' || copy_count, ', ') WITHIN GROUP (ORDER BY redo_dir)
+                        FROM (SELECT substr(member,1,instr(member,'/',-1)-1) as redo_dir, COUNT(*) as copy_count 
+                              FROM v\\$logfile GROUP BY substr(member,1,instr(member,'/',-1)-1))), '') ||
+                '}' || CHR(10) ||
+                '    },' || CHR(10) ||
+                '    "ARCHIVE_LOGS": {' || CHR(10) ||
+                '        "directories": [' || 
                     NVL(( SELECT LISTAGG('"' || archive_dir || '"', ', ') WITHIN GROUP (ORDER BY archive_dir)
                         FROM (
                             SELECT DISTINCT
@@ -95,23 +103,69 @@ const loadStorageDetectionModules = `
                         )
                         WHERE LENGTH(TRIM(archive_dir)) > 0 ), '') || 
                 '],' || CHR(10) ||
-                '    "CONTROL_FILES": [' || 
+                '        "copies_per_directory": {' ||
+                    NVL((SELECT LISTAGG('"' || archive_dir || '": 1', ', ') WITHIN GROUP (ORDER BY archive_dir)
+                        FROM (
+                            SELECT DISTINCT
+                                CASE destination
+                                        WHEN 'USE_DB_RECOVERY_FILE_DEST'
+                                            THEN (SELECT value
+                                                    FROM v\\$parameter
+                                                    WHERE name = 'db_recovery_file_dest')
+                                        ELSE destination
+                                END AS archive_dir
+                            FROM   v\\$archive_dest
+                            WHERE  destination IS NOT NULL
+                            AND  LENGTH(TRIM(destination)) > 0
+                        )
+                        WHERE LENGTH(TRIM(archive_dir)) > 0 ), '') ||
+                '}' || CHR(10) ||
+                '    },' || CHR(10) ||
+                '    "CONTROL_FILES": {' || CHR(10) ||
+                '        "directories": [' || 
                     NVL((SELECT LISTAGG('"' || ctrlfile_dir || '"', ', ') WITHIN GROUP (ORDER BY ctrlfile_dir)
                         FROM (SELECT DISTINCT substr(name,1,instr(name,'/',-1)-1) as ctrlfile_dir FROM v\\$controlfile)), '') || 
                 '],' || CHR(10) ||
-                '    "TEMP_FILES": [' || 
+                '        "copies_per_directory": {' ||
+                    NVL((SELECT LISTAGG('"' || ctrlfile_dir || '": ' || copy_count, ', ') WITHIN GROUP (ORDER BY ctrlfile_dir)
+                        FROM (SELECT substr(name,1,instr(name,'/',-1)-1) as ctrlfile_dir, COUNT(*) as copy_count 
+                              FROM v\\$controlfile GROUP BY substr(name,1,instr(name,'/',-1)-1))), '') ||
+                '}' || CHR(10) ||
+                '    },' || CHR(10) ||
+                '    "TEMP_FILES": {' || CHR(10) ||
+                '        "directories": [' || 
                     NVL((SELECT LISTAGG('"' || tempfile_dir || '"', ', ') WITHIN GROUP (ORDER BY tempfile_dir)
                         FROM (SELECT DISTINCT substr(file_name,1,instr(file_name,'/',-1)-1) as tempfile_dir FROM dba_temp_files)), '') || 
                 '],' || CHR(10) ||
-                '    "DATA_FILES": [' || 
+                '        "copies_per_directory": {' ||
+                    NVL((SELECT LISTAGG('"' || tempfile_dir || '": ' || copy_count, ', ') WITHIN GROUP (ORDER BY tempfile_dir)
+                        FROM (SELECT substr(file_name,1,instr(file_name,'/',-1)-1) as tempfile_dir, COUNT(*) as copy_count 
+                              FROM dba_temp_files GROUP BY substr(file_name,1,instr(file_name,'/',-1)-1))), '') ||
+                '}' || CHR(10) ||
+                '    },' || CHR(10) ||
+                '    "DATA_FILES": {' || CHR(10) ||
+                '        "directories": [' || 
                     NVL((SELECT LISTAGG('"' || data_dir || '"', ', ') WITHIN GROUP (ORDER BY data_dir)
                         FROM (SELECT DISTINCT SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1) AS data_dir 
                             FROM dba_data_files WHERE file_name $matching '+%')), '') || 
                 '],' || CHR(10) ||
-                '   "FRA": [' || 
+                '        "copies_per_directory": {' ||
+                    NVL((SELECT LISTAGG('"' || data_dir || '": ' || copy_count, ', ') WITHIN GROUP (ORDER BY data_dir)
+                        FROM (SELECT SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1) AS data_dir, COUNT(*) as copy_count 
+                              FROM dba_data_files WHERE file_name $matching '+%' 
+                              GROUP BY SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1))), '') ||
+                '}' || CHR(10) ||
+                '    },' || CHR(10) ||
+                '   "FRA": {' || CHR(10) ||
+                '        "directories": [' || 
                         NVL((SELECT LISTAGG('"' || fra_dir || '"', ', ') WITHIN GROUP (ORDER BY fra_dir)
                             FROM (SELECT DISTINCT name as fra_dir FROM v\\$RECOVERY_FILE_DEST)), '') || 
-                ']' || CHR(10) ||
+                '],' || CHR(10) ||
+                '        "copies_per_directory": {' ||
+                    NVL((SELECT LISTAGG('"' || fra_dir || '": 1', ', ') WITHIN GROUP (ORDER BY fra_dir)
+                        FROM (SELECT DISTINCT name as fra_dir FROM v\\$RECOVERY_FILE_DEST)), '') ||
+                '}' || CHR(10) ||
+                '    }' || CHR(10) ||
                 '}'
             AS json_output
             FROM dual;
@@ -405,7 +459,7 @@ get_multipath_mount_details() {
                             iscsiSerialNumber=$(echo "$multipathMountPointDetails" | cut -d',' -f2)
                             protocol=$(echo "$multipathMountPointDetails" | cut -d',' -f3)
                             mountPoint="$iscsiSerialNumber"
-                            jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                            jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"directoryPath\\":\\"$dataDirectory\\"}"
                             
                         else
                             rawUdevInfo=$(udevadm info --query=all --name=$source)
@@ -421,7 +475,7 @@ get_multipath_mount_details() {
                             fi
 
                             mountPoint=$iscsiSerialNumber
-                            jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                            jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"directoryPath\\":\\"$dataDirectory\\"}"
                         fi
                     elif [[ "$fstype" == nfs* ]]; then
                         dns_name=$(echo "$source" | cut -d':' -f1)
@@ -433,7 +487,7 @@ get_multipath_mount_details() {
                         else
                             mountIp=$(dig +short "$dns_name")
                         fi
-                        jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                        jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"directoryPath\\":\\"$dataDirectory\\"}"
                     else
                         continue
                     fi
@@ -559,12 +613,27 @@ get_multipath_mount_details() {
         db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO" | tr -d '\n' | tr -d ' ')
         oracleMountDetails="{"
         for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
-            paths=$(echo "$db_paths_json" | jq -r ".$fileType[]" 2>/dev/null)
+            paths=$(echo "$db_paths_json" | jq -r ".$fileType.directories[]" 2>/dev/null)
             paths_csv=$(echo "$paths" | tr '\n' ',' | sed 's/,$//')
             
             # Get mount details for these paths
             if [ -n "$paths_csv" ]; then
                 mountDetails=$(get_directory_mount_details "$paths_csv")
+                updatedMountDetails="[]"
+                for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
+                    directoryPath=$(echo "$mountDetail" | jq -r '.directoryPath')
+                    
+                    # Get the copy count for this specific directory path
+                    copiesCount=$(echo "$db_paths_json" | jq -r --arg ft "$fileType" --arg path "$directoryPath" '.[$ft].copies_per_directory[$path] // 0')
+                    
+                    if [ "$copiesCount" == "null" ] || [ -z "$copiesCount" ]; then
+                        copiesCount=0
+                    fi
+                    
+                    mountDetail=$(echo "$mountDetail" | jq --arg cc "$copiesCount" '. + {copiesCount: ($cc | tonumber)}')
+                    updatedMountDetails=$(echo "$updatedMountDetails" | jq --argjson md "$mountDetail" '. += [$md]')
+                done
+                mountDetails="$updatedMountDetails"
             else
                 mountDetails="[]"
             fi
@@ -587,13 +656,24 @@ get_multipath_mount_details() {
         db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES" | tr -d '\n' | tr -d ' ')
         oracleMountDetails="{"
         for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
-            diskgroups_csv=$(jq -r --arg ft "$fileType" '.[$ft][]? | split("/") | .[0] | ltrimstr("+")' <<< "$db_paths_json" | sort -u | paste -sd ',' -)
+            diskgroups_csv=$(jq -r --arg ft "$fileType" '.[$ft].directories[]? | split("/") | .[0] | ltrimstr("+")' <<< "$db_paths_json" | sort -u | paste -sd ',' -)
 
             mountDetails="["
             if [ -n "$diskgroups_csv" ]; then
                 for diskGroup in $(echo "$diskgroups_csv" | tr ',' ' '); do
                     diskNames=$(get_disk_details "$ORACLE_SID" "$diskGroup")
                     if [ -n "$diskNames" ]; then
+                        # Get the copy count for this disk group
+                        diskgroupPath="+$diskGroup"
+                        copiesCount=$(echo "$db_paths_json" | jq -r --arg ft "$fileType" --arg dg "$diskgroupPath" '
+                            .[$ft].copies_per_directory | 
+                            to_entries | 
+                            map(select(.key | startswith($dg)) | .value) | 
+                            add // 0
+                            ')
+                        if [ "$copiesCount" == "null" ] || [ -z "$copiesCount" ]; then
+                            copiesCount=0
+                        fi
                         while IFS= read -r diskName; do
                             [ -z "$diskName" ] && continue
                             result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details "$diskName")
@@ -604,7 +684,7 @@ get_multipath_mount_details() {
                             mountPoint=$(echo "$result" | cut -d',' -f2)
                             protocol=$(echo "$result" | cut -d',' -f3)
 
-                            json_obj="{\\"isAsmManaged\\":\\"true\\", \\"mountIP\\":\\"$mountIP\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"diskName\\":\\"$diskName\\", \\"diskGroup\\":\\"$diskGroup\\"}"
+                            json_obj="{\\"isAsmManaged\\":\\"true\\", \\"mountIP\\":\\"$mountIP\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"diskName\\":\\"$diskName\\", \\"diskGroup\\":\\"$diskGroup\\", \\"copiesCount\\":$copiesCount}"
 
                             if [ "$mountDetails" == "[" ]; then
                                 mountDetails+="$json_obj"
@@ -1357,6 +1437,7 @@ const getMappedOntapDataVolumeForInstance = (
         local mountPoint=$(echo "$mountDetail" | jq -r '.mountPoint')
         local mountProtocol=$(echo "$mountDetail" | jq -r '.protocol')
         local isAsm=$(echo "$mountDetail" | jq -r '.isAsmManaged')
+        local copiesCount=$(echo "$mountDetail" | jq -r '.copiesCount // 0')
         local volumeName
         local volumeId
         local lunName
@@ -1389,7 +1470,7 @@ const getMappedOntapDataVolumeForInstance = (
         if [ "$mountProtocol" == "iSCSI" ]; then
             # For iSCSI, extract LUN details
             lunName=$(echo "$response" | jq -r '.records[0].name')
-            volumeEntry="{\\"volumeName\\": \\"$volumeName\\",\\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\", \\"svmId\\": \\"$svmId\\", \\"lunName\\": \\"$lunName\\", \\"lunId\\": \\"$lunId\\"}"
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\",\\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\", \\"svmId\\": \\"$svmId\\", \\"lunName\\": \\"$lunName\\", \\"lunId\\": \\"$lunId\\", \\"copiesCount\\": $copiesCount}"
 
             lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
             if [ -z "$lunExists" ]; then
@@ -1400,7 +1481,7 @@ const getMappedOntapDataVolumeForInstance = (
         else
             # For NFS
             log "Processing NFS protocol"
-            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\",\\"svmId\\": \\"$svmId\\"}"
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\",\\"svmId\\": \\"$svmId\\", \\"copiesCount\\": $copiesCount}"
             log "LUN record already exists for serial: $mountPoint"
         fi
         
