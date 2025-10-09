@@ -1,5 +1,5 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { BlueXPListeners, DsTooltipInfo, Popover, postBlueXPMessage, TooltipInfo } from '@netapp/design-system';
+import { BlueXPListeners, Popover, postBlueXPMessage, TooltipInfo } from '@netapp/design-system';
 import { TFunction } from 'i18next';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
@@ -369,7 +369,7 @@ export function getOracleDatabaseColumnsList({
                         {loading && <DsFlashingDotsLoader />}
                         {!loading && !rowData?.size && (
                             <div className={styles.databaseSize}>
-                                <DsTooltipInfo
+                                <TooltipInfo
                                     className={`${styles.databaseSizeTooltipContainer} ${styles['tooltip-icon']}`}
                                     trigger="hover"
                                 >
@@ -378,7 +378,7 @@ export function getOracleDatabaseColumnsList({
                                             {t('databases.databases-table.oracle.credentials-not-available')}
                                         </DsTypography>
                                     </div>
-                                </DsTooltipInfo>
+                                </TooltipInfo>
                                 <div className={styles.colText}>
                                     <DsTypography variant="Regular_13">
                                         {REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
@@ -411,10 +411,7 @@ export function getOracleDatabaseColumnsList({
                     <>
                         {!loading && rowData?.fsxId && (
                             <div className={styles.fsxNameContainer}>
-                                <DsTooltipInfo
-                                    className={`${styles.fsxName} ${styles['tooltip-icon']}`}
-                                    trigger="hover"
-                                >
+                                <TooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
                                     <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
                                         <DsTypography variant="Regular_13">{`ID: ${rowData?.fsxId}`}</DsTypography>
                                         <Popover
@@ -428,7 +425,7 @@ export function getOracleDatabaseColumnsList({
                                             }
                                         />
                                     </div>
-                                </DsTooltipInfo>
+                                </TooltipInfo>
                                 <div className={styles.fsxName}>
                                     <DsTypography
                                         className={styles.fsxNameText}
