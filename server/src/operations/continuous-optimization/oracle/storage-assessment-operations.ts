@@ -498,7 +498,10 @@ function prepareASMLunLayoutAssessment(
         return acc;
     }, [] as OracleVolumeRecord[]);
 
-    const lunsGroupedByDiskGroup = Object.groupBy(luns, lun => lun.diskGroup!);
+    let lunsGroupedByDiskGroup = Object.groupBy(luns, lun => lun.diskGroup!);
+    if (isDemoFlow) {
+        lunsGroupedByDiskGroup = { DISK1: Object.values(lunsGroupedByDiskGroup)[0] || [] };
+    }
 
     if (isEmpty(luns)) {
         goldenConfig = createEmptyVolumeAssessment(goldenConfig, diskGroupLabel);
@@ -1036,7 +1039,9 @@ function calculateStorageDrift(
     storageDriftData.configuration.volumes = getVolumeConfigDrift(volumeTypeMap, storageAssessmentData);
 
     const protocol = mappedOntapVolumes[fsxFileSystemId]?.protocol;
-    const isASMManaged = mappedOntapVolumes[fsxFileSystemId]?.isASMManaged;
+    const isASMManaged = isDemoFlow
+        ? Object.values(mappedOntapVolumes)[0]?.isASMManaged
+        : mappedOntapVolumes[fsxFileSystemId]?.isASMManaged;
     if (protocol === 'iSCSI') {
         storageDriftData.configuration.luns = getLunConfigDrift(storageAssessmentData);
         storageDriftData.configuration.os = getOSConfigDrift(

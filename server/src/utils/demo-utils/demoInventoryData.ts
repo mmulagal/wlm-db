@@ -703,7 +703,7 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
         [fsxId]: {
             protocol,
             lunRecords: [],
-            isASMManaged: false,
+            isASMManaged: protocol === 'iSCSI',
             volumeMappings: [
                 {
                     [oracleSid]: {
@@ -2964,6 +2964,143 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
 };
 
 const ORACLE_STORAGE_ASSESSMENT_DATA = {
+    layout: [
+        {
+            name: 'archive-placement',
+            status: 'optimized',
+            recommended: 'separate-volume',
+            severity: 'warning',
+            recommendation:
+                'Placing archive logs on a dedicated volume enhances performance and recovery processes. This isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.',
+            tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+            objectsInViolation: [],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 0
+        },
+        {
+            name: 'datafiles-placement',
+            status: 'optimized',
+            recommended: 'separate-volume-or-shared-with-control-files',
+            severity: 'warning',
+            recommendation:
+                'Placing data files on a dedicated volume or shared with control files boosts performance by isolating their random I/O from redo or archive log writes, reducing contention. This separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.',
+            tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+            objectsInViolation: [],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 0
+        },
+        {
+            name: 'controlfiles-placement',
+            status: 'not-optimized',
+            recommended: 'two-multiplexed-volumes',
+            severity: 'warning',
+            recommendation:
+                'Oracle strongly recommends multiplexing control files to avoid a single point of failure in production environments. Maintain at least two, preferably three, control file copies across separate volumes or disks to enhance redundancy and reduce the risk of losing all copies. Control files can be placed on a dedicated volume or shared with redo logs or data files, but avoid placing them on volumes tiered to object storage, such as archive volumes, as its slower access pattern is incompatible with control file performance needs.',
+            tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+            objectsInViolation: [],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 0
+        },
+        {
+            name: 'redologs-placement',
+            status: 'optimized',
+            recommended: 'separate-volume-or-shared-with-temp-control-files',
+            severity: 'warning',
+            recommendation:
+                'Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',
+            tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+            objectsInViolation: [],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 0
+        },
+        {
+            name: 'templogs-placement',
+            status: 'optimized',
+            recommended: 'separate-volume-or-shared-with-redo-control-files',
+            severity: 'warning',
+            recommendation:
+                'Placing temp logs on a dedicated volume or shared with redo/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed temp log copy should reside on a separate volume for redundancy. Frequent changes make temp logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Temp logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',
+            tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+            objectsInViolation: [],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 0
+        },
+        {
+            name: 'oracle-binary-placement',
+            status: 'optimized',
+            recommended: 'separate-volume',
+            severity: 'warning',
+            recommendation:
+                'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. This separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.',
+            tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+            objectsInViolation: [],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 0
+        },
+        {
+            name: 'data-dg-lun-layout',
+            status: 'not-optimized',
+            recommended: 'associated-lun-count',
+            severity: 'warning',
+            recommendation:
+                'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.',
+            tags: ['Operational excellence', 'Performance efficiency'],
+            objectsInViolation: ['DISK1'],
+            violationDetails: [
+                {
+                    objectName: 'DISK1',
+                    value: '1',
+                    objectType: 'Disk Group',
+                    recommended: '4',
+                    dataCategory: 'Data'
+                }
+            ],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 1
+        },
+        {
+            name: 'redolog-dg-lun-layout',
+            status: 'not-optimized',
+            recommended: 'associated-lun-count',
+            severity: 'warning',
+            recommendation:
+                'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.',
+            tags: ['Operational excellence', 'Performance efficiency'],
+            objectsInViolation: ['DISK1'],
+            violationDetails: [
+                {
+                    objectName: 'DISK1',
+                    value: '1',
+                    objectType: 'Disk Group',
+                    recommended: '2',
+                    dataCategory: 'Redo Log'
+                }
+            ],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 1
+        },
+        {
+            name: 'archivelog-dg-lun-layout',
+            status: 'not-optimized',
+            recommended: 'associated-lun-count',
+            severity: 'warning',
+            recommendation:
+                'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.',
+            tags: ['Operational excellence', 'Performance efficiency'],
+            objectsInViolation: ['DISK1'],
+            violationDetails: [
+                {
+                    objectName: 'DISK1',
+                    value: '1',
+                    objectType: 'Disk Group',
+                    recommended: '2',
+                    dataCategory: 'Archive Log'
+                }
+            ],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 1
+        }
+    ],
     volumes: {
         data: [
             {

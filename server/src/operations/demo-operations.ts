@@ -88,7 +88,7 @@ import {
     LicenseDriftResponseType,
     StorageParameterDriftResponseType
 } from '../routes/types/mssql-continuous-optimisation.types';
-import { OracleDeploymentTenacy } from './workloads/oracle/consts';
+import { OracleDeploymentTenacy, STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS } from './workloads/oracle/consts';
 import { OracleDriftAssessmentResponseType } from '../routes/types/oracle-continuous-optimization.types';
 
 const logger = getLogger();
@@ -1447,17 +1447,18 @@ function handleGetOracleAssessmentForDemo(
     const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
     const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
     const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+    const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
+        configArray?.map(config => {
+            if (optimizedConfigs.includes(config.name)) {
+                config.status = AssessmentStatus.OPTIMIZED;
+                config.objectsInViolation = [];
+                config.violationDetails = [];
+                config.totalObjectsInViolation = 0;
+            }
+            return config;
+        });
 
     if (storageConfigsOptimized.length > 0) {
-        const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
-            configArray?.map(config => {
-                if (optimizedConfigs.includes(config.name)) {
-                    config.status = AssessmentStatus.OPTIMIZED;
-                    config.objectsInViolation = [];
-                }
-                return config;
-            });
-
         storageAssessmentResponse.configuration.volumes = optimizeConfig(
             storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
             storageConfigsOptimized
@@ -1467,6 +1468,19 @@ function handleGetOracleAssessmentForDemo(
             storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
             storageConfigsOptimized
         );
+    }
+
+    if (storageAssessmentResponse.layout) {
+        if (assessmentData.storageProtocol !== STORAGE_PROTOCOLS.ISCSI) {
+            storageAssessmentResponse.layout = storageAssessmentResponse.layout.filter(
+                assm => !STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS.includes(assm.name)
+            );
+        } else if (storageConfigsOptimized.length > 0) {
+            storageAssessmentResponse.layout = optimizeConfig(
+                storageAssessmentResponse.layout as ParameterDriftResponseType[],
+                storageConfigsOptimized
+            );
+        }
     }
 
     if (osConfigsOptimized.length > 0) {

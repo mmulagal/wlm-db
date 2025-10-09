@@ -9,17 +9,16 @@ import {
     OptimizeStorageRequestParams
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
-import GOLDEN_CONFIG from './golden-config';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getInstanceInfo } from '../../database/database-operations';
 import { fetchOracleDriftAssessment, triggerOracleAssessment } from './assessment-operations';
-import { DatabaseInstancesIncludingResource, Metadata } from '../../../utils/common-types';
+import { DatabaseInstanceMetadata, DatabaseInstancesIncludingResource, Metadata } from '../../../utils/common-types';
 import {
     OracleGenericParameterDriftResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import { sqlResponseParsing } from '../../../utils/utils';
+import { isDemo, sqlResponseParsing } from '../../../utils/utils';
 import {
     addDiskToDiskGroups,
     createAndMapLunsForDiskGroups,
@@ -31,8 +30,11 @@ import { mapVolumeTypesToIdName } from './storage-assessment-operations';
 import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
 import { UnOptimizedDiskGroups } from '../assessment-utils';
 import { CUSTOM_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
+import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
+import GOLDEN_CONFIG from './golden-config';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 const STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS = [
     GOLDEN_CONFIG.dataDiskLunLayout.name,
     GOLDEN_CONFIG.redoLogDiskLunLayout.name,
@@ -242,7 +244,8 @@ async function triggerAssessmentAndStartOptimization(
         database_instance_id: databaseInstanceId,
         account_id: accountId,
         credentials_id: credentialsId,
-        resource_id: resourceId
+        resource_id: resourceId,
+        metadata: instanceMetadata
     } = managedInstance;
 
     let parentJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
@@ -273,6 +276,7 @@ async function triggerAssessmentAndStartOptimization(
         );
 
         const unOptimizedDiskGroups: UnOptimizedDiskGroups[] = [];
+        const targetConfigNamesForDemo: string[] = [];
         lunLayoutDrift.forEach(lunDrift => {
             const targetConfig = storageLayoutTargets.find(target => target.configurationName === lunDrift.name);
             if (targetConfig) {
@@ -287,8 +291,19 @@ async function triggerAssessmentAndStartOptimization(
                         }
                     }
                 });
+                targetConfigNamesForDemo.push(targetConfig.configurationName);
             }
         });
+
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                targetConfigNamesForDemo,
+                'STORAGE',
+                instanceMetadata as DatabaseInstanceMetadata
+            );
+        }
 
         if (unOptimizedDiskGroups.length > 0) {
             await handleDiskgroupOptimization(managedInstance, unOptimizedDiskGroups, parentJobId);

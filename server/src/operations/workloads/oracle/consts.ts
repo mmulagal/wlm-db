@@ -3,6 +3,13 @@ const SSM_RUN_SHELL_SCRIPT_DOC_VERSION = '1';
 const ORACLE_DEFAULT_PDB = 'PDB$SEED';
 const MAX_LUNS_PER_DG = 8;
 
+const STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS = [
+    'data-dg-lun-layout',
+    'redolog-dg-lun-layout',
+    'fra-dg-lun-layout',
+    'archivelog-dg-lun-layout'
+];
+
 enum MIN_OPTIMAL_LUN_PER_DG {
     DATA = 4,
     LOG_RECOVERY = 2
@@ -41,5 +48,6 @@ export {
     ORACLE_DEFAULT_PDB,
     MIN_OPTIMAL_LUN_PER_DG,
     MAX_LUNS_PER_DG,
-    pythonRelativePaths
+    pythonRelativePaths,
+    STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS
 };

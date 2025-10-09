@@ -1085,7 +1085,8 @@ async function getOracleDatabaseMappedVolumes(
                         if (isDemoFlow) {
                             parsedMappedVolRes = {
                                 ...parsedMappedVolRes,
-                                protocol: instance.storage_protocol
+                                protocol: instance.storage_protocol,
+                                isASMManaged: instance.storage_protocol === 'iSCSI'
                             } as OracleInstanceMountpointResponse;
                         }
                         instanceToFsxnMap.get(instanceId)!.set(fsxId, parsedMappedVolRes);
