@@ -977,8 +977,13 @@ async function getOracleDatabaseHostInstanceSummary(
             undefined,
             true
         );
+        let tenancy = (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType;
+        if (databaseInstanceSummary?.databases) {
+            const isCDB = databaseInstanceSummary.databases.some(db => db.type === 'CDB' || db.type === 'PDB');
+            tenancy = isCDB ? OracleDeploymentTenacy.MULTI_TENANT : OracleDeploymentTenacy.SINGLE_TENANT;
+        }
         return {
-            tenancy: (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType,
+            tenancy,
             ...databaseInstanceSummary
         };
     } catch (error) {

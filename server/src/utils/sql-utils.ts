@@ -157,7 +157,11 @@ function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseT
                 tenancy?: string
             ) => {
                 volumeRecords.forEach((record: OracleVolumeRecord) => {
-                    if (!combinedOntapVolumes.some(v => v.id === record.volumeId)) {
+                    if (
+                        record?.volumeId &&
+                        record?.volumeId !== 'null' &&
+                        !combinedOntapVolumes.some(v => v.id === record.volumeId)
+                    ) {
                         luns = luns.some(lun => lun.id === record.lunId)
                             ? luns
                             : [...luns, { id: record.lunId, name: record.lunName }];
