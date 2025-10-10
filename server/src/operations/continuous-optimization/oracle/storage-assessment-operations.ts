@@ -3,7 +3,7 @@ import { isEmpty, uniqBy } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
-import { ASSESSMENT_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
+import { ASSESSMENT_SSM_EXECUTION_TIMEOUT, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
@@ -498,11 +498,7 @@ function prepareASMLunLayoutAssessment(
         return acc;
     }, [] as OracleVolumeRecord[]);
 
-    let lunsGroupedByDiskGroup = Object.groupBy(luns, lun => lun.diskGroup!);
-    if (isDemoFlow) {
-        lunsGroupedByDiskGroup = { DISK1: Object.values(lunsGroupedByDiskGroup)[0] || [] };
-    }
-
+    const lunsGroupedByDiskGroup = Object.groupBy(luns, lun => lun.diskGroup!);
     if (isEmpty(luns)) {
         goldenConfig = createEmptyVolumeAssessment(goldenConfig, diskGroupLabel);
     } else {
@@ -1039,10 +1035,8 @@ function calculateStorageDrift(
     storageDriftData.configuration.volumes = getVolumeConfigDrift(volumeTypeMap, storageAssessmentData);
 
     const protocol = mappedOntapVolumes[fsxFileSystemId]?.protocol;
-    const isASMManaged = isDemoFlow
-        ? Object.values(mappedOntapVolumes)[0]?.isASMManaged
-        : mappedOntapVolumes[fsxFileSystemId]?.isASMManaged;
-    if (protocol === 'iSCSI') {
+    const isASMManaged = mappedOntapVolumes[fsxFileSystemId]?.isASMManaged;
+    if (protocol === STORAGE_PROTOCOLS.ISCSI) {
         storageDriftData.configuration.luns = getLunConfigDrift(storageAssessmentData);
         storageDriftData.configuration.os = getOSConfigDrift(
             ec2InstanceId,

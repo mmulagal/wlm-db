@@ -9,7 +9,8 @@ import {
     ONLINE,
     ORACLE_DATABASE_INSTANCE_INDEX_MAPPING,
     ORACLE_INSTANCE_STATE,
-    ServerState
+    ServerState,
+    STORAGE_PROTOCOLS
 } from '../../../utils/consts';
 import getLogger from '../../../utils/logger';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
@@ -1086,7 +1087,7 @@ async function getOracleDatabaseMappedVolumes(
                             parsedMappedVolRes = {
                                 ...parsedMappedVolRes,
                                 protocol: instance.storage_protocol,
-                                isASMManaged: instance.storage_protocol === 'iSCSI'
+                                isASMManaged: instance.storage_protocol === STORAGE_PROTOCOLS.ISCSI
                             } as OracleInstanceMountpointResponse;
                         }
                         instanceToFsxnMap.get(instanceId)!.set(fsxId, parsedMappedVolRes);

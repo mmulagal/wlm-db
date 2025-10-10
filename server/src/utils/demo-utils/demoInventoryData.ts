@@ -1,4 +1,5 @@
 import { DiscoverMsSqlResponseBodyType } from '../../routes/types/discover.types';
+import { STORAGE_PROTOCOLS } from '../consts';
 
 const MANAGE_READINESS = {
     missingSqlCmd: false,
@@ -703,7 +704,7 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
         [fsxId]: {
             protocol,
             lunRecords: [],
-            isASMManaged: protocol === 'iSCSI',
+            isASMManaged: protocol === STORAGE_PROTOCOLS.ISCSI,
             volumeMappings: [
                 {
                     [oracleSid]: {
@@ -723,7 +724,10 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
                 volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                 volumeName: 'oracleredo2',
                 lunName: '/vol/wlmdb_oracleredo_1735809893269/lun1',
-                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7a'
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                diskGroup: 'DISK1',
+                diskName: 'DISK1',
+                copiesCount: 1
             }
         ],
         DATA_FILES: [
@@ -733,7 +737,10 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
                 volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                 volumeName: 'oracledata2',
                 lunName: '/vol/wlmdb_oracledata_1735809893269/lun2',
-                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7b'
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7b',
+                diskGroup: 'DISK2',
+                diskName: 'DISK1',
+                copiesCount: 1
             }
         ],
         TEMP_FILES: [
@@ -743,7 +750,10 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
                 volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                 volumeName: 'oracleredo2',
                 lunName: '/vol/wlmdb_oracletemp_1735809893269/lun3',
-                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7c'
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7c',
+                diskGroup: 'DISK3',
+                diskName: 'DISK1',
+                copiesCount: 1
             }
         ],
         ARCHIVE_LOGS: [
@@ -753,7 +763,10 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
                 volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
                 volumeName: 'oraclearch2',
                 lunName: '/vol/wlmdb_oraclearch_1735809893269/lun4',
-                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d'
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d',
+                diskGroup: 'DISK4',
+                diskName: 'DISK1',
+                copiesCount: 1
             }
         ],
         CONTROL_FILES: [
@@ -763,7 +776,10 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
                 volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                 volumeName: 'oracledata2',
                 lunName: '/vol/wlmdb_oraclectrl_1735809893269/lun5',
-                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7e'
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7e',
+                diskGroup: 'DISK5',
+                diskName: 'DISK1',
+                copiesCount: 1
             }
         ]
     };

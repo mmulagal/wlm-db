@@ -1329,15 +1329,6 @@ function handleGetMssqlAssessmentForDemo(
         const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
 
         if (storageConfigsOptimized.length > 0) {
-            const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
-                configArray.map(config => {
-                    if (optimizedConfigs.includes(config.name)) {
-                        config.status = AssessmentStatus.OPTIMIZED;
-                        config.objectsInViolation = [];
-                    }
-                    return config;
-                });
-
             storageAssessmentResponse.configuration.volumes = optimizeConfig(
                 storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
                 storageConfigsOptimized
@@ -1447,17 +1438,6 @@ function handleGetOracleAssessmentForDemo(
     const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
     const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
     const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
-    const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
-        configArray?.map(config => {
-            if (optimizedConfigs.includes(config.name)) {
-                config.status = AssessmentStatus.OPTIMIZED;
-                config.objectsInViolation = [];
-                config.violationDetails = [];
-                config.totalObjectsInViolation = 0;
-            }
-            return config;
-        });
-
     if (storageConfigsOptimized.length > 0) {
         storageAssessmentResponse.configuration.volumes = optimizeConfig(
             storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
@@ -1508,6 +1488,18 @@ function handleGetOracleAssessmentForDemo(
     assessmentData.storage = storageAssessmentResponse;
 
     return assessmentData;
+}
+
+function optimizeConfig(configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) {
+    return configArray.map(config => {
+        if (optimizedConfigs.includes(config.name)) {
+            config.status = AssessmentStatus.OPTIMIZED;
+            config.objectsInViolation = [];
+            config.violationDetails = [];
+            config.totalObjectsInViolation = 0;
+        }
+        return config;
+    });
 }
 
 export {
