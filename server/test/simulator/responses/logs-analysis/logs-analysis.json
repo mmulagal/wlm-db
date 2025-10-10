@@ -1,678 +1,1876 @@
 {
     "remediationRecommendation": [
         {
-            "error": "Error: 25607, Severity: 24, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "The Extended Event engine has been disabled by startup options. This indicates that SQL Server was started with the -T7806 trace flag or another option that disables the Extended Events engine. Features that rely on Extended Events will not function properly.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 17054, Severity: 16, State: 1.",
+            "cause": "The current event was not reported to the operating system error log due to an operating system error. This typically occurs when the Windows Event Log is full or there are permissions issues preventing SQL Server from writing to the event log.",
             "count": 48,
             "remediation": [
-                "Remove the -T7806 trace flag from SQL Server startup parameters in SQL Server Configuration Manager.",
-                "Restart the SQL Server service after removing the trace flag to enable the Extended Events engine.",
-                "Check for other startup parameters that might be disabling Extended Events by reviewing the SQL Server error log.",
-                "Verify if this trace flag was intentionally set for a specific purpose, as it's uncommon to disable Extended Events in production environments.",
-                "After enabling Extended Events, verify functionality by creating a test Extended Event session."
+                "Check Windows Event Log capacity and clear old entries if the Application log is full to allow SQL Server to write new events",
+                "Verify that the SQL Server service account has proper permissions to write to the Windows Event Log",
+                "Review the failed query 'sys.dm_os_ring_buffers' which shows 'Invalid column name record_type' - this suggests using an incorrect DMV structure for the SQL Server version",
+                "Replace the problematic ring buffer query with a version-appropriate alternative such as querying sys.dm_os_ring_buffers with correct column names for your SQL Server version",
+                "Monitor the SQL Server error log directly using sp_readerrorlog as an alternative to Windows Event Log when event logging issues persist"
             ],
-            "severity": "24",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "25607",
+            "context": "2025-10-09 01:20:17.42 spid14s     Error: 17054, Severity: 16, State: 1.\n2025-10-09 01:20:17.42 spid14s     The current event was not reported to the operating system error log. Operating system error = (null). You may need to clear the operating system error log if it is full.",
+            "severity": "16",
+            "firstOccurrence": 1759972817420,
+            "lastOccurrence": 1759971378780,
+            "errorCode": "17054",
+            "uniqueErrorKey": "17054",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, value, value_in_use, description FROM sys.configurations WHERE name IN ('xp_cmdshell', 'Ole Automation Procedures') FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 log_date, process_info, text FROM sys.dm_os_ring_buffers CROSS APPLY (SELECT CAST(record as XML) as record_xml) as tab1 CROSS APPLY (SELECT log_date = record_xml.value('(Record/@time)[1]', 'datetime'), process_info = record_xml.value('(Record/Error/@source)[1]', 'varchar(255)'), text = record_xml.value('(Record/Error/Stack)[1]', 'varchar(max)')) as tab2 WHERE record_type = 'RING_BUFFER_EXCEPTION' ORDER BY log_date DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, blocking_session_id, wait_type, wait_time, last_wait_type FROM sys.dm_exec_requests WHERE session_id > 50 FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 2 },
-                { "hour": 1740448800000, "count": 0 },
-                { "hour": 1740452400000, "count": 5 },
-                { "hour": 1740456000000, "count": 0 },
-                { "hour": 1740459600000, "count": 6 },
-                { "hour": 1740463200000, "count": 1 },
-                { "hour": 1740466800000, "count": 0 },
-                { "hour": 1740470400000, "count": 4 },
-                { "hour": 1740474000000, "count": 6 },
-                { "hour": 1740477600000, "count": 0 },
-                { "hour": 1740481200000, "count": 6 },
-                { "hour": 1740484800000, "count": 0 },
-                { "hour": 1740488400000, "count": 5 },
-                { "hour": 1740492000000, "count": 0 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 0 },
-                { "hour": 1740502800000, "count": 0 },
-                { "hour": 1740506400000, "count": 0 },
-                { "hour": 1740510000000, "count": 0 },
-                { "hour": 1740513600000, "count": 6 },
-                { "hour": 1740517200000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 5
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 5
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 26079, Severity: 22, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "SQL Server TCP provider has stopped listening on port 0 due to a CreateSocket failure. This typically indicates a network-related issue, possibly due to port conflicts, network connectivity problems, or insufficient resources. Since this is running on AWS FSx for NetApp ONTAP, it could be related to storage network connectivity issues.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 25606, Severity: 17, State: 1.",
+            "cause": "The Extended Event engine could not be initialized. This error typically occurs when SQL Server cannot start the Extended Events subsystem due to insufficient system resources, file system issues, or problems with the underlying storage infrastructure. Given that this system uses AWS FSx for NetApp ONTAP, this could be related to storage connectivity, permissions, or resource constraints.",
             "count": 36,
             "remediation": [
-                "Restart the SQL Server service to re-establish TCP connections and socket bindings.",
-                "Verify network connectivity between the SQL Server instance and the AWS FSx for NetApp ONTAP storage system.",
-                "Check Windows Event Logs for any network-related errors that might provide additional context.",
-                "Ensure that the SQL Server port (default 1433) is not being blocked by a firewall or security group.",
-                "Verify that the SQL Server configuration allows TCP/IP connections in SQL Server Configuration Manager.",
-                "Check for resource contention on the AWS FSx for NetApp ONTAP system that might be affecting network performance.",
-                "Review SQL Server error logs for additional details about the CreateSocket failure.",
-                "Ensure that the service account running SQL Server has appropriate network permissions."
+                "XE_TIMER_EVENT shows 47.7 million ms of wait time with high signal wait time (47.7 million ms), indicating Extended Events timer processing delays. Restart SQL Server service to reinitialize Extended Events subsystem.",
+                "XE_DISPATCHER_WAIT shows 47.7 million ms of wait time with 0 signal wait time, suggesting Extended Events dispatcher threads are blocked. Check for storage I/O issues on AWS FSx for NetApp ONTAP volumes.",
+                "Multiple queries are failing due to invalid column names, indicating potential SQL Server version compatibility issues or system catalog corruption. Run DBCC CHECKDB on system databases to verify integrity.",
+                "PREEMPTIVE_XE_GETTARGETSTATE waits indicate Extended Events target state retrieval issues. Verify AWS FSx storage permissions and connectivity for Extended Events log file locations.",
+                "Consider disabling non-essential Extended Events sessions temporarily and re-enable them one by one to identify problematic sessions causing the initialization failure."
             ],
-            "severity": "22",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "26079",
+            "context": "2025-10-09 14:42:38.24 spid53      Error: 25606, Severity: 17, State: 1.\n2025-10-09 14:42:38.24 spid53      The Extended Event engine could not be initialized. Check the SQL Server error log and the operating system error log for information about possible related problems.",
+            "severity": "17",
+            "firstOccurrence": 1760020958240,
+            "lastOccurrence": 1760020958240,
+            "errorCode": "25606",
+            "uniqueErrorKey": "25606",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, state_desc, is_default FROM sys.server_event_sessions FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 type_desc, pages_kb, virtual_memory_reserved_kb FROM sys.dm_os_memory_clerks WHERE type LIKE '%XE%' ORDER BY pages_kb DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 wait_type, waiting_tasks_count, wait_time_ms, signal_wait_time_ms FROM sys.dm_os_wait_stats WHERE wait_type LIKE '%XE%' OR wait_type LIKE '%EVENT%' ORDER BY wait_time_ms DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, status, cpu_time, memory_usage, reads, writes FROM sys.dm_exec_requests WHERE session_id = 53 FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 1 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 1 },
-                { "hour": 1740456000000, "count": 2 },
-                { "hour": 1740459600000, "count": 1 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 1 },
-                { "hour": 1740470400000, "count": 2 },
-                { "hour": 1740474000000, "count": 1 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 1 },
-                { "hour": 1740484800000, "count": 2 },
-                { "hour": 1740488400000, "count": 1 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 1 },
-                { "hour": 1740499200000, "count": 2 },
-                { "hour": 1740502800000, "count": 1 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 1 },
-                { "hour": 1740513600000, "count": 2 },
-                { "hour": 1740517200000, "count": 1 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 1 },
-                { "hour": 1740528000000, "count": 2 }
+                {
+                    "hour": 1740445200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 2
+                }
             ]
         },
         {
-            "error": "Error: 30038, Severity: 21, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "Full-text index corruption has occurred during compression or decompression operations. This is a serious error that indicates the full-text index may be corrupted on disk, potentially affecting search functionality in the database.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 25607, Severity: 17, State: 1.",
+            "cause": "The Extended Event engine has been disabled by startup options. This error occurs when SQL Server's Extended Events feature is disabled through startup parameters, which can affect monitoring and diagnostic capabilities that depend on Extended Events functionality.",
             "count": 51,
             "remediation": [
-                "Run DBCC CHECKDB to verify the overall database integrity and identify any additional corruption issues",
-                "Rebuild the affected full-text catalog using ALTER FULLTEXT CATALOG [catalog_name] REBUILD command",
-                "If rebuilding fails, consider dropping and recreating the full-text index for the affected table(s)",
-                "Check for disk issues on the AWS FSx for NetApp ONTAP storage, as underlying storage problems can cause index corruption",
-                "Ensure SQL Server has the latest service pack and cumulative updates applied, as some full-text corruption issues have been fixed in updates",
-                "Review and increase the error log retention to capture more details about when and how the corruption occurred",
-                "Consider restoring from a backup if the corruption cannot be resolved through rebuilding"
+                "Check SQL Server startup parameters for '-X' flag which disables Extended Events and remove it if present",
+                "Restart SQL Server service after removing the Extended Events disable parameter to re-enable functionality",
+                "Verify Extended Events configuration by querying sys.configurations after restart to ensure extended events are enabled",
+                "Update diagnostic queries to use correct column names - 'create_time' and 'modify_date' are invalid for sys.server_event_sessions, use 'name' only or check SQL Server version compatibility",
+                "Replace invalid columns 'is_clustered' and 'server_memory_limit_mb' in sys.dm_os_sys_info query with valid columns like 'sqlserver_start_time' and 'physical_memory_kb'",
+                "Consider upgrading SQL Server version if using older version that lacks these Extended Events DMV columns"
             ],
-            "severity": "21",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "30038",
+            "context": "2025-10-09 14:42:40.26 spid53      Error: 25607, Severity: 17, State: 1.\n2025-10-09 14:42:40.26 spid53      The Extended Event engine has been disabled by startup options.  Features that depend on Extended Events may fail to start.",
+            "severity": "17",
+            "firstOccurrence": 1760020960260,
+            "lastOccurrence": 1760020960260,
+            "errorCode": "25607",
+            "uniqueErrorKey": "25607",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, value, value_in_use, description FROM sys.configurations WHERE name LIKE '%extended%' OR name LIKE '%event%' FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT sqlserver_start_time, is_clustered, server_memory_limit_mb FROM sys.dm_os_sys_info FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 5 name, create_time, modify_date FROM sys.server_event_sessions FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 4 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 3 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 25726, Severity: 17, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "The SQL Server Extended Events session has too many outstanding events in the data stream. This occurs when events are generated faster than they can be processed or consumed, causing the buffer to overflow. This is typically seen in high-volume Extended Events sessions with insufficient filtering or when the consumer application isn't processing events quickly enough.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 25608, Severity: 17, State: 1.",
+            "cause": "The Extended Event engine could not allocate record for local thread/fiber. This error indicates memory pressure or resource exhaustion in the Extended Events subsystem, which can occur when there is insufficient memory available for Extended Events sessions or when the system is under high load.",
             "count": 51,
             "remediation": [
-                "Increase the buffer size for the affected Extended Events session using ALTER EVENT SESSION to prevent overflow",
-                "Add more targeted filters to your Extended Events session to reduce the volume of captured events",
-                "Consider using event_retention_mode = ALLOW_SINGLE_EVENT_LOSS or event_retention_mode = ALLOW_MULTIPLE_EVENT_LOSS to prevent session blocking",
-                "Implement a more efficient consumer application that can process events at a faster rate",
-                "Check if there are any blocked processes that might be generating excessive events by configuring 'blocked process threshold' properly",
-                "Review your Extended Events session configuration for any high-frequency events that could be excluded",
-                "For AWS FSx storage environments, ensure the storage throughput capacity is sufficient for the I/O demands of the Extended Events session"
+                "One MEMORYCLERK_XE_BUFFER shows 12,672 KB of virtual memory committed. Consider reducing Extended Events session buffer sizes or memory allocation limits.",
+                "MEMORYCLERK_SQLQUERYEXEC is consuming 584 KB which may indicate query execution pressure. Monitor concurrent query execution and consider optimizing resource-intensive queries.",
+                "All Extended Events sessions (hkenginexesession, system_health, sp_server_diagnostics session, telemetry_xevents) show 0 dropped events/buffers, but consider temporarily disabling non-critical XE sessions like telemetry_xevents to reduce memory pressure.",
+                "Despite system showing 'Available physical memory is high' with 5GB available, the XE subsystem may have internal memory limits. Review and adjust max_memory and max_event_size settings for active Extended Events sessions.",
+                "Monitor sys.dm_xe_sessions for increasing dropped_event_count and dropped_buffer_count values to identify which sessions are experiencing resource pressure."
             ],
-            "severity": "19",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "25726",
+            "context": "2025-10-09 14:42:42.27 spid53      Error: 25608, Severity: 17, State: 1.\n2025-10-09 14:42:42.27 spid53      The Extended Event engine could not allocate record for local thread/fiber.",
+            "severity": "17",
+            "firstOccurrence": 1760020962270,
+            "lastOccurrence": 1760020962270,
+            "errorCode": "25608",
+            "uniqueErrorKey": "25608",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 type, pages_kb, virtual_memory_reserved_kb, virtual_memory_committed_kb FROM sys.dm_os_memory_clerks WHERE type LIKE '%XE%' OR type LIKE '%EVENT%' ORDER BY pages_kb DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 name, create_time, dropped_event_count, dropped_buffer_count FROM sys.dm_xe_sessions FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 total_physical_memory_kb, available_physical_memory_kb, total_page_file_kb, available_page_file_kb, system_memory_state_desc FROM sys.dm_os_sys_memory FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 4 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 3 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 25729, Severity: 18, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "The event data stream was disconnected due to an internal error. This is typically related to network connectivity issues, storage subsystem problems, or resource constraints affecting SQL Server's ability to maintain event data streams. Since you're using AWS FSx for NetApp ONTAP as storage, this could indicate an issue with the storage connectivity or performance.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 25699, Severity: 17, State: 1.",
+            "cause": "The Extended Event engine failed unexpectedly while performing an operation. This indicates an internal failure in the Extended Events subsystem, which could be due to corrupted session configurations, resource constraints, or issues with the underlying storage system.",
             "count": 49,
             "remediation": [
-                "Investigate high wait times for HADR_FILESTREAM_IOMGR_IOCOMPLETION (53,370,236ms) which suggests file I/O issues with the AWS FSx storage.",
-                "Check network connectivity between SQL Server and the FSx for NetApp ONTAP storage - the high wait times indicate potential latency or connection issues.",
-                "Review the I/O statistics showing multiple database files with high stall times, particularly database ID 3, file 1 with 664ms of I/O stall time.",
-                "Consider increasing the FSx for NetApp ONTAP throughput capacity if I/O bottlenecks persist.",
-                "Monitor PAGEIOLATCH_SH waits (2,103ms) which indicate potential disk I/O bottlenecks when reading data pages.",
-                "Verify AWS FSx for NetApp ONTAP service health in the AWS console and check for any maintenance events or service disruptions.",
-                "Review SQL Server error logs for additional connectivity errors that might provide more context about the disconnection."
+                "The queries are using incorrect column names for sys.server_event_sessions. Use correct column names: 'name' exists but 'create_time' and 'startup_state_desc' do not. Query sys.server_event_sessions with valid columns only.",
+                "The target_data column does not exist in sys.server_event_session_targets. Use sys.dm_xe_session_targets instead for target configuration data.",
+                "MEMORYCLERK_XE_BUFFER shows 12,672 KB of virtual memory committed. Monitor XE buffer memory usage and consider reducing Extended Events session buffer sizes if memory pressure exists.",
+                "Stop and restart problematic Extended Events sessions to clear potential corruption: ALTER EVENT SESSION [session_name] ON SERVER STATE = STOP; ALTER EVENT SESSION [session_name] ON SERVER STATE = START;",
+                "Check AWS FSx for NetApp ONTAP storage performance and connectivity as Extended Events write to storage and storage issues can cause XE engine failures."
             ],
-            "severity": "18",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "25729",
+            "context": "2025-10-09 14:42:46.31 spid53      Error: 25699, Severity: 17, State: 1.\n2025-10-09 14:42:46.31 spid53      The Extended Event engine failed unexpectedly while performing an operation.",
+            "severity": "17",
+            "firstOccurrence": 1760020966310,
+            "lastOccurrence": 1760020966310,
+            "errorCode": "25699",
+            "uniqueErrorKey": "25699",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, create_time, startup_state, startup_state_desc FROM sys.server_event_sessions FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 s.name as session_name, t.name as target_name, t.target_data FROM sys.server_event_sessions s JOIN sys.server_event_session_targets t ON s.event_session_id = t.event_session_id FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 type, pages_kb, virtual_memory_reserved_kb, virtual_memory_committed_kb FROM sys.dm_os_memory_clerks WHERE type LIKE '%XE%' ORDER BY pages_kb DESC FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 3 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 2 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 30029, Severity: 17, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "The full-text host controller failed to start. This error indicates an issue with the SQL Server Full-Text Search service. The error code 0x(null) suggests that the service could not initialize properly, possibly due to configuration issues, service account permissions, or underlying file system problems.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 25726, Severity: 17, State: 1.",
+            "cause": "The event data stream was disconnected because there were too many outstanding events in an Extended Events session. This occurs when the session is capturing more events than it can process, typically due to insufficient filtering or too many events/actions configured.",
             "count": 50,
             "remediation": [
-                "Check if the SQL Server Full-Text Filter Daemon Launcher service is running in Windows Services. If not, start it and ensure it's set to Automatic startup.",
-                "Verify that the SQL Server service account has sufficient permissions to access the full-text catalog directories on the AWS FSx for NetApp ONTAP storage.",
-                "Examine the SQL Server error logs for additional details about the full-text service failure using EXEC sp_readerrorlog.",
-                "Rebuild the full-text catalogs using 'ALTER FULLTEXT CATALOG [catalog_name] REBUILD' for affected databases.",
-                "Check for I/O latency issues with the FSx storage, as indicated by the high wait times for HADR_FILESTREAM_IOMGR_IOCOMPLETION (53370236ms) in the wait stats.",
-                "Ensure that the SQL Server service account has the 'Lock pages in memory' privilege if using enterprise features.",
-                "Verify network connectivity between the SQL Server and the FSx for NetApp ONTAP storage, as network issues can impact full-text operations.",
-                "Consider restarting the SQL Server instance if other remediation steps don't resolve the issue."
+                "Increase max_memory for system_health session from current 4096KB to 8192KB or higher using ALTER EVENT SESSION system_health ON SERVER WITH (MAX_MEMORY=8192KB)",
+                "Reduce max_dispatch_latency for system_health session from 120000ms to 60000ms to process events faster using ALTER EVENT SESSION system_health ON SERVER WITH (MAX_DISPATCH_LATENCY=60000)",
+                "Add more restrictive predicates to system_health events, particularly for wait_info events which currently capture waits >15000ms - consider increasing threshold to 30000ms",
+                "Consider disabling non-critical events in system_health session temporarily, such as wait_info_external events which have complex predicates and may generate high volume",
+                "Monitor Extended Events session performance using sys.dm_xe_sessions and sys.dm_xe_session_targets to track memory usage and event processing rates",
+                "Fix the syntax error in the target query by using proper table aliases instead of 'set' keyword which is reserved"
             ],
+            "context": "2025-10-09 14:42:48.32 spid53      Error: 25726, Severity: 17, State: 1.\n2025-10-09 14:42:48.32 spid53      The event data stream was disconnected because there were too many outstanding events. To avoid this error either remove events or actions from your session or add a more restrictive predicate filter to your session.",
             "severity": "17",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "30029",
+            "firstOccurrence": 1760020968320,
+            "lastOccurrence": 1760020968320,
+            "errorCode": "25726",
+            "uniqueErrorKey": "25726",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 s.name, s.max_memory, s.max_dispatch_latency, s.memory_partition_mode, s.track_causality FROM sys.server_event_sessions s FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 ses.name, set.name as target_name, set.execution_count, set.target_data FROM sys.server_event_sessions ses JOIN sys.server_event_session_targets set ON ses.event_session_id = set.event_session_id FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 ses.name, see.name as event_name, see.predicate FROM sys.server_event_sessions ses JOIN sys.server_event_session_events see ON ses.event_session_id = see.event_session_id FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 4 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 3 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 3 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 28405, Severity: 15, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "This error indicates a critical failure during error handling. SQL Server encountered a second error while trying to handle an initial error, resulting in an unrecoverable state. This is a serious issue that can lead to database instability or corruption.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 25729, Severity: 17, State: 1.",
+            "cause": "The event data stream was disconnected due to an internal error. This typically occurs with Extended Events sessions when there's a problem with the event stream processing, memory pressure, or internal SQL Server issues affecting the Extended Events infrastructure.",
             "count": 49,
             "remediation": [
-                "Investigate the HADR_FILESTREAM_IOMGR_IOCOMPLETION wait type which shows the highest wait time (53,370,236ms), suggesting potential issues with FileStream operations on the AWS FSx for NetApp ONTAP storage.",
-                "Check for storage latency issues as the IO stats show significant stall time on several database files, particularly database ID 3 file 1 with 664ms of stall time.",
-                "Review SQL Server error logs to identify the initial error that triggered the cascading failure.",
-                "Consider restarting the SQL Server instance to clear the error state if it persists.",
-                "Verify that the AWS FSx for NetApp ONTAP storage is properly configured and accessible with adequate performance characteristics.",
-                "Ensure that the SQL Server service account has proper permissions on the underlying storage system.",
-                "Monitor storage performance metrics in AWS CloudWatch to identify potential bottlenecks in the FSx for NetApp ONTAP configuration.",
-                "Consider increasing the timeout values for storage operations if the environment experiences intermittent network latency."
+                "Session 53 is running as TASK MANAGER with no blocking - restart any problematic Extended Events sessions that may have disconnected",
+                "MEMORYCLERK_XE_BUFFER shows 12,672 KB of virtual memory reserved - monitor Extended Events buffer memory usage and consider reducing buffer sizes if sessions are consuming excessive memory",
+                "All current XE sessions (hkenginexesession, system_health, sp_server_diagnostics session, telemetry_xevents) show 0 dropped events and buffers - verify if any custom XE sessions were running that may have caused the disconnection",
+                "Check SQL Server error log around the time of the error for any related internal errors or memory pressure indicators that could affect Extended Events infrastructure",
+                "Consider recreating any custom Extended Events sessions with smaller buffer sizes or less frequent event capture to prevent future stream disconnections"
             ],
-            "severity": "15",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "28405",
+            "context": "2025-10-09 14:42:50.34 spid53      Error: 25729, Severity: 17, State: 1.\n2025-10-09 14:42:50.34 spid53      The event data stream was disconnected due to an internal error.",
+            "severity": "17",
+            "firstOccurrence": 1760020970340,
+            "lastOccurrence": 1760020970340,
+            "errorCode": "25729",
+            "uniqueErrorKey": "25729",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, create_time, dropped_event_count, dropped_buffer_count FROM sys.dm_xe_sessions FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 type, pages_kb, virtual_memory_reserved_kb FROM sys.dm_os_memory_clerks WHERE type LIKE '%XE%' ORDER BY pages_kb DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, blocking_session_id, wait_type, wait_time, command FROM sys.dm_exec_requests WHERE session_id = 53 FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 3 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 2 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 26040, Severity: 24, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "The SQL Server TCP provider has stopped listening on port 0 due to an AcceptEx failure. This typically indicates network connectivity issues, port conflicts, or resource constraints on the server. Since this is running on AWS FSx for NetApp ONTAP, it could be related to network configuration issues between SQL Server and the storage subsystem.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 26040, Severity: 17, State: 1.",
+            "cause": "Server TCP provider has stopped listening on port due to an AcceptEx failure. This is typically caused by network connectivity issues, port conflicts, insufficient system resources, or problems with the underlying network infrastructure. Since this system uses AWS FSx for NetApp ONTAP storage, it could also be related to storage I/O issues affecting network operations.",
             "count": 48,
             "remediation": [
-                "Check the SQL Server error log for additional details about the AcceptEx failure and related network errors.",
-                "Verify network connectivity between the SQL Server instance and the AWS FSx for NetApp ONTAP storage system.",
-                "Examine the high wait time (53,370,236 ms) for HADR_FILESTREAM_IOMGR_IOCOMPLETION, which suggests file I/O issues with the storage subsystem.",
-                "Ensure that the SQL Server service account has appropriate permissions to access the AWS FSx for NetApp ONTAP storage.",
-                "Check if there are any network throttling policies or bandwidth limitations between SQL Server and the storage system.",
-                "Verify that the SQL Server TCP/IP protocol is properly configured in SQL Server Configuration Manager.",
-                "Restart the SQL Server service to reset the TCP provider and network connections.",
-                "Review AWS FSx for NetApp ONTAP performance metrics to identify any storage latency or throughput issues.",
-                "Check if there are any AWS network security groups or firewall rules blocking SQL Server network traffic."
+                "Current user connections show 760 active connections with 2128 KB connection memory usage. Monitor if connection limits are being exceeded and consider implementing connection pooling.",
+                "Max worker threads is set to 0 (auto-configure). With high connection count, verify that worker thread exhaustion is not contributing to AcceptEx failures by monitoring sys.dm_os_schedulers.",
+                "User connections configuration is set to 0 (unlimited). Consider setting an explicit limit to prevent resource exhaustion that could cause AcceptEx failures.",
+                "Check Windows Event Logs for TCP/IP stack errors and verify that the SQL Server service account has sufficient privileges for network operations.",
+                "Since using AWS FSx for NetApp ONTAP, verify storage network connectivity and check for any I/O latency issues that might be affecting network stack performance.",
+                "Restart SQL Server service to reinitialize TCP provider and clear any corrupted network state that may be causing AcceptEx failures.",
+                "Verify that antivirus software or Windows Firewall is not interfering with SQL Server's network operations on the listening port."
             ],
-            "severity": "24",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
+            "context": "2025-10-09 14:42:52.35 spid53      Error: 26040, Severity: 17, State: 1.\n2025-10-09 14:42:52.35 spid53      Server TCP provider has stopped listening on port [ 0 ] due to an AcceptEx failure. Socket error: 0, state: (null). The server will automatically attempt to reestablish listening.",
+            "severity": "17",
+            "firstOccurrence": 1760020972350,
+            "lastOccurrence": 1760020972350,
             "errorCode": "26040",
+            "uniqueErrorKey": "26040",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, value_in_use FROM sys.configurations WHERE name IN ('max worker threads', 'user connections', 'remote access', 'network packet size') FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 protocol_desc, type_desc, port, state_desc, ip_address FROM sys.dm_exec_connections GROUP BY protocol_desc, type_desc, port, state_desc, ip_address FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 cntr_value, cntr_type FROM sys.dm_os_performance_counters WHERE counter_name IN ('User Connections', 'Logins/sec', 'Connection Memory (KB)') FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 3 },
-                { "hour": 1740448800000, "count": 1 },
-                { "hour": 1740452400000, "count": 2 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 29227, Severity: 22, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "Thread creation failed in SQL Server. This is a critical error indicating the server could not create a new thread, likely due to resource constraints such as memory pressure or reaching thread limits on the system. With AWS FSx for NetApp ONTAP as the underlying storage, this could be related to I/O operations consuming too many system resources.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 26042, Severity: 17, State: 1.",
+            "cause": "Server HTTP provider has stopped listening due to a failure. This error indicates that the SQL Server HTTP endpoint has encountered a failure and stopped accepting HTTP requests. This can be caused by network connectivity issues, SSL certificate problems, port conflicts, or underlying storage issues with AWS FSx for NetApp ONTAP affecting the HTTP service.",
             "count": 52,
             "remediation": [
-                "Check for high I/O wait statistics - HADR_FILESTREAM_IOMGR_IOCOMPLETION has 104,779 waits with 53,370,236 ms total wait time, indicating potential I/O bottlenecks with the AWS FSx storage.",
-                "Investigate memory pressure - MEMORY_ALLOCATION_EXT has 385,853 waits, suggesting memory allocation issues that may be preventing thread creation.",
-                "Review the SQL Server configuration for max worker threads and adjust if necessary to prevent thread exhaustion.",
-                "Optimize database files with high I/O - database file with ID 3, file ID 1 shows high I/O (237 reads, 110,723,072 bytes) and significant stall time (664 ms).",
-                "Consider increasing the resources allocated to your AWS FSx for NetApp ONTAP instance to handle the current workload.",
-                "Implement a monitoring solution to track thread usage and I/O patterns to identify recurring bottlenecks.",
-                "Review and optimize queries that might be causing excessive I/O operations or thread creation."
+                "No HTTP endpoints are currently configured on instance STVYK7H. Create and configure HTTP endpoints using CREATE ENDPOINT statement if HTTP connectivity is required.",
+                "Session 53 is in sleeping state with MISCELLANEOUS wait type. Monitor this session for any connection-related issues that might affect HTTP services.",
+                "The sys.dm_os_ring_buffers query failed due to invalid column names. Use correct DMV sys.dm_os_ring_buffers with valid columns like ring_buffer_address, ring_buffer_type, and record to diagnose connectivity issues.",
+                "Verify network connectivity and port availability for HTTP endpoints on the SQL Server instance.",
+                "Check AWS FSx for NetApp ONTAP storage health and network connectivity as underlying storage issues can affect HTTP service functionality."
             ],
-            "severity": "22",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "29227",
+            "context": "2025-10-09 14:42:54.37 spid53      Error: 26042, Severity: 17, State: 1.\n2025-10-09 14:42:54.37 spid53      Server HTTP provider has stopped listening due to a failure. Error: 0, state: (null). The server will automatically attempt to reestablish listening.",
+            "severity": "17",
+            "firstOccurrence": 1760020974370,
+            "lastOccurrence": 1760020974370,
+            "errorCode": "26042",
+            "uniqueErrorKey": "26042",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, protocol_desc, type_desc, state_desc, is_admin_endpoint FROM sys.endpoints WHERE type_desc = 'SERVICE_BROKER' OR protocol_desc = 'HTTP' FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, status, blocking_session_id, wait_type, wait_time, last_wait_type FROM sys.dm_exec_requests WHERE session_id = 53 FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 record_type, record_time, component, state, error FROM sys.dm_os_ring_buffers WHERE ring_buffer_type = 'RING_BUFFER_CONNECTIVITY' FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 4 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 3 },
-                { "hour": 1740456000000, "count": 2 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 26042, Severity: 19, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "The SQL Server HTTP provider has stopped listening due to a failure. This typically happens when there's an issue with the HTTP endpoint configuration, network problems, or resource constraints. The server will automatically attempt to reestablish the HTTP endpoint connection.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 26079, Severity: 17, State: 1.",
+            "cause": "Server TCP provider has stopped listening on port due to a CreateSocket failure. This indicates a network connectivity issue where SQL Server cannot create or maintain TCP socket connections, potentially due to network configuration problems, port conflicts, or underlying network infrastructure issues.",
             "count": 51,
             "remediation": [
-                "Verify HTTP endpoint configuration by running 'SELECT name, state_desc FROM sys.endpoints WHERE type_desc = \"HTTP\"' to check the current state of HTTP endpoints.",
-                "Check for network connectivity issues between SQL Server and the AWS FSx for NetApp ONTAP storage, as HTTP endpoints may be used for communication with the storage system.",
-                "Review SQL Server error logs for more detailed information about the HTTP provider failure using 'EXEC xp_readerrorlog' to find related errors.",
-                "Ensure that the SQL Server service account has the necessary permissions to access network resources and the FSx storage.",
-                "Monitor HTTP Storage performance counters which show HTTP Storage IO metrics that may indicate issues with the storage connectivity.",
-                "Restart the SQL Server service (MSSQL$SIGMA) if the HTTP endpoint cannot recover automatically.",
-                "Check if there are resource constraints as the server has only 8 GB of physical memory which might be insufficient for the workload."
+                "Enable TCP/IP protocol in SQL Server Configuration Manager as current connections show only 'Shared memory' transport, indicating TCP/IP may be disabled",
+                "Configure TCP/IP port settings in SQL Server Configuration Manager since no TCP port information is visible in current connections",
+                "Restart SQL Server service after enabling TCP/IP protocol to reinitialize network listeners",
+                "Verify Windows Firewall settings allow SQL Server TCP traffic on the configured port (typically 1433)",
+                "Check for port conflicts with other applications using netstat -an command to identify if the SQL Server port is already in use",
+                "Validate network adapter configuration and ensure the server can bind to the specified IP addresses",
+                "Review SQL Server error log for additional CreateSocket failure details that may indicate specific network binding issues"
             ],
-            "severity": "19",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "26042",
-            "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 4 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 3 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
-            ]
-        },
-        {
-            "error": "Error: 30039, Severity: 17, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "Data corruption occurred during communication between SQL Server and the full-text filter daemon host. This typically happens when a filter used for full-text indexing is malfunctioning or when there are issues with the full-text indexing process. The system will automatically retry the indexing operation with a smaller batch size.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "count": 52,
-            "remediation": [
-                "Restart the Full-Text Filter Daemon Host service (fdhost.exe) to clear any corrupted state.",
-                "Verify that all full-text filters are properly installed and registered in the system.",
-                "Check SQL Server error logs for additional information about the full-text indexing failures.",
-                "Run 'sp_fulltext_service 'restart_all_fdhosts', 1' to restart all full-text filter daemon hosts.",
-                "Consider rebuilding the affected full-text catalogs using 'ALTER FULLTEXT CATALOG [catalog_name] REBUILD'.",
-                "Ensure that the SQL Server service account has sufficient permissions to access the full-text catalog files.",
-                "Since this is running on AWS FSx for NetApp ONTAP, verify network connectivity between SQL Server and the storage system, as latency or connectivity issues could contribute to the corruption during data transfer."
-            ],
+            "context": "2025-10-09 14:43:00.42 spid53      Error: 26079, Severity: 17, State: 1.\n2025-10-09 14:43:00.42 spid53      Server TCP provider has stopped listening on port [ 0 ] due to a CreateSocket failure. Error: 0, state: (null). The server will automatically attempt to reestablish listening.",
             "severity": "17",
-            "firstOccurrence": 1750778520830,
-            "lastOccurrence": 1750778520830,
-            "errorCode": "30039",
+            "firstOccurrence": 1760020980420,
+            "lastOccurrence": 1760020980420,
+            "errorCode": "26079",
+            "uniqueErrorKey": "26079",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, value, value_in_use FROM sys.configurations WHERE name LIKE '%tcp%' OR name LIKE '%port%' FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 protocol_desc, type_desc, port, state_desc FROM sys.dm_tcp_listener_states FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 net_transport, protocol_type, auth_scheme, local_net_address, local_tcp_port FROM sys.dm_exec_connections FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 5 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 3 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 3
+                }
             ]
         },
         {
-            "error": "Error: 25699, Severity: 15, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "The Extended Event engine failed unexpectedly while performing an operation. This indicates a critical issue with SQL Server's Extended Events system, which is used for monitoring and troubleshooting SQL Server performance. This could be due to resource constraints, corruption in the Extended Events system, or underlying storage issues with AWS FSx for NetApp ONTAP.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 28405, Severity: 17, State: 1.",
+            "cause": "During error handling, a second error was raised, causing an unrecoverable failure. This is a critical system error that occurs when SQL Server encounters a secondary error while trying to handle an initial error, leading to an unrecoverable state. This can be caused by memory corruption, stack overflow, access violations, or other severe system-level issues.",
             "count": 11,
             "remediation": [
-                "Check for SQL Server updates and patches that address Extended Events engine issues. Apply any relevant updates.",
-                "Review the SQL Server error log for additional details about the Extended Events failure using EXEC sp_readerrorlog.",
-                "Verify that the AWS FSx for NetApp ONTAP storage has sufficient IOPS and throughput for SQL Server operations.",
-                "The server has only 8GB of physical memory which may be insufficient. Consider increasing memory allocation for the SQL Server instance.",
-                "Restart the Extended Events service or sessions that are experiencing issues.",
-                "Check if any HTTP-related Extended Events sessions are causing the issue as there are HTTP performance counters active.",
-                "Verify permissions on the Extended Events file targets and ensure SQL Server has proper access to storage locations.",
-                "Consider disabling problematic Extended Events sessions temporarily to isolate which one might be causing the error."
+                "Session 53 is in sleeping state with TASK MANAGER command - investigate what operations this session was performing before the error occurred",
+                "MEMORYCLERK_SOSNODE is consuming 54,688 KB of memory - monitor for memory pressure and consider increasing available memory",
+                "CACHESTORE_SQLCP is using 20,056 KB - review plan cache usage and consider clearing plan cache if memory pressure exists",
+                "MEMORYCLERK_SQLBUFFERPOOL has reserved 3,177,696 KB virtual memory but only committed 26,948 KB - investigate buffer pool configuration and memory allocation",
+                "MEMORYCLERK_SQLCLR has reserved 3,151,680 KB virtual memory but only committed 3,688 KB - review CLR memory usage and assemblies",
+                "Ring buffer and error log queries failed due to invalid column names - update diagnostic queries to use correct DMV schema for your SQL Server version",
+                "Restart SQL Server service to recover from the unrecoverable state caused by the secondary error during error handling",
+                "Run DBCC CHECKDB on all databases to identify potential corruption that may have contributed to the error cascade",
+                "Review Windows Event Log and SQL Server Error Log for additional details about the primary error that triggered the cascade failure"
             ],
-            "severity": "15",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "25699",
+            "context": "2025-10-09 14:43:02.43 spid53      Error: 28405, Severity: 17, State: 1.\n2025-10-09 14:43:02.43 spid53      During error handling, a second error was raised, causing an unrecoverable failure.",
+            "severity": "17",
+            "firstOccurrence": 1760020982430,
+            "lastOccurrence": 1760020982430,
+            "errorCode": "28405",
+            "uniqueErrorKey": "28405",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, status, command, blocking_session_id, wait_type, wait_time, cpu_time, reads, writes FROM sys.dm_exec_requests WHERE session_id = 53 FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 type, pages_kb, virtual_memory_reserved_kb, virtual_memory_committed_kb FROM sys.dm_os_memory_clerks ORDER BY pages_kb DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 type, source, description, creation_time FROM sys.dm_os_ring_buffers WHERE ring_buffer_type = 'RING_BUFFER_EXCEPTION' ORDER BY creation_time DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 5 error_number, error_severity, error_state, error_message, error_time FROM sys.dm_os_sys_info FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 1 },
-                { "hour": 1740448800000, "count": 1 },
-                { "hour": 1740452400000, "count": 0 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 1 },
-                { "hour": 1740466800000, "count": 0 },
-                { "hour": 1740470400000, "count": 0 },
-                { "hour": 1740474000000, "count": 0 },
-                { "hour": 1740477600000, "count": 1 },
-                { "hour": 1740481200000, "count": 0 },
-                { "hour": 1740484800000, "count": 0 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 1 },
-                { "hour": 1740495600000, "count": 0 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 0 },
-                { "hour": 1740506400000, "count": 1 },
-                { "hour": 1740510000000, "count": 0 },
-                { "hour": 1740513600000, "count": 0 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 0 },
-                { "hour": 1740524400000, "count": 1 },
-                { "hour": 1740528000000, "count": 2 }
+                {
+                    "hour": 1740445200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 2
+                }
             ]
         },
         {
-            "error": "Error: 25608, Severity: 24, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "The SQL Server Extended Event engine failed to allocate memory for a record in the local thread/fiber. This typically indicates memory pressure on the server or resource contention issues. Since this application uses AWS FSx for NetApp ONTAP as underlying storage, there might be storage-related resource constraints affecting SQL Server's Extended Events functionality.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 29201, Severity: 17, State: 1.",
+            "cause": "Configuration manager enlistment cannot initialize communication service to receive enlistment requests. This error typically occurs when SQL Server's Distributed Transaction Coordinator (DTC) service cannot properly initialize its communication components, often due to network configuration issues, firewall restrictions, or DTC service problems.",
             "count": 15,
             "remediation": [
-                "Increase the physical memory allocation for the SQL Server instance. Current physical memory is only about 8GB (7977MB), which may be insufficient for the workload.",
-                "Review and optimize Extended Events sessions that might be consuming excessive resources. Consider disabling unnecessary Extended Events sessions.",
-                "Check for HTTP Storage IO issues as indicated by the performance counters. Monitor 'HTTP Storage IO failed/sec' and 'HTTP Storage IO retry/sec' metrics.",
-                "Verify AWS FSx for NetApp ONTAP configuration and throughput capacity. Consider increasing the throughput capacity if storage I/O is constrained.",
-                "Implement a memory cap for Extended Events to prevent excessive memory consumption by using the MAX_MEMORY parameter in your Extended Events session configuration.",
-                "Review SQL Server's max server memory setting to ensure it's not set too high, leaving insufficient memory for the operating system and other processes."
+                "Ad Hoc Distributed Queries is disabled (value: 0). If distributed transactions are required, enable this feature using: EXEC sp_configure 'Ad Hoc Distributed Queries', 1; RECONFIGURE;",
+                "Network packet size is set to 4096 bytes. Consider increasing to 8192 or higher if network latency is affecting DTC communication: EXEC sp_configure 'network packet size', 8192; RECONFIGURE;",
+                "Verify that the Distributed Transaction Coordinator (MSDTC) service is running on the server using: NET START MSDTC",
+                "Check Windows firewall settings to ensure DTC ports (135 and dynamic RPC ports) are open for communication",
+                "Configure DTC security settings using dcomcnfg.exe to allow network DTC access and authentication",
+                "Since no active DTC-related sessions were found, restart the SQL Server service after configuring DTC settings to reinitialize the communication service"
             ],
-            "severity": "24",
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740528000000,
-            "errorCode": "25608",
+            "context": "2025-10-09 14:43:04.45 spid53      Error: 29201, Severity: 17, State: 1.\n2025-10-09 14:43:04.45 spid53      Configuration manager enlistment can not initialize communication service to receive enlistment requests",
+            "severity": "17",
+            "firstOccurrence": 1760020984450,
+            "lastOccurrence": 1760020984450,
+            "errorCode": "29201",
+            "uniqueErrorKey": "29201",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, value, value_in_use, description FROM sys.configurations WHERE name LIKE '%distributed%' OR name LIKE '%network%' FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, status, command, wait_type, wait_time, blocking_session_id FROM sys.dm_exec_requests WHERE command LIKE '%DTC%' OR wait_type LIKE '%DTC%' FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 type_desc, name, state_desc FROM sys.dm_os_performance_counters WHERE object_name LIKE '%Distributed Transaction Coordinator%' FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 2 },
-                { "hour": 1740448800000, "count": 3 },
-                { "hour": 1740452400000, "count": 0 },
-                { "hour": 1740456000000, "count": 2 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 1 },
-                { "hour": 1740466800000, "count": 0 },
-                { "hour": 1740470400000, "count": 0 },
-                { "hour": 1740474000000, "count": 0 },
-                { "hour": 1740477600000, "count": 1 },
-                { "hour": 1740481200000, "count": 0 },
-                { "hour": 1740484800000, "count": 0 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 1 },
-                { "hour": 1740495600000, "count": 0 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 0 },
-                { "hour": 1740506400000, "count": 1 },
-                { "hour": 1740510000000, "count": 0 },
-                { "hour": 1740513600000, "count": 0 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 0 },
-                { "hour": 1740524400000, "count": 1 },
-                { "hour": 1740528000000, "count": 2 }
+                {
+                    "hour": 1740445200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 2
+                }
             ]
         },
         {
-            "error": "Error: 29223, Severity: 22, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "SQL Server configuration manager enlistment ran out of memory. This indicates a severe memory pressure situation where SQL Server could not allocate memory needed for configuration changes. As this is running on AWS FSx for NetApp ONTAP, there might be memory constraints related to storage operations or configuration.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 29223, Severity: 17, State: 1.",
+            "cause": "Configuration manager enlistment ran out of memory. This error indicates that SQL Server's configuration manager has exhausted available memory for transaction enlistment operations, causing enlistment messages to be ignored. This is typically related to memory pressure or excessive transaction activity.",
             "count": 57,
             "remediation": [
-                "Increase the physical memory allocation to the SQL Server instance. Current physical memory is only about 8GB (7977MB), which is insufficient for SQL Server operations with FSx for NetApp ONTAP.",
-                "Review and optimize HTTP Storage configurations as indicated by the performance counters. HTTP Storage is likely being used for FSx for NetApp ONTAP connectivity.",
-                "Check for memory-intensive queries or processes that might be consuming excessive resources. Consider implementing Resource Governor to limit memory usage by specific workloads.",
-                "Verify that the SQL Server maximum memory setting is configured appropriately, leaving sufficient memory for the operating system (recommended to leave at least 4GB for OS on this system).",
-                "Monitor HTTP Storage IO metrics regularly as they indicate potential issues with the FSx for NetApp ONTAP connectivity.",
-                "Consider upgrading the instance size if memory pressure persists after optimization, as SQL Server with FSx for NetApp ONTAP typically requires more memory than standard configurations."
+                "MEMORYCLERK_SOSNODE is consuming 54GB of memory which is unusually high. Investigate potential memory leaks or excessive SOSNODE allocations and consider restarting SQL Server service if memory usage continues to grow.",
+                "Multiple long-running transactions detected from 2025-10-09T01:33:13.313 (over 13 hours old). Identify and commit or rollback these stale transactions to free up transaction log space and reduce memory pressure on configuration manager.",
+                "MEMORYCLERK_SQLCLR has reserved 3GB of virtual memory but only committed 3.6MB, indicating potential CLR memory fragmentation. Review CLR assemblies and consider optimizing or removing unused CLR objects.",
+                "Monitor transaction enlistment operations using sys.dm_tran_active_transactions and implement transaction timeout policies to prevent long-running transactions from exhausting configuration manager memory.",
+                "Consider increasing the 'max server memory' setting if workload demands require more memory, as current memory clerks show high utilization patterns that may be approaching system limits."
             ],
-            "severity": "22",
-            "firstOccurrence": 1750778508780,
-            "lastOccurrence": 1750778508780,
+            "context": "2025-10-09 14:43:06.46 spid53      Error: 29223, Severity: 17, State: 1.\n2025-10-09 14:43:06.46 spid53      Configuration manager enlistment ran out of memory. Enlistment messages ignored.",
+            "severity": "17",
+            "firstOccurrence": 1760020986460,
+            "lastOccurrence": 1760020986460,
             "errorCode": "29223",
+            "uniqueErrorKey": "29223",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 type, pages_kb, virtual_memory_reserved_kb, virtual_memory_committed_kb FROM sys.dm_os_memory_clerks ORDER BY pages_kb DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT total_physical_memory_kb, available_physical_memory_kb, total_page_file_kb, available_page_file_kb, system_memory_state_desc FROM sys.dm_os_sys_memory FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 transaction_id, transaction_begin_time, transaction_type, transaction_state FROM sys.dm_tran_active_transactions ORDER BY transaction_begin_time FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT cntr_value FROM sys.dm_os_performance_counters WHERE counter_name = 'Memory Grants Outstanding' FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 4 },
-                { "hour": 1740448800000, "count": 2 },
-                { "hour": 1740452400000, "count": 3 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 6 },
-                { "hour": 1740477600000, "count": 6 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
             ]
         },
         {
-            "error": "Error: 29201, Severity: 17, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
-            "cause": "SQL Server's Configuration Manager enlistment service is unable to initialize the communication service required to receive enlistment requests. This is a critical error related to the distributed transaction coordinator (DTC) functionality, which may affect distributed transactions across multiple databases or servers.",
-            "context": "2025-02-24 20:08:17.83 Logon       Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
+            "error": "Error: 29227, Severity: 17, State: 1.",
+            "cause": "Thread creation failed. This error indicates that SQL Server was unable to create a new thread, typically due to system resource constraints such as insufficient memory, reaching thread limits, or operating system resource exhaustion. This can severely impact SQL Server's ability to process requests.",
+            "count": 1,
+            "remediation": [
+                "MEMORYCLERK_SOSNODE is consuming 54.7MB of memory which may indicate excessive thread overhead. Monitor thread pool usage and consider reducing concurrent connections.",
+                "Buffer pool has only 994 database pages against target of 15,958,016 pages, indicating severe memory pressure. Increase available memory or reduce buffer pool target size.",
+                "Buffer cache hit ratio is 100% (240/240) but with extremely low database pages, suggesting memory starvation. Add physical memory to the server.",
+                "Scheduler 1 shows 1 runnable task which indicates potential CPU pressure contributing to thread creation issues. Monitor CPU utilization and consider reducing workload.",
+                "MEMORYCLERK_SQLBUFFERPOOL has 3.1GB virtual memory reserved but only 26MB committed, indicating memory fragmentation. Restart SQL Server service to defragment memory.",
+                "Current tasks count of 18 per scheduler is within normal range, but monitor sys.dm_os_wait_stats for THREADPOOL waits to confirm thread exhaustion.",
+                "Consider enabling 'lightweight pooling' configuration option temporarily to reduce thread overhead, but monitor performance impact carefully."
+            ],
+            "context": "2025-10-09 14:43:08.48 spid53      Error: 29227, Severity: 17, State: 1.\n2025-10-09 14:43:08.48 spid53      Thread creation failed. (RC=0).",
+            "severity": "17",
+            "firstOccurrence": 1760020988480,
+            "lastOccurrence": 1760020988480,
+            "errorCode": "29227",
+            "uniqueErrorKey": "29227",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 type, pages_kb, virtual_memory_reserved_kb, virtual_memory_committed_kb FROM sys.dm_os_memory_clerks ORDER BY pages_kb DESC FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 counter_name, cntr_value FROM sys.dm_os_performance_counters WHERE object_name LIKE '%Memory Manager%' OR object_name LIKE '%Buffer Manager%' FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 scheduler_id, current_tasks_count, runnable_tasks_count, work_queue_count, pending_disk_io_count FROM sys.dm_os_schedulers WHERE scheduler_id < 255 FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, blocking_session_id, wait_type, wait_time, cpu_time, memory_usage FROM sys.dm_exec_requests WHERE session_id > 50 FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1760018400000,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "error": "Error: 30028, Severity: 17, State: 1.",
+            "cause": "Failed to get pipeline interface for 'dummy', resulting in communication problem with the host controller or filter daemon host. This error typically occurs when there are issues with external data source connections, linked servers, or communication with external services. Given the AWS FSx for NetApp ONTAP storage context, this could be related to storage connectivity or external data pipeline failures.",
+            "count": 1,
+            "remediation": [
+                "No external data sources or linked servers are currently configured on instance STVYK7H, indicating the 'dummy' pipeline interface may be a system-level component failure",
+                "Session 53 is in 'sleeping' status with TASK MANAGER command, suggesting the error may be related to background system processes rather than active user queries",
+                "Restart the SQL Server service on instance STVYK7H to reinitialize pipeline interfaces and system components",
+                "Check AWS FSx for NetApp ONTAP storage connectivity and ensure network communication between SQL Server and the storage subsystem is stable",
+                "Verify that SQL Server service account has appropriate permissions to access AWS FSx storage and system pipeline components",
+                "Monitor sys.dm_exec_requests for any blocked or long-running sessions that might indicate underlying storage or communication issues"
+            ],
+            "context": "2025-10-09 14:43:10.50 spid53      Error: 30028, Severity: 17, State: 1.\n2025-10-09 14:43:10.50 spid53      Failed to get pipeline interface for 'dummy', resulting in error: 0x(null). There is a problem communicating with the host controller or filter daemon host.",
+            "severity": "17",
+            "firstOccurrence": 1760020990500,
+            "lastOccurrence": 1760020990500,
+            "errorCode": "30028",
+            "uniqueErrorKey": "30028",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, data_source_id, location, credential_id FROM sys.external_data_sources FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 server_id, name, product, provider, data_source, provider_string, catalog FROM sys.servers WHERE is_linked = 1 FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, status, command, wait_type, wait_time, blocking_session_id FROM sys.dm_exec_requests WHERE session_id = 53 FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1760018400000,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "error": "Error: 30029, Severity: 17, State: 1.",
+            "cause": "The full-text host controller failed to start. This error typically occurs when the Full-Text Search service is unable to initialize properly, which can be due to service configuration issues, insufficient permissions, corrupted full-text components, or resource constraints.",
+            "count": 1,
+            "remediation": [
+                "Full-Text Search is installed (IsFullTextInstalled=1) but queries are failing with invalid column errors, indicating potential version compatibility issues or corrupted system views",
+                "Restart the SQL Server Full-Text Filter Daemon Launcher (MSSQLFDLauncher) service to reinitialize the full-text host controller",
+                "Verify that the SQL Server service account has sufficient permissions to start and manage the full-text services",
+                "Run DBCC CHECKDB on system databases to identify any corruption in full-text catalog metadata",
+                "Check SQL Server error logs for additional full-text service startup failures and resource constraint messages",
+                "Consider rebuilding full-text catalogs using ALTER FULLTEXT CATALOG REBUILD if corruption is detected",
+                "Verify adequate disk space and memory resources are available for full-text indexing operations on the AWS FSx for NetApp ONTAP storage"
+            ],
+            "context": "2025-10-09 14:43:12.51 spid53      Error: 30029, Severity: 17, State: 1.\n2025-10-09 14:43:12.51 spid53      The full-text host controller failed to start. Error: 0x(null).",
+            "severity": "17",
+            "firstOccurrence": 1760020992510,
+            "lastOccurrence": 1760020992510,
+            "errorCode": "30029",
+            "uniqueErrorKey": "30029",
+            "sql": [
+                "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsFullTextInstalled') AS IsFullTextInstalled FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT name, is_enabled FROM sys.configurations WHERE name LIKE '%full%text%' FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 name, database_id, is_enabled FROM sys.fulltext_catalogs FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, status, blocking_session_id, wait_type, wait_time FROM sys.dm_exec_requests WHERE command LIKE '%FULLTEXT%' FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1760018400000,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "error": "Error: 30038, Severity: 17, State: 1.",
+            "cause": "Fulltext index error during compression or decompression. The full-text index may be corrupted on disk, requiring database integrity checks and index re-population.",
+            "count": 1,
+            "remediation": [
+                "Run DBCC CHECKDB to verify database integrity and identify any corruption in fulltext indexes",
+                "Execute ALTER FULLTEXT INDEX ON [table_name] REBUILD to rebuild corrupted fulltext indexes",
+                "Check disk space and I/O subsystem health on AWS FSx for NetApp ONTAP storage as corruption may indicate storage issues",
+                "Review SQL Server error logs for additional fulltext service errors that may indicate the root cause",
+                "Consider stopping and restarting the SQL Server Full-Text Filter Daemon Launcher service if corruption persists",
+                "Verify that the fulltext catalog files are accessible and not locked by running SELECT * FROM sys.fulltext_catalogs to check catalog status",
+                "If rebuilding fails, drop and recreate the fulltext index using DROP FULLTEXT INDEX and CREATE FULLTEXT INDEX statements"
+            ],
+            "context": "2025-10-09 14:43:16.54 spid53      Error: 30038, Severity: 17, State: 1.\n2025-10-09 14:43:16.54 spid53      Fulltext index error during compression or decompression. Full-text index may be corrupted on disk. Run dbcc checkdatabase and re-populate the index.",
+            "severity": "17",
+            "firstOccurrence": 1760020996540,
+            "lastOccurrence": 1760020996540,
+            "errorCode": "30038",
+            "uniqueErrorKey": "30038",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 db.name as database_name, ft.object_id, OBJECT_NAME(ft.object_id) as table_name, ft.unique_index_id, ft.fulltext_catalog_id, ft.is_enabled, ft.change_tracking_state_desc FROM sys.fulltext_indexes ft INNER JOIN sys.databases db ON DB_ID(db.name) = DB_ID() FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 name as catalog_name, fulltext_catalog_id, principal_id, is_default, is_accent_sensitivity_on FROM sys.fulltext_catalogs FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 OBJECT_NAME(object_id) as table_name, column_id, COL_NAME(object_id, column_id) as column_name, type_column_id, language_id FROM sys.fulltext_index_columns FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1760018400000,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "error": "Error: 30039, Severity: 17, State: 1.",
+            "cause": "Data corruption detected in communication between SQL Server and the Full-Text Filter Daemon Host (fdhost.exe) during full-text indexing operations. This can be caused by a faulty full-text filter, memory corruption, or issues with the underlying storage system. Given the AWS FSx for NetApp ONTAP storage, this could also indicate storage-level corruption or network communication issues.",
             "count": 54,
             "remediation": [
-                "Verify that the Microsoft Distributed Transaction Coordinator (MSDTC) service is running on the server. Restart the service if necessary.",
-                "Check network connectivity between the SQL Server instance (STVYCUAMIKQ4\\SIGMA) and any other servers involved in distributed transactions.",
-                "Ensure that the SQL Server service account has proper permissions to interact with the DTC service.",
-                "Review Windows Event logs for any related DTC errors that might provide additional context.",
-                "Since this environment uses AWS FSx for NetApp ONTAP storage, verify that network connectivity between the SQL Server and the storage layer is functioning correctly.",
-                "Run 'dcomcnfg', navigate to Component Services > Computers > My Computer > Distributed Transaction Coordinator, and verify the security settings are properly configured.",
-                "Consider restarting the SQL Server service (SQL Server (SIGMA)) to reinitialize the DTC connections.",
-                "Check if any recent changes to firewall settings might be blocking DTC communication ports (typically port 135 and dynamic RPC ports)."
+                "The sys.fulltext_catalogs query failed due to invalid column names (is_paused, import_status, accent_sensitivity, file_size, item_count). Use SQL Server version-appropriate columns or check SQL Server version compatibility for full-text catalog monitoring.",
+                "No active full-text operations were found in sys.dm_exec_requests, indicating the corruption may be intermittent. Monitor sys.dm_exec_requests continuously during full-text indexing operations to capture active sessions.",
+                "Restart the SQL Server Full-Text Filter Daemon Host service to reset communication channels between SQL Server and fdhost.exe.",
+                "Run DBCC CHECKDB on databases with full-text indexes to identify any underlying data corruption that may be affecting full-text operations.",
+                "Check AWS FSx for NetApp ONTAP storage health and network connectivity, as storage-level issues can manifest as full-text communication errors.",
+                "Rebuild full-text catalogs using ALTER FULLTEXT CATALOG catalog_name REBUILD to resolve potential index corruption.",
+                "Review SQL Server error logs and Windows Event Logs for additional fdhost.exe related errors that may provide more specific failure details."
             ],
+            "context": "2025-10-09 14:43:18.56 spid53      Error: 30039, Severity: 17, State: 1.\n2025-10-09 14:43:18.56 spid53      Data coming back to the SQL Server process from the filter daemon host is corrupted. This may be caused by a bad filter. The batch for the indexing operation will automatically be retried using a smaller batch size.",
             "severity": "17",
-            "firstOccurrence": 1750778506760,
-            "lastOccurrence": 1750778506760,
-            "errorCode": "29201",
+            "firstOccurrence": 1760020998560,
+            "lastOccurrence": 1760020998560,
+            "errorCode": "30039",
+            "uniqueErrorKey": "30039",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 c.name AS catalog_name, c.is_importing, c.is_paused, c.import_status, c.accent_sensitivity, c.file_size, c.item_count FROM sys.fulltext_catalogs c FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 i.object_id, OBJECT_NAME(i.object_id) AS table_name, i.is_enabled, i.change_tracking_state_desc, i.has_crawl_completed, i.crawl_type_desc, i.crawl_start_date, i.crawl_end_date FROM sys.fulltext_indexes i FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT TOP 10 session_id, request_id, start_time, status, command, wait_type, wait_time, cpu_time, reads, writes FROM sys.dm_exec_requests WHERE command LIKE '%FULL%TEXT%' FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
-                { "hour": 1740445200000, "count": 4 },
-                { "hour": 1740448800000, "count": 5 },
-                { "hour": 1740452400000, "count": 3 },
-                { "hour": 1740456000000, "count": 1 },
-                { "hour": 1740459600000, "count": 0 },
-                { "hour": 1740463200000, "count": 2 },
-                { "hour": 1740466800000, "count": 3 },
-                { "hour": 1740470400000, "count": 1 },
-                { "hour": 1740474000000, "count": 4 },
-                { "hour": 1740477600000, "count": 2 },
-                { "hour": 1740481200000, "count": 3 },
-                { "hour": 1740484800000, "count": 1 },
-                { "hour": 1740488400000, "count": 0 },
-                { "hour": 1740492000000, "count": 2 },
-                { "hour": 1740495600000, "count": 3 },
-                { "hour": 1740499200000, "count": 1 },
-                { "hour": 1740502800000, "count": 4 },
-                { "hour": 1740506400000, "count": 2 },
-                { "hour": 1740510000000, "count": 3 },
-                { "hour": 1740513600000, "count": 1 },
-                { "hour": 1740517200000, "count": 0 },
-                { "hour": 1740520800000, "count": 2 },
-                { "hour": 1740524400000, "count": 3 },
-                { "hour": 1740528000000, "count": 4 }
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 5
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740528000000,
+                    "count": 4
+                }
+            ]
+        },
+        {
+            "error": "Resource governor reconfiguration encountered an issue (HRESULT code : 0x80070002, reason: Construction of Launchpad Connection failed), while sending active external resource pool ids to launchpad. This will not fail reconfigure.",
+            "cause": "The SQL Server Launchpad service is not running or not properly configured. HRESULT 0x80070002 indicates 'The system cannot find the file specified', which typically occurs when the Launchpad service required for external script execution (R/Python) is unavailable or misconfigured. This affects Resource Governor's ability to manage external resource pools but does not prevent SQL Server from starting.",
+            "count": 6,
+            "remediation": [
+                "Resource Governor is currently disabled (is_enabled: false) on instance STVYK7H. Enable Resource Governor using 'ALTER RESOURCE GOVERNOR RECONFIGURE' if external resource management is required.",
+                "The SQL Server version appears to be older as sys.resource_governor_external_resource_pools and some columns in sys.resource_governor_resource_pools are not available. Consider upgrading to SQL Server 2016 or later for full external script execution support.",
+                "Check if SQL Server Machine Learning Services feature is installed. If external script execution is needed, install this feature through SQL Server Setup.",
+                "Verify SQL Server Launchpad service status using 'services.msc' or PowerShell. Start the service if it exists but is stopped.",
+                "If Launchpad service is not installed and external script execution is not required, this error can be safely ignored as it does not affect core SQL Server functionality."
+            ],
+            "context": "2025-10-09 01:22:40.00 spid21s     Resource governor reconfiguration encountered an issue (HRESULT code : 0x80070002, reason: Construction of Launchpad Connection failed), while sending active external resource pool ids to launchpad. This will not fail reconfigure.\n2025-10-09 01:22:40.00 spid21s     SQL Server is now ready for client connections. This is an informational message; no user action is required.",
+            "firstOccurrence": 1759972960000,
+            "lastOccurrence": 1759970424030,
+            "uniqueErrorKey": "a751083a25078d96-dummy",
+            "sql": [
+                "SET NOCOUNT ON; SELECT TOP 10 name, pool_id, max_memory_percent, max_cpu_percent FROM sys.resource_governor_external_resource_pools FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT name, is_default, max_memory_percent, max_cpu_percent, cap_cpu_percent FROM sys.resource_governor_resource_pools FOR JSON PATH;",
+                "SET NOCOUNT ON; SELECT classifier_function_id, is_enabled FROM sys.resource_governor_configuration FOR JSON PATH;"
+            ],
+            "additionalInfo": [],
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1759968000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1759971600000,
+                    "count": 4
+                }
             ]
         }
     ]
