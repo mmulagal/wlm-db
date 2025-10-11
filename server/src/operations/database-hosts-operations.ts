@@ -2092,10 +2092,16 @@ async function processResourcesBatch(
 ): Promise<number> {
     logger.info(`Processing ${resources.length} resources in batch ${batchNumber}`);
 
-    // Filter out already processed resources
-    const uniqueResources = resources.filter(
-        (resource: ResourceDetails) => !processedResourceIds.has(resource.resource_id)
-    );
+    // Remove duplicate resources within current batch and across all processed batches
+    const seenInBatch = new Set<string>();
+    const uniqueResources = resources.filter((resource: ResourceDetails) => {
+        const resourceId = resource.resource_id;
+        if (processedResourceIds.has(resourceId) || seenInBatch.has(resourceId)) {
+            return false;
+        }
+        seenInBatch.add(resourceId);
+        return true;
+    });
 
     if (uniqueResources.length === 0) {
         logger.info(`No new resources to process in batch ${batchNumber}`);

@@ -458,6 +458,17 @@ async function fetchOracleDriftAssessment(
 
     const dismissedConfigurations = mergeDismissConfigurations(instanceDismissedConfigs, hostDismissedConfigs);
 
+    // Remove LUNs configuration for Oracle NFS since they're not applicable
+    if (
+        storageProtocol === STORAGE_PROTOCOLS.NFS &&
+        dismissedConfigurations &&
+        dismissedConfigurations.storage &&
+        dismissedConfigurations.storage.configuration &&
+        dismissedConfigurations.storage.configuration.luns
+    ) {
+        delete dismissedConfigurations.storage.configuration.luns;
+    }
+
     if (!isEmpty(dismissedConfigurations)) {
         fieldsValues = updateFieldsBasedOnDismissedConfigurations(
             fieldsValues,
