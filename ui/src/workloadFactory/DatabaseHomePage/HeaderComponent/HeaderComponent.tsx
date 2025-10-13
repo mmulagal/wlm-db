@@ -1480,7 +1480,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             {/* Add based on noCred flag */}
                             {showNA && (
                                 <div className={styles.noCredBanner}>
-                                    <NoCredBanner width="83.5%" />
+                                    <NoCredBanner width="100%" />
                                 </div>
                             )}
 
@@ -1499,7 +1499,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             {/* Add based on noCred flag */}
                             {showNA && (
                                 <div className={styles.noCredBanner}>
-                                    <NoCredBanner width="87.3%" />
+                                    <NoCredBanner width="100%" />
                                 </div>
                             )}
 
@@ -1581,7 +1581,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             {/* Add based on noCred flag */}
                             {showNA && (
                                 <div className={styles.noCredBanner}>
-                                    <NoCredBanner width="87.3%" />
+                                    <NoCredBanner width="100%" />
                                 </div>
                             )}
 
@@ -1603,7 +1603,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             {/* Add based on noCred flag */}
                             {showNA && (
                                 <div className={styles.noCredBanner}>
-                                    <NoCredBanner width="87.3%" />
+                                    <NoCredBanner width="100%" />
                                 </div>
                             )}
                             <ExploreSavings />
