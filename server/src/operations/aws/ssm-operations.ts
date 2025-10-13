@@ -39,7 +39,7 @@ import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getCloudWatchLogs, setLogGroupRetentionPolicy } from './cloud-watch-logs-operations';
-import { getBedrockRegionsList } from './bedrock-operations';
+import { getLogsAnalyzerBedrockRegionsList } from './bedrock-operations';
 
 const logger = getLogger();
 
@@ -350,7 +350,10 @@ async function getGenericFSxOntapRegionsList(
 
         let bedrockRegions: string[] = [];
         if (includeBedrockStatus) {
-            [fsxRegionResponse, bedrockRegions] = await Promise.all([getParametersByPath(), getBedrockRegionsList()]);
+            [fsxRegionResponse, bedrockRegions] = await Promise.all([
+                getParametersByPath(),
+                getLogsAnalyzerBedrockRegionsList()
+            ]);
         } else {
             fsxRegionResponse = await getParametersByPath();
         }
@@ -409,7 +412,7 @@ async function getFSxOntapRegionsList(
                 [fsxRegionResponse, ec2RegionResponse, bedrockRegions] = await Promise.all([
                     getParametersByPath(),
                     describeRegions(input, credentialsId, cacheParams),
-                    getBedrockRegionsList()
+                    getLogsAnalyzerBedrockRegionsList()
                 ]);
             } else {
                 [fsxRegionResponse, ec2RegionResponse] = await Promise.all([

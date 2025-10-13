@@ -16,7 +16,7 @@ export default async function waitForJobCompletion(
     }
 
     const jobStatus = await listUniqueJob(accountId, credentialsId, region, jobId);
-    if (jobStatus && ['COMPLETED', 'WARNING', 'FAILED'].includes(jobStatus.status) ) {
+    if (jobStatus && ['COMPLETED', 'WARNING', 'FAILED'].includes(jobStatus.status)) {
         return;
     }
 

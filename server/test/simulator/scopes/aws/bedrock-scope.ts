@@ -2,9 +2,16 @@ import { HttpResponse } from '@smithy/types';
 import nock from 'nock';
 
 import { mockClient } from 'aws-sdk-client-mock';
-import { BedrockClient, InferenceProfileSummary, ListInferenceProfilesCommand } from '@aws-sdk/client-bedrock';
+import {
+    BedrockClient,
+    InferenceProfileSummary,
+    ListFoundationModelsCommand,
+    ListFoundationModelsCommandOutput,
+    ListInferenceProfilesCommand
+} from '@aws-sdk/client-bedrock';
 
 import listInferenceProfilesResponse from '../../responses/aws/list-inference-profile.json';
+import listFoundationModelsResponse from '../../responses/aws/list-foundation-models-response.json';
 
 const bedrockMock = mockClient(BedrockClient);
 
@@ -39,3 +46,5 @@ bedrockMock.on(ListInferenceProfilesCommand).resolves({
         updatedAt: new Date(item.updatedAt)
     })) as InferenceProfileSummary[]
 });
+
+bedrockMock.on(ListFoundationModelsCommand).resolves(listFoundationModelsResponse as ListFoundationModelsCommandOutput);

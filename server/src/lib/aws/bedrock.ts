@@ -1,6 +1,11 @@
 import createError from 'http-errors';
 
-import { BedrockClient, InferenceProfileType, paginateListInferenceProfiles } from '@aws-sdk/client-bedrock';
+import {
+    BedrockClient,
+    InferenceProfileType,
+    ListFoundationModelsCommand,
+    paginateListInferenceProfiles
+} from '@aws-sdk/client-bedrock';
 import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from '@aws-sdk/client-bedrock-runtime';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
@@ -12,23 +17,39 @@ import getLogger from '../../utils/logger';
 import { MODEL_AVAILABILITY_STATUS } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { isDemo } from '../../utils/utils';
+import { AWSSDKCacheParams } from '../../utils/common-types';
+import addCacheMiddleware from '../../utils/aws-sdk-middlewares';
 
 const logger = getLogger();
 
-async function getBedrockClient(accountId: string, credentialsId: string, region: string) {
-    logger.debug('Getting bedrock client:', { accountId, credentialsId, region });
+interface BedrockClientParams {
+    accountId?: string;
+    credentialsId?: string;
+    cacheParams?: AWSSDKCacheParams;
+    region: string;
+}
 
-    const {
-        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId, accountId);
-    const credentials = { accessKeyId, secretAccessKey, sessionToken };
+async function getBedrockClient(params: BedrockClientParams) {
+    logger.debug('Getting bedrock client:', params);
 
-    const client = new BedrockClient({
-        credentials,
-        region,
-        sha256: Sha256
-    });
-    return client;
+    let client: BedrockClient;
+    const { accountId, credentialsId, region, cacheParams = {} } = params;
+
+    if (!accountId || !credentialsId) {
+        client = new BedrockClient({ region });
+    } else {
+        const {
+            credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
+        } = await getCredentialsDetails(credentialsId, accountId);
+        const credentials = { accessKeyId, secretAccessKey, sessionToken };
+
+        client = new BedrockClient({
+            credentials,
+            region,
+            sha256: Sha256
+        });
+    }
+    return addCacheMiddleware(client, { ...cacheParams, credentialsId });
 }
 
 async function getBedrockRuntimeClient() {
@@ -140,7 +161,7 @@ async function getModelAvailability(accountId: string, credentialsId: string, re
 async function listInferenceProfiles(accountId: string, credentialsId: string, region: string) {
     logger.debug('List inference profile:', { accountId, credentialsId, region });
 
-    const client = await getBedrockClient(accountId, credentialsId, region);
+    const client = await getBedrockClient({ region, accountId, credentialsId });
 
     const inferenceProfiles = [];
 
@@ -152,4 +173,19 @@ async function listInferenceProfiles(accountId: string, credentialsId: string, r
     return inferenceProfiles;
 }
 
-export { sendPrompt, getModelAvailability, listInferenceProfiles };
+async function listFoundationModels(region: string, cacheParams?: AWSSDKCacheParams) {
+    logger.info('Listing foundation models', { region, cacheParams });
+
+    const client = await getBedrockClient({ region, cacheParams });
+    const command = new ListFoundationModelsCommand({
+        byProvider: 'Anthropic',
+        byOutputModality: 'TEXT'
+    });
+    const response = await client.send(command);
+
+    logger.info('List foundation models response', response);
+
+    return response;
+}
+
+export { sendPrompt, getModelAvailability, listInferenceProfiles, listFoundationModels };

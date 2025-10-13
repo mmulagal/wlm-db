@@ -1,4 +1,7 @@
-import { getBedrockRegionsList, getInferenceProfileFromModelId } from '../../../src/operations/aws/bedrock-operations';
+import {
+    getLogsAnalyzerBedrockRegionsList,
+    getInferenceProfileFromModelId
+} from '../../../src/operations/aws/bedrock-operations';
 import { LOGS_ANALYZER_MODEL_IDS } from '../../../src/utils/logs-analyzer/logs-analyzer-consts';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -31,9 +34,9 @@ describe('getInferenceProfileFromModelId', () => {
     });
 });
 
-describe('getBedrockRegionsList', () => {
+describe('getLogsAnalyzerBedrockRegionsList', () => {
     it('Should list all regions with bedrock support', async () => {
-        const regions = await getBedrockRegionsList();
+        const regions = await getLogsAnalyzerBedrockRegionsList();
         expect(regions.length).toBeGreaterThan(0);
     });
 });

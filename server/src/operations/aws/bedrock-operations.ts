@@ -1,20 +1,45 @@
 import createError from 'http-errors';
 import { compact } from 'lodash-es';
-import { listInferenceProfiles } from '../../lib/aws/bedrock';
-import { HttpErrorCodes } from '../../utils/consts';
+import throat from 'throat';
+import { FoundationModelSummary } from '@aws-sdk/client-bedrock';
+import { listInferenceProfiles, listFoundationModels } from '../../lib/aws/bedrock';
+import { HttpErrorCodes, RESTRICTED_FSX_REGIONS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { getParametersByPath } from '../../lib/aws/ssm';
+import { LOGS_ANALYZER_MODEL_IDS } from '../../utils/logs-analyzer/logs-analyzer-consts';
 
 const logger = getLogger();
 
-async function getBedrockRegionsList() {
+async function getLogsAnalyzerBedrockRegionsList() {
     logger.info('Getting Bedrock regions list');
+
     const bedrockRegionsResponse = await getParametersByPath(
         undefined,
         undefined,
         '/aws/service/global-infrastructure/services/bedrock/regions'
     );
-    return compact(bedrockRegionsResponse.map(({ Value }) => Value));
+    const bedrockSupportedRegionsList = compact(
+        bedrockRegionsResponse.filter(({ Value }) => !RESTRICTED_FSX_REGIONS.includes(Value!)).map(({ Value }) => Value)
+    );
+
+    const logsAnalyserSupportedRegions = await Promise.all(
+        compact(
+            bedrockSupportedRegionsList.map(
+                throat(3, async region => {
+                    const response = await listFoundationModels(region, { useCache: true });
+                    const { modelSummaries } = response || {};
+                    const regionSupportedModels =
+                        compact(modelSummaries?.map(({ modelId }: FoundationModelSummary) => modelId)) || [];
+
+                    if (LOGS_ANALYZER_MODEL_IDS.some(id => regionSupportedModels.includes(id))) {
+                        return region;
+                    }
+                })
+            )
+        )
+    );
+
+    return compact(logsAnalyserSupportedRegions);
 }
 
 async function getInferenceProfileFromModelId(
@@ -36,5 +61,4 @@ async function getInferenceProfileFromModelId(
 
     return inferenceProfileArn;
 }
-
-export { getBedrockRegionsList, getInferenceProfileFromModelId };
+export { getLogsAnalyzerBedrockRegionsList, getInferenceProfileFromModelId };

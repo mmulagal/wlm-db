@@ -25,7 +25,6 @@ import {
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID, CREDENTIALS_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
 
-
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 const credentialsId = `${faker.string.alpha(20)}`;
 const awsAccountId = `${faker.string.alpha(8)}`;

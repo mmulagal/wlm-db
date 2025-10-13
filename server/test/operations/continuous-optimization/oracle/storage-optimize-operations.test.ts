@@ -59,9 +59,7 @@ beforeAll(async () => {
         last_updated: new Date(),
         config_data: {
             [fsxNId]: {
-                DATADG: [
-                    { lunId: 'BaselineLUN1', diskGroup: 'DATADG', svmName: 'svm1', svmId: 'svm1' }
-                ]
+                DATADG: [{ lunId: 'BaselineLUN1', diskGroup: 'DATADG', svmName: 'svm1', svmId: 'svm1' }]
             }
         },
         config_data_type: AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES
@@ -79,9 +77,7 @@ beforeAll(async () => {
             layout: [
                 {
                     name: GOLDEN_CONFIG.dataDiskLunLayout.name,
-                    violationDetails: [
-                        { objectName: 'DATADG', value: '0', recommended: '1' }
-                    ]
+                    violationDetails: [{ objectName: 'DATADG', value: '0', recommended: '1' }]
                 }
             ]
         },
@@ -119,7 +115,12 @@ describe('optimizeOracleStorageLayout (integration style)', () => {
         expect(parentJob).toBeDefined();
         expect(parentJob?.type).toBe('OPTIMIZATION');
 
-        await waitForJobCompletion(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, parentJobIdOrErr as string);
+        await waitForJobCompletion(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            parentJobIdOrErr as string
+        );
 
         const { items: jobStatusAfterCompletion } = await getJobs(ACCOUNT_ID, {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
