@@ -251,7 +251,7 @@ const NFS_OS_ASSESSMENT = (ec2InstanceId: string, dbSid: string) => `
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
 
 sudo mkdir -p /var/log/netapp
-sudo chown oracle:oracle /var/log/netapp
+sudo chown root:root /var/log/netapp
 sudo chmod 755 /var/log/netapp
 
 export PYTHON_LATEST=$(ls /usr/bin/python* /usr/local/bin/python* 2>/dev/null | xargs -I {} sh -c 'version=$({} -c "import sys; print(f\\"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\\")" 2>/dev/null); if [[ "$version" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then echo "{}|$version"; fi' | sort -t'|' -k2 -V | tail -n1 | cut -d'|' -f1)
