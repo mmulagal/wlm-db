@@ -425,10 +425,7 @@ function getNfsOSConfigDrift(
                             violationDetails.push(createViolationDetail(param, 'kernel parameter', value, '128'));
                         }
                     });
-
-                    if (violationDetails.length > 0) {
-                        osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
-                    }
+                    osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 }
                 break;
             }
