@@ -55,6 +55,26 @@ const NUMASTATIC = 'NUMAStatic';
 // Redis
 const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
 
+enum OptimizeOracleTypes {
+    STORAGE_CONFIGURATION = 'storage-configuration',
+    STORAGE_LAYOUT = 'storage-layout',
+    STORAGE_OPERATING_SYSTEM = 'storage-operating-system'
+}
+
+enum OptimizeOracleiSCSIStorageOperatingSystem {
+    TCP_OPTIONS = 'tcp-options',
+    MULTIPATH_ENABLE = 'multipath-enable',
+    HOST_UTILITIES = 'host-utilities',
+    THP_DISABLE = 'thp-disable',
+    SELINUX_DISABLE = 'selinux-disable',
+    ISCSI_REPLACEMENT_TIMEOUT = 'iscsi-replacement-timeout',
+    ISCSI_TARGETS_SESSIONS = 'iscsi-targets-sessions',
+    FILESYSTEM_IO_OPTIONS = 'filesystem-io-options',
+    MULTIPATH_CONFIGURATION = 'multipath-configuration',
+    MULTIPATH_FRIENDLY_NAMES = 'multipath-friendly-names',
+    MULTIPATH_READCOUNT = 'multipath-readcount'
+}
+
 enum OptimizeStorageConfigs {
     THIN_PROVISIONING = 'thin-provision',
     AUTOSIZE = 'autosize',
@@ -598,5 +618,7 @@ export {
     OptimizeStorageAttributeParams,
     OptimizeStorageOperationParams,
     OptimizeStorageRequestParamsType,
-    OptimizeStorageRequestParams
+    OptimizeStorageRequestParams,
+    OptimizeOracleTypes,
+    OptimizeOracleiSCSIStorageOperatingSystem
 };

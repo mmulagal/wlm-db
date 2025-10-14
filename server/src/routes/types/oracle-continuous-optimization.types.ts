@@ -1,5 +1,10 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { AssessmentStatus, AwsWellArchitecturedPillars } from '../../utils/continous-optimization-consts';
+import {
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    OptimizeOracleiSCSIStorageOperatingSystem,
+    OptimizeOracleTypes
+} from '../../utils/continous-optimization-consts';
 import {
     OntapVolume,
     GenericViolationResponse,
@@ -72,6 +77,33 @@ const DriftAssessmentResponsePerAccount = Type.Object({
 
 type DriftAssessmentResponsePerAccountType = Static<typeof DriftAssessmentResponsePerAccount>;
 
+const OptimizePerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1, description: 'WLMDB registered database host identifier' }),
+    region: Type.String({ minLength: 1, description: 'AWS region of the database host' }),
+    credentialsId: Type.String({ minLength: 1, description: 'WLMDB registered credentials identifier' }),
+    databases: Type.Array(Type.String({ minLength: 1, description: 'Oracle database sid' }))
+});
+
+const OptimizeRequestBody = Type.Object({
+    type: Type.Enum(OptimizeOracleTypes, {
+        description: 'Type of optimization to perform',
+        examples: ['storage-operating-system']
+    }),
+    hostsToOptimize: Type.Optional(
+        Type.Array(
+            Type.Object({
+                configurationName: Type.Enum(OptimizeOracleiSCSIStorageOperatingSystem, {
+                    description:
+                        'Optimization configuration name for the type specified. \n For storage-operating-system type, valid values are:\n - tcp-options\n - multipath-enable\n - host-utilities\n - thp-disable\n - selinux-disable\n - iscsi-replacement-timeout\n - iscsi-targets-sessions\n - filesystem-io-options\n - multipath-configuration\n - multipath-friendly-names\n - multipath-readcount'
+                }),
+                databaseHosts: Type.Array(OptimizePerHostRequestBody)
+            })
+        )
+    )
+});
+
+type OptimizeRequestBodyType = Static<typeof OptimizeRequestBody>;
+
 export {
     OracleGenericParameterDriftResponse,
     OracleGenericParameterDriftResponseType,
@@ -81,5 +113,7 @@ export {
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerHostType,
     DriftAssessmentResponsePerAccount,
-    DriftAssessmentResponsePerAccountType
+    DriftAssessmentResponsePerAccountType,
+    OptimizeRequestBody,
+    OptimizeRequestBodyType
 };

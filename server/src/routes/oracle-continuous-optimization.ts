@@ -16,12 +16,15 @@ import {
     DriftAssessmentDataCollection,
     DriftAssessmentPerAccount,
     DriftAssessmentPerHost,
+    OracleOptimizeSchema,
     OracleOptimizeStorageSchema
 } from './schemas/oracle-continuous-optimization-schema';
 import { optimizeStorage } from '../operations/cont-opt-optimize-operations';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
 import { DatabaseTypes } from '../utils/consts';
 import { optimizeOracleStorageLayout } from '../operations/continuous-optimization/oracle/storage-optimize-operations';
+import { optimizeOracleDatabase } from '../operations/continuous-optimization/oracle/optimization-operations';
+import { OptimizeRequestBodyType } from './types/oracle-continuous-optimization.types';
 
 const API_PREFIX_PATH = '/v1/oracle/credentials/:credentialsId/regions/:region';
 const ORACLE_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/oracle';
@@ -154,6 +157,22 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     databaseInstanceId,
                     optimizationTargets: assessments
                 } as OptimizeStorageParams);
+                return reply.send({ jobId });
+            }
+        )
+        .post(
+            `${ORACLE_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize`,
+            { schema: OracleOptimizeSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { type, hostsToOptimize }
+                } = castRequest(request);
+
+                const jobId = await optimizeOracleDatabase(accountId, {
+                    type,
+                    hostsToOptimize
+                } as OptimizeRequestBodyType);
                 return reply.send({ jobId });
             }
         );

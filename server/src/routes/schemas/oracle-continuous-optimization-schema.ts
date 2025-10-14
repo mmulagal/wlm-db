@@ -9,10 +9,11 @@ import {
 import {
     DriftAssessmentResponsePerAccount,
     DriftAssessmentResponsePerHost,
+    OptimizeRequestBody,
     OracleDriftAssessmentResponse
 } from '../types/oracle-continuous-optimization.types';
 import { resourceRequest } from './database-hosts-schemas';
-import { CredentialsIdParams, JobIdResponse } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams, OptimizationResponse } from '../types/generic.types';
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
@@ -26,6 +27,17 @@ const DriftAssessmentDataCollection = {
     }
 };
 
+const OracleOptimizeSchema = {
+    ...resourceRequest,
+    summary: 'Fix for a oracle database',
+    description:
+        'Fix storage parameters/layout/operating system settings as per the best practice for the selected database instance.',
+    params: AccountIdParams,
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    body: OptimizeRequestBody,
+    response: OptimizationResponse
+};
+
 const OracleOptimizeStorageSchema = {
     ...resourceRequest,
     summary: 'Fix storage for a database instance',
@@ -33,11 +45,7 @@ const OracleOptimizeStorageSchema = {
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     body: OptimizeStorageRequestBody,
-    response: {
-        200: JobIdResponse,
-        400: { type: 'object', properties: { error: { type: 'string' } } },
-        404: { type: 'object', properties: { error: { type: 'string' } } }
-    }
+    response: OptimizationResponse
 };
 
 const DriftAssessmentPerHost = {
@@ -68,5 +76,6 @@ export {
     DriftAssessmentDataCollection,
     DriftAssessmentPerHost,
     DriftAssessmentPerAccount,
-    OracleOptimizeStorageSchema
+    OracleOptimizeStorageSchema,
+    OracleOptimizeSchema
 };

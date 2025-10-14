@@ -81,6 +81,12 @@ const JobIdResponse = Type.Object({
 
 type JobIdResponseType = Static<typeof JobIdResponse>;
 
+const OptimizationResponse = {
+    200: JobIdResponse,
+    400: { type: 'object', properties: { error: { type: 'string' } } },
+    404: { type: 'object', properties: { error: { type: 'string' } } }
+};
+
 export {
     GenericHeaders,
     GenericHeadersType,
@@ -96,5 +102,6 @@ export {
     NextTokenQueryString,
     CredentialsIdParamsType,
     JobIdResponse,
-    JobIdResponseType
+    JobIdResponseType,
+    OptimizationResponse
 };
