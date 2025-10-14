@@ -1,4 +1,4 @@
-import { DsTooltipInfo, DsTypography, PasswordField, RadioButton, TextField, useWizard } from '@netapp/design-system';
+import { DsTypography, PasswordField, RadioButton, TextField, TooltipInfo, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -289,13 +289,13 @@ const DetectContent = () => {
                         <DsTypography variant="Semibold_14" className={styles.optionalText}>
                             {t('databases.register-flow.optional-credentials')}
                         </DsTypography>
-                        <DsTooltipInfo trigger="hover">
+                        <TooltipInfo trigger="hover">
                             <div>
                                 <DsTypography variant="Regular_13">
                                     {t('databases.register-flow.detect-oracle-asm-optionalCredentialTooltipText')}
                                 </DsTypography>
                             </div>
-                        </DsTooltipInfo>
+                        </TooltipInfo>
                     </div>
                 </div>
                 <div className={styles.textFieldContainer}>

@@ -1,4 +1,4 @@
-import { Button, DsTooltipInfo, DsTypography, SelectField, TextField, useDialog } from '@netapp/design-system';
+import { Button, DsTypography, SelectField, TextField, TooltipInfo, useDialog } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -491,9 +491,9 @@ const SavingsSelection = ({ printState }: any) => {
                                                 {GENERAL.LEARN_HOW}
                                             </Button>
                                         ) : (
-                                            <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                            <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
                                                 {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
-                                            </DsTooltipInfo>
+                                            </TooltipInfo>
                                         )}
                                     </div>
                                 )}

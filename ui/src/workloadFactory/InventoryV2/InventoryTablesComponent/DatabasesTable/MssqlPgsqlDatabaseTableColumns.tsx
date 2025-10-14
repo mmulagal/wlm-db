@@ -1,6 +1,6 @@
 import { TFunction } from 'i18next';
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { DsTooltipInfo, Popover } from '@netapp/design-system';
+import { Popover, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
@@ -130,7 +130,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
                 <>
                     {cellData && rowData?.instanceRow?.fsxId ? (
                         <div className={styles.fsxNameContainer}>
-                            <DsTooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
+                            <TooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
                                 <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
                                     <DsTypography variant="Regular_13">{rowData?.instanceRow?.fsxId}</DsTypography>
                                     <Popover
@@ -144,7 +144,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
                                         }
                                     />
                                 </div>
-                            </DsTooltipInfo>
+                            </TooltipInfo>
                             <div className={styles.fsxName}>
                                 <DsTypography
                                     className={styles.fsxNameText}

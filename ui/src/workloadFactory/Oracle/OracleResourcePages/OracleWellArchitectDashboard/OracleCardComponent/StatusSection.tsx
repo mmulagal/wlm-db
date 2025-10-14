@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography } from '@tlveng/wlm-ds';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { CONFIG_STATES, GETWELL_STATUS } from '../../../../../utils/consts';
 import styles from './OracleCardComponent.module.scss';
@@ -7,6 +7,7 @@ import { ReactComponent as NotActive } from '../../../../../assets/ic_not_active
 import { ReactComponent as Optimized } from '../../../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../../../assets/under-provisioned.svg';
 import { ReactComponent as InProgress } from '../../../../../assets/In Progress.svg';
+import { TooltipInfo } from '@netapp/design-system';
 
 const StatusSection = ({ cardData, loading, disableText }: any) => {
     const { t } = useTranslation();
@@ -71,9 +72,9 @@ const StatusSection = ({ cardData, loading, disableText }: any) => {
                 <>
                     {cardData?.errorMessage ? (
                         <span className={styles.warningMsg}>
-                            <DsTooltipInfo trigger="hover">
+                            <TooltipInfo trigger="hover">
                                 <DsTypography variant="Regular_14">{cardData?.errorMessage}</DsTypography>
-                            </DsTooltipInfo>
+                            </TooltipInfo>
                             <DsTypography variant="Semibold_14" isDisabled={disableText}>
                                 {GENERAL.UNAVAILABLE}
                             </DsTypography>
