@@ -201,7 +201,7 @@ const GOLDEN_CONFIG = {
                 ]
             }
         ],
-        os: [
+        os_iscsi: [
             {
                 parameter: 'multipath-io',
                 name: 'multipath-io',
@@ -311,6 +311,90 @@ const GOLDEN_CONFIG = {
                 recommendation:
                     'Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP LUNs, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
+            }
+        ],
+        os_nfs: [
+            {
+                parameter: 'kernel-parameters',
+                name: 'kernel-parameters',
+                recommended: '',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends configuring the kernel parameters for the TCP slot table to 128, optimized specifically for Oracle workloads.',
+                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            },
+            {
+                parameter: 'nfs-mount-options-databasefiles',
+                name: 'nfs-mount-options-databasefiles',
+                recommended: '',
+                severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,noint. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.',
+                tags: [
+                    AwsWellArchitecturedPillars.RELIABILITY,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+                ]
+            },
+            {
+                parameter: 'nfs-mount-options-adrhome',
+                name: 'nfs-mount-options-adrhome',
+                recommended: '',
+                severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends using optimized NFS mount options for ADR home: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144 ',
+                tags: [
+                    AwsWellArchitecturedPillars.RELIABILITY,
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                ]
+            },
+            {
+                parameter: 'nfs-rootonly',
+                name: 'nfs-rootonly',
+                recommended: '',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAP"s nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.',
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+            },
+            {
+                parameter: 'export-policy',
+                name: 'export-policy',
+                recommended: '',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends ensuring that if Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution.',
+                tags: [
+                    AwsWellArchitecturedPillars.SECURITY,
+                    AwsWellArchitecturedPillars.RELIABILITY,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                ]
+            },
+            {
+                parameter: 'nfsv4-domain-name',
+                name: 'nfsv4-domain-name',
+                recommended: '',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends ensuring that for NFSv4, the domain names in /etc/idmapd.conf on the host and NFS server (show -fields v4-id-domain in ONTAP) match.',
+                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.SECURITY]
+            },
+            {
+                parameter: 'nfs-caching-options',
+                name: 'nfs-caching-options',
+                recommended: '',
+                severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends avoiding the use of the following mount options in standalone deployments to prevent disabling cache: "cio", "actimeo=0", "noac", and "forcedirectio".',
+                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
             }
         ]
     },

@@ -100,10 +100,9 @@ import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } 
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import { optimizeStorageConfigParamsOracle } from './workloads/oracle/storage-optimize-scripts';
 import { onDemandTriggerOracleDriftAssessment } from './continuous-optimization/oracle/assessment-operations';
-import {
-    calculateStorageDrift,
-    StorageAssessment as StorageAssessmentType
-} from './continuous-optimization/oracle/storage-assessment-operations';
+import { calculateStorageDrift } from './continuous-optimization/oracle/storage-assessment-operations';
+
+import { StorageAssessment as StorageAssessmentType } from './continuous-optimization/oracle/common-types';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { OracleMappedOntapVolumesResponse } from './workloads/oracle/common-types';
 import {
@@ -188,6 +187,7 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
                     databaseHostId,
                     instanceId,
                     instanceName,
+                    instanceMetadata?.oracleDeploymentType || '',
                     activeNodeInstanceId,
                     fsxId,
                     optimizationTargets,
@@ -268,6 +268,7 @@ async function getRecommendationMap(
     databaseHostId: string,
     databaseInstanceId: string,
     databaseInstanceName: string,
+    deploymentType: string,
     activeNodeInstanceId: string,
     fileSystemId: string,
     optimizationTargets: OptimizeStorageRequestParamsType[],
@@ -327,6 +328,7 @@ async function getRecommendationMap(
             activeNodeInstanceId,
             databaseInstanceId,
             databaseInstanceName,
+            deploymentType,
             fileSystemId,
             mappedOntapVolumes,
             assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessmentType

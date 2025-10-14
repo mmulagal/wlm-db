@@ -31,11 +31,8 @@ import {
     OracleVolumeRecord
 } from '../../workloads/oracle/common-types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import {
-    calculateStorageDrift,
-    initiateStorageAssessmentCollection,
-    StorageAssessment
-} from './storage-assessment-operations';
+import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
+
 import {
     DriftAssessmentResponsePerAccountType,
     DriftAssessmentResponsePerHostType,
@@ -52,6 +49,7 @@ import {
     mergeDismissConfigurations
 } from '../assessment-dismiss-operations';
 import { handleGetOracleAssessmentForDemo } from '../../demo-operations';
+import { StorageAssessment } from './common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -493,6 +491,7 @@ async function fetchOracleDriftAssessment(
               node1InstanceId,
               databaseInstanceId,
               databaseInstanceName,
+              databaseDeploymentType || '',
               fileSystemId,
               mappedOntapVolumes,
               assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment

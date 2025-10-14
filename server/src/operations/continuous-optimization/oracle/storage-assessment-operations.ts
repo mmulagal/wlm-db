@@ -27,126 +27,24 @@ import {
     OracleSysFileTypes,
     OracleVolumeRecord
 } from '../../workloads/oracle/common-types';
-import { OS_ASSESSMENT } from '../../workloads/oracle/os-assessment-scripts';
+import { OS_ASSESSMENT } from '../../workloads/oracle/os-iscsi-assessment-scripts';
+import { NFS_OS_ASSESSMENT } from '../../workloads/oracle/os-nfs-assessment-scripts';
+import {
+    defaultMultipathExpected,
+    netappMultipathExpected,
+    nfsMountOptionExpected,
+    StorageAssessment,
+    StorageIscsiAssessment,
+    StorageNfsAssessment
+} from './common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
 
 const volumeConfigData = storageGoldenConfigData.configuration.volume;
 const lunConfigData = storageGoldenConfigData.configuration.lun;
-const osConfigData = storageGoldenConfigData.configuration.os;
-
-interface OSAssessment {
-    'host-utilities'?: {
-        error?: string | null;
-        'sanlun-version'?: string | null;
-        'sanlun-installed'?: boolean;
-    };
-    selinux?: {
-        error?: string | null;
-        'selinux-value'?: string;
-        'selinux-disabled'?: boolean;
-    };
-    'multipath-io'?: {
-        error?: string | null;
-        'multipath-io-is-active'?: boolean;
-        'multipath-io-active-value'?: string;
-        'multipath-io-is-enabled'?: boolean;
-        'multipath-io-enabled-value'?: string;
-    };
-    'tcp-advanced-options'?: {
-        error?: string | null;
-        'tcp-features'?: {
-            'tcp-sack-value'?: string;
-            'tcp-sack-enabled'?: boolean;
-            'tcp-timestamps-value'?: string;
-            'tcp-timestamps-enabled'?: boolean;
-            'tcp-window-scaling-value'?: string;
-            'tcp-window-scaling-enabled'?: boolean;
-        };
-    };
-    'transparent-hugepages'?: {
-        error?: string | null;
-        'thp-value'?: string;
-        'thp-disabled'?: boolean;
-    };
-    'iscsi-targets-sessions'?: {
-        error?: string | null;
-        'iscsi-targets-found'?: number;
-        'total-active-sessions'?: number;
-        'iscsi-sessions-per-target'?: Record<string, any>;
-    };
-
-    'iscsi-replacement-timeout'?: {
-        error?: string | null;
-        'replacement-timeout'?: number;
-    };
-    'oracle-parameters'?: {
-        error?: string | null;
-        'filesystemio-options'?: {
-            value?: string;
-            found?: boolean;
-        };
-        'db-file-multiblock-read-count'?: {
-            value?: string;
-            found?: boolean;
-        };
-    };
-    'multipath-configuration'?: {
-        error?: string | null;
-        defaults?: Record<string, string | number | boolean>;
-        'netapp-device'?: Record<string, string | number | boolean>;
-    };
-    'oracle-parameters-from-init'?: {
-        error?: string | null;
-        'db-file-multiblock-read-count-in-init'?: [
-            {
-                path?: string;
-                error?: string | null;
-                'parameter-found'?: boolean;
-                'parameter-value'?: string;
-            }
-        ];
-    };
-}
-
-interface StorageAssessment {
-    fraEnabled?: string;
-    rmanCompressionEnabled?: string;
-    volumes: {
-        error: string;
-        data: Record<string, any>[];
-        filesystemId: string;
-    };
-    luns?: {
-        error: string;
-        data: Record<string, any>[];
-    };
-    binaryVolumes?: {
-        error?: string;
-        data?: { volumeId: string; volumeName: string }[];
-    };
-    os?: OSAssessment;
-}
-
-const defaultMultipathExpected = { find_multipaths: ['yes', 'on'], polling_interval: 5 };
-
-const netappMultipathExpected = {
-    path_grouping_policy: 'group_by_prio',
-    path_selector: 'service-time 0',
-    prio: 'ontap',
-    hardware_handler: 0,
-    failback: 'immediate',
-    rr_weight: 'uniform',
-    no_path_retry: 'queue',
-    fast_io_fail_tmo: 5,
-    dev_loss_tmo: 'infinity',
-    detect_prio: 'yes',
-    flush_on_last_del: ['yes', 'always'],
-    retain_attached_hw_handler: 'yes',
-    path_checker: 'tur',
-    max_sectors_kb: 4096
-};
+const osIsciConfigData = storageGoldenConfigData.configuration.os_iscsi;
+const osNfsConfigData = storageGoldenConfigData.configuration.os_nfs;
 
 function mapVolumeTypesToIdName(
     databaseInstanceName: string,
@@ -246,7 +144,7 @@ function createAssessment(
 function getOSConfigDrift(
     ec2InstanceId: string,
     databaseInstanceName: string,
-    storageAssessmentData: StorageAssessment
+    storageAssessmentData: StorageIscsiAssessment
 ) {
     logger.info('Fetching OS configuration drift', { ec2InstanceId, databaseInstanceName });
     const { os } = storageAssessmentData;
@@ -257,7 +155,7 @@ function getOSConfigDrift(
         return osDrift;
     }
 
-    osConfigData.forEach(config => {
+    osIsciConfigData.forEach(config => {
         let violationDetails: GenericViolationResponseType[] = [];
 
         switch (config.parameter) {
@@ -476,6 +374,191 @@ function getOSConfigDrift(
                 break;
             }
 
+            default:
+                break;
+        }
+    });
+
+    return osDrift;
+}
+
+function getNfsOSConfigDrift(
+    ec2InstanceId: string,
+    databaseInstanceName: string,
+    deploymentType: string,
+    storageAssessmentData: StorageNfsAssessment
+) {
+    logger.info('Fetching NFS OS configuration drift', { ec2InstanceId, databaseInstanceName, deploymentType });
+    const { os } = storageAssessmentData;
+    const osDrift: StorageParameterDriftResponseType['configuration']['os'] = [];
+
+    if (!os || isEmpty(os)) {
+        osDrift.push({ errorMessage: 'No OS assessment data found.' });
+        return osDrift;
+    }
+
+    const recommendedNFSMountOptions = Object.entries(nfsMountOptionExpected)
+        .map(([key, expectedValue]) => {
+            const recommendedText = Array.isArray(expectedValue)
+                ? expectedValue.join(' or ')
+                : expectedValue.toString();
+            return `${key}=${recommendedText}`;
+        })
+        .join(', ');
+
+    osNfsConfigData.forEach(config => {
+        const violationDetails: GenericViolationResponseType[] = [];
+
+        switch (config.parameter) {
+            case 'kernel-parameters': {
+                const kernelParamsData = os?.['kernel-parameters'];
+                const sunrpcTcpSlotEntries = kernelParamsData?.['sunrpc-tcp-slot-entries'];
+                if (kernelParamsData?.error) {
+                    osDrift.push({ name: config.name, errorMessage: kernelParamsData.error });
+                } else {
+                    const tcpMaxSlotTable = sunrpcTcpSlotEntries?.['tcp-max-slot-table'] || '';
+                    const tcpSlotTable = sunrpcTcpSlotEntries?.['tcp-slot-table'] || '';
+
+                    ['tcp-max-slot-table', 'tcp-slot-table'].forEach(param => {
+                        const value = param === 'tcp-max-slot-table' ? tcpMaxSlotTable : tcpSlotTable;
+                        if (value !== '128') {
+                            violationDetails.push(createViolationDetail(param, 'kernel parameter', value, '128'));
+                        }
+                    });
+
+                    if (violationDetails.length > 0) {
+                        osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                    }
+                }
+                break;
+            }
+            case 'nfs-mount-options-databasefiles': {
+                const nfsMountData = os?.['nfs-mount-options'];
+                if (nfsMountData?.error) {
+                    osDrift.push({ name: config.name, errorMessage: nfsMountData.error });
+                } else {
+                    const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
+                    mountOptions.forEach(mount => {
+                        const mountPoint = mount?.['mount-point'] || '';
+                        const remotePath = mount?.['remote-path'] || '';
+                        const options = mount?.options || {};
+
+                        const violations = Object.entries(nfsMountOptionExpected)
+                            .filter(([key, expectedValue]) => {
+                                const actualValue = options[key];
+                                return Array.isArray(expectedValue)
+                                    ? !expectedValue.includes(actualValue as string)
+                                    : actualValue !== expectedValue;
+                            })
+                            .map(([key]) => {
+                                const actualValue = options[key]?.toString() || 'not found';
+                                return `${key}=${actualValue}`;
+                            });
+
+                        if (violations.length > 0) {
+                            violationDetails.push(
+                                createViolationDetail(
+                                    `${remotePath}:${mountPoint}`,
+                                    'nfs mount options',
+                                    violations.join(', '),
+                                    recommendedNFSMountOptions
+                                )
+                            );
+                        }
+                    });
+                }
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                break;
+            }
+            case 'nfs-caching-options': {
+                if (deploymentType !== 'Standalone') {
+                    return;
+                }
+                const nfsMountData = os?.['nfs-mount-options'];
+                if (nfsMountData?.error) {
+                    osDrift.push({ name: config.name, errorMessage: nfsMountData.error });
+                } else {
+                    const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
+                    mountOptions.forEach(mount => {
+                        const mountPoint = mount?.['mount-point'] || '';
+                        const remotePath = mount?.['remote-path'] || '';
+                        const options = mount?.options || {};
+                        const violations: string[] = [];
+
+                        // Check for noac with NFSv3
+                        if (options.vers === '3' && options.noac !== undefined) {
+                            violations.push('noac should not be used with NFSv3');
+                        }
+
+                        // Check for caching options set to 0
+                        ['acregmin', 'acregmax', 'acdirmin', 'acdirmax'].forEach(option => {
+                            if (options[option] === '0') {
+                                violations.push(`${option}=${options[option]}`);
+                            }
+                        });
+
+                        if (violations.length > 0) {
+                            violationDetails.push(
+                                createViolationDetail(
+                                    `${remotePath}:${mountPoint}`,
+                                    'nfs mount options',
+                                    violations.join(', '),
+                                    'Remove noac option and ensure caching options are not set to 0'
+                                )
+                            );
+                        }
+                    });
+                }
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                break;
+            }
+            case 'nfs-mount-options-adrhome': {
+                const adrMountInfoData = os?.['adr-info'];
+                if (adrMountInfoData?.error) {
+                    osDrift.push({ name: config.name, errorMessage: adrMountInfoData.error });
+                } else {
+                    const mountOptions = adrMountInfoData?.['adr-home-mount-info'];
+                    const fileSystem = mountOptions?.['filesystem-type'] || '';
+
+                    if (!fileSystem.includes('nfs')) {
+                        osDrift.push({ name: config.name, errorMessage: 'ADR home mount is not NFS' });
+                        return;
+                    }
+
+                    const mountPoint = mountOptions?.['mount-point'] || '';
+                    const options = mountOptions?.['mount-options'] || {};
+
+                    const violations = Object.entries(nfsMountOptionExpected)
+                        .filter(([key, expectedValue]) => {
+                            if (key === 'nointr') {
+                                return false;
+                            } // Skip nointr check for adr-home
+
+                            const actualValue = options[key];
+                            return Array.isArray(expectedValue)
+                                ? !expectedValue.includes(actualValue as string)
+                                : actualValue !== expectedValue;
+                        })
+                        .map(([key]) => {
+                            const actualValue = options[key]?.toString() || 'not found';
+
+                            return `${key}=${actualValue}`;
+                        });
+
+                    if (violations.length > 0) {
+                        violationDetails.push(
+                            createViolationDetail(
+                                mountPoint,
+                                'nfs mount options',
+                                violations.join(', '),
+                                recommendedNFSMountOptions
+                            )
+                        );
+                    }
+                }
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                break;
+            }
             default:
                 break;
         }
@@ -1010,11 +1093,19 @@ function calculateStorageDrift(
     ec2InstanceId: string,
     databaseInstanceId: string,
     databaseInstanceName: string,
+    deploymentType: string,
     fsxFileSystemId: string,
     mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
     storageAssessmentData: StorageAssessment
 ) {
-    logger.info('Calculating storage drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
+    logger.info('Calculating storage drift', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        deploymentType
+    });
 
     if (isEmpty(storageAssessmentData)) {
         const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
@@ -1046,6 +1137,13 @@ function calculateStorageDrift(
         if (isASMManaged) {
             storageDriftData.layout.push(...getLunLayoutDrift(volumeTypeMap, storageAssessmentData));
         }
+    } else {
+        storageDriftData.configuration.os = getNfsOSConfigDrift(
+            ec2InstanceId,
+            databaseInstanceName,
+            deploymentType,
+            storageAssessmentData as StorageNfsAssessment
+        );
     }
 
     return storageDriftData;
@@ -1115,6 +1213,8 @@ async function initiateStorageAssessmentCollection(
         const command = [VOLUME_LUN_CONFIGURATION(instanceRecord)];
         if (storageProtocol === 'iSCSI') {
             command.push(OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName));
+        } else {
+            command.push(NFS_OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName));
         }
         const ssmComment = 'Get Storage Configuration Assessment for Oracle instance';
 
@@ -1144,8 +1244,7 @@ async function initiateStorageAssessmentCollection(
                 database_instance_id: databaseInstanceId,
                 creation_time: new Date(Date.now()),
                 config_data_type: AssessmentCategories.STORAGE,
-                config_data:
-                    storageProtocol === 'iSCSI' ? { ...storageAssessment, ...osAssessment } : { ...storageAssessment }
+                config_data: { ...storageAssessment, ...osAssessment }
             }
         ]);
 
@@ -1184,10 +1283,4 @@ async function initiateStorageAssessmentCollection(
     }
 }
 
-export {
-    initiateStorageAssessmentCollection,
-    calculateStorageDrift,
-    StorageAssessment,
-    getVolumeConfigDrift,
-    mapVolumeTypesToIdName
-};
+export { initiateStorageAssessmentCollection, calculateStorageDrift, getVolumeConfigDrift, mapVolumeTypesToIdName };
