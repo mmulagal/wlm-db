@@ -188,29 +188,28 @@ async function handleComputeRemediation(
 
                     try {
                         // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
-                        await Promise.all(
-                            nonPrimaryNodeInstanceIds.map(async nodeId => {
-                                const { ec2InstanceType: oldInstanceType = '' } =
-                                    clusterNodeDetails.find(node => node.ec2InstanceId === nodeId) || {};
-                                const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    nodeId,
-                                    instanceType,
-                                    fsxId,
-                                    svmId,
-                                    changeInstanceTypeJobId,
-                                    formattedInstanceName
-                                );
-                                modifiedInstancesNodeDetails.push({
-                                    ec2InstanceId,
-                                    oldDnsAddresses,
-                                    oldInstanceType,
-                                    isPrimaryNode: false
-                                });
-                            })
-                        );
+                        for (const nodeId of nonPrimaryNodeInstanceIds) {
+                            const { ec2InstanceType: oldInstanceType = '' } =
+                                clusterNodeDetails.find(node => node.ec2InstanceId === nodeId) || {};
+                            // eslint-disable-next-line no-await-in-loop
+                            const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
+                                accountId,
+                                credentialsId,
+                                region,
+                                nodeId,
+                                instanceType,
+                                fsxId,
+                                svmId,
+                                changeInstanceTypeJobId,
+                                formattedInstanceName
+                            );
+                            modifiedInstancesNodeDetails.push({
+                                ec2InstanceId,
+                                oldDnsAddresses,
+                                oldInstanceType,
+                                isPrimaryNode: false
+                            });
+                        }
                         logger.info('Instance type updated for all secondary nodes in the cluster');
 
                         await updateJobDetails(accountId, changeInstanceTypeJobId, {
