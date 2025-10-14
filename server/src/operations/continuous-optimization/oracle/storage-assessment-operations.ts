@@ -969,6 +969,11 @@ function getVolumeLayoutDrift(
                 1;
         insufficientMultiplexing = !hasMultipleVolumes && !hasSingleVolumeWithSingleCopy;
 
+        // Find volumes with multiple copies when there's insufficient multiplexing
+        const volumesWithMultipleCopies = insufficientMultiplexing
+            ? redoLogVolumes.filter(vol => uniqueRedoLogVolumesWithoutSharingViolation.includes(vol.volumeId))
+            : [];
+
         status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
         const recommended =
             hasConflicts && insufficientMultiplexing
@@ -976,13 +981,22 @@ function getVolumeLayoutDrift(
                 : hasConflicts
                 ? 'separate-volume-or-shared-with-control-temp'
                 : 'multiplexed-copies-on-two-or-more-volumes';
+
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.redologsPlacement,
             recommended,
             status,
-            objectsInViolation: hasConflicts ? redoFileConflicts.map(conflict => conflict.volumeName) : [],
+            objectsInViolation: hasConflicts
+                ? redoFileConflicts.map(conflict => conflict.volumeName)
+                : insufficientMultiplexing
+                ? volumesWithMultipleCopies.map(v => v.volumeName)
+                : [],
             totalObjectsAssessed: redoLogVolumes.length,
-            totalObjectsInViolation: hasConflicts ? redoFileConflicts.length : 0
+            totalObjectsInViolation: hasConflicts
+                ? redoFileConflicts.length
+                : insufficientMultiplexing
+                ? volumesWithMultipleCopies.length
+                : 0
         });
     }
 
