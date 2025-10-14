@@ -1,5 +1,5 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { BlueXPListeners, DsTooltipInfo, Popover, postBlueXPMessage, TooltipInfo } from '@netapp/design-system';
+import { BlueXPListeners, Popover, postBlueXPMessage, TooltipInfo } from '@netapp/design-system';
 import { TFunction } from 'i18next';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
@@ -242,10 +242,7 @@ export function getPgsqlInstanceTableColumns({
                     <>
                         {!loading && rowData?.fsxId && (
                             <div className={styles.fsxNameContainer}>
-                                <DsTooltipInfo
-                                    className={`${styles.fsxName} ${styles['tooltip-icon']}`}
-                                    trigger="hover"
-                                >
+                                <TooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
                                     <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
                                         <DsTypography variant="Regular_13">{`ID: ${rowData?.fsxId}`}</DsTypography>
                                         <Popover
@@ -259,7 +256,7 @@ export function getPgsqlInstanceTableColumns({
                                             }
                                         />
                                     </div>
-                                </DsTooltipInfo>
+                                </TooltipInfo>
                                 <div className={styles.fsxName}>
                                     <DsTypography
                                         className={styles.fsxNameText}
