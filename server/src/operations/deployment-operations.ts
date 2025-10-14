@@ -547,7 +547,11 @@ async function getCloudformationTemplate(
                 adConfiguration.domainPassword
             ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
+            let paramValue = e.ParameterValue;
+            if (Array.isArray(e.ParameterValue)) {
+                paramValue = e.ParameterValue.join(',');
+            }
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${paramValue?.toString()}" `;
         }
     });
     const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${
@@ -699,7 +703,11 @@ async function getPgSqlCfTemplate(
                 sqlConfiguration.serviceAccountPassword
             ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
+            let paramValue = e.ParameterValue;
+            if (Array.isArray(e.ParameterValue)) {
+                paramValue = e.ParameterValue.join(',');
+            }
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${paramValue?.toString()}" `;
         }
     });
     const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${
