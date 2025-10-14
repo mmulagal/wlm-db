@@ -20,7 +20,7 @@ router.get('/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts', a
     }, 500);
 });
 
-router.get('v1/management/organizations', async (req: {}, res: any) => {
+router.get('/v1/management/organizations', async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, {
             continue: '8e5da794-7f36-11f0-8d12-a2501b99603f',

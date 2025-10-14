@@ -968,7 +968,9 @@
                 "create-database": "Create database",
                 "create-sandbox": "Create sandbox",
                 "protect": "Protect",
-                "deregister": "Deregister"
+                "edit-protection": "Edit protection",
+                "deregister": "Deregister",
+                "view-protection-details": "View protection details"
             }
         },
         "databases-table": {

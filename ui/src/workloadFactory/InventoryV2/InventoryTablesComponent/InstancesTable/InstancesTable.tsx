@@ -35,7 +35,7 @@ import {
     uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
-import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import { bxpRedirect, getProtectionHydrationFailureReason, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import { ACTION_CTA, DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
@@ -47,6 +47,7 @@ import {
     setTableManageColumnState,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { updateOrgId } from '../../../../store/authSlice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
@@ -67,7 +68,11 @@ import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import {
     cancelProtectionForRow,
     setAuthVerification,
-    setDataForRow
+    setDataForRow,
+    upsertProtectionHosts,
+    upsertInstanceProtectionBatch,
+    setWorkSpaceData,
+    setSelectedAgent
 } from '../../../../store/workloadFactory/snapcenterSlice';
 import {
     resetAgenticPreCheckData,
@@ -110,6 +115,8 @@ const InstancesTable = () => {
         selectedFilterValue
     } = useAppSelector(state => state.inventoryV2);
     const { multiDataLoading, regionMapping } = useAppSelector(state => state.headers);
+    const { instanceProtection } = useAppSelector(state => state.snapCenter);
+    const orgId = useAppSelector(state => state.auth?.orgId);
     const {
         notRegisteredSQLView,
         notActiveSQLInstancesView,
@@ -151,6 +158,107 @@ const InstancesTable = () => {
     const [getOrganizationIds] = useGetOrganizationIdsMutation();
 
     const { title, exportToCsvFileName, buttonText } = getInstableTableTopMenuOptions(selectedHostType, t);
+
+    // Prefetch SnapCenter hosts and instances to decide Protect/Edit Protection
+    const protectionPrefetchRun = useRef(false);
+    useEffect(() => {
+        if (protectionPrefetchRun.current) return;
+        protectionPrefetchRun.current = true;
+
+        (async () => {
+            try {
+                let organizationId: string = orgId || '';
+                if (isWorkloadFactory && !organizationId) {
+                    const orgRes: any = await getOrganizationIds({});
+                    const resolved = orgRes?.data?.items?.find(
+                        (i: any) => i?.legacyId === store.getState().auth.accountId
+                    )?.ownerOrganizationId;
+                    if (resolved) {
+                        organizationId = resolved;
+                        dispatch(updateOrgId(resolved));
+                    } else {
+                        return;
+                    }
+                }
+                const hostsRes: any = await listExistingHosts({ accountID: organizationId });
+                const hosts: any[] = hostsRes?.data?.hosts || [];
+                if (hosts.length) {
+                    dispatch(upsertProtectionHosts(hosts));
+                }
+
+                const [workSpaceRes, connectorsRes] = await Promise.all([
+                    getWorkSpaceID({ accountID: organizationId }),
+                    getConnector({ accountID: organizationId })
+                ]);
+                const workspaceItem = workSpaceRes?.data?.items?.[0];
+                const workspaceID = workspaceItem?.id;
+                if (workspaceItem) {
+                    dispatch(setWorkSpaceData(workspaceItem));
+                }
+                const occms: any[] = connectorsRes?.data?.occms || [];
+                const activeAws = occms.find((o: any) => o?.agent?.status === 'active' && o?.agent?.provider === 'aws');
+                const agentID = activeAws?.agent?.agentId;
+                if (agentID) {
+                    dispatch(setSelectedAgent([{ id: agentID }]));
+                }
+
+                if (!workspaceID || !agentID || !hosts.length) {
+                    const reason = getProtectionHydrationFailureReason(hosts.length, agentID, workspaceID);
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: `Unable to retrieve protection status: ${reason}. Please try again later.`
+                        })
+                    );
+                    return;
+                }
+
+                const hostNames = hosts.map(h => h?.name).filter(Boolean);
+                await Promise.allSettled(
+                    hostNames.map(name =>
+                        getDiscoverInstanceResult({ accountID: organizationId, name, agentID, workspaceID })
+                            .then((instRes: any) => {
+                                const instances: any[] = instRes?.data?.instances || [];
+                                if (!instances.length) return;
+                                const items = instances.map((it: any) => ({
+                                    host: it?.host,
+                                    hostName: it?.host,
+                                    name: it?.name,
+                                    instance: it?.name,
+                                    instanceName: it?.name,
+                                    status: it?.status,
+                                    id: it?.id,
+                                    policies: it?.policies || []
+                                }));
+                                dispatch(upsertInstanceProtectionBatch({ items }));
+                            })
+                            .catch(() => undefined)
+                    )
+                );
+            } catch (e) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'Unable to retrieve protection status: Please try again later.'
+                    })
+                );
+            }
+        })();
+    }, [
+        orgId,
+        listExistingHosts,
+        getWorkSpaceID,
+        getConnector,
+        getDiscoverInstanceResult,
+        isWorkloadFactory,
+        getOrganizationIds,
+        dispatch
+    ]);
+
+    // Direct Edit Protection handler - no prereqs, redirect only
+    const handleEditProtection = (rowData: any) => {
+        bxpRedirect(isWorkloadFactory, { ...rowData, editProtection: true }, 'instance', getDiscoverInstanceResult);
+    };
 
     useEffect(() => {
         setLoading(
@@ -678,8 +786,25 @@ const InstancesTable = () => {
                     optimizationDisableMsg = '';
                     optimizationIsDisabled = false;
                 }
+                // Compute protection from cache
+                const hostFqdn = (row?.hostRow?.fqdn || row?.hostRow?.name || row?.name || '').toLowerCase();
+                const hostShort = hostFqdn.split('.')[0];
+                const instName = (row?.databaseInstanceName || '').toLowerCase();
+                const possibleKeys = [
+                    `${hostFqdn}::${instName}`,
+                    `${hostShort}::${instName}`,
+                    // Named instance full form host\\instance
+                    `${hostFqdn}::${hostShort}\\${instName}`,
+                    `${hostShort}::${hostShort}\\${instName}`,
+                    // Default instance MSSQLSERVER variants
+                    `${hostFqdn}::${hostShort}`,
+                    `${hostShort}::${hostShort}`
+                ];
+                const isProtected = possibleKeys.some(k => instanceProtection?.[k]?.protected === true);
+
                 return {
                     ...row,
+                    isProtected,
                     statusAccessor: setStatusForFilter(row),
                     optimizationStatus,
                     optimizationDisableMsg,
@@ -695,7 +820,7 @@ const InstancesTable = () => {
                     }
                 };
             }),
-        [instanceTableRows]
+        [instanceTableRows, instanceProtection]
     );
 
     const isUnregisteredRows = useMemo(
@@ -883,7 +1008,8 @@ const InstancesTable = () => {
                                             navigate,
                                             handleProtection,
                                             handleDialog,
-                                            optimizeAction
+                                            optimizeAction,
+                                            handleEditProtection
                                         });
                                     }
                                 }}

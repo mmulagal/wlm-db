@@ -302,12 +302,36 @@ export const bxpRedirect = async (
             });
 
             if (matchingInstance) {
-                // Create wlmdbParams object for instance
+                // Build common instance fields
+                const computedInstanceName = instanceName === 'MSSQLSERVER' ? hostName : `${hostName}\\${instanceName}`;
+
+                const policyId =
+                    (Array.isArray(matchingInstance?.policies) && matchingInstance.policies[0]?.id) ||
+                    (Array.isArray(matchingInstance?.policies) && matchingInstance.policies[0]) ||
+                    undefined;
+
+                if (rowData?.editProtection === true) {
+                    const editParams = {
+                        source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
+                        type: 'instance',
+                        editProtection: true,
+                        redirectToWorkloadFactory: false,
+                        hostName: fqdn,
+                        instanceName: computedInstanceName,
+                        instanceId: matchingInstance.id,
+                        policyId,
+                        protectionGroupId: matchingInstance.protectionGroupId
+                    };
+
+                    handleRedirectWithParams(isWorkloadFactory, baseUrl, editParams);
+                    return;
+                }
+
                 const instanceParams = {
                     source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
                     redirectToWorkloadFactory: true,
                     hostName: fqdn,
-                    instanceName: instanceName === 'MSSQLSERVER' ? hostName : `${hostName}-${instanceName}`,
+                    instanceName: computedInstanceName,
                     instanceId: matchingInstance.id
                 };
 
@@ -315,7 +339,6 @@ export const bxpRedirect = async (
                 return;
             }
         } else if (rowData && from === 'database') {
-            // Database logic
             const databaseName = rowData?.name; // "DB22"
             const instanceName = rowData?.databaseInstanceName; // "INSTANCE2"
             const hostName = rowData?.hostName; // "dec04std2"
@@ -369,23 +392,58 @@ export const bxpRedirect = async (
             });
 
             if (matchingDatabase) {
-                // Create wlmdbParams object for database
-                const databaseParams = {
+                const computedInstanceName = instanceName === 'MSSQLSERVER' ? hostName : `${hostName}\\${instanceName}`;
+
+                const policyId =
+                    (Array.isArray(matchingDatabase?.policies) && matchingDatabase.policies[0]?.id) ||
+                    (Array.isArray(matchingDatabase?.policies) && matchingDatabase.policies[0]) ||
+                    undefined;
+
+                const commonDbParams = {
                     source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
-                    redirectToWorkloadFactory: true,
+                    type: 'database',
                     hostName: fqdn,
-                    instanceName: instanceName === 'MSSQLSERVER' ? hostName : `${hostName}-${instanceName}`,
+                    instanceName: computedInstanceName,
                     instanceId: matchingDatabase.instanceId || 'unknown',
                     databaseName: matchingDatabase.name,
-                    databaseId: matchingDatabase.id
+                    databaseId: matchingDatabase.id,
+                    policyId
                 };
 
+                if (rowData?.viewProtectionDetails === true) {
+                    const viewDbParams = {
+                        ...commonDbParams,
+                        policies: matchingDatabase.policies,
+                        storageType: matchingDatabase.storageType,
+                        editProtection: false,
+                        viewProtection: true,
+                        redirectToWorkloadFactory: false
+                    };
+                    handleRedirectWithParams(isWorkloadFactory, baseUrl, viewDbParams);
+                    return;
+                }
+
+                if (rowData?.editProtection === true) {
+                    const editDbParams = {
+                        ...commonDbParams,
+                        protectionGroupId: matchingDatabase.protectionGroupId,
+                        editProtection: true,
+                        viewProtection: false,
+                        redirectToWorkloadFactory: false
+                    };
+                    handleRedirectWithParams(isWorkloadFactory, baseUrl, editDbParams);
+                    return;
+                }
+
+                const databaseParams = {
+                    ...commonDbParams,
+                    redirectToWorkloadFactory: true
+                };
                 handleRedirectWithParams(isWorkloadFactory, baseUrl, databaseParams);
                 return;
             }
         }
     } catch (error) {
-        // Fallback to base URL on error - use console.warn instead of console.error for better practices
         // console.warn('Error in bxpRedirect:', error);
     }
 
@@ -2553,3 +2611,10 @@ export const blobToDataURL = (blob: Blob): Promise<string> =>
             reject(err);
         }
     });
+
+export const getProtectionHydrationFailureReason = (hostsLength: number, agentId?: string, workspaceId?: string) => {
+    if (!hostsLength) return 'no SQL hosts were returned';
+    if (!agentId) return 'no active connector (agent) was found';
+    if (!workspaceId) return 'no workspace could be resolved';
+    return 'an unknown issue occurred';
+};

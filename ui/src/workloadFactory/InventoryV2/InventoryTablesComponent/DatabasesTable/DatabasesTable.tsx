@@ -11,7 +11,7 @@ import { setSelectedFilterValue, setTableManageColumnState } from '../../../../s
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
-import { bxpRedirect } from '../../../../utils/utilityFunctions';
+import { bxpRedirect, getProtectionHydrationFailureReason } from '../../../../utils/utilityFunctions';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
@@ -43,7 +43,11 @@ import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import {
     cancelProtectionForRow,
     setAuthVerification,
-    setDataForRow
+    setDataForRow,
+    upsertDatabaseProtectionBatch,
+    upsertProtectionHosts,
+    setWorkSpaceData,
+    setSelectedAgent
 } from '../../../../store/workloadFactory/snapcenterSlice';
 import { addHostHandlerSc } from '../../InventoryUtilsV2';
 import { getDatabaseTableColumns } from './DatabaseTableColumns';
@@ -52,6 +56,7 @@ import { oraclePDBColumnFilterMap } from './OraclePDBTableColumns';
 import { getInitialDatabaseTableColState } from '../../../../utils/manageColumnUtils';
 import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { updateOrgId } from '../../../../store/authSlice';
 
 const DatabasesTable = () => {
     const { t } = useTranslation();
@@ -346,6 +351,27 @@ const DatabasesTable = () => {
         });
     };
 
+    // Direct redirect handlers for cleaner usage in menu selection
+    const handleEditProtectionDb = (rowData: any) => {
+        bxpRedirect(
+            isWorkloadFactory,
+            { ...rowData, editProtection: true },
+            'database',
+            undefined,
+            getDiscoverHostResult
+        );
+    };
+
+    const handleViewProtectionDetailsDb = (rowData: any) => {
+        bxpRedirect(
+            isWorkloadFactory,
+            { ...rowData, viewProtectionDetails: true },
+            'database',
+            undefined,
+            getDiscoverHostResult
+        );
+    };
+
     const showNoAgentDialog = (extraStep?: boolean, rowData?: any) => {
         setDialog(
             <DialogComponent
@@ -446,6 +472,100 @@ const DatabasesTable = () => {
 
     const getTableColDefsPerEngineType = () => getDatabaseTableColumns({ t, databaseTableRows, selectedHostType });
 
+    // Prefetch SnapCenter databases per host
+    const prefetchRun = useRef(false);
+    const orgId = useAppSelector(state => state.auth?.orgId);
+    const { databaseProtection } = useAppSelector(state => state.snapCenter);
+    useEffect(() => {
+        if (prefetchRun.current) return;
+        prefetchRun.current = true;
+        (async () => {
+            try {
+                let organizationId: string = orgId || '';
+                if (isWorkloadFactory && !organizationId) {
+                    const orgRes: any = await getOrganizationIds({});
+                    const resolved = orgRes?.data?.items?.find(
+                        (i: any) => i?.legacyId === store.getState().auth.accountId
+                    )?.ownerOrganizationId;
+                    if (resolved) {
+                        organizationId = resolved;
+                        dispatch(updateOrgId(resolved));
+                    } else {
+                        return;
+                    }
+                }
+
+                const hostsRes: any = await listExistingHosts({ accountID: organizationId });
+                const hosts: any[] = hostsRes?.data?.hosts || [];
+                if (hosts.length) {
+                    dispatch(upsertProtectionHosts(hosts));
+                }
+                const hostNames = hosts.map(h => h?.name).filter(Boolean);
+
+                // Ensure workspace and agent are persisted
+                const [workSpaceRes, connectorsRes] = await Promise.all([
+                    getWorkSpaceID({ accountID: organizationId }),
+                    getConnector({ accountID: organizationId })
+                ]);
+                const workspaceItem = workSpaceRes?.data?.items?.[0];
+                const workspaceID = workspaceItem?.id;
+                if (workspaceItem) dispatch(setWorkSpaceData(workspaceItem));
+                const occms: any[] = connectorsRes?.data?.occms || [];
+                const activeAws = occms.find((o: any) => o?.agent?.status === 'active' && o?.agent?.provider === 'aws');
+                const agentID = activeAws?.agent?.id || activeAws?.id;
+                if (agentID) dispatch(setSelectedAgent([{ id: agentID }]));
+
+                if (!workspaceID || !agentID || !hosts.length) {
+                    const reason = getProtectionHydrationFailureReason(hosts.length, agentID, workspaceID);
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: `Unable to retrieve protection status: ${reason}. Please try again later.`
+                        })
+                    );
+                    return;
+                }
+
+                await Promise.allSettled(
+                    hostNames.map(hostName =>
+                        getDiscoverHostResult({ accountID: organizationId, hostName, agentID, workspaceID })
+                            .then((res: any) => {
+                                const databases: any[] = res?.data?.databases || [];
+                                if (!databases.length) return;
+                                dispatch(
+                                    upsertDatabaseProtectionBatch({
+                                        items: databases.map(db => ({
+                                            host: db?.host,
+                                            instance: db?.instance,
+                                            name: db?.name,
+                                            status: db?.status
+                                        }))
+                                    })
+                                );
+                            })
+                            .catch(() => undefined)
+                    )
+                );
+            } catch {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'Unable to retrieve protection status: Please try again later.'
+                    })
+                );
+            }
+        })();
+    }, [
+        orgId,
+        listExistingHosts,
+        getDiscoverHostResult,
+        getWorkSpaceID,
+        getConnector,
+        dispatch,
+        isWorkloadFactory,
+        getOrganizationIds
+    ]);
+
     const tableProps = useTable({
         isSorting: false,
         columns: getTableColDefsPerEngineType(),
@@ -477,18 +597,43 @@ const DatabasesTable = () => {
                     disableOption = true;
                     disableMessage = 'Create sandbox option is not available for system database.';
                 }
+                // Determine protection via cache first, fall back to status text
+                const hostFqdn = (rowData?.hostRow?.fqdn || rowData?.hostName || '').toLowerCase();
+                const hostShort = hostFqdn.split('.')[0];
+                const instanceShort = (rowData?.databaseInstanceName || '').toLowerCase();
+                const dbName = (rowData?.name || '').toLowerCase();
+                const possibleKeys = [
+                    `${hostFqdn}::${instanceShort}::${dbName}`,
+                    `${hostShort}::${instanceShort}::${dbName}`,
+                    `${hostFqdn}::mssqlserver::${dbName}`,
+                    `${hostShort}::mssqlserver::${dbName}`
+                ];
+                const isProtectedCache = possibleKeys.some(k => databaseProtection?.[k]?.protected === true);
+                const statusVal = (rowData?.protectionStatus || rowData?.status || '').toLowerCase();
+                const isProtected = isProtectedCache || statusVal === 'protected' || statusVal === 'instance protected';
                 const menu = [
                     {
                         id: 'createSandbox',
-                        displayName: 'Create sandbox',
+                        displayName: t('databases.instance-table.menu-options.create-sandbox'),
                         disabled: disableOption,
                         infoText: disableMessage
                     },
                     {
-                        id: 'protect',
-                        displayName: 'Protect',
+                        id: isProtected ? 'editProtection' : 'protect',
+                        displayName: isProtected
+                            ? t('databases.instance-table.menu-options.edit-protection')
+                            : t('databases.instance-table.menu-options.protect'),
                         disabled: isProtectDisabled(rowData)
-                    }
+                    },
+                    ...(isProtected
+                        ? [
+                              {
+                                  id: 'viewProtectionDetails',
+                                  displayName: t('databases.instance-table.menu-options.view-protection-details'),
+                                  disabled: false
+                              }
+                          ]
+                        : [])
                 ];
                 return (
                     <div className={styles.jobMenuPopover}>
@@ -527,6 +672,10 @@ const DatabasesTable = () => {
                                     // Protect POC code
                                     if (menuId === 'protect') {
                                         handleProtection(rowData);
+                                    } else if (menuId === 'editProtection') {
+                                        handleEditProtectionDb(rowData);
+                                    } else if (menuId === 'viewProtectionDetails') {
+                                        handleViewProtectionDetailsDb(rowData);
                                     }
                                 }
                             }}

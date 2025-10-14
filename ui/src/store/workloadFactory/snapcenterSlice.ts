@@ -15,6 +15,9 @@ export const initialSandboxState: SnapCenterEntities = {
     dataMap: {},
     workSpaceData: {},
     protectionProcessState: {},
+    protectionHosts: {},
+    instanceProtection: {},
+    databaseProtection: {},
     credentials: {
         username: '',
         password: ''
@@ -96,6 +99,95 @@ const snapCenterSlice = createSlice({
         },
         clearDataMap: state => {
             state.dataMap = {};
+        },
+        // Record hosts returned by listExistingHosts
+        upsertProtectionHosts: (state, action: PayloadAction<any[]>) => {
+            action.payload?.forEach((host: any) => {
+                const key = host?.name?.toLowerCase();
+                if (key) {
+                    state.protectionHosts[key] = {
+                        id: host?.id,
+                        name: host?.name,
+                        lastFetched: Date.now()
+                    };
+                }
+            });
+        },
+        // Batch update instance protection statuses discovered per host
+        upsertInstanceProtectionBatch: (state, action: PayloadAction<{ items: any[] }>) => {
+            action.payload?.items?.forEach((inst: any) => {
+                const hostFqdn = inst.host.toLowerCase();
+                if (!hostFqdn) return;
+                const hostShort = hostFqdn.split('.')[0];
+                const apiInstanceName = inst.name.toLowerCase();
+                if (!apiInstanceName) return;
+
+                // Derive short instance name if API returns host\\instance
+                const instanceShort = apiInstanceName.includes('\\')
+                    ? apiInstanceName.split('\\').pop() || apiInstanceName
+                    : apiInstanceName;
+                const isProtected =
+                    (typeof inst?.status === 'string' && inst.status.toLowerCase() === 'protected') ||
+                    (Array.isArray(inst?.policies) && inst.policies.length > 0);
+
+                const keys = new Set<string>();
+                // Base keys
+                keys.add(`${hostFqdn}::${apiInstanceName}`);
+                keys.add(`${hostShort}::${apiInstanceName}`);
+                // Short instance variant
+                keys.add(`${hostFqdn}::${instanceShort}`);
+                keys.add(`${hostShort}::${instanceShort}`);
+
+                // Default MSSQLSERVER case -> instance name equals host short
+                keys.add(`${hostFqdn}::${hostShort}`);
+                keys.add(`${hostShort}::${hostShort}`);
+
+                keys.forEach(k => {
+                    state.instanceProtection[k] = {
+                        protected: isProtected,
+                        lastFetched: Date.now()
+                    };
+                });
+            });
+        },
+        // Batch update database protection statuses discovered per host
+        upsertDatabaseProtectionBatch: (state, action: PayloadAction<{ items: any[] }>) => {
+            action.payload?.items?.forEach((db: any) => {
+                const hostFqdn = (db?.host || '').toLowerCase();
+                if (!hostFqdn) return;
+                const hostShort = hostFqdn.split('.')[0];
+                const apiInstanceName = (db?.instance || '').toLowerCase();
+                const instanceShort = apiInstanceName.includes('\\')
+                    ? (apiInstanceName.split('\\').pop() || '').toLowerCase()
+                    : apiInstanceName;
+                const dbName = (db?.name || '').toLowerCase();
+                if (!dbName) return;
+
+                const statusVal = (db?.status || '').toLowerCase();
+                const isProtected = statusVal === 'protected' || statusVal === 'instance protected';
+
+                const keys = new Set<string>();
+                // Full
+                if (apiInstanceName) {
+                    keys.add(`${hostFqdn}::${apiInstanceName}::${dbName}`);
+                    keys.add(`${hostShort}::${apiInstanceName}::${dbName}`);
+                }
+                // Short instance variant
+                if (instanceShort) {
+                    keys.add(`${hostFqdn}::${instanceShort}::${dbName}`);
+                    keys.add(`${hostShort}::${instanceShort}::${dbName}`);
+                }
+                // Default MSSQLSERVER fallback
+                keys.add(`${hostFqdn}::mssqlserver::${dbName}`);
+                keys.add(`${hostShort}::mssqlserver::${dbName}`);
+
+                keys.forEach(k => {
+                    state.databaseProtection[k] = {
+                        protected: isProtected,
+                        lastFetched: Date.now()
+                    };
+                });
+            });
         }
     }
 });
@@ -113,7 +205,10 @@ export const {
     resetProtectionProcess,
     completeProtectionStep1,
     completeProtectionStep2,
-    clearDataMap
+    clearDataMap,
+    upsertProtectionHosts,
+    upsertInstanceProtectionBatch,
+    upsertDatabaseProtectionBatch
 } = snapCenterSlice.actions;
 
 export default snapCenterSlice;

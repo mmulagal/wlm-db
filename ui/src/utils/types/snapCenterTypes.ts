@@ -11,6 +11,9 @@ export interface SnapCenterEntities {
     dataMap: any;
     workSpaceData: any;
     protectionProcessState: ProtectionProcessState;
+    protectionHosts: Record<string, any>;
+    instanceProtection: Record<string, { protected: boolean; lastFetched: number }>;
+    databaseProtection?: Record<string, { protected: boolean; lastFetched: number }>;
     credentials: UserCredentials;
     authVerification: boolean;
 }

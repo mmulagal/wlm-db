@@ -42,6 +42,7 @@ export interface InstanceMenuSelectionParams {
     handleProtection: (rowData: any) => void;
     handleDialog: (rowData: any) => void;
     optimizeAction: (rowData: any) => void;
+    handleEditProtection: (rowData: any) => void;
 }
 
 // Function to get menu options for instances table for MSSQL/PQSQL and database table for Oracle
@@ -138,8 +139,10 @@ export const getInstanceTableMenuOptions = (
                     ]
                 },
                 {
-                    id: 'protect',
-                    displayName: t('databases.instance-table.menu-options.protect'),
+                    id: rowData?.isProtected ? 'editProtection' : 'protect',
+                    displayName: rowData?.isProtected
+                        ? t('databases.instance-table.menu-options.edit-protection')
+                        : t('databases.instance-table.menu-options.protect'),
                     disabled: disableOption || !rowData?.fsxId || !rowData?.hostRow?.nodeIpAddress,
                     infoText: disableMessage
                 },
@@ -161,7 +164,8 @@ export const handleInstanceMenuSelection = ({
     navigate,
     handleProtection,
     handleDialog,
-    optimizeAction
+    optimizeAction,
+    handleEditProtection
 }: InstanceMenuSelectionParams) => {
     // resetting wizard operation type to single once out of bulk
     dispatch(setWizardOperationType('single'));
@@ -170,6 +174,9 @@ export const handleInstanceMenuSelection = ({
             switch (menuId) {
                 case 'protect':
                     handleProtection(rowData);
+                    break;
+                case 'editProtection':
+                    handleEditProtection(rowData);
                     break;
                 case 'optimize':
                 case 'investigateErrors':
