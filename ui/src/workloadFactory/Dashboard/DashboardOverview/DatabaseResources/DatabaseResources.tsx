@@ -207,7 +207,16 @@ const DatabaseResources = () => {
 
                         <div className={styles.row}>
                             <div className={styles.tooltipSide}>
-                                {loading || (showNA && <TooltipDisabled />)}
+                                {(loading || showNA) && (
+                                    <>
+                                        <div className={styles.tooltipDisabled}>
+                                            <TooltipDisabled />
+                                            <DsTypography variant="Regular_14" className={styles.disabled}>
+                                                {t('databases.dashboard.overview')}
+                                            </DsTypography>
+                                        </div>
+                                    </>
+                                )}
                                 {!loading && !showNA && (
                                     <>
                                         <TooltipInfo>
@@ -293,7 +302,16 @@ const DatabaseResources = () => {
 
                         <div className={styles.row}>
                             <div className={styles.tooltipSide}>
-                                {loading || (showNA && <TooltipDisabled />)}
+                                {(loading || showNA) && (
+                                    <>
+                                        <div className={styles.tooltipDisabled}>
+                                            <TooltipDisabled />
+                                            <DsTypography variant="Regular_14" className={styles.disabled}>
+                                                {t('databases.dashboard.overview')}
+                                            </DsTypography>
+                                        </div>
+                                    </>
+                                )}
 
                                 {!loading && !showNA && (
                                     <>
@@ -380,7 +398,16 @@ const DatabaseResources = () => {
 
                         <div className={styles.row}>
                             <div className={styles.tooltipSide}>
-                                {loading || (showNA && <TooltipDisabled />)}
+                                {(loading || showNA) && (
+                                    <>
+                                        <div className={styles.tooltipDisabled}>
+                                            <TooltipDisabled />
+                                            <DsTypography variant="Regular_14" className={styles.disabled}>
+                                                {t('databases.dashboard.overview')}
+                                            </DsTypography>
+                                        </div>
+                                    </>
+                                )}
                                 {!loading && !showNA && (
                                     <>
                                         <TooltipInfo>

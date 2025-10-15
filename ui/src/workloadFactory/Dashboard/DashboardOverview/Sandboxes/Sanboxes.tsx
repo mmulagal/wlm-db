@@ -114,7 +114,12 @@ const Sandboxes = () => {
                 </DsTypography>
 
                 <div className={styles.buttonContainer}>
-                    <DsButton variant="secondary" isThin onClick={() => handleClick()} isDisabled={loading}>
+                    <DsButton
+                        variant="secondary"
+                        isThin
+                        onClick={() => handleClick()}
+                        isDisabled={loading || (data && data.length === 0) || isNA}
+                    >
                         {t('databases.dashboard.create-sandbox')}
                     </DsButton>
                 </div>
@@ -123,7 +128,9 @@ const Sandboxes = () => {
             <div className={styles.mainSection}>
                 {!loading && data && data.length === 0 ? (
                     <>
-                        <SandboxSmallImage />
+                        <div>
+                            <SandboxSmallImage />
+                        </div>
 
                         <DsTypography variant="Regular_14">{t('databases.dashboard.sandbox-text')}</DsTypography>
                     </>

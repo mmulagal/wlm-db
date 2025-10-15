@@ -47,6 +47,12 @@
                     .tooltipSide {
                         display: flex;
                         gap: 8px;
+
+                        .tooltipDisabled {
+                            display: flex;
+                            gap: 8px;
+                            align-items: center;
+                        }
                     }
 
                     .textClass {
