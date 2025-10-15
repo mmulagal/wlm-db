@@ -235,6 +235,24 @@ const DatabaseResources = () => {
                             <DsButton
                                 type="text"
                                 onClick={() => {
+                                    if (isWorkloadFactory) {
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: {
+                                                pathname: '../../databases/inventory',
+                                                replace: true
+                                            }
+                                        });
+                                    } else {
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: {
+                                                pathname: '../../fsxdb/inventory',
+                                                replace: true
+                                            }
+                                        });
+                                    }
+
                                     dispatch(setSelectedHostType(DBType.MSSQL));
                                     dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
                                     dispatch(setSelectedInventoryTab('Instances'));
@@ -331,6 +349,23 @@ const DatabaseResources = () => {
                             <DsButton
                                 type="text"
                                 onClick={() => {
+                                    if (isWorkloadFactory) {
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: {
+                                                pathname: '../../databases/inventory',
+                                                replace: true
+                                            }
+                                        });
+                                    } else {
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: {
+                                                pathname: '../../fsxdb/inventory',
+                                                replace: true
+                                            }
+                                        });
+                                    }
                                     dispatch(setSelectedHostType(DBType.ORACLE));
                                     dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
                                     dispatch(setSelectedInventoryTab('Instances'));
