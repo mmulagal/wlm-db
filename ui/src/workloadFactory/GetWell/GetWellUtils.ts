@@ -1399,6 +1399,7 @@ export const formatOsPatchCardConfig = (
         totalViolations += perInstance?.criticalNonCompliantCount || 0;
         totalViolations += perInstance?.securityNonCompliantCount || 0;
         totalViolations += perInstance?.otherNonCompliantCount || 0;
+
         criticalViolations += perInstance?.criticalNonCompliantCount || 0;
         securityViolations += perInstance?.securityNonCompliantCount || 0;
         otherViolations += perInstance?.otherNonCompliantCount || 0;
@@ -1883,16 +1884,26 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         file_system_headroom: 'headroom',
         storage_tier: 'performance-tier',
         transaction_log_drive_size: 'log-drive-size',
-        tempdb_drive_size: 'tempdb-drive-size'
+        tempdb_drive_size: 'tempdb-drive-size',
+
+        // Storage efficiency configurations
+        Compression: 'compression',
+        Deduplication: 'deduplication',
+        Compaction: 'compaction',
+        'Snapshot policy': 'snapshot-policy'
     };
 
     return nameMapping[displayName] || displayName;
 };
 
 // Helper function to map technical configuration names to display names
-export const getConfigurationDisplayName = (technicalName: string): string =>
+export const getConfigurationDisplayName = (technicalName: string): string => {
+    if (technicalName === 'snapshot-policy') {
+        technicalName = 'snapshot-policy-vol';
+    }
     // Use existing GETWELL_CONFIG mappings which already contain the technical to display name mappings
-    GETWELL_CONFIG?.[technicalName] || technicalName;
+    return GETWELL_CONFIG?.[technicalName] || technicalName;
+};
 
 // Helper function to filter individual ONTAP/OS configurations based on dismissed state
 export const filterIndividualOntapOsConfigurations = (
@@ -1953,24 +1964,29 @@ export const shouldShowOntapOsCard = (
         const dismissedLunConfigs = dismissedConfig?.storage?.configuration?.luns || [];
 
         const allVolumesAreDismissed =
-            volumeConfigs.length > 0 &&
-            areAllSubcategoryConfigurationsDismissed(volumeConfigs, dismissedVolumeConfigs, 'volumes');
+            volumeConfigs.length > 0
+                ? areAllSubcategoryConfigurationsDismissed(volumeConfigs, dismissedVolumeConfigs, 'volumes')
+                : true;
         const allLunsAreDismissed =
-            lunConfigs.length > 0 && areAllSubcategoryConfigurationsDismissed(lunConfigs, dismissedLunConfigs, 'luns');
+            lunConfigs.length > 0
+                ? areAllSubcategoryConfigurationsDismissed(lunConfigs, dismissedLunConfigs, 'luns')
+                : true;
 
         // Check if there are any dismissed or postponed configurations in volumes or luns
         const hasAnyDismissedVolumes = dismissedVolumeConfigs.some(
             (c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS
         );
-        const hasAnyDismissedLuns = dismissedLunConfigs.some(
-            (c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS
-        );
+        const hasAnyDismissedLuns =
+            dismissedLunConfigs.length > 0
+                ? dismissedLunConfigs.some((c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS)
+                : false;
         const hasAnyPostponedVolumes = dismissedVolumeConfigs.some(
             (c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED
         );
-        const hasAnyPostponedLuns = dismissedLunConfigs.some(
-            (c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED
-        );
+        const hasAnyPostponedLuns =
+            dismissedLunConfigs.length > 0
+                ? dismissedLunConfigs.some((c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED)
+                : false;
 
         // Show ONTAP card in dismissed view if any subcategory has dismissed or postponed configurations
         // Show ONTAP card in normal view if not all subcategories are fully dismissed/postponed
@@ -2253,6 +2269,159 @@ export const areAllSubcategoryConfigurationsDismissed = (
         .map(config => config.configurationName);
 
     return configurations.every(config => dismissedOrPostponedConfigNames.includes(config.name));
+};
+
+// Oracle-specific filtering functions for handling active/dismissed configurations
+
+// Helper function to filter individual Oracle ONTAP/OS configurations based on dismissed state
+export const filterIndividualOracleOntapOsConfigurations = (
+    tableData: any[],
+    assessmentData: any,
+    showDismissedView: boolean = false
+): any[] => {
+    if (!Array.isArray(tableData)) return [];
+
+    const filteredResult = tableData.filter((item: any) => {
+        if (!item || !item.name || !item.type) return true; // Keep non-ontap/os items
+
+        // Get dismissed configurations for the subcategory
+        let dismissedConfigs: any[] = [];
+
+        if (item.type === 'volume') {
+            dismissedConfigs = assessmentData?.dismissedConfigurations?.storage?.configuration?.volumes || [];
+        } else if (item.type === 'lun') {
+            dismissedConfigs = assessmentData?.dismissedConfigurations?.storage?.configuration?.luns || [];
+        } else if (item.type === 'os') {
+            dismissedConfigs = assessmentData?.dismissedConfigurations?.storage?.configuration?.os || [];
+        } else {
+            return true; // Keep non-ontap/os items
+        }
+
+        // Map display name to technical name for comparison
+        const technicalName = getConfigurationTechnicalName(item.name, item.type);
+
+        // Find if this specific configuration is dismissed or postponed using technical name
+        const dismissedConfig = dismissedConfigs.find((config: any) => config.configurationName === technicalName);
+        const isConfigDismissed = dismissedConfig?.configState === CONFIG_STATE_ACTIONS.DISMISS;
+        const isConfigPostponed = dismissedConfig?.configState === CONFIG_STATE_ACTIONS.POSTPONED;
+        const isConfigDismissedOrPostponed = isConfigDismissed || isConfigPostponed;
+
+        // In dismissed view, show only dismissed or postponed configurations
+        // In normal view, show only active (non-dismissed, non-postponed) configurations
+        return showDismissedView ? isConfigDismissedOrPostponed : !isConfigDismissedOrPostponed;
+    });
+
+    return filteredResult;
+};
+
+// Helper function to determine if Oracle ONTAP/OS cards should be shown based on dismissal state
+export const shouldShowOracleOntapOsCard = (
+    cardKey: 'ontap_configuration' | 'os_configuration',
+    assessmentData: any,
+    showDismissedView: boolean = false
+): boolean => {
+    if (!assessmentData || !assessmentData.dismissedConfigurations) return true;
+
+    const dismissedConfig = assessmentData.dismissedConfigurations;
+
+    if (cardKey === 'ontap_configuration') {
+        // Check volumes and luns for Oracle
+        const volumeConfigs = assessmentData?.storage?.configuration?.volumes || [];
+        const lunConfigs = assessmentData?.storage?.configuration?.luns || [];
+        const dismissedVolumeConfigs = dismissedConfig?.storage?.configuration?.volumes || [];
+        const dismissedLunConfigs = dismissedConfig?.storage?.configuration?.luns || [];
+
+        const allVolumesAreDismissed =
+            volumeConfigs.length > 0 &&
+            areAllSubcategoryConfigurationsDismissed(volumeConfigs, dismissedVolumeConfigs, 'volumes');
+        const allLunsAreDismissed =
+            lunConfigs.length > 0 && areAllSubcategoryConfigurationsDismissed(lunConfigs, dismissedLunConfigs, 'luns');
+
+        // Check if there are any dismissed or postponed configurations in volumes or luns
+        const hasAnyDismissedVolumes = dismissedVolumeConfigs.some(
+            (c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS
+        );
+        const hasAnyDismissedLuns = dismissedLunConfigs.some(
+            (c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS
+        );
+        const hasAnyPostponedVolumes = dismissedVolumeConfigs.some(
+            (c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED
+        );
+        const hasAnyPostponedLuns = dismissedLunConfigs.some(
+            (c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED
+        );
+
+        // Show ONTAP card in dismissed view if any subcategory has dismissed or postponed configurations
+        // Show ONTAP card in normal view if not all subcategories are fully dismissed/postponed
+        if (showDismissedView) {
+            return hasAnyDismissedVolumes || hasAnyDismissedLuns || hasAnyPostponedVolumes || hasAnyPostponedLuns;
+        }
+        return !(allVolumesAreDismissed && allLunsAreDismissed);
+    }
+    if (cardKey === 'os_configuration') {
+        // Check OS configurations for Oracle
+        const osConfigs = assessmentData?.storage?.configuration?.os || [];
+        const dismissedOsConfigs = dismissedConfig?.storage?.configuration?.os || [];
+
+        const allOsAreDismissed =
+            osConfigs.length > 0 &&
+            areAllSubcategoryConfigurationsDismissed(osConfigs, dismissedOsConfigs, ASSESSMENT_CONFIG_NAMES.OS);
+
+        // Check if there are any dismissed or postponed OS configurations
+        const hasAnyDismissedOs = dismissedOsConfigs.some((c: any) => c.configState === CONFIG_STATE_ACTIONS.DISMISS);
+        const hasAnyPostponedOs = dismissedOsConfigs.some((c: any) => c.configState === CONFIG_STATE_ACTIONS.POSTPONED);
+
+        // Show OS card in dismissed view if there are any dismissed or postponed OS configs
+        // Show OS card in normal view if not all OS configs are dismissed/postponed
+        if (showDismissedView) {
+            return hasAnyDismissedOs || hasAnyPostponedOs;
+        }
+        return !allOsAreDismissed;
+    }
+
+    return true;
+};
+
+// Helper function to check if all Oracle ONTAP sub-configurations are in ACTIVATING state
+export const areAllOracleOntapSubConfigurationsActivating = (assessmentData: any): boolean => {
+    if (!assessmentData || !assessmentData.dismissedConfigurations) return false;
+
+    const dismissedConfig = assessmentData.dismissedConfigurations;
+    const dismissedVolumeConfigs = dismissedConfig?.storage?.configuration?.volumes || [];
+    const dismissedLunConfigs = dismissedConfig?.storage?.configuration?.luns || [];
+
+    // If there are no dismissed configs, they're not activating
+    if (dismissedVolumeConfigs.length === 0 && dismissedLunConfigs.length === 0) return false;
+
+    // Check if all dismissed volume configs are activating
+    const allVolumesActivating = dismissedVolumeConfigs.every(
+        (config: any) => config.configState === CONFIG_STATES.ACTIVATING
+    );
+
+    // Check if all dismissed lun configs are activating
+    const allLunsActivating = dismissedLunConfigs.every(
+        (config: any) => config.configState === CONFIG_STATES.ACTIVATING
+    );
+
+    // Return true only if there are configs and they're all activating
+    return (
+        (dismissedVolumeConfigs.length > 0 ? allVolumesActivating : true) &&
+        (dismissedLunConfigs.length > 0 ? allLunsActivating : true)
+    );
+};
+
+// Helper function to check if all Oracle OS sub-configurations are in ACTIVATING state
+export const areAllOracleOsSubConfigurationsActivating = (assessmentData: any): boolean => {
+    if (!assessmentData || !assessmentData.dismissedConfigurations) return false;
+
+    const dismissedConfig = assessmentData.dismissedConfigurations;
+    const dismissedOsConfigs = dismissedConfig?.storage?.configuration?.os || [];
+
+    // If there are no dismissed configs, they're not activating
+    if (dismissedOsConfigs.length === 0) return false;
+
+    // Check if all dismissed OS configs are activating
+    return dismissedOsConfigs.every((config: any) => config.configState === CONFIG_STATES.ACTIVATING);
 };
 
 // Helper function to check if we should filter storage subcategory based on view

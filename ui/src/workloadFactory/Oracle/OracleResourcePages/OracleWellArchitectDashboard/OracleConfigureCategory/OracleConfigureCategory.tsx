@@ -11,7 +11,7 @@ import styles from './OracleConfigureCategory.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import OptimizeComponent from '../../../../GetWell/OptimizeComponent/OptimizeComponent';
 
-const OracleConfigureCategory = () => {
+const OracleConfigureCategory = ({ allConfigurationsDismissed }: { allConfigurationsDismissed?: boolean }) => {
     const { t } = useTranslation();
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const optimizationBreakDown = useAppSelector(state => state.getWellOptimize.optimizationBreakDown);
@@ -62,6 +62,7 @@ const OracleConfigureCategory = () => {
                         text="Storage"
                         image={<Storage />}
                         isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
                     />
                     <OptimizeComponent value={<ComingSoon />} text="Compute" image={<Compute />} isComingSoon />
                     <OptimizeComponent

@@ -13,9 +13,10 @@ import {
     setOracleOptimizeFilterTags
 } from '../../../../../store/workloadFactory/oracleSlice';
 
-import { CONFIG_STATES } from '../../../../../utils/consts';
+import { CONFIG_NAME_TO_ID_MAPPING } from '../../../../../utils/consts';
 import { handleSelectForFilter, removeEntry, removeObjectFromArray } from '../../../../../utils/resourceUtils';
 import { oracleApplyFilter } from '../OracleWellArchitectedUtils';
+import { calculateTotalConfigCount } from '../../../../GetWell/GetWellHelper';
 
 interface OracleFilterComponentProps {
     setFilteredCardData: (data: any) => void;
@@ -53,13 +54,35 @@ const OracleFilterComponent = ({
     // This might be pass from parent
     const [configCount, setConfigCount] = useState(0);
 
-    const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
     const {
         optimizePageLoading: loading,
         isAssessmentAvailable,
         cardData,
         ontapConfigTableData
     } = useAppSelector(state => state.getWellOptimize);
+
+    const totalConfigCount = useAppSelector(state => {
+        const total = state.getWellOptimize.optimizationBreakDown?.total?.total || 0;
+        const dismissedIds = state.getWellOptimize.optimizationBreakDown?.total?.dismissedIds || [];
+
+        // Filter dismissedIds to only include those NOT in STORAGE_CONFIG_MAP
+        // Anything not in STORAGE_CONFIG_MAP is either storage layout, ONTAP, or OS configuration
+        const storageConfigKeys = Object.keys(CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP || {});
+
+        const nonStorageConfigDismissedIds = dismissedIds.filter(
+            (dismissedId: string) =>
+                // Check if this dismissed ID is NOT in the storage config mapping
+                !storageConfigKeys.includes(dismissedId)
+        );
+
+        return total + nonStorageConfigDismissedIds.length;
+    });
+
+    // Helper function to get total count based on dismissed configuration state
+    const getTotalConfigCount = useMemo(
+        () => calculateTotalConfigCount(cardData, showDismissedConfigurations, driftAssessmentData),
+        [cardData, showDismissedConfigurations, driftAssessmentData]
+    );
 
     // To apply filters on change of filters or card data
     useEffect(() => {
@@ -322,9 +345,11 @@ const OracleFilterComponent = ({
                             {loading
                                 ? GENERAL.NOT_AVAILABLE
                                 : `${
-                                      totalConfigCount === configCount
-                                          ? `All(${totalConfigCount})`
-                                          : `${configCount}/${totalConfigCount}`
+                                      getTotalConfigCount === totalConfigCount
+                                          ? `All(${getTotalConfigCount})`
+                                          : getTotalConfigCount === configCount
+                                          ? `${getTotalConfigCount}`
+                                          : `${configCount}/${getTotalConfigCount}`
                                   }`}
                         </DsTypography>
                     </div>

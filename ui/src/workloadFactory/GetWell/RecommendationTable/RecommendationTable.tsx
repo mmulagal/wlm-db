@@ -26,6 +26,7 @@ import {
 import { GENERAL } from '../../../utils/appConstants';
 import {
     useDismissMssqlAssessmentMutation,
+    useDismissOracleAssessmentMutation,
     useLazyGetSubTaskListQuery,
     useOptimizeHAMssqlMutation,
     useOptimizeOperatingSystemMutation,
@@ -46,6 +47,7 @@ import {
     filterIndividualOntapOsConfigurations,
     filterIndividualMssqlHighAvailabilityConfigurations
 } from '../GetWellUtils';
+import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATE_ACTIONS,
@@ -79,7 +81,8 @@ const RecommendationTable = ({
     // Adding undefined by default to stop showing dismiss button in Dashboard
     showDismissedConfigurations = undefined,
     setShowDismissedConfigurations,
-    driftAssessmentData
+    driftAssessmentData,
+    customStyles
 }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -109,11 +112,23 @@ const RecommendationTable = ({
     const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
+    const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
 
     const isDialogPrimaryBtnDisabled = (rowData: any) =>
         rowData?.name === 'OS type' ||
         rowData?.name === 'NTFS allocation unit size' ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER;
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS;
 
     const getHaPayload = (configurationName: string) => ({
         hostsToOptimize: [
@@ -313,6 +328,25 @@ const RecommendationTable = ({
             );
         });
     };
+    const innerPageOracleCheck = (name: string) => {
+        if (
+            engineType === DBType.ORACLE &&
+            (name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
+                name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES ||
+                name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
+                name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
+                name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
+                name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
+                name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
+                name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
+                name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
+                name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
+                name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS)
+        ) {
+            return false;
+        }
+        return true;
+    };
 
     const innerPageCheck = (name: string) => {
         if (
@@ -346,7 +380,13 @@ const RecommendationTable = ({
         setDialog(
             <DialogComponent
                 header={`${rowData?.name}`}
-                content={<DialogContent type={rowData?.name} objectsInViolation={rowData?.objectsInViolation} />}
+                content={
+                    <DialogContent
+                        type={rowData?.name}
+                        objectsInViolation={rowData?.objectsInViolation}
+                        engineType={engineType}
+                    />
+                }
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -371,6 +411,7 @@ const RecommendationTable = ({
     const handleDifferentNavigation = (rowData: any) => {
         if (
             (selectedHeaderTab === WLF_TABS.OPTIMIZE || selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED) &&
+            innerPageOracleCheck(rowData?.name) &&
             innerPageCheck(rowData?.name)
         ) {
             handleNavigateToOptimizePage(rowData);
@@ -450,7 +491,7 @@ const RecommendationTable = ({
             selectedDatabaseInstance || instanceId,
             selectedGwInstanceCredId || credIdFromJM,
             selectedGwInstanceRegionId || regionFromJM,
-            dismissMssqlAssessment,
+            engineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment,
             setDismissAction,
             handleDismissResponseWithRowData,
             handleDismissError
@@ -463,6 +504,9 @@ const RecommendationTable = ({
 
     const handleDismissResponse = (res: any, action: string, rowData: any) => {
         if (!rowData) return;
+
+        // Use the appropriate format function based on engine type
+        const formatFunction = engineType === DBType.ORACLE ? formatOracleWellArchitectedData : formatGetWellData;
 
         handleDismissResponseHelper(
             res,
@@ -478,7 +522,7 @@ const RecommendationTable = ({
             dispatch,
             addSuccessNotification,
             t,
-            formatGetWellData
+            formatFunction
         );
     };
 
@@ -539,7 +583,13 @@ const RecommendationTable = ({
 
         return (
             <div className={styles.postponeInfoContainer}>
-                <PostponeInfo configKey="config" getPostponeInfo={getPostponeInfo} translation={t} placement="right" />
+                <PostponeInfo
+                    configKey="config"
+                    getPostponeInfo={getPostponeInfo}
+                    translation={t}
+                    placement="right"
+                    customStyles={customStyles}
+                />
             </div>
         );
     };
@@ -710,7 +760,10 @@ const RecommendationTable = ({
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
-                            rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS
                         ) {
                             type = 'EC2 instances';
                         } else if (
@@ -902,6 +955,7 @@ const RecommendationTable = ({
                                             cardData={{ dummy: { dismissedObj: { configState: 'ACTIVATING' } } }}
                                             translation={t}
                                             showFullContent={false}
+                                            customStyles={customStyles}
                                         />
                                     ) : GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
                                       rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (

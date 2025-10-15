@@ -177,6 +177,23 @@ export const checkHasDismissedConfigurations = (cardData: any, assessmentData?: 
     return hasStandardDismissed || hasStorageSizingDismissed || hasSubConfigsDismissed;
 };
 
+// Helper function to check if a configuration should be counted based on Oracle-specific conditions for MSSQL we do not have any condition so will go to else block
+const shouldCountOracleMSSQLConfiguration = (key: string, cardData: any): boolean => {
+    if (key === 'log_dg_lun_layout' || key === 'data_dg_lun_layout') {
+        return cardData.isASMManaged;
+    }
+    if (key === 'archivelog_dg_lun_layout' || key === 'fra_dg_lun_layout') {
+        if (key === 'archivelog_dg_lun_layout' && !cardData.isStorageLayoutFra && cardData.isASMManaged) {
+            return true;
+        }
+        if (key === 'fra_dg_lun_layout' && cardData.isStorageLayoutFra && cardData.isASMManaged) {
+            return true;
+        }
+        return false;
+    }
+    return true;
+};
+
 // Helper function to get total count based on dismissed configuration state
 export const calculateTotalConfigCount = (
     cardData: any,
@@ -195,17 +212,25 @@ export const calculateTotalConfigCount = (
             return;
         }
 
+        if (key === 'isStorageLayoutFra' || key === 'isASMManaged') {
+            return;
+        }
+
         const configState = cardData[key]?.dismissedObj?.configState;
 
         if (showDismissedConfigurations) {
             // Count only dismissed and postponed configurations
             if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
-                count++;
+                if (shouldCountOracleMSSQLConfiguration(key, cardData)) {
+                    count++;
+                }
             }
         } else {
             // Count only active configurations
             if (!configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING) {
-                count++;
+                if (shouldCountOracleMSSQLConfiguration(key, cardData)) {
+                    count++;
+                }
             }
         }
     });

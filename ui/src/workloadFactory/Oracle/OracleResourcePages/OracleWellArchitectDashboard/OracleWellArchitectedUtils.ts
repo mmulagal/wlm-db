@@ -22,7 +22,118 @@ import {
     formatNumberWithCustomComma,
     getCurrentDateTime
 } from '../../../../utils/utilityFunctions';
-import { shouldShowOntapOsCard } from '../../../GetWell/GetWellUtils';
+import {
+    areAllSubcategoryConfigurationsDismissed,
+    getConfigurationDisplayName,
+    shouldShowOntapOsCard
+} from '../../../GetWell/GetWellUtils';
+
+// Helper function to get the dismiss state for ONTAP/OS cards based on subcategory logic (Oracle version)
+const getOracleOntapOsCardDismissState = (
+    cardKey: 'ontap_configuration' | 'os_configuration',
+    assessmentData: any
+): { configState?: string; startTime?: string; endTime?: string } | undefined => {
+    if (!assessmentData || !assessmentData.dismissedConfigurations) return undefined;
+
+    const dismissedConfig = assessmentData.dismissedConfigurations;
+
+    if (cardKey === 'ontap_configuration') {
+        // Check volumes and luns
+        const volumeConfigs = assessmentData?.storage?.configuration?.volumes || [];
+        const lunConfigs = assessmentData?.storage?.configuration?.luns || [];
+        const dismissedVolumeConfigs = dismissedConfig?.storage?.configuration?.volumes || [];
+        const dismissedLunConfigs = dismissedConfig?.storage?.configuration?.luns || [];
+
+        const allVolumesAreDismissed =
+            volumeConfigs.length > 0
+                ? areAllSubcategoryConfigurationsDismissed(volumeConfigs, dismissedVolumeConfigs, 'volumes')
+                : true;
+
+        const allLunsAreDismissed =
+            lunConfigs.length > 0
+                ? areAllSubcategoryConfigurationsDismissed(lunConfigs, dismissedLunConfigs, 'luns')
+                : true;
+
+        // If all volumes and luns are dismissed/postponed, consider the card dismissed
+        if (
+            (volumeConfigs.length === 0 || allVolumesAreDismissed) &&
+            (lunConfigs.length === 0 || allLunsAreDismissed) &&
+            (volumeConfigs.length > 0 || lunConfigs.length > 0)
+        ) {
+            const allDismissedOntapConfigs = [...dismissedVolumeConfigs, ...dismissedLunConfigs];
+
+            if (allDismissedOntapConfigs.length > 0) {
+                // Count dismissed vs postponed to determine final state
+                const dismissedCount = allDismissedOntapConfigs.filter(
+                    (config: any) => config.configState === CONFIG_STATES.DISMISSED
+                ).length;
+                const postponedCount = allDismissedOntapConfigs.filter(
+                    (config: any) => config.configState === CONFIG_STATES.POSTPONED
+                ).length;
+
+                const finalState = dismissedCount >= postponedCount ? CONFIG_STATES.DISMISSED : CONFIG_STATES.POSTPONED;
+
+                // If the final state is postponed, get the timestamp from one of the postponed configurations
+                if (finalState === CONFIG_STATES.POSTPONED) {
+                    const postponedConfig = allDismissedOntapConfigs.find(
+                        (config: any) => config.configState === CONFIG_STATES.POSTPONED
+                    );
+
+                    return {
+                        configState: finalState,
+                        startTime: postponedConfig?.startTime,
+                        endTime: postponedConfig?.endTime
+                    };
+                }
+
+                return {
+                    configState: finalState
+                };
+            }
+        }
+    } else if (cardKey === 'os_configuration') {
+        // Check OS configurations
+        const osConfigs = assessmentData?.storage?.configuration?.os || [];
+        const dismissedOsConfigs = dismissedConfig?.storage?.configuration?.os || [];
+
+        const allOsAreDismissed =
+            osConfigs.length > 0
+                ? areAllSubcategoryConfigurationsDismissed(osConfigs, dismissedOsConfigs, ASSESSMENT_CONFIG_NAMES.OS)
+                : true;
+
+        // If all OS configurations are dismissed/postponed, consider the card dismissed
+        if (allOsAreDismissed && dismissedOsConfigs.length > 0) {
+            // Count dismissed vs postponed to determine final state
+            const dismissedCount = dismissedOsConfigs.filter(
+                (config: any) => config.configState === CONFIG_STATES.DISMISSED
+            ).length;
+            const postponedCount = dismissedOsConfigs.filter(
+                (config: any) => config.configState === CONFIG_STATES.POSTPONED
+            ).length;
+
+            const finalState = dismissedCount >= postponedCount ? CONFIG_STATES.DISMISSED : CONFIG_STATES.POSTPONED;
+
+            // If the final state is postponed, get the timestamp from one of the postponed configurations
+            if (finalState === CONFIG_STATES.POSTPONED) {
+                const postponedConfig = dismissedOsConfigs.find(
+                    (config: any) => config.configState === CONFIG_STATES.POSTPONED
+                );
+
+                return {
+                    configState: finalState,
+                    startTime: postponedConfig?.startTime,
+                    endTime: postponedConfig?.endTime
+                };
+            }
+
+            return {
+                configState: finalState
+            };
+        }
+    }
+
+    return undefined;
+};
 
 // Helper function to get individual configuration dismiss state (similar to MSSQL version)
 const getIndividualConfigDismissState = (
@@ -232,7 +343,7 @@ const generateStorageLayoutCards = () => {
 export const oracleCardData: any = {
     ...generateStorageLayoutCards(),
     ontap_configuration: {
-        id: 'ontap',
+        id: 'ONTAP',
         category: 'storage',
         mapName: ASSESSMENT_CONFIG_NAMES.ONTAP,
         block_one: {
@@ -260,6 +371,7 @@ export const oracleCardData: any = {
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency']
     },
     os_configuration: {
+        id: 'Operating system',
         category: 'storage',
         mapName: ASSESSMENT_CONFIG_NAMES.OS,
         block_one: {
@@ -539,7 +651,8 @@ const createOntapConfigurationBlock = (
     ontapOptimizedConfig: number,
     ontapNotOptimizedConfig: number,
     highestOntapSeverity: string,
-    ontapTagsList: string[]
+    ontapTagsList: string[],
+    dismissedObj?: any
 ) => {
     const totalConfigs = ontapOptimizedConfig + ontapNotOptimizedConfig;
     const hasConfigs = totalConfigs > 0;
@@ -570,16 +683,18 @@ const createOntapConfigurationBlock = (
             }
         },
         tags: [...new Set(ontapTagsList)], // Remove duplicates
-        category: 'storage'
+        category: 'storage',
+        dismissedObj: dismissedObj || null
     };
 };
 
-// Helper function to create ONTAP configuration block
+// Helper function to create OS configuration block
 const createOsConfigurationBlock = (
     osOptimizedConfig: number,
     osNotOptimizedConfig: number,
     highestOsSeverity: string,
-    osTagsList: string[]
+    osTagsList: string[],
+    dismissedObj?: any
 ) => {
     const totalConfigs = osOptimizedConfig + osNotOptimizedConfig;
     const hasConfigs = totalConfigs > 0;
@@ -610,7 +725,8 @@ const createOsConfigurationBlock = (
             }
         },
         tags: [...new Set(osTagsList)], // Remove duplicates
-        category: 'storage'
+        category: 'storage',
+        dismissedObj: dismissedObj || null
     };
 };
 
@@ -631,6 +747,10 @@ export const getOracleCardsData = (
     const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
         formatOSConfig(data, optimizingData, showDismissedView);
 
+    // Get dismiss states for ONTAP and OS cards
+    const ontapDismissedObj = getOracleOntapOsCardDismissState('ontap_configuration', data);
+    const osDismissedObj = getOracleOntapOsCardDismissState('os_configuration', data);
+
     const isFraCheck = data?.storage?.layout?.some((item: any) => item?.name === 'fra-dg-lun-layout') || false;
 
     const cardsData = {
@@ -641,13 +761,15 @@ export const getOracleCardsData = (
             ontapOptimizedConfig,
             ontapNotOptimizedConfig,
             highestOntapSeverity,
-            ontapTagsList
+            ontapTagsList,
+            ontapDismissedObj
         ),
         os_configuration: createOsConfigurationBlock(
             osOptimizedConfig,
             osNotOptimizedConfig,
             highestOsSeverity,
-            osTagsList
+            osTagsList,
+            osDismissedObj
         )
     };
 
@@ -721,7 +843,7 @@ export const formatOracleOptimizationBreakDown = (
             storageCount.dismissedOrPostponed++;
             storageCount.hasDismissedOrPostponed = true;
             // Use proper display names for parent cards
-            if (cardItem?.id === 'ontap_configuration') {
+            if (cardItem?.id === 'ontap_configuration' || cardItem?.id === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
                 storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
             } else if (cardItem?.id === 'os_configuration') {
                 storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
@@ -763,7 +885,7 @@ export const formatOracleOptimizationBreakDown = (
                 if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
                     storageCount.dismissedOrPostponed++;
                     storageCount.hasDismissedOrPostponed = true;
-                    storageCount.dismissedIds.push(config.configurationName);
+                    storageCount.dismissedIds.push(getConfigurationDisplayName(config.configurationName));
                 }
             });
         }
@@ -784,7 +906,7 @@ export const formatOracleOptimizationBreakDown = (
                 if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
                     storageCount.dismissedOrPostponed++;
                     storageCount.hasDismissedOrPostponed = true;
-                    storageCount.dismissedIds.push(config.configurationName);
+                    storageCount.dismissedIds.push(getConfigurationDisplayName(config.configurationName));
                 }
             });
         }

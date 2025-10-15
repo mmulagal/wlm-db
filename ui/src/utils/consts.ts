@@ -1010,7 +1010,12 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         'snapshot-autodelete': 'volumes',
         'space-mgmt-try-first': 'volumes',
         'tiering-policy': 'volumes',
-        'tiering-min-cooling-days': 'volumes'
+        'tiering-min-cooling-days': 'volumes',
+        // Oracle specific configurations
+        compression: 'volumes',
+        deduplication: 'volumes',
+        compaction: 'volumes',
+        'snapshot-policy': 'volumes'
     },
     STORAGE_LAYOUT_MAP: {
         [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'data-files-location',

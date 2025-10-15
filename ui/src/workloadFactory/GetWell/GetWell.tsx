@@ -220,6 +220,17 @@ const GetWell = () => {
         [cardData, driftAssessmentData]
     );
 
+    // Memoize sub-configuration activation states to avoid redundant computation
+    const areAllOntapActivating = useMemo(
+        () => areAllOntapSubConfigurationsActivating(driftAssessmentData),
+        [driftAssessmentData]
+    );
+
+    const areAllOsActivating = useMemo(
+        () => areAllOsSubConfigurationsActivating(driftAssessmentData),
+        [driftAssessmentData]
+    );
+
     // Automatically enable dismissed toggle when all configurations are dismissed
     useEffect(() => {
         if (allConfigurationsDismissed) {
@@ -340,10 +351,10 @@ const GetWell = () => {
 
         switch (configType) {
             case ASSESSMENT_CONFIG_NAMES.ONTAP:
-                areAllActivating = areAllOntapSubConfigurationsActivating(driftAssessmentData);
+                areAllActivating = areAllOntapActivating;
                 break;
             case ASSESSMENT_CONFIG_NAMES.OS:
-                areAllActivating = areAllOsSubConfigurationsActivating(driftAssessmentData);
+                areAllActivating = areAllOsActivating;
                 break;
             case ASSESSMENT_CONFIG_NAMES.HA:
                 areAllActivating = areAllHaSubConfigurationsActivating(driftAssessmentData);
@@ -1708,9 +1719,7 @@ const GetWell = () => {
                                                     optimizePrintState={optimizePrintState}
                                                     showDismissedConfigurations={showDismissedConfigurations}
                                                     setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                    isAllSubConfigActivating={areAllOntapSubConfigurationsActivating(
-                                                        driftAssessmentData
-                                                    )}
+                                                    isAllSubConfigActivating={areAllOntapActivating}
                                                 />
                                                 <DsAccordion
                                                     id="9"
@@ -1746,16 +1755,12 @@ const GetWell = () => {
                                                             {renderPostponeActivatingInfo('ontap_configuration')}
 
                                                             {/* Show full ActivatingInfo if all sub-configs are activating */}
-                                                            {areAllOntapSubConfigurationsActivating(
-                                                                driftAssessmentData
-                                                            ) &&
+                                                            {areAllOntapActivating &&
                                                                 !showDismissedConfigurations &&
                                                                 renderSubConfigActivatingInfo('ontap')}
 
                                                             {/* Show normal view button if not all sub-configs are activating or in dismissed view */}
-                                                            {(!areAllOntapSubConfigurationsActivating(
-                                                                driftAssessmentData
-                                                            ) ||
+                                                            {(!areAllOntapActivating ||
                                                                 showDismissedConfigurations) && (
                                                                 <>
                                                                     <div
@@ -1815,9 +1820,7 @@ const GetWell = () => {
                                                     optimizePrintState={optimizePrintState}
                                                     showDismissedConfigurations={showDismissedConfigurations}
                                                     setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                    isAllSubConfigActivating={areAllOsSubConfigurationsActivating(
-                                                        driftAssessmentData
-                                                    )}
+                                                    isAllSubConfigActivating={areAllOsActivating}
                                                 />
                                                 <DsAccordion
                                                     id="10"
@@ -1853,15 +1856,12 @@ const GetWell = () => {
                                                             {renderPostponeActivatingInfo('os_configuration')}
 
                                                             {/* Show full ActivatingInfo if all sub-configs are activating */}
-                                                            {areAllOsSubConfigurationsActivating(driftAssessmentData) &&
+                                                            {areAllOsActivating &&
                                                                 !showDismissedConfigurations &&
                                                                 renderSubConfigActivatingInfo('os')}
 
                                                             {/* Show normal view button if not all sub-configs are activating or in dismissed view */}
-                                                            {(!areAllOsSubConfigurationsActivating(
-                                                                driftAssessmentData
-                                                            ) ||
-                                                                showDismissedConfigurations) && (
+                                                            {(!areAllOsActivating || showDismissedConfigurations) && (
                                                                 <>
                                                                     <div
                                                                         className={

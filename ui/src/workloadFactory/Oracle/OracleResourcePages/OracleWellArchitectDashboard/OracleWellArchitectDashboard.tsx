@@ -12,7 +12,7 @@ import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
-import { checkHasDismissedConfigurations } from '../../../GetWell/GetWellHelper';
+import { checkAllConfigurationsDismissed, checkHasDismissedConfigurations } from '../../../GetWell/GetWellHelper';
 import { generateOracleDynamicFilterOptions, oracleApplyFilter } from './OracleWellArchitectedUtils';
 import {
     setOracleOptimizeFilterTags,
@@ -82,6 +82,19 @@ const OracleWellArchitectDashboard = () => {
         return result;
     }, [cardData, driftAssessmentData]);
 
+    // Helper function to check if all configurations are dismissed
+    const allConfigurationsDismissed = useMemo(
+        () => checkAllConfigurationsDismissed(cardData, driftAssessmentData),
+        [cardData, driftAssessmentData]
+    );
+
+    // Automatically enable dismissed toggle when all configurations are dismissed
+    useEffect(() => {
+        if (allConfigurationsDismissed) {
+            setShowDismissedConfigurations(true);
+        }
+    }, [allConfigurationsDismissed]);
+
     // To apply filters on change of filters or card data
     useEffect(() => {
         const { data, configCount } = oracleApplyFilter(
@@ -142,8 +155,9 @@ const OracleWellArchitectDashboard = () => {
                                 loading={loading}
                                 optimizationBreakDown={optimizationBreakDown}
                                 isAssessmentAvailable={isAssessmentAvailable}
+                                allConfigurationsDismissed={allConfigurationsDismissed}
                             />
-                            <OracleConfigureCategory />
+                            <OracleConfigureCategory allConfigurationsDismissed={allConfigurationsDismissed} />
                         </div>
 
                         <div className={styles.sectionTwo}>
@@ -187,6 +201,24 @@ const OracleWellArchitectDashboard = () => {
                                                             onClick={() => {}}
                                                             title="Dismissed configuration"
                                                             isDisabled
+                                                        />
+                                                    </DsPopover>
+                                                ) : allConfigurationsDismissed ? (
+                                                    <DsPopover
+                                                        trigger="hover"
+                                                        title={t(
+                                                            'databases.well-architect.dismiss.all-configurations-dismissed-tooltip'
+                                                        )}
+                                                        monitorPosition="all"
+                                                        placement="bottom"
+                                                    >
+                                                        <DsToggleSwitch
+                                                            id="dismissed-configuration-toggle"
+                                                            data-testid="dismissed-configuration-toggle"
+                                                            onClick={() => {}}
+                                                            title="Dismissed configuration"
+                                                            isDisabled
+                                                            value
                                                         />
                                                     </DsPopover>
                                                 ) : (

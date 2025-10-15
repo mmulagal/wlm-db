@@ -15,31 +15,23 @@ import { GENERAL } from '../../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
-    CONFIG_STATE_ACTIONS,
     DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
-    RESPONSE_STATUS,
     WELL_ARCHITECT_FINDINGS,
     WLF_TABS
 } from '../../../utils/consts';
 import {
-    setDriftAssessmentData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import {
-    formatGetWellData,
-    handleOptimizeStorageJob,
-    updateConfigStatePerInstance,
-    updateConfigStateStatus
-} from '../GetWellUtils';
+import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
@@ -113,8 +105,23 @@ const StorageCardComponent = ({
             return showDismissedConfigurations || isAllSubConfigActivating;
         }
 
-        // For other normal cards: keep the existing logic
+        // For other normal cards
         return showDismissedConfigurations || cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
+    };
+
+    // Function to determine if dismissed style should be applied
+    const shouldRemoveActivatingPointer = () => {
+        // For ONTAP, OS, and HA cards: apply dismissed style if all sub-configs are activating
+        if (
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
+        ) {
+            return isAllSubConfigActivating;
+        }
+
+        // For other normal cards
+        return cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
     };
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
@@ -953,7 +960,7 @@ const StorageCardComponent = ({
                 className={styles.cardContent}
                 onMouseEnter={handleCardHoverMouseEnter}
                 onMouseLeave={handleCardHoverMouseLeave}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: shouldRemoveActivatingPointer() ? 'default' : 'pointer' }}
             >
                 {/* First Column */}
                 <div className={`${styles.column}`}>

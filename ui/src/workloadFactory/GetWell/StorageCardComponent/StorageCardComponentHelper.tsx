@@ -102,7 +102,6 @@ export const getSubConfigurationData = (cardData: any) => {
     // Check if this is ONTAP or OS configuration with sub-tables
     const configName = cardData?.block_one?.value;
 
-    // If we change the dismiss button to right then it might come in different block
     if (configName === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS || configName === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) {
         const count = cardData?.block_five?.count?.totalObjectsAssessed;
         return {
@@ -279,10 +278,13 @@ export const handleDismissResponse = (
 
         if (!targetId || !updatedState) return;
 
-        // Update configuration state for the instance
-        const newData =
-            updateConfigStatePerInstance(updatedState, targetId, res?.data?.dismissedConfigurations?.[0]?.endTime) ||
-            {};
+        // Update configuration state for the instance using the unified function
+        const newData = updateConfigStatePerInstance(
+            updatedState,
+            targetId,
+            res?.data?.dismissedConfigurations?.[0]?.endTime
+        ) || {};
+
         // Set drift assessment data (used by both MSSQL and Oracle)
         dispatch(setDriftAssessmentData(newData));
 

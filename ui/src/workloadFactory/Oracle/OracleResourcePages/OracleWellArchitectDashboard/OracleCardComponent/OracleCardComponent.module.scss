@@ -18,6 +18,8 @@
         width: auto;
         display: flex;
         justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
         flex-shrink: 0;
         [class*='dsButtons'] {
             height: 32px !important;
@@ -182,6 +184,21 @@
         .centerText {
             position: relative;
             top: 4.5px;
+        }
+    }
+
+    /* Postpone info container for dismissed configurations */
+    .postponeInfoContainer {
+        margin-right: 20px;
+
+        /* Ensure typography maintains proper colors */
+        [class*='Typography'] {
+            color: var(--text-primary) !important;
+        }
+
+        /* Ensure icons maintain their proper colors */
+        svg {
+            fill: var(--icon-primary) !important;
         }
     }
 }
