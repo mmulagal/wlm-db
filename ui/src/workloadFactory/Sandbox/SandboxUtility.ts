@@ -1,7 +1,9 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
+import store from '../../store/store';
 import { GENERAL } from '../../utils/appConstants';
 import { CreateSandboxPayloadEntities, SandboxListEntities } from '../../utils/types/sandBoxTypes';
 import { formatDateWithTime, formatSize, getTimeDifferenceInDays } from '../../utils/utilityFunctions';
+import { uniqueHostRow } from '../InventoryV2/InventoryUtilsV2';
 
 export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEntities => {
     const payload = {
@@ -224,4 +226,64 @@ export const isValidSandboxName = (name: any) => {
         return false;
     }
     return true;
+};
+
+/**
+ * Transform tableData into unique rows based on databaseHostName, databaseHostId,
+ * databaseInstanceName, databaseInstanceId, credentialId, regionId
+ * and add sandboxCount field
+ */
+export const createUniqueSandboxTableData = (tableData: any[]) => {
+    if (!tableData || !Array.isArray(tableData)) {
+        return [];
+    }
+
+    const state = store.getState();
+    const { inventoryTableData, getDatabaseHosts } = state.inventoryV2;
+
+    const uniqueMap = new Map();
+    let id = 1;
+    tableData.forEach(item => {
+        // Create unique key based on the specified fields
+        const uniqueKey = `${item.databaseHostId}_${item.databaseInstanceName}_${item.credentialId}_${item.regionId}`;
+        if (uniqueMap.has(uniqueKey)) {
+            // If key exists, increment sandbox count
+            const existingItem = uniqueMap.get(uniqueKey);
+            existingItem.sandboxCount += 1;
+        } else {
+            const host = inventoryTableData?.[uniqueHostRow(item.databaseHostId, item?.credentialId, item.regionId)];
+            const isLoading = getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading;
+            let loadingStatus = false;
+            let status;
+            if (!host) {
+                loadingStatus = isLoading;
+            } else {
+                const instance = host?.sqlServerInstances?.find(
+                    (instance: any) => instance.databaseInstanceId === item.databaseInstanceId
+                );
+                if (!instance) {
+                    loadingStatus = isLoading;
+                } else {
+                    status = instance?.status || '';
+                    loadingStatus = false;
+                }
+            }
+            // If key doesn't exist, create new entry with sandbox count = 1
+            uniqueMap.set(uniqueKey, {
+                databaseHostName: item.databaseHostName,
+                databaseHostId: item.databaseHostId,
+                databaseInstanceName: item.databaseInstanceName,
+                databaseInstanceId: item.databaseInstanceId,
+                credentialId: item.credentialId,
+                regionId: item.regionId,
+                sandboxCount: 1,
+                type: item.type,
+                loadingStatus,
+                status,
+                id: id++
+            });
+        }
+    });
+
+    return Array.from(uniqueMap.values());
 };

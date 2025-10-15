@@ -41,13 +41,21 @@ export const initialSandboxState: AgenticAIEntities = {
     agenticRegisterFlowChecks: {
         data: null,
         loading: false
-    }
+    },
+    selectedErrorInvestigationRow: null,
+    selectedViewInvestigationRow: null
 };
 
 const agenticAISlice = createSlice({
     name: 'agenticAI',
     initialState: initialSandboxState,
     reducers: {
+        setSelectedViewErrorInvestigationRow: (state, action: PayloadAction<any>) => {
+            state.selectedViewInvestigationRow = action.payload;
+        },
+        setSelectedErrorInvestigationRow: (state, action: PayloadAction<any>) => {
+            state.selectedErrorInvestigationRow = action.payload;
+        },
         setSelectedInvestigationDate: (state, action: PayloadAction<any>) => {
             state.selectedInvestigationDate = action.payload;
         },
@@ -152,6 +160,8 @@ const agenticAISlice = createSlice({
 });
 
 export const {
+    setSelectedViewErrorInvestigationRow,
+    setSelectedErrorInvestigationRow,
     setSelectedSeverity,
     setSelectedTimeFrame,
     setSelectedErrorCodes,

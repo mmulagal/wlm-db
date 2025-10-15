@@ -283,8 +283,8 @@
             .contentArea {
                 display: flex;
                 justify-content: space-between;
-                width: 86%;
-                max-width: 1607px;
+                width: 100%;
+                padding: 0 40px;
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
@@ -307,8 +307,9 @@
             .contentAreaTemp {
                 display: flex;
                 justify-content: space-between;
-                width: 86%;
-                max-width: 1607px;
+                width: 100%;
+                padding: 0 40px;
+
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
@@ -537,26 +538,6 @@
     height: 100vh;
 }
 
-@media screen and (min-width: 1429px) and (max-width: 1700px) {
-    .headerComponent {
-        .dashboardSection {
-            .contentAreaTemp {
-                width: 1318px !important;
-            }
-        }
-    }
-}
-
-@media screen and (min-width: 1429px) and (max-width: 1818px) {
-    .headerComponent {
-        .dashboardSection {
-            .contentArea {
-                width: 81.4% !important;
-            }
-        }
-    }
-}
-
 @media screen and (max-width: 1428px) {
     .headerComponent {
         .dashboardSection {
@@ -583,14 +564,6 @@
 
 @media screen and (min-width: 1920px) {
     .headerComponent {
-        [class*='dashboardSection'] {
-            [class*='spaceAreaTemp'] {
-                [class*='contentArea'] {
-                    width: 82.5% !important;
-                    max-width: unset !important;
-                }
-            }
-        }
         .sandboxSection {
             .contentArea {
                 max-width: unset !important;

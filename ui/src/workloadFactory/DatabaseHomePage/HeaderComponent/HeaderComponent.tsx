@@ -128,6 +128,7 @@ import RegisterWizard from '../../InventoryV2/InventoryTablesComponent/ManageIns
 import DummySelect from '../../../common/DummySelect/DummySelect';
 import OracleResourcePages from '../../Oracle/OracleResourcePages/OracleResourcePages';
 import { clearDataMap } from '../../../store/workloadFactory/snapcenterSlice';
+import DashboardOverview from '../../Dashboard/DashboardOverview/DashboardOverview';
 
 type Tab = {
     tab: string;
@@ -1402,78 +1403,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <div className={styles.spaceAreaTemp}>
                                 <div className={styles.contentAreaTemp}>
                                     {selectMultipleComponents()}
-                                    <div className={styles.content}>
-                                        <DsButton
-                                            children="Deploy host"
-                                            variant="Default"
-                                            dropDown={{
-                                                trigger: 'click',
-                                                autoPosition: true,
-                                                items: [
-                                                    {
-                                                        id: 'wlm-db-deploy-mssql-host',
-                                                        label: 'Microsoft SQL Server',
-                                                        onClick: () => {
-                                                            dispatch(setDatabaseHostEntryPoint('database'));
-                                                            dispatch(setSelectedDatabaseType(DBType.MSSQL));
-                                                            // navigate(WLF_TO_FORM_NAVIGATE);
-                                                            if (isWorkloadFactory) {
-                                                                navigate(WLF_TO_FORM_NAVIGATE);
-                                                                postBlueXPMessage({
-                                                                    type: BlueXPListeners.navigate,
-                                                                    payload: {
-                                                                        pathname: './mssql-deploy-wizard',
-                                                                        replace: true
-                                                                    }
-                                                                });
-                                                            } else {
-                                                                navigate('../../fsxdb/mssql-deploy-wizard');
-                                                                postBlueXPMessage({
-                                                                    type: BlueXPListeners.navigate,
-                                                                    payload: {
-                                                                        pathname: '../../fsxdb/mssql-deploy-wizard',
-                                                                        replace: true
-                                                                    }
-                                                                });
-                                                            }
-                                                        },
-                                                        className: 'mssql-deployment-button'
-                                                    },
-                                                    {
-                                                        id: 'wlm-db-deploy-pgsql-host',
-                                                        label: 'PostgreSQL Server',
-                                                        onClick: () => {
-                                                            dispatch(setDatabaseHostEntryPoint('database'));
-                                                            dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
-                                                            if (isWorkloadFactory) {
-                                                                navigate(WLF_TO_PROTECT_NAVIGATE);
-                                                                postBlueXPMessage({
-                                                                    type: BlueXPListeners.navigate,
-                                                                    payload: {
-                                                                        pathname: './postgreSQL-deploy-wizard',
-                                                                        replace: true
-                                                                    }
-                                                                });
-                                                            } else {
-                                                                navigate('../../fsxdb/postgreSQL-deploy-wizard');
-                                                                postBlueXPMessage({
-                                                                    type: BlueXPListeners.navigate,
-                                                                    payload: {
-                                                                        pathname:
-                                                                            '../../fsxdb/postgreSQL-deploy-wizard',
-                                                                        replace: true
-                                                                    }
-                                                                });
-                                                            }
-                                                        },
-                                                        className: 'pgsql-deployment-button'
-                                                    }
-                                                ]
-                                            }}
-                                        />
-
-                                        {refreshComponent()}
-                                    </div>
+                                    <div className={styles.content}>{refreshComponent()}</div>
                                 </div>
                             </div>
 
@@ -1484,7 +1414,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 </div>
                             )}
 
-                            <Dashboard />
+                            <DashboardOverview />
+                            {/* <Dashboard /> */}
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (

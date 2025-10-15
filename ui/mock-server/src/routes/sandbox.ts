@@ -10,10 +10,10 @@ router.get(
             count: 4,
             items: [
                 {
-                    databaseHostName: 'SQLServer-Prod-01',
-                    databaseHostId: '64de4daa-3405-47c6-8689-58f4987b6ad8',
-                    databaseInstanceName: 'Default Instance',
-                    databaseInstanceId: 'inst1',
+                    databaseHostName: 'Database hostname 1',
+                    databaseHostId: 'resource-id-1',
+                    databaseInstanceName: 'MSSQLSERVER',
+                    databaseInstanceId: '11',
                     sandboxName: 'sandboxtest1',
                     sourceDatabaseName: 'dbname1',
                     sourceDatabaseHostName: 'dbhost',
@@ -22,10 +22,10 @@ router.get(
                     tag: 'dev'
                 },
                 {
-                    databaseHostName: 'SQLServer-Prod-01',
-                    databaseHostId: '64de4daa-3405-47c6-8689-58f4987b6ad82',
-                    databaseInstanceName: 'Default Instance',
-                    databaseInstanceId: 'inst1',
+                    databaseHostName: 'Database hostname 1',
+                    databaseHostId: 'resource-id-1',
+                    databaseInstanceName: 'MSSQLSERVER',
+                    databaseInstanceId: '11',
                     sandboxName: 'sandboxtest2',
                     sourceDatabaseName: 'dbname2',
                     sourceDatabaseHostName: 'dbhost',
@@ -34,10 +34,10 @@ router.get(
                     tag: 'qa'
                 },
                 {
-                    databaseHostName: 'SQLServer-Dev-01',
-                    databaseHostId: 'fc0be6a3-f710-47db-b5b4-4ee709250777',
-                    databaseInstanceName: 'Default Instance',
-                    databaseInstanceId: 'inst2',
+                    databaseHostName: 'Database hostname 1',
+                    databaseHostId: 'resource-id-1',
+                    databaseInstanceName: 'MSSQLSERVER2',
+                    databaseInstanceId: '12',
                     sandboxName: 'sandboxtest1',
                     sourceDatabaseName: 'dbname1',
                     sourceDatabaseHostName: 'dbhost',
@@ -46,10 +46,10 @@ router.get(
                     tag: 'dev'
                 },
                 {
-                    databaseHostName: 'SQLServer-Dev-01',
-                    databaseHostId: 'fc0be6a3-f710-47db-b5b4-4ee7092507774',
-                    databaseInstanceName: 'Default Instance',
-                    databaseInstanceId: 'inst2',
+                    databaseHostName: 'Database hostname 2',
+                    databaseHostId: 'resource-id-2',
+                    databaseInstanceName: 'MSSQLSERVER',
+                    databaseInstanceId: '21',
                     sandboxName: 'sandboxtest2',
                     sourceDatabaseName: 'dbname2',
                     sourceDatabaseHostName: 'dbhost',

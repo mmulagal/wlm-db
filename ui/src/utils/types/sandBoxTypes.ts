@@ -90,6 +90,7 @@ export interface SandboxItemEntities {
 }
 
 export interface SandboxEntities {
+    selectedSandboxRow: null | any;
     sandboxInstanceLoading: boolean;
     showBanner: boolean;
     refreshSandboxInstanceTime: any;

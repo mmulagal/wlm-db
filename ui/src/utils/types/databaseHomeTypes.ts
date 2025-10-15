@@ -161,6 +161,7 @@ export interface DatabaseHostsEntities {
     selectedTab: string;
     aggregatedHostsCount: AggregatedHostsCountRes | null;
     aggregatedPgSqlHostsCount: AggregatedHostsCountRes | null;
+    aggregatedOracleHostsCount: AggregatedHostsCountRes | null;
     aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedPgsqlStorageSavings: AggregatedStorageSavingsRes | null;

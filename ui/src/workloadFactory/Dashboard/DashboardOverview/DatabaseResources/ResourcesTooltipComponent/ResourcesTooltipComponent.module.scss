@@ -1,0 +1,15 @@
+.resourceTooltip {
+    width: 232px;
+    height: 108px;
+    padding: 8px 0px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+}

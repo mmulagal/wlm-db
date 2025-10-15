@@ -1,0 +1,75 @@
+.errorInvestigationOverview {
+    background-color: var(--content-background);
+    width: 50%;
+    height: 368px;
+    box-shadow: 2px 2px 6px 0px var(--border);
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .rightSection {
+        display: flex;
+        gap: 8px;
+    }
+
+    .emptyState {
+        padding: 40px;
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        height: 296px;
+
+        .rightSection {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+    }
+
+    .mainSection {
+        padding: 40px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+
+        .sectionOne {
+            display: flex;
+            gap: 10%;
+            align-items: center;
+
+            .fullBlock {
+                width: 100%;
+                display: flex;
+
+                .block {
+                    width: 32%;
+                    height: 48px;
+                    border-right: 1px solid var(--border);
+                    display: flex;
+                    flex-direction: column;
+
+                    .bottomRow {
+                        display: flex;
+                        gap: 8px;
+                        align-items: center;
+                    }
+                }
+            }
+        }
+
+        .sectionTwo {
+            background: var(--notification-warning-bg, #fffaf6);
+            padding: 12px 24px;
+            height: 48px;
+            display: flex;
+            gap: 6px;
+        }
+    }
+}

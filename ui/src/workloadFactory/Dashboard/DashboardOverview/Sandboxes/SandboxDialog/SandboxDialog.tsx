@@ -3,23 +3,23 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import styles from './CategoryDialogComponent.module.scss';
-import { useAppSelector } from '../../../../store/storeHooks';
-import { setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
-import { GENERAL } from '../../../../utils/appConstants';
+import styles from './SandboxDialog.module.scss';
+import { GENERAL } from '../../../../../utils/appConstants';
+import { INVENTORY_STATUS } from '../../../../../utils/consts';
+import { setSelectedSandboxRow } from '../../../../../store/workloadFactory/sandboxSlice';
+import { useAppSelector } from '../../../../../store/storeHooks';
 
-const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
+const SandboxDialog = ({ tableData }: { tableData: any }) => {
     const dispatch = useDispatch();
-    const selectedRow = useAppSelector(state => state.databaseHome.selectedAssessmentRow);
     const { t } = useTranslation();
+    const selectedRow = useAppSelector(state => state.sandbox.selectedSandboxRow);
 
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
-            Header: 'SQL Server instance name',
+            Header: t('databases.dashboard.resource-name'),
             accessor: 'databaseInstanceName',
-            width: 'auto',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.databaseInstanceName;
@@ -59,7 +59,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         },
         {
             id: '2',
-            Header: 'Type',
+            Header: t('databases.dashboard.type'),
             accessor: 'type',
             width: 'auto',
             filterOptions: 'auto',
@@ -67,19 +67,19 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         },
         {
             id: '3',
-            Header: 'Host name',
-            accessor: 'hostName',
-            width: '20%',
+            Header: t('databases.dashboard.host-name'),
+            accessor: 'databaseHostName',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             id: '4',
-            Header: 'Optimization score',
-            accessor: 'score',
-            width: '20%',
+            Header: t('databases.dashboard.sandboxes'),
+            accessor: 'sandboxCount',
+            width: 'auto',
             isSortable: true,
-            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: any) => cellData || 0
         }
     ];
 
@@ -97,7 +97,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         // @ts-ignore
         manageColumnsProps: false,
         defaultSelectedRows: selectedRow ? [selectedRow.id] : [firstEnabledRow()],
-        isSorting: false,
+        isSorting: true,
         selectionType: 'singular',
         columns: ColDefs,
         rows: tableData,
@@ -111,21 +111,21 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         if (rowNumber && rowNumber !== '0') {
             const row = tableData?.find((row: any) => String(row?.id) === rowNumber);
             if (row) {
-                dispatch(setSelectedAssessmentRow(row));
+                dispatch(setSelectedSandboxRow(row));
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tableProps.selectionState]);
+    }, [tableProps.selectionState, tableData]);
 
     return (
         <div className={styles.categoryDialogContent}>
-            <DsTypography variant="Regular_14">{t('databases.dashboard.category-dialog-component')}</DsTypography>
-            <div className={styles.table}>
+            <DsTypography variant="Regular_14">{t('databases.dashboard.sandbox-dialog-text')}</DsTypography>
+            <div className={styles.table} style={{ width: '800px' }}>
                 <TableTopBar
                     // @ts-ignore
                     tableProps={tableProps}
-                    pluralTitle="Not-optimized instances"
-                    singularTitle="Not-optimized instance"
+                    pluralTitle={t('databases.dashboard.resources')}
+                    singularTitle={t('databases.dashboard.resource')}
                 />
                 <Table
                     // @ts-ignore
@@ -137,4 +137,4 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
     );
 };
 
-export default CategoryDialogComponent;
+export default SandboxDialog;

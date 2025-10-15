@@ -8,7 +8,8 @@ export const AUTH_STATUS = {
 
 export const WIZARD_TYPE = {
     PGSQL: 'pgsql',
-    MSSQL: 'mssql'
+    MSSQL: 'mssql',
+    ORACLE: 'oracle'
 };
 
 // Environments names should be aligned with .env files

@@ -36,7 +36,9 @@ import {
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading, allOracleHostAssessmentData } = useAppSelector(
+        state => state.inventoryV2
+    );
     const { setDialog, closeDialog } = useDialog();
     const categoryData = useMemo(
         () => getAssessmentGroupedByCategory(allmssqlHostAssessmentData),
@@ -95,7 +97,7 @@ const OptimizeByCategory = () => {
 
     const handleClick = () => {
         const tableData = sortListOfDict(
-            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData) || [],
+            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData, allOracleHostAssessmentData) || [],
             'status',
             false
         );

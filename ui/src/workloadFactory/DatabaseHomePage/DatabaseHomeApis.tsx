@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAggregatedCosts,
+    addAggregatedOracleHostsCount,
     addAggregatedPgsqlStorageSavings,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
@@ -22,6 +23,7 @@ const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
     const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.multiMssqlDatabaseHostsData);
     const pgsqlHostData = useAppSelector(state => state.inventoryV2.multiPgSqlDatabaseHostsData);
+    const oracleHostData = useAppSelector(state => state.inventoryV2.multiOracleDatabaseHostsData);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
@@ -103,6 +105,19 @@ const DatabaseHomeApis = () => {
         dispatch(addAggregatePgSqlHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pgsqlHostData, inventoryTableData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
+
+    // To have oracle database hosts count data in dashboard
+    useEffect(() => {
+        if (refreshBlocked) {
+            return;
+        }
+        if (!oracleHostData) {
+            return;
+        }
+        const hostStatusCount = getManagedHostCount(oracleHostData, dispatch, WIZARD_TYPE.ORACLE);
+        dispatch(addAggregatedOracleHostsCount(hostStatusCount));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [oracleHostData, inventoryTableData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     useEffect(() => {
         if (refreshBlocked) {

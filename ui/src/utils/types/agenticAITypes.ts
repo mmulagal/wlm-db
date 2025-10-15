@@ -19,6 +19,8 @@ export interface ErrorInvestigationGetApiResponse {
 }
 
 export interface AgenticAIEntities {
+    selectedViewInvestigationRow: [] | any;
+    selectedErrorInvestigationRow: [] | any;
     selectedSeverity: [] | any;
     selectedTimeFrame: any;
     selectedErrorCodes: [] | any;

@@ -1,0 +1,33 @@
+.dashboardOverview {
+    background-color: var(--main-background);
+    height: auto;
+    display: flex;
+    gap: 24px;
+    flex-direction: column;
+    margin-bottom: 60px;
+    padding: 0 40px;
+
+    .layerTwo {
+        display: flex;
+        gap: 24px;
+    }
+
+    .layerThree {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 40px;
+
+        .rightSection {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            width: 50%;
+
+            .container {
+                background-color: var(--content-background);
+                box-shadow: 2px 2px 6px var(--grey-15);
+                height: 272px;
+            }
+        }
+    }
+}

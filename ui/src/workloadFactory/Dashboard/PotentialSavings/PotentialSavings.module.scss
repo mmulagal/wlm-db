@@ -1,7 +1,7 @@
 .potentialSavings {
     background-color: var(--content-background);
-    width: 792px;
-    height: 551px;
+    width: 50%;
+    height: 567px;
     box-shadow: 2px 2px 6px 0px #e0e0e0;
 
     .headSection {
@@ -23,44 +23,6 @@
         display: flex;
         gap: 8px;
     }
-
-    // .mainSection {
-    //     padding: 40px;
-    //     display: flex;
-    //     flex-direction: column;
-    //     align-items: center;
-    //     gap: 28px;
-
-    //     .topSection {
-    //         height: 76px;
-    //         width: 712px;
-    //         background-color: var(--hover-background);
-    //         padding: 8px 64px;
-    //         display: flex;
-    //         gap: 40px;
-
-    //         .subContent1 {
-    //             display: flex;
-    //             flex-direction: column;
-    //             width: 244px;
-
-    //             .loaderText {
-    //                 display: flex;
-    //                 gap: 8px;
-    //             }
-    //         }
-    //         .subContent2 {
-    //             display: flex;
-    //             flex-direction: column;
-    //             width: 244px;
-
-    //             .loaderText {
-    //                 display: flex;
-    //                 gap: 8px;
-    //             }
-    //         }
-    //     }
-    // }
 
     .mainSection {
         padding: 40px 40px 40px 40px;
@@ -98,18 +60,20 @@
             flex-direction: column;
 
             .leftSide {
+                width: 100%;
                 display: flex;
                 flex-direction: column;
                 gap: 28px;
 
                 .topSection {
+                    width: 100%;
                     display: flex;
                     gap: 16px;
 
                     .subContent {
+                        width: 33.33%;
                         display: flex;
                         flex-direction: column;
-                        width: max-content;
 
                         .loaderText {
                             display: flex;
@@ -206,7 +170,7 @@
 
         .newChartSection {
             max-height: 306px;
-            width: 280px;
+            width: calc(100% - 40px);
             margin-left: 20px;
         }
 
@@ -217,54 +181,54 @@
     }
 }
 
-@media screen and (max-width: 1700px) {
-    .potentialSavings {
-        width: 650px;
+// @media screen and (max-width: 1700px) {
+//     .potentialSavings {
+//         width: 650px;
 
-        .mainSection {
-            padding: 40px;
-            .topSection {
-                width: 570px;
-                padding: 8px 24px;
-                gap: 24px;
+//         .mainSection {
+//             padding: 40px;
+//             .topSection {
+//                 width: 570px;
+//                 padding: 8px 24px;
+//                 gap: 24px;
 
-                .subContent1 {
-                    width: 231px;
-                }
-                .subContent2 {
-                    width: 244px;
-                }
-            }
+//                 .subContent1 {
+//                     width: 231px;
+//                 }
+//                 .subContent2 {
+//                     width: 244px;
+//                 }
+//             }
 
-            .newChartSection {
-                width: 220px;
-            }
-        }
-    }
-}
+//             .newChartSection {
+//                 width: 220px;
+//             }
+//         }
+//     }
+// }
 
-@media screen and (min-width: 1920px) {
-    .potentialSavings {
-        width: 41.25%;
+// @media screen and (min-width: 1920px) {
+//     .potentialSavings {
+//         width: 41.25%;
 
-        .mainSection {
-            .newValueSection {
-                .leftSide {
-                    width: 100%;
-                    .topSection {
-                        width: 100%;
-                        .subContent {
-                            width: 33.33%;
-                        }
-                    }
-                }
+//         .mainSection {
+//             .newValueSection {
+//                 .leftSide {
+//                     width: 100%;
+//                     .topSection {
+//                         width: 100%;
+//                         .subContent {
+//                             width: 33.33%;
+//                         }
+//                     }
+//                 }
 
-                .chartContainer {
-                    .newChartSection {
-                        width: calc(100% - 40px);
-                    }
-                }
-            }
-        }
-    }
-}
+//                 .chartContainer {
+//                     .newChartSection {
+//                         width: calc(100% - 40px);
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }

@@ -26,6 +26,17 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         managedDatabases: 0,
         managedInstances: 0
     },
+    aggregatedOracleHostsCount: {
+        totalDatabases: 0,
+        totalHosts: 0,
+        totalUpHosts: 0,
+        totalInitializingHosts: 0,
+        totalDownHosts: 0,
+        totalFailedHosts: 0,
+        totalInstances: 0,
+        managedDatabases: 0,
+        managedInstances: 0
+    },
     aggregatedProtectionDbCount: {
         protectedDb: 0,
         unprotectedDb: 0,
@@ -65,7 +76,8 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         severity: '',
         configState: '',
         totalInstances: 0,
-        tooltipText: ''
+        tooltipText: '',
+        dismissedInstances: 0
     },
     selectedAssessmentRow: null,
     sandboxAgeRange: {
@@ -124,6 +136,9 @@ const databaseHomeSlice = createSlice({
         addAggregatePgSqlHostsCountData: (state, action: PayloadAction<any>) => {
             state.aggregatedPgSqlHostsCount = action.payload;
         },
+        addAggregatedOracleHostsCount: (state, action: PayloadAction<any>) => {
+            state.aggregatedOracleHostsCount = action.payload;
+        },
         addAggregatedProtectionDbCount: (state, action: PayloadAction<any>) => {
             state.aggregatedProtectionDbCount = action.payload;
         },
@@ -157,6 +172,7 @@ export const {
     selectedTabSelection,
     addAggregateHostsCountData,
     addAggregatePgSqlHostsCountData,
+    addAggregatedOracleHostsCount,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
     addAggregatedPgsqlStorageSavings,
