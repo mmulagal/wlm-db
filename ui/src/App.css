@@ -11,3 +11,7 @@
 [class*='Typography-module_Semibold_14'] {
     font-weight: 500 !important;
 }
+
+[class*='Dialog-module_dialog'] {
+    z-index: 4 !important;
+}
