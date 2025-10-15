@@ -97,7 +97,7 @@ const SandboxDialog = ({ tableData }: { tableData: any }) => {
         // @ts-ignore
         manageColumnsProps: false,
         defaultSelectedRows: selectedRow ? [selectedRow.id] : [firstEnabledRow()],
-        isSorting: true,
+        isSorting: false,
         selectionType: 'singular',
         columns: ColDefs,
         rows: tableData,
@@ -115,7 +115,7 @@ const SandboxDialog = ({ tableData }: { tableData: any }) => {
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tableProps.selectionState, tableData]);
+    }, [tableProps.selectionState]);
 
     return (
         <div className={styles.categoryDialogContent}>

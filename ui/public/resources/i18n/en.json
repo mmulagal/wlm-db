@@ -504,6 +504,8 @@
             "well-architected-instances": "Well-architected instances",
             "not-optimized-instances": "Not-optimized instances",
             "not-optimized-instance": "Not-optimized instance",
+            "not-optimized-resources": "Not-optimized resources",
+            "not-optimized-resource": "Not-optimized resource",
             "severity": "Severity",
             "analysis-state": "Analysis state",
             "instances": "Instances",
@@ -882,7 +884,9 @@
             "readiness-status-incomplete": "Incomplete"
         },
         "dashboard": {
-            "instance-well-arch-score": "Instances well-architected score",
+            "hostname": "Host name",
+            "optimization-score": "Optimization score",
+            "instance-well-arch-score": "Investigate resources",
             "deploy-database-host": "Deploy database host",
             "ms-sql-server": "Microsoft SQL Server",
             "pg-sql-server": "PostgreSQL Server",
@@ -931,7 +935,7 @@
             "savings-percentage": "Savings percentage",
             "switching-to-fsx-for-ontap-wont-save-you-money": "Switching to FSx for ONTAP won't save you money.",
             "select-explore-savings-to-review-the-cost-breakdown": "Select Explore savings to review the cost breakdown.",
-            "category-dialog-component": "Choose the instance you want to optimize, then click 'Continue' to be redirected to the instance's well-architected page.",
+            "category-dialog-component": "Select the resource to view and then select 'Continue' to be redirected to the well-architected dashboard for the resource.",
             "well-architected-breakdown-by-configurations": "Well-architected breakdown by configurations",
             "total-registered-instances": "Total registered instances",
             "well-architected-instances": "Well-architected instances",

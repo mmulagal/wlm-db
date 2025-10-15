@@ -6,8 +6,10 @@ import styles from './WellArchitectTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { GENERAL } from '../../../../utils/appConstants';
-import { WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
+import { ERROR_ANALYZER_STATUS, WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
+import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
+import { uniqueHostRow } from '../../../InventoryV2/InventoryUtilsV2';
 
 const WellArchitectTabs = () => {
     const { t } = useTranslation();
@@ -15,7 +17,9 @@ const WellArchitectTabs = () => {
     const [selectedTab, setSelectedTab] = useState<any>();
     const { selectedWellArchitectTab } = useAppSelector(state => state.getWellOptimize);
     const { regionMapping } = useAppSelector(state => state.headers);
-    const { selectedGwInstanceRegionId } = useAppSelector(state => state.getWellOptimize);
+    const { selectedGwInstanceRegionId, selectedGwInstanceCredId, selectedResourceId, selectedDatabaseInstance } =
+        useAppSelector(state => state.getWellOptimize);
+    const { allLogAnalysisData } = useAppSelector(state => state.inventoryV2);
 
     const isBedrockSupportedForRegion = useMemo(() => {
         let isBedRockAvailable = true;
@@ -39,6 +43,18 @@ const WellArchitectTabs = () => {
         setSelectedTab(value);
         dispatch(setSelectedWellArchitectTab(value));
     };
+
+    const updateLogAnalyzerCheck = () => {
+        dispatch(resetEiData({}));
+        const key = uniqueHostRow(selectedResourceId, selectedGwInstanceCredId, selectedGwInstanceRegionId);
+        const logAnalyzerRow: any = allLogAnalysisData?.find(
+            (perLa: any) =>
+                uniqueHostRow(perLa?.databaseHostId, perLa?.credentialId || '', perLa?.regionId || '') === key &&
+                perLa?.databaseInstanceId === selectedDatabaseInstance
+        );
+        dispatch(setLogAnalyzerState(logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE));
+    };
+
     return (
         <div className={styles['well-architect-tabs']}>
             <div
@@ -113,7 +129,10 @@ const WellArchitectTabs = () => {
                                 ? `${styles.headerPart1} ${styles.activeText}`
                                 : `${styles.headerPart1}`
                         }
-                        onClick={() => handleClick('Error investigation')}
+                        onClick={() => {
+                            updateLogAnalyzerCheck();
+                            handleClick('Error investigation');
+                        }}
                         data-testid="wlm-db-mssql-error-investigation-tab"
                     >
                         {t('databases.log-analyzer.error-investigation')}

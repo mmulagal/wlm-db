@@ -17,7 +17,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
-            Header: 'SQL Server instance name',
+            Header: t('databases.dashboard.resource-name'),
             accessor: 'databaseInstanceName',
             width: 'auto',
             filterOptions: 'auto',
@@ -59,7 +59,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         },
         {
             id: '2',
-            Header: 'Type',
+            Header: t('databases.dashboard.type'),
             accessor: 'type',
             width: 'auto',
             filterOptions: 'auto',
@@ -67,7 +67,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         },
         {
             id: '3',
-            Header: 'Host name',
+            Header: t('databases.dashboard.hostname'),
             accessor: 'hostName',
             width: '20%',
             filterOptions: 'auto',
@@ -75,7 +75,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         },
         {
             id: '4',
-            Header: 'Optimization score',
+            Header: t('databases.dashboard.optimization-score'),
             accessor: 'score',
             width: '20%',
             isSortable: true,
@@ -124,8 +124,8 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
                 <TableTopBar
                     // @ts-ignore
                     tableProps={tableProps}
-                    pluralTitle="Not-optimized instances"
-                    singularTitle="Not-optimized instance"
+                    pluralTitle={t('databases.well-architect.not-optimized-resources')}
+                    singularTitle={t('databases.well-architect.not-optimized-resource')}
                 />
                 <Table
                     // @ts-ignore

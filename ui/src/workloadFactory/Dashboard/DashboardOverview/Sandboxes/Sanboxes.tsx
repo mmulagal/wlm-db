@@ -84,12 +84,12 @@ const Sandboxes = () => {
     };
 
     const handleClick = () => {
-        const tableData: any = createUniqueSandboxTableData(data);
-        const isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
+        const newTableData: any = createUniqueSandboxTableData(data);
+        const isOnlineInstance = newTableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
         setDialog(
             <DialogComponent
                 header={t('databases.dashboard.create-sandbox')}
-                content={<SandboxDialog tableData={tableData} />}
+                content={<SandboxDialog tableData={newTableData} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -100,7 +100,7 @@ const Sandboxes = () => {
                     dispatch(setSelectedSandboxRow(null));
                 }}
                 customClass={styles.dialog}
-                primaryButtonDisabled={!tableData || tableData.length === 0 || !isOnlineInstance}
+                primaryButtonDisabled={!newTableData || newTableData.length === 0 || !isOnlineInstance}
                 testId="wlm-db-create-sandbox-dialog"
             />
         );
