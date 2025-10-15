@@ -243,10 +243,13 @@ export const bxpRedirect = async (
     try {
         if (rowData && from === 'instance') {
             // Extract instance information from rowData
-            const instanceName = rowData?.databaseInstanceName; // "MSSQLSERVER" or "INSTANCEJUN_9"
-            const hostName = rowData?.name; // "dec04std2"
-            const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
-            const workspaceID = workSpaceData?.id;
+            const {
+                databaseInstanceName: instanceName, // "MSSQLSERVER" or "INSTANCEJUN_9"
+                name: hostName, // "dec04std2"
+                hostRow: { fqdn } = {} // "DEC04STD2.WLM.COM"
+            } = rowData || {};
+
+            const { id: workspaceID } = workSpaceData || {};
 
             if (!instanceName || !hostName || !fqdn || !orgId || !agentID || !workspaceID) {
                 return;
@@ -278,8 +281,7 @@ export const bxpRedirect = async (
 
             // Find matching instance with proper name and host validation
             const matchingInstance = searchResult.instances.find((instance: any) => {
-                const apiInstanceName = instance.name;
-                const apiHostName = instance.host;
+                const { name: apiInstanceName, host: apiHostName } = instance || {};
 
                 // Host validation - compare FQDN with API host (case insensitive)
                 const hostMatches = fqdn.toLowerCase() === apiHostName.toLowerCase();
@@ -303,12 +305,8 @@ export const bxpRedirect = async (
 
             if (matchingInstance) {
                 // Build common instance fields
-                const computedInstanceName = instanceName === 'MSSQLSERVER' ? hostName : `${hostName}\\${instanceName}`;
-
-                const policyId =
-                    (Array.isArray(matchingInstance?.policies) && matchingInstance.policies[0]?.id) ||
-                    (Array.isArray(matchingInstance?.policies) && matchingInstance.policies[0]) ||
-                    undefined;
+                const { host, name, id, protectionGroupId, policies } = matchingInstance;
+                const policy = (Array.isArray(policies) && policies[0]) || undefined;
 
                 if (rowData?.editProtection === true) {
                     const editParams = {
@@ -316,13 +314,12 @@ export const bxpRedirect = async (
                         type: 'instance',
                         editProtection: true,
                         redirectToWorkloadFactory: false,
-                        hostName: fqdn,
-                        instanceName: computedInstanceName,
-                        instanceId: matchingInstance.id,
-                        policyId,
-                        protectionGroupId: matchingInstance.protectionGroupId
+                        hostName: host,
+                        instanceName: name,
+                        instanceId: id,
+                        policy,
+                        protectionGroupId
                     };
-
                     handleRedirectWithParams(isWorkloadFactory, baseUrl, editParams);
                     return;
                 }
@@ -330,20 +327,21 @@ export const bxpRedirect = async (
                 const instanceParams = {
                     source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
                     redirectToWorkloadFactory: true,
-                    hostName: fqdn,
-                    instanceName: computedInstanceName,
-                    instanceId: matchingInstance.id
+                    hostName: host,
+                    instanceName: name,
+                    instanceId: id
                 };
-
                 handleRedirectWithParams(isWorkloadFactory, baseUrl, instanceParams);
                 return;
             }
         } else if (rowData && from === 'database') {
-            const databaseName = rowData?.name; // "DB22"
-            const instanceName = rowData?.databaseInstanceName; // "INSTANCE2"
-            const hostName = rowData?.hostName; // "dec04std2"
-            const fqdn = rowData?.hostRow?.fqdn; // "DEC04STD2.WLM.COM"
-            const workspaceID = workSpaceData?.id;
+            const {
+                name: databaseName,
+                databaseInstanceName: instanceName,
+                hostName,
+                hostRow: { fqdn } = {}
+            } = rowData || {};
+            const { id: workspaceID } = workSpaceData;
 
             if (!databaseName || !instanceName || !hostName || !fqdn || !orgId || !agentID || !workspaceID) {
                 return;
@@ -363,9 +361,7 @@ export const bxpRedirect = async (
 
             // Find matching database with proper name, instance and host validation
             const matchingDatabase = searchResult.databases.find((database: any) => {
-                const apiDatabaseName = database.name;
-                const apiInstanceName = database.instance;
-                const apiHostName = database.host;
+                const { name: apiDatabaseName, instance: apiInstanceName, host: apiHostName } = database || {};
 
                 // Database name validation
                 const databaseMatches = apiDatabaseName.toLowerCase() === databaseName.toLowerCase();
@@ -392,29 +388,27 @@ export const bxpRedirect = async (
             });
 
             if (matchingDatabase) {
-                const computedInstanceName = instanceName === 'MSSQLSERVER' ? hostName : `${hostName}\\${instanceName}`;
+                const { policies, instanceId, name, id, host, instance, storageType, protectionGroupId } =
+                    matchingDatabase;
 
-                const policyId =
-                    (Array.isArray(matchingDatabase?.policies) && matchingDatabase.policies[0]?.id) ||
-                    (Array.isArray(matchingDatabase?.policies) && matchingDatabase.policies[0]) ||
-                    undefined;
+                const policy = (Array.isArray(policies) && policies[0]) || undefined;
 
                 const commonDbParams = {
                     source: isWorkloadFactory ? 'wlmdb' : 'wlmdbbxp',
                     type: 'database',
-                    hostName: fqdn,
-                    instanceName: computedInstanceName,
-                    instanceId: matchingDatabase.instanceId || 'unknown',
-                    databaseName: matchingDatabase.name,
-                    databaseId: matchingDatabase.id,
-                    policyId
+                    hostName: host,
+                    instanceName: instance,
+                    instanceId: instanceId || 'unknown',
+                    databaseName: name,
+                    databaseId: id,
+                    policy
                 };
 
                 if (rowData?.viewProtectionDetails === true) {
                     const viewDbParams = {
                         ...commonDbParams,
-                        policies: matchingDatabase.policies,
-                        storageType: matchingDatabase.storageType,
+                        policies,
+                        storageType,
                         editProtection: false,
                         viewProtection: true,
                         redirectToWorkloadFactory: false
@@ -426,7 +420,7 @@ export const bxpRedirect = async (
                 if (rowData?.editProtection === true) {
                     const editDbParams = {
                         ...commonDbParams,
-                        protectionGroupId: matchingDatabase.protectionGroupId,
+                        protectionGroupId,
                         editProtection: true,
                         viewProtection: false,
                         redirectToWorkloadFactory: false
@@ -2611,10 +2605,3 @@ export const blobToDataURL = (blob: Blob): Promise<string> =>
             reject(err);
         }
     });
-
-export const getProtectionHydrationFailureReason = (hostsLength: number, agentId?: string, workspaceId?: string) => {
-    if (!hostsLength) return 'no SQL hosts were returned';
-    if (!agentId) return 'no active connector (agent) was found';
-    if (!workspaceId) return 'no workspace could be resolved';
-    return 'an unknown issue occurred';
-};

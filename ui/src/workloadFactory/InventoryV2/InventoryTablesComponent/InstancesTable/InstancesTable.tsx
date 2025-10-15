@@ -169,7 +169,7 @@ const InstancesTable = () => {
             try {
                 let organizationId: string = orgId || '';
                 if (isWorkloadFactory && !organizationId) {
-                    const orgRes: any = await getOrganizationIds({});
+                    const orgRes: any = await getOrganizationIds({ selfErrorHandling: true });
                     const resolved = orgRes?.data?.items?.find(
                         (i: any) => i?.legacyId === store.getState().auth.accountId
                     )?.ownerOrganizationId;
@@ -180,15 +180,15 @@ const InstancesTable = () => {
                         return;
                     }
                 }
-                const hostsRes: any = await listExistingHosts({ accountID: organizationId });
+                const hostsRes: any = await listExistingHosts({ accountID: organizationId, selfErrorHandling: true });
                 const hosts: any[] = hostsRes?.data?.hosts || [];
                 if (hosts.length) {
                     dispatch(upsertProtectionHosts(hosts));
                 }
 
                 const [workSpaceRes, connectorsRes] = await Promise.all([
-                    getWorkSpaceID({ accountID: organizationId }),
-                    getConnector({ accountID: organizationId })
+                    getWorkSpaceID({ accountID: organizationId, selfErrorHandling: true }),
+                    getConnector({ accountID: organizationId, selfErrorHandling: true })
                 ]);
                 const workspaceItem = workSpaceRes?.data?.items?.[0];
                 const workspaceID = workspaceItem?.id;
@@ -202,21 +202,18 @@ const InstancesTable = () => {
                     dispatch(setSelectedAgent([{ id: agentID }]));
                 }
 
-                if (!workspaceID || !agentID || !hosts.length) {
-                    const reason = getProtectionHydrationFailureReason(hosts.length, agentID, workspaceID);
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: `Unable to retrieve protection status: ${reason}. Please try again later.`
-                        })
-                    );
-                    return;
-                }
+                if (!workspaceID || !agentID || !hosts.length) return;
 
                 const hostNames = hosts.map(h => h?.name).filter(Boolean);
                 await Promise.allSettled(
                     hostNames.map(name =>
-                        getDiscoverInstanceResult({ accountID: organizationId, name, agentID, workspaceID })
+                        getDiscoverInstanceResult({
+                            accountID: organizationId,
+                            name,
+                            agentID,
+                            workspaceID,
+                            selfErrorHandling: true
+                        })
                             .then((instRes: any) => {
                                 const instances: any[] = instRes?.data?.instances || [];
                                 if (!instances.length) return;
@@ -236,12 +233,7 @@ const InstancesTable = () => {
                     )
                 );
             } catch (e) {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: 'Unable to retrieve protection status: Please try again later.'
-                    })
-                );
+                // No need to handle error
             }
         })();
     }, [

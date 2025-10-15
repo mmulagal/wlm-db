@@ -483,7 +483,7 @@ const DatabasesTable = () => {
             try {
                 let organizationId: string = orgId || '';
                 if (isWorkloadFactory && !organizationId) {
-                    const orgRes: any = await getOrganizationIds({});
+                    const orgRes: any = await getOrganizationIds({ selfErrorHandling: true });
                     const resolved = orgRes?.data?.items?.find(
                         (i: any) => i?.legacyId === store.getState().auth.accountId
                     )?.ownerOrganizationId;
@@ -495,7 +495,7 @@ const DatabasesTable = () => {
                     }
                 }
 
-                const hostsRes: any = await listExistingHosts({ accountID: organizationId });
+                const hostsRes: any = await listExistingHosts({ accountID: organizationId, selfErrorHandling: true });
                 const hosts: any[] = hostsRes?.data?.hosts || [];
                 if (hosts.length) {
                     dispatch(upsertProtectionHosts(hosts));
@@ -504,8 +504,8 @@ const DatabasesTable = () => {
 
                 // Ensure workspace and agent are persisted
                 const [workSpaceRes, connectorsRes] = await Promise.all([
-                    getWorkSpaceID({ accountID: organizationId }),
-                    getConnector({ accountID: organizationId })
+                    getWorkSpaceID({ accountID: organizationId, selfErrorHandling: true }),
+                    getConnector({ accountID: organizationId, selfErrorHandling: true })
                 ]);
                 const workspaceItem = workSpaceRes?.data?.items?.[0];
                 const workspaceID = workspaceItem?.id;
@@ -515,20 +515,17 @@ const DatabasesTable = () => {
                 const agentID = activeAws?.agent?.id || activeAws?.id;
                 if (agentID) dispatch(setSelectedAgent([{ id: agentID }]));
 
-                if (!workspaceID || !agentID || !hosts.length) {
-                    const reason = getProtectionHydrationFailureReason(hosts.length, agentID, workspaceID);
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: `Unable to retrieve protection status: ${reason}. Please try again later.`
-                        })
-                    );
-                    return;
-                }
+                if (!workspaceID || !agentID || !hosts.length) return;
 
                 await Promise.allSettled(
                     hostNames.map(hostName =>
-                        getDiscoverHostResult({ accountID: organizationId, hostName, agentID, workspaceID })
+                        getDiscoverHostResult({
+                            accountID: organizationId,
+                            hostName,
+                            agentID,
+                            workspaceID,
+                            selfErrorHandling: true
+                        })
                             .then((res: any) => {
                                 const databases: any[] = res?.data?.databases || [];
                                 if (!databases.length) return;
@@ -547,12 +544,7 @@ const DatabasesTable = () => {
                     )
                 );
             } catch {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: 'Unable to retrieve protection status: Please try again later.'
-                    })
-                );
+                // No need to handle error
             }
         })();
     }, [
