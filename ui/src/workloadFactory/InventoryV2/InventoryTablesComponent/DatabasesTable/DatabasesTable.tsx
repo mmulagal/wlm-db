@@ -512,7 +512,7 @@ const DatabasesTable = () => {
                 if (workspaceItem) dispatch(setWorkSpaceData(workspaceItem));
                 const occms: any[] = connectorsRes?.data?.occms || [];
                 const activeAws = occms.find((o: any) => o?.agent?.status === 'active' && o?.agent?.provider === 'aws');
-                const agentID = activeAws?.agent?.id || activeAws?.id;
+                const agentID = activeAws?.agent?.agentId;
                 if (agentID) dispatch(setSelectedAgent([{ id: agentID }]));
 
                 if (!workspaceID || !agentID || !hosts.length) return;
