@@ -3201,7 +3201,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
     os: {
         selinux: {
             error: null,
-            'selinux-status': 'permissive',
+            'selinux-value': 'permissive',
             'selinux-disabled': false
         },
         'multipath-io': {
@@ -3267,9 +3267,9 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         'multipath-configuration': {
             error: null,
             defaults: {
-                find_multipaths: true,
+                find_multipaths: 'yes',
                 polling_interval: 5,
-                user_friendly_names: true
+                user_friendly_names: 'yes'
             },
             'netapp-device': {
                 prio: 'ontap',
@@ -3279,8 +3279,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 features: '2 pg_init_retries 50',
                 dev_loss_tmo: 'infinity',
                 no_path_retry: 'queue',
-                flush_on_last_del: true,
-                user_friendly_names: false,
+                flush_on_last_del: 'yes',
+                user_friendly_names: 'no',
                 path_grouping_policy: 'group_by_prio'
             },
             'multipath-config-found': true
@@ -3299,7 +3299,119 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                     'parameter-value': 'Parameter not found in SPFile'
                 }
             ]
+        },
+        'adr-info': {
+            error: null,
+            'adr-home': '/u01/app/oracle/diag/rdbms/ordbsdl/ordbsdl',
+            'adr-home-mount': '/dev/nvme0n1p3',
+            'adr-home-mount-info': {
+                error: null,
+                'mount-point': '/dev/nvme0n1p3',
+                'mount-options': {
+                    rw: true,
+                    attr2: true,
+                    inode64: true,
+                    logbufs: '8',
+                    noquota: true,
+                    logbsize: '32k',
+                    relatime: true,
+                    seclabel: true
+                },
+                'filesystem-type': 'xfs'
+            }
+        },
+        'kernel-parameters': {
+            error: null,
+            'sunrpc-tcp-slot-entries': {
+                'tcp-slot-table': '2',
+                'tcp-max-slot-table': '65536'
+            }
+        },
+        'nfs-mount-options': {
+            error: null,
+            'nfs-mount-options': [
+                {
+                    server: '172.31.255.231',
+                    options: {
+                        rw: true,
+                        sec: 'sys',
+                        addr: '172.31.255.231',
+                        hard: true,
+                        vers: '4.2',
+                        proto: 'tcp',
+                        rsize: '65536',
+                        timeo: '600',
+                        wsize: '65536',
+                        namlen: '255',
+                        retrans: '2',
+                        relatime: true,
+                        clientaddr: '172.31.48.99',
+                        local_lock: 'none'
+                    },
+                    'mount-point': '/mnt/oradata',
+                    'remote-path': '/oracledata2',
+                    'filesystem-type': 'nfs4'
+                },
+                {
+                    server: '172.31.255.231',
+                    options: {
+                        rw: true,
+                        sec: 'sys',
+                        addr: '172.31.255.231',
+                        hard: true,
+                        vers: '4.2',
+                        proto: 'tcp',
+                        rsize: '65536',
+                        timeo: '600',
+                        wsize: '65536',
+                        namlen: '255',
+                        retrans: '2',
+                        relatime: true,
+                        clientaddr: '172.31.48.99',
+                        local_lock: 'none'
+                    },
+                    'mount-point': '/mnt/oraarch',
+                    'remote-path': '/oraclearch2',
+                    'filesystem-type': 'nfs4'
+                },
+                {
+                    server: '172.31.255.231',
+                    options: {
+                        rw: true,
+                        sec: 'sys',
+                        addr: '172.31.255.231',
+                        hard: true,
+                        vers: '4.2',
+                        proto: 'tcp',
+                        rsize: '65536',
+                        timeo: '600',
+                        wsize: '65536',
+                        namlen: '255',
+                        retrans: '2',
+                        relatime: true,
+                        clientaddr: '172.31.48.99',
+                        local_lock: 'none'
+                    },
+                    'mount-point': '/mnt/oraredoctl',
+                    'remote-path': '/oracleredo2',
+                    'filesystem-type': 'nfs4'
+                }
+            ]
+        },
+        'idmapd-domain-config': {
+            error: null,
+            domain: 'dbsqa.mssql.com',
+            'config-file': '/etc/idmapd.conf',
+            'config-exists': true
         }
+    },
+    nfsv4DomainData: {
+        data: {
+            v40Enabled: true,
+            v41Enabled: true,
+            v4IdDomain: 'dbsqa.mssql.com'
+        },
+        error: ''
     }
 };
 

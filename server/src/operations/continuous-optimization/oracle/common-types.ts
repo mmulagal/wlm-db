@@ -102,6 +102,11 @@ interface NFSOSAssessment {
             'mount-options'?: Record<string, string>;
         };
     };
+    'idmapd-domain-config'?: {
+        error?: string | null;
+        domain?: string | null;
+        'config-exists'?: boolean;
+    };
 }
 
 interface StorageAssessment {
@@ -127,6 +132,14 @@ interface StorageIscsiAssessment extends StorageAssessment {
 }
 
 interface StorageNfsAssessment extends StorageAssessment {
+    nfsv4DomainData?: {
+        error?: string | null;
+        data?: {
+            v40Enabled?: boolean;
+            v41Enabled?: boolean;
+            v4IdDomain?: string | null;
+        };
+    };
     os?: NFSOSAssessment;
 }
 

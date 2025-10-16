@@ -246,6 +246,93 @@ def get_mount_options_for_mount_point(mount_point):
     return options_info
 `;
 
+const IDMAPD_DOMAIN_CONFIG = `
+def get_idmapd_domain_config():
+    """Check /etc/idmapd.conf and extract domain configuration"""
+    log('Checking /etc/idmapd.conf for domain configuration')
+    
+    result = {
+        "config-file": "/etc/idmapd.conf",
+        "domain": None,
+        "config-exists": False,
+        "error": None
+    }
+    
+    try:
+        config_path = Path("/etc/idmapd.conf")
+        
+        # Check if file exists
+        if not config_path.exists():
+            result["error"] = "idmapd.conf file does not exist"
+            log("idmapd.conf file not found")
+            return result
+        
+        result["config-exists"] = True
+        
+        # Read and parse the configuration file
+        with open(config_path, 'r') as f:
+            content = f.read()
+        
+        log(f"Successfully read idmapd.conf file ({len(content)} characters)")
+        
+        # Parse configuration to find domain setting
+        domain_value = None
+        in_general_section = False
+        
+        for line_num, line in enumerate(content.split('\\n'), 1):
+            line = line.strip()
+            
+            # Skip empty lines and comments
+            if not line or line.startswith('#'):
+                continue
+            
+            # Check for section headers
+            if line.startswith('[') and line.endswith(']'):
+                section_name = line[1:-1].strip()
+                in_general_section = (section_name.lower() == 'general')
+                continue
+            
+            # Look for Domain setting in General section or globally
+            if '=' in line:
+                key, value = line.split('=', 1)
+                key = key.strip()
+                value = value.strip()
+                
+                # Remove quotes if present
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+                elif value.startswith("'") and value.endswith("'"):
+                    value = value[1:-1]
+                
+                # Check if this is a Domain setting
+                if key.lower() == 'domain':
+                    if in_general_section or domain_value is None:
+                        domain_value = value
+                        log(f"Found domain setting at line {line_num}: {domain_value}")
+                        
+                        # If found in General section, prefer it and break
+                        if in_general_section:
+                            break
+        
+        if domain_value:
+            result["domain"] = domain_value
+            log(f"Successfully extracted domain: {domain_value}")
+        else:
+            result["error"] = "No domain configuration found in idmapd.conf"
+            log("No domain configuration found in idmapd.conf")
+            
+    except PermissionError:
+        error_msg = "Permission denied reading /etc/idmapd.conf"
+        result["error"] = error_msg
+        log(error_msg)
+    except Exception as e:
+        error_msg = f"Exception while reading idmapd.conf: {str(e)}"
+        result["error"] = error_msg
+        log(error_msg)
+    
+    return result
+`;
+
 const NFS_OS_ASSESSMENT = (ec2InstanceId: string, dbSid: string) => `
 
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
@@ -278,6 +365,8 @@ ${NFS_MOUNT_OPTIONS}
 
 ${ADR_HOME}
 
+${IDMAPD_DOMAIN_CONFIG}
+
 # Run all checks and compile results
 log('Starting comprehensive system assessment')
 
@@ -290,6 +379,9 @@ def run_all_checks():
     
     log('Running NFS mount options checks')
     results["os"]["nfs-mount-options"] = get_nfs_mount_options()
+
+    log('Running idmapd domain configuration checks')
+    results["os"]["idmapd-domain-config"] = get_idmapd_domain_config()
     
     # Oracle checks
     log('Running Oracle ADR checks')

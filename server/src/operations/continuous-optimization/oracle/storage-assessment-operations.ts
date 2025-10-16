@@ -389,7 +389,7 @@ function getNfsOSConfigDrift(
     storageAssessmentData: StorageNfsAssessment
 ) {
     logger.info('Fetching NFS OS configuration drift', { ec2InstanceId, databaseInstanceName, deploymentType });
-    const { os } = storageAssessmentData;
+    const { os, volumes, nfsv4DomainData } = storageAssessmentData;
     const osDrift: StorageParameterDriftResponseType['configuration']['os'] = [];
 
     if (!os || isEmpty(os)) {
@@ -512,13 +512,20 @@ function getNfsOSConfigDrift(
             case 'nfs-mount-options-adrhome': {
                 const adrMountInfoData = os?.['adr-info'];
                 if (adrMountInfoData?.error) {
-                    osDrift.push({ name: config.name, errorMessage: adrMountInfoData.error });
+                    logger.info('Skipping ADR home mount check', {
+                        message: adrMountInfoData.error,
+                        ec2InstanceId,
+                        databaseInstanceName
+                    });
                 } else {
                     const mountOptions = adrMountInfoData?.['adr-home-mount-info'];
                     const fileSystem = mountOptions?.['filesystem-type'] || '';
 
                     if (!fileSystem.includes('nfs')) {
-                        osDrift.push({ name: config.name, errorMessage: 'ADR home mount is not NFS' });
+                        logger.info('Skipping ADR home mount check as it is not NFS', {
+                            ec2InstanceId,
+                            databaseInstanceName
+                        });
                         return;
                     }
 
@@ -552,6 +559,52 @@ function getNfsOSConfigDrift(
                             )
                         );
                     }
+                }
+                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                break;
+            }
+            case 'nfsv4-domain-name': {
+                const idmapdDomainConfig = os?.['idmapd-domain-config'];
+                const mountOptions = os?.['nfs-mount-options']?.['nfs-mount-options'] || [];
+
+                // Check if NFSv4 mounts exist
+                const hasOntapNfsv4Mount = mountOptions.some(mount => {
+                    const options = mount?.options || {};
+                    const remotePath = mount?.['remote-path'] || '';
+                    return (
+                        options.vers.includes('4') &&
+                        volumes?.data?.some(
+                            volume =>
+                                volume.name && remotePath && volume.name.includes(remotePath.split('/').pop() || '')
+                        )
+                    );
+                });
+
+                if (
+                    !nfsv4DomainData?.data ||
+                    nfsv4DomainData.error ||
+                    !idmapdDomainConfig?.['config-exists'] ||
+                    !hasOntapNfsv4Mount
+                ) {
+                    const message =
+                        nfsv4DomainData?.error ||
+                        (!hasOntapNfsv4Mount ? 'No ontap NFSv4 mounts found' : 'No data found');
+                    logger.info('Skipping NFSv4 domain name check', { message, ec2InstanceId, databaseInstanceName });
+                    return;
+                }
+
+                const domainName = nfsv4DomainData.data.v4IdDomain || '';
+                const configDomain = idmapdDomainConfig.domain || '';
+
+                if (domainName !== configDomain) {
+                    violationDetails.push(
+                        createViolationDetail(
+                            'Domain name',
+                            'idmapd configuration',
+                            `Server domain: ${domainName}, /etc/idmapd.conf: ${configDomain}`,
+                            `Domain name should match the ONTAP SVM NFSv4 domain: ${domainName || 'not found'}`
+                        )
+                    );
                 }
                 osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;

@@ -11,14 +11,11 @@ import {
     onDemandTriggerOracleDriftAssessment
 } from '../../../../src/operations/continuous-optimization/oracle/assessment-operations';
 import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../../src/utils/continous-optimization-consts';
-import {
-    oracleAssessmentMetadata,
-    storageAssessmnetMetadata,
-    oracleInstanceMappedVolMetadata
-} from './oracle-assessment-metadata';
+import { oracleAssessmentMetadata, oracleInstanceMappedVolMetadata } from './oracle-assessment-metadata';
 import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
 import { StorageParameterDriftResponseType } from '../../../../src/routes/types/mssql-continuous-optimisation.types';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
+import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils/demoInventoryData';
 
 const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
 const region = DEFAULT_AWS_REGION;
@@ -68,7 +65,7 @@ beforeAll(async () => {
         database_instance_id: dbInstanceSid,
         creation_time: new Date(),
         last_updated: new Date(),
-        config_data: storageAssessmnetMetadata,
+        config_data: ORACLE_STORAGE_ASSESSMENT_DATA,
         config_data_type: AssessmentCategoriesOracle.STORAGE
     };
 
@@ -110,6 +107,7 @@ describe('Oracle assessment operations', () => {
             dbInstanceSid,
             'storage'
         );
+
         expect(assessmentData).toBeDefined();
         expect(assessmentData.fileSystemId).toBe('fs-0f53fbecdd3d85fb2');
         expect(assessmentData.ec2InstanceId).toBe(node1InstanceId);

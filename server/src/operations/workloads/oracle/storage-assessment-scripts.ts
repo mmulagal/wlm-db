@@ -55,7 +55,6 @@ mkdir -p /var/log/netapp
 instanceName="${instanceRecord.name}"
 filesystemid="${instanceRecord.fsxFileSystem}"
 region="${instanceRecord.region}"
-ontapSvmUuid="${instanceRecord.svmOntapUuid}"
 storageProtocol="${instanceRecord.storageProtocol}"
 ec2InstanceId="${instanceRecord.activeNodeInstanceid}"
 
@@ -64,9 +63,11 @@ log "Filesystem ID: $filesystemid, Region: $region, Protocol: $storageProtocol"
 
 IFS=',' read -r -a mappedOntapVolumeNames <<< "${instanceRecord.mappedVolumeNames}"
 IFS=',' read -r -a mappedOntapVolumeUuids <<< "${instanceRecord.mappedVolumesUuids}"
+IFS=',' read -r -a ontapSvmUuids <<< "${instanceRecord.svmOntapUuid}"
 
 log "Mapped volume names: $mappedOntapVolumeNames"
 log "Mapped volume UUIDs: $mappedOntapVolumeUuids"
+log "ONTAP SVM UUIDs: $ontapSvmUuids"
 
 if [ "$storageProtocol" != "iSCSI" ]; then
     mappedOntapLunNames=()
@@ -239,6 +240,46 @@ if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; 
         }')
 fi
 
+# Fetch NFS protocol information
+log "Fetching NFS protocol configuration"
+# Fetch NFS protocol information only if protocol is NFS
+if [ "$storageProtocol" = "NFS" ]; then
+    log "Fetching NFS protocol configuration for NFS storage"
+    nfsEndpoint="protocols/nfs/services?svm.uuid=$(IFS='|'; echo "\${ontapSvmUuids[*]}")&fields=protocol.v4_id_domain,protocol.v40_enabled,protocol.v41_enabled"
+    log "Calling NFS protocol API endpoint: $nfsEndpoint"
+
+    nfsResponse=$(ontap_request 'GET' $nfsEndpoint)
+    log "NFS protocol API response status: $?"
+
+    nfsError=''
+    # Check if NFS service data was found
+    nfsService=$(echo "$nfsResponse" | jq -c '.records[]')
+    if [ -z "$nfsService" ]; then
+        nfsError="No NFS service records found in response"
+        log "ERROR: No NFS service records found in API response"
+    else
+        log "Successfully retrieved NFS service configuration"
+    fi
+
+    # Create NFS protocol data object
+    nfsData=$(echo "$nfsResponse" | jq '[.records[] | {
+        v4IdDomain: .protocol.v4_id_domain,
+        v40Enabled: .protocol.v40_enabled,
+        v41Enabled: .protocol.v41_enabled
+    }] | .[0] // {}')
+
+    nfsProtocol=$(jq -n \
+        --arg error "$nfsError" \
+        --argjson nfsData "$nfsData" \
+        '{
+            error: $error,
+            data: $nfsData
+        }')
+else
+    log "Storage protocol is not NFS, skipping NFS protocol configuration"
+    nfsProtocol=$(jq -n '{error: "NFS protocol not applicable", data: {}}')
+fi
+
 log "Starting Oracle binary volumes discovery"
 ${ORACLE_BINARY_VOLUMES_METADATA}
 binaryVolumesData=$(find_oracle_binary_volumes)
@@ -286,11 +327,13 @@ else
         --arg rman "$rman_compression_enabled" \\
         --argjson volumes "$volumes" \
         --argjson binaryVolumes "$binaryVolumes" \
+        --argjson nfsProtocol "$nfsProtocol" \
         '{
             fraEnabled: $fra,
             rmanCompressionEnabled: $rman,
             volumes: $volumes,
-            binaryVolumes: $binaryVolumes
+            binaryVolumes: $binaryVolumes,
+            nfsv4DomainData: $nfsProtocol
         }')
 fi
 

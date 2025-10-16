@@ -3821,9 +3821,112 @@
                         "parameter-value": "Parameter not found in SPFile"
                     }
                 ]
-            }
+            },
+            "adr-info": {
+    "error": null,
+    "adr-home": "/u01/app/oracle/diag/rdbms/ordbsdl/ordbsdl",
+    "adr-home-mount": "/dev/nvme0n1p3",
+    "adr-home-mount-info": {
+        "error": null,
+        "mount-point": "/dev/nvme0n1p3",
+        "mount-options": {
+            "rw": true,
+            "attr2": true,
+            "inode64": true,
+            "logbufs": "8",
+            "noquota": true,
+            "logbsize": "32k",
+            "relatime": true,
+            "seclabel": true
+        },
+        "filesystem-type": "xfs"
+    }
+},
+"kernel-parameters": {
+    "error": null,
+    "sunrpc-tcp-slot-entries": {
+        "tcp-slot-table": "2",
+        "tcp-max-slot-table": "65536"
+    }
+},
+"nfs-mount-options": {
+    "error": null,
+    "nfs-mount-options": [
+        {
+            "server": "172.31.255.231",
+            "options": {
+                "rw": true,
+                "sec": "sys",
+                "addr": "172.31.255.231",
+                "hard": true,
+                "vers": "4.2",
+                "proto": "tcp",
+                "rsize": "65536",
+                "timeo": "600",
+                "wsize": "65536",
+                "namlen": "255",
+                "retrans": "2",
+                "relatime": true,
+                "clientaddr": "172.31.48.99",
+                "local_lock": "none"
+            },
+            "mount-point": "/mnt/oradata",
+            "remote-path": "/oracledata2",
+            "filesystem-type": "nfs4"
+        },
+        {
+            "server": "172.31.255.231",
+            "options": {
+                "rw": true,
+                "sec": "sys",
+                "addr": "172.31.255.231",
+                "hard": true,
+                "vers": "4.2",
+                "proto": "tcp",
+                "rsize": "65536",
+                "timeo": "600",
+                "wsize": "65536",
+                "namlen": "255",
+                "retrans": "2",
+                "relatime": true,
+                "clientaddr": "172.31.48.99",
+                "local_lock": "none"
+            },
+            "mount-point": "/mnt/oraarch",
+            "remote-path": "/oraclearch2",
+            "filesystem-type": "nfs4"
+        },
+        {
+            "server": "172.31.255.231",
+            "options": {
+                "rw": true,
+                "sec": "sys",
+                "addr": "172.31.255.231",
+                "hard": true,
+                "vers": "4.2",
+                "proto": "tcp",
+                "rsize": "65536",
+                "timeo": "600",
+                "wsize": "65536",
+                "namlen": "255",
+                "retrans": "2",
+                "relatime": true,
+                "clientaddr": "172.31.48.99",
+                "local_lock": "none"
+            },
+            "mount-point": "/mnt/oraredoctl",
+            "remote-path": "/oracleredo2",
+            "filesystem-type": "nfs4"
         }
-    },
+    ]
+},
+"idmapd-domain-config": {
+    "error": null,
+    "domain": "dbsqa.mssql.com",
+    "config-file": "/etc/idmapd.conf",
+    "config-exists": true
+}
+    }},
     "getoptimizeMtuResponse": {
         "optimizedInterfaces": [
             {

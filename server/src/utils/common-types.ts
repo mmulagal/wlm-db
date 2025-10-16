@@ -534,7 +534,7 @@ interface WorkloadInstance {
     cloudProviderAccountId: string;
     resourceName: string;
     svmId?: string;
-    svmOntapUuid?: string;
+    svmOntapUuid?: string | string[];
     databaseInstanceObject?: DatabaseInstance;
     storageProtocol?: string;
 }

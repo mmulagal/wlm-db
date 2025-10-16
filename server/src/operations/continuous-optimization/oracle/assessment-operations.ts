@@ -124,7 +124,12 @@ async function initiateInstanceLevelAssessmentDataCollection(
             Object.values(volumes).flatMap(pdb =>
                 Object.values(pdb).flatMap(volumeGroup =>
                     Array.isArray(volumeGroup)
-                        ? volumeGroup.map(vol => ({ id: vol.volumeId, name: vol.volumeName }))
+                        ? volumeGroup.map(vol => ({
+                              id: vol.volumeId,
+                              name: vol.volumeName,
+                              svmId: vol.svmId,
+                              svmName: vol.svmName
+                          }))
                         : []
                 )
             );
@@ -132,9 +137,15 @@ async function initiateInstanceLevelAssessmentDataCollection(
         const volumeData = isCDB
             ? extractVolumeData(ontapVolumes)
             : Object.values(ontapVolumes).flatMap(volumes =>
-                  volumes.map((vol: any) => ({ id: vol.volumeId, name: vol.volumeName }))
+                  volumes.map((vol: any) => ({
+                      id: vol.volumeId,
+                      name: vol.volumeName,
+                      svmId: vol.svmId,
+                      svmName: vol.svmName
+                  }))
               );
 
+        databaseInstanceRecord.svmOntapUuid = [...new Set(volumeData.map(vol => vol.svmId))].filter(Boolean);
         databaseInstanceRecord.mappedVolumesUuids = [...new Set(volumeData.map(vol => vol.id))];
         databaseInstanceRecord.mappedVolumeNames = [...new Set(volumeData.map(vol => vol.name))];
         databaseInstanceRecord.storageProtocol = protocol;
