@@ -1003,12 +1003,6 @@ const storageAssessmnetMetadata = {
                     error: null,
                     'parameter-found': false,
                     'parameter-value': 'Parameter not found in SPFile'
-                },
-                {
-                    path: '/u01/app/oracle/product/19c/db_1/dbs/init.ora',
-                    error: null,
-                    'parameter-found': false,
-                    'parameter-value': 'Parameter not found or is commented out'
                 }
             ]
         }

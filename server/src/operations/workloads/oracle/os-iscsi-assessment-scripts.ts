@@ -117,12 +117,115 @@ def find_oracle_home(oracle_sid):
     return result
 `;
 
+const GET_ORACLE_SPFILE = `
+def get_oracle_spfile():
+    """Get the current spfile used by Oracle instance"""
+    
+    oracle_sid = os.environ.get('ORACLE_SID', '')
+    sqlplus_cmd = os.environ.get('SQLPLUS_CMD', '')
+    
+    result = {
+        "spfile-path": None,
+        "spfile-type": None,
+        "is-default": False,
+        "error": None
+    }
+    
+    if not sqlplus_cmd:
+        result["error"] = "SQLPLUS_CMD not set"
+        return result
+    
+    if not oracle_sid:
+        result["error"] = "ORACLE_SID not set"
+        return result
+    
+    try:
+        cmd_parts = sqlplus_cmd.split()
+        env = os.environ.copy()
+        env['ORACLE_SID'] = oracle_sid
+        
+        sql_query = """SET PAGESIZE 0
+SET FEEDBACK OFF
+SET HEADING OFF
+SET LINESIZE 4000
+SET TRIMSPOOL ON
+SELECT JSON_OBJECT(
+    'name' VALUE name,
+    'type' VALUE type,
+    'value' VALUE value,
+    'isdefault' VALUE isdefault
+) AS spfile_param
+FROM v\\$parameter 
+WHERE name = 'spfile';
+EXIT;
+"""
+        
+        spfile_result = subprocess.run(
+            cmd_parts,
+            input=sql_query,
+            env=env,
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE, 
+            universal_newlines=True,
+            timeout=30
+        )
+        
+        if spfile_result.returncode == 0:
+            output = spfile_result.stdout.strip()
+            
+            # Find the JSON line in the output
+            for line in output.split('\\n'):
+                line = line.strip()
+                if line.startswith('{') and line.endswith('}'):
+                    try:
+                        param_info = json.loads(line)
+                        
+                        # Extract spfile parameter information
+                        spfile_value = param_info.get("value")
+                        is_default = param_info.get("isdefault")
+                        
+                        # Set is-default
+                        result["is-default"] = is_default == "TRUE" if is_default else False
+                        
+                        # Check if Oracle is using an spfile
+                        if spfile_value and spfile_value.lower() not in ['', 'null', '(null)']:
+                            result["spfile-path"] = spfile_value
+                            result["spfile-type"] = "spfile"
+                        else:
+                            result["spfile-path"] = None
+                            result["spfile-type"] = "pfile"
+                        
+                        break
+                        
+                    except json.JSONDecodeError as e:
+                        result["error"] = f"JSON parse error: {str(e)}"
+                        break
+            else:
+                result["error"] = f"No valid JSON found in output: {output}"
+                
+        else:
+            result["error"] = f"SQL query failed: {spfile_result.stderr.strip()}"
+            
+    except subprocess.TimeoutExpired:
+        result["error"] = "SQL query timed out"
+    except Exception as e:
+        result["error"] = f"Error running SQL query: {str(e)}"
+    
+    return result
+`;
+
 const CHECK_INIT_ORA_PARAMETERS = `
+
+${GET_ORACLE_SPFILE}
+
+# Check init.ora and spfile for db_file_multiblock_read_count parameter
 def check_init_ora_parameters():
 
     oracle_sid = os.environ.get('ORACLE_SID', '')
+
     result = {
         "db-file-multiblock-read-count-in-init": [],
+        "current-spfile-info": None,
         "error": None
     }
     
@@ -134,27 +237,32 @@ def check_init_ora_parameters():
             result["error"] = "ORACLE_HOME or ORACLE_SID not set"
             return result
     
-        # Oracle initialization file search order
-        possible_paths = [
-            (f"{oracle_home}/dbs/spfile{oracle_sid}.ora", "spfile"),
-            (f"{oracle_home}/dbs/spfile.ora", "spfile"),
-            (f"{oracle_home}/dbs/init{oracle_sid}.ora", "init"),
-            (f"{oracle_home}/dbs/init.ora", "init")
-        ]
+        # First, get the current spfile information
+        spfile_info = get_oracle_spfile()
+        result["current-spfile-info"] = spfile_info
         
-        active_file_found = False
+        files_to_check = []
         
-        for init_path, file_type in possible_paths:
+        if spfile_info.get("spfile-path") and spfile_info.get("spfile-type") == "spfile":
+            # Oracle is using an spfile, check that specific file
+            spfile_path = spfile_info["spfile-path"]
+            files_to_check = [(spfile_path, "spfile")]
+        else:
+            # Oracle is using pfile, check traditional init files
+            files_to_check = [
+                (f"{oracle_home}/dbs/init{oracle_sid}.ora", "pfile"),
+                (f"{oracle_home}/dbs/init.ora", "pfile")
+            ]
+        
+        for init_path, file_type in files_to_check:
             if os.path.exists(init_path):
                 file_info = {
                     "path": init_path,
+                    "file-type": file_type,
                     "parameter-found": False,
                     "parameter-value": None,
                     "error": None
                 }
-                
-                if not active_file_found:
-                    active_file_found = True
                     
                 try:
                     if file_type == "spfile":
@@ -188,7 +296,7 @@ def check_init_ora_parameters():
                         except Exception as e:
                             file_info["error"] = f"Error searching SPFile: {str(e)}"
                     
-                    else:  # init file
+                    else:  # pfile
                         try:
                             with open(init_path, 'r') as f:
                                 content = f.read()
@@ -214,16 +322,24 @@ def check_init_ora_parameters():
                                 file_info["parameter-found"] = False
                                 file_info["parameter-value"] = "Parameter not found or is commented out"
                         except Exception as e:
-                            file_info["error"] = f"Error reading init file: {str(e)}"
+                            file_info["error"] = f"Error reading pfile: {str(e)}"
                     
                 except Exception as e:
                     file_info["error"] = f"Error processing file: {str(e)}"
                 
-                # Add file info directly to the list
+                # Add file info to the list
                 result["db-file-multiblock-read-count-in-init"].append(file_info)
                 
-        if not active_file_found:
-            result["error"] = "No initialization file found in Oracle's default search order"
+                # If we found the spfile, we only need to check that one file
+                if file_type == "spfile":
+                    break
+        
+        # If no files were found or checked
+        if not result["db-file-multiblock-read-count-in-init"]:
+            if spfile_info.get("spfile-path"):
+                result["error"] = f"SPFile path found but file does not exist: {spfile_info['spfile-path']}"
+            else:
+                result["error"] = "No initialization files found"
             
     except Exception as e:
         result["error"] = str(e)
