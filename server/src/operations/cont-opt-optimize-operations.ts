@@ -58,7 +58,6 @@ import {
     AssessmentTriggeredBy,
     OptimizeStorageConfigsJobNames,
     STORAGE_OPTIMIZE_JOB_PARAM,
-    AssessmentCategoriesOracle,
     OptimizeStorageRequestParamsType
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
@@ -100,16 +99,10 @@ import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } 
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import { optimizeStorageConfigParamsOracle } from './workloads/oracle/storage-optimize-scripts';
 import { onDemandTriggerOracleDriftAssessment } from './continuous-optimization/oracle/assessment-operations';
-import { calculateStorageDrift } from './continuous-optimization/oracle/storage-assessment-operations';
-
-import { StorageAssessment as StorageAssessmentType } from './continuous-optimization/oracle/common-types';
-import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { OracleMappedOntapVolumesResponse } from './workloads/oracle/common-types';
 import {
-    OracleGenericParameterDriftResponseType,
-    StorageParameterDriftResponseType
-} from '../routes/types/oracle-continuous-optimization.types';
-import { getOracleDatabaseMappedVolumes } from './workloads/oracle/oracle-operations';
+    getOracleStorageConfigRecommendationMap,
+    oracleSpecialStorageConfigNames
+} from './continuous-optimization/oracle/storage-optimize-operations';
 
 const isDemoFlow = isDemo();
 
@@ -177,10 +170,12 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             if (
                 databaseType === RESOURCESTYPE.ORACLE &&
                 optimizationTargets.some(target =>
-                    specialConfigNames.includes(target.configurationName as unknown as OptimizeStorageConfigs)
+                    oracleSpecialStorageConfigNames.includes(
+                        target.configurationName as unknown as OptimizeStorageConfigs
+                    )
                 )
             ) {
-                recommendationMap = await getRecommendationMap(
+                recommendationMap = await getOracleStorageConfigRecommendationMap(
                     accountId,
                     credentialsId,
                     region,
@@ -253,144 +248,6 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
     }
 }
 
-const specialConfigNames = [
-    OptimizeStorageConfigs.TIERING_POLICY,
-    OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS,
-    OptimizeStorageConfigs.COMPRESSION,
-    OptimizeStorageConfigs.DEDUPLICATION,
-    OptimizeStorageConfigs.COMPACTION
-];
-
-async function getRecommendationMap(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    databaseInstanceName: string,
-    deploymentType: string,
-    activeNodeInstanceId: string,
-    fileSystemId: string,
-    optimizationTargets: OptimizeStorageRequestParamsType[],
-    serverNameWithHostName: string,
-    parentJobId: string
-) {
-    logger.info('Getting fresh recommendation', {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        fileSystemId,
-        optimizationTargets
-    });
-
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Fix storage for ${serverNameWithHostName}`,
-        description: `Getting fresh recommendation map for ${serverNameWithHostName}`,
-        startTime: Date.now(),
-        type: JOBTYPE.WELL_ARCHITECTED,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        parentJobId
-    });
-    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let jobError;
-
-    try {
-        await getOracleDatabaseMappedVolumes(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
-
-        const databaseInstanceConfigData = await listDatabaseInstanceConfigData({
-            accountId,
-            region,
-            credentialsId,
-            resourceId: databaseHostId,
-            databaseInstanceIds: [databaseInstanceId]
-        });
-
-        const assessmentDataMap = databaseInstanceConfigData.reduce(
-            (acc: Record<string, unknown>, config: { config_data_type: string; config_data: unknown }) => {
-                acc[config.config_data_type] = acc[config.config_data_type] || config.config_data;
-                return acc;
-            },
-            {} as Record<string, unknown>
-        );
-
-        const mappedOntapVolumes = assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as Record<
-            string,
-            OracleMappedOntapVolumesResponse
-        >;
-
-        const storageDrift = calculateStorageDrift(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            activeNodeInstanceId,
-            databaseInstanceId,
-            databaseInstanceName,
-            deploymentType,
-            fileSystemId,
-            mappedOntapVolumes,
-            assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessmentType
-        );
-
-        // recommendation map: config -> {recommendedValue -> [objectName]}
-        const recommendationMap: { [key in OptimizeStorageConfigs]?: Record<string, string[]> } = {};
-
-        const storageDriftTyped = storageDrift as StorageParameterDriftResponseType;
-        if (isEmpty(storageDriftTyped.configuration)) {
-            return;
-        }
-
-        const { volumes } = storageDriftTyped.configuration;
-        if (isEmpty(volumes)) {
-            return;
-        }
-
-        volumes
-            .filter(({ name }) => name && specialConfigNames.includes(name as OptimizeStorageConfigs))
-            .forEach(volume => {
-                const { name: configKey, violationDetails } = volume as OracleGenericParameterDriftResponseType;
-                if (!violationDetails) {
-                    return;
-                }
-
-                optimizationTargets
-                    .filter(({ configurationName }) => configurationName === configKey)
-                    .forEach(({ objectsToOptimize }) => {
-                        violationDetails
-                            .filter(
-                                ({ objectName, recommended }) =>
-                                    objectName && recommended && objectsToOptimize.includes(objectName)
-                            )
-                            .forEach(({ objectName, recommended }) => {
-                                if (!recommended) {
-                                    return;
-                                }
-                                const key = configKey as OptimizeStorageConfigs;
-                                recommendationMap[key] ??= {};
-                                recommendationMap[key][recommended] ??= [];
-                                recommendationMap[key][recommended].push(objectName);
-                            });
-                    });
-            });
-
-        logger.info('Got optimization recommendations', { recommendationMap });
-        return recommendationMap;
-    } catch (error) {
-        logger.error('Failed to refresh assessment data', { error });
-        jobStatus = JOBSTATUS.FAILED;
-        jobError = error;
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get recommendation map');
-    } finally {
-        await updateJobDetails(accountId, jobId, {
-            status: jobStatus,
-            error: jobStatus === JOBSTATUS.FAILED ? `Failed to get recommendation map; Error: ${jobError}` : undefined,
-            endTime: Date.now()
-        });
-    }
-}
-
 async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
     const {
         accountId,
@@ -445,7 +302,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 const recommendedValues: Record<string, string[]> = {};
                 if (
                     resourceType === RESOURCESTYPE.ORACLE &&
-                    specialConfigNames.includes(configurationName as OptimizeStorageConfigs)
+                    oracleSpecialStorageConfigNames.includes(configurationName as OptimizeStorageConfigs)
                 ) {
                     if (!recommendationMap?.[configurationName]) {
                         throw new Error('Failed to fetch latest well-architected recommendations');
@@ -546,7 +403,11 @@ async function callOntapApi(
     value?: string
 ) {
     let apiData;
-    if (specialConfigNames.includes(OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs])) {
+    if (
+        oracleSpecialStorageConfigNames.includes(
+            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs]
+        )
+    ) {
         if (
             OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs] ===
             OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS

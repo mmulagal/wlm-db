@@ -908,4 +908,4 @@ PYTHON
 
 `;
 
-export { OS_ASSESSMENT };
+export { OS_ASSESSMENT, CHECK_TCP_FEATURES };

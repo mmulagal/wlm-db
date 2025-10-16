@@ -4000,5 +4000,27 @@
     "oracleStorageConfigurationOptimizationResponse": {
         "num_records": 1,
         "cli_output": "Volume modify successful on volume wlmdb_sqldata_1728552629461 of Vserver wlmdb_sqlsvm_1729483528219."
+    },
+    "oracleTcpOptionsOptimizationResponse": {
+        "tcp-features": {
+            "tcp-timestamps": {
+                "enabled": true,
+                "persisted": true,
+                "error": null,
+                "already-optimal": true
+            },
+            "tcp-sack": {
+                "enabled": true,
+                "persisted": true,
+                "error": null,
+                "already-optimal": true
+            },
+            "tcp-window-scaling": {
+                "enabled": true,
+                "persisted": true,
+                "error": null,
+                "already-optimal": true
+            }
+        }
     }
 }

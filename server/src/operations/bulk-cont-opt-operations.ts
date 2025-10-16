@@ -635,5 +635,6 @@ export {
     bulkComputeOptimization,
     bulkCloneOptimization,
     bulkHASharedStorageOptimization,
-    bulkHostLevelOptimization
+    bulkHostLevelOptimization,
+    validateAndFilterDatabaseHosts
 };

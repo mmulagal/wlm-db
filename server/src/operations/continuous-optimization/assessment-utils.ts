@@ -7,6 +7,7 @@ import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { AssessmentCategoriesOracle, AssessmentStatus } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import type { JobMetadata } from '../../utils/common-types';
+import { OracleJobMetadata } from './oracle/consts';
 
 const logger = getLogger();
 
@@ -48,7 +49,7 @@ async function handleOptimizeJobCreation(
     jobName: string,
     jobDescription: string,
     parentJobId?: string,
-    jobMetadata?: JobMetadata
+    jobMetadata?: JobMetadata | OracleJobMetadata
 ) {
     updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 

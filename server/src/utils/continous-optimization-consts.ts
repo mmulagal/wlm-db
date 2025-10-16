@@ -61,14 +61,20 @@ enum OptimizeOracleTypes {
     STORAGE_OPERATING_SYSTEM = 'storage-operating-system'
 }
 
+const OracleOptimizeJobDescriptions = {
+    [OptimizeOracleTypes.STORAGE_CONFIGURATION]: 'Fix Oracle Storage Configuration',
+    [OptimizeOracleTypes.STORAGE_LAYOUT]: 'Fix Oracle Storage Layout',
+    [OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM]: 'Fix Oracle Storage Operating System'
+};
+
 enum OptimizeOracleiSCSIStorageOperatingSystem {
-    TCP_OPTIONS = 'tcp-options',
-    MULTIPATH_ENABLE = 'multipath-enable',
+    TCP_OPTIONS = 'tcp-advanced-options',
+    MULTIPATH_ENABLE = 'multipath-io',
     HOST_UTILITIES = 'host-utilities',
-    THP_DISABLE = 'thp-disable',
-    SELINUX_DISABLE = 'selinux-disable',
+    THP_DISABLE = 'transparent-hugepages',
+    SELINUX_DISABLE = 'selinux',
     ISCSI_REPLACEMENT_TIMEOUT = 'iscsi-replacement-timeout',
-    ISCSI_TARGETS_SESSIONS = 'iscsi-targets-sessions',
+    MULTIPATH_IO_SESSIONS = 'multipath-io-sessions', // not present in golden_config
     FILESYSTEM_IO_OPTIONS = 'filesystem-io-options',
     MULTIPATH_CONFIGURATION = 'multipath-configuration',
     MULTIPATH_FRIENDLY_NAMES = 'multipath-friendly-names',
@@ -620,5 +626,6 @@ export {
     OptimizeStorageRequestParamsType,
     OptimizeStorageRequestParams,
     OptimizeOracleTypes,
-    OptimizeOracleiSCSIStorageOperatingSystem
+    OptimizeOracleiSCSIStorageOperatingSystem,
+    OracleOptimizeJobDescriptions
 };
