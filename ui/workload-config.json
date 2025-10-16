@@ -60,7 +60,7 @@
         "description": "Automate database deployment, validate best practices, and optimize databases for performance, cost, and protection.",
         "tabs": [
             {
-                "label": "Dashboard",
+                "label": "Overview",
                 "to": "/databases/dashboard"
             },
             {
