@@ -240,6 +240,9 @@ describe('Logs Analyzer Operations', () => {
             expect(item.databaseHostId).toBe(TEST_RESOURCE_ID);
             expect(typeof item.latestReport.errorCount).toBe('number');
             expect(item.latestReport.errorCount).toBeGreaterThanOrEqual(0);
+            if (item.latestReport.errorCount > 0) {
+                expect(item.latestReport).toHaveProperty('severityCounts');
+            }
         });
     });
 });

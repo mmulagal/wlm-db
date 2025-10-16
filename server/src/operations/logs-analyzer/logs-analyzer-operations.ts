@@ -40,12 +40,13 @@ import { getActiveNodeAndInstanceDetails } from '../workloads/mssql/mssql-operat
 import { sqlQueryExecutionWithAuth } from '../workloads/mssql/ssm-script-utils';
 import { getModelAvailability } from '../../lib/aws/bedrock';
 import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
-import { parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
+import { mapSeverityLevel, parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
     LogsAnalyzerBodyType,
     RemediationRecommendationObject,
-    RemediationRecommendationObjectType
+    RemediationRecommendationObjectType,
+    SeverityCountsType
 } from '../../routes/types/logs-analyzer.types';
 import { getInferenceProfileFromModelId } from '../aws/bedrock-operations';
 import {
@@ -1121,7 +1122,7 @@ async function getLatestLogsAnalysisReports(
         nextToken = getNextToken(reports, totalReportCount, DEFAULT_PAGE_SIZE);
     } while (nextToken && processedCount < totalReportCount);
 
-    const latestReports: {
+    const latestReports: Array<{
         id: string;
         databaseHostId: string;
         databaseInstanceId: string;
@@ -1129,8 +1130,9 @@ async function getLatestLogsAnalysisReports(
             jobId: string;
             creationTime: number;
             errorCount: number;
+            severityCounts?: SeverityCountsType;
         };
-    }[] = [];
+    }> = [];
     instanceReportsMap.forEach((report, instanceId) => {
         const {
             logs_analysis_data: [{ data: logsAnalysisData }],
@@ -1139,6 +1141,15 @@ async function getLatestLogsAnalysisReports(
             job_id: jobIdFromReport
         } = report;
         if (logsAnalysisData?.remediationRecommendation) {
+            const severityCounts: SeverityCountsType = {};
+            for (const rec of logsAnalysisData.remediationRecommendation) {
+                const { severity: initialSeverity, count } = rec;
+                if (initialSeverity) {
+                    const severity = mapSeverityLevel(Number(initialSeverity));
+                    severityCounts[severity as keyof SeverityCountsType] =
+                        (severityCounts[severity as keyof SeverityCountsType] || 0) + (count || 0);
+                }
+            }
             latestReports.push({
                 id,
                 databaseHostId,
@@ -1146,7 +1157,8 @@ async function getLatestLogsAnalysisReports(
                 latestReport: {
                     jobId: jobIdFromReport,
                     creationTime: report.creation_time.getTime(),
-                    errorCount: logsAnalysisData?.remediationRecommendation?.length
+                    errorCount: logsAnalysisData?.remediationRecommendation?.length,
+                    severityCounts
                 } // TODO: can be extended to include host level report/ instance level report count if needed.
             });
         }

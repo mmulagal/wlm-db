@@ -82,6 +82,14 @@ const LogsAnalysisPreRequisites = Type.Object({
     )
 });
 
+const SeverityCounts = Type.Object({
+    warning: Type.Optional(Type.Number()),
+    severe: Type.Optional(Type.Number()),
+    critical: Type.Optional(Type.Number())
+});
+
+type SeverityCountsType = Static<typeof SeverityCounts>;
+
 const LatestReportObject = Type.Object({
     id: Type.String(),
     databaseHostId: Type.String(),
@@ -89,7 +97,8 @@ const LatestReportObject = Type.Object({
     latestReport: Type.Object({
         jobId: Type.String(),
         creationTime: Type.Number(),
-        errorCount: Type.Number()
+        errorCount: Type.Number(),
+        severityCounts: Type.Optional(SeverityCounts)
     })
 });
 
@@ -127,5 +136,7 @@ export {
     RemediationRecommendationObjectType,
     LogsAnalysisPreRequisites,
     LatestReports,
-    AnalyzePreRequisitesQuery
+    AnalyzePreRequisitesQuery,
+    SeverityCounts,
+    SeverityCountsType
 };
