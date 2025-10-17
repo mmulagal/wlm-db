@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
-import { createStandardDialog, createStandardNotesSection } from './DialogContentHelper';
+import { createActionOptionSection, createSection, createStandardDialog, createStandardNotesSection } from './DialogContentHelper';
 
 const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: string; createOSConfigSection: any }) => {
     const { t } = useTranslation();
@@ -93,6 +93,75 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     t('databases.well-architect.oracle-multipath-config-action-summary'),
                     t('databases.well-architect.oracle-multipath-config-what-will-happen'),
                     createStandardNotesSection(),
+                    createOSConfigSection()
+                );
+            case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-asm-setup-action-summary')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-asm-setup-note')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-asm-setup-optimization-step1'),
+                            t('databases.well-architect.oracle-asm-setup-optimization-step2'),
+                            t('databases.well-architect.oracle-asm-setup-optimization-step3'),
+                            t('databases.well-architect.oracle-asm-setup-optimization-step4'),
+                            t('databases.well-architect.oracle-asm-setup-optimization-step5'),
+                            t('databases.well-architect.oracle-asm-setup-optimization-step6'),
+                            t('databases.well-architect.oracle-asm-setup-optimization-step7'),
+                            t('databases.well-architect.oracle-asm-setup-optimization-step8'),
+                            t('databases.well-architect.oracle-asm-setup-optimization-step9')
+                        ])}
+                    </>
+                );            
+            case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-asm-external-redundancy-action-summary')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-asm-external-redundancy-optimization-step1'),
+                            t('databases.well-architect.oracle-asm-external-redundancy-optimization-step2'),
+                            t('databases.well-architect.oracle-asm-external-redundancy-optimization-step3'),
+                            t('databases.well-architect.oracle-asm-external-redundancy-optimization-step4'),
+                            t('databases.well-architect.oracle-asm-external-redundancy-optimization-step5'),
+                            t('databases.well-architect.oracle-asm-external-redundancy-optimization-step6'),
+                            t('databases.well-architect.oracle-asm-external-redundancy-optimization-step7'),
+                            t('databases.well-architect.oracle-asm-external-redundancy-optimization-step8')
+                       ])}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-asm-setup-note')
+                        )}
+                                </>
+                            );
+            case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-afd-logical-block-size-action-summary'),
+                    t('databases.well-architect.oracle-afd-logical-block-size-what-will-happen'),
+                    createSection(
+                        t('databases.well-architect.note'),
+                        t('databases.well-architect.oracle-afd-logical-block-size-note')
+                    ),
+                    createOSConfigSection()
+                );
+            case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-asmlib-logical-block-size-action-summary'),
+                    t('databases.well-architect.oracle-asmlib-logical-block-size-what-will-happen'),
+                    createSection(
+                        t('databases.well-architect.note'),
+                        t('databases.well-architect.oracle-afd-logical-block-size-note')
+                    ),
                     createOSConfigSection()
                 );
         }

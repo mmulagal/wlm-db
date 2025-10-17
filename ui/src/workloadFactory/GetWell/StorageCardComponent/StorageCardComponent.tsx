@@ -843,7 +843,9 @@ const StorageCardComponent = ({
             type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
             type === GENERAL.OPERATING_SYSTEM_PATCH ||
             type === GENERAL.MICROSOFT_SQL_PATCH ||
-            type === GENERAL.CRR
+            type === GENERAL.CRR ||
+            type === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
+            type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
         ) {
             return 'View';
         }

@@ -22,12 +22,31 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagCompone
 
     useEffect(() => {
         if (engineType && engineType === DBType.ORACLE) {
-            // Default oracle has all 3 tags. Once we get different configs for oracle, we can update the tags accordingly using switch case.
-            setTagData([
-                { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' },
-                { label: t('databases.well-architect.tags.operationalExcellence'), value: 'operationalExcellence' },
-                { label: t('databases.well-architect.tags.performanceEfficiency'), value: 'performanceEfficiency' }
-            ]);
+            // Handle specific Oracle configurations with their appropriate tags
+            switch (selectedConfig || type) {
+                case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.costEfficiency'), value: 'costEfficiency' },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+                    break;
+                default:
+                    // Default oracle has all 3 tags. Once we get different configs for oracle, we can update the tags accordingly using switch case.
+                    setTagData([
+                        { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+            }
         } else {
             switch (selectedConfig || type) {
                 case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
@@ -193,8 +212,20 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagCompone
                 case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
                 case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
+                case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
+                case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
                     setTagData([
                         { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.costEfficiency'), value: 'costEfficiency' },
                         {
                             label: t('databases.well-architect.tags.performanceEfficiency'),
                             value: 'performanceEfficiency'

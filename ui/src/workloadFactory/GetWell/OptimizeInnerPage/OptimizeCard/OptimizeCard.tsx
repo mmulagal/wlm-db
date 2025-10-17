@@ -73,9 +73,23 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
             case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
             case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
             case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+            case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
+            case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
                 return {
                     block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
+                };
+            case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
+            case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+                return {
+                    block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendation },
                     data: {

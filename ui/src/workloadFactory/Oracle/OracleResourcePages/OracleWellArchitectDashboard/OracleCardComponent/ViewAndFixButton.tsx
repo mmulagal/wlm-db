@@ -56,7 +56,9 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
             type === ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT ||
             type === ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT ||
             type === ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT
+            type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT ||
+            type === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
+            type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
         ) {
             return t('databases.oracle-inner-page.view');
         }

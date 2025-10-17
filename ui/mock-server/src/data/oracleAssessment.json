@@ -612,6 +612,90 @@
                     "totalObjectsAssessed": 1,
                     "totalObjectsInViolation": 1,
                     "resourceType": "EC2 instance"
+                },
+                {
+                    "parameter": "asm-setup",
+                    "status": "not-optimized",
+                    "name": "asm-setup",
+                    "recommended": "",
+                    "severity": "warning",
+                    "resourceType": "EC2 Instance",
+                    "recommendation": "Workload Factory recommends using Oracle Automatic Storage Management (ASM) for iSCSI-based storage, such as FSx for NetApp ONTAP, to optimize performance, simplify storage management, and enhance scalability for Oracle Database deployments.",
+                    "tags": ["Reliability", "Performance efficiency"],
+                    "objectsInViolation": ["DATADG"],
+                    "violationDetails": [
+                        {
+                            "objectName": "DATADG",
+                            "value": "2",
+                            "objectType": "EC2 Instance",
+                            "recommended": "4"
+                        }
+                    ],
+                    "totalObjectsAssessed": "1",
+                    "totalObjectsInViolation": "1"
+                },
+                {
+                    "parameter": "asm-external-redundancy",
+                    "status": "not-optimized",
+                    "name": "asm-external-redundancy",
+                    "recommended": "",
+                    "severity": "warning",
+                    "resourceType": "Disk Group",
+                    "recommendation": "Workload Factory recommends configuring Oracle ASM disk groups with External Redundancy for FSxN iSCSI LUNs to leverage FSxN’s built-in high availability, optimize storage efficiency, and reduce costs by avoiding Oracle-level data mirroring.",
+                    "tags": ["Cost efficiency", "Performance efficiency"],
+                    "objectsInViolation": ["DATADG"],
+                    "violationDetails": [
+                        {
+                            "objectName": "DATADG",
+                            "value": "2",
+                            "recommendation": "4",
+                            "objectType": "Disk Group"
+                        }
+                    ],
+                    "totalObjectsAssessed": "1",
+                    "totalObjectsInViolation": "1"
+                },
+                {
+                    "parameter": "afd-logical-block-size",
+                    "status": "not-optimized",
+                    "name": "afd-logical-block-size",
+                    "recommended": "1",
+                    "severity": "critical",
+                    "resourceType": "EC2 Instance",
+                    "recommendation": "Workload Factory recommends configuring the Oracle ASM Filter Driver (AFD) to use the logical block size of the underlying FSx for NetApp ONTAP. This ensures that AFD aligns I/O operations with the storage’s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.",
+                    "tags": ["Reliability", "Performance efficiency"],
+                    "objectsInViolation": ["DATADG"],
+                    "violationDetails": [
+                        {
+                            "objectName": "DATADG",
+                            "value": "2",
+                            "objectType": "EC2 Instance",
+                            "recommended": "4"
+                        }
+                    ],
+                    "totalObjectsAssessed": "1",
+                    "totalObjectsInViolation": "1"
+                },
+                {
+                    "parameter": "asmlib-logical-block-size",
+                    "status": "not-optimized",
+                    "name": "asmlib-logical-block-size",
+                    "recommended": "true",
+                    "severity": "critical",
+                    "resourceType": "EC2 Instance",
+                    "recommendation": "Workload Factory recommends configuring Oracle ASMLib to use the logical block size of the underlying FSx for NetApp ONTAP, by setting the appropriate option in the ASMLib configuration file. This ensures that ASMLib aligns I/O operations with the storage’s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.",
+                    "tags": ["Reliability", "Performance efficiency"],
+                    "objectsInViolation": ["DATADG"],
+                    "violationDetails": [
+                        {
+                            "objectName": "DATADG",
+                            "value": "2",
+                            "objectType": "EC2 Instance",
+                            "recommended": "4"
+                        }
+                    ],
+                    "totalObjectsAssessed": "1",
+                    "totalObjectsInViolation": "1"
                 }
             ]
         },
@@ -622,13 +706,8 @@
                 "recommended": "associated-lun-count",
                 "severity": "warning",
                 "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.",
-                "tags": [
-                    "Operational excellence",
-                    "Performance efficiency"
-                ],
-                "objectsInViolation": [
-                    "DATADG"
-                ],
+                "tags": ["Operational excellence", "Performance efficiency"],
+                "objectsInViolation": ["DATADG"],
                 "violationDetails": [
                     {
                         "objectName": "DATADG",
@@ -647,13 +726,8 @@
                 "recommended": "associated-lun-count",
                 "severity": "warning",
                 "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.",
-                "tags": [
-                    "Operational excellence",
-                    "Performance efficiency"
-                ],
-                "objectsInViolation": [
-                    "DATARG"
-                ],
+                "tags": ["Operational excellence", "Performance efficiency"],
+                "objectsInViolation": ["DATARG"],
                 "violationDetails": [
                     {
                         "objectName": "DATARG",
@@ -672,13 +746,8 @@
                 "recommended": "associated-lun-count",
                 "severity": "warning",
                 "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
-                "tags": [
-                    "Operational excellence",
-                    "Performance efficiency"
-                ],
-                "objectsInViolation": [
-                    "DATARG"
-                ],
+                "tags": ["Operational excellence", "Performance efficiency"],
+                "objectsInViolation": ["DATARG"],
                 "violationDetails": [
                     {
                         "objectName": "DATARG",
@@ -697,13 +766,8 @@
                 "recommended": "associated-lun-count",
                 "severity": "warning",
                 "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
-                "tags": [
-                    "Operational excellence",
-                    "Performance efficiency"
-                ],
-                "objectsInViolation": [
-                    "DATARG"
-                ],
+                "tags": ["Operational excellence", "Performance efficiency"],
+                "objectsInViolation": ["DATARG"],
                 "violationDetails": [
                     {
                         "objectName": "DATARG",

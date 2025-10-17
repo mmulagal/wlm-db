@@ -881,7 +881,11 @@ export const GETWELL_CONFIG: any = {
     'filesystems-io-options': 'Filesystem I/O options',
     'multipath-readcount': 'Multiblock read count',
     'multipath-io-sessions': 'Multipath I/O sessions',
-    'multipath-configuration': 'Multipath config file'
+    'multipath-configuration': 'Multipath config file',
+    'asm-setup': 'ASM setup',
+    'asm-external-redundancy': 'ASM external redundancy',
+    'afd-logical-block-size': 'ASM filter driver logical block size alignment',
+    'asmlib-logical-block-size': 'ASMLib logical block size alignment',
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -957,6 +961,10 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MULTIPATH_READCOUNT: 'Multiblock read count',
     MULTIPATH_IO_SESSIONS: 'Multipath I/O sessions',
     MULTIPATH_CONFIGURATION: 'Multipath config file',
+    ASM_SETUP: 'ASM setup',
+    ASM_EXTERNAL_REDUNDANCY: 'ASM external redundancy',
+    AFD_LOGICAL_BLOCK_SIZE: 'ASM filter driver logical block size alignment',
+    ASMLIB_LOGICAL_BLOCK_SIZE: 'ASMLib logical block size alignment',
     HIGH_AVAILABILITY: 'highAvailability'
 };
 

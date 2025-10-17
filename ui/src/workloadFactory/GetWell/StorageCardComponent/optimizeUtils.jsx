@@ -112,7 +112,9 @@ const isDialogPrimaryBtnDisabled = rowData => {
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION)
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
+            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE)
     ) {
         return true;
     }
@@ -120,21 +122,40 @@ const isDialogPrimaryBtnDisabled = rowData => {
 };
 
 export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
-    setDialog(
-        <DialogComponent
-            header={`${rowData?.data?.name} `}
-            content={<DialogContent type={rowData?.data?.name} engineType={rowData?.engineType} />}
-            primaryButton={GENERAL.CONTINUE}
-            secondaryButton={GENERAL.CANCEL}
-            callback={() => {
-                callOptimizeApi(rowData?.data, operation, singleRowData);
-            }}
-            closeCallback={() => {
-                closeDialog();
-            }}
-            customClass="innerPage"
-            primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
-            primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
-        />
-    );
+    // Check if this is an ASM configuration that should only have a Close button
+    const isCloseButton  =  rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY;
+    if (isCloseButton) {
+        setDialog(
+            <DialogComponent
+                header={`${rowData?.data?.name} `}
+                content={<DialogContent type={rowData?.data?.name} engineType={rowData?.engineType} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {
+                    closeDialog();
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass="innerPage"
+            />
+        );
+    } else {
+        setDialog(
+            <DialogComponent
+                header={`${rowData?.data?.name} `}
+                content={<DialogContent type={rowData?.data?.name} engineType={rowData?.engineType} />}
+                primaryButton={GENERAL.CONTINUE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    callOptimizeApi(rowData?.data, operation, singleRowData);
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass="innerPage"
+                primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
+                primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
+            />
+        );
+    }
 };

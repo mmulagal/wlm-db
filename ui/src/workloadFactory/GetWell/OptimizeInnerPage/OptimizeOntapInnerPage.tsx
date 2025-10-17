@@ -41,6 +41,7 @@ import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 import OntapTable from './InnerTables/OntapTable';
 import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
 import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
+import ASMExternalRedundency from './InnerTables/ASMExternalRedundency';
 import OntapTableWithData from './InnerTables/OntapTableWithData';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 import MSSQLHighAvailabilityTableWithData from './InnerTables/MSSQLHighAvailabilityTableWithData';
@@ -91,6 +92,12 @@ const OptimizeOntapInnerPage = () => {
                     setCardHeight({
                         recommendationSection: '160px',
                         tagSection: '256px'
+                    });
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+                    setCardHeight({
+                        recommendationSection: '180px',
+                        tagSection: '276px'
                     });
                     break;
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
@@ -495,6 +502,15 @@ const OptimizeOntapInnerPage = () => {
                             isRecommendation={false}
                         />
                     );
+                case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+                    return (
+                        <ASMExternalRedundency
+                            type={selectedOptimizeConfig?.type}
+                            data={selectedOptimizeConfig?.data}
+                            lastColDetails={lastColDetails}
+                            handleBulkAction={handleBulkAction}
+                        />
+                    );
                 default:
                     return (
                         <OntapTableWithData
@@ -579,6 +595,9 @@ const OptimizeOntapInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE
         ) {
             return `${t('databases.general.mssql-high-availability')} / ${selectedOptimizeConfig?.type}`;
+        }
+        if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY) {
+            return `Operating System / ${selectedOptimizeConfig?.type}`;
         }
         if (
             selectedOptimizeConfig?.type !== 'Multipath I/O Policy' &&
