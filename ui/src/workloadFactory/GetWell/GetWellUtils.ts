@@ -2531,18 +2531,35 @@ export const formatOntapConfig = (
 
     const ontapVolAndLunList = [];
     if (volumesList && !volumesList?.[0]?.errorMessage) {
-        ontapVolAndLunList.push(data?.storage?.configuration?.volumes);
+        ontapVolAndLunList.push({ configs: data?.storage?.configuration?.volumes, type: 'volume' });
     }
     if (lunsList && !lunsList?.[0]?.errorMessage) {
-        ontapVolAndLunList.push(data?.storage?.configuration?.luns);
+        ontapVolAndLunList.push({ configs: data?.storage?.configuration?.luns, type: 'lun' });
     }
-    ontapVolAndLunList?.map(type => {
-        type?.map((item: PerConfigInterface) => {
+    ontapVolAndLunList?.map(({ configs, type }) => {
+        configs?.map((item: PerConfigInterface) => {
+            // Get the dismiss state for this configuration
+            const dismissedObj = getIndividualConfigDismissState(
+                item?.name || '',
+                type as any,
+                data?.dismissedConfigurations
+            );
+            const configState = dismissedObj?.configState;
+
+            // Skip dismissed and postponed configurations from counts
+            if (configState === CONFIG_STATE_ACTIONS.DISMISS || configState === CONFIG_STATE_ACTIONS.POSTPONED) {
+                return;
+            }
+
             let status = item?.status || '';
             if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
                 status = optimizingData?.[item?.name || ''];
             }
-            if (status === 'optimized') {
+
+            // If the configuration is in activating state, count it as optimized
+            if (configState === CONFIG_STATES.ACTIVATING) {
+                ontapOptimizedConfig++;
+            } else if (status === 'optimized') {
                 ontapOptimizedConfig++;
             } else {
                 ontapNotOptimizedConfig++;
@@ -2617,11 +2634,24 @@ export const formatOsConfig = (
     let osNotOptimizedConfig = 0;
     if (osList && !osList?.[0]?.errorMessage) {
         data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+            // Get the dismiss state for this configuration
+            const dismissedObj = getIndividualConfigDismissState(item?.name || '', 'os', data?.dismissedConfigurations);
+            const configState = dismissedObj?.configState;
+
+            // Skip dismissed and postponed configurations from counts
+            if (configState === CONFIG_STATE_ACTIONS.DISMISS || configState === CONFIG_STATE_ACTIONS.POSTPONED) {
+                return;
+            }
+
             let status = item?.status || '';
             if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
                 status = optimizingData?.[item?.name || ''];
             }
-            if (status === 'optimized') {
+
+            // If the configuration is in activating state, count it as optimized
+            if (configState === CONFIG_STATES.ACTIVATING) {
+                osOptimizedConfig++;
+            } else if (status === 'optimized') {
                 osOptimizedConfig++;
             } else {
                 osNotOptimizedConfig++;
@@ -2738,11 +2768,28 @@ export const formatMssqlHighAvailabilityConfig = (
     // Count optimized vs not optimized configurations from active configs
     if (mssqlHAData && !mssqlHAData?.[0]?.errorMessage) {
         mssqlHAData?.forEach((item: PerConfigInterface) => {
+            // Get the dismiss state for this configuration
+            const dismissedObj = getIndividualConfigDismissState(
+                item?.name || '',
+                'mssqlHighAvailability',
+                data?.dismissedConfigurations
+            );
+            const configState = dismissedObj?.configState;
+
+            // Skip dismissed and postponed configurations from counts
+            if (configState === CONFIG_STATE_ACTIONS.DISMISS || configState === CONFIG_STATE_ACTIONS.POSTPONED) {
+                return;
+            }
+
             let status = item?.status || '';
             if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
                 status = optimizingData?.[item?.name || ''];
             }
-            if (status === 'optimized') {
+
+            // If the configuration is in activating state, count it as optimized
+            if (configState === CONFIG_STATES.ACTIVATING) {
+                mssqlHAOptimizedConfig++;
+            } else if (status === 'optimized') {
                 mssqlHAOptimizedConfig++;
             } else {
                 mssqlHANotOptimizedConfig++;

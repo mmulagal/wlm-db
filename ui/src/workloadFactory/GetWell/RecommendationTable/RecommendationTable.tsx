@@ -544,7 +544,7 @@ const RecommendationTable = ({
     };
 
     const addSuccessNotification = (action: string, cardName?: string) => {
-        addSuccessNotificationHelper(action, cardName || '', dispatch, t);
+        addSuccessNotificationHelper(action, cardName || '', dispatch, t, false);
     };
 
     const handleDismissResponse = (res: any, action: string, rowData: any) => {
@@ -565,6 +565,7 @@ const RecommendationTable = ({
             setShowDismissedConfigurations,
             fullCardData,
             dispatch,
+            false, // false as it is a sub configuration so to show sub-config in the notification
             addSuccessNotification,
             t,
             formatFunction

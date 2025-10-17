@@ -200,29 +200,50 @@ export const handleSingleAction = (
         });
 };
 
-export const addSuccessNotification = (action: string, cardName: string, dispatch: any, t: any) => {
+export const addSuccessNotification = (
+    action: string,
+    cardName: string,
+    dispatch: any,
+    t: any,
+    isBulkAction: boolean = true
+) => {
     switch (action) {
         case CONFIG_STATE_ACTIONS.DISMISS:
         case CONFIG_STATE_ACTIONS.POSTPONED:
-            const message = (
+            const dismissMessage = (
                 <>
                     <span>{t('databases.well-architect.dismiss.dismiss-notification-content1')}</span>
                     <span style={{ fontWeight: 500 }}> {cardName} </span>
-                    <span>{t('databases.well-architect.dismiss.dismiss-notification-content2')}</span>
+                    <span>
+                        {isBulkAction
+                            ? t('databases.well-architect.dismiss.dismiss-notification-content2')
+                            : t('databases.well-architect.dismiss.dismiss-notification-content2-subconfig')}
+                    </span>
                 </>
             );
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                    message
+                    message: dismissMessage
                 })
             );
             break;
         case CONFIG_STATE_ACTIONS.ACTIVE:
+            const reactivateMessage = (
+                <>
+                    <span>{t('databases.well-architect.dismiss.reactivate-notification-content1')}</span>
+                    <span style={{ fontWeight: 500 }}> {cardName} </span>
+                    <span>
+                        {isBulkAction
+                            ? t('databases.well-architect.dismiss.dismiss-notification-content2')
+                            : t('databases.well-architect.dismiss.dismiss-notification-content2-subconfig')}
+                    </span>
+                </>
+            );
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                    message: t('databases.well-architect.dismiss.reactivate-notification-message')
+                    message: reactivateMessage
                 })
             );
             break;
@@ -249,7 +270,8 @@ export const handleDismissResponse = (
     setShowDismissedConfigurations: ((value: boolean) => void) | null,
     fullCardData: any,
     dispatch: any,
-    addSuccessNotification: (action: string, cardName: string, dispatch: any, t: any) => void,
+    isBulkAction: boolean,
+    addSuccessNotification: (action: string, cardName: string, dispatch: any, t: any, isBulkAction: boolean) => void,
     t: TFunction,
     formatDataFunction?: (dispatch: any, data?: any, showDismissedView?: boolean) => void
 ) => {
@@ -279,11 +301,9 @@ export const handleDismissResponse = (
         if (!targetId || !updatedState) return;
 
         // Update configuration state for the instance using the unified function
-        const newData = updateConfigStatePerInstance(
-            updatedState,
-            targetId,
-            res?.data?.dismissedConfigurations?.[0]?.endTime
-        ) || {};
+        const newData =
+            updateConfigStatePerInstance(updatedState, targetId, res?.data?.dismissedConfigurations?.[0]?.endTime) ||
+            {};
 
         // Set drift assessment data (used by both MSSQL and Oracle)
         dispatch(setDriftAssessmentData(newData));
@@ -320,7 +340,7 @@ export const handleDismissResponse = (
             }
         }
 
-        addSuccessNotification(action, cardData?.mapName || cardData?.name, dispatch, t);
+        addSuccessNotification(action, cardData?.mapName || cardData?.name, dispatch, t, isBulkAction);
     } else {
         dispatch(
             addNotification({

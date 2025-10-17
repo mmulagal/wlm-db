@@ -869,7 +869,7 @@ const StorageCardComponent = ({
     };
 
     const addSuccessNotification = (action: string, cardName?: string) => {
-        addSuccessNotificationHelper(action, cardName || '', dispatch, t);
+        addSuccessNotificationHelper(action, cardName || '', dispatch, t, true);
     };
 
     const handleDismissResponse = (res: any, action: string) => {
@@ -885,6 +885,7 @@ const StorageCardComponent = ({
             setShowDismissedConfigurations,
             fullCardData,
             dispatch,
+            true, // true for bulk action to show configuration text in notification
             addSuccessNotification,
             t,
             formatGetWellData

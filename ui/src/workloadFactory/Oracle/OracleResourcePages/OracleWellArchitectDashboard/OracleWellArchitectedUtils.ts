@@ -11,6 +11,7 @@ import {
 import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
+    CONFIG_STATE_ACTIONS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES
@@ -149,9 +150,9 @@ const getIndividualConfigDismissState = (
     } else if (type === 'os') {
         dismissedConfigs = dismissedConfigurations?.storage?.configuration?.os || [];
     }
-
     const dismissedConfig = dismissedConfigs.find((config: any) => config.configurationName === configName);
 
+    // Return the dismiss state for any configuration that has been dismissed, postponed, or is activating
     if (dismissedConfig) {
         return {
             configState: dismissedConfig.configState,
@@ -160,7 +161,7 @@ const getIndividualConfigDismissState = (
         };
     }
 
-    return null;
+    return undefined;
 };
 
 // Factory function for creating base block structure
@@ -568,11 +569,32 @@ export const formatOntapConfig = (
             );
             formatOntapConfigList.push(processedItem);
 
-            // Count optimized vs not optimized
-            if (processedItem.originalStatus === 'optimized') {
-                ontapOptimizedConfig++;
+            // Get the dismiss state for this configuration
+            const dismissedObj = getIndividualConfigDismissState(
+                item?.name || '',
+                index === 0 ? 'volume' : 'lun',
+                data?.dismissedConfigurations
+            );
+            const configState = dismissedObj?.configState;
+
+            // Skip dismissed and postponed configurations from counts
+            if (configState === CONFIG_STATE_ACTIONS.DISMISS || configState === CONFIG_STATE_ACTIONS.POSTPONED) {
+                // Skip this configuration from counting
             } else {
-                ontapNotOptimizedConfig++;
+                // Count optimized vs not optimized
+                let status = item?.status || '';
+                if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                    status = optimizingData?.[item?.name || ''];
+                }
+
+                // If the configuration is in activating state, count it as optimized
+                if (configState === CONFIG_STATES.ACTIVATING) {
+                    ontapOptimizedConfig++;
+                } else if (status === 'optimized') {
+                    ontapOptimizedConfig++;
+                } else {
+                    ontapNotOptimizedConfig++;
+                }
             }
 
             // Track severities
@@ -622,11 +644,28 @@ export const formatOSConfig = (
         const processedItem = processStorageConfigItem(item, optimizingData, 'os', data?.dismissedConfigurations);
         formatOsConfigList.push(processedItem);
 
-        // Count optimized vs not optimized
-        if (processedItem.originalStatus === 'optimized') {
-            osOptimizedConfig++;
+        // Get the dismiss state for this configuration
+        const dismissedObj = getIndividualConfigDismissState(item?.name || '', 'os', data?.dismissedConfigurations);
+        const configState = dismissedObj?.configState;
+
+        // Skip dismissed and postponed configurations from counts
+        if (configState === CONFIG_STATE_ACTIONS.DISMISS || configState === CONFIG_STATE_ACTIONS.POSTPONED) {
+            // Skip this configuration from counting
         } else {
-            osNotOptimizedConfig++;
+            // Count optimized vs not optimized
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+
+            // If the configuration is in activating state, count it as optimized
+            if (configState === CONFIG_STATES.ACTIVATING) {
+                osOptimizedConfig++;
+            } else if (status === 'optimized') {
+                osOptimizedConfig++;
+            } else {
+                osNotOptimizedConfig++;
+            }
         }
 
         // Track severities
@@ -661,7 +700,7 @@ const createOntapConfigurationBlock = (
         ...oracleCardData?.ontap_configuration,
         block_two: {
             ...oracleCardData?.ontap_configuration?.block_two,
-            value: hasConfigs ? (ontapNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized') : ''
+            value: hasConfigs ? (ontapNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized') : 'n/a'
         },
         block_three: {
             ...oracleCardData?.ontap_configuration?.block_three,
@@ -703,7 +742,7 @@ const createOsConfigurationBlock = (
         ...oracleCardData?.os_configuration,
         block_two: {
             ...oracleCardData?.os_configuration?.block_two,
-            value: hasConfigs ? (osNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized') : ''
+            value: hasConfigs ? (osNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized') : 'n/a'
         },
         block_three: {
             ...oracleCardData?.os_configuration?.block_three,

@@ -126,7 +126,10 @@ const StorageConfigurationSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData?.ontap_configuration?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                            key={index}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}
@@ -199,7 +202,10 @@ const StorageConfigurationSection = ({
                             title={
                                 <div className={styles.tagPlacement}>
                                     {oracleCardData?.os_configuration?.tags?.map((perTag: string, index: number) => (
-                                        <div key={index}>
+                                        <div
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                            key={index}
+                                        >
                                             <Tag text={perTag} />
                                         </div>
                                     ))}

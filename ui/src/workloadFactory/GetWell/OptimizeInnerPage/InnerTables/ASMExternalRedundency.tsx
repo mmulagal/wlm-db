@@ -16,7 +16,7 @@ const ASMExternalRedundency = ({ type, data, lastColDetails, handleBulkAction }:
     const { t } = useTranslation();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
-    
+
     const tableData = useMemo(() => {
         let id = 0;
         return data?.violationDetails?.map((row: any) => ({
@@ -69,14 +69,16 @@ const ASMExternalRedundency = ({ type, data, lastColDetails, handleBulkAction }:
         selectionType: 'multiple',
         defaultSelectedRows: []
     });
-    
 
     useEffect(() => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY]?.length) {
+        if (
+            rowsData.length > 0 &&
+            inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY]?.length
+        ) {
             checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
     }, [tableProps.selectionState]);
