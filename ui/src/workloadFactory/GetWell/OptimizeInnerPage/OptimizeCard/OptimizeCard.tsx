@@ -75,6 +75,8 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
             case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
             case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
             case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
+            case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
+            case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
                 return {
                     block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Critical' },
@@ -87,6 +89,9 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                 };
             case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
             case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+            case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
+            case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
+            case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
                 return {
                     block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
@@ -192,6 +197,8 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
             case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
             case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
             case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
+            case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
+            case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
             case 'Tiering policy':
             case 'Tiering minimum cooling days':
                 return {

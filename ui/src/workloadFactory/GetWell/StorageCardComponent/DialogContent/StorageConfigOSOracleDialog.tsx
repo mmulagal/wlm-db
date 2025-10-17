@@ -1,7 +1,14 @@
 import { useTranslation } from 'react-i18next';
+import { DsTypography } from '@tlveng/wlm-ds';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
-import { createActionOptionSection, createSection, createStandardDialog, createStandardNotesSection } from './DialogContentHelper';
+import {
+    createStandardDialog,
+    createStandardNotesSection,
+    createSection,
+    createNumberedActionSteps,
+    createActionOptionSection
+} from './DialogContentHelper';
 
 const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: string; createOSConfigSection: any }) => {
     const { t } = useTranslation();
@@ -118,7 +125,7 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.oracle-asm-setup-optimization-step9')
                         ])}
                     </>
-                );            
+                );
             case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
                 return (
                     <>
@@ -135,13 +142,13 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.oracle-asm-external-redundancy-optimization-step6'),
                             t('databases.well-architect.oracle-asm-external-redundancy-optimization-step7'),
                             t('databases.well-architect.oracle-asm-external-redundancy-optimization-step8')
-                       ])}
+                        ])}
                         {createSection(
                             t('databases.well-architect.notes'),
                             t('databases.well-architect.oracle-asm-setup-note')
                         )}
-                                </>
-                            );
+                    </>
+                );
             case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
                 return createStandardDialog(
                     t,
@@ -164,6 +171,88 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     ),
                     createOSConfigSection()
                 );
+            case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-kernel-parameters-action-summary'),
+                    t('databases.well-architect.oracle-kernel-parameters-what-will-happen'),
+                    createStandardNotesSection(),
+                    createOSConfigSection()
+                );
+            case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-nfs-mount-options-dbfiles-action-summary'),
+                    <>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.well-architect.oracle-nfs-mount-options-dbfiles-what-will-happen')}
+                        </DsTypography>
+                        {createNumberedActionSteps([
+                            t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step1'),
+                            t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step2'),
+                            t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step3')
+                        ])}
+                    </>,
+                    createSection(
+                        t('databases.well-architect.note'),
+                        t('databases.well-architect.oracle-nfs-mount-options-dbfiles-note')
+                    ),
+                    createOSConfigSection()
+                );
+            case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-nfs-mount-options-adrhome-action-summary'),
+                    <>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.well-architect.oracle-nfs-mount-options-adrhome-what-will-happen')}
+                        </DsTypography>
+                        {createNumberedActionSteps([
+                            t('databases.well-architect.oracle-nfs-mount-options-adrhome-step1'),
+                            t('databases.well-architect.oracle-nfs-mount-options-adrhome-step2'),
+                            t('databases.well-architect.oracle-nfs-mount-options-adrhome-step3'),
+                            t('databases.well-architect.oracle-nfs-mount-options-adrhome-step4')
+                        ])}
+                    </>,
+                    createSection(
+                        t('databases.well-architect.note'),
+                        t('databases.well-architect.oracle-nfs-mount-options-adrhome-note')
+                    ),
+                    createOSConfigSection()
+                );
+            case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-nfsv4-domain-name-action-summary')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.user-action-required'),
+                            t('databases.well-architect.oracle-nfsv4-domain-name-user-action-required')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.what-will-happen'),
+                            t('databases.well-architect.oracle-nfsv4-domain-name-what-will-happen')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.note'),
+                            t('databases.well-architect.oracle-nfsv4-domain-name-note')
+                        )}
+                    </div>
+                );
+            case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-nfs-caching-options-action-summary'),
+                    t('databases.well-architect.oracle-nfs-caching-options-what-will-happen'),
+                    createSection(
+                        t('databases.well-architect.note'),
+                        t('databases.well-architect.oracle-nfs-caching-options-note')
+                    )
+                );
+            default:
+                return null;
         }
     };
     return <div className={styles['storage-tier-block']}>{setContent()}</div>;

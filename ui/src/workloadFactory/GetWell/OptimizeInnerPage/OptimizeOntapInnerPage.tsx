@@ -43,6 +43,7 @@ import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
 import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
 import ASMExternalRedundency from './InnerTables/ASMExternalRedundency';
 import OntapTableWithData from './InnerTables/OntapTableWithData';
+import OSOracleTable from './InnerTables/OSOracleTable';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 import MSSQLHighAvailabilityTableWithData from './InnerTables/MSSQLHighAvailabilityTableWithData';
 import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
@@ -89,6 +90,8 @@ const OptimizeOntapInnerPage = () => {
                 case 'OS type':
                 case 'Space reservation':
                 case 'Space allocation':
+                case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
+                case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
                     setCardHeight({
                         recommendationSection: '160px',
                         tagSection: '256px'
@@ -113,6 +116,11 @@ const OptimizeOntapInnerPage = () => {
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
                 case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
+                case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
+                case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
+                case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
+                case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
                     setCardHeight({
                         recommendationSection: '170px',
                         tagSection: '266px'
@@ -492,6 +500,10 @@ const OptimizeOntapInnerPage = () => {
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
+                case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
+                case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
+                case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
                     return (
                         <OntapTableWithData
                             type={selectedOptimizeConfig?.type}
@@ -500,6 +512,15 @@ const OptimizeOntapInnerPage = () => {
                             handleBulkAction={handleBulkAction}
                             engineType={selectedOptimizeConfig?.engineType}
                             isRecommendation={false}
+                        />
+                    );
+                case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
+                    return (
+                        <OSOracleTable
+                            type={selectedOptimizeConfig?.type}
+                            data={selectedOptimizeConfig?.data}
+                            lastColDetails={lastColDetails}
+                            handleBulkAction={handleBulkAction}
                         />
                     );
                 case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
@@ -596,7 +617,10 @@ const OptimizeOntapInnerPage = () => {
         ) {
             return `${t('databases.general.mssql-high-availability')} / ${selectedOptimizeConfig?.type}`;
         }
-        if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY) {
+        if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES
+        ) {
             return `Operating System / ${selectedOptimizeConfig?.type}`;
         }
         if (

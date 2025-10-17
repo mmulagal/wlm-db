@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
-import { createStandardDialog, createStandardNotesSection } from './DialogContentHelper';
+import { createStandardDialog, createStandardNotesSection, createSection } from './DialogContentHelper';
 
 const StorageConfigOracleDialog = ({
     type,
@@ -142,6 +142,30 @@ const StorageConfigOracleDialog = ({
                     createStandardNotesSection(),
                     createONTAPConfigSection()
                 );
+            case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-nfs-rootonly-action-summary'),
+                    t('databases.well-architect.oracle-nfs-rootonly-what-will-happen'),
+                    createSection(
+                        t('databases.well-architect.note'),
+                        t('databases.well-architect.oracle-nfs-root-only-note')
+                    ),
+                    createONTAPConfigSection()
+                );
+            case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.oracle-export-policy-action-summary'),
+                    t('databases.well-architect.oracle-export-policy-what-will-happen'),
+                    createSection(
+                        t('databases.well-architect.note'),
+                        t('databases.well-architect.oracle-export-policy-note')
+                    ),
+                    createONTAPConfigSection()
+                );
+            default:
+                return null;
         }
     };
     return <div className={styles['storage-tier-block']}>{setContent()}</div>;

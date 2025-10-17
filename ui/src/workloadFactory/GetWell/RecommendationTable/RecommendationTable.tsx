@@ -130,7 +130,14 @@ const RecommendationTable = ({
         rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE;
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY ||
+        rowData?.name === ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY;
 
     const getHaPayload = (configurationName: string) => ({
         hostsToOptimize: [
@@ -346,7 +353,11 @@ const RecommendationTable = ({
                 name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
                 name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
                 name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
-                name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE)
+                name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
+                name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
+                name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
+                name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
+                name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME)
         ) {
             return false;
         }
@@ -371,9 +382,11 @@ const RecommendationTable = ({
     };
 
     const innerPageText = (name: string) => {
-        if (name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
+        if (
+            name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
             name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
-            name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY) {
+            name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
+        ) {
             return 'View';
         }
         return 'View and fix';
@@ -385,53 +398,53 @@ const RecommendationTable = ({
 
     const handleOntapDialog = (rowData: any) => {
         // Check if this is an ASM configuration that should only have a Close button
-            const isCloseButton  =  rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP;
-            if (isCloseButton) {
-                setDialog(
-                    <DialogComponent
-                        header={`${rowData?.name} `}
-                         content={
-                            <DialogContent
-                                type={rowData?.name}
-                                objectsInViolation={rowData?.objectsInViolation}
-                                engineType={engineType}
-                            />
-                        }
-                        primaryButton={GENERAL.CLOSE}
-                        callback={() => {
-                            closeDialog();
-                        }}
-                        closeCallback={() => {
-                            closeDialog();
-                        }}
-                        customClass="innerPage"
-                    />
-                );
-            } else {
-                setDialog(
-                    <DialogComponent
-                        header={`${rowData?.name}`}
-                        content={
-                            <DialogContent
-                                type={rowData?.name}
-                                objectsInViolation={rowData?.objectsInViolation}
-                                engineType={engineType}
-                            />
-                        }
-                        primaryButton={GENERAL.CONTINUE}
-                        secondaryButton={GENERAL.CANCEL}
-                        callback={() => {
-                            callOptimizeApi(rowData);
-                        }}
-                        closeCallback={() => {
-                            closeDialog();
-                        }}
-                        customClass="innerPage"
-                        primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
-                        primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
-                    />
-                );
-    }
+        const isCloseButton = rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP;
+        if (isCloseButton) {
+            setDialog(
+                <DialogComponent
+                    header={`${rowData?.name} `}
+                    content={
+                        <DialogContent
+                            type={rowData?.name}
+                            objectsInViolation={rowData?.objectsInViolation}
+                            engineType={engineType}
+                        />
+                    }
+                    primaryButton={GENERAL.CLOSE}
+                    callback={() => {
+                        closeDialog();
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                    customClass="innerPage"
+                />
+            );
+        } else {
+            setDialog(
+                <DialogComponent
+                    header={`${rowData?.name}`}
+                    content={
+                        <DialogContent
+                            type={rowData?.name}
+                            objectsInViolation={rowData?.objectsInViolation}
+                            engineType={engineType}
+                        />
+                    }
+                    primaryButton={GENERAL.CONTINUE}
+                    secondaryButton={GENERAL.CANCEL}
+                    callback={() => {
+                        callOptimizeApi(rowData);
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                    customClass="innerPage"
+                    primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
+                    primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
+                />
+            );
+        }
     };
 
     const handleNavigateToOptimizePage = (rowData: any) => {
@@ -798,13 +811,17 @@ const RecommendationTable = ({
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
-                            rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME
                         ) {
                             type = 'EC2 instances';
-                        } else if(rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY){
+                        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY) {
                             type = 'Disk Group';
-                        }
-                        else if (
+                        } else if (
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS
                         ) {

@@ -33,6 +33,29 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagCompone
                         }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
+                case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+                    break;
                 default:
                     // Default oracle has all 3 tags. Once we get different configs for oracle, we can update the tags accordingly using switch case.
                     setTagData([

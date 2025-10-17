@@ -834,6 +834,8 @@ export const GETWELL_CONFIG: any = {
     compression: 'Compression',
     deduplication: 'Deduplication',
     compaction: 'Compaction',
+    'nfs-rootonly': 'NFS rootonly',
+    'export-policy': 'Export policy',
     'log-drive-size': 'transaction_log_drive_size',
     'performance-tier': 'storage_tier',
     'tempdb-drive-size': 'tempdb_drive_size',
@@ -882,10 +884,15 @@ export const GETWELL_CONFIG: any = {
     'multipath-readcount': 'Multiblock read count',
     'multipath-io-sessions': 'Multipath I/O sessions',
     'multipath-configuration': 'Multipath config file',
+    'kernel-parameters': 'Kernel parameters',
+    'nfs-mount-options-databasefiles': 'NFS mount options - database files',
+    'nfs-mount-options-adrhome': 'NFS mount options - ADR home',
+    'nfs-caching-options': 'NFS caching options',
+    'nfsv4-domain-name': 'NFSv4 domain name',
     'asm-setup': 'ASM setup',
     'asm-external-redundancy': 'ASM external redundancy',
     'afd-logical-block-size': 'ASM filter driver logical block size alignment',
-    'asmlib-logical-block-size': 'ASMLib logical block size alignment',
+    'asmlib-logical-block-size': 'ASMLib logical block size alignment'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -947,6 +954,8 @@ export const ASSESSMENT_CONFIG_NAMES = {
     COMPRESSION: 'Compression',
     DEDUPLICATION: 'Deduplication',
     COMPACTION: 'Compaction',
+    NFS_ROOTONLY: 'NFS rootonly',
+    EXPORT_POLICY: 'Export policy',
     SNAPSHOT_POLICY: 'Snapshot policy',
     OPERATING_SYSTEM: 'Operating system',
     ONTAP_CAPS: 'ONTAP',
@@ -961,6 +970,11 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MULTIPATH_READCOUNT: 'Multiblock read count',
     MULTIPATH_IO_SESSIONS: 'Multipath I/O sessions',
     MULTIPATH_CONFIGURATION: 'Multipath config file',
+    KERNEL_PARAMETERS: 'Kernel parameters',
+    NFS_MOUNT_OPTIONS_DATABASEFILES: 'NFS mount options - database files',
+    NFS_MOUNT_OPTIONS_ADRHOME: 'NFS mount options - ADR home',
+    NFS_CACHING_OPTIONS: 'NFS caching options',
+    NFSV4_DOMAIN_NAME: 'NFSv4 domain name',
     ASM_SETUP: 'ASM setup',
     ASM_EXTERNAL_REDUNDANCY: 'ASM external redundancy',
     AFD_LOGICAL_BLOCK_SIZE: 'ASM filter driver logical block size alignment',
@@ -1023,7 +1037,14 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         compression: 'volumes',
         deduplication: 'volumes',
         compaction: 'volumes',
-        'snapshot-policy': 'volumes'
+        'snapshot-policy': 'volumes',
+        'nfs-rootonly': 'volumes',
+        'export-policy': 'volumes',
+        'kernel-parameters': 'os',
+        'nfs-mount-options-databasefiles': 'os',
+        'nfs-mount-options-adrhome': 'os',
+        'nfs-caching-options': 'os',
+        'nfsv4-domain-name': 'os'
     },
     STORAGE_LAYOUT_MAP: {
         [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'data-files-location',
