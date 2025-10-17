@@ -39,6 +39,7 @@ import { discoverDemoDataOracle, inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 import { instanceDemoData, oracleInstanceDemoData } from './instancesResponse';
 import { Metadata } from '../common-types';
+import { triggerLogsAnalysis } from '../../operations/logs-analyzer/logs-analyzer-operations';
 
 const logger = getLogger();
 
@@ -372,6 +373,23 @@ async function createDemoResourcesPerRegion(
                     resourceId
                 );
                 await createJobs(accountId, enableMpioJobMockData);
+
+                if (accountId && !isEmpty(resource.database_instances)) {
+                    await Promise.all(
+                        resource.database_instances.map(
+                            async ({ database_instance_id: sqlInstanceId }: { database_instance_id: string }) => {
+                                await triggerLogsAnalysis(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    resourceId,
+                                    sqlInstanceId,
+                                    {}
+                                );
+                            }
+                        )
+                    );
+                }
             }
         }
         const filteredInstances = instances.filter(instance => instance.databaseType !== DatabaseTypes.PG_SQL);
@@ -382,6 +400,7 @@ async function createDemoResourcesPerRegion(
             region
         );
         await createJobs(accountId, assessmentJobMockData);
+
         return { message: 'Default Demo Data created' };
     }
     return { message: 'Default Demo Data exists' };

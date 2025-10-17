@@ -116,6 +116,7 @@ interface RemediationRecommendation {
     cause?: string;
     count: number;
     remediation: string;
+    tags?: string[];
     severity?: string | number;
     firstOccurrence?: number;
     lastOccurrence?: number;
@@ -647,13 +648,14 @@ async function recommendRemediation(
             } = response;
             const { content: [{ text }] = [] } = message;
             if (text) {
-                const { remediation } = JSON.parse(text);
+                const { remediation, tags = [] } = JSON.parse(text);
                 remediationRecommendation.push({
                     error,
                     cause,
                     count,
                     severity,
                     remediation,
+                    tags,
                     firstOccurrence,
                     lastOccurrence,
                     errorCode,

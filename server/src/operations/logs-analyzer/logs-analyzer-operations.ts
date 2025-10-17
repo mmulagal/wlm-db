@@ -1141,7 +1141,11 @@ async function getLatestLogsAnalysisReports(
             job_id: jobIdFromReport
         } = report;
         if (logsAnalysisData?.remediationRecommendation) {
-            const severityCounts: SeverityCountsType = {};
+            const severityCounts: SeverityCountsType = {
+                severe: 0,
+                warning: 0,
+                critical: 0
+            };
             for (const rec of logsAnalysisData.remediationRecommendation) {
                 const { severity: initialSeverity, count } = rec;
                 if (initialSeverity) {

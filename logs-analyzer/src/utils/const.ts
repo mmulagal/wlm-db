@@ -96,12 +96,20 @@ Respond with raw JSON only - no markdown formatting. The JSON object should have
 {
     "error": "<error message>",
     "cause": "<cause of the error>",
+    "tags": ["<tag1>", "<tag2>", ...],
     "remediation": [
         "<specific remediation recommendation 1>",
         "<specific remediation recommendation 2>",
         ...
     ]
 }
+
+### Tags:
+Assign one or more relevant tags from the following list: Compute, Storage, Network, Security.
+- Compute: Issues related to CPU, memory, performance, or resource pools (e.g., high CPU usage, memory pressure, resource pool exhaustion)
+- Storage: Issues related to disk space, I/O, database files, log files, or backup/restore operations (e.g., insufficient disk space, slow I/O, backup failures)
+- Network: Issues related to connectivity, timeouts, replication, mirroring, or availability groups (e.g., connection drops, replication lag, failover events)
+- Security: Issues related to authentication, authorization, permissions, or encryption (e.g., login failures, permission denied, encryption errors)
 
 ### Rules:
 1. Respond strictly in valid JSON format. Do not include any additional commentary, explanations, or text outside the JSON response.
@@ -139,6 +147,7 @@ Respond with raw JSON only - no markdown formatting. The JSON object should have
 {
     "error": "Error: 18456, Severity: 14, State: 1.",
     "cause": "There is insufficient system memory in the 'default' resource pool to run the query. This indicates that the SQL Server is running out of memory, which can lead to performance issues and potentially cause the server to become unresponsive.",
+    "tags": ["Compute"],
     "remediation": [
         "MEMORYCLERK_SQLBUFFERPOOL is consuming 200MB of memory. Consider reducing buffer pool usage or increasing memory allocation.",
         "The system has 400MB of total memory, with only 100MB free. Consider adding more physical memory to the server.",
