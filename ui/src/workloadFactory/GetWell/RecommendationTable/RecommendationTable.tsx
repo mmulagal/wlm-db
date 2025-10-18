@@ -568,7 +568,8 @@ const RecommendationTable = ({
             false, // false as it is a sub configuration so to show sub-config in the notification
             addSuccessNotification,
             t,
-            formatFunction
+            formatFunction,
+            engineType
         );
     };
 

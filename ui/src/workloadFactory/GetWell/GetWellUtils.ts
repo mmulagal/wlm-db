@@ -30,6 +30,7 @@ import {
     CONFIG_STATES,
     CONFIG_STATES_UI,
     CONFIG_STATE_ACTIONS,
+    DBType,
     FINDINGS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -4328,6 +4329,13 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                 if (instance?.databaseInstanceId === rowData?.instanceId) {
                     const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
                     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
+                    let newStorageConfigurationMap: any;
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
+                        newStorageConfigurationMap = { ...storageConfigurationMap }; // Create a copy to avoid mutating original
+                        delete newStorageConfigurationMap['snapshot-policy'];
+                    } else {
+                        newStorageConfigurationMap = { ...storageConfigurationMap };
+                    }
                     const haMssqlMap: any = CONFIG_NAME_TO_ID_MAPPING.HA_MSSQL;
                     if (storageSizingMap[rowData?.name]) {
                         return {
@@ -4394,8 +4402,8 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                             }
                         };
                     }
-                    if (storageConfigurationMap[rowData?.id]) {
-                        const key = storageConfigurationMap[rowData?.id];
+                    if (newStorageConfigurationMap[rowData?.id]) {
+                        const key = newStorageConfigurationMap[rowData?.id];
                         return {
                             ...instance,
                             assessments: {
@@ -4538,6 +4546,14 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                         const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
                         const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
                         const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
+                        let newStorageConfigurationMap: any;
+                        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
+                            newStorageConfigurationMap = { ...storageConfigurationMap }; // Create a copy to avoid mutating original
+                            delete newStorageConfigurationMap['snapshot-policy'];
+                        } else {
+                            newStorageConfigurationMap = { ...storageConfigurationMap };
+                        }
+
                         const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
                         const haMssqlMap: any = CONFIG_NAME_TO_ID_MAPPING.HA_MSSQL;
                         if (haMssqlMap[rowData?.name]) {
@@ -4726,8 +4742,8 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                 }
                             };
                         }
-                        if (storageConfigurationMap[rowData?.id]) {
-                            const key = storageConfigurationMap[rowData?.id];
+                        if (newStorageConfigurationMap[rowData?.id]) {
+                            const key = newStorageConfigurationMap[rowData?.id];
                             return {
                                 ...instance,
                                 assessments: {
@@ -4801,9 +4817,22 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
 
-export const updateConfigStatePerInstance = (setAction: any, name: string, endTime: any) => {
+export const updateConfigStatePerInstance = (setAction: any, name: string, endTime: any, engineType?: string) => {
     const state = store.getState();
     const { driftAssessmentData } = state.getWellOptimize;
+
+    // Auto-detect engine type if not provided by checking for Oracle-specific fields
+    let detectedEngineType = engineType;
+    if (!detectedEngineType) {
+        // Check for Oracle-specific fields in driftAssessmentData
+        if (driftAssessmentData?.isASMManaged !== undefined || driftAssessmentData?.isStorageLayoutFra !== undefined) {
+            detectedEngineType = DBType.ORACLE;
+        } else {
+            // Default to MSSQL if no Oracle-specific fields found
+            detectedEngineType = DBType.MSSQL;
+        }
+    }
+
     const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size'];
     const storageLayoutMap: any = [
         'data-files-location',
@@ -4829,6 +4858,17 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         'drive-letter'
     ];
     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
+    let newStorageConfigurationMap: any;
+    // Only delete snapshot-policy mapping for MSSQL - Oracle needs it for proper categorization
+    if (detectedEngineType === DBType.MSSQL) {
+        newStorageConfigurationMap = { ...storageConfigurationMap }; // Create a copy to avoid mutating original
+        delete newStorageConfigurationMap['snapshot-policy'];
+    } else if (detectedEngineType === DBType.ORACLE) {
+        newStorageConfigurationMap = { ...storageConfigurationMap };
+    } else {
+        newStorageConfigurationMap = { ...storageConfigurationMap };
+        delete newStorageConfigurationMap['snapshot-policy'];
+    }
     const otherConfigMap: any = {
         'compute-rightsizing': 'compute',
         maxdop: 'maxDOP',
@@ -5085,8 +5125,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
             }
         };
     }
-    if (storageConfigurationMap[name]) {
-        const key = storageConfigurationMap[name];
+    if (newStorageConfigurationMap[name]) {
+        const key = newStorageConfigurationMap[name];
 
         // Get existing dismissed configurations for this subcategory
         const existingConfigs = driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key] || [];

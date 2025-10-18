@@ -888,7 +888,8 @@ const StorageCardComponent = ({
             true, // true for bulk action to show configuration text in notification
             addSuccessNotification,
             t,
-            formatGetWellData
+            formatGetWellData,
+            DBType.MSSQL
         );
     };
 

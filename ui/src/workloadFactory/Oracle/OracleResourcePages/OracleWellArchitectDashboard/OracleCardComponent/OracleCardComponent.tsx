@@ -8,7 +8,7 @@ import StatusSection from './StatusSection';
 import SectionSix from './SectionSix';
 import SectionFive from './SectionFive';
 import ViewAndFixButton from './ViewAndFixButton';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES } from '../../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, DBType } from '../../../../../utils/consts';
 import { useDismissOracleAssessmentMutation } from '../../../../../utils/apiService';
 import { DismissDialog } from '../../../../GetWell/StorageCardComponent/DismissDialog/DismissDialog';
 import {
@@ -188,7 +188,8 @@ const OracleCardComponent = ({
             true, // true for bulk action to show configuration text in notification
             addSuccessNotification,
             t,
-            formatOracleWellArchitectedData
+            formatOracleWellArchitectedData,
+            DBType.ORACLE
         );
     };
 

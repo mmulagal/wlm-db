@@ -273,7 +273,8 @@ export const handleDismissResponse = (
     isBulkAction: boolean,
     addSuccessNotification: (action: string, cardName: string, dispatch: any, t: any, isBulkAction: boolean) => void,
     t: TFunction,
-    formatDataFunction?: (dispatch: any, data?: any, showDismissedView?: boolean) => void
+    formatDataFunction?: (dispatch: any, data?: any, showDismissedView?: boolean) => void,
+    engineType?: string
 ) => {
     const dismissedConfigs = res?.data?.dismissedConfigurations;
     const databaseHosts = dismissedConfigs?.[0]?.databaseHosts;
@@ -302,8 +303,12 @@ export const handleDismissResponse = (
 
         // Update configuration state for the instance using the unified function
         const newData =
-            updateConfigStatePerInstance(updatedState, targetId, res?.data?.dismissedConfigurations?.[0]?.endTime) ||
-            {};
+            updateConfigStatePerInstance(
+                updatedState,
+                targetId,
+                res?.data?.dismissedConfigurations?.[0]?.endTime,
+                engineType
+            ) || {};
 
         // Set drift assessment data (used by both MSSQL and Oracle)
         dispatch(setDriftAssessmentData(newData));
