@@ -21,7 +21,12 @@ import {
     setDeployRedirectToCfLink,
     setPermissionWarning
 } from '../../../../store/mssql/msSqlActionSlice';
-import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
+import {
+    CREDENTIAL_PROD_LINK,
+    CREDENTIAL_STAGE_LINK,
+    POLICIES_PERMISSIONS,
+    PRODUCTION
+} from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -200,7 +205,15 @@ const AwsAccount = () => {
     };
 
     const openDialog = (type: string) => {
-        const data = JSON.stringify(type === 'view' ? policiesList?.view : policiesList?.operate, null, 2);
+        const viewPackage = policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY);
+        const data = JSON.stringify(
+            type === 'view'
+                ? viewPackage?.permissions ?? []
+                : policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.OPERATE_POLICY)
+                      ?.permissions ?? [],
+            null,
+            2
+        );
         setDialog(
             <DialogComponent
                 header={type === 'view' ? GENERAL.REQUIRED_VIEW_PERMISSIONS : GENERAL.REQUIRED_OPERATE_PERMISSIONS}

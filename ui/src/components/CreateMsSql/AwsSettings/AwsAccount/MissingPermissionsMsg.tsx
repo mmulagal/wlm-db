@@ -7,6 +7,7 @@ import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './AwsAccount.module.scss';
 import MissingPermissionTable from './MissingPermissionTable/MissingPermissionTable';
+import { POLICIES_PERMISSIONS } from '../../../../utils/consts';
 
 type permissionProp = {
     permissionData?: any;
@@ -71,7 +72,13 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     };
 
     const openDialog = (type: string) => {
-        const data = JSON.stringify(type === 'view' ? policiesList?.view : policiesList?.operate, null, 2);
+        const data = JSON.stringify(
+            type === 'view'
+                ? policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY)?.permissions
+                : policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.OPERATE_POLICY)?.permissions,
+            null,
+            2
+        );
         setDialog(
             <DialogComponent
                 header={setHeading(type)}

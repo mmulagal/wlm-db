@@ -7,6 +7,7 @@ import CopyToClipboardCommon from '../../../../../../../common/CopyToClipboard/c
 import DialogComponent from '../../../../../../../common/Dialog/DialogComponent';
 import PolicyDialog from './PolicyDialog/PolicyDialog';
 import WellArchitectPolicyDialog from './WellArchitectPolicyDialog/WellArchitectPolicyDialog';
+import { POLICIES_PERMISSIONS } from '../../../../../../../utils/consts';
 
 type PermissionBlock = {
     label: string;
@@ -33,9 +34,18 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
     const openDialog = (type: string | undefined, label: string) => {
         let data = null;
         if (label === t('databases.register-flow.aws-iam-policy-permissions')) {
-            data = JSON.stringify(policies?.view, null, 2);
+            data = JSON.stringify(
+                policies?.packages?.find?.((pkg: any) => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY)?.permissions,
+                null,
+                2
+            );
         } else {
-            data = JSON.stringify(policies?.['instance-profile'], null, 2);
+            data = JSON.stringify(
+                policies?.packages?.find?.((pkg: any) => pkg?.name === POLICIES_PERMISSIONS.INSTANCE_PROFILE_POLICY)
+                    ?.permissions,
+                null,
+                2
+            );
         }
         setDialog(
             <DialogComponent

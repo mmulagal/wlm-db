@@ -12,6 +12,15 @@ export const WIZARD_TYPE = {
     ORACLE: 'oracle'
 };
 
+export const POLICIES_PERMISSIONS = {
+    VIEW_POLICY: 'View, planning, and analysis',
+    OPERATE_POLICY: 'Operations and remediation',
+    INSTANCE_PROFILE_POLICY: 'instance-profile',
+    WELL_ARCHITECTED_FSX__POLICY: 'well-architected-fsx',
+    WELL_ARCHITECTED_COMPUTE_POLICY: 'well-architected-compute-optimizer',
+    DATABASE_HOST_CREATION_POLICY: 'Database host creation'
+};
+
 // Environments names should be aligned with .env files
 export const PRODUCTION = 'PRODUCTION';
 export const STAGING = 'STAGING';

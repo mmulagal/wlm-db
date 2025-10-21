@@ -207,9 +207,9 @@ export const GENERAL = {
     AWS_ACCOUNT_SUB_TEXT_READ:
         'Use NetApp Console in read mode by selecting AWS credentials that provide the read permissions required to generate a CloudFormation template. You can then use the template from the AWS CloudFormation console to provision stacks.',
     AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE:
-        'Use Workload Factory in automate mode by selecting credentials that grant Workload Factory the AWS permissions required to deploy and manage resources in your AWS account.',
+        'Use any other Workload Factory policy to generate a CloudFormation template, which can later be used from the AWS CloudFormation console to provision stacks.',
     AWS_ACCOUNT_SUB_TEXT_WF_READ:
-        'Use Workload Factory in read mode by selecting AWS credentials that provide the read permissions required to generate a CloudFormation template. You can then use the template from the AWS CloudFormation console to provision stacks.',
+        'Use the Workload Factory database host creation policy by selecting credentials that grant Workload Factory the AWS permissions required to deploy and manage resources in your AWS account.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:

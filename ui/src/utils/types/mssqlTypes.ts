@@ -63,6 +63,36 @@ export interface KmsKeys {
     default?: boolean;
 }
 
+export interface PolicyStatement {
+    Sid?: string;
+    Effect: string;
+    Action: string[];
+    Resource: string | string[];
+    Condition?: {
+        [key: string]: {
+            [key: string]: string | string[];
+        };
+    };
+}
+
+export interface PolicyPermissions {
+    Version: string;
+    Statement: PolicyStatement[];
+}
+
+export interface PolicyPackage {
+    name: string;
+    description: string;
+    immutable: boolean;
+    isDefault: boolean;
+    permissions: PolicyPermissions;
+}
+
+export interface WorkloadPolicies {
+    workload: string;
+    packages: PolicyPackage[];
+}
+
 export interface KeyPairs {
     id?: string;
     name?: string;
@@ -104,10 +134,7 @@ export interface FSxN {
 
 export interface MssqlEntities {
     getPolicies: {
-        policiesList: {
-            view?: {};
-            operate?: {};
-        } | null;
+        policiesList: WorkloadPolicies | null;
         policiesLoading: false;
         policiesError: null;
     };
