@@ -15,6 +15,7 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
 import BarComponent from '../../Dashboard/BarComponent/BarComponent';
+import { derivedType } from '../../../utils/utilityFunctions';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { t } = useTranslation();
@@ -79,6 +80,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         );
         const isLoading = loading || (inProgressOptimizationData?.[assessmentKey]?.length || 0) > 0;
         const width = windowSize.width > 1700 ? '328px' : '248px';
+        const identifyType = derivedType(assessmentKey);
 
         return (
             <BarComponent
@@ -102,6 +104,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 textMessageVariant={showNA ? 'Regular_14' : undefined}
                 tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
                 isDisabled={showNA}
+                type={identifyType}
             />
         );
     };

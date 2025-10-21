@@ -922,6 +922,14 @@ export const NETWORK_PERFORMANCE_OPTIONS: any = {
 
 export const ERR_MSG_TO_CHECK = ['does not match schema definition.'];
 
+export const ASSESSMENT_CONFIG_OTHER = {
+    STORAGE: 'Storage',
+    COMPUTE: 'Compute',
+    APPLICATION: 'Application',
+    RESILIENCY: 'Resiliency',
+    CLONE: 'Clone'
+};
+
 export const ASSESSMENT_CONFIG_NAMES = {
     STORAGE_TIER: 'Storage tier',
     FILE_SYSTEM_HEADROOM: 'File system headroom',

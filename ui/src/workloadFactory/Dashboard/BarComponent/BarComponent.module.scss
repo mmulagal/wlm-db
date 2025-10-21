@@ -61,9 +61,48 @@
             }
         }
 
-        .bottomTextSection {
+        .bottomSection {
             display: flex;
-            gap: 8px;
+            justify-content: space-between;
+            .bottomTextSection {
+                display: flex;
+                gap: 8px;
+            }
+
+            .bottomRightSection {
+                display: flex;
+                gap: 24px;
+                align-items: center;
+
+                .severity {
+                    display: flex;
+                    gap: 4px;
+                    align-items: center;
+
+                    .circle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 50%;
+                        background-color: var(--notification-error);
+                    }
+
+                    .warning {
+                        background-color: var(--notification-warning);
+                    }
+
+                    .error {
+                        background-color: var(--notification-error);
+                    }
+                }
+
+                [class*='tag'] {
+                    border: none !important;
+                    font-weight: 500;
+                    font-size: 13px;
+                    width: 97px;
+                    height: 24px;
+                }
+            }
         }
     }
 }

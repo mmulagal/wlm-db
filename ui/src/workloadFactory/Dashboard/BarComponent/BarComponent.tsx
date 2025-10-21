@@ -4,6 +4,7 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { CONFIG_STATES, CONFIG_STATES_UI } from '../../../utils/consts';
+import Tag from '../../../common/Tag/Tag';
 
 type BarComponentType = {
     color: string;
@@ -21,6 +22,8 @@ type BarComponentType = {
     textMessageVariant?: string | any;
     tooltipMessage?: string;
     isDisabled?: boolean;
+    severity?: string;
+    type?: string;
 };
 
 const BarComponent = ({
@@ -38,7 +41,9 @@ const BarComponent = ({
     textMessage,
     textMessageVariant,
     tooltipMessage,
-    isDisabled = false
+    isDisabled = false,
+    severity = 'critical',
+    type
 }: BarComponentType) => {
     const handleProgressBar = () => {
         const disabledColor = isDisabled ? 'var(--text-disabled)' : color;
@@ -207,31 +212,57 @@ const BarComponent = ({
                     </div>
                 </div>
 
-                {!textMessage && (
+                <div className={styles.bottomSection}>
                     <div className={styles.bottomTextSection}>
-                        {tooltipMessage && <TooltipInfo>{tooltipMessage}</TooltipInfo>}
-                        {bottomText && (
-                            <DsTypography variant="Regular_14" className={isDisabled ? CommonStyles.notAvailable : ''}>
-                                {bottomText}
-                            </DsTypography>
+                        {!textMessage && (
+                            <>
+                                {tooltipMessage && <TooltipInfo>{tooltipMessage}</TooltipInfo>}
+                                {bottomText && (
+                                    <DsTypography
+                                        variant="Regular_14"
+                                        className={isDisabled ? CommonStyles.notAvailable : ''}
+                                    >
+                                        {bottomText}
+                                    </DsTypography>
+                                )}
+                                {beforeOutOf !== undefined && afterOutOf !== undefined && (
+                                    <DsTypography
+                                        variant="Semibold_14"
+                                        className={isDisabled ? CommonStyles.notAvailable : ''}
+                                    >
+                                        {beforeOutOf} out of {afterOutOf}
+                                    </DsTypography>
+                                )}
+                            </>
                         )}
-                        {beforeOutOf !== undefined && afterOutOf !== undefined && (
-                            <DsTypography variant="Semibold_14" className={isDisabled ? CommonStyles.notAvailable : ''}>
-                                {beforeOutOf} out of {afterOutOf}
-                            </DsTypography>
-                        )}
-                    </div>
-                )}
 
-                {textMessage && (
-                    <div className={styles.bottomTextSection}>
-                        <Warning />
-                        <DsTypography variant="Regular_14" className={isDisabled ? CommonStyles.notAvailable : ''}>
-                            This configuration analysis is{' '}
-                            {textMessage === CONFIG_STATES_UI.DISMISSED ? 'dismissed' : 'postponed'}.
-                        </DsTypography>
+                        {textMessage && (
+                            <div className={styles.bottomTextSection}>
+                                <Warning />
+                                <DsTypography
+                                    variant="Regular_14"
+                                    className={isDisabled ? CommonStyles.notAvailable : ''}
+                                >
+                                    This configuration analysis is{' '}
+                                    {textMessage === CONFIG_STATES_UI.DISMISSED ? 'dismissed' : 'postponed'}.
+                                </DsTypography>
+                            </div>
+                        )}
                     </div>
-                )}
+
+                    <div className={styles.bottomRightSection}>
+                        <div className={styles.severity}>
+                            <div
+                                className={`${styles.circle} ${
+                                    severity === 'critical' ? styles.error : styles.warning
+                                }`}
+                            />
+                            <DsTypography variant="Semibold_14">Critical</DsTypography>
+                        </div>
+
+                        <Tag text={type} />
+                    </div>
+                </div>
             </div>
         </div>
     );
