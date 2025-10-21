@@ -2276,7 +2276,8 @@ export const checkLeftNavRoute = (route: string) => {
         route === '/databases/inventory' ||
         route === '/databases/sandboxes' ||
         route === '/databases/explore-savings' ||
-        route === '/databases/job-monitoring'
+        route === '/databases/job-monitoring' ||
+        route === '/databases/well-architected'
     ) {
         return true;
     }
