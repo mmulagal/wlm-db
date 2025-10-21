@@ -149,201 +149,123 @@
                 "ec2:ResourceTag/aws:cloudformation:stack-name": "WLMDB*"
               }
             }
-        },
-        {
-            "name": "Operations and remediation",
-            "description": "Additional permissions for operating databases and fixing configuration issues beyond view, planning, and analyzing capabilities",
-            "immutable": false,
-            "isDefault": false,
-            "permissions": {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Sid": "RemediationFix",
-                        "Effect": "Allow",
-                        "Action": [
-                            "fsx:UpdateFileSystem",
-                            "fsx:UpdateVolume",
-                            "ec2:RunInstances",
-                            "ec2:StartInstances",
-                            "ec2:ModifyInstanceAttribute",
-                            "ec2:StopInstances"
-                        ],
-                        "Resource": "*"
-                    }
-                ]
+          },
+          {
+            "Sid": "FSxNGroup",
+            "Effect": "Allow",
+            "Action": ["fsx:TagResource"],
+            "Resource": "*",
+            "Condition": {
+              "StringLike": {
+                "aws:ResourceTag/aws:cloudformation:stack-name": "WLMDB*"
+              }
             }
-        },
-        {
-            "name": "Database host creation",
-            "description": "Additional permissions for creating and managing database host deployments beyond operate and remediate capabilities",
-            "immutable": false,
-            "isDefault": false,
-            "permissions": {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Sid": "EC2TagGroup",
-                        "Effect": "Allow",
-                        "Action": [
-                            "ec2:AllocateAddress",
-                            "ec2:AllocateHosts",
-                            "ec2:AssignPrivateIpAddresses",
-                            "ec2:AssociateAddress",
-                            "ec2:AssociateRouteTable",
-                            "ec2:AssociateSubnetCidrBlock",
-                            "ec2:AssociateVpcCidrBlock",
-                            "ec2:AttachInternetGateway",
-                            "ec2:AttachNetworkInterface",
-                            "ec2:AttachVolume",
-                            "ec2:AuthorizeSecurityGroupEgress",
-                            "ec2:AuthorizeSecurityGroupIngress",
-                            "ec2:CreateVolume",
-                            "ec2:DeleteNetworkInterface",
-                            "ec2:DeleteSecurityGroup",
-                            "ec2:DeleteTags",
-                            "ec2:DeleteVolume",
-                            "ec2:DetachNetworkInterface",
-                            "ec2:DetachVolume",
-                            "ec2:DisassociateAddress",
-                            "ec2:DisassociateIamInstanceProfile",
-                            "ec2:DisassociateRouteTable",
-                            "ec2:DisassociateSubnetCidrBlock",
-                            "ec2:DisassociateVpcCidrBlock",
-                            "ec2:ModifyInstancePlacement",
-                            "ec2:ModifyNetworkInterfaceAttribute",
-                            "ec2:ModifySubnetAttribute",
-                            "ec2:ModifyVolume",
-                            "ec2:ModifyVolumeAttribute",
-                            "ec2:ReleaseAddress",
-                            "ec2:ReplaceRoute",
-                            "ec2:ReplaceRouteTableAssociation",
-                            "ec2:RevokeSecurityGroupEgress",
-                            "ec2:RevokeSecurityGroupIngress"
-                        ],
-                        "Resource": "*",
-                        "Condition": {
-                            "StringLike": {
-                                "ec2:ResourceTag/aws:cloudformation:stack-name": "WLMDB*"
-                            }
-                        }
-                    },
-                    {
-                        "Sid": "FSxNGroup",
-                        "Effect": "Allow",
-                        "Action": ["fsx:TagResource"],
-                        "Resource": "*",
-                        "Condition": {
-                            "StringLike": {
-                                "aws:ResourceTag/aws:cloudformation:stack-name": "WLMDB*"
-                            }
-                        }
-                    },
-                    {
-                        "Sid": "CreationGroup",
-                        "Effect": "Allow",
-                        "Action": [
-                            "cloudformation:CreateStack",
-                            "cloudformation:DescribeStackEvents",
-                            "cloudformation:DescribeStacks",
-                            "cloudformation:ValidateTemplate",
-                            "ec2:CreateLaunchTemplate",
-                            "ec2:CreateLaunchTemplateVersion",
-                            "ec2:CreateNetworkInterface",
-                            "ec2:CreateSecurityGroup",
-                            "ec2:CreateTags",
-                            "ec2:CreateVpcEndpoint",
-                            "ec2:DescribeTags",
-                            "ec2:DescribeLaunchTemplates",
-                            "ec2:ModifyVpcAttribute",
-                            "fsx:CreateFileSystem",
-                            "fsx:CreateStorageVirtualMachine",
-                            "fsx:CreateVolume",
-                            "fsx:DescribeFileSystemAliases",
-                            "kms:CreateGrant",
-                            "kms:DescribeCustomKeyStores",
-                            "kms:GenerateDataKey",
-                            "kms:Decrypt",
-                            "logs:CreateLogGroup",
-                            "logs:CreateLogStream",
-                            "logs:GetLogGroupFields",
-                            "logs:GetLogRecord",
-                            "logs:ListLogDeliveries",
-                            "logs:PutLogEvents",
-                            "logs:TagResource",
-                            "sns:Publish",
-                            "ssm:PutComplianceItems",
-                            "ssm:PutConfigurePackageResult",
-                            "ssm:PutInventory",
-                            "ssm:UpdateAssociationStatus",
-                            "ssm:UpdateInstanceAssociationStatus",
-                            "ssm:UpdateInstanceInformation",
-                            "ssmmessages:CreateControlChannel",
-                            "ssmmessages:CreateDataChannel",
-                            "ssmmessages:OpenControlChannel",
-                            "ssmmessages:OpenDataChannel",
-                            "compute-optimizer:GetEnrollmentStatus",
-                            "compute-optimizer:PutRecommendationPreferences",
-                            "compute-optimizer:GetEffectiveRecommendationPreferences",
-                            "compute-optimizer:GetEC2InstanceRecommendations",
-                            "autoscaling:DescribeAutoScalingGroups",
-                            "autoscaling:DescribeAutoScalingInstances",
-                            "iam:GetPolicy",
-                            "iam:GetPolicyVersion",
-                            "iam:GetRole",
-                            "iam:GetRolePolicy",
-                            "iam:GetUser"
-                        ],
-                        "Resource": "*"
-                    },
-                    {
-                        "Sid": "ArnGroup",
-                        "Effect": "Allow",
-                        "Action": ["cloudformation:SignalResource"],
-                        "Resource": ["arn:aws:cloudformation:*:*:stack/WLMDB*", "arn:aws:logs:*:*:log-group:WLMDB*"]
-                    },
-                    {
-                        "Sid": "IAMGroup1",
-                        "Effect": "Allow",
-                        "Action": [
-                            "iam:AddRoleToInstanceProfile",
-                            "iam:CreateInstanceProfile",
-                            "iam:DeleteInstanceProfile",
-                            "iam:PutRolePolicy",
-                            "iam:RemoveRoleFromInstanceProfile"
-                        ],
-                        "Resource": ["arn:aws:iam::*:instance-profile/*", "arn:aws:iam::*:role/WLMDB*"]
-                    },
-                    {
-                        "Sid": "IAMGroup2",
-                        "Effect": "Allow",
-                        "Action": "iam:CreateServiceLinkedRole",
-                        "Resource": ["arn:aws:iam::*:instance-profile/*", "arn:aws:iam::*:role/WLMDB*"],
-                        "Condition": {
-                            "StringLike": {
-                                "iam:AWSServiceName": "ec2.amazonaws.com"
-                            }
-                        }
-                    },
-                    {
-                        "Sid": "IAMGroup3",
-                        "Effect": "Allow",
-                        "Action": "iam:PassRole",
-                        "Resource": ["arn:aws:iam::*:instance-profile/*", "arn:aws:iam::*:role/WLMDB*"],
-                        "Condition": {
-                            "StringEquals": {
-                                "iam:PassedToService": "ec2.amazonaws.com"
-                            }
-                        }
-                    },
-                    {
-                        "Sid": "IAMGroup4",
-                        "Effect": "Allow",
-                        "Action": "iam:CreateRole",
-                        "Resource": "arn:aws:iam::*:role/WLMDB*"
-                    }
-                ]
+          },
+          {
+            "Sid": "CreationGroup",
+            "Effect": "Allow",
+            "Action": [
+              "cloudformation:CreateStack",
+              "cloudformation:DescribeStackEvents",
+              "cloudformation:DescribeStacks",
+              "cloudformation:ValidateTemplate",
+              "ec2:CreateLaunchTemplate",
+              "ec2:CreateLaunchTemplateVersion",
+              "ec2:CreateNetworkInterface",
+              "ec2:CreateSecurityGroup",
+              "ec2:CreateTags",
+              "ec2:CreateVpcEndpoint",
+              "ec2:DescribeTags",
+              "ec2:DescribeLaunchTemplates",
+              "ec2:ModifyVpcAttribute",
+              "fsx:CreateFileSystem",
+              "fsx:CreateStorageVirtualMachine",
+              "fsx:CreateVolume",
+              "fsx:DescribeFileSystemAliases",
+              "kms:CreateGrant",
+              "kms:DescribeCustomKeyStores",
+              "kms:GenerateDataKey",
+              "kms:Decrypt",
+              "logs:CreateLogGroup",
+              "logs:CreateLogStream",
+              "logs:GetLogGroupFields",
+              "logs:GetLogRecord",
+              "logs:ListLogDeliveries",
+              "logs:PutLogEvents",
+              "logs:TagResource",
+              "sns:Publish",
+              "ssm:PutComplianceItems",
+              "ssm:PutConfigurePackageResult",
+              "ssm:PutInventory",
+              "ssm:UpdateAssociationStatus",
+              "ssm:UpdateInstanceAssociationStatus",
+              "ssm:UpdateInstanceInformation",
+              "ssmmessages:CreateControlChannel",
+              "ssmmessages:CreateDataChannel",
+              "ssmmessages:OpenControlChannel",
+              "ssmmessages:OpenDataChannel",
+              "compute-optimizer:GetEnrollmentStatus",
+              "compute-optimizer:PutRecommendationPreferences",
+              "compute-optimizer:GetEffectiveRecommendationPreferences",
+              "compute-optimizer:GetEC2InstanceRecommendations",
+              "autoscaling:DescribeAutoScalingGroups",
+              "autoscaling:DescribeAutoScalingInstances",
+              "iam:GetPolicy",
+              "iam:GetPolicyVersion",
+              "iam:GetRole",
+              "iam:GetRolePolicy",
+              "iam:GetUser"
+            ],
+            "Resource": "*"
+          },
+          {
+            "Sid": "ArnGroup",
+            "Effect": "Allow",
+            "Action": ["cloudformation:SignalResource"],
+            "Resource": ["arn:aws:cloudformation:*:*:stack/WLMDB*", "arn:aws:logs:*:*:log-group:WLMDB*"]
+          },
+          {
+            "Sid": "IAMGroup1",
+            "Effect": "Allow",
+            "Action": [
+              "iam:AddRoleToInstanceProfile",
+              "iam:CreateInstanceProfile",
+              "iam:DeleteInstanceProfile",
+              "iam:PutRolePolicy",
+              "iam:RemoveRoleFromInstanceProfile"
+            ],
+            "Resource": ["arn:aws:iam::*:instance-profile/*", "arn:aws:iam::*:role/WLMDB*"]
+          },
+          {
+            "Sid": "IAMGroup2",
+            "Effect": "Allow",
+            "Action": "iam:CreateServiceLinkedRole",
+            "Resource": ["arn:aws:iam::*:instance-profile/*", "arn:aws:iam::*:role/WLMDB*"],
+            "Condition": {
+              "StringLike": {
+                "iam:AWSServiceName": "ec2.amazonaws.com"
+              }
             }
-        }
-    ]
+          },
+          {
+            "Sid": "IAMGroup3",
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": ["arn:aws:iam::*:instance-profile/*", "arn:aws:iam::*:role/WLMDB*"],
+            "Condition": {
+              "StringEquals": {
+                "iam:PassedToService": "ec2.amazonaws.com"
+              }
+            }
+          },
+          {
+            "Sid": "IAMGroup4",
+            "Effect": "Allow",
+            "Action": "iam:CreateRole",
+            "Resource": "arn:aws:iam::*:role/WLMDB*"
+          }
+        ]
+      }
+    }
+  ]
 }
