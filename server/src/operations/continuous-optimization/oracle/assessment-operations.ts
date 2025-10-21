@@ -146,6 +146,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
               );
 
         databaseInstanceRecord.svmOntapUuid = [...new Set(volumeData.map(vol => vol.svmId))].filter(Boolean);
+        databaseInstanceRecord.svmOntapName = [...new Set(volumeData.map(vol => vol.svmName))].filter(Boolean);
         databaseInstanceRecord.mappedVolumesUuids = [...new Set(volumeData.map(vol => vol.id))];
         databaseInstanceRecord.mappedVolumeNames = [...new Set(volumeData.map(vol => vol.name))];
         databaseInstanceRecord.storageProtocol = protocol;

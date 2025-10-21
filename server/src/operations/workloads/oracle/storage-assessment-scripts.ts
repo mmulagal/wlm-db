@@ -41,6 +41,60 @@ EOF
 }
 `;
 
+const CHECK_ORACLE_DNFS_SERVERS = (ec2InstanceId: string, dbSid: string) => `
+    check_oracle_dnfs_servers() {
+        local ec2InstanceId="$1"
+        local oracleSid="$2"
+
+        ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+        local dnfs_servers_result
+        dnfs_servers_result=$(sudo -i -u oracle bash <<EOF
+        set -e
+        export ORACLE_SID="$oracleSid"
+        $sqlplus_command <<'EOSQL'
+        SET HEADING OFF
+        SET LINESIZE 500
+        SET FEEDBACK OFF
+        SET TERMOUT OFF
+        SET PAGESIZE 0
+        SET TRIMSPOOL ON
+        WHENEVER SQLERROR EXIT SQL.SQLCODE
+        SELECT json_object(
+            'svrname' VALUE svrname,
+            'dirname' VALUE dirname,
+            'nfsversion' VALUE Nfsversion
+        ) as dnfs_server_info
+        FROM v\\$dnfs_servers;
+        EXIT;
+EOSQL
+EOF
+)
+
+# Parse DNFS result into JSON array - handle both empty and non-empty results
+if [ -n "$dnfs_servers_result" ] && [ "$dnfs_servers_result" != "" ]; then
+    # Check if result contains valid JSON objects
+    dnfsServersData=$(echo "$dnfs_servers_result" | grep -v '^$' | while read -r line; do
+        if [ -n "$line" ] && echo "$line" | jq -e . >/dev/null 2>&1; then
+            echo "$line"
+        fi
+    done | jq -s .)
+else
+    dnfsServersData='[]'
+fi
+
+dnfsServers=$(jq -n \
+    --arg error "" \
+    --argjson dnfsServersData "$dnfsServersData" \
+    '{
+        error: $error,
+        data: $dnfsServersData
+    }')
+
+echo "$dnfsServers"
+
+}
+`;
+
 const VOLUME_LUN_CONFIGURATION = (instanceRecord: WorkloadInstance) =>
     `
 # Get Storage Configuration Assessment
@@ -64,6 +118,7 @@ log "Filesystem ID: $filesystemid, Region: $region, Protocol: $storageProtocol"
 IFS=',' read -r -a mappedOntapVolumeNames <<< "${instanceRecord.mappedVolumeNames}"
 IFS=',' read -r -a mappedOntapVolumeUuids <<< "${instanceRecord.mappedVolumesUuids}"
 IFS=',' read -r -a ontapSvmUuids <<< "${instanceRecord.svmOntapUuid}"
+IFS=',' read -r -a ontapSvmNames <<< "${instanceRecord.svmOntapName}"
 
 log "Mapped volume names: $mappedOntapVolumeNames"
 log "Mapped volume UUIDs: $mappedOntapVolumeUuids"
@@ -275,6 +330,26 @@ if [ "$storageProtocol" = "NFS" ]; then
             error: $error,
             data: $nfsData
         }')
+
+    # Fetch NFS rootonly configuration
+    log "Fetching NFS rootonly configuration"
+    nfsRootonlyEndpoint="private/cli/vserver/nfs?vserver=$(IFS='|'; echo "\${ontapSvmNames[*]}")&fields=nfs_rootonly"
+    log "Calling NFS rootonly API endpoint: $nfsRootonlyEndpoint"
+
+    nfsRootonlyResponse=$(ontap_request 'GET' $nfsRootonlyEndpoint)
+    log "NFS rootonly API response status: $?"
+
+    # Check if NFS rootonly data was found and add error handling
+    if echo "$nfsRootonlyResponse" | jq -e '.records' > /dev/null 2>&1; then
+        log "Successfully retrieved NFS rootonly configuration"
+        svmNfsRootonlyData=$(echo "$nfsRootonlyResponse" | jq '[.records[] | {
+            svmName: .vserver,
+            nfsRootonly: .nfs_rootonly
+        }]')
+    else
+        log "WARNING: No valid NFS rootonly response or no records found"
+        svmNfsRootonlyData='[]'
+    fi
 else
     log "Storage protocol is not NFS, skipping NFS protocol configuration"
     nfsProtocol=$(jq -n '{error: "NFS protocol not applicable", data: {}}')
@@ -304,6 +379,12 @@ rman_compression_enabled=$(echo "$fra_rman_result" | sed -n '2p' | tr -d '[:spac
 
 log "FRA enabled: $fra_enabled, RMAN compression: $rman_compression_enabled"
 
+log "Starting Oracle DNFS servers check"
+${CHECK_ORACLE_DNFS_SERVERS(instanceRecord.activeNodeInstanceid, instanceRecord.id)}
+dnfs_result=$(check_oracle_dnfs_servers "${instanceRecord.activeNodeInstanceid}" "${instanceRecord.id}")
+log "DNFS servers check result: $dnfs_result"
+
+
 # Create result with valid JSON
 if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; then
     log "Creating final result with LUNs included"
@@ -328,12 +409,16 @@ else
         --argjson volumes "$volumes" \
         --argjson binaryVolumes "$binaryVolumes" \
         --argjson nfsProtocol "$nfsProtocol" \
+        --argjson dnfsServers "$dnfs_result" \
+        --argjson svmNfsRootonlyData "$svmNfsRootonlyData" \
         '{
             fraEnabled: $fra,
             rmanCompressionEnabled: $rman,
             volumes: $volumes,
             binaryVolumes: $binaryVolumes,
-            nfsv4DomainData: $nfsProtocol
+            nfsRootonly: $svmNfsRootonlyData,
+            nfsv4DomainData: $nfsProtocol,
+            dnfsServers: $dnfsServers
         }')
 fi
 

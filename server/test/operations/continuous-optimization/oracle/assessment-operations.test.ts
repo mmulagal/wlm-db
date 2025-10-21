@@ -20,9 +20,39 @@ import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils
 const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
 const region = DEFAULT_AWS_REGION;
 const dbInstanceSid = 'oradbsan';
+const dbNfsInstanceSid = 'mynas';
 const accountId = ACCOUNT_ID;
 const node1InstanceId = 'i-03ed3dc17db570670';
 const fsxNId = 'fs-0f53fbecdd3d85fb2';
+
+const createDatabaseInstanceRecord = (instanceId: string, storageProtocol?: string) => ({
+    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+    region: DEFAULT_AWS_REGION,
+    resourceId: '6cbdabbfe3fb147e',
+    databaseInstanceId: instanceId,
+    databaseInstanceName: instanceId,
+    isDefault: true,
+    source: 'deployment',
+    sqlDeploymentType: 'Standalone',
+    fsxSvmId: { [fsxNId]: 'svm-0123456789abcdef0' },
+    fsxnIds: fsxNId,
+    databaseType: 'Oracle',
+    metadata: oracleAssessmentMetadata,
+    ...(storageProtocol && { storageProtocol })
+});
+
+// Helper function to create config data records
+const createConfigDataRecord = (instanceId: string, configData: any, configType: string) => ({
+    account_id: ACCOUNT_ID,
+    credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+    region: DEFAULT_AWS_REGION,
+    resource_id: '6cbdabbfe3fb147e',
+    database_instance_id: instanceId,
+    creation_time: new Date(),
+    last_updated: new Date(),
+    config_data: configData,
+    config_data_type: configType
+});
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -40,47 +70,29 @@ beforeAll(async () => {
         }
     });
 
-    const DATABASE_INSTANCE_RECORD = {
-        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-        region: DEFAULT_AWS_REGION,
-        resourceId: '6cbdabbfe3fb147e',
-        databaseInstanceId: dbInstanceSid,
-        databaseInstanceName: dbInstanceSid,
-        isDefault: true,
-        source: 'deployment',
-        sqlDeploymentType: 'Standalone',
-        fsxSvmId: { [fsxNId]: 'svm-0123456789abcdef0' },
-        fsxnIds: fsxNId,
-        databaseType: 'Oracle',
-        metadata: oracleAssessmentMetadata
-    };
+    await Promise.all([
+        upsertDatabaseInstance(ACCOUNT_ID, createDatabaseInstanceRecord(dbInstanceSid)),
+        upsertDatabaseInstance(ACCOUNT_ID, createDatabaseInstanceRecord(dbNfsInstanceSid, 'NFS'))
+    ]);
 
-    await upsertDatabaseInstance(ACCOUNT_ID, DATABASE_INSTANCE_RECORD);
+    const configDataRecords = [
+        // iSCSI instance configs
+        createConfigDataRecord(dbInstanceSid, ORACLE_STORAGE_ASSESSMENT_DATA, AssessmentCategoriesOracle.STORAGE),
+        createConfigDataRecord(
+            dbInstanceSid,
+            oracleInstanceMappedVolMetadata('iSCSI'),
+            AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES
+        ),
+        // NFS instance configs
+        createConfigDataRecord(dbNfsInstanceSid, ORACLE_STORAGE_ASSESSMENT_DATA, AssessmentCategoriesOracle.STORAGE),
+        createConfigDataRecord(
+            dbNfsInstanceSid,
+            oracleInstanceMappedVolMetadata('NFS'),
+            AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES
+        )
+    ];
 
-    const DatabaseInstanceStorageConfigData = {
-        account_id: ACCOUNT_ID,
-        credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
-        region: DEFAULT_AWS_REGION,
-        resource_id: '6cbdabbfe3fb147e',
-        database_instance_id: dbInstanceSid,
-        creation_time: new Date(),
-        last_updated: new Date(),
-        config_data: ORACLE_STORAGE_ASSESSMENT_DATA,
-        config_data_type: AssessmentCategoriesOracle.STORAGE
-    };
-
-    const DatabaseInstanceMappedVolConfigData = {
-        account_id: ACCOUNT_ID,
-        credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
-        region: DEFAULT_AWS_REGION,
-        resource_id: '6cbdabbfe3fb147e',
-        database_instance_id: dbInstanceSid,
-        creation_time: new Date(),
-        last_updated: new Date(),
-        config_data: oracleInstanceMappedVolMetadata,
-        config_data_type: AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES
-    };
-    await createDatabaseInstanceConfigData([DatabaseInstanceStorageConfigData, DatabaseInstanceMappedVolConfigData]);
+    await createDatabaseInstanceConfigData(configDataRecords);
 });
 
 afterAll(async () => {
@@ -258,5 +270,94 @@ describe('Oracle assessment operations', () => {
         const assessmentData = await fetchOracleDriftAssessmentPerAccount(accountId, credentialsId, region);
         expect(assessmentData).toBeDefined();
         expect(assessmentData.assessmentsPerAccount.length).toBeGreaterThan(0);
+    });
+    it('should return nfs drift assessment data', async () => {
+        const assessmentData = await fetchOracleDriftAssessment(
+            accountId,
+            credentialsId,
+            region,
+            '6cbdabbfe3fb147e',
+            dbNfsInstanceSid,
+            'storage'
+        );
+        expect(assessmentData).toBeDefined();
+        expect(assessmentData.fileSystemId).toBe('fs-0f53fbecdd3d85fb2');
+        expect(assessmentData.ec2InstanceId).toBe(node1InstanceId);
+        expect(
+            (assessmentData.storage as StorageParameterDriftResponseType)?.configuration?.volumes.length
+        ).toBeGreaterThan(0);
+        expect((assessmentData.storage as StorageParameterDriftResponseType)?.layout?.length).toBeGreaterThan(0);
+
+        expect((assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os?.length).toBeGreaterThan(
+            0
+        );
+
+        // Test NFS-specific volume configuration - nfs-rootonly assessment
+        const volumeAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.configuration?.volumes;
+        const nfsRootonlyAssessment = volumeAssessment?.find(
+            item => item.name === 'nfs-rootonly'
+        ) as OracleGenericParameterDriftResponseType;
+
+        expect(nfsRootonlyAssessment).toBeDefined();
+        expect(nfsRootonlyAssessment.name).toBe('nfs-rootonly');
+        expect(nfsRootonlyAssessment.recommended).toBe('disabled');
+        expect(nfsRootonlyAssessment.status).toBe('optimized');
+        expect(nfsRootonlyAssessment.severity).toBe('critical');
+        expect(nfsRootonlyAssessment.totalObjectsAssessed).toBeGreaterThanOrEqual(0);
+        expect(nfsRootonlyAssessment.totalObjectsInViolation).toBe(0);
+        expect((nfsRootonlyAssessment as any).resourceType).toBe('Volume');
+
+        // Test NFS-specific OS configuration - nfs-mount-options assessment
+        const osAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os;
+        const nfsMountOptions = osAssessment?.find(
+            item => item.name === 'nfs-mount-options-databasefiles'
+        ) as OracleGenericParameterDriftResponseType;
+
+        expect(nfsMountOptions).toBeDefined();
+        expect(nfsMountOptions.name).toBe('nfs-mount-options-databasefiles');
+        expect(nfsMountOptions.status).toBe('not-optimized');
+        expect(nfsMountOptions.severity).toBe('warning');
+        expect(nfsMountOptions.totalObjectsAssessed).toBeGreaterThanOrEqual(0);
+        expect(nfsMountOptions.totalObjectsInViolation).toBeGreaterThanOrEqual(0);
+        expect((nfsMountOptions as any).resourceType).toBe('EC2 Instance');
+
+        // Test NFS-specific OS configuration - kernel parameters assessment
+        const kernelParams = osAssessment?.find(
+            item => item.name === 'kernel-parameters'
+        ) as OracleGenericParameterDriftResponseType;
+
+        expect(kernelParams).toBeDefined();
+        expect(kernelParams.name).toBe('kernel-parameters');
+        expect(kernelParams.status).toBe('not-optimized');
+        expect(kernelParams.severity).toBe('critical');
+        expect(kernelParams.totalObjectsAssessed).toBe(1);
+        expect(kernelParams.totalObjectsInViolation).toBe(1);
+        expect((kernelParams as any).resourceType).toBe('EC2 Instance');
+
+        // Test NFS-specific OS configuration - nfsv4-domain-name assessment
+        const idmapdDomain = osAssessment?.find(
+            item => item.name === 'nfsv4-domain-name'
+        ) as OracleGenericParameterDriftResponseType;
+
+        expect(idmapdDomain).toBeDefined();
+        expect(idmapdDomain.name).toBe('nfsv4-domain-name');
+        expect(idmapdDomain.status).toBe('optimized');
+        expect(idmapdDomain.severity).toBe('critical');
+        expect(idmapdDomain.totalObjectsAssessed).toBe(1);
+        expect(idmapdDomain.totalObjectsInViolation).toBe(0);
+        expect((idmapdDomain as any).resourceType).toBe('EC2 Instance');
+
+        // Test NFS-specific OS configuration - nfs-caching-options NFS assessment
+        const nfsCachingOptions = osAssessment?.find(
+            item => item.name === 'nfs-caching-options'
+        ) as OracleGenericParameterDriftResponseType;
+
+        expect(nfsCachingOptions).toBeDefined();
+        expect(nfsCachingOptions.name).toBe('nfs-caching-options');
+        expect(nfsCachingOptions.status).toBe('optimized');
+        expect(nfsCachingOptions.severity).toBe('warning');
+        expect(nfsCachingOptions.totalObjectsAssessed).toBe(1);
+        expect(nfsCachingOptions.totalObjectsInViolation).toBe(0);
+        expect((nfsCachingOptions as any).resourceType).toBe('EC2 Instance');
     });
 });

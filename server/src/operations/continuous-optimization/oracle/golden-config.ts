@@ -173,6 +173,18 @@ const GOLDEN_CONFIG = {
                 ]
             }
         ],
+        volume_nfs: [
+            {
+                parameter: 'nfs-rootonly',
+                name: 'nfs-rootonly',
+                value: 'disabled',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'Volume',
+                recommendation:
+                    'Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAPs nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.',
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+            }
+        ],
         lun: [
             {
                 name: 'space-reservation-enabled',
@@ -351,16 +363,6 @@ const GOLDEN_CONFIG = {
                     AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
                 ]
-            },
-            {
-                parameter: 'nfs-rootonly',
-                name: 'nfs-rootonly',
-                recommended: '',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAP"s nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
             },
             {
                 parameter: 'export-policy',

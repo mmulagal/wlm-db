@@ -805,9 +805,9 @@ const oracleAssessmentMetadata = {
     lastAssessmentTimestamp: 1758014364464
 };
 
-const oracleInstanceMappedVolMetadata = {
+const oracleInstanceMappedVolMetadata = (protocol: string = 'iSCSI') => ({
     'fs-0f53fbecdd3d85fb2': {
-        protocol: 'iSCSI',
+        protocol,
         lunRecords: [],
         isASMManaged: true,
         volumeMappings: [
@@ -1189,6 +1189,6 @@ const oracleInstanceMappedVolMetadata = {
             }
         ]
     }
-};
+});
 
 export { oracleAssessmentMetadata, oracleInstanceMappedVolMetadata };

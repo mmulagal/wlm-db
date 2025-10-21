@@ -3412,7 +3412,28 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             v4IdDomain: 'dbsqa.mssql.com'
         },
         error: ''
-    }
+    },
+    dnfsServers: {
+        data: [
+            {
+                dirname: '/oracledata2',
+                svrname: '172.31.255.231',
+                nfsversion: 'NFSv3.0'
+            },
+            {
+                dirname: '/oracleredo2',
+                svrname: 'fsxnfsv3',
+                nfsversion: 'NFSv4.0'
+            }
+        ],
+        error: ''
+    },
+    nfsRootonly: [
+        {
+            svmName: 'wlmdb_sqlsvm_1735809893269',
+            nfsRootonly: 'disabled'
+        }
+    ]
 };
 
 const MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {

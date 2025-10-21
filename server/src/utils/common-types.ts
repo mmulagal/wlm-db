@@ -535,6 +535,7 @@ interface WorkloadInstance {
     resourceName: string;
     svmId?: string;
     svmOntapUuid?: string | string[];
+    svmOntapName?: string | string[];
     databaseInstanceObject?: DatabaseInstance;
     storageProtocol?: string;
 }

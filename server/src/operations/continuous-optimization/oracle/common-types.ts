@@ -132,6 +132,18 @@ interface StorageIscsiAssessment extends StorageAssessment {
 }
 
 interface StorageNfsAssessment extends StorageAssessment {
+    dnfsServers?: {
+        error?: string | null;
+        data?: Array<{
+            dirname?: string;
+            svrname?: string;
+            nfsversion?: string;
+        }>;
+    };
+    nfsRootonly?: Array<{
+        svmName?: string;
+        nfsRootonly?: string;
+    }>;
     nfsv4DomainData?: {
         error?: string | null;
         data?: {
