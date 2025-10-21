@@ -68,6 +68,10 @@
                 "to": "/databases/inventory"
             },
             {
+                "label": "Well-architected",
+                "to": "/databases/well-architected"
+            },
+            {
                 "label": "Sandboxes",
                 "to": "/databases/sandboxes"
             },

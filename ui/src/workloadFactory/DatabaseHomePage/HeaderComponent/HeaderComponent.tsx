@@ -129,6 +129,7 @@ import DummySelect from '../../../common/DummySelect/DummySelect';
 import OracleResourcePages from '../../Oracle/OracleResourcePages/OracleResourcePages';
 import { clearDataMap } from '../../../store/workloadFactory/snapcenterSlice';
 import DashboardOverview from '../../Dashboard/DashboardOverview/DashboardOverview';
+import WellArchitectedTab from '../../WellArchitectedTab/WellArchitectedTab';
 
 type Tab = {
     tab: string;
@@ -1296,6 +1297,33 @@ const HeaderComponent = ({ tab }: Tab) => {
                                             <Typography
                                                 variant="Regular_14"
                                                 className={
+                                                    selectedHeaderTab === WLF_TABS.WELL_ARCHITECTED_TAB
+                                                        ? `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart5
+                                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                                          } ${
+                                                              isWorkloadFactory
+                                                                  ? styles.active
+                                                                  : `${styles.active} ${styles.activeBlueXPActive}`
+                                                          }`
+                                                        : `${
+                                                              isWorkloadFactory
+                                                                  ? styles.headerPart5
+                                                                  : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                                          }`
+                                                }
+                                                onClick={() => {
+                                                    handleClick(WLF_TABS.WELL_ARCHITECTED_TAB);
+                                                }}
+                                                id="well-architected"
+                                            >
+                                                {'Well-architected'}
+                                            </Typography>
+
+                                            <Typography
+                                                variant="Regular_14"
+                                                className={
                                                     selectedHeaderTab === WLF_TABS.SANDBOXES
                                                         ? `${
                                                               isWorkloadFactory
@@ -1435,6 +1463,26 @@ const HeaderComponent = ({ tab }: Tab) => {
                             )}
 
                             <InventoryV2 />
+                        </>
+                    )}
+
+                    {selectedHeaderTab === WLF_TABS.WELL_ARCHITECTED_TAB && (
+                        <>
+                            <div className={styles.inventoryHeaderSection}>
+                                <div className={styles.contentArea}>
+                                    {selectMultipleComponents()}
+                                    <div className={styles.content}>{refreshComponent()}</div>
+                                </div>
+                            </div>
+
+                            {/* Add based on noCred flag */}
+                            {showNA && (
+                                <div className={styles.noCredBanner}>
+                                    <NoCredBanner width="100%" />
+                                </div>
+                            )}
+
+                            <WellArchitectedTab />
                         </>
                     )}
                     {selectedHeaderTab === WLF_TABS.JOB_MONITORING && (

@@ -138,6 +138,10 @@ const Home = () => {
                             path="/databases/job-monitoring"
                             element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                         />
+                        <Route
+                            path="/databases/well-architected"
+                            element={<HeaderComponent tab={WLF_TABS.WELL_ARCHITECTED_TAB} />}
+                        />
                         <Route path="/create-new-user" element={<WizardComponent />} />
                         <Route path="/job-monitor" element={<JobMonitoring />} />
                         <Route path="/create-new-sandbox" element={<CreateNewSandbox />} />
@@ -178,6 +182,10 @@ const Home = () => {
                             <Route
                                 path="/fsxdb/job-monitoring"
                                 element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
+                            />
+                            <Route
+                                path="/fsxdb/well-architected"
+                                element={<HeaderComponent tab={WLF_TABS.WELL_ARCHITECTED_TAB} />}
                             />
                             <Route
                                 path="/databases/explore-savings/explore-savings-ebs"

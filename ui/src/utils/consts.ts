@@ -390,6 +390,7 @@ export const WLF_TABS = {
     DASHBOARD_OPTIMIZE_INNER_PAGE: 'DashboardOptimizeInnerPage',
     OPTIMIZE_ONTAP_INNER_PAGE: 'OptimizeOntapInnerPage',
     INVENTORY: 'Inventory',
+    WELL_ARCHITECTED_TAB: 'Well Architected Tab',
     OVERVIEW: 'Overview',
     SANDBOXES: 'Sandboxes',
     EXPLORE_SAVINGS: 'Explore savings',

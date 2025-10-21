@@ -2302,6 +2302,9 @@ export const handleURLFromDashboard = (value: string, isWorkloadFactory: boolean
             case 'Job monitoring':
                 path = '../databases/job-monitoring';
                 break;
+            case 'Well Architected Tab':
+                path = '../databases/well-architected';
+                break;
         }
     } else {
         switch (value) {
@@ -2319,6 +2322,9 @@ export const handleURLFromDashboard = (value: string, isWorkloadFactory: boolean
                 break;
             case 'Job monitoring':
                 path = '../../fsxdb/job-monitoring';
+                break;
+            case 'Well Architected Tab':
+                path = '../../fsxdb/well-architected';
                 break;
         }
     }
@@ -2351,6 +2357,9 @@ export const handleURL = (value: string, isWorkloadFactory: boolean) => {
             case 'Job monitoring':
                 path = './job-monitoring';
                 break;
+            case 'Well Architected Tab':
+                path = './well-architected';
+                break;
         }
     } else {
         switch (value) {
@@ -2368,6 +2377,9 @@ export const handleURL = (value: string, isWorkloadFactory: boolean) => {
                 break;
             case 'Job monitoring':
                 path = '../../fsxdb/job-monitoring';
+                break;
+            case 'Well Architected Tab':
+                path = '../../fsxdb/well-architected';
                 break;
         }
     }
