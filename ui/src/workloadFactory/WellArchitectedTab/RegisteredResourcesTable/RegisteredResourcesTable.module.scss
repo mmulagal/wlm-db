@@ -1,0 +1,45 @@
+.registered-resources {
+    .progressBar {
+        width: 100%;
+        height: 8px;
+        background-color: var(--content-background);
+        display: flex;
+        align-items: center;
+    }
+
+    .progress {
+        height: 100%;
+    }
+
+    .leftCurveBar {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    .rightCurveBar {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .barContainer {
+        display: flex;
+        gap: 13px;
+        width: 90%;
+        align-items: center;
+
+        .scoreText {
+            display: flex;
+            gap: 4px;
+        }
+    }
+
+    .buttonContainer {
+        display: flex;
+        justify-content: space-between;
+        width: 92%;
+
+        [class*='dsButtons'] {
+            border-radius: 20px !important;
+        }
+    }
+}
