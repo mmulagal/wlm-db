@@ -122,8 +122,6 @@ const RecommendationTable = ({
         rowData?.name === 'OS type' ||
         rowData?.name === 'NTFS allocation unit size' ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
@@ -290,7 +288,18 @@ const RecommendationTable = ({
             apiCall = optimizeOracleOs;
             payload = getOracleOsPayload('multipath-readcount');
             apiInput = { payload };
-        } else {
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE){
+            statusType = ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('afd-logical-block-size');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE) {
+            statusType = ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('asmlib-logical-block-size');
+            apiInput = { payload };
+        }
+        else {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOs;
             apiInput = {
