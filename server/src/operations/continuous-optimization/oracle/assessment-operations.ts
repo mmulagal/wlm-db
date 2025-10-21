@@ -100,6 +100,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
             >[]) || [];
 
         const protocol = response.get(databaseInstanceName)?.get(fsxFileSystem)?.protocol;
+        const isASMManaged = response.get(databaseInstanceName)?.get(fsxFileSystem)?.isASMManaged;
 
         if (isDemoFlow) {
             const mappedOntapVolumes = ORACLE_MAPPED_ONTAP_VOLUMES_DATA(
@@ -127,6 +128,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
                         ? volumeGroup.map(vol => ({
                               id: vol.volumeId,
                               name: vol.volumeName,
+                              diskGroup: vol?.diskGroup ?? null,
                               svmId: vol.svmId,
                               svmName: vol.svmName
                           }))
@@ -140,6 +142,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
                   volumes.map((vol: any) => ({
                       id: vol.volumeId,
                       name: vol.volumeName,
+                      diskGroup: vol?.diskGroup ?? null,
                       svmId: vol.svmId,
                       svmName: vol.svmName
                   }))
@@ -149,6 +152,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
         databaseInstanceRecord.svmOntapName = [...new Set(volumeData.map(vol => vol.svmName))].filter(Boolean);
         databaseInstanceRecord.mappedVolumesUuids = [...new Set(volumeData.map(vol => vol.id))];
         databaseInstanceRecord.mappedVolumeNames = [...new Set(volumeData.map(vol => vol.name))];
+        databaseInstanceRecord.mappedDiskGroups = [...new Set(volumeData.map(vol => vol.diskGroup).filter(dg => !!dg))];
         databaseInstanceRecord.storageProtocol = protocol;
 
         if (protocol === 'iSCSI') {
@@ -157,13 +161,23 @@ async function initiateInstanceLevelAssessmentDataCollection(
             ) =>
                 Object.values(volumes).flatMap(pdb =>
                     Object.values(pdb).flatMap(volumeGroup =>
-                        Array.isArray(volumeGroup) ? volumeGroup.map(vol => ({ id: vol.lunId, name: vol.lunName })) : []
+                        Array.isArray(volumeGroup)
+                            ? volumeGroup.map(vol => ({
+                                  id: vol.lunId,
+                                  name: vol.lunName,
+                                  diskGroup: vol?.diskGroup ?? null
+                              }))
+                            : []
                     )
                 );
             const lunData = isCDB ? extractLunData(ontapVolumes) : [];
             databaseInstanceRecord.mappedLunUuids = [...new Set(lunData.map(lun => lun.id))];
             databaseInstanceRecord.mappedLunNames = [...new Set(lunData.map(lun => lun.name))];
+            databaseInstanceRecord.mappedDiskGroups = [
+                ...new Set(lunData.map(vol => vol.diskGroup).filter(dg => !!dg))
+            ];
         }
+        databaseInstanceRecord.isASMManaged = isASMManaged;
     } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         logger.error('Error while fetching mapped ontap volumes data', {

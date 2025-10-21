@@ -531,6 +531,7 @@ interface WorkloadInstance {
     mappedVolumesUuids?: string[];
     mappedLunNames?: string[];
     mappedLunUuids?: string[];
+    mappedDiskGroups?: string[];
     cloudProviderAccountId: string;
     resourceName: string;
     svmId?: string;
@@ -538,6 +539,7 @@ interface WorkloadInstance {
     svmOntapName?: string | string[];
     databaseInstanceObject?: DatabaseInstance;
     storageProtocol?: string;
+    isASMManaged?: boolean;
 }
 interface LogDriveDetails {
     lunUuid: string;

@@ -552,7 +552,11 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     'filesystems-io-options',
     'multipath-readcount',
     'multipath-configuration',
-    'snapshot-policy'
+    'snapshot-policy',
+    'asm-setup',
+    'asm-external-redundancy',
+    'afd-logical-block-size',
+    'asmlib-logical-block-size'
 ];
 
 const HOST_LEVEL_CONFIGURATIONS = [

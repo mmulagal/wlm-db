@@ -128,7 +128,7 @@ describe('Oracle assessment operations', () => {
         ).toBeGreaterThan(0);
         expect((assessmentData.storage as StorageParameterDriftResponseType)?.layout?.length).toBeGreaterThan(0);
 
-        expect((assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os?.length).toEqual(11);
+        expect((assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os?.length).toEqual(14);
 
         // Additional OS assessment assertions
         const osAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os;

@@ -70,6 +70,30 @@ interface ISCIOSAssessment {
             }
         ];
     };
+    'asm-os-config'?: {
+        isIscsi?: string;
+        'asm-setup'?: string;
+        'asm-external-redundancy'?: {
+            error?: string;
+            assessment?: {
+                violations?: string[];
+                result?: string;
+                totalObjects?: number;
+            };
+        };
+        'afd-logical-block-size'?: {
+            error?: string;
+            assessment?: {
+                result?: string;
+            };
+        };
+        'asmlib-logical-block-size'?: {
+            error?: string;
+            assessment?: {
+                result?: string;
+            };
+        };
+    };
 }
 
 interface NFSOSAssessment {

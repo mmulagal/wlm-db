@@ -31,6 +31,7 @@ import { OS_ASSESSMENT } from '../../workloads/oracle/os-iscsi-assessment-script
 import { NFS_OS_ASSESSMENT } from '../../workloads/oracle/os-nfs-assessment-scripts';
 import {
     defaultMultipathExpected,
+    ISCIOSAssessment,
     netappMultipathExpected,
     nfsMountOptionExpected,
     StorageAssessment,
@@ -140,6 +141,146 @@ function createAssessment(
         totalObjectsInViolation: [...new Set(objectsInViolation)].length,
         violationDetails
     };
+}
+
+function getAsmOSConfigDrift(osData: ISCIOSAssessment, databaseInstanceName: string) {
+    try {
+        const asmOsConfigData = osData?.['asm-os-config'];
+        const driftData: StorageParameterDriftResponseType['configuration']['os'] = [];
+        const goldenConfig = storageGoldenConfigData.configuration.asmOS;
+        if (asmOsConfigData && !isEmpty(asmOsConfigData) && asmOsConfigData?.isIscsi === 'true') {
+            goldenConfig.forEach(config => {
+                const violationDetails: GenericViolationResponseType[] = [];
+                switch (config.name) {
+                    case 'asm-setup': {
+                        if (asmOsConfigData?.isIscsi === 'true') {
+                            if (asmOsConfigData['asm-setup'] !== 'true') {
+                                violationDetails.push(
+                                    createViolationDetail(
+                                        config.name,
+                                        'configuration',
+                                        asmOsConfigData['asm-setup'] || 'false',
+                                        'true'
+                                    )
+                                );
+                            }
+                            driftData.push(
+                                createAssessment(
+                                    config,
+                                    1,
+                                    asmOsConfigData['asm-setup'] !== 'true' ? [databaseInstanceName] : [],
+                                    violationDetails
+                                )
+                            );
+                        }
+                        break;
+                    }
+                    case 'asm-external-redundancy': {
+                        if (asmOsConfigData['asm-setup'] !== 'true') {
+                            break;
+                        }
+                        if (asmOsConfigData?.['asm-external-redundancy']?.error) {
+                            driftData.push({
+                                name: config.name,
+                                errorMessage: asmOsConfigData?.['asm-external-redundancy']?.error
+                            });
+                        } else if (asmOsConfigData?.['asm-external-redundancy']?.assessment) {
+                            if (
+                                (asmOsConfigData?.['asm-external-redundancy']?.assessment?.violations ?? []).length > 0
+                            ) {
+                                asmOsConfigData?.['asm-external-redundancy']?.assessment?.violations?.forEach(
+                                    (dgName: string) => {
+                                        violationDetails.push(
+                                            createViolationDetail(dgName, 'ASM Disk Group', 'False', 'External')
+                                        );
+                                    }
+                                );
+                            }
+                            driftData.push(
+                                createAssessment(
+                                    config,
+                                    asmOsConfigData?.['asm-external-redundancy']?.assessment?.totalObjects ?? 0,
+                                    asmOsConfigData?.['asm-external-redundancy']?.assessment?.violations || [],
+                                    violationDetails
+                                )
+                            );
+                        }
+                        break;
+                    }
+                    case 'afd-logical-block-size': {
+                        if (asmOsConfigData['asm-setup'] !== 'true') {
+                            break;
+                        }
+                        if (asmOsConfigData?.['afd-logical-block-size']?.error) {
+                            driftData.push({
+                                name: config.name,
+                                errorMessage: asmOsConfigData?.['afd-logical-block-size']?.error
+                            });
+                        } else if (asmOsConfigData?.['afd-logical-block-size']?.assessment) {
+                            if (asmOsConfigData?.['afd-logical-block-size']?.assessment?.result === '0') {
+                                violationDetails.push(
+                                    createViolationDetail(config.name, 'configuration', 'false', 'true')
+                                );
+                            }
+                            driftData.push(
+                                createAssessment(
+                                    config,
+                                    1,
+                                    asmOsConfigData?.['afd-logical-block-size']?.assessment?.result === '0'
+                                        ? [databaseInstanceName]
+                                        : [],
+                                    []
+                                )
+                            );
+                        }
+                        break;
+                    }
+                    case 'asmlib-logical-block-size': {
+                        if (asmOsConfigData['asm-setup'] !== 'true') {
+                            break;
+                        }
+                        if (asmOsConfigData?.['asmlib-logical-block-size']?.error) {
+                            driftData.push({
+                                name: config.name,
+                                errorMessage: asmOsConfigData?.['asmlib-logical-block-size']?.error
+                            });
+                        } else if (asmOsConfigData?.['asmlib-logical-block-size']?.assessment) {
+                            const isUnoptimized = ['Y', 'YES'].includes(
+                                asmOsConfigData?.['asmlib-logical-block-size']?.assessment?.result?.toUpperCase() ?? ''
+                            );
+                            if (isUnoptimized) {
+                                violationDetails.push(
+                                    createViolationDetail(
+                                        config.name,
+                                        'configuration',
+                                        asmOsConfigData?.[
+                                            'asmlib-logical-block-size'
+                                        ]?.assessment?.result?.toUpperCase() || 'N',
+                                        'Y'
+                                    )
+                                );
+                            }
+                            driftData.push(
+                                createAssessment(
+                                    config,
+                                    1,
+                                    isUnoptimized ? [databaseInstanceName] : [],
+                                    violationDetails
+                                )
+                            );
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            });
+        }
+        return driftData;
+    } catch (error) {
+        logger.error('Error while assessing ASM OS configuration drift', { error });
+        throw error;
+    }
 }
 
 function getOSConfigDrift(
@@ -379,7 +520,10 @@ function getOSConfigDrift(
                 break;
         }
     });
-
+    const asmOSConfigDrift = getAsmOSConfigDrift(os, databaseInstanceName);
+    if (!isEmpty(asmOSConfigDrift)) {
+        osDrift.push(...asmOSConfigDrift);
+    }
     return osDrift;
 }
 
@@ -1331,7 +1475,9 @@ async function initiateStorageAssessmentCollection(
         activeNodeInstanceid,
         mappedVolumesUuids,
         fsxFileSystem,
-        storageProtocol
+        storageProtocol,
+        isASMManaged = false,
+        mappedDiskGroups
     } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
@@ -1366,7 +1512,15 @@ async function initiateStorageAssessmentCollection(
     try {
         const command = [VOLUME_LUN_CONFIGURATION(instanceRecord)];
         if (storageProtocol === 'iSCSI') {
-            command.push(OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName));
+            command.push(
+                OS_ASSESSMENT(
+                    activeNodeInstanceid,
+                    databaseInstanceName,
+                    storageProtocol,
+                    isASMManaged,
+                    mappedDiskGroups
+                )
+            );
         } else {
             command.push(NFS_OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName));
         }

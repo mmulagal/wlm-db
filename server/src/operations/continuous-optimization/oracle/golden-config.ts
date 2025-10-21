@@ -325,6 +325,48 @@ const GOLDEN_CONFIG = {
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
             }
         ],
+        asmOS: [
+            {
+                parameter: 'asm-setup',
+                name: 'asm-setup',
+                recommended: '',
+                severity: SEVERITY.WARNING,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends using Oracle Automatic Storage Management (ASM) for iSCSI-based storage, such as FSx for NetApp ONTAP, to optimize performance, simplify storage management, and enhance scalability for Oracle Database deployments.',
+                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            },
+            {
+                parameter: 'asm-external-redundancy',
+                name: 'asm-external-redundancy',
+                recommended: '',
+                severity: SEVERITY.WARNING,
+                resourceType: 'ASM Disk Group',
+                recommendation:
+                    'Workload Factory recommends configuring Oracle ASM disk groups with External Redundancy for FSxN iSCSI LUNs to leverage FSxN’s built-in high availability, optimize storage efficiency, and reduce costs by avoiding Oracle-level data mirroring.',
+                tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            },
+            {
+                parameter: 'afd-logical-block-size',
+                name: 'afd-logical-block-size',
+                recommended: '1',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends configuring the Oracle ASM Filter Driver (AFD) to use the logical block size of the underlying FSx for NetApp ONTAP. This ensures that AFD aligns I/O operations with the storage’s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.',
+                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            },
+            {
+                parameter: 'asmlib-logical-block-size',
+                name: 'asmlib-logical-block-size',
+                recommended: 'true',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends configuring Oracle ASMLib to use the logical block size of the underlying FSx for NetApp ONTAP, by setting the appropriate option in the ASMLib configuration file. This ensures that ASMLib aligns I/O operations with the storage’s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.',
+                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            }
+        ],
         os_nfs: [
             {
                 parameter: 'kernel-parameters',

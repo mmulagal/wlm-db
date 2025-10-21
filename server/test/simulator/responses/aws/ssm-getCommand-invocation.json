@@ -3843,6 +3843,25 @@
                     }
                 ]
             },
+            "asm-os-config": {
+                "isIscsi": "true",
+                "asm-setup": "true",
+                "asm-external-redundancy": {
+                    "error": "",
+                    "assessment": {
+                    "violations": [],
+                    "result": "true",
+                    "totalObjects": 2
+                    }
+                },
+                "afd-logical-block-size": {},
+                "asmlib-logical-block-size": {
+                    "assessment": {
+                    "result": "Y"
+                    },
+                    "error": ""
+                }
+            },
             "adr-info": {
     "error": null,
     "adr-home": "/u01/app/oracle/diag/rdbms/ordbsdl/ordbsdl",

@@ -3398,6 +3398,25 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 }
             ]
         },
+        'asm-os-config': {
+            isIscsi: 'true',
+            'asm-setup': 'true',
+            'asm-external-redundancy': {
+                error: '',
+                assessment: {
+                    violations: [],
+                    result: 'true',
+                    totalObjects: 2
+                }
+            },
+            'afd-logical-block-size': {},
+            'asmlib-logical-block-size': {
+                assessment: {
+                    result: 'Y'
+                },
+                error: ''
+            }
+        },
         'idmapd-domain-config': {
             error: null,
             domain: 'dbsqa.mssql.com',

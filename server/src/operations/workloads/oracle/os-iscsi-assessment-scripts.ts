@@ -798,7 +798,130 @@ def check_multipath_configuration():
 
 `;
 
-const OS_ASSESSMENT = (ec2InstanceId: string, dbSid: string) => `
+const ASM_OS_CONFIG_ASSESSMENTS = (diskGroups: string[]) => `
+def check_asm_os_config(isAsmManaged, isIscsi):
+    disk_groups = json.loads('${JSON.stringify(diskGroups)}')
+    log('Checking ASM related OS configurations')
+    result = {}
+    result['isIscsi'] = 'true'
+    result['asm-setup'] = 'false'
+    result.setdefault('asm-external-redundancy', {})
+    result.setdefault('afd-logical-block-size', {})
+    result.setdefault('asmlib-logical-block-size', {})
+
+    if isIscsi.lower() != 'true':
+        log('Not an iSCSI setup, skipping ASM OS config checks')
+        result['isIscsi'] = 'false'
+        return result
+    else:
+        result['isIscsi'] = 'true'
+    if isAsmManaged.lower() != 'true':
+        log('Not an ASM managed setup, skipping ASM OS config checks')
+        result['asm-setup'] = 'false'
+        return result
+    else:
+        result['asm-setup'] = 'true'
+
+    # Check asm_external_redundancy parameter
+
+    try:
+        sqlplus_cmd = os.environ.get('SQLPLUS_CMD', '')
+        oracle_sid = os.environ.get('ORACLE_SID', '')
+        result['asm-external-redundancy']['error'] = ''
+        result['asm-external-redundancy']['assessment'] = {}
+        result['asm-external-redundancy']['assessment']['violations'] = []
+        result['asm-external-redundancy']['assessment']['result'] = ''
+        result['asm-external-redundancy']['assessment']['totalObjects'] = len(disk_groups)
+        instanceLevelRedundancy = True
+        for dg in disk_groups:
+            if not sqlplus_cmd:
+                result['asm-external-redundancy']['error'] = "SQLPLUS_CMD not set"
+                break;
+            cmd_parts = sqlplus_cmd.split()
+            env = os.environ.copy()
+            env['ORACLE_SID'] = oracle_sid
+            sql_query = """SET PAGESIZE 0
+SET FEEDBACK OFF
+SET HEADING OFF
+SET LINESIZE 4000
+SET TRIMSPOOL ON
+SELECT CASE WHEN type IN ('EXTERNAL','EXTERN') THEN 'YES' ELSE 'NO' END AS is_external FROM v\\$asm_diskgroup WHERE name = UPPER('{dg}');
+EXIT;
+"""
+            result_proc = subprocess.run(
+                cmd_parts,
+                input=sql_query,
+                env=env,
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                universal_newlines=True,
+                timeout=30
+            )
+            if result_proc.returncode == 0:
+                output = result_proc.stdout.strip()
+                if output == 'NO':
+                    instanceLevelRedundancy = instanceLevelRedundancy and False
+                    result['asm-external-redundancy']['assessment']['violations'].append(dg)
+            else:
+                result['asm-external-redundancy']['error'] = f"sqlplus failed: {result_proc.stderr}"
+                break;
+        if result['asm-external-redundancy']['error'] == '':
+            if instanceLevelRedundancy:
+                result['asm-external-redundancy']['assessment']['result'] = 'true'
+            else:
+                result['asm-external-redundancy']['assessment']['result'] = 'false'
+    except Exception as e:
+        result['asm-external-redundancy']['error'] = f"Error: {str(e)}"
+
+    
+    # AFD logical block size check
+    try:
+        checkAFDModuleCmd = 'lsmod | grep -w oracleafd'
+        result_proc = subprocess.run(['bash', '-c', checkAFDModuleCmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
+        if result_proc.returncode == 0 and result_proc.stdout.strip() and ('oracleafd' in result_proc.stdout.strip()):
+            result['afd-logical-block-size']['assessment'] = {}
+            result['afd-logical-block-size']['error'] = ''
+            result['afd-logical-block-size']['assessment']['result'] = ''
+            afdBlockSizeCmd = 'cat /sys/module/oracleafd/parameters/oracleafd_use_logical_block_size'
+            afdBlockSizeCmdOutput = subprocess.run(['bash', '-c', checkAFDModuleCmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
+            if afdBlockSizeCmdOutput.returncode == 0 and afdBlockSizeCmdOutput.stdout.strip():
+                result['afd-logical-block-size']['result'] = afdBlockSizeCmdOutput.stdout.strip()
+            else:
+                result['afd-logical-block-size']['error'] = f"Command failed: {afdBlockSizeCmdOutput.stderr.strip()}"
+        elif result_proc.returncode != 0:
+            result['afd-logical-block-size'] = {}
+    except Exception as e:
+        result['afd-logical-block-size']['error'] = f"Error checking AFD module: {str(e)}"
+    
+    # ASMLib logical block size check
+    try:
+        checkASMLibModuleCmd = 'lsmod | grep -w oracleasm'
+        result_proc = subprocess.run(['bash', '-c', checkASMLibModuleCmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
+        if result_proc.returncode == 0 and result_proc.stdout.strip() and ('oracleasm' in result_proc.stdout.strip()):
+            result['asmlib-logical-block-size']['assessment'] = {}
+            result['asmlib-logical-block-size']['error'] = ''
+            result['asmlib-logical-block-size']['assessment']['result'] = ''
+            asmLibBlockSizeCmd = 'cat /sys/module/oracleasm/parameters/use_logical_block_size'
+            asmLibBlockSizeCmdOutput = subprocess.run(['bash', '-c', asmLibBlockSizeCmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
+            if asmLibBlockSizeCmdOutput.returncode == 0 and asmLibBlockSizeCmdOutput.stdout.strip():
+                result['asmlib-logical-block-size']['assessment']['result'] = asmLibBlockSizeCmdOutput.stdout.strip()
+            else:
+                result['asmlib-logical-block-size']['error'] = f"Command failed: {asmLibBlockSizeCmdOutput.stderr.strip()}"
+        elif result_proc.returncode != 0:
+            result['asmlib-logical-block-size'] = {}
+    except Exception as e:
+        result['asmlib-logical-block-size']['error'] = f"Error checking ASMLib module: {str(e)}"
+
+    return result
+`;
+
+const OS_ASSESSMENT = (
+    ec2InstanceId: string,
+    dbSid: string,
+    protocol: string,
+    isAsmManaged: boolean,
+    diskGroups?: string[]
+) => `
 
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
 export PYTHON_LATEST=$(ls /usr/bin/python* /usr/local/bin/python* 2>/dev/null | xargs -I {} sh -c 'version=$({} -c "import sys; print(f\\"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\\")" 2>/dev/null); if [[ "$version" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then echo "{}|$version"; fi' | sort -t'|' -k2 -V | tail -n1 | cut -d'|' -f1)
@@ -861,6 +984,9 @@ import os
 import json
 import subprocess
 import re
+import datetime
+
+${pythonLogger('storageOsAssessment.log')}
 
 ${CHECK_ORACLE_PARAMETERS}
 
@@ -868,14 +994,22 @@ ${ORACLE_HOME}
 
 ${CHECK_INIT_ORA_PARAMETERS}
 
+${ASM_OS_CONFIG_ASSESSMENTS(diskGroups || [])}
+
 # Run Oracle parameters check
 oracle_params_result = get_oracle_parameters()
 
 # Run init.ora/spfile check
 oracle_init_params = check_init_ora_parameters()
 
+# ASM OS config checks (only if ASM managed and iSCSI)
+protocol = '${protocol.toLowerCase()}'
+isAsmManaged = '${isAsmManaged ? 'true' : 'false'}'
+isIscsi = 'true' if protocol == 'iscsi' else 'false'
+asm_os_config = check_asm_os_config(isAsmManaged, isIscsi)
 
-print(json.dumps({"oracle-parameters": oracle_params_result, "oracle-init-parameters": oracle_init_params}))
+
+print(json.dumps({"oracle-parameters": oracle_params_result, "oracle-init-parameters": oracle_init_params, "asm_os_config": asm_os_config}))
 
 PYTHON
 ORACLE_SHELL
@@ -893,11 +1027,12 @@ log('Combining OS and Oracle results')
 
 try:
     os_results = json.loads('$OS_RESULTS')
-    oracle_results = json.loads('$ORACLE_RESULTS')
+    oracle_results = json.loads("""$ORACLE_RESULTS""")
     
     # Add oracle-parameters to the os section
     os_results["os"]["oracle-parameters"] = oracle_results.get("oracle-parameters", {})
     os_results["os"]["oracle-parameters-from-init"] = oracle_results.get("oracle-init-parameters", {})
+    os_results["os"]["asm-os-config"] = oracle_results.get("asm_os_config", {})
 
     print(json.dumps(os_results))
 except Exception as e:
