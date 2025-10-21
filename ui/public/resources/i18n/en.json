@@ -1,5 +1,8 @@
 {
     "databases": {
+        "well-architected-tab": {
+            "application": "Application"
+        },
         "general": {
             "instance-well-architected-dashboard": "instance well-architected dashboard",
             "database-well-architected-dashboard-for-oracle": "database well-architected dashboard for oracle",

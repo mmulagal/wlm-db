@@ -202,7 +202,7 @@ const OptimizeByCategory = () => {
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {GENERAL.APPLICATION}
+                                {t('databases.well-architected-tab.application')}
                             </DsTypography>
                         </div>
                     </div>

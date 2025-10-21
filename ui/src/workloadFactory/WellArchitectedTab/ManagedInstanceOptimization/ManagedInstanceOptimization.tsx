@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography, FlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
+import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import styles from './ManagedInstanceOptimization.module.scss';
@@ -7,15 +7,12 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
 import { ReactComponent as WellArchitect } from '../../../assets/well-architect.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
-import useResize from '../../../common/hooks/useResize';
-import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { getManagedInstanceOptimizationSummary } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import HostDistributionChart from '../../Dashboard/HostDistribution/HostDistributionChart/HostDistributionChart';
 
 const ManagedInstanceOptimization = () => {
     const { t } = useTranslation();
-    const windowSize = useResize();
     const { allmssqlHostAssessmentLoading, allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
         useAppSelector(state => state.headers);
@@ -76,36 +73,36 @@ const ManagedInstanceOptimization = () => {
 
             {(loading || instanceOptimizationSummary?.optimizedPercent !== 100) && (
                 <div className={styles.mainSection}>
-                        <ChartComponent />
-                        <div className={styles.contentSection}>
-                            <SquareComponent
-                                value={
-                                    showNA
-                                        ? t('databases.general.not-available')
-                                        : String(instanceOptimizationSummary?.optimizedInstances)
-                                }
-                                color="var(--chart-4)"
-                                text="Well-architected resources"
-                                isLoading={false}
-                                loadingInFirstRow={loading}
-                                showNA={showNA}
-                            />
+                    <ChartComponent />
+                    <div className={styles.contentSection}>
+                        <SquareComponent
+                            value={
+                                showNA
+                                    ? t('databases.general.not-available')
+                                    : String(instanceOptimizationSummary?.optimizedInstances)
+                            }
+                            color="var(--chart-4)"
+                            text="Well-architected resources"
+                            isLoading={false}
+                            loadingInFirstRow={loading}
+                            showNA={showNA}
+                        />
 
-                            <SeparatorComponent variant="vertical" height="48px" />
-                            <SquareComponent
-                                value={
-                                    showNA
-                                        ? t('databases.general.not-available')
-                                        : String(instanceOptimizationSummary?.notOptimizedInstances)
-                                }
-                                color="var(--chart-disabled)"
-                                text="Not-optimized resources"
-                                isLoading={false}
-                                loadingInFirstRow={loading}
-                                showNA={showNA}
-                            />
-                        </div>
+                        <SeparatorComponent variant="vertical" height="48px" />
+                        <SquareComponent
+                            value={
+                                showNA
+                                    ? t('databases.general.not-available')
+                                    : String(instanceOptimizationSummary?.notOptimizedInstances)
+                            }
+                            color="var(--chart-disabled)"
+                            text="Not-optimized resources"
+                            isLoading={false}
+                            loadingInFirstRow={loading}
+                            showNA={showNA}
+                        />
                     </div>
+                </div>
             )}
 
             {!loading && instanceOptimizationSummary?.optimizedPercent === 100 && (

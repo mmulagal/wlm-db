@@ -839,7 +839,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const refreshPage = () => {
         dispatch(updateRefreshBlocked(false));
-        if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
+        if (selectedHeaderTab === WLF_TABS.DASHBOARD || selectedHeaderTab === WLF_TABS.WELL_ARCHITECTED_TAB) {
             dispatch(setRefreshTime(getCurrentDateTime()));
             resetDBHomePageState(dispatch);
             dispatch(setDashboardRefresh(true));
