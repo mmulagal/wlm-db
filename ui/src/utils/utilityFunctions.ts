@@ -2505,6 +2505,8 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
                 return selectedHeaderTab;
             }
             return WLF_TABS.INVENTORY;
+        case WLF_TABS.WELL_ARCHITECTED_TAB:
+            return WLF_TABS.WELL_ARCHITECTED_TAB;
         case WLF_TABS.EXPLORE_SAVINGS_EBS:
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
         case WLF_TABS.EXPLORE_SAVINGS_FsxW:

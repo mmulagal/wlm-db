@@ -206,14 +206,37 @@ const AwsAccount = () => {
 
     const openDialog = (type: string) => {
         const viewPackage = policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY);
-        const data = JSON.stringify(
-            type === 'view'
-                ? viewPackage?.permissions ?? []
-                : policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.OPERATE_POLICY)
-                      ?.permissions ?? [],
-            null,
-            2
-        );
+
+        let permissionsData;
+        if (type === 'view') {
+            // Merge permissions from View, Operations, and Database host creation packages
+            const viewPermissions = viewPackage?.permissions;
+            const operatePackage = policiesList?.packages?.find?.(
+                pkg => pkg?.name === POLICIES_PERMISSIONS.OPERATE_POLICY
+            );
+            const dbHostPackage = policiesList?.packages?.find?.(
+                pkg => pkg?.name === POLICIES_PERMISSIONS.DATABASE_HOST_CREATION_POLICY
+            );
+
+            const mergedStatements = [
+                ...(viewPermissions?.Statement ?? []),
+                ...(operatePackage?.permissions?.Statement ?? []),
+                ...(dbHostPackage?.permissions?.Statement ?? [])
+            ];
+
+            permissionsData = {
+                Version:
+                    viewPermissions?.Version ??
+                    operatePackage?.permissions?.Version ??
+                    dbHostPackage?.permissions?.Version ??
+                    '2012-10-17',
+                Statement: mergedStatements
+            };
+        } else {
+            permissionsData = viewPackage?.permissions ?? [];
+        }
+
+        const data = JSON.stringify(permissionsData, null, 2);
         setDialog(
             <DialogComponent
                 header={type === 'view' ? GENERAL.REQUIRED_VIEW_PERMISSIONS : GENERAL.REQUIRED_OPERATE_PERMISSIONS}

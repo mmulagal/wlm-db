@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as CopyIcon } from '../../../../../../../../assets/ic_copy.svg';
 import styles from './WellArchitectPolicyDialog.module.scss';
 import CopyToClipboardCommon from '../../../../../../../../common/CopyToClipboard/copyToClipboard';
+import { POLICIES_PERMISSIONS } from '../../../../../../../../utils/consts';
 
 const WellArchitectPolicyDialog = ({ data, label }: any) => {
     const { t } = useTranslation();
@@ -13,11 +14,17 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
     const handleClick = (value: string) => {
         let permissionData: any = '';
         if (value === t('databases.register-flow.aws-iam-policy-permissions')) {
-            permissionData = data?.view;
+            permissionData = data?.packages?.find?.(
+                (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY
+            )?.permissions;
         } else if (value === t('databases.register-flow.fsx-for-ontap-permissions')) {
-            permissionData = data?.['well-architected-fsx'];
+            permissionData = data?.packages?.find?.(
+                (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.WELL_ARCHITECTED_FSX__POLICY
+            )?.permissions;
         } else if (value === t('databases.register-flow.compute-optimizer-permissions')) {
-            permissionData = data?.['well-architected-compute-optimizer'];
+            permissionData = data?.packages?.find?.(
+                (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.WELL_ARCHITECTED_COMPUTE_POLICY
+            )?.permissions;
         }
         setPermissionData(JSON.stringify(permissionData, null, 2));
         setSelectedTab(value);

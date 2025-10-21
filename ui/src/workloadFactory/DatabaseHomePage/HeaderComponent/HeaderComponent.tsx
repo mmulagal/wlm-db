@@ -1318,7 +1318,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 }}
                                                 id="well-architected"
                                             >
-                                                {'Well-architected'}
+                                                Well-architected
                                             </Typography>
 
                                             <Typography
