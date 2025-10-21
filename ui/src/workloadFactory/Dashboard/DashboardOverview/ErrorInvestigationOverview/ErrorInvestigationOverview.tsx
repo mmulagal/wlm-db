@@ -2,59 +2,128 @@ import { DsButton, DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { useMemo } from 'react';
 import styles from './ErrorInvestigationOverview.module.scss';
 import DatabaseOverviewChart from '../DatabaseOverviewChart/DatabaseOverviewChart';
 import Square from '../../../../common/Square/Square';
 import ActivateErrorInvestigation from './ActivateErrorInvestigation/CategoryDialogComponent/ActivateErrorInvestigation';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
+    resetEiData,
+    setLogAnalyzerState,
     setSelectedErrorInvestigationRow,
     setSelectedViewErrorInvestigationRow
 } from '../../../../store/workloadFactory/agenticAISlice';
 import { ReactComponent as ErrorInvestigateSmall } from '../../../../assets/ErrorInvestigationSmallImage.svg';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { ERROR_ANALYZER_STATUS, INVENTORY_STATUS, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
 import ViewErrorInvestigation from './ActivateErrorInvestigation/CategoryDialogComponent/ViewErrorInvestigation';
 import { useAppSelector } from '../../../../store/storeHooks';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import {
+    createLogAnalyzerActiveInstance,
+    createLogAnalyzerNotActiveInstance,
+    getErrorInvestigationSummary
+} from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import store from '../../../../store/store';
+import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
+    setFSXId,
+    setGwPageLoadInstanceData,
+    setLandingFrom,
+    setSelectedWellArchitectTab
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
+import {
+    setSelectedHostname,
+    setSelectedResourcePageHostData
+} from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 const ErrorInvestigationOverview = () => {
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
-    const { showNA } = useAppSelector(state => state.headers);
-    const loading = false;
+    const { showNA, multiDataLoading } = useAppSelector(state => state.headers);
+    const { allLogAnalysisLoading, allLogAnalysisData, inventoryTableData } = useAppSelector(
+        state => state.inventoryV2
+    );
+    const loading = useMemo(() => allLogAnalysisLoading || multiDataLoading, [allLogAnalysisLoading, multiDataLoading]);
 
-    const emptyState = false;
+    const errInvestigationOverview: any = useMemo(
+        () => getErrorInvestigationSummary(allLogAnalysisData),
+        [allLogAnalysisData, inventoryTableData]
+    );
+
+    const redirectToLogAnalyzerPage = (type: string) => {
+        const updatedState = store.getState();
+        const { selectedErrorInvestigationRow, selectedViewInvestigationRow }: any = updatedState.agenticAI;
+        let selectedRowData = null;
+        if (type === 'activate') {
+            selectedRowData = selectedErrorInvestigationRow;
+        } else {
+            selectedRowData = selectedViewInvestigationRow;
+        }
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION));
+
+        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.DASHBOARD));
+
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: selectedRowData?.databaseHostName,
+                resourceId: selectedRowData?.databaseHostId,
+                instanceId: selectedRowData?.databaseInstanceId,
+                instanceName: selectedRowData?.databaseInstanceName,
+                credId: selectedRowData?.credentialId,
+                regionId: selectedRowData?.regionId,
+                storageType: selectedRowData?.sqlServerDeploymentType
+            })
+        );
+
+        dispatch(setSelectedHostname(selectedRowData?.databaseHostName));
+
+        dispatch(
+            setSelectedResourcePageHostData({
+                resourceId: selectedRowData?.databaseHostId,
+                databaseInstanceId: selectedRowData?.databaseInstanceId,
+                databaseInstanceName: selectedRowData?.databaseInstanceName,
+                credentialId: selectedRowData?.credentialId,
+                regionId: selectedRowData?.regionId
+            })
+        );
+        dispatch(
+            setFSXId({
+                fsxId: selectedRowData?.fsxId,
+                ec2InstanceId: selectedRowData?.ec2InstanceId
+            })
+        );
+
+        dispatch(resetEiData({}));
+        dispatch(setLogAnalyzerState(selectedRowData?.logAnalyzer?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE));
+
+        setTimeout(() => {
+            dispatch(setSelectedErrorInvestigationRow(null));
+            dispatch(setSelectedViewErrorInvestigationRow(null));
+        }, 5);
+    };
 
     const handleClick = (type: string) => {
-        const tableData = [
-            {
-                resourceName: 'Resource-1',
-                status: 'Up',
-                hostName: 'host-1',
-                errorInvestigation: 'Activate',
-                id: '1'
-            },
-            {
-                resourceName: 'Resource-2',
-                status: 'Stopped',
-                hostName: 'host-2',
-                errorInvestigation: 'Activate',
-                id: '2'
-            },
-            {
-                resourceName: 'Resource-3',
-                status: 'Running',
-                hostName: 'host-3',
-                errorInvestigation: 'Activate',
-                id: '3'
-            }
-        ];
+        let tableData: any = [];
+        if (type === 'activate') {
+            tableData = createLogAnalyzerNotActiveInstance(allLogAnalysisData);
+        } else {
+            tableData = createLogAnalyzerActiveInstance(allLogAnalysisData);
+        }
         const isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
         setDialog(
             <DialogComponent
-                header={type === 'activate' ? 'Activate error investigation' : 'View error investigation'}
+                header={
+                    type === 'activate'
+                        ? t('databases.dashboard.activate-error-investigation')
+                        : t('databases.dashboard.view-error-investigation')
+                }
                 content={
                     type === 'activate' ? (
                         <ActivateErrorInvestigation tableData={tableData} />
@@ -65,7 +134,7 @@ const ErrorInvestigationOverview = () => {
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    // redirectToGetWellPage();
+                    redirectToLogAnalyzerPage(type);
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -76,11 +145,12 @@ const ErrorInvestigationOverview = () => {
                     }
                 }}
                 customClass={styles.dialog}
-                // primaryButtonDisabled={!tableData || tableData.length === 0 || !isOnlineInstance}
+                primaryButtonDisabled={!tableData || tableData.length === 0 || !isOnlineInstance}
                 testId="wlm-db-activate-error-investigation-dialog"
             />
         );
     };
+
     return (
         <div className={styles.errorInvestigationOverview}>
             <div className={styles.headSection}>
@@ -121,20 +191,20 @@ const ErrorInvestigationOverview = () => {
                 </div>
             </div>
 
-            {emptyState && (
+            {errInvestigationOverview?.emptyState && (
                 <div className={styles.emptyState}>
                     <div>
                         <ErrorInvestigateSmall />
                     </div>
 
                     <div className={styles.rightSection}>
-                        <DsTypography variant="Semibold_16">Log analyzer</DsTypography>
+                        <DsTypography variant="Semibold_16">{t('databases.dashboard.log-analyzer')}</DsTypography>
                         <DsTypography variant="Regular_14">{t('databases.dashboard.error-analysis-text')}</DsTypography>
                     </div>
                 </div>
             )}
 
-            {!emptyState && (
+            {!errInvestigationOverview?.emptyState && (
                 <div className={styles.mainSection}>
                     <div className={styles.sectionOne}>
                         <div className={styles.chartContainer}>
@@ -142,11 +212,11 @@ const ErrorInvestigationOverview = () => {
                                 color1="#FE5502"
                                 color2="#F7941D"
                                 color3="#FDC300"
-                                data1={800}
-                                data2={400}
-                                data3={200}
+                                data1={errInvestigationOverview?.severity1}
+                                data2={errInvestigationOverview?.severity2}
+                                data3={errInvestigationOverview?.severity3}
                                 centerText="Events"
-                                centerValue="28"
+                                centerValue={String(errInvestigationOverview?.totalEvents)}
                                 loading={false}
                                 isDisabled={loading || showNA}
                             />
@@ -160,7 +230,9 @@ const ErrorInvestigationOverview = () => {
                                         variant="Regular_24"
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                     >
-                                        {showNA ? t('databases.general.not-available') : 14}
+                                        {showNA
+                                            ? t('databases.general.not-available')
+                                            : errInvestigationOverview?.severity1}
                                     </DsTypography>
                                     {loading && <DsFlashingDotsLoader />}
                                 </div>
@@ -183,7 +255,9 @@ const ErrorInvestigationOverview = () => {
                                         variant="Regular_24"
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                     >
-                                        {showNA ? t('databases.general.not-available') : 4}
+                                        {showNA
+                                            ? t('databases.general.not-available')
+                                            : errInvestigationOverview?.severity2}
                                     </DsTypography>
                                     {loading && <DsFlashingDotsLoader />}
                                 </div>
@@ -205,7 +279,9 @@ const ErrorInvestigationOverview = () => {
                                         variant="Regular_24"
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                     >
-                                        {showNA ? t('databases.general.not-available') : 10}
+                                        {showNA
+                                            ? t('databases.general.not-available')
+                                            : errInvestigationOverview?.severity3}
                                     </DsTypography>
                                     {loading && <DsFlashingDotsLoader />}
                                 </div>
@@ -222,11 +298,13 @@ const ErrorInvestigationOverview = () => {
                         </div>
                     </div>
                     <div className={styles.sectionTwo}>
-                        <DsTypography variant="Semibold_14">Activation:</DsTypography>
+                        <DsTypography variant="Semibold_14">{t('databases.dashboard.activation')}:</DsTypography>
                         <DsTypography className={showNA ? CommonStyles.notAvailable : ''} variant="Regular_14">
                             {showNA
                                 ? t('databases.general.not-available')
-                                : 'x of y of your resources activated Agentic AI'}
+                                : `${errInvestigationOverview?.activeResource} of ${
+                                      errInvestigationOverview?.totalResource
+                                  } ${t('databases.dashboard.resource-active-msg')}`}
                         </DsTypography>
                     </div>
                 </div>

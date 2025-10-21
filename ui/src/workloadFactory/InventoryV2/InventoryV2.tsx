@@ -241,7 +241,12 @@ const InventoryV2 = () => {
                                 loading: allLogAnalysisLoading,
                                 errorCount: logAnalyzerRow?.latestReport?.errorCount || 0,
                                 status: logAnalyzerStatus,
-                                lastScan: logAnalyzerRow?.latestReport?.creationTime || ''
+                                lastScan: logAnalyzerRow?.latestReport?.creationTime || '',
+                                severityCounts: {
+                                    warning: logAnalyzerRow?.latestReport?.severityCounts?.warning || 0,
+                                    critical: logAnalyzerRow?.latestReport?.severityCounts?.critical || 0,
+                                    severe: logAnalyzerRow?.latestReport?.severityCounts?.severe || 0
+                                }
                             },
                             id: String(instanceUniqueId++),
                             hostRow: perHost,

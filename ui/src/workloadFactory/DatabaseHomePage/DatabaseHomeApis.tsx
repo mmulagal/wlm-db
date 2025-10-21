@@ -15,9 +15,10 @@ import {
     getManagedAggrProtection,
     getManagedAggrStorageSavings,
     getManagedHostCount,
+    getManagedHostCountFromInventory,
     getPotentialSavingsValues
 } from './DatabaseHomeUtils';
-import { WIZARD_TYPE } from '../../utils/consts';
+import { DBType, WIZARD_TYPE } from '../../utils/consts';
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
@@ -88,7 +89,8 @@ const DatabaseHomeApis = () => {
         if (!databaseHostsDataV2) {
             return;
         }
-        const hostStatusCount = getManagedHostCount(databaseHostsDataV2, dispatch);
+        // const hostStatusCount = getManagedHostCount(databaseHostsDataV2, dispatch);
+        const hostStatusCount = getManagedHostCountFromInventory(inventoryTableData, dispatch, DBType.MSSQL);
         dispatch(addAggregateHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsDataV2, inventoryTableData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
@@ -101,7 +103,8 @@ const DatabaseHomeApis = () => {
         if (!pgsqlHostData) {
             return;
         }
-        const hostStatusCount = getManagedHostCount(pgsqlHostData, dispatch, WIZARD_TYPE.PGSQL);
+        // const hostStatusCount = getManagedHostCount(pgsqlHostData, dispatch, WIZARD_TYPE.PGSQL);
+        const hostStatusCount = getManagedHostCountFromInventory(inventoryTableData, dispatch, DBType.POSTGRESQL);
         dispatch(addAggregatePgSqlHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pgsqlHostData, inventoryTableData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
@@ -114,7 +117,8 @@ const DatabaseHomeApis = () => {
         if (!oracleHostData) {
             return;
         }
-        const hostStatusCount = getManagedHostCount(oracleHostData, dispatch, WIZARD_TYPE.ORACLE);
+        // const hostStatusCount = getManagedHostCount(oracleHostData, dispatch, WIZARD_TYPE.ORACLE);
+        const hostStatusCount = getManagedHostCountFromInventory(inventoryTableData, dispatch, DBType.ORACLE);
         dispatch(addAggregatedOracleHostsCount(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [oracleHostData, inventoryTableData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);

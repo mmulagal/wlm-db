@@ -948,6 +948,9 @@
             "readiness-status-incomplete": "Incomplete"
         },
         "dashboard": {
+            "log-analyzer": "Log analyzer",
+            "activation": "Activation",
+            "resource-active-msg": "of your resources activated Agentic AI",
             "hostname": "Host name",
             "optimization-score": "Optimization score",
             "instance-well-arch-score": "Investigate resources",

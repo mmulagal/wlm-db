@@ -390,7 +390,12 @@ export const handleLogAnalyzerJob = (
                             latestReport: {
                                 creationTime: latestReport?.creationTime || 0,
                                 jobId: jobId || '',
-                                errorCount: latestReport?.errorCount || 0
+                                errorCount: latestReport?.errorCount || 0,
+                                severityCounts: {
+                                    warning: latestReport?.severityCounts?.warning || 0,
+                                    critical: latestReport?.severityCounts?.critical || 0,
+                                    severe: latestReport?.severityCounts?.severe || 0
+                                }
                             }
                         };
                         updateLogAnalyzerRow(dispatch, newObj);

@@ -1,6 +1,7 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { GENERAL } from '../../utils/appConstants';
+import { DBType, INVENTORY_STATUS } from '../../utils/consts';
 import { CreateSandboxPayloadEntities, SandboxListEntities } from '../../utils/types/sandBoxTypes';
 import { formatDateWithTime, formatSize, getTimeDifferenceInDays } from '../../utils/utilityFunctions';
 import { uniqueHostRow } from '../InventoryV2/InventoryUtilsV2';
@@ -240,50 +241,109 @@ export const createUniqueSandboxTableData = (tableData: any[]) => {
 
     const state = store.getState();
     const { inventoryTableData, getDatabaseHosts } = state.inventoryV2;
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
 
-    const uniqueMap = new Map();
+    if (!inventoryTableData) {
+        return [];
+    }
+
+    // Step 1: Create unique managed instance list from inventoryTableData
+    const managedInstancesMap = new Map();
+    const uniqueResourceList: Array<string> = [];
     let id = 1;
-    tableData.forEach(item => {
-        // Create unique key based on the specified fields
-        const uniqueKey = `${item.databaseHostId}_${item.databaseInstanceName}_${item.credentialId}_${item.regionId}`;
-        if (uniqueMap.has(uniqueKey)) {
-            // If key exists, increment sandbox count
-            const existingItem = uniqueMap.get(uniqueKey);
-            existingItem.sandboxCount += 1;
-        } else {
-            const host = inventoryTableData?.[uniqueHostRow(item.databaseHostId, item?.credentialId, item.regionId)];
-            const isLoading = getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading;
-            let loadingStatus = false;
-            let status;
-            if (!host) {
-                loadingStatus = isLoading;
-            } else {
-                const instance = host?.sqlServerInstances?.find(
-                    (instance: any) => instance.databaseInstanceId === item.databaseInstanceId
-                );
-                if (!instance) {
-                    loadingStatus = isLoading;
-                } else {
-                    status = instance?.status || '';
-                    loadingStatus = false;
-                }
+
+    Object.keys(inventoryTableData)?.forEach((key: any) => {
+        const item = inventoryTableData[key];
+        if (
+            !headerSelectedMultiCredIdsList.includes(item?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
+            uniqueResourceList.includes(item?.resourceId || '') ||
+            item?.managedInstance === 0 ||
+            item?.hostType !== DBType.MSSQL
+        ) {
+            return;
+        }
+        uniqueResourceList.push(item?.resourceId || '');
+
+        item?.sqlServerInstances?.forEach((instance: any) => {
+            if (instance?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                return;
             }
-            // If key doesn't exist, create new entry with sandbox count = 1
-            uniqueMap.set(uniqueKey, {
-                databaseHostName: item.databaseHostName,
-                databaseHostId: item.databaseHostId,
-                databaseInstanceName: item.databaseInstanceName,
-                databaseInstanceId: item.databaseInstanceId,
-                credentialId: item.credentialId,
-                regionId: item.regionId,
-                sandboxCount: 1,
-                type: item.type,
-                loadingStatus,
-                status,
+
+            const uniqueKey = `${item?.resourceId}_${instance?.databaseInstanceName}`;
+            managedInstancesMap.set(uniqueKey, {
+                databaseHostName: item?.name,
+                databaseHostId: item?.resourceId,
+                databaseInstanceName: instance?.databaseInstanceName,
+                databaseInstanceId: instance?.databaseInstanceId,
+                credentialId: item?.credentialId,
+                regionId: item?.regionId,
+                type: item?.hostType,
+                status: instance?.status,
+                sandboxCount: 0,
+                loadingStatus: false,
                 id: id++
             });
+        });
+    });
+
+    // Step 2: Loop through tableData (sandbox data) and process
+    const isLoading = getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading;
+
+    tableData.forEach(item => {
+        const uniqueKey = `${item.databaseHostId}_${item.databaseInstanceName}`;
+
+        // Check if this instance exists in managed instances
+        if (managedInstancesMap.has(uniqueKey)) {
+            // Found in managed instances - increment sandbox count
+            const existingItem = managedInstancesMap.get(uniqueKey);
+            existingItem.sandboxCount += 1;
+        } else {
+            // Not found in managed instances but exists in tableData
+            // Create entry from tableData
+            const fullUniqueKey = `${item.databaseHostId}_${item.databaseInstanceName}_${item.credentialId}_${item.regionId}`;
+
+            if (!managedInstancesMap.has(fullUniqueKey)) {
+                // Get host info for loading status
+                const host =
+                    inventoryTableData?.[uniqueHostRow(item.databaseHostId, item?.credentialId, item.regionId)];
+                let loadingStatus = false;
+                let status = item.status || '';
+
+                if (!host) {
+                    loadingStatus = isLoading;
+                } else {
+                    const instance = host?.sqlServerInstances?.find(
+                        (instance: any) => instance.databaseInstanceId === item.databaseInstanceId
+                    );
+                    if (!instance) {
+                        loadingStatus = isLoading;
+                    } else {
+                        status = instance?.status || item.status || '';
+                        loadingStatus = false;
+                    }
+                }
+
+                managedInstancesMap.set(fullUniqueKey, {
+                    databaseHostName: item.databaseHostName,
+                    databaseHostId: item.databaseHostId,
+                    databaseInstanceName: item.databaseInstanceName,
+                    databaseInstanceId: item.databaseInstanceId,
+                    credentialId: item.credentialId,
+                    regionId: item.regionId,
+                    type: item.type || DBType.MSSQL,
+                    status,
+                    sandboxCount: 1,
+                    loadingStatus,
+                    id: id++
+                });
+            } else {
+                // Already exists, just increment count
+                const existingItem = managedInstancesMap.get(fullUniqueKey);
+                existingItem.sandboxCount += 1;
+            }
         }
     });
 
-    return Array.from(uniqueMap.values());
+    return Array.from(managedInstancesMap.values());
 };

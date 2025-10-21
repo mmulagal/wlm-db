@@ -6,6 +6,7 @@ import {
     CONFIG_STATES,
     COSTING_TYPES,
     DBType,
+    ERROR_ANALYZER_STATUS,
     FINDINGS,
     GETWELL_CONFIG,
     GETWELL_VALUES,
@@ -31,7 +32,7 @@ import {
 
 export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZARD_TYPE.MSSQL) => {
     let totalDatabases = 0;
-    let totahosts = 0;
+    let totalhosts = 0;
     let managedDatabases = 0;
     let totalInstances = 0;
     let managedInstances = 0;
@@ -50,7 +51,7 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
             return;
         }
         uniqueResourceList.push(keyList?.[0]);
-        totahosts += 1;
+        totalhosts += 1;
         totalInstances += data[val]?.databaseInstanceDetails?.length || 0;
         data[val]?.databaseInstanceDetails?.map((per: any) => {
             if (per?.isManaged) {
@@ -88,7 +89,65 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
     dispatch(setManagedHostInstanceLoading(isLoading));
     return {
         totalDatabases,
-        totalHosts: totahosts,
+        totalHosts: totalhosts,
+        managedDatabases,
+        totalInstances,
+        managedInstances
+    };
+};
+
+export const getManagedHostCountFromInventory = (
+    inventoryTableData: any,
+    dispatch: any,
+    type: string = WIZARD_TYPE.MSSQL
+) => {
+    let totalDatabases = 0;
+    let totalhosts = 0;
+    let managedDatabases = 0;
+    let totalInstances = 0;
+    let managedInstances = 0;
+    let isLoading = false;
+
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+
+    if (!inventoryTableData) {
+        return [];
+    }
+
+    const uniqueResourceList: Array<string> = [];
+    Object.keys(inventoryTableData)?.forEach((key: any) => {
+        const item = inventoryTableData[key];
+        if (
+            !headerSelectedMultiCredIdsList.includes(item?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
+            uniqueResourceList.includes(item?.resourceId || '') ||
+            item?.managedInstance === 0 ||
+            item?.hostType !== type
+        ) {
+            return;
+        }
+        uniqueResourceList.push(item?.resourceId || '');
+        totalhosts += 1;
+
+        item?.sqlServerInstances?.forEach((instance: any) => {
+            totalInstances += 1;
+            totalDatabases += instance?.databaseCount || 0;
+            if (instance?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                return;
+            }
+            managedInstances += 1;
+            managedDatabases += instance?.databaseCount || 0;
+            if (inventoryTableData[key]?.loading) {
+                isLoading = true;
+            }
+        });
+    });
+
+    dispatch(setManagedHostInstanceLoading(isLoading));
+    return {
+        totalDatabases,
+        totalHosts: totalhosts,
         managedDatabases,
         totalInstances,
         managedInstances
@@ -1061,6 +1120,96 @@ export const getManagedOptimizationSummary = (assessmentData: any, oracleAssessm
         warningNotOptimizedInstances,
         optimizedPercent: totalInstances > 0 ? Math.round((optimizedInstances / totalInstances) * 100) : 0,
         hasDismissedOrPostponed: isDismissedConfig
+    };
+};
+
+export const getErrorInvestigationSummary = (allLogAnalysisData: any) => {
+    const state = store.getState();
+    const { inventoryTableData } = state.inventoryV2;
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+
+    if (!inventoryTableData) {
+        return [];
+    }
+
+    let totalResource = 0;
+
+    const uniqueResourceList: Array<string> = [];
+    Object.keys(inventoryTableData)?.forEach((key: any) => {
+        const item = inventoryTableData[key];
+        if (
+            !headerSelectedMultiCredIdsList.includes(item?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
+            uniqueResourceList.includes(item?.resourceId || '') ||
+            item?.managedInstance === 0 ||
+            item?.hostType !== DBType.MSSQL
+        ) {
+            return;
+        }
+        uniqueResourceList.push(item?.resourceId || '');
+
+        item?.sqlServerInstances?.forEach((instance: any) => {
+            if (instance?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                return;
+            }
+            totalResource += 1;
+        });
+    });
+
+    const headerFilters = {
+        headerSelectedMultiCredIdsList: state.headers.headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList: state.headers.headerSelectedMultiRegionIdsList
+    };
+    const uniqueResourceAssList: Array<string> = [];
+
+    if (!allLogAnalysisData || allLogAnalysisData?.length === 0) {
+        return {
+            emptyState: true,
+            totalResource: 0,
+            activeResource: 0,
+            totalEvents: 0,
+            severity1: 0,
+            severity2: 0,
+            severity3: 0
+        };
+    }
+
+    let totalPresentResource = 0;
+    let activeResource = 0;
+    let totalEvents = 0;
+    let severity1 = 0;
+    let severity2 = 0;
+    let severity3 = 0;
+
+    allLogAnalysisData?.forEach((databaseHost: any) => {
+        if (
+            !headerFilters?.headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
+            !headerFilters?.headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
+            uniqueResourceAssList.includes(databaseHost?.databaseHostId)
+        ) {
+            return;
+        }
+        uniqueResourceAssList.push(databaseHost?.databaseHostId);
+
+        totalPresentResource++;
+        if (databaseHost?.status === ERROR_ANALYZER_STATUS.ACTIVE) {
+            activeResource++;
+        }
+        totalEvents += databaseHost?.latestReport?.errorCount || 0;
+
+        severity1 += databaseHost?.latestReport?.severityCounts?.critical || 0;
+        severity2 += databaseHost?.latestReport?.severityCounts?.severe || 0;
+        severity3 += databaseHost?.latestReport?.severityCounts?.warning || 0;
+    });
+
+    return {
+        emptyState: false,
+        totalResource: totalResource || totalPresentResource,
+        activeResource,
+        totalEvents,
+        severity1,
+        severity2,
+        severity3
     };
 };
 
@@ -2161,4 +2310,155 @@ export const categorizeStateInstances = (data: any, type: string) => {
     });
 
     return { successList, failedList };
+};
+
+/**
+ * Transform log analyzer data into unique rows based on databaseHostName, databaseHostId,
+ * databaseInstanceName, databaseInstanceId, credentialId, regionId
+ * and add sandboxCount field
+ */
+export const createLogAnalyzerNotActiveInstance = (tableData: any) => {
+    const state = store.getState();
+    const { inventoryTableData, allLogAnalysisData, allLogAnalysisLoading } = state.inventoryV2;
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+
+    if (!inventoryTableData) {
+        return [];
+    }
+
+    const newTableData: any[] = [];
+
+    const uniqueResourceList: Array<string> = [];
+    let id = 1;
+    Object.keys(inventoryTableData)?.forEach((key: any) => {
+        const item = inventoryTableData[key];
+        if (
+            !headerSelectedMultiCredIdsList.includes(item?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
+            uniqueResourceList.includes(item?.resourceId || '') ||
+            item?.managedInstance === 0 ||
+            item?.hostType !== DBType.MSSQL
+        ) {
+            return;
+        }
+        uniqueResourceList.push(item?.resourceId || '');
+
+        item?.sqlServerInstances?.forEach((instance: any) => {
+            if (instance?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                return;
+            }
+            const logAnalyzerRow = allLogAnalysisData?.find(
+                (perLa: any) =>
+                    uniqueHostRow(perLa?.databaseHostId, perLa?.credentialId || '', perLa?.regionId || '') === key &&
+                    perLa?.databaseInstanceId === instance?.databaseInstanceId
+            );
+            const logAnalyzerStatus = logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE;
+            if (logAnalyzerStatus === ERROR_ANALYZER_STATUS.ACTIVE) {
+                return;
+            }
+            newTableData.push({
+                databaseHostName: item?.name,
+                databaseHostId: item?.resourceId,
+                databaseInstanceName: instance?.databaseInstanceName,
+                databaseInstanceId: instance?.databaseInstanceId,
+                credentialId: item?.credentialId,
+                regionId: item?.regionId,
+                type: item?.hostType,
+                status: instance?.status,
+                id: id++,
+                logAnalyzer: {
+                    loading: allLogAnalysisLoading,
+                    errorCount: logAnalyzerRow?.latestReport?.errorCount || 0,
+                    status: logAnalyzerStatus,
+                    lastScan: logAnalyzerRow?.latestReport?.creationTime || '',
+                    severityCounts: {
+                        warning: logAnalyzerRow?.latestReport?.severityCounts?.warning || 0,
+                        critical: logAnalyzerRow?.latestReport?.severityCounts?.critical || 0,
+                        severe: logAnalyzerRow?.latestReport?.severityCounts?.severe || 0
+                    }
+                },
+                ec2InstanceId: item?.ec2InstanceId,
+                fsxId: instance?.fsxId,
+                sqlServerDeploymentType: instance?.sqlServerDeploymentType
+            });
+        });
+    });
+
+    return newTableData;
+};
+
+/**
+ * Transform log analyzer data into unique rows based on databaseHostName, databaseHostId,
+ * databaseInstanceName, databaseInstanceId, credentialId, regionId
+ * and add sandboxCount field
+ */
+export const createLogAnalyzerActiveInstance = (tableData: any[]) => {
+    const state = store.getState();
+    const { inventoryTableData, allLogAnalysisData, allLogAnalysisLoading } = state.inventoryV2;
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+
+    if (!inventoryTableData) {
+        return [];
+    }
+
+    const newTableData: any[] = [];
+
+    const uniqueResourceList: Array<string> = [];
+    let id = 1;
+    Object.keys(inventoryTableData)?.forEach((key: any) => {
+        const item = inventoryTableData[key];
+        if (
+            !headerSelectedMultiCredIdsList.includes(item?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
+            uniqueResourceList.includes(item?.resourceId || '') ||
+            item?.managedInstance === 0 ||
+            item?.hostType !== DBType.MSSQL
+        ) {
+            return;
+        }
+        uniqueResourceList.push(item?.resourceId || '');
+
+        item?.sqlServerInstances?.forEach((instance: any) => {
+            if (instance?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                return;
+            }
+            const logAnalyzerRow = allLogAnalysisData?.find(
+                (perLa: any) =>
+                    uniqueHostRow(perLa?.databaseHostId, perLa?.credentialId || '', perLa?.regionId || '') === key &&
+                    perLa?.databaseInstanceId === instance?.databaseInstanceId
+            );
+            const logAnalyzerStatus = logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE;
+            if (logAnalyzerStatus !== ERROR_ANALYZER_STATUS.ACTIVE) {
+                return;
+            }
+            newTableData.push({
+                databaseHostName: item?.name,
+                databaseHostId: item?.resourceId,
+                databaseInstanceName: instance?.databaseInstanceName,
+                databaseInstanceId: instance?.databaseInstanceId,
+                credentialId: item?.credentialId,
+                regionId: item?.regionId,
+                type: item?.hostType,
+                status: instance?.status,
+                id: id++,
+                logAnalyzerErrorCount: logAnalyzerRow?.latestReport?.errorCount || 0,
+                logAnalyzer: {
+                    loading: allLogAnalysisLoading,
+                    errorCount: logAnalyzerRow?.latestReport?.errorCount || 0,
+                    status: logAnalyzerStatus,
+                    lastScan: logAnalyzerRow?.latestReport?.creationTime || '',
+                    severityCounts: {
+                        warning: logAnalyzerRow?.latestReport?.severityCounts?.warning || 0,
+                        critical: logAnalyzerRow?.latestReport?.severityCounts?.critical || 0,
+                        severe: logAnalyzerRow?.latestReport?.severityCounts?.severe || 0
+                    }
+                },
+                ec2InstanceId: item?.ec2InstanceId,
+                fsxId: instance?.fsxId,
+                sqlServerDeploymentType: instance?.sqlServerDeploymentType
+            });
+        });
+    });
+
+    return newTableData;
 };

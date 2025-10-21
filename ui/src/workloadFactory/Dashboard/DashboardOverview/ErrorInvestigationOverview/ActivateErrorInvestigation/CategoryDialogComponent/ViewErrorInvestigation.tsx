@@ -5,7 +5,6 @@ import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import styles from './ActivateErrorInvestigation.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { GENERAL } from '../../../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../../../utils/consts';
 import { setSelectedViewErrorInvestigationRow } from '../../../../../../store/workloadFactory/agenticAISlice';
 
@@ -18,14 +17,16 @@ const ViewErrorInvestigation = ({ tableData }: { tableData: any }) => {
         {
             id: '1',
             Header: t('databases.dashboard.resource-name'),
-            accessor: 'resourceName',
-            width: '180px',
+            accessor: 'databaseInstanceName',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.resourceName;
+                const name = rowData?.databaseInstanceName;
                 return (
                     <div>
-                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {name || t('databases.general.not-available-table-columns')}
+                        </DsTypography>
                         {rowData?.loadingStatus && <DsFlashingDotsLoader />}
                         {!rowData?.loadingStatus && (
                             <div className={styles.firstColText}>
@@ -61,23 +62,23 @@ const ViewErrorInvestigation = ({ tableData }: { tableData: any }) => {
             id: '2',
             Header: t('databases.dashboard.type'),
             accessor: 'type',
-            width: '180px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: any) => cellData || t('databases.general.not-available-table-columns')
         },
         {
             id: '3',
             Header: t('databases.dashboard.host-name'),
-            accessor: 'hostName',
-            width: '180px',
+            accessor: 'databaseHostName',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: any) => cellData || t('databases.general.not-available-table-columns')
         },
         {
             id: '4',
             Header: t('databases.dashboard.error-analysis'),
-            accessor: 'errorInvestigation',
-            width: '190px',
+            accessor: 'logAnalyzerErrorCount',
+            width: 'auto',
             isSortable: true,
             renderCell: (cellData: any) => cellData || t('databases.general.not-available-table-columns')
         }

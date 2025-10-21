@@ -79,7 +79,12 @@ const LogAnalyzerOnboarding = () => {
                 latestReport: {
                     creationTime: 0,
                     jobId: res.data?.jobId || '',
-                    errorCount: 0
+                    errorCount: 0,
+                    severityCounts: {
+                        warning: 0,
+                        critical: 0,
+                        severe: 0
+                    }
                 }
             };
             const state = store.getState();

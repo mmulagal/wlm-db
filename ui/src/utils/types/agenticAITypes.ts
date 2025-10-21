@@ -81,5 +81,10 @@ export interface ErrorInvestigationInstance {
         creationTime?: number;
         jobId?: string;
         errorCount?: number;
+        severityCounts?: {
+            warning: number;
+            critical: number;
+            severe: number;
+        };
     };
 }
