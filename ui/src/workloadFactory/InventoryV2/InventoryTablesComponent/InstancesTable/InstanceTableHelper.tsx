@@ -59,26 +59,26 @@ export const getInstanceTableMenuOptions = (
         case DBType.POSTGRESQL:
             return [
                 {
-                    id: 'unManage',
+                    id: 'pgsql-unManage',
                     displayName: 'Deregister'
                 }
             ];
         case DBType.ORACLE:
             return [
                 {
-                    id: 'optimize',
+                    id: 'oracle-optimize',
                     displayName: t('databases.databases-table.oracle.menu-options.well-architected'),
                     disabled: disableOption,
                     infoText: disableMessage
                 },
                 {
-                    id: 'viewDatabaseDashboard',
+                    id: 'oracle-viewDatabaseDashboard',
                     displayName: t('databases.databases-table.oracle.menu-options.manage-database'),
                     disabled: disableOption,
                     infoText: disableMessage,
                     subMenu: [
                         {
-                            id: 'viewDatabaseDashboard',
+                            id: 'oracle-viewDatabaseDashboard',
                             displayName: t('databases.databases-table.oracle.menu-options.database-dashboard'),
                             disabled: disableOption,
                             infoText: disableMessage
@@ -86,20 +86,20 @@ export const getInstanceTableMenuOptions = (
                     ]
                 },
                 {
-                    id: 'unManage',
+                    id: 'oracle-unManage',
                     displayName: t('databases.databases-table.oracle.menu-options.deregister')
                 }
             ];
         case DBType.MSSQL:
             return [
                 {
-                    id: 'optimize',
+                    id: 'mssql-optimize',
                     displayName: t('databases.instance-table.menu-options.well-architected'),
                     disabled: disableOption,
                     infoText: disableMessage
                 },
                 {
-                    id: 'investigateErrors',
+                    id: 'mssql-investigateErrors',
                     displayName: t('databases.instance-table.menu-options.investigate-errors'),
                     disabled: !isBedRockAvailable || disableOption,
                     infoText: !isBedRockAvailable
@@ -107,31 +107,31 @@ export const getInstanceTableMenuOptions = (
                         : disableMessage
                 },
                 {
-                    id: 'viewInstance',
+                    id: 'mssql-viewInstance',
                     displayName: t('databases.instance-table.menu-options.manage-instance'),
                     disabled: disableOption,
                     infoText: disableMessage,
                     subMenu: [
                         {
-                            id: 'viewInstance',
+                            id: 'mssql-viewInstance',
                             displayName: t('databases.instance-table.menu-options.instance-dashboard'),
                             disabled: disableOption,
                             infoText: disableMessage
                         },
                         {
-                            id: 'viewDatabases',
+                            id: 'mssql-viewDatabases',
                             displayName: t('databases.instance-table.menu-options.view-databases'),
                             disabled: disableOption,
                             infoText: disableMessage
                         },
                         {
-                            id: 'createUserDb',
+                            id: 'mssql-createUserDb',
                             displayName: t('databases.instance-table.menu-options.create-database'),
                             disabled: disableOption || disableCreateDb,
                             infoText: disableMessage || disableCreateDbMsg
                         },
                         {
-                            id: 'createSandbox',
+                            id: 'mssql-createSandbox',
                             displayName: t('databases.instance-table.menu-options.create-sandbox'),
                             disabled: disableOption,
                             infoText: disableMessage
@@ -139,7 +139,7 @@ export const getInstanceTableMenuOptions = (
                     ]
                 },
                 {
-                    id: rowData?.isProtected ? 'editProtection' : 'protect',
+                    id: rowData?.isProtected ? 'mssql-editProtection' : 'mssql-protect',
                     displayName: rowData?.isProtected
                         ? t('databases.instance-table.menu-options.edit-protection')
                         : t('databases.instance-table.menu-options.protect'),
@@ -147,7 +147,7 @@ export const getInstanceTableMenuOptions = (
                     infoText: disableMessage
                 },
                 {
-                    id: 'unManage',
+                    id: 'mssql-unManage',
                     displayName: t('databases.instance-table.menu-options.deregister')
                 }
             ];
@@ -172,29 +172,29 @@ export const handleInstanceMenuSelection = ({
     switch (rowData.hostType) {
         case DBType.MSSQL:
             switch (menuId) {
-                case 'protect':
+                case 'mssql-protect':
                     handleProtection(rowData);
                     break;
-                case 'editProtection':
+                case 'mssql-editProtection':
                     handleEditProtection(rowData);
                     break;
-                case 'optimize':
-                case 'investigateErrors':
-                case 'viewInstance':
+                case 'mssql-optimize':
+                case 'mssql-investigateErrors':
+                case 'mssql-viewInstance':
                     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                     dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
                     dispatch(setFSXId({ fsxId: rowData?.fsxId, ec2InstanceId: rowData?.ec2InstanceId }));
-                    if (menuId === 'optimize') {
+                    if (menuId === 'mssql-optimize') {
                         dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
-                    } else if (menuId === 'investigateErrors') {
+                    } else if (menuId === 'mssql-investigateErrors') {
                         dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION));
-                    } else if (menuId === 'viewInstance') {
+                    } else if (menuId === 'mssql-viewInstance') {
                         dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
                     }
                     optimizeAction(rowData);
                     break;
-                case 'viewDatabases':
+                case 'mssql-viewDatabases':
                     dispatch(setSelectedInventoryTab('Databases'));
                     dispatch(
                         setSelectedFilterValue({
@@ -209,7 +209,7 @@ export const handleInstanceMenuSelection = ({
                         })
                     );
                     break;
-                case 'createUserDb':
+                case 'mssql-createUserDb':
                     dispatch(addInitialDBCreateData(initialCreateNewUserState));
                     dispatch(updateResourceId(rowData?.resourceId));
                     dispatch(
@@ -223,7 +223,7 @@ export const handleInstanceMenuSelection = ({
                     );
                     navigate('../create-new-user');
                     break;
-                case 'createSandbox':
+                case 'mssql-createSandbox':
                     dispatch(
                         setSelectedSandboxHeaderValue({
                             credId: rowData?.credentialId,
@@ -239,7 +239,7 @@ export const handleInstanceMenuSelection = ({
                     );
                     navigate('../create-new-sandbox');
                     break;
-                case 'unManage':
+                case 'mssql-unManage':
                     handleDialog(rowData);
                     break;
                 default:
@@ -248,7 +248,7 @@ export const handleInstanceMenuSelection = ({
             break;
         case DBType.ORACLE:
             switch (menuId) {
-                case 'optimize':
+                case 'oracle-optimize':
                     dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
                     dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
                     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
@@ -261,10 +261,10 @@ export const handleInstanceMenuSelection = ({
                     );
                     optimizeAction(rowData);
                     break;
-                case 'unManage':
+                case 'oracle-unManage':
                     handleDialog(rowData);
                     break;
-                case 'viewDatabaseDashboard':
+                case 'oracle-viewDatabaseDashboard':
                     dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
                     dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.OVERVIEW));
                     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
@@ -282,7 +282,7 @@ export const handleInstanceMenuSelection = ({
             }
             break;
         case DBType.POSTGRESQL:
-            if (menuId === 'unManage') {
+            if (menuId === 'pgsql-unManage') {
                 handleDialog(rowData);
             }
             break;

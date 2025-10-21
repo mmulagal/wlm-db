@@ -504,7 +504,12 @@ export function getOracleDatabaseColumnsList({
                                 trigger="hover"
                                 container={
                                     <div className={styles.buttonContainer}>
-                                        <DsButton variant="secondary" isThin isDisabled>
+                                        <DsButton
+                                            variant="secondary"
+                                            data-testid={`wlm-db-oracle-${colText}`}
+                                            isThin
+                                            isDisabled
+                                        >
                                             {colText}
                                         </DsButton>
                                     </div>
@@ -515,6 +520,7 @@ export function getOracleDatabaseColumnsList({
                                 <DsButton
                                     variant="secondary"
                                     isThin
+                                    data-testid={`wlm-db-oracle-${colText}`}
                                     onClick={() => {
                                         if (
                                             colText === ACTION_CTA.FIX_ISSUES ||

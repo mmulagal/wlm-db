@@ -9,7 +9,7 @@ type BulkActionContainerProps = {
 const BulkActionContainer = ({ action, onClick }: BulkActionContainerProps) => (
     <div className={styles.bulkContainer}>
         <DsTypography variant="Semibold_14">Bulk actions:</DsTypography>
-        <DsButton type="text" onClick={onClick}>
+        <DsButton data-testid={`wlm-db-${action}`} type="text" onClick={onClick}>
             {action}
         </DsButton>
     </div>

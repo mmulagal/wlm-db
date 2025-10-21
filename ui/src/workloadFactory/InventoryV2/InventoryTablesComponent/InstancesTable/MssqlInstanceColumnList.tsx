@@ -474,7 +474,12 @@ export function getMssqlInstanceTableColumns({
                                 trigger="hover"
                                 container={
                                     <div className={styles.buttonContainer}>
-                                        <DsButton variant="secondary" isThin isDisabled>
+                                        <DsButton
+                                            data-testid={`wlm-db-mssql-${colText}`}
+                                            variant="secondary"
+                                            isThin
+                                            isDisabled
+                                        >
                                             {colText}
                                         </DsButton>
                                     </div>
@@ -485,6 +490,7 @@ export function getMssqlInstanceTableColumns({
                                 <DsButton
                                     variant="secondary"
                                     isThin
+                                    data-testid={`wlm-db-mssql-${colText}`}
                                     onClick={() => {
                                         if (
                                             colText === ACTION_CTA.FIX_ISSUES ||
