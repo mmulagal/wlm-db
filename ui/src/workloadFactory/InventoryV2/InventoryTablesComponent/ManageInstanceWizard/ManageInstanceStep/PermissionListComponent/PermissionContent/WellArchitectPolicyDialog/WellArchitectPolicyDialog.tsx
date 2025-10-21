@@ -9,7 +9,13 @@ import { POLICIES_PERMISSIONS } from '../../../../../../../../utils/consts';
 const WellArchitectPolicyDialog = ({ data, label }: any) => {
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(t('databases.register-flow.aws-iam-policy-permissions'));
-    const [permissionData, setPermissionData] = useState<any>(JSON.stringify(data?.view, null, 2));
+    const [permissionData, setPermissionData] = useState<any>(
+        JSON.stringify(
+            data?.packages?.find?.((pkg: any) => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY)?.permissions,
+            null,
+            2
+        )
+    );
 
     const handleClick = (value: string) => {
         let permissionData: any = '';
