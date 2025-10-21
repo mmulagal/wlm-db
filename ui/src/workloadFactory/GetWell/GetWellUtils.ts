@@ -54,6 +54,7 @@ import {
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
+import { formatOracleWellArchitectedData } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 // Category and subcategory mapping for configurations
 export const getCategoryData = () => ({
@@ -960,6 +961,16 @@ export const cardDataDefault: any = {
                 'Old clones can incur significant costs.\nConsider deleting or refreshing these clones to optimize your storage expenses.'
         },
         tags: ['Cost Efficiency']
+    }
+};
+
+export const formatAssessmentData = (engineType: string | undefined, dispatch: any) => {
+    if (engineType === DBType.ORACLE) {
+        // Format data call for oracle
+        formatOracleWellArchitectedData(dispatch);
+    } else {
+        // Format data call for MSSQL
+        formatGetWellData(dispatch);
     }
 };
 
@@ -3816,7 +3827,8 @@ const updateAssessmentWithCompletedJobs = (
     type: string,
     jobId: string,
     rowData: any,
-    bulkRowData: any
+    bulkRowData: any,
+    engineType: string | undefined
 ) => {
     const state = store.getState();
     const { allmssqlHostAssessmentData } = state.inventoryV2;
@@ -3842,7 +3854,7 @@ const updateAssessmentWithCompletedJobs = (
             updateOptimizationStatus(row, dispatch);
         });
         setTimeout(() => {
-            formatGetWellData(dispatch);
+            formatAssessmentData(engineType, dispatch);
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -3867,7 +3879,7 @@ const updateAssessmentWithCompletedJobs = (
         );
 
         updateOptimizationStatus(rowData, dispatch);
-        formatGetWellData(dispatch);
+        formatAssessmentData(engineType, dispatch);
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -3884,7 +3896,8 @@ const updateAssessmentWithWarningJobs = (
     jobId: string,
     rowData: any,
     bulkRowData: any,
-    subjobs: any
+    subjobs: any,
+    engineType?: string | undefined
 ) => {
     const state = store.getState();
     const { allmssqlHostAssessmentData } = state.inventoryV2;
@@ -3920,7 +3933,7 @@ const updateAssessmentWithWarningJobs = (
             }
         });
         setTimeout(() => {
-            formatGetWellData(dispatch);
+            formatAssessmentData(engineType, dispatch);
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.INFO,
@@ -3944,7 +3957,7 @@ const updateAssessmentWithWarningJobs = (
             inProgressHostData
         );
         updateOptimizationStatus(rowData, dispatch);
-        formatGetWellData(dispatch);
+        formatAssessmentData(engineType, dispatch);
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -3961,7 +3974,8 @@ const updateAssessmentWithFailedJobs = (
     jobId: string,
     rowData: any,
     bulkRowData: any,
-    failedMsgData: any
+    failedMsgData: any,
+    engineType?: string
 ) => {
     const state = store.getState();
     const {
@@ -3982,7 +3996,7 @@ const updateAssessmentWithFailedJobs = (
         );
 
         setTimeout(() => {
-            formatGetWellData(dispatch);
+            formatAssessmentData(engineType, dispatch);
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
@@ -4005,7 +4019,7 @@ const updateAssessmentWithFailedJobs = (
             jobToInstanceMap,
             inProgressHostData
         );
-        formatGetWellData(dispatch);
+        formatAssessmentData(engineType, dispatch);
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.ERROR,
@@ -4197,7 +4211,8 @@ export const handleOptimizeStorageJob = (
     type?: any,
     operation?: string,
     bulkRowData?: any,
-    isOptimizeInnerPage?: boolean
+    isOptimizeInnerPage?: boolean,
+    engineType?: string
 ) => {
     const state = store.getState();
     const optimizingData = state.getWellOptimize.optimizingData || {};
@@ -4212,7 +4227,15 @@ export const handleOptimizeStorageJob = (
                     const jobId = jobRes?.data?.id;
                     const subjobs = jobRes?.data?.subJobs;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                        updateAssessmentWithCompletedJobs(dispatch, operation, type, jobId, rowData, bulkRowData);
+                        updateAssessmentWithCompletedJobs(
+                            dispatch,
+                            operation,
+                            type,
+                            jobId,
+                            rowData,
+                            bulkRowData,
+                            engineType
+                        );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
                         if (isOptimizeInnerPage) {
@@ -4226,7 +4249,8 @@ export const handleOptimizeStorageJob = (
                             jobId,
                             rowData,
                             bulkRowData,
-                            subjobs
+                            subjobs,
+                            engineType
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
@@ -4241,7 +4265,8 @@ export const handleOptimizeStorageJob = (
                             jobId,
                             rowData,
                             bulkRowData,
-                            failedMsgData
+                            failedMsgData,
+                            engineType
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);

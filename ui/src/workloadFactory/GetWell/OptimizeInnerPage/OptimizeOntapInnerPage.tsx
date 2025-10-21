@@ -28,7 +28,7 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
-import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import { formatAssessmentData, formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeStorageConfigMutation,
@@ -373,13 +373,7 @@ const OptimizeOntapInnerPage = () => {
                 [statusType]: [...(inProgressHostData[statusType] || []), selectedResourceId]
             })
         );
-        if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
-            // Format data call for oracle
-            formatOracleWellArchitectedData(dispatch);
-        } else {
-            // Format data call for MSSQL
-            formatGetWellData(dispatch);
-        }
+        formatAssessmentData(selectedOptimizeConfig?.engineType, dispatch);
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
@@ -475,7 +469,8 @@ const OptimizeOntapInnerPage = () => {
                 statusType,
                 '',
                 {},
-                true
+                true,
+                selectedOptimizeConfig?.engineType
             );
         });
     };

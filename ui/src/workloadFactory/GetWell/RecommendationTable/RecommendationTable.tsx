@@ -30,6 +30,7 @@ import {
     useLazyGetSubTaskListQuery,
     useOptimizeHAMssqlMutation,
     useOptimizeOperatingSystemMutation,
+    useOptimizeOracleOperatingSystemMutation,
     useOptimizeStorageConfigMutation
 } from '../../../utils/apiService';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -45,10 +46,12 @@ import {
     formatGetWellData,
     handleOptimizeStorageJob,
     filterIndividualOntapOsConfigurations,
-    filterIndividualMssqlHighAvailabilityConfigurations
+    filterIndividualMssqlHighAvailabilityConfigurations,
+    formatAssessmentData
 } from '../GetWellUtils';
 import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import {
+    ACTION_TYPE,
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
@@ -109,6 +112,7 @@ const RecommendationTable = ({
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
+    const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
     const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
@@ -118,17 +122,6 @@ const RecommendationTable = ({
         rowData?.name === 'OS type' ||
         rowData?.name === 'NTFS allocation unit size' ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
         rowData?.name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
@@ -170,6 +163,23 @@ const RecommendationTable = ({
                         ],
                         credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                         region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
+                    }
+                ]
+            }
+        ]
+    });
+
+    const getOracleOsPayload = (configurationName: string) => ({
+        type: 'storage-operating-system',
+        hostsToOptimize: [
+            {
+                configurationName,
+                databaseHosts: [
+                    {
+                        id: selectedResourceId || hostId,
+                        region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                        credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                        databases: [selectedDatabaseInstance || instanceId]
                     }
                 ]
             }
@@ -222,6 +232,64 @@ const RecommendationTable = ({
                     ]
                 }
             };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('tcp-advanced-options');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('multipath-io');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('host-utilities');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('transparent-hugepages');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.SELINUX) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('selinux');
+            apiInput = { payload };
+        } else if (
+            engineType === DBType.ORACLE &&
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT
+        ) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('iscsi-replacement-timeout');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('iscsi-targets-sessions');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('filesystem-io-options');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('multipath-configuration');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('multipath-friendly-names');
+            apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('multipath-readcount');
+            apiInput = { payload };
         } else {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOs;
@@ -259,7 +327,7 @@ const RecommendationTable = ({
                 [statusType]: [...(inProgressHostData[statusType] || []), selectedResourceId]
             })
         );
-        formatGetWellData(dispatch);
+        formatAssessmentData(engineType, dispatch);
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
@@ -333,7 +401,11 @@ const RecommendationTable = ({
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                statusType
+                statusType,
+                ACTION_TYPE.SINGLE,
+                {},
+                false,
+                engineType
             );
         });
     };
