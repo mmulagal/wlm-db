@@ -73,22 +73,16 @@ const HostDistributionChart = ({
         <div className={styles.inventoryChart} id="chart-item">
             <div className={styles['center-text']}>
                 <Typography
-                    variant={isDisabled ? 'Semibold_14' : 'Regular_32'}
+                    variant={isDisabled ? 'Semibold_14' : 'Regular_24'}
                     style={{ lineHeight: 'unset' }}
                     className={isDisabled ? CommonStyles.notAvailable : ''}
                 >
                     {centerValue}
                 </Typography>
 
-                {isDisabled && (
-                    <Typography
-                        variant="Regular_14"
-                        style={{ lineHeight: 'unset', marginTop: '4px' }}
-                        className={CommonStyles.notAvailable}
-                    >
-                        {centerText}
-                    </Typography>
-                )}
+                <Typography variant="Regular_14" style={{ lineHeight: 'unset', marginTop: '4px' }}>
+                    {centerText}
+                </Typography>
 
                 {loading && (
                     <div style={{ marginTop: '6px' }}>

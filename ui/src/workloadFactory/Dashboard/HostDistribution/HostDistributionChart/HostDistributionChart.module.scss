@@ -1,6 +1,6 @@
 .inventoryChart {
-    width: 200px;
-    height: 200px;
+    width: 144px;
+    height: 144px;
     position: relative;
     .center-text {
         position: absolute;
@@ -13,8 +13,8 @@
         flex-direction: column;
     }
     .emptyCircle {
-        width: 200px;
-        height: 200px;
+        width: 144px;
+        height: 144px;
         border-radius: 50%;
         border: 1px solid var(--field-border-disabled);
     }

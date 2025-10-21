@@ -3,7 +3,7 @@
         "general": {
             "instance-well-architected-dashboard": "instance well-architected dashboard",
             "database-well-architected-dashboard-for-oracle": "database well-architected dashboard for oracle",
-            "manage-instances-well-architected-score": "Registered instances well-architected score",
+            "manage-instances-well-architected-score": "Well-architected score",
             "well_architected_status": "Well-architected status",
             "update": "Update",
             "update_fsx_admin_password": "Update FSxadmin password",
@@ -1003,7 +1003,7 @@
             "switching-to-fsx-for-ontap-wont-save-you-money": "Switching to FSx for ONTAP won't save you money.",
             "select-explore-savings-to-review-the-cost-breakdown": "Select Explore savings to review the cost breakdown.",
             "category-dialog-component": "Select the resource to view and then select 'Continue' to be redirected to the well-architected dashboard for the resource.",
-            "well-architected-breakdown-by-configurations": "Well-architected breakdown by configurations",
+            "well-architected-breakdown-by-configurations": "Score breakdown by configurations",
             "total-registered-instances": "Total registered instances",
             "well-architected-instances": "Well-architected instances",
             "not-optimized-instances": "Not optimized instances",

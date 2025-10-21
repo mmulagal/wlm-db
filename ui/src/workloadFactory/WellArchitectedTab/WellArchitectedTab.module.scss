@@ -1,3 +1,17 @@
 .well-architected-tab {
     padding: 0 40px;
+
+    .section {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        width: 100%;
+
+        .subSection {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            width: 50%;
+        }
+    }
 }

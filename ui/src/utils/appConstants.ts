@@ -57,7 +57,7 @@ export const GENERAL = {
         'Plus, get optimization recommendations to make sure your database resources are well-architected.',
     INVENTORY_CARD_TEXT3:
         'Automatically assess and mitigate issues in database infrastructure to keep your databases running smoothly and cost-effectively. Continuously scan deployments to get insights and recommendations to make sure everything aligns with vendor and industry best practices.',
-    WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY: 'Well-architected breakdown by category',
+    WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY: 'Score breakdown by categories',
     CPU_UTILIZATION: 'CPU utilization',
     CAPACITY_UTILIZATION: 'Capacity utilization',
     REACTIVATE_TOOLTIP: 'Restart the analysis for a postponed or dismissed configuration.',
