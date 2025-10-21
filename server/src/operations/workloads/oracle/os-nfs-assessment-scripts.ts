@@ -38,8 +38,6 @@ def check_sunrpc_tcp_slot_entries():
 const NFS_MOUNT_OPTIONS = `
 def get_nfs_mount_options():
     """Fetch NFS mount point options for database files"""
-    log('Checking NFS mount point options for database files')
-    
     try:
         # Get all mount points
         result = subprocess.run(['mount', '-t', 'nfs,nfs4'], 
@@ -48,38 +46,79 @@ def get_nfs_mount_options():
         
         if result.returncode != 0:
             error_msg = f'mount command failed: {result.stderr.strip()}'
-            log(error_msg)
             return {"nfs-mount-options": None, "error": error_msg}
         
         mount_info = []
         lines = result.stdout.strip().split('\\n')
         
+        # Parse fstab for bg and nointr options
+        fstab_options = {}
+        try:
+            with open('/etc/fstab', 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            device, mount_point, fs_type, options = parts[0], parts[1], parts[2], parts[3]
+                            if fs_type in ['nfs', 'nfs4']:
+                                fstab_options[mount_point] = options
+        except Exception as e:
+            pass
+        
+        mount_data = []
         for line in lines:
             if not line.strip():
                 continue
-                
-            # Parse mount line format: server:/path on /mountpoint type nfs (options)
+
             match = re.match(r'^([^:]+):(\\S+)\\s+on\\s+(\\S+)\\s+type\\s+(\\w+)\\s+\\(([^)]+)\\)$', line)
             if match:
                 server, remote_path, mount_point, fs_type, options = match.groups()
+                mount_data.append((mount_point, server, remote_path, fs_type, options))
+        
+        mount_data.sort(key=lambda x: len(x[0]))
+        processed_mounts = []
+        for mount_point, server, remote_path, fs_type, options in mount_data:
+            # Check if this is a subdirectory of any already processed mount
+            is_subdirectory = any(mount_point.startswith(existing + '/') for existing, _, _, _, _ in processed_mounts)
+
+            if is_subdirectory:
+                continue
+
+            # Parse options into dictionary
+            option_dict = {}
+            for opt in options.split(','):
+                if '=' in opt:
+                    key, value = opt.split('=', 1)
+                    option_dict[key] = value
+                else:
+                    option_dict[opt] = True
                 
-                # Parse options into dictionary
-                option_dict = {}
-                for opt in options.split(','):
+            # Check fstab for bg and nointr options
+            fstab_opts = fstab_options.get(mount_point, '')
+            fstab_option_dict = {}
+            if fstab_opts:
+                for opt in fstab_opts.split(','):
                     if '=' in opt:
                         key, value = opt.split('=', 1)
-                        option_dict[key] = value
+                        fstab_option_dict[key] = value
                     else:
-                        option_dict[opt] = True
-                
-                mount_info.append({
-                    'server': server,
-                    'remote-path': remote_path,
-                    'mount-point': mount_point,
-                    'filesystem-type': fs_type,
-                    'options': option_dict
-                })
-    
+                        fstab_option_dict[opt] = True
+            
+            # Add bg and nointr status from fstab
+            option_dict['bg'] = fstab_option_dict.get('bg', False)
+            option_dict['nointr'] = fstab_option_dict.get('nointr', False)
+            
+            mount_info.append({
+                'server': server,
+                'remote-path': remote_path,
+                'mount-point': mount_point,
+                'filesystem-type': fs_type,
+                'options': option_dict
+            })
+            
+            processed_mounts.append((mount_point, server, remote_path, fs_type, options))
+        
         return {
             "nfs-mount-options": mount_info,
             "error": None
@@ -87,13 +126,10 @@ def get_nfs_mount_options():
         
     except subprocess.TimeoutExpired:
         error_msg = 'mount command timed out'
-        log(error_msg)
         return {"nfs-mount-options": None, "error": error_msg}
     except Exception as e:
         error_msg = f'Exception while checking NFS mount options: {str(e)}'
-        log(error_msg)
         return {"nfs-mount-options": None, "error": error_msg}
-
 `;
 
 const ADR_HOME = `
@@ -195,7 +231,7 @@ EXIT;
 
 def get_mount_options_for_mount_point(mount_point):
     """Get mount options for a specific mount point"""
-    
+    log(f'Getting mount options for mount point: {mount_point}')
     options_info = {
         "mount-point": mount_point,
         "filesystem-type": None,
@@ -225,23 +261,43 @@ def get_mount_options_for_mount_point(mount_point):
         device, mp, fs_type, options = match.groups()
         options_info["filesystem-type"] = fs_type
         
+        # Parse options into dictionary
+        option_dict = {}
         if options:
-            # Parse options into dictionary
-            option_dict = {}
             for opt in options.split(','):
                 if '=' in opt:
                     key, value = opt.split('=', 1)
                     option_dict[key] = value
                 else:
                     option_dict[opt] = True
-            options_info["mount-options"] = option_dict
-        else:
-            options_info["mount-options"] = {}
+
+        # Check fstab for additional mount options
+        try:
+            with open('/etc/fstab', 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        parts = line.split()
+                        if len(parts) >= 4 and parts[0] == mount_point:
+                            # Parse and merge fstab options
+                            if 'bg' in parts[3]:
+                                option_dict['bg'] = True
+                                break
+                            break
+        except Exception as e:
+            log(f"Error reading fstab: {str(e)}")
+        
+        # Ensure bg has boolean values if not set
+        if 'bg' not in option_dict:
+            option_dict['bg'] = False
+        options_info["mount-options"] = option_dict
 
     except subprocess.TimeoutExpired:
         options_info["error"] = "mount command timed out"
+        log(f"Timeout expired while getting mount options for {mount_point}")
     except Exception as e:
         options_info["error"] = f"Exception getting mount options: {str(e)}"
+        log(f"Exception while getting mount options for {mount_point}: {str(e)}")
     
     return options_info
 `;

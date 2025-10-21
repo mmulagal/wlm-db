@@ -439,7 +439,13 @@ function getNfsOSConfigDrift(
                         const mountPoint = mount?.['mount-point'] || '';
                         const remotePath = mount?.['remote-path'] || '';
                         const options = mount?.options || {};
-
+                        const mountVersion = options.vers;
+                        const currentMountOptions = Object.entries(nfsMountOptionExpected)
+                            .map(([key]) => {
+                                const actualValue = options[key]?.toString() || 'not found';
+                                return `${key}=${actualValue}`;
+                            })
+                            .join(', ');
                         const violations = Object.entries(nfsMountOptionExpected)
                             .filter(([key, expectedValue]) => {
                                 const actualValue = options[key];
@@ -456,9 +462,9 @@ function getNfsOSConfigDrift(
                             violationDetails.push(
                                 createViolationDetail(
                                     `${remotePath}:${mountPoint}`,
-                                    'nfs mount options',
-                                    violations.join(', '),
-                                    recommendedNFSMountOptions
+                                    'nfs mount mapping',
+                                    `${currentMountOptions}, vers=${mountVersion}`,
+                                    `${recommendedNFSMountOptions}, vers=${mountVersion}`
                                 )
                             );
                         }
@@ -481,10 +487,8 @@ function getNfsOSConfigDrift(
                         const remotePath = mount?.['remote-path'] || '';
                         const options = mount?.options || {};
                         const violations: string[] = [];
-
-                        // Check for noac with NFSv3
-                        if (options.vers === '3' && options.noac !== undefined) {
-                            violations.push('noac should not be used with NFSv3');
+                        if (options.noac !== undefined) {
+                            violations.push('noac');
                         }
 
                         // Check for caching options set to 0
@@ -498,7 +502,7 @@ function getNfsOSConfigDrift(
                             violationDetails.push(
                                 createViolationDetail(
                                     `${remotePath}:${mountPoint}`,
-                                    'nfs mount options',
+                                    'nfs mount mapping',
                                     violations.join(', '),
                                     'Remove noac option and ensure caching options are not set to 0'
                                 )
@@ -519,9 +523,8 @@ function getNfsOSConfigDrift(
                     });
                 } else {
                     const mountOptions = adrMountInfoData?.['adr-home-mount-info'];
-                    const fileSystem = mountOptions?.['filesystem-type'] || '';
 
-                    if (!fileSystem.includes('nfs')) {
+                    if (!mountOptions?.['filesystem-type']?.includes('nfs')) {
                         logger.info('Skipping ADR home mount check as it is not NFS', {
                             ec2InstanceId,
                             databaseInstanceName
@@ -529,33 +532,39 @@ function getNfsOSConfigDrift(
                         return;
                     }
 
-                    const mountPoint = mountOptions?.['mount-point'] || '';
                     const options = mountOptions?.['mount-options'] || {};
+                    const mountPoint = mountOptions?.['mount-point'] || '';
+                    const mountVersion = options.vers;
 
-                    const violations = Object.entries(nfsMountOptionExpected)
-                        .filter(([key, expectedValue]) => {
-                            if (key === 'nointr') {
-                                return false;
-                            } // Skip nointr check for adr-home
+                    const expectedOptions = Object.entries(nfsMountOptionExpected).filter(([key]) => key !== 'nointr');
 
-                            const actualValue = options[key];
-                            return Array.isArray(expectedValue)
-                                ? !expectedValue.includes(actualValue as string)
-                                : actualValue !== expectedValue;
-                        })
-                        .map(([key]) => {
-                            const actualValue = options[key]?.toString() || 'not found';
-
-                            return `${key}=${actualValue}`;
-                        });
+                    const violations = expectedOptions.filter(([key, expectedValue]) => {
+                        const actualValue = options[key];
+                        return Array.isArray(expectedValue)
+                            ? !expectedValue.includes(actualValue as string)
+                            : actualValue !== expectedValue;
+                    });
 
                     if (violations.length > 0) {
+                        const currentOptions = expectedOptions
+                            .map(([key]) => `${key}=${options[key]?.toString() || 'not found'}`)
+                            .join(', ');
+
+                        const recommendedOptions = expectedOptions
+                            .map(([key, expectedValue]) => {
+                                const recommended = Array.isArray(expectedValue)
+                                    ? expectedValue.join(' or ')
+                                    : expectedValue.toString();
+                                return `${key}=${recommended}`;
+                            })
+                            .join(', ');
+
                         violationDetails.push(
                             createViolationDetail(
                                 mountPoint,
-                                'nfs mount options',
-                                violations.join(', '),
-                                recommendedNFSMountOptions
+                                'nfs mount mapping',
+                                `${currentOptions}, vers=${mountVersion}`,
+                                `${recommendedOptions}, vers=${mountVersion}`
                             )
                         );
                     }

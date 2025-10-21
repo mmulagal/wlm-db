@@ -166,7 +166,6 @@ const nfsMountOptionExpected = {
     rw: true,
     bg: true,
     hard: true,
-    vers: ['3', '4.1'],
     proto: 'tcp',
     rsize: '262144',
     wsize: '262144',
