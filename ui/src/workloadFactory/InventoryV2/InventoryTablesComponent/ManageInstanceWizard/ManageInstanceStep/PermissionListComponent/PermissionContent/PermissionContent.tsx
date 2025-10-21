@@ -8,6 +8,7 @@ import DialogComponent from '../../../../../../../common/Dialog/DialogComponent'
 import PolicyDialog from './PolicyDialog/PolicyDialog';
 import WellArchitectPolicyDialog from './WellArchitectPolicyDialog/WellArchitectPolicyDialog';
 import { POLICIES_PERMISSIONS } from '../../../../../../../utils/consts';
+import { workloadPolicies } from '../../../../../../../utils/workloadPolicies';
 
 type PermissionBlock = {
     label: string;
@@ -41,7 +42,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
             );
         } else {
             data = JSON.stringify(
-                policies?.packages?.find?.((pkg: any) => pkg?.name === POLICIES_PERMISSIONS.INSTANCE_PROFILE_POLICY)
+                workloadPolicies.find(policy => policy.name === POLICIES_PERMISSIONS.INSTANCE_PROFILE_POLICY)
                     ?.permissions,
                 null,
                 2

@@ -5,6 +5,7 @@ import { ReactComponent as CopyIcon } from '../../../../../../../../assets/ic_co
 import styles from './WellArchitectPolicyDialog.module.scss';
 import CopyToClipboardCommon from '../../../../../../../../common/CopyToClipboard/copyToClipboard';
 import { POLICIES_PERMISSIONS } from '../../../../../../../../utils/consts';
+import { workloadPolicies } from '../../../../../../../../utils/workloadPolicies';
 
 const WellArchitectPolicyDialog = ({ data, label }: any) => {
     const { t } = useTranslation();
@@ -24,12 +25,12 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
                 (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY
             )?.permissions;
         } else if (value === t('databases.register-flow.fsx-for-ontap-permissions')) {
-            permissionData = data?.packages?.find?.(
-                (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.WELL_ARCHITECTED_FSX__POLICY
+            permissionData = workloadPolicies.find(
+                policy => policy.name === POLICIES_PERMISSIONS.WELL_ARCHITECTED_FSX__POLICY
             )?.permissions;
         } else if (value === t('databases.register-flow.compute-optimizer-permissions')) {
-            permissionData = data?.packages?.find?.(
-                (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.WELL_ARCHITECTED_COMPUTE_POLICY
+            permissionData = workloadPolicies.find(
+                policy => policy.name === POLICIES_PERMISSIONS.WELL_ARCHITECTED_COMPUTE_POLICY
             )?.permissions;
         }
         setPermissionData(JSON.stringify(permissionData, null, 2));
