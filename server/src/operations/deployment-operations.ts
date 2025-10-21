@@ -1486,7 +1486,7 @@ async function deploymentStatusByName(accountId: string, deploymentName: string)
     return data;
 }
 
-function prepareResourceActionMap(statements: [PolicyStatement]) {
+function prepareResourceActionMap(statements: PolicyStatement[]) {
     logger.debug('Preparing resource action map', { statements });
 
     const resourcePolicyActions: {
@@ -1510,7 +1510,7 @@ function prepareResourceActionMap(statements: [PolicyStatement]) {
                     Object.entries(value).forEach(([conditionKey, conditionValue]) =>
                         resourceConditions.push({
                             ContextKeyName: conditionKey,
-                            ContextKeyValues: [conditionValue],
+                            ContextKeyValues: Array.isArray(conditionValue) ? conditionValue : [conditionValue],
                             ContextKeyType: 'string'
                         })
                     );

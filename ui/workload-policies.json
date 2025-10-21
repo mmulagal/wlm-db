@@ -1,75 +1,153 @@
 {
-    "workload": "Databases",
-    "packages": [
-        {
-            "name": "View, planning, and analysis",
-            "description": "Permissions for viewing, planning, and analyzing databases, including resource monitoring and the well-architected analysis",
-            "immutable": true,
-            "isDefault": true,
-            "permissions": {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Sid": "CommonGroup",
-                        "Effect": "Allow",
-                        "Action": [
-                            "cloudwatch:GetMetricStatistics",
-                            "cloudwatch:GetMetricData",
-                            "sns:ListTopics",
-                            "ec2:DescribeInstances",
-                            "ec2:DescribeVpcs",
-                            "ec2:DescribeSubnets",
-                            "ec2:DescribeSecurityGroups",
-                            "ec2:DescribeImages",
-                            "ec2:DescribeRegions",
-                            "ec2:DescribeRouteTables",
-                            "ec2:DescribeKeyPairs",
-                            "ec2:DescribeNetworkInterfaces",
-                            "ec2:DescribeInstanceTypes",
-                            "ec2:DescribeVpcEndpoints",
-                            "ec2:DescribeInstanceTypeOfferings",
-                            "ec2:DescribeSnapshots",
-                            "ec2:DescribeVolumes",
-                            "ec2:DescribeAddresses",
-                            "kms:ListAliases",
-                            "kms:ListKeys",
-                            "kms:DescribeKey",
-                            "cloudformation:ListStacks",
-                            "cloudformation:DescribeAccountLimits",
-                            "ds:DescribeDirectories",
-                            "fsx:DescribeVolumes",
-                            "fsx:DescribeBackups",
-                            "fsx:DescribeStorageVirtualMachines",
-                            "fsx:DescribeFileSystems",
-                            "servicequotas:ListServiceQuotas",
-                            "ssm:GetParametersByPath",
-                            "ssm:GetCommandInvocation",
-                            "ssm:SendCommand",
-                            "ssm:GetConnectionStatus",
-                            "ssm:DescribePatchBaselines",
-                            "ssm:DescribeInstancePatchStates",
-                            "ssm:ListCommands",
-                            "ssm:DescribeInstanceInformation",
-                            "fsx:ListTagsForResource",
-                            "logs:DescribeLogGroups",
-                            "bedrock:GetFoundationModelAvailability",
-                            "bedrock:ListInferenceProfiles"
-                        ],
-                        "Resource": ["*"]
-                    },
-                    {
-                        "Sid": "SSMParameterStore",
-                        "Effect": "Allow",
-                        "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameters"],
-                        "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
-                    },
-                    {
-                        "Sid": "SSMResponseCloudWatch",
-                        "Effect": "Allow",
-                        "Action": ["logs:GetLogEvents", "logs:PutRetentionPolicy"],
-                        "Resource": "arn:aws:logs:*:*:log-group:netapp/wlmdb/*"
-                    }
-                ]
+  "workload": "Databases",
+  "packages": [
+    {
+      "name": "View, planning, and analysis",
+      "description": "View the inventory of database resources, learn about the health of your resources, review the well-architected analysis of your database configurations, get error log analysis, and explore savings.",
+      "immutable": true,
+      "isDefault": true,
+      "permissions": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "CommonGroup",
+            "Effect": "Allow",
+            "Action": [
+              "cloudwatch:GetMetricStatistics",
+              "cloudwatch:GetMetricData",
+              "sns:ListTopics",
+              "ec2:DescribeInstances",
+              "ec2:DescribeVpcs",
+              "ec2:DescribeSubnets",
+              "ec2:DescribeSecurityGroups",
+              "ec2:DescribeImages",
+              "ec2:DescribeRegions",
+              "ec2:DescribeRouteTables",
+              "ec2:DescribeKeyPairs",
+              "ec2:DescribeNetworkInterfaces",
+              "ec2:DescribeInstanceTypes",
+              "ec2:DescribeVpcEndpoints",
+              "ec2:DescribeInstanceTypeOfferings",
+              "ec2:DescribeSnapshots",
+              "ec2:DescribeVolumes",
+              "ec2:DescribeAddresses",
+              "kms:ListAliases",
+              "kms:ListKeys",
+              "kms:DescribeKey",
+              "cloudformation:ListStacks",
+              "cloudformation:DescribeAccountLimits",
+              "ds:DescribeDirectories",
+              "fsx:DescribeVolumes",
+              "fsx:DescribeBackups",
+              "fsx:DescribeStorageVirtualMachines",
+              "fsx:DescribeFileSystems",
+              "servicequotas:ListServiceQuotas",
+              "ssm:GetParametersByPath",
+              "ssm:GetCommandInvocation",
+              "ssm:SendCommand",
+              "ssm:GetConnectionStatus",
+              "ssm:DescribePatchBaselines",
+              "ssm:DescribeInstancePatchStates",
+              "ssm:ListCommands",
+              "ssm:DescribeInstanceInformation",
+              "fsx:ListTagsForResource",
+              "logs:DescribeLogGroups",
+              "bedrock:GetFoundationModelAvailability",
+              "bedrock:ListInferenceProfiles"
+            ],
+            "Resource": ["*"]
+          },
+          {
+            "Sid": "SSMParameterStore",
+            "Effect": "Allow",
+            "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameters"],
+            "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
+          },
+          {
+            "Sid": "SSMResponseCloudWatch",
+            "Effect": "Allow",
+            "Action": ["logs:GetLogEvents", "logs:PutRetentionPolicy"],
+            "Resource": "arn:aws:logs:*:*:log-group:netapp/wlmdb/*"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Operations and remediation",
+      "description": "Perform operational tasks for your database resources and fix issues for database configurations and the underlying FSx for ONTAP filesystem storage.",
+      "immutable": false,
+      "isDefault": false,
+      "permissions": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "RemediationFix",
+            "Effect": "Allow",
+            "Action": [
+              "fsx:UpdateFileSystem",
+              "fsx:UpdateVolume",
+              "ec2:RunInstances",
+              "ec2:StartInstances",
+              "ec2:ModifyInstanceAttribute",
+              "ec2:StopInstances"
+            ],
+            "Resource": "*"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Database host creation",
+      "description": "Deploy database hosts and the underlying FSx for ONTAP filesystem storage according to best practices.",
+      "immutable": false,
+      "isDefault": false,
+      "permissions": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "EC2TagGroup",
+            "Effect": "Allow",
+            "Action": [
+              "ec2:AllocateAddress",
+              "ec2:AllocateHosts",
+              "ec2:AssignPrivateIpAddresses",
+              "ec2:AssociateAddress",
+              "ec2:AssociateRouteTable",
+              "ec2:AssociateSubnetCidrBlock",
+              "ec2:AssociateVpcCidrBlock",
+              "ec2:AttachInternetGateway",
+              "ec2:AttachNetworkInterface",
+              "ec2:AttachVolume",
+              "ec2:AuthorizeSecurityGroupEgress",
+              "ec2:AuthorizeSecurityGroupIngress",
+              "ec2:CreateVolume",
+              "ec2:DeleteNetworkInterface",
+              "ec2:DeleteSecurityGroup",
+              "ec2:DeleteTags",
+              "ec2:DeleteVolume",
+              "ec2:DetachNetworkInterface",
+              "ec2:DetachVolume",
+              "ec2:DisassociateAddress",
+              "ec2:DisassociateIamInstanceProfile",
+              "ec2:DisassociateRouteTable",
+              "ec2:DisassociateSubnetCidrBlock",
+              "ec2:DisassociateVpcCidrBlock",
+              "ec2:ModifyInstancePlacement",
+              "ec2:ModifyNetworkInterfaceAttribute",
+              "ec2:ModifySubnetAttribute",
+              "ec2:ModifyVolume",
+              "ec2:ModifyVolumeAttribute",
+              "ec2:ReleaseAddress",
+              "ec2:ReplaceRoute",
+              "ec2:ReplaceRouteTableAssociation",
+              "ec2:RevokeSecurityGroupEgress",
+              "ec2:RevokeSecurityGroupIngress"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "StringLike": {
+                "ec2:ResourceTag/aws:cloudformation:stack-name": "WLMDB*"
+              }
             }
         },
         {
