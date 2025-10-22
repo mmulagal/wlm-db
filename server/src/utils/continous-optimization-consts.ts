@@ -420,6 +420,16 @@ const ORACLE_STORAGE_LAYOUT_CONFIGS_MAP = {
     ]
 };
 
+const ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
+    volumes: ['nfs-rootonly', 'export-policy'],
+    os: [
+        'kernel-parameters',
+        'nfs-mount-options-databasefiles',
+        'nfs-mount-options-adrhome',
+        'nfsv4-domain-name',
+        'nfs-caching-options'
+    ]
+};
 const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
     volumes: [
         'thin-provision',
@@ -434,7 +444,8 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'tiering-min-cooling-days',
         'compression',
         'deduplication',
-        'compaction'
+        'compaction',
+        ...ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes
     ],
     luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
     os: [
@@ -448,7 +459,8 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'tcp-advanced-options',
         'filesystems-io-options',
         'multipath-readcount',
-        'multipath-configuration'
+        'multipath-configuration',
+        ...ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
     ]
 };
 
@@ -631,5 +643,6 @@ export {
     OptimizeStorageRequestParams,
     OptimizeOracleTypes,
     OptimizeOracleiSCSIStorageOperatingSystem,
-    OracleOptimizeJobDescriptions
+    OracleOptimizeJobDescriptions,
+    ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP
 };

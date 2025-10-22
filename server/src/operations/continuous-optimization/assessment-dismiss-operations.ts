@@ -12,7 +12,8 @@ import {
     MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,
-    ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS
+    ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS,
+    ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import {
@@ -666,6 +667,15 @@ function areAllStorageConfigurationsDismissed(
             return areAllConfigsDismissed(nfsRelevantConfigs, categoryConfigs);
         }
 
+        if (!isOracleWithNFS && (category === 'volumes' || category === 'os')) {
+            const nfsConfigs =
+                ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP[
+                    category as keyof typeof ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP
+                ];
+            const nonNfsConfigs = expectedConfigs.filter(config => !nfsConfigs.includes(config));
+            return areAllConfigsDismissed(nonNfsConfigs, categoryConfigs);
+        }
+
         return areAllConfigsDismissed(expectedConfigs, categoryConfigs);
     });
 
@@ -768,6 +778,13 @@ function updateFieldsBasedOnDismissedConfigurations(
 
         // Skip Oracle iSCSI-specific layout configs for NFS protocol
         if (isOracleWithNFS && ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS.includes(fieldValue)) {
+            return false;
+        }
+
+        if (
+            (!isOracleWithNFS && ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes.includes(fieldValue)) ||
+            ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os.includes(fieldValue)
+        ) {
             return false;
         }
 
