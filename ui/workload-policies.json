@@ -100,7 +100,7 @@
             "Resource": "*",
             "Condition": {
               "StringLike": {
-              "ec2:ResourceTag/*": "WLMDB*"
+              "ec2:ResourceTag/aws:cloudformation:stack-name": "WLMDB*"
               }
             }
           }
