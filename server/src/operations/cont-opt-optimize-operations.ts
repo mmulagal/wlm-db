@@ -2273,8 +2273,7 @@ async function enableMpioTimeout(optimizeMpioTimeoutParams: OptimizeMpioTimeoutP
             sqlAuthEnabled: sqlAuthEnabled || false,
             fsxFileSystem: fsxId,
             activeNodeInstanceid: activeNodeInstanceId!,
-            resourceName: serverNameWithHostName,
-            cloudProviderAccountId: accountId
+            resourceName: serverNameWithHostName
         };
         if (isDemoFlow) {
             await updateOptimizedConfigNameInInstanceTable(

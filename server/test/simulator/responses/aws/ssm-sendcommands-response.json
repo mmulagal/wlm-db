@@ -1776,5 +1776,41 @@
             "OutputS3Region": "ap-southeast-1",
             "RequestedDateTime": "2023-08-28T14:57:41.365Z"
         }
+    },
+    "optimizeIscsiReplacementTimeout": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeIscsiReplacementTimeout",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeIscsiReplacementTimeout",
+            "DocumentName": "AWS-RunShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "optimizeOracleMultipathIoSessions": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeOracleMultipathIoSessions",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeOracleMultipathIoSessions",
+            "DocumentName": "AWS-RunShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
     }
 }

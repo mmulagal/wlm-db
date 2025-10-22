@@ -131,7 +131,6 @@ describe('MTU optimization', () => {
             region,
             sqlAuthEnabled: false,
             activeNodeInstanceid: instanceId,
-            cloudProviderAccountId: accountId,
             resourceName: 'test-mtu-resource'
         };
         const mtu = await getFSxMTUValue(credentialsId, region, instanceRecord, accountId);
@@ -150,7 +149,6 @@ describe('MTU optimization', () => {
             region,
             sqlAuthEnabled: false,
             activeNodeInstanceid: instanceId,
-            cloudProviderAccountId: accountId,
             resourceName: 'test-mtu-resource-2'
         };
         const mtu = await getFSxMTUValue(credentialsId, region, instanceRecord, accountId);

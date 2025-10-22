@@ -532,7 +532,7 @@ interface WorkloadInstance {
     mappedLunNames?: string[];
     mappedLunUuids?: string[];
     mappedDiskGroups?: string[];
-    cloudProviderAccountId: string;
+    cloudProviderAccountId?: string; // Refers to AWS account ID
     resourceName: string;
     svmId?: string;
     svmOntapUuid?: string | string[];

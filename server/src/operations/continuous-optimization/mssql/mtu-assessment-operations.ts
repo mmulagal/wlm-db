@@ -80,7 +80,6 @@ async function mtuAssessment(
         region,
         sqlAuthEnabled: false,
         activeNodeInstanceid: activeNodeInstanceId,
-        cloudProviderAccountId: accountId,
         resourceName: databaseHostId
     };
     try {

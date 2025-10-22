@@ -1351,6 +1351,7 @@ import stat
 import textwrap
 from urllib.parse import urlparse
 from urllib.request import urlopen, Request
+from pathlib import Path
 `;
 
 const ontapRestApiScript = `

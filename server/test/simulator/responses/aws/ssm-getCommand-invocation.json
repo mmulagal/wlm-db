@@ -2164,12 +2164,8 @@
                         "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
                         "name": "daily",
                         "cron": {
-                            "minutes": [
-                                10
-                            ],
-                            "hours": [
-                                0
-                            ]
+                            "minutes": [10],
+                            "hours": [0]
                         },
                         "_links": {
                             "self": {
@@ -3446,23 +3442,7 @@
             "instanceState": "Running"
         }
     ],
-    "getAvailableDriveLetters": [
-        "A",
-        "B",
-        "D",
-        "E",
-        "F",
-        "G",
-        "N",
-        "O",
-        "P",
-        "Q",
-        "R",
-        "W",
-        "X",
-        "Y",
-        "Z"
-    ],
+    "getAvailableDriveLetters": ["A", "B", "D", "E", "F", "G", "N", "O", "P", "Q", "R", "W", "X", "Y", "Z"],
     "getSqlServerServicesCommand": {
         "Name": "MSSQLSERVER",
         "Status": "Running",
@@ -3487,18 +3467,14 @@
                 "lunName": "/vol/wlmdb_sqllog_1753314349998/sqllog",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": [
-                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"
-                ]
+                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
             },
             {
                 "lunUuid": "74f32fa7-a69a-46ad-ac43-96446696235b",
                 "lunName": "/vol/wlmdb_sqldata_1753314349998/sqldata",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": [
-                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"
-                ]
+                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
             },
             {
                 "lunUuid": "5267b549-d42c-41dd-a54e-31a8beb96cb5",
@@ -3515,9 +3491,7 @@
                 "lunName": "/vol/wlmdb_sqllog_1753333408/sqllog",
                 "igroupUuid": "af2e8720-682e-11f0-afc5-97265296a03d",
                 "igroupName": "wlmdb_sqligroup_1753314349998",
-                "initiatorNames": [
-                    "iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"
-                ]
+                "initiatorNames": ["iqn.1991-05.com.microsoft:sqlnode1-56270.wlmdb-private.com"]
             },
             {
                 "lunUuid": "1e9b1d45-4c81-4bd1-bfe8-7d0ab4c8899c",
@@ -3594,9 +3568,7 @@
                 "name": "Ethernet 3",
                 "mtu": 1500,
                 "interfaceIndex": 9,
-                "ports": [
-                    "1433"
-                ],
+                "ports": ["1433"],
                 "ipAddresses": [
                     {
                         "address": "172.31.32.100",
@@ -3612,9 +3584,7 @@
                 "name": "Ethernet 4",
                 "mtu": 9001,
                 "interfaceIndex": 10,
-                "ports": [
-                    "1434"
-                ],
+                "ports": ["1434"],
                 "ipAddresses": [
                     {
                         "address": "172.31.32.101",
@@ -3721,26 +3691,26 @@
             "error": ""
         },
         "dnfsServers": {
-        "data": [
+            "data": [
+                {
+                    "dirname": "/oracledata2",
+                    "svrname": "172.31.255.231",
+                    "nfsversion": "NFSv3.0"
+                },
+                {
+                    "dirname": "/oracleredo2",
+                    "svrname": "fsxnfsv3",
+                    "nfsversion": "NFSv4.0"
+                }
+            ],
+            "error": ""
+        },
+        "nfsRootonly": [
             {
-                "dirname": "/oracledata2",
-                "svrname": "172.31.255.231",
-                "nfsversion": "NFSv3.0"
-            },
-            {
-                "dirname": "/oracleredo2",
-                "svrname": "fsxnfsv3",
-                "nfsversion": "NFSv4.0"
+                "svmName": "wlmdb_sqlsvm_1735809893269",
+                "nfsRootonly": "disabled"
             }
         ],
-        "error": ""
-    },
-    "nfsRootonly": [
-        {
-            "svmName": "wlmdb_sqlsvm_1735809893269",
-            "nfsRootonly": "disabled"
-        }
-    ],
         "os": {
             "selinux": {
                 "error": null,
@@ -3849,124 +3819,125 @@
                 "asm-external-redundancy": {
                     "error": "",
                     "assessment": {
-                    "violations": [],
-                    "result": "true",
-                    "totalObjects": 2
+                        "violations": [],
+                        "result": "true",
+                        "totalObjects": 2
                     }
                 },
                 "afd-logical-block-size": {},
                 "asmlib-logical-block-size": {
                     "assessment": {
-                    "result": "Y"
+                        "result": "Y"
                     },
                     "error": ""
                 }
             },
             "adr-info": {
-    "error": null,
-    "adr-home": "/u01/app/oracle/diag/rdbms/ordbsdl/ordbsdl",
-    "adr-home-mount": "/dev/nvme0n1p3",
-    "adr-home-mount-info": {
-        "error": null,
-        "mount-point": "/dev/nvme0n1p3",
-        "mount-options": {
-            "rw": true,
-            "attr2": true,
-            "inode64": true,
-            "logbufs": "8",
-            "noquota": true,
-            "logbsize": "32k",
-            "relatime": true,
-            "seclabel": true
-        },
-        "filesystem-type": "xfs"
-    }
-},
-"kernel-parameters": {
-    "error": null,
-    "sunrpc-tcp-slot-entries": {
-        "tcp-slot-table": "2",
-        "tcp-max-slot-table": "65536"
-    }
-},
-"nfs-mount-options": {
-    "error": null,
-    "nfs-mount-options": [
-        {
-            "server": "172.31.255.231",
-            "options": {
-                "rw": true,
-                "sec": "sys",
-                "addr": "172.31.255.231",
-                "hard": true,
-                "vers": "4.2",
-                "proto": "tcp",
-                "rsize": "65536",
-                "timeo": "600",
-                "wsize": "65536",
-                "namlen": "255",
-                "retrans": "2",
-                "relatime": true,
-                "clientaddr": "172.31.48.99",
-                "local_lock": "none"
+                "error": null,
+                "adr-home": "/u01/app/oracle/diag/rdbms/ordbsdl/ordbsdl",
+                "adr-home-mount": "/dev/nvme0n1p3",
+                "adr-home-mount-info": {
+                    "error": null,
+                    "mount-point": "/dev/nvme0n1p3",
+                    "mount-options": {
+                        "rw": true,
+                        "attr2": true,
+                        "inode64": true,
+                        "logbufs": "8",
+                        "noquota": true,
+                        "logbsize": "32k",
+                        "relatime": true,
+                        "seclabel": true
+                    },
+                    "filesystem-type": "xfs"
+                }
             },
-            "mount-point": "/mnt/oradata",
-            "remote-path": "/oracledata2",
-            "filesystem-type": "nfs4"
-        },
-        {
-            "server": "172.31.255.231",
-            "options": {
-                "rw": true,
-                "sec": "sys",
-                "addr": "172.31.255.231",
-                "hard": true,
-                "vers": "4.2",
-                "proto": "tcp",
-                "rsize": "65536",
-                "timeo": "600",
-                "wsize": "65536",
-                "namlen": "255",
-                "retrans": "2",
-                "relatime": true,
-                "clientaddr": "172.31.48.99",
-                "local_lock": "none"
+            "kernel-parameters": {
+                "error": null,
+                "sunrpc-tcp-slot-entries": {
+                    "tcp-slot-table": "2",
+                    "tcp-max-slot-table": "65536"
+                }
             },
-            "mount-point": "/mnt/oraarch",
-            "remote-path": "/oraclearch2",
-            "filesystem-type": "nfs4"
-        },
-        {
-            "server": "172.31.255.231",
-            "options": {
-                "rw": true,
-                "sec": "sys",
-                "addr": "172.31.255.231",
-                "hard": true,
-                "vers": "4.2",
-                "proto": "tcp",
-                "rsize": "65536",
-                "timeo": "600",
-                "wsize": "65536",
-                "namlen": "255",
-                "retrans": "2",
-                "relatime": true,
-                "clientaddr": "172.31.48.99",
-                "local_lock": "none"
+            "nfs-mount-options": {
+                "error": null,
+                "nfs-mount-options": [
+                    {
+                        "server": "172.31.255.231",
+                        "options": {
+                            "rw": true,
+                            "sec": "sys",
+                            "addr": "172.31.255.231",
+                            "hard": true,
+                            "vers": "4.2",
+                            "proto": "tcp",
+                            "rsize": "65536",
+                            "timeo": "600",
+                            "wsize": "65536",
+                            "namlen": "255",
+                            "retrans": "2",
+                            "relatime": true,
+                            "clientaddr": "172.31.48.99",
+                            "local_lock": "none"
+                        },
+                        "mount-point": "/mnt/oradata",
+                        "remote-path": "/oracledata2",
+                        "filesystem-type": "nfs4"
+                    },
+                    {
+                        "server": "172.31.255.231",
+                        "options": {
+                            "rw": true,
+                            "sec": "sys",
+                            "addr": "172.31.255.231",
+                            "hard": true,
+                            "vers": "4.2",
+                            "proto": "tcp",
+                            "rsize": "65536",
+                            "timeo": "600",
+                            "wsize": "65536",
+                            "namlen": "255",
+                            "retrans": "2",
+                            "relatime": true,
+                            "clientaddr": "172.31.48.99",
+                            "local_lock": "none"
+                        },
+                        "mount-point": "/mnt/oraarch",
+                        "remote-path": "/oraclearch2",
+                        "filesystem-type": "nfs4"
+                    },
+                    {
+                        "server": "172.31.255.231",
+                        "options": {
+                            "rw": true,
+                            "sec": "sys",
+                            "addr": "172.31.255.231",
+                            "hard": true,
+                            "vers": "4.2",
+                            "proto": "tcp",
+                            "rsize": "65536",
+                            "timeo": "600",
+                            "wsize": "65536",
+                            "namlen": "255",
+                            "retrans": "2",
+                            "relatime": true,
+                            "clientaddr": "172.31.48.99",
+                            "local_lock": "none"
+                        },
+                        "mount-point": "/mnt/oraredoctl",
+                        "remote-path": "/oracleredo2",
+                        "filesystem-type": "nfs4"
+                    }
+                ]
             },
-            "mount-point": "/mnt/oraredoctl",
-            "remote-path": "/oracleredo2",
-            "filesystem-type": "nfs4"
+            "idmapd-domain-config": {
+                "error": null,
+                "domain": "dbsqa.mssql.com",
+                "config-file": "/etc/idmapd.conf",
+                "config-exists": true
+            }
         }
-    ]
-},
-"idmapd-domain-config": {
-    "error": null,
-    "domain": "dbsqa.mssql.com",
-    "config-file": "/etc/idmapd.conf",
-    "config-exists": true
-}
-    }},
+    },
     "getoptimizeMtuResponse": {
         "optimizedInterfaces": [
             {
@@ -4062,5 +4033,20 @@
                 "already-optimal": true
             }
         }
+    },
+    "optimizeOracleMultipathIoSessionsResponse": {
+        "overall_status": "passed",
+        "summary": [
+            {
+                "target": "iqn.1992-08.com.netapp:sn.b2853ecdb1f911efa8811fbfd81226d0:vs.345",
+                "portal": "172.31.48.72:3260,1031",
+                "status": "updated"
+            },
+            {
+                "target": "iqn.1992-08.com.netapp:sn.b2853ecdb1f911efa8811fbfd81226d0:vs.345",
+                "portal": "172.31.6.100:3260,1032",
+                "status": "updated"
+            }
+        ]
     }
 }

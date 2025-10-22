@@ -221,7 +221,6 @@ async function handleOptimizeMTUAlignment(
             region,
             sqlAuthEnabled: false,
             activeNodeInstanceid: activeNodeInstanceId,
-            cloudProviderAccountId: accountId,
             resourceName
         };
 

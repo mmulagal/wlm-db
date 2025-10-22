@@ -16,7 +16,11 @@ import { updateJobDetails, registerJob } from '../../database/job-operations';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
-import { optimizeTcpOptionsCommand } from './ssm-scripts/os-optimization-scripts';
+import {
+    optimizeTcpOptionsCommand,
+    optimizeIscsiReplacementTimeoutCommand,
+    optimizeMultipathIoSessionsCommand
+} from './ssm-scripts/os-optimization-scripts';
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import getLogger from '../../../utils/logger';
 import { OracleJobMetadata, TcpFeatures, TcpOptimizationResponse } from './consts';
@@ -24,7 +28,7 @@ import { OracleJobMetadata, TcpFeatures, TcpOptimizationResponse } from './const
 const logger = getLogger();
 const isDemoFlow = isDemo();
 
-interface OptimizeTcpOptionsParams {
+interface OptimizeOSParams {
     accountId: string;
     credentialsId: string;
     region: string;
@@ -32,8 +36,8 @@ interface OptimizeTcpOptionsParams {
     serverNameWithHostName: string;
     parentJobId: string;
     databaseInstanceId: string;
-    databaseInstanceName: string;
-    fsxId: string;
+    databaseInstanceName?: string;
+    fsxId?: string;
     activeNodeInstanceId: string;
     instanceMetadata: unknown;
 }
@@ -76,8 +80,10 @@ async function oracleOptimizeStorageOS(
         resourceType: DatabaseTypes.ORACLE
     });
 
-    if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to fix host ${oracleResourceName} in account ${accountId} due to SSM connection issues.`;
+    if (!activeNodeInstanceId || !isSSMConnected) {
+        const errorMessage = !activeNodeInstanceId
+            ? `Unable to fix host ${oracleResourceName} in account ${accountId}. Cannot retrieve active node ID from the Oracle configuration.`
+            : `Unable to fix host ${oracleResourceName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -94,10 +100,22 @@ async function oracleOptimizeStorageOS(
         : (oracleResourceName as string);
     updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
-    const jobDescription =
-        configurationName === OptimizeOracleiSCSIStorageOperatingSystem.TCP_OPTIONS
-            ? `Fix Storage Operating System TCP options for ${serverNameWithHostName}`
-            : '';
+    let jobDescription = '';
+    switch (configurationName) {
+        case OptimizeOracleiSCSIStorageOperatingSystem.TCP_OPTIONS:
+            jobDescription = `Fix Storage Operating System TCP options for ${serverNameWithHostName}`;
+            break;
+        case OptimizeOracleiSCSIStorageOperatingSystem.ISCSI_REPLACEMENT_TIMEOUT:
+            jobDescription = `Fix Storage Operating System iSCSI replacement timeout for ${serverNameWithHostName}`;
+            break;
+        case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_IO_SESSIONS:
+            jobDescription = `Fix Storage Operating System multipath IO sessions for ${serverNameWithHostName}`;
+            break;
+        default:
+            jobDescription = '';
+            break;
+    }
+
     const jobMetadata: OracleJobMetadata = {
         hostsToOptimize: [
             {
@@ -132,9 +150,7 @@ async function oracleOptimizeStorageOS(
                     serverNameWithHostName,
                     parentJobId,
                     databaseInstanceId,
-                    databaseInstanceName: instanceName,
-                    fsxId,
-                    activeNodeInstanceId: activeNodeInstanceId!,
+                    activeNodeInstanceId,
                     instanceMetadata
                 });
             } catch (error) {
@@ -153,6 +169,68 @@ async function oracleOptimizeStorageOS(
             break;
         }
 
+        case OptimizeOracleiSCSIStorageOperatingSystem.ISCSI_REPLACEMENT_TIMEOUT: {
+            try {
+                await optimizeIscsiReplacementTimeout({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseInstanceId,
+                    activeNodeInstanceId,
+                    instanceMetadata
+                });
+            } catch (error) {
+                const errorMessage = `Error while fixing iSCSI replacement timeout settings ${error}`;
+                logger.error(errorMessage);
+                jobError = errorMessage;
+                jobStatus = JOBSTATUS.FAILED;
+            } finally {
+                await updateJobDetails(accountId, parentJobId, {
+                    status: jobStatus,
+                    endTime: Date.now(),
+                    error: jobError
+                });
+                if (jobStatus === JOBSTATUS.FAILED) {
+                    await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+                }
+            }
+            break;
+        }
+
+        case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_IO_SESSIONS: {
+            try {
+                await optimizeMultipathIoSessions({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseInstanceId,
+                    activeNodeInstanceId,
+                    instanceMetadata
+                });
+            } catch (error) {
+                const errorMessage = `Error while fixing multipath IO sessions settings ${error}`;
+                logger.error(errorMessage);
+                jobError = errorMessage;
+                jobStatus = JOBSTATUS.FAILED;
+            } finally {
+                await updateJobDetails(accountId, parentJobId, {
+                    status: jobStatus,
+                    endTime: Date.now(),
+                    error: jobError
+                });
+                if (jobStatus === JOBSTATUS.FAILED) {
+                    await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+                }
+            }
+            break;
+        }
+
         default: {
             const errorMessage = `Configuration name ${configurationName} is not supported`;
             jobStatus = JOBSTATUS.FAILED;
@@ -161,9 +239,34 @@ async function oracleOptimizeStorageOS(
             throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
         }
     }
+
+    // Common assessment trigger logic for all successful optimizations
+    if (jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING) {
+        const instanceToAssess: WorkloadInstance = {
+            id: databaseInstanceId,
+            name: instanceName,
+            type: RESOURCESTYPE.ORACLE,
+            region,
+            sqlAuthEnabled: false,
+            fsxFileSystem: fsxId,
+            activeNodeInstanceid: activeNodeInstanceId,
+            resourceName: serverNameWithHostName
+        };
+        await triggerAssessmentAfterOptimization(
+            credentialsId,
+            region,
+            accountId,
+            databaseHostId,
+            serverNameWithHostName,
+            parentJobId,
+            instanceToAssess,
+            AssessmentCategories.STORAGE,
+            RESOURCESTYPE.ORACLE
+        );
+    }
 }
 
-async function optimizeTcpOptions(params: OptimizeTcpOptionsParams) {
+async function optimizeTcpOptions(params: OptimizeOSParams) {
     const {
         accountId,
         credentialsId,
@@ -172,8 +275,6 @@ async function optimizeTcpOptions(params: OptimizeTcpOptionsParams) {
         serverNameWithHostName,
         parentJobId,
         databaseInstanceId,
-        databaseInstanceName,
-        fsxId,
         activeNodeInstanceId,
         instanceMetadata
     } = params;
@@ -193,7 +294,7 @@ async function optimizeTcpOptions(params: OptimizeTcpOptionsParams) {
     let jobError;
 
     try {
-        const ssmCommand = optimizeTcpOptionsCommand();
+        const ssmCommand = optimizeTcpOptionsCommand;
         const ssmComment = 'Optimize TCP options';
         const response = await retryWithDelay(
             callSsmExecution.bind(
@@ -279,29 +380,249 @@ async function optimizeTcpOptions(params: OptimizeTcpOptionsParams) {
         );
         throw new Error(jobError);
     }
+}
 
-    const instanceToAssess: WorkloadInstance = {
-        id: databaseInstanceId,
-        name: databaseInstanceName,
-        type: RESOURCESTYPE.ORACLE,
-        region,
-        sqlAuthEnabled: false,
-        fsxFileSystem: fsxId,
-        activeNodeInstanceid: activeNodeInstanceId!,
-        resourceName: serverNameWithHostName,
-        cloudProviderAccountId: accountId
-    };
-    await triggerAssessmentAfterOptimization(
+async function optimizeIscsiReplacementTimeout(params: OptimizeOSParams) {
+    const {
+        accountId,
         credentialsId,
         region,
-        accountId,
         databaseHostId,
         serverNameWithHostName,
         parentJobId,
-        instanceToAssess,
-        AssessmentCategories.STORAGE,
-        RESOURCESTYPE.ORACLE
-    );
+        databaseInstanceId,
+        activeNodeInstanceId,
+        instanceMetadata
+    } = params;
+
+    logger.info('Optimizing iSCSI Replacement Timeout', {
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        databaseInstanceId
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Fix iSCSI Replacement Timeout for ${serverNameWithHostName}`,
+        description: `Fix iSCSI replacement timeout for ${serverNameWithHostName}`,
+        resourceName: serverNameWithHostName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.WELL_ARCHITECTED,
+        parentJobId
+    });
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    try {
+        const ssmCommand = optimizeIscsiReplacementTimeoutCommand;
+        const ssmComment = 'Optimize iSCSI replacement timeout';
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId,
+                ssmComment,
+                accountId,
+                false,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            ),
+            3,
+            5000
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+
+        if (parsedResponse.error) {
+            throw new Error(parsedResponse.error);
+        }
+
+        const status = parsedResponse?.status;
+        if (status === 'success') {
+            logger.info('iSCSI replacement timeout optimization completed successfully');
+        } else if (status === 'skipped') {
+            const skippedMessage = 'iSCSI replacement timeout is 5 as per recommendations. No changes needed';
+            logger.info(skippedMessage);
+            jobError = skippedMessage;
+            jobStatus = JOBSTATUS.WARNING;
+        }
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['iscsi-replacement-timeout'],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+    } catch (error) {
+        jobError = jobError || `Error while fixing iSCSI replacement timeout ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING
+                ? AuditStatus.SUCCESS
+                : AuditStatus.FAILED,
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING ? '' : jobError
+        );
+    }
+
+    if (jobStatus !== JOBSTATUS.COMPLETED && jobStatus !== JOBSTATUS.WARNING) {
+        logger.info(
+            `Skipping assessment trigger for databaseHost ${databaseHostId} as iscsi replacement timeout optimization job did not complete successfully.`
+        );
+        throw new Error(jobError);
+    }
+}
+
+interface MultipathIoSessionSummaryItem {
+    status: string;
+    target: string;
+    portal: string;
+    error?: string;
+}
+
+async function optimizeMultipathIoSessions(params: OptimizeOSParams) {
+    const {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        databaseInstanceId,
+        activeNodeInstanceId,
+        instanceMetadata
+    } = params;
+
+    logger.info('Optimizing Multipath IO Sessions', {
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        databaseInstanceId
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Fix Multipath IO Sessions for ${serverNameWithHostName}`,
+        description: `Fix multipath IO sessions for ${serverNameWithHostName}`,
+        resourceName: serverNameWithHostName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.WELL_ARCHITECTED,
+        parentJobId
+    });
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    try {
+        const ssmCommand = optimizeMultipathIoSessionsCommand;
+        const ssmComment = 'Optimize multipath IO sessions';
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId,
+                ssmComment,
+                accountId,
+                false,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            ),
+            3,
+            5000
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+
+        if (parsedResponse.error) {
+            throw new Error(parsedResponse.error);
+        }
+
+        const status = parsedResponse?.overall_status;
+        const summary: MultipathIoSessionSummaryItem[] = parsedResponse?.summary || [];
+
+        if (status === 'success') {
+            logger.info('Multipath IO sessions optimization completed successfully');
+            jobStatus = JOBSTATUS.COMPLETED;
+        } else if (status === 'skipped') {
+            const skippedCount = summary.filter(item => item.status === 'skipped').length;
+            logger.info('Multipath IO sessions optimization skipped');
+            jobStatus = JOBSTATUS.WARNING;
+            jobError = `Multipath IO sessions optimization skipped. ${skippedCount} target(s) already had 4 sessions configured.`;
+        } else if (status === 'partial') {
+            const updatedCount = summary.filter(item => item.status === 'updated').length;
+            const failedCount = summary.filter(item => item.status === 'failed').length;
+            const failedTargets = summary
+                .filter(item => item.status === 'failed')
+                .map(item => `${item.target} (${item.portal})`)
+                .join(', ');
+
+            logger.warn(
+                `Multipath IO sessions optimization partially successful: ${updatedCount} succeeded, ${failedCount} failed`
+            );
+            jobStatus = JOBSTATUS.WARNING;
+            jobError = `Multipath IO sessions optimization failed for few targets. Successfully updated: ${updatedCount}, Failed: ${failedCount}. Failed targets: ${failedTargets}`;
+        } else if (status === 'failed') {
+            const failedTargets = summary
+                .filter(item => item.status === 'failed')
+                .map(item => `${item.target} (${item.portal}): ${item.error || 'Unknown error'}`)
+                .join('; ');
+
+            logger.error('Multipath IO sessions optimization failed for all targets');
+            jobStatus = JOBSTATUS.FAILED;
+            jobError = `Multipath IO sessions optimization failed. Failed targets: ${failedTargets}`;
+        } else {
+            logger.warn(`Unexpected multipath IO sessions optimization status: ${status}`);
+            jobStatus = JOBSTATUS.WARNING;
+            jobError = `Multipath IO sessions optimization completed with unexpected status: ${status}`;
+        }
+
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['multipath-io-sessions'],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+    } catch (error) {
+        jobError = jobError || `Error while fixing multipath IO sessions ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING
+                ? AuditStatus.SUCCESS
+                : AuditStatus.FAILED,
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING ? '' : jobError
+        );
+    }
+
+    if (jobStatus !== JOBSTATUS.COMPLETED && jobStatus !== JOBSTATUS.WARNING) {
+        logger.info(
+            `Skipping assessment trigger for databaseHost ${databaseHostId} as multipath IO sessions optimization job did not complete successfully.`
+        );
+        throw new Error(jobError);
+    }
 }
 
 export { oracleOptimizeStorageOS };

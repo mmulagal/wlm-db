@@ -985,7 +985,11 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('optimizeOracleStorageConfiguration'))
     .on(SendCommandCommand, params => params.Comment === 'Optimize TCP options')
-    .resolves(getSampleCommandResponse('optimizeOracleTcpOptions'));
+    .resolves(getSampleCommandResponse('optimizeOracleTcpOptions'))
+    .on(SendCommandCommand, params => params.Comment === 'Optimize iSCSI replacement timeout')
+    .resolves(getSampleCommandResponse('optimizeIscsiReplacementTimeout'))
+    .on(SendCommandCommand, params => params.Comment === 'Optimize multipath IO sessions')
+    .resolves(getSampleCommandResponse('optimizeOracleMultipathIoSessions'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1575,6 +1579,19 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'optimizeOracleTcpOptions',
             JSON.stringify(getCommandInvocationResponse.oracleTcpOptionsOptimizationResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeIscsiReplacementTimeout'
+    })
+    .resolves(getSampleCommandResponseWithOutput('optimizeIscsiReplacementTimeout', '{"status":"success"}'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeOracleMultipathIoSessions'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeOracleMultipathIoSessions',
+            JSON.stringify(getCommandInvocationResponse.optimizeOracleMultipathIoSessionsResponse)
         )
     );
 
