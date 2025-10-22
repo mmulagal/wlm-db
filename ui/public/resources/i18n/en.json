@@ -956,6 +956,9 @@
             "readiness-status-incomplete": "Incomplete"
         },
         "dashboard": {
+            "critical": "Critical",
+            "severe": "Severe",
+            "warning": "Warning",
             "log-analyzer": "Log analyzer",
             "activation": "Activation",
             "resource-active-msg": "of your resources activated Agentic AI",

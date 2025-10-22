@@ -243,7 +243,7 @@ const ErrorInvestigationOverview = () => {
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                         variant="Regular_14"
                                     >
-                                        Severity x-y
+                                        {t('databases.dashboard.critical')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -267,7 +267,7 @@ const ErrorInvestigationOverview = () => {
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                         variant="Regular_14"
                                     >
-                                        Severity x-y
+                                        {t('databases.dashboard.severe')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -291,7 +291,7 @@ const ErrorInvestigationOverview = () => {
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                         variant="Regular_14"
                                     >
-                                        Severity x-y
+                                        {t('databases.dashboard.warning')}
                                     </DsTypography>
                                 </div>
                             </div>

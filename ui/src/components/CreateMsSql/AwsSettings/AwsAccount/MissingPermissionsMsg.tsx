@@ -56,11 +56,11 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
             setPermissionCount(mergeData.length);
         } else {
             const updatedMissingPermissions =
-                permissionData?.implicitlyDenied.length &&
+                permissionData?.implicitlyDenied?.length &&
                 permissionData?.implicitlyDenied.map((obj: any) => modifyPermissions(obj, 'missing'));
 
             setDataToDisplay(updatedMissingPermissions);
-            setPermissionCount(updatedMissingPermissions.length);
+            setPermissionCount(updatedMissingPermissions?.length);
         }
     }, [permissionData]);
 
@@ -72,10 +72,33 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     };
 
     const openDialog = (type: string) => {
+        let permissionsData;
+
+        const viewPackage = policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY);
+        const viewPermissions = viewPackage?.permissions;
+        const operatePackage = policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.OPERATE_POLICY);
+        const dbHostPackage = policiesList?.packages?.find?.(
+            pkg => pkg?.name === POLICIES_PERMISSIONS.DATABASE_HOST_CREATION_POLICY
+        );
+
+        const mergedStatements = [
+            ...(viewPermissions?.Statement ?? []),
+            ...(operatePackage?.permissions?.Statement ?? []),
+            ...(dbHostPackage?.permissions?.Statement ?? [])
+        ];
+
+        permissionsData = {
+            Version:
+                viewPermissions?.Version ??
+                operatePackage?.permissions?.Version ??
+                dbHostPackage?.permissions?.Version ??
+                '2012-10-17',
+            Statement: mergedStatements
+        };
         const data = JSON.stringify(
             type === 'view'
                 ? policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY)?.permissions
-                : policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.OPERATE_POLICY)?.permissions,
+                : permissionsData,
             null,
             2
         );
