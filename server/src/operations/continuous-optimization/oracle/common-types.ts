@@ -147,7 +147,16 @@ interface StorageAssessment {
     };
     binaryVolumes?: {
         error?: string;
-        data?: { volumeId: string; volumeName: string }[];
+        data?: {
+            volumeId: string;
+            volumeName: string;
+            isNfsMount?: boolean;
+            nfsInfo?: {
+                exportPolicyName?: string;
+                svmName?: string;
+                rules: { clients?: string[]; superuser?: string[]; allow_suid?: boolean }[];
+            };
+        }[];
     };
 }
 

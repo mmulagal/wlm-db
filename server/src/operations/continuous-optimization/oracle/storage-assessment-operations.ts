@@ -818,7 +818,7 @@ function prepareASMLunLayoutAssessment(
 
 function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
     logger.info('Fetching NFS volume configuration drift');
-    const { volumes, dnfsServers, nfsRootonly } = storageAssessmentData;
+    const { volumes, dnfsServers, nfsRootonly, binaryVolumes } = storageAssessmentData;
     const { data: volumesData } = volumes;
 
     const nfsVolumeConfigDrift: StorageParameterDriftResponseType['configuration']['volumes'] = [];
@@ -827,6 +827,7 @@ function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
         let totalObjectsAssessed = 0;
         const objectsInViolation: string[] = [];
         const violationDetails: GenericViolationResponseType[] = [];
+        const recommended = config.value.toString();
 
         switch (config.parameter) {
             case 'nfs-rootonly': {
@@ -854,7 +855,7 @@ function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
                                 objectName: matchingVolume.name,
                                 value: 'enabled',
                                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                                recommended: 'disabled'
+                                recommended
                             });
                             objectsInViolation.push(matchingVolume.name);
                         }
@@ -863,7 +864,72 @@ function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
 
                 nfsVolumeConfigDrift.push({
                     ...config,
-                    recommended: config.value.toString(),
+                    recommended,
+                    status: violationDetails.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+                    objectsInViolation: [...new Set(objectsInViolation)],
+                    totalObjectsAssessed,
+                    totalObjectsInViolation: violationDetails.length,
+                    resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                    violationDetails
+                });
+                break;
+            }
+
+            case 'export-policy': {
+                if (isEmpty(binaryVolumes) || isEmpty(volumes)) {
+                    logger.info('Skipping export-policy check as required data is missing');
+                    return;
+                }
+
+                const binaryVolumesData = binaryVolumes.data || [];
+                const nfsMountedVolumes = binaryVolumesData.filter(volume => volume.isNfsMount === true);
+
+                if (nfsMountedVolumes.length === 0) {
+                    logger.info('Skipping export-policy check as no NFS mounts found');
+                    return;
+                }
+
+                totalObjectsAssessed = nfsMountedVolumes.length;
+
+                nfsMountedVolumes.forEach(volume => {
+                    const { rules, exportPolicyName } = volume.nfsInfo || {};
+                    if (!rules) {
+                        logger.info(`Skipping export-policy check for volume ${volume.volumeName} as no rules found`);
+                        return;
+                    }
+
+                    // Check if any rule violates requirements (missing superuser 'sys' or allow_suid !== true)
+                    const hasViolations = rules.some(
+                        rule => !rule.superuser?.includes('sys') || rule.allow_suid !== true
+                    );
+
+                    if (hasViolations) {
+                        const violatingRules = rules.filter(
+                            rule => !rule.superuser?.includes('sys') || rule.allow_suid !== true
+                        );
+
+                        const currentRules = `export-policy: ${exportPolicyName}, ${violatingRules
+                            .map(
+                                rule =>
+                                    `clients: [${rule.clients?.join(',')}], superuser: ${rule.superuser?.join(
+                                        ','
+                                    )}, allow_suid: ${rule.allow_suid}`
+                            )
+                            .join('; ')}`;
+
+                        violationDetails.push({
+                            objectName: volume.volumeName,
+                            value: currentRules,
+                            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                            recommended
+                        });
+                        objectsInViolation.push(volume.volumeName);
+                    }
+                });
+
+                nfsVolumeConfigDrift.push({
+                    ...config,
+                    recommended,
                     status: violationDetails.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
                     objectsInViolation: [...new Set(objectsInViolation)],
                     totalObjectsAssessed,

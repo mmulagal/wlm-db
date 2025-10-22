@@ -183,6 +183,20 @@ const GOLDEN_CONFIG = {
                 recommendation:
                     'Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAPs nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.',
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+            },
+            {
+                parameter: 'export-policy',
+                name: 'export-policy',
+                value: 'superuser: sys, allow_suid: true',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'Volume',
+                recommendation:
+                    'Workload Factory recommends ensuring that if Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution.',
+                tags: [
+                    AwsWellArchitecturedPillars.SECURITY,
+                    AwsWellArchitecturedPillars.RELIABILITY,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                ]
             }
         ],
         lun: [
@@ -403,20 +417,6 @@ const GOLDEN_CONFIG = {
                 tags: [
                     AwsWellArchitecturedPillars.RELIABILITY,
                     AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'export-policy',
-                name: 'export-policy',
-                recommended: '',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends ensuring that if Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution.',
-                tags: [
-                    AwsWellArchitecturedPillars.SECURITY,
-                    AwsWellArchitecturedPillars.RELIABILITY,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
                 ]
             },
