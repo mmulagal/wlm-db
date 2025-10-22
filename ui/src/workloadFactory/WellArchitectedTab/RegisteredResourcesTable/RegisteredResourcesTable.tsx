@@ -193,7 +193,6 @@ const RegisteredResourcesTable = () => {
             <Table
                 // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow
             />
         </div>
     );
