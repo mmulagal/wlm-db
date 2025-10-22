@@ -38,6 +38,7 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { dashboardRedirection } from '../../../../utils/utilityFunctions';
 
 const ErrorInvestigationOverview = () => {
     const { t } = useTranslation();
@@ -58,6 +59,7 @@ const ErrorInvestigationOverview = () => {
         const updatedState = store.getState();
         const { selectedErrorInvestigationRow, selectedViewInvestigationRow }: any = updatedState.agenticAI;
         let selectedRowData = null;
+        dashboardRedirection();
         if (type === 'activate') {
             selectedRowData = selectedErrorInvestigationRow;
         } else {

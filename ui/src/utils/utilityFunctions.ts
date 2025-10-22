@@ -2694,3 +2694,25 @@ export const getCategoryForAssessment = (assessmentKey: string): string => {
     };
     return categoryMap[assessmentKey] || 'Storage';
 };
+
+export const dashboardRedirection = () => {
+    const state = store.getState();
+    const isWorkloadFactory = state?.auth?.isWorkloadFactory;
+    if (isWorkloadFactory) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: '../../databases/inventory',
+                replace: true
+            }
+        });
+    } else {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: '../../fsxdb/inventory',
+                replace: true
+            }
+        });
+    }
+};

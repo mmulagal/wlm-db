@@ -12,7 +12,7 @@ import {
     getAssessmentHostListGroupedByCategory,
     getManagedOptimizationSummary
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
-import { sortListOfDict } from '../../../../utils/utilityFunctions';
+import { dashboardRedirection, sortListOfDict } from '../../../../utils/utilityFunctions';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import CategoryDialogComponent from '../../ManagedInstanceOptimizationBreakdownByCategory/CategoryDialogComponent/CategoryDialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -84,6 +84,7 @@ const WellArchitectedScore = () => {
     const redirectToGetWellPage = () => {
         const updatedState = store.getState();
         const { selectedAssessmentRow }: any = updatedState.databaseHome;
+        dashboardRedirection();
         if (selectedAssessmentRow?.type === DBType.ORACLE) {
             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
             dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
