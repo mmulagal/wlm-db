@@ -293,6 +293,9 @@ if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; 
             error: $error,
             data: $lunsData
         }')
+else
+    log "No LUN UUIDs mapped or protocol is not iSCSI, skipping LUN configuration"
+    luns=$(jq -n '{error: "LUNs not applicable", data: []}')
 fi
 
 # Fetch NFS protocol information
@@ -386,7 +389,7 @@ log "DNFS servers check result: $dnfs_result"
 
 
 # Create result with valid JSON
-if [ -n "\${mappedOntapLunUuids+x}" ] && [ \${#mappedOntapLunUuids[@]} -gt 0 ]; then
+if [ "$storageProtocol" = "iSCSI"  ]; then
     log "Creating final result with LUNs included"
     result=$(jq -n \
         --arg fra "$fra_enabled" \\

@@ -120,7 +120,8 @@ async function initiateInstanceLevelAssessmentDataCollection(
         }
         const { ontapVolumes = {}, isCDB = false } = instanceVolumeMapping || {};
         const extractVolumeData = (
-            volumes: Record<string, OracleVolumeRecord[]> | Record<string, Record<string, OracleVolumeRecord[]>>
+            volumes: Record<string, OracleVolumeRecord[]> | Record<string, Record<string, OracleVolumeRecord[]>>,
+            storageProtocol: string
         ) =>
             Object.values(volumes).flatMap(pdb =>
                 Object.values(pdb).flatMap(volumeGroup =>
@@ -130,21 +131,29 @@ async function initiateInstanceLevelAssessmentDataCollection(
                               name: vol.volumeName,
                               diskGroup: vol?.diskGroup ?? null,
                               svmId: vol.svmId,
-                              svmName: vol.svmName
+                              svmName: vol.svmName,
+                              ...(storageProtocol === 'iSCSI' && {
+                                  lunId: vol.lunId,
+                                  lunName: vol.lunName
+                              })
                           }))
                         : []
                 )
             );
 
         const volumeData = isCDB
-            ? extractVolumeData(ontapVolumes)
+            ? extractVolumeData(ontapVolumes, protocol!)
             : Object.values(ontapVolumes).flatMap(volumes =>
                   volumes.map((vol: any) => ({
                       id: vol.volumeId,
                       name: vol.volumeName,
                       diskGroup: vol?.diskGroup ?? null,
                       svmId: vol.svmId,
-                      svmName: vol.svmName
+                      svmName: vol.svmName,
+                      ...(protocol === 'iSCSI' && {
+                          lunId: vol.lunId,
+                          lunName: vol.lunName
+                      })
                   }))
               );
 
@@ -156,25 +165,10 @@ async function initiateInstanceLevelAssessmentDataCollection(
         databaseInstanceRecord.storageProtocol = protocol;
 
         if (protocol === 'iSCSI') {
-            const extractLunData = (
-                volumes: Record<string, OracleVolumeRecord[]> | Record<string, Record<string, OracleVolumeRecord[]>>
-            ) =>
-                Object.values(volumes).flatMap(pdb =>
-                    Object.values(pdb).flatMap(volumeGroup =>
-                        Array.isArray(volumeGroup)
-                            ? volumeGroup.map(vol => ({
-                                  id: vol.lunId,
-                                  name: vol.lunName,
-                                  diskGroup: vol?.diskGroup ?? null
-                              }))
-                            : []
-                    )
-                );
-            const lunData = isCDB ? extractLunData(ontapVolumes) : [];
-            databaseInstanceRecord.mappedLunUuids = [...new Set(lunData.map(lun => lun.id))];
-            databaseInstanceRecord.mappedLunNames = [...new Set(lunData.map(lun => lun.name))];
+            databaseInstanceRecord.mappedLunUuids = [...new Set(volumeData.map(volume => volume.lunId))];
+            databaseInstanceRecord.mappedLunNames = [...new Set(volumeData.map(volume => volume.lunName))];
             databaseInstanceRecord.mappedDiskGroups = [
-                ...new Set(lunData.map(vol => vol.diskGroup).filter(dg => !!dg))
+                ...new Set(volumeData.map(volume => volume.diskGroup).filter(dg => !!dg))
             ];
         }
         databaseInstanceRecord.isASMManaged = isASMManaged;
