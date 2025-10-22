@@ -81,17 +81,28 @@
         "Version": "2012-10-17",
         "Statement": [
           {
-            "Sid": "RemediationFix",
+            "Sid": "FSxRemediation",
             "Effect": "Allow",
             "Action": [
               "fsx:UpdateFileSystem",
-              "fsx:UpdateVolume",
-              "ec2:RunInstances",
+              "fsx:UpdateVolume"
+            ],
+            "Resource": "*"
+          },
+          {
+            "Sid": "EC2Remediation",
+            "Effect": "Allow",
+            "Action": [
               "ec2:StartInstances",
               "ec2:ModifyInstanceAttribute",
               "ec2:StopInstances"
             ],
-            "Resource": "*"
+            "Resource": "*",
+            "Condition": {
+              "StringLike": {
+              "ec2:ResourceTag/*": "WLMDB*"
+              }
+            }
           }
         ]
       }
@@ -175,6 +186,7 @@
               "ec2:CreateSecurityGroup",
               "ec2:CreateTags",
               "ec2:CreateVpcEndpoint",
+              "ec2:RunInstances",
               "ec2:DescribeTags",
               "ec2:DescribeLaunchTemplates",
               "ec2:ModifyVpcAttribute",

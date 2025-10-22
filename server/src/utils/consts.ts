@@ -1696,9 +1696,11 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'autoscaling:DescribeAutoScalingInstances',
     'fsx:UpdateFileSystem',
     'fsx:UpdateVolume',
+    'fsx:DescribeBackups',
     'bedrock:GetFoundationModelAvailability',
     'bedrock:ListInferenceProfiles',
     'logs:PutRetentionPolicy',
+    'logs:GetLogEvents',
     'cloudwatch:GetMetricData',
     'cloudwatch:GetMetricStatistics'
 ];
