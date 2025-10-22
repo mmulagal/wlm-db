@@ -78,7 +78,9 @@ enum OptimizeOracleiSCSIStorageOperatingSystem {
     FILESYSTEM_IO_OPTIONS = 'filesystem-io-options',
     MULTIPATH_CONFIGURATION = 'multipath-configuration',
     MULTIPATH_FRIENDLY_NAMES = 'multipath-friendly-names',
-    MULTIPATH_READCOUNT = 'multipath-readcount'
+    MULTIPATH_READCOUNT = 'multipath-readcount',
+    ORACLE_AFD_LOGICAL_BLOCK_SIZE = 'afd-logical-block-size',
+    ORACLE_ASM_LOGICAL_BLOCK_SIZE = 'asm-logical-block-size'
 }
 
 enum OptimizeStorageConfigs {

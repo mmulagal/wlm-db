@@ -24,6 +24,7 @@ import {
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import getLogger from '../../../utils/logger';
 import { OracleJobMetadata, TcpFeatures, TcpOptimizationResponse } from './consts';
+import { handleAfdDriftOptimization, handleAsmLibDriftOptimization } from './storage-optimize-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -227,6 +228,62 @@ async function oracleOptimizeStorageOS(
                 if (jobStatus === JOBSTATUS.FAILED) {
                     await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
                 }
+            }
+            break;
+        }
+
+        case OptimizeOracleiSCSIStorageOperatingSystem.ORACLE_AFD_LOGICAL_BLOCK_SIZE: {
+            try {
+                await handleAfdDriftOptimization({
+                    accountId,
+                    region,
+                    credentialsId,
+                    resourceId: databaseHostId,
+                    databaseInstanceId,
+                    node1InstanceId,
+                    instanceMetadata,
+                    parentJobId
+                });
+            } catch (error) {
+                const errorMessage = `Error while fixing AFD logical block size settings ${error}`;
+                logger.error(errorMessage);
+                jobError = errorMessage;
+                jobStatus = JOBSTATUS.WARNING;
+            } finally {
+                await updateJobDetails(accountId, parentJobId, {
+                    status: jobStatus,
+                    endTime: Date.now(),
+                    error: jobError
+                });
+                await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+            }
+            break;
+        }
+
+        case OptimizeOracleiSCSIStorageOperatingSystem.ORACLE_ASM_LOGICAL_BLOCK_SIZE: {
+            try {
+                await handleAsmLibDriftOptimization({
+                    accountId,
+                    region,
+                    credentialsId,
+                    resourceId: databaseHostId,
+                    databaseInstanceId,
+                    node1InstanceId,
+                    instanceMetadata,
+                    parentJobId
+                });
+            } catch (error) {
+                const errorMessage = `Error while fixing Asm lib logical block size settings ${error}`;
+                logger.error(errorMessage);
+                jobError = errorMessage;
+                jobStatus = JOBSTATUS.WARNING;
+            } finally {
+                await updateJobDetails(accountId, parentJobId, {
+                    status: jobStatus,
+                    endTime: Date.now(),
+                    error: jobError
+                });
+                await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
             }
             break;
         }

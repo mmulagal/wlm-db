@@ -5,6 +5,7 @@ import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
     AssessmentTriggeredBy,
+    OptimizeOracleiSCSIStorageOperatingSystem,
     OptimizeStorageConfigs,
     OptimizeStorageParams,
     OptimizeStorageRequestParams,
@@ -25,7 +26,9 @@ import { isDemo, sqlResponseParsing } from '../../../utils/utils';
 import {
     addDiskToDiskGroups,
     createAndMapLunsForDiskGroups,
-    mountLunsToDisks
+    mountLunsToDisks,
+    optimizeAfdDriftConfigParam,
+    optimizeAsmLibDriftConfigParam
 } from '../../workloads/oracle/storage-optimize-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
@@ -53,6 +56,172 @@ const oracleSpecialStorageConfigNames = [
     OptimizeStorageConfigs.DEDUPLICATION,
     OptimizeStorageConfigs.COMPACTION
 ];
+
+interface OptimizeAsmConfigParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    resourceId: string;
+    databaseInstanceId: string;
+    node1InstanceId: string;
+    instanceMetadata: unknown;
+    parentJobId: string;
+}
+
+async function handleAfdDriftOptimization(params: OptimizeAsmConfigParams) {
+    const {
+        accountId,
+        region,
+        credentialsId,
+        resourceId,
+        databaseInstanceId,
+        node1InstanceId,
+        instanceMetadata,
+        parentJobId
+    } = params;
+    logger.info('Handle Afd config drift optimization');
+    const jobName = `Fix Afd Config param for ${databaseInstanceId}`;
+    const jobDescription = `Fix Oracle Afd Logical block size Config param for DB Instance ${databaseInstanceId}`;
+    let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
+    let jobError;
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: jobName,
+        description: jobDescription,
+        resourceName: databaseInstanceId,
+        startTime: Date.now(),
+        status: jobStatus,
+        type: JOBTYPE.OPTIMIZATION,
+        parentJobId
+    });
+
+    try {
+        if (!node1InstanceId) {
+            const errorMessage = `No EC2 instance id found for resource ${resourceId} in account ${accountId}.`;
+            throw Error(errorMessage);
+        }
+
+        const optimizeAfdDriftParam = optimizeAfdDriftConfigParam;
+        const optimizeAfdDriftParamComment = 'Optimize AFD Drift Config Param';
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [optimizeAfdDriftParam],
+            node1InstanceId,
+            optimizeAfdDriftParamComment,
+            accountId,
+            undefined,
+            CUSTOM_SSM_EXECUTION_TIMEOUT,
+            undefined,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        );
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                [OptimizeOracleiSCSIStorageOperatingSystem.ORACLE_AFD_LOGICAL_BLOCK_SIZE],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+        if (response) {
+            const parsedResponse = sqlResponseParsing(response);
+            if (parsedResponse && parsedResponse.success) {
+                jobStatus = JOBSTATUS.COMPLETED;
+            } else {
+                throw Error(`Error optimizing afd drift config param: ${parsedResponse.error}`);
+            }
+        }
+    } catch (error) {
+        jobStatus = JOBSTATUS.FAILED;
+        jobError = `Error fixing Oracle AFD config param: ${(error as Error).message}`;
+        logger.error(jobError);
+        throw createError(jobError);
+    } finally {
+        updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+    }
+}
+
+async function handleAsmLibDriftOptimization(params: OptimizeAsmConfigParams) {
+    logger.info('Handle asm lib config drift optimization');
+    const {
+        accountId,
+        region,
+        credentialsId,
+        resourceId,
+        databaseInstanceId,
+        node1InstanceId,
+        instanceMetadata,
+        parentJobId
+    } = params;
+    const jobName = `Fix Asm lib Config param for ${databaseInstanceId}`;
+    const jobDescription = `Fix Oracle Asm lib Config param for DB Instance ${databaseInstanceId}`;
+    let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
+    let jobError;
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: jobName,
+        description: jobDescription,
+        resourceName: databaseInstanceId,
+        startTime: Date.now(),
+        status: jobStatus,
+        type: JOBTYPE.OPTIMIZATION,
+        parentJobId
+    });
+
+    try {
+        if (!node1InstanceId) {
+            const errorMessage = `No EC2 instance id found for resource ${resourceId} in account ${accountId}.`;
+            throw Error(errorMessage);
+        }
+        const optimizeAsmLibParam = optimizeAsmLibDriftConfigParam;
+        const optimizeAsmLibParamComment = 'Optimize Asm Lib Config Param';
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [optimizeAsmLibParam],
+            node1InstanceId,
+            optimizeAsmLibParamComment,
+            accountId,
+            undefined,
+            CUSTOM_SSM_EXECUTION_TIMEOUT,
+            undefined,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        );
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                [OptimizeOracleiSCSIStorageOperatingSystem.ORACLE_ASM_LOGICAL_BLOCK_SIZE],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+        if (response) {
+            const parsedResponse = sqlResponseParsing(response);
+            if (parsedResponse && parsedResponse.success) {
+                jobStatus = JOBSTATUS.COMPLETED;
+            } else {
+                throw Error(`Error optimizing asm lib config param: ${parsedResponse.error}`);
+            }
+        }
+    } catch (error) {
+        jobStatus = JOBSTATUS.FAILED;
+        jobError = `Error fixing Oracle asm lib config param: ${(error as Error).message}`;
+        logger.error(jobError);
+        throw createError(jobError);
+    } finally {
+        updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+    }
+}
 
 async function handleDiskgroupOptimization(
     managedInstance: DatabaseInstancesIncludingResource,
@@ -537,4 +706,10 @@ async function getOracleStorageConfigRecommendationMap(
     }
 }
 
-export { optimizeOracleStorageLayout, getOracleStorageConfigRecommendationMap, oracleSpecialStorageConfigNames };
+export {
+    optimizeOracleStorageLayout,
+    getOracleStorageConfigRecommendationMap,
+    oracleSpecialStorageConfigNames,
+    handleAfdDriftOptimization,
+    handleAsmLibDriftOptimization
+};

@@ -989,7 +989,11 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Optimize iSCSI replacement timeout')
     .resolves(getSampleCommandResponse('optimizeIscsiReplacementTimeout'))
     .on(SendCommandCommand, params => params.Comment === 'Optimize multipath IO sessions')
-    .resolves(getSampleCommandResponse('optimizeOracleMultipathIoSessions'));
+    .resolves(getSampleCommandResponse('optimizeOracleMultipathIoSessions'))
+    .on(SendCommandCommand, params => params.Comment === 'Optimize Asm Lib Config Param')
+    .resolves(getSampleCommandResponse('optimizeOracleAsmLibDriftConfigParam'))
+    .on(SendCommandCommand, params => params.Comment === 'Optimize AFD Drift Config Param')
+    .resolves(getSampleCommandResponse('optimizeOracleAfdDriftConfigParam'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1592,6 +1596,24 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'optimizeOracleMultipathIoSessions',
             JSON.stringify(getCommandInvocationResponse.optimizeOracleMultipathIoSessionsResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeOracleAsmLibDriftConfigParam'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeOracleAsmLibDriftConfigParam',
+            JSON.stringify(getCommandInvocationResponse.oracleAsmLibDriftConfigParamOptimizationResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeOracleAfdDriftConfigParam'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeOracleAfdDriftConfigParam',
+            JSON.stringify(getCommandInvocationResponse.oracleAfdDriftConfigParamOptimizationResponse)
         )
     );
 

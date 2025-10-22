@@ -4034,6 +4034,14 @@
             }
         }
     },
+    "oracleAsmLibDriftConfigParamOptimizationResponse": {
+        "success": "Successfully modified ORACLEASM_USE_LOGICAL_BLOCK_SIZE to true",
+        "error": null
+    },
+    "oracleAfdDriftConfigParamOptimizationResponse": {
+        "success": "Successfully updated oracleafd_use_logical_block_size to 1",
+        "error": null
+    },
     "optimizeOracleMultipathIoSessionsResponse": {
         "overall_status": "passed",
         "summary": [
