@@ -21,7 +21,7 @@ import {
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
+import { addAllMssqlHostAssessmentData, setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
 import { setInstanceDetailsData } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../utils/appConstants';
 import {
@@ -38,7 +38,8 @@ import {
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
-    STATUS_CONST
+    STATUS_CONST,
+    WLF_TABS
 } from '../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../utils/resourceUtils';
 import {
@@ -5642,5 +5643,27 @@ export const storageMockData = {
                 name: 'log-files-location'
             }
         ]
+    }
+};
+
+export const instanceBreadCrumbSelectedFrom = (breadCrumbSelectedFrom: string) => {
+    let tab: string = '';
+    if (breadCrumbSelectedFrom === WLF_TABS.INVENTORY) {
+        tab = 'Inventory';
+    } else if (breadCrumbSelectedFrom === WLF_TABS.WELL_ARCHITECTED_TAB) {
+        tab = 'Well-architected';
+    } else {
+        tab = 'Dashboard';
+    }
+    return tab;
+};
+
+export const selectHeaderTabFromBreadCrumb = (breadCrumbSelectedFrom: string, dispatch: any) => {
+    if (breadCrumbSelectedFrom === WLF_TABS.INVENTORY) {
+        dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+    } else if (breadCrumbSelectedFrom === WLF_TABS.WELL_ARCHITECTED_TAB) {
+        dispatch(setSelectedHeaderTab(WLF_TABS.WELL_ARCHITECTED_TAB));
+    } else {
+        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
     }
 };

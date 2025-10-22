@@ -8,23 +8,33 @@ import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareCompon
 import { ReactComponent as WellArchitect } from '../../../assets/well-architect.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useAppSelector } from '../../../store/storeHooks';
-import { getManagedInstanceOptimizationSummary } from '../../DatabaseHomePage/DatabaseHomeUtils';
+import { getManagedOptimizationSummary } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import HostDistributionChart from '../../Dashboard/HostDistribution/HostDistributionChart/HostDistributionChart';
 
 const ManagedInstanceOptimization = () => {
     const { t } = useTranslation();
-    const { allmssqlHostAssessmentLoading, allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
+    const {
+        allmssqlHostAssessmentLoading,
+        allmssqlHostAssessmentData,
+        allOracleHostAssessmentLoading,
+        allOracleHostAssessmentData
+    } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
         useAppSelector(state => state.headers);
 
     const instanceOptimizationSummary = useMemo(
-        () => getManagedInstanceOptimizationSummary(allmssqlHostAssessmentData),
-        [allmssqlHostAssessmentData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]
+        () => getManagedOptimizationSummary(allmssqlHostAssessmentData, allOracleHostAssessmentData),
+        [
+            allmssqlHostAssessmentData,
+            allOracleHostAssessmentData,
+            headerSelectedMultiCredIdsList,
+            headerSelectedMultiRegionIdsList
+        ]
     );
 
     const loading = useMemo(
-        () => allmssqlHostAssessmentLoading || multiDataLoading,
-        [allmssqlHostAssessmentLoading, multiDataLoading]
+        () => allmssqlHostAssessmentLoading || allOracleHostAssessmentLoading || multiDataLoading,
+        [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading, multiDataLoading]
     );
 
     const ChartComponent = useMemo(() => {

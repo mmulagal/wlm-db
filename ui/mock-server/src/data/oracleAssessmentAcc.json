@@ -2045,6 +2045,7 @@
             "instancesAssessment": [
                 {
                     "databaseInstanceId": "asm28n",
+                    "databaseInstanceName": "MSSQLSERVER2",
                     "error": "Error while fetching drift assessment for asm28n. Error: No storage assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later."
                 }
             ]

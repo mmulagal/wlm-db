@@ -28,7 +28,13 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
-import { formatAssessmentData, formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import {
+    formatAssessmentData,
+    formatGetWellData,
+    handleOptimizeStorageJob,
+    instanceBreadCrumbSelectedFrom,
+    selectHeaderTabFromBreadCrumb
+} from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeStorageConfigMutation,
@@ -60,6 +66,7 @@ const OptimizeOntapInnerPage = () => {
     });
     const userNavigated = useRef(false);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
+    const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
 
@@ -662,9 +669,9 @@ const OptimizeOntapInnerPage = () => {
                     <BreadCrumbs
                         items={[
                             {
-                                title: 'Inventory',
+                                title: instanceBreadCrumbSelectedFrom(breadCrumbSelectedFrom),
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                    selectHeaderTabFromBreadCrumb(breadCrumbSelectedFrom, dispatch);
                                 }
                             },
                             {

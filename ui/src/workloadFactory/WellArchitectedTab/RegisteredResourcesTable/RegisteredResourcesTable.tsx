@@ -1,34 +1,41 @@
 import { DsTypography, Popover } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { DsButton } from '@tlveng/wlm-ds';
+import { useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
 import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import { useTable } from '../../../common/Lib/Table/useTable';
 import styles from './RegisteredResourcesTable.module.scss';
+import { useAppSelector } from '../../../store/storeHooks';
+import { getAllAssessmentResources, redirectToGetWellPage } from '../WellArchitectedTabUtils';
 
 const RegisteredResourcesTable = () => {
-    const tableData = [
-        {
-            id: '1',
-            name: 'Resource 1',
-            engineType: 'Microsoft SQL Server',
-            hostName: 'host1',
-            optimizationScore: 0
-        },
-        {
-            id: '2',
-            name: 'Resource 2',
-            engineType: 'Oracle',
-            hostName: 'host2',
-            optimizationScore: 90
-        },
-        {
-            id: '3',
-            name: 'Resource 3',
-            engineType: 'PostgreSQL',
-            hostName: 'host3',
-            optimizationScore: 75
-        }
-    ];
+    const dispatch = useDispatch();
+    const { t } = useTranslation();
+    const {
+        allmssqlHostAssessmentLoading,
+        allmssqlHostAssessmentData,
+        allOracleHostAssessmentData,
+        allOracleHostAssessmentLoading
+    } = useAppSelector(state => state.inventoryV2);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
+        useAppSelector(state => state.headers);
+
+    const assessmentResourceData = useMemo(
+        () => getAllAssessmentResources(allmssqlHostAssessmentData, allOracleHostAssessmentData),
+        [
+            allmssqlHostAssessmentData,
+            allOracleHostAssessmentData,
+            headerSelectedMultiCredIdsList,
+            headerSelectedMultiRegionIdsList
+        ]
+    );
+
+    const loading = useMemo(
+        () => allmssqlHostAssessmentLoading || allOracleHostAssessmentLoading || multiDataLoading,
+        [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading, multiDataLoading]
+    );
 
     const handleProgressBar = (cellData: number | string) => {
         if (
@@ -91,30 +98,31 @@ const RegisteredResourcesTable = () => {
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Resources name',
-            accessor: 'name',
+            Header: t('databases.well-architected-tab.resource-name'),
+            accessor: 'databaseInstanceName',
             id: '1',
             isSortable: true,
             width: '320px'
         },
 
         {
-            Header: 'Engine type',
-            accessor: 'engineType',
+            Header: t('databases.well-architected-tab.engine-type'),
+            accessor: 'type',
             id: '2',
             width: '267px',
             filterOptions: 'auto'
         },
         {
-            Header: 'Host name',
+            Header: t('databases.well-architected-tab.hostname'),
             accessor: 'hostName',
             id: '3',
             width: '267px',
+            filterOptions: 'auto',
             isSortable: true
         },
         {
-            Header: 'Optimization score',
-            accessor: 'optimizationScore',
+            Header: t('databases.well-architected-tab.optimization-score'),
+            accessor: 'score',
             id: '4',
             width: '347px',
             isSortable: true,
@@ -141,15 +149,19 @@ const RegisteredResourcesTable = () => {
                         isAppendedToBody
                         children={
                             <DsTypography variant="Regular_14">
-                                Selecting 'View and Fix' will redirect you to the Inventory tab
+                                {t('databases.well-architected-tab.resource-view-fix-hover-msg')}
                             </DsTypography>
                         }
                         trigger="hover"
-                        delayHide={200}
-                        interactive
                         container={
-                            <DsButton variant="secondary" isDisabled isThin>
-                                View and fix
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {
+                                    redirectToGetWellPage(dispatch, rowData);
+                                }}
+                            >
+                                {t('databases.general.view-and-fix')}
                             </DsButton>
                         }
                     />
@@ -164,17 +176,18 @@ const RegisteredResourcesTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
-        rows: tableData || [],
+        rows: assessmentResourceData || [],
         pageSize: 50,
-        selectionType: 'none'
+        selectionType: 'none',
+        isLazyLoading: loading
     });
     return (
         <div className={styles['registered-resources']}>
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle="Registered resources"
-                singularTitle="Registered resource"
+                pluralTitle={t('databases.well-architected-tab.registered-resources')}
+                singularTitle={t('databases.well-architected-tab.registered-resource')}
             />
 
             <Table

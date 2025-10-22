@@ -6,9 +6,17 @@
             "cancel": "Cancel",
             "reset-to-default": "Reset to default",
             "filter-by-categories": "Filter by categories and severity",
-            "filter-configuration": "Filter configuration"
+            "filter-configuration": "Filter configuration",
+            "resource-name": "Resource name",
+            "engine-type": "Engine type",
+            "hostname": "Host name",
+            "optimization-score": "Optimization score",
+            "resource-view-fix-hover-msg": "Selecting 'View and Fix' will redirect you to the Inventory tab",
+            "registered-resources": "Registered resources",
+            "registered-resource": "Registered resource"
         },
         "general": {
+            "view-and-fix": "View and fix",
             "instance-well-architected-dashboard": "instance well-architected dashboard",
             "database-well-architected-dashboard-for-oracle": "database well-architected dashboard for oracle",
             "manage-instances-well-architected-score": "Well-architected score",

@@ -40,7 +40,7 @@ import {
     setPasswordResetLoading,
     resetAllPasswords
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { resetGwValuesOnRefresh } from '../GetWellUtils';
+import { instanceBreadCrumbSelectedFrom, resetGwValuesOnRefresh, selectHeaderTabFromBreadCrumb } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import { FSXPasswordContent, SQLServerPasswordContent } from './FSXPasswordContent/FSXPasswordContent';
@@ -289,13 +289,9 @@ const WellArchitectDashboard = () => {
                 <BreadCrumbs
                     items={[
                         {
-                            title: breadCrumbSelectedFrom === WLF_TABS.INVENTORY ? 'Inventory' : 'Dashboard',
+                            title: instanceBreadCrumbSelectedFrom(breadCrumbSelectedFrom),
                             onClick: () => {
-                                if (breadCrumbSelectedFrom === WLF_TABS.INVENTORY) {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
-                                } else {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
-                                }
+                                selectHeaderTabFromBreadCrumb(breadCrumbSelectedFrom, dispatch);
                                 dispatch(resetGwData({}));
                             }
                         },

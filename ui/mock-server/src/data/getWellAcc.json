@@ -3345,6 +3345,7 @@
                 },
                 {
                     "databaseInstanceId": "44",
+                    "databaseInstanceName": "MSSQLSERVER4",
                     "error": "Error while fetching drift assessment for 2037134E-FBD5-4740-9BB2-F01BDCED1E72. Error: No storage assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later."
                 }
             ]
@@ -7562,6 +7563,7 @@
                 },
                 {
                     "databaseInstanceId": "34",
+                    "databaseInstanceName": "MSSQLSERVER4",
                     "error": "Error while fetching drift assessment for 2037134E-FBD5-4740-9BB2-F01BDCED1E72. Error: No storage assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later."
                 }
             ]

@@ -27,7 +27,13 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
-import { formatAssessmentData, formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import {
+    formatAssessmentData,
+    formatGetWellData,
+    handleOptimizeStorageJob,
+    instanceBreadCrumbSelectedFrom,
+    selectHeaderTabFromBreadCrumb
+} from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigForBulkMutation,
@@ -65,6 +71,7 @@ const OptimizeInnerPage = () => {
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const {
@@ -876,9 +883,9 @@ const OptimizeInnerPage = () => {
                     <BreadCrumbs
                         items={[
                             {
-                                title: 'Inventory',
+                                title: instanceBreadCrumbSelectedFrom(breadCrumbSelectedFrom),
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                    selectHeaderTabFromBreadCrumb(breadCrumbSelectedFrom, dispatch);
                                 }
                             },
                             {
