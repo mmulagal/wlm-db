@@ -1,9 +1,9 @@
 import { DsTypography, Popover } from '@netapp/design-system';
+import { DsButton } from '@tlveng/wlm-ds';
 import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
 import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import { useTable } from '../../../common/Lib/Table/useTable';
 import styles from './RegisteredResourcesTable.module.scss';
-import { DsButton } from '@tlveng/wlm-ds';
 
 const RegisteredResourcesTable = () => {
     const tableData = [
@@ -12,7 +12,7 @@ const RegisteredResourcesTable = () => {
             name: 'Resource 1',
             engineType: 'Microsoft SQL Server',
             hostName: 'host1',
-            optimizationScore: 80
+            optimizationScore: 0
         },
         {
             id: '2',
@@ -42,7 +42,7 @@ const RegisteredResourcesTable = () => {
                         className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                         style={{
                             width: `${100}%`,
-                            backgroundColor: 'var(--chart-9)'
+                            backgroundColor: 'var(--chart-disabled)'
                         }}
                     />
                 </div>
@@ -118,17 +118,15 @@ const RegisteredResourcesTable = () => {
             id: '4',
             width: '347px',
             isSortable: true,
-            renderCell: (cellData: string) => {
-                return (
-                    <div className={styles.barContainer}>
-                        {handleProgressBar(cellData)}
-                        <div className={styles.scoreText}>
-                            <DsTypography variant="Semibold_14">{cellData}</DsTypography>
-                            <DsTypography variant="Semibold_14">%</DsTypography>
-                        </div>
+            renderCell: (cellData: string) => (
+                <div className={styles.barContainer}>
+                    {handleProgressBar(cellData)}
+                    <div className={styles.scoreText}>
+                        <DsTypography variant="Semibold_14">{cellData}</DsTypography>
+                        <DsTypography variant="Semibold_14">%</DsTypography>
                     </div>
-                );
-            }
+                </div>
+            )
         },
         {
             Header: '',
@@ -136,33 +134,27 @@ const RegisteredResourcesTable = () => {
             id: '5',
             width: '248px',
             isSortable: false,
-            renderCell: (_: any, rowData: any) => {
-                return (
-                    <div className={styles.buttonContainer}>
-                        <div />
-                        {
-                            <>
-                                <Popover
-                                    isAppendedToBody
-                                    children={
-                                        <DsTypography variant="Regular_14">
-                                            {"Selecting 'View and Fix' will redirect you to the Inventory tab"}
-                                        </DsTypography>
-                                    }
-                                    trigger="hover"
-                                    delayHide={200}
-                                    interactive
-                                    container={
-                                        <DsButton variant="secondary" isDisabled isThin>
-                                            View and fix
-                                        </DsButton>
-                                    }
-                                />
-                            </>
+            renderCell: (_: any, rowData: any) => (
+                <div className={styles.buttonContainer}>
+                    <div />
+                    <Popover
+                        isAppendedToBody
+                        children={
+                            <DsTypography variant="Regular_14">
+                                Selecting 'View and Fix' will redirect you to the Inventory tab
+                            </DsTypography>
                         }
-                    </div>
-                );
-            }
+                        trigger="hover"
+                        delayHide={200}
+                        interactive
+                        container={
+                            <DsButton variant="secondary" isDisabled isThin>
+                                View and fix
+                            </DsButton>
+                        }
+                    />
+                </div>
+            )
         }
     ];
 

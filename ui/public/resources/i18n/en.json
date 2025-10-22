@@ -1,7 +1,12 @@
 {
     "databases": {
         "well-architected-tab": {
-            "application": "Application"
+            "application": "Application",
+            "apply": "Apply",
+            "cancel": "Cancel",
+            "reset-to-default": "Reset to default",
+            "filter-by-categories": "Filter by categories and severity",
+            "filter-configuration": "Filter configuration"
         },
         "general": {
             "instance-well-architected-dashboard": "instance well-architected dashboard",

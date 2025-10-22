@@ -2666,3 +2666,31 @@ export const derivedType = (type: string) => {
             return ASSESSMENT_CONFIG_OTHER.CLONE;
     }
 };
+
+// Function to get category for each assessment configuration
+export const getCategoryForAssessment = (assessmentKey: string): string => {
+    const categoryMap: { [key: string]: string } = {
+        [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]: 'Compute',
+        [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'Application',
+        [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'Application',
+        [ASSESSMENT_CONFIG_NAMES.MAXDOP]: 'Application',
+        [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'Compute',
+        [ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]: 'Compute',
+        [ASSESSMENT_CONFIG_NAMES.MTU]: 'Compute',
+        [ASSESSMENT_CONFIG_NAMES.OS]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.ONTAP]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: 'Resiliency',
+        [ASSESSMENT_CONFIG_NAMES.CRR]: 'Resiliency',
+        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'Resiliency',
+        [ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]: 'Resiliency',
+        [ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]: 'Cloning'
+    };
+    return categoryMap[assessmentKey] || 'Storage';
+};

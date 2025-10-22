@@ -1,13 +1,22 @@
 import { DsButton, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DsCheckbox } from '@tlveng/wlm-ds';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATES_UI, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    categoryOptions,
+    CONFIG_STATES,
+    CONFIG_STATES_UI,
+    severityOptions,
+    WLF_TABS
+} from '../../../utils/consts';
 import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import { ReactComponent as Filter } from '../../../assets/filter-icon.svg';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
@@ -15,7 +24,7 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
 import BarComponent from '../../Dashboard/BarComponent/BarComponent';
-import { derivedType } from '../../../utils/utilityFunctions';
+import { derivedType, getCategoryForAssessment } from '../../../utils/utilityFunctions';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { t } = useTranslation();
@@ -23,6 +32,67 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const dispatch = useDispatch();
     const windowSize = useResize();
+
+    // For popup
+    const [isOpen, setIsOpen] = useState(false);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(categoryOptions);
+    const [selectedSeverity, setSelectedSeverity] = useState<string[]>(severityOptions);
+    // Applied filters (only updated when Apply button is clicked)
+    const [appliedCategories, setAppliedCategories] = useState<string[]>(categoryOptions);
+    const [appliedSeverity, setAppliedSeverity] = useState<string[]>(severityOptions);
+    const popupRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLDivElement>(null);
+
+    // Close on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (
+                popupRef.current &&
+                !popupRef.current.contains(e.target as Node) &&
+                !buttonRef.current?.contains(e.target as Node)
+            ) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const toggleCategory = (item: string) => {
+        setSelectedCategories(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+    };
+
+    const toggleSeverity = (item: string) => {
+        setSelectedSeverity(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+    };
+
+    const handleApply = () => {
+        // Apply the selected filters
+        setAppliedCategories(selectedCategories);
+        setAppliedSeverity(selectedSeverity);
+        setIsOpen(false);
+    };
+
+    const handleReset = () => {
+        setSelectedCategories(categoryOptions);
+        setSelectedSeverity(severityOptions);
+        // Also reset the applied filters immediately
+        setAppliedCategories(categoryOptions);
+        setAppliedSeverity(severityOptions);
+    };
+
+    // Check if reset button should be disabled (when all categories are selected - default state)
+    const isResetDisabled =
+        appliedCategories.length === categoryOptions.length &&
+        appliedCategories.every(category => categoryOptions.includes(category));
+
+    // Function to check if a tile should be visible based on applied filters
+    const shouldShowTile = (assessmentKey: string): boolean => {
+        const tileCategory = getCategoryForAssessment(assessmentKey);
+        return appliedCategories.includes(tileCategory);
+    };
+
+    // Ends here
 
     const { multiDataLoading, showNA } = useAppSelector(state => state.headers);
 
@@ -116,531 +186,652 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     {t('databases.dashboard.well-architected-breakdown-by-configurations')}
                 </DsTypography>
 
-                {loading && <FlashingDotsLoader />}
+                <div className={styles.rightSide}>
+                    {loading && <FlashingDotsLoader />}
+                    <div className={`${styles.imageFilter} ${loading ? styles.loading : ''}`} ref={buttonRef}>
+                        <Filter />
+                        <DsButton isDisabled={loading} type="text" onClick={() => setIsOpen(!isOpen)}>
+                            {t('databases.well-architected-tab.filter-configuration')}
+                        </DsButton>
+                        {isOpen && (
+                            <div className={styles.popup} ref={popupRef}>
+                                <div className={styles.headerContainer}>
+                                    <DsTypography variant="Semibold_14" className={styles.title}>
+                                        {t('databases.well-architected-tab.filter-by-categories')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.filterGrid}>
+                                    <div className={styles.column}>
+                                        {categoryOptions.map(option => (
+                                            <DsCheckbox
+                                                id={option}
+                                                key={option}
+                                                title={option}
+                                                isSelected={selectedCategories.includes(option)}
+                                                onSelect={() => toggleCategory(option)}
+                                                className={styles.item}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    <div className={styles.column}>
+                                        {severityOptions.map(option => (
+                                            <DsCheckbox
+                                                id={option}
+                                                key={option}
+                                                title={option}
+                                                isSelected={selectedSeverity.includes(option)}
+                                                onSelect={() => toggleSeverity(option)}
+                                                className={styles.item}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className={styles.footer}>
+                                    <DsButton className={styles.buttonItem} type="text" onClick={handleApply}>
+                                        {t('databases.well-architected-tab.apply')}
+                                    </DsButton>
+                                    <DsButton
+                                        className={styles.buttonItem1}
+                                        type="text"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        {t('databases.well-architected-tab.cancel')}
+                                    </DsButton>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <SeparatorComponent variant="vertical" height="24px" />
+
+                    <DsButton onClick={handleReset} type="text" isDisabled={isResetDisabled}>
+                        {t('databases.well-architected-tab.reset-to-default')}
+                    </DsButton>
+                </div>
             </div>
 
             <div className={styles.mainSection}>
-                <div className={`${styles.tile} ${styles.firstTile}`}>
-                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, 'Storage tier', 'storageTier')}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) && (
+                    <div className={`${styles.tile} ${styles.firstTile}`}>
+                        {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, 'Storage tier', 'storageTier')}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
-                            }}
-                            data-testid="wlm-db-optimize-storage-tier"
-                            isDisabled={
-                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
+                                }}
+                                data-testid="wlm-db-optimize-storage-tier"
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
-                        'File system headroom',
-                        'fileSystemHeadroom'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+                            'File system headroom',
+                            'fileSystemHeadroom'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            data-testid="wlm-db-optimize-file-system-headroom"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
-                            }}
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                data-testid="wlm-db-optimize-file-system-headroom"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE, 'Log drive size', 'logDriveSize')}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
+                            'Log drive size',
+                            'logDriveSize'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
-                            }}
-                            data-testid="wlm-db-optimize-log-drive-size"
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
+                                }}
+                                data-testid="wlm-db-optimize-log-drive-size"
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
-                        'TempDB drive size',
-                        'tempdbDriveSize'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+                            'TempDB drive size',
+                            'tempdbDriveSize'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            data-testid="wlm-db-optimize-temdb-drive-size"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
-                            }}
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                data-testid="wlm-db-optimize-temdb-drive-size"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
-                        'Data files (.mdf)',
-                        'userDataFiles'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
+                            'Data files (.mdf)',
+                            'userDataFiles'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            data-testid="wlm-db-optimize-data-files"
-                            variant="secondary"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF);
-                            }}
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                data-testid="wlm-db-optimize-data-files"
+                                variant="secondary"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF, 'Log files (.ldf)', 'logFiles')}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF, 'Log files (.ldf)', 'logFiles')}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            data-testid="wlm-db-optimize-log-files"
-                            variant="secondary"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF);
-                            }}
-                            isDisabled={
-                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                data-testid="wlm-db-optimize-log-files"
+                                variant="secondary"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
-                        ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
-                        'tempdbPlacement'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+                            ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+                            'tempdbPlacement'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            data-testid="wlm-db-optimize-temdb-placement"
-                            variant="secondary"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT);
-                            }}
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                data-testid="wlm-db-optimize-temdb-placement"
+                                variant="secondary"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.ONTAP, 'ONTAP', 'ontapConfiguration')}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.ONTAP) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.ONTAP, 'ONTAP', 'ontapConfiguration')}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            data-testid="wlm-db-optimize-ontap"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
-                            }}
-                            isDisabled={loading}
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                data-testid="wlm-db-optimize-ontap"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
+                                }}
+                                isDisabled={loading}
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.OS, 'Operating system', 'operatingSystem')}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.OS) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.OS, 'Operating system', 'operatingSystem')}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            data-testid="wlm-db-optimize-operating-system"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
-                            }}
-                            isDisabled={loading}
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                data-testid="wlm-db-optimize-operating-system"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
+                                }}
+                                isDisabled={loading}
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
-                        ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
-                        'computeRightsizing'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+                            ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+                            'computeRightsizing'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            data-testid="wlm-db-optimize-compute-right-sizing"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING);
-                            }}
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                data-testid="wlm-db-optimize-compute-right-sizing"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-                        'operatingSystemPatch'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                            ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                            'operatingSystemPatch'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            data-testid="wlm-db-optimize-operating-system-patch"
-                            isThin
-                            variant="secondary"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH);
-                            }}
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                data-testid="wlm-db-optimize-operating-system-patch"
+                                isThin
+                                variant="secondary"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]?.length >
+                                        0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
-                        ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
-                        'rssConfiguration'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
+                            ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
+                            'rssConfiguration'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION);
-                            }}
-                            data-testid="wlm-db-optimize-rss-configuration"
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION);
+                                }}
+                                data-testid="wlm-db-optimize-rss-configuration"
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
-                <div className={styles.tile}>
-                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.MTU, t('databases.general.mtu'), 'mtuConfiguration')}
-                    <SeparatorComponent variant="vertical" height="60px" />
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            data-testid="wlm-db-optimize-mtu"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.MTU);
-                            }}
-                            isDisabled={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MTU]?.length > 0}
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.MTU) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.MTU,
+                            t('databases.general.mtu'),
+                            'mtuConfiguration'
+                        )}
+                        <SeparatorComponent variant="vertical" height="60px" />
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                data-testid="wlm-db-optimize-mtu"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.MTU);
+                                }}
+                                isDisabled={
+                                    loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MTU]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.LICENSE,
-                        ASSESSMENT_CONFIG_NAMES.LICENSE,
-                        'applicationSqlServer'
-                    )}
+                )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.LICENSE) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.LICENSE,
+                            ASSESSMENT_CONFIG_NAMES.LICENSE,
+                            'applicationSqlServer'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            data-testid="wlm-db-optimize-license-sql-server"
-                            isThin
-                            variant="secondary"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.LICENSE);
-                            }}
-                            isDisabled={
-                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LICENSE]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                data-testid="wlm-db-optimize-license-sql-server"
+                                isThin
+                                variant="secondary"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.LICENSE);
+                                }}
+                                isDisabled={
+                                    loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LICENSE]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-                        ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-                        'mssqlPatch'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+                            ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+                            'mssqlPatch'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            data-testid="wlm-db-optimize-microsoft-sql-server"
-                            variant="secondary"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH);
-                            }}
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]?.length >
-                                    0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                data-testid="wlm-db-optimize-microsoft-sql-server"
+                                variant="secondary"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]
+                                        ?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.MAXDOP,
-                        ASSESSMENT_CONFIG_NAMES.MAXDOP,
-                        'maxdopPatch'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.MAXDOP) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.MAXDOP,
+                            ASSESSMENT_CONFIG_NAMES.MAXDOP,
+                            'maxdopPatch'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.MAXDOP);
-                            }}
-                            data-testid="wlm-db-optimize-maxdop"
-                            isDisabled={
-                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.MAXDOP);
+                                }}
+                                data-testid="wlm-db-optimize-maxdop"
+                                isDisabled={
+                                    loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
-                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
-                        'scheduledLocalSnapshot'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+                            'scheduledLocalSnapshot'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
-                            }}
-                            data-testid="wlm-db-optimize-snapshot"
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
+                                }}
+                                data-testid="wlm-db-optimize-snapshot"
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]
+                                        ?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.CRR, 'Cross-Region Replication (CRR)', 'crr')}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.CRR) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.CRR, 'Cross-Region Replication (CRR)', 'crr')}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <TooltipComponent title="" placement="bottom" width="120px" height="30px">
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-crr"
-                                    variant="secondary"
-                                    isThin
-                                    onClick={() => {
-                                        handleOptimize(ASSESSMENT_CONFIG_NAMES.CRR);
-                                    }}
-                                    isDisabled={
-                                        loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0
-                                    }
-                                >
-                                    {t('databases.well-architect.view-and-fix')}
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
+                        <div className={styles.buttonContainer}>
+                            <TooltipComponent title="" placement="bottom" width="120px" height="30px">
+                                <div>
+                                    <DsButton
+                                        data-testid="wlm-db-optimize-crr"
+                                        variant="secondary"
+                                        isThin
+                                        onClick={() => {
+                                            handleOptimize(ASSESSMENT_CONFIG_NAMES.CRR);
+                                        }}
+                                        isDisabled={
+                                            loading ||
+                                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0
+                                        }
+                                    >
+                                        {t('databases.well-architect.view-and-fix')}
+                                    </DsButton>
+                                </div>
+                            </TooltipComponent>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-                        'scheduledawsBackup'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                            'scheduledawsBackup'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
-                            }}
-                            data-testid="wlm-db-optimize-awsbackup"
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
-                                    ?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
+                                }}
+                                data-testid="wlm-db-optimize-awsbackup"
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
+                                        ?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
-                        t('databases.general.mssql-high-availability'),
-                        'mssqlhighAvailability'
-                    )}
+                )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
+                            t('databases.general.mssql-high-availability'),
+                            'mssqlhighAvailability'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            data-testid="wlm-db-optimize-mssql-high-availability"
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
-                            }}
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                data-testid="wlm-db-optimize-mssql-high-availability"
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
+                                }}
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]
+                                        ?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                <div className={styles.tile}>
-                    {renderOptimizationBar(
-                        ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
-                        ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
-                        'clone'
-                    )}
+                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) && (
+                    <div className={styles.tile}>
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                            ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                            'clone'
+                        )}
 
-                    <SeparatorComponent variant="vertical" height="60px" />
+                        <SeparatorComponent variant="vertical" height="60px" />
 
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
-                            }}
-                            data-testid="wlm-db-optimize-clone"
-                            isDisabled={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
-                            }
-                        >
-                            {t('databases.well-architect.view-and-fix')}
-                        </DsButton>
+                        <div className={styles.buttonContainer}>
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {
+                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
+                                }}
+                                data-testid="wlm-db-optimize-clone"
+                                isDisabled={
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
+                                }
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

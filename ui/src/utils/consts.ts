@@ -1000,6 +1000,9 @@ export const ASSESSMENT_CONFIG_NAMES = {
     HIGH_AVAILABILITY: 'highAvailability'
 };
 
+export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
+export const severityOptions = ['Critical', 'Warning'];
+
 export const CONFIG_STATES = {
     ACTIVE: 'ACTIVE',
     POSTPONED: 'POSTPONED',
