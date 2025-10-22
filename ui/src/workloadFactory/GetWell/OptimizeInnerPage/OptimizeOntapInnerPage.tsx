@@ -34,7 +34,8 @@ import {
     useOptimizeStorageConfigMutation,
     useOptimizeOperatingSystemMutation,
     useOptimizeHAMssqlMutation,
-    useOptimizeOracleStorageConfigMutation
+    useOptimizeOracleStorageConfigMutation,
+    useOptimizeOracleOperatingSystemMutation
 } from '../../../utils/apiService';
 import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 
@@ -75,6 +76,7 @@ const OptimizeOntapInnerPage = () => {
     } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOracleStorageConfig] = useOptimizeOracleStorageConfigMutation();
+    const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -294,6 +296,23 @@ const OptimizeOntapInnerPage = () => {
         };
     };
 
+    const getOracleOsPayload = (configurationName: string) => ({
+        type: 'storage-operating-system',
+        hostsToOptimize: [
+            {
+                configurationName,
+                databaseHosts: [
+                    {
+                        id: selectedResourceId || selectedOptimizeConfig?.hostId,
+                        region: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                        credentialsId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                        databases: [selectedDatabaseInstance || selectedOptimizeConfig?.instanceId]
+                    }
+                ]
+            }
+        ]
+    });
+
     // This is the function that will be called when the optimize button is clicked from main cards
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any, operation: string, singleRowData: any) => {
@@ -316,6 +335,16 @@ const OptimizeOntapInnerPage = () => {
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 databaseHostId: selectedResourceId || selectedOptimizeConfig?.hostId,
                 instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
+                payload
+            };
+        } else if (
+            selectedOptimizeConfig?.engineType === DBType.ORACLE &&
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES
+        ) {
+            statusType = ASSESSMENT_CONFIG_NAMES.OS;
+            apiCall = optimizeOracleOs;
+            payload = getOracleOsPayload('nfs-mount-options-databasefiles');
+            apiInput = {
                 payload
             };
         } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE) {
