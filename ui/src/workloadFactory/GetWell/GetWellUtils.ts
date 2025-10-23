@@ -1903,7 +1903,47 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         Compression: 'compression',
         Deduplication: 'deduplication',
         Compaction: 'compaction',
-        'Snapshot policy': 'snapshot-policy'
+        'Snapshot policy': 'snapshot-policy',
+        'NFS rootonly': 'nfs-rootonly',
+        'Export policy': 'export-policy',
+
+        // OS configurations for Oracle
+        'Kernel parameters': 'kernel-parameters',
+        'NFS mount options - database files': 'nfs-mount-options-databasefiles',
+        'NFS mount options - ADR home': 'nfs-mount-options-adrhome',
+        'NFS caching options': 'nfs-caching-options',
+        'NFSv4 domain name': 'nfsv4-domain-name',
+
+        // ASM configurations
+        'ASM setup': 'asm-setup',
+        'ASM external redundancy': 'asm-external-redundancy',
+        'ASM filter driver logical block size alignment': 'afd-logical-block-size',
+        'ASMLib logical block size alignment': 'asmlib-logical-block-size',
+
+        // Oracle multipath and OS configurations
+        'Multipath I/O': 'multipath-io',
+        'Host utilities': 'host-utilities',
+        'Transparent hugepages': 'transparent-hugepages',
+        'SELinux': 'selinux',
+        'ISCSI replacement timeout': 'iscsi-replacement-timeout',
+        'Multipath friendly names': 'multipath-friendly-names',
+        'TCP advanced options': 'tcp-advanced-options',
+        'Filesystem I/O options': 'filesystems-io-options',
+        'Multiblock read count': 'multipath-readcount',
+        'Multipath I/O sessions': 'multipath-io-sessions',
+        'Multipath config file': 'multipath-configuration',
+
+        // Oracle placement configurations
+        'Redo logs placement': 'redologs-placement',
+        'Temp placement': 'templogs-placement',
+        'Archive placement': 'archive-placement',
+        'Data files placement': 'datafiles-placement',
+        'Control files placement': 'controlfiles-placement',
+        'Oracle binary placement': 'oracle-binary-placement',
+        'ASM data disk group LUNs': 'data-dg-lun-layout',
+        'ASM logs disk group LUNs': 'redolog-dg-lun-layout',
+        'ASM FRA disk group LUNs': 'fra-dg-lun-layout',
+        'ASM archive log disk group LUNs': 'archivelog-dg-lun-layout'
     };
 
     return nameMapping[displayName] || displayName;

@@ -1065,7 +1065,35 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         'nfs-mount-options-databasefiles': 'os',
         'nfs-mount-options-adrhome': 'os',
         'nfs-caching-options': 'os',
-        'nfsv4-domain-name': 'os'
+        'nfsv4-domain-name': 'os',
+        // Oracle OS configurations
+        'multipath-io': 'os',
+        'host-utilities': 'os',
+        'transparent-hugepages': 'os',
+        selinux: 'os',
+        'iscsi-replacement-timeout': 'os',
+        'multipath-friendly-names': 'os',
+        'tcp-advanced-options': 'os',
+        'filesystems-io-options': 'os',
+        'multipath-readcount': 'os',
+        'multipath-io-sessions': 'os',
+        'multipath-configuration': 'os',
+        // Oracle placement configurations
+        'redologs-placement': 'os',
+        'templogs-placement': 'os',
+        'archive-placement': 'os',
+        'datafiles-placement': 'os',
+        'controlfiles-placement': 'os',
+        'oracle-binary-placement': 'os',
+        'data-dg-lun-layout': 'os',
+        'redolog-dg-lun-layout': 'os',
+        'fra-dg-lun-layout': 'os',
+        'archivelog-dg-lun-layout': 'os',
+        // ASM specific configurations
+        'asm-setup': 'os',
+        'asm-external-redundancy': 'os',
+        'afd-logical-block-size': 'os',
+        'asmlib-logical-block-size': 'os'
     },
     STORAGE_LAYOUT_MAP: {
         [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'data-files-location',

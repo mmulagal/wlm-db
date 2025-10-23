@@ -188,7 +188,12 @@ const StorageConfigurationSection = ({
 
                 {oracleCardData.os_configuration && (
                     <div>
-                        <OracleCardComponent cardData={oracleCardData.os_configuration} />
+                        <OracleCardComponent
+                            cardData={oracleCardData.os_configuration}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            isAllSubConfigActivating={areAllOsActivating}
+                        />
 
                         <DsAccordion
                             id="11"
