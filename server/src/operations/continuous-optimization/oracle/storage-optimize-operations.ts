@@ -23,13 +23,6 @@ import {
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { isDemo, sqlResponseParsing } from '../../../utils/utils';
-import {
-    addDiskToDiskGroups,
-    createAndMapLunsForDiskGroups,
-    mountLunsToDisks,
-    optimizeAfdDriftConfigParam,
-    optimizeAsmLibDriftConfigParam
-} from '../../workloads/oracle/storage-optimize-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import { calculateStorageDrift, mapVolumeTypesToIdName } from './storage-assessment-operations';
@@ -39,6 +32,13 @@ import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../../utils/con
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import GOLDEN_CONFIG from './golden-config';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
+import {
+    optimizeAfdDriftConfigParam,
+    optimizeAsmLibDriftConfigParam,
+    createAndMapLunsForDiskGroups,
+    mountLunsToDisks,
+    addDiskToDiskGroups
+} from './ssm-scripts/storage-optimize-scripts';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();

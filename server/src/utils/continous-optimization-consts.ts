@@ -74,7 +74,7 @@ enum OptimizeOracleiSCSIStorageOperatingSystem {
     THP_DISABLE = 'transparent-hugepages',
     SELINUX_DISABLE = 'selinux',
     ISCSI_REPLACEMENT_TIMEOUT = 'iscsi-replacement-timeout',
-    MULTIPATH_IO_SESSIONS = 'multipath-io-sessions', // not present in golden_config
+    MULTIPATH_IO_SESSIONS = 'multipath-io-sessions',
     FILESYSTEM_IO_OPTIONS = 'filesystem-io-options',
     MULTIPATH_CONFIGURATION = 'multipath-configuration',
     MULTIPATH_FRIENDLY_NAMES = 'multipath-friendly-names',

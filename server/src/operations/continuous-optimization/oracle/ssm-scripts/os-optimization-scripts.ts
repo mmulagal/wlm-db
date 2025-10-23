@@ -1,9 +1,10 @@
 import { logFileCheck, pythonScriptInit } from '../../../workloads/oracle/oracle-ssm-script-utils';
 import {
-    CHECK_TCP_FEATURES,
     CHECK_ISCSI_REPLACEMENT_TIMEOUT,
-    CHECK_ISCSI_TARGETS_SESSIONS
-} from '../../../workloads/oracle/os-iscsi-assessment-scripts';
+    CHECK_ISCSI_TARGETS_SESSIONS,
+    CHECK_TCP_FEATURES,
+    CHECK_TRANSPARENT_HUGEPAGE
+} from './os-iscsi-assessment-scripts';
 
 const OPTIMIZE_TCP_OPTIONS = `
 # Optimize TCP options for Oracle workloads
@@ -319,4 +320,281 @@ ${logFileCheck(false)}
 ${pythonScriptInit(optimizeOracleMultipathIoSessionsTemplate, 'wlmdb-multipath-IO-sessions-optimization.log')}
 `;
 
-export { optimizeTcpOptionsCommand, optimizeIscsiReplacementTimeoutCommand, optimizeMultipathIoSessionsCommand };
+const FIX_TRANSPARENT_HUGEPAGE = `
+# Common utility functions for error checking and file operations
+def check_for_error_and_return_failure(result_dict, context_message):
+    """Check if result dictionary has an error and return failure response if found"""
+    if result_dict.get("error"):
+        error_msg = '{}: {}'.format(context_message, result_dict["error"])
+        log(error_msg)
+        return {"status": "failure", "error": error_msg}
+    return None
+
+def backup_file(file_path):
+    """Create a timestamped backup of the given file"""
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = '{}.backup.{}'.format(file_path, timestamp)
+    result = subprocess.run(['sudo', 'cp', file_path, backup_path], 
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
+    if result.returncode == 0:
+        log('Successfully created backup: {}'.format(backup_path))
+        return True
+    else:
+        log('Failed to create backup: {}'.format(result.stderr))
+        return False
+
+def write_temp_file_and_move(temp_name, target_path, content):
+    """Write content to a temporary file and move it to target location"""
+    temp_path = '/tmp/{}'.format(temp_name)
+    try:
+        with open(temp_path, 'w') as f:
+            f.write(content)
+        
+        result = subprocess.run(['sudo', 'mv', temp_path, target_path], 
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
+        if result.returncode == 0:
+            log('Successfully updated file: {}'.format(target_path))
+            return True
+        else:
+            log('Failed to move temp file: {}'.format(result.stderr))
+            return False
+    except Exception as e:
+        log('Error writing temporary file: {}'.format(str(e)))
+        return False
+
+def setup_grub_thp_persistence(thp_param):
+    """Setup THP persistence using GRUB kernel parameters"""
+    grub_file = '/etc/default/grub'
+    
+    if not os.path.exists(grub_file):
+        log('GRUB configuration file not found, skipping GRUB method')
+        return False
+    
+    if not backup_file(grub_file):
+        return False
+    
+    try:
+        with open(grub_file, 'r') as f:
+            content = f.read()
+        
+        if thp_param in content:
+            log('THP parameter already exists in GRUB configuration')
+            return True
+        
+        # Update GRUB config
+        lines = content.split('\\n')
+        updated = False
+        
+        for i, line in enumerate(lines):
+            if line.startswith(('GRUB_CMDLINE_LINUX=', 'GRUB_CMDLINE_LINUX_DEFAULT=')):
+                if line.endswith('"') and '="' in line:
+                    lines[i] = line[:-1] + ' {}"'.format(thp_param)
+                    updated = True
+                    break
+        
+        if not updated:
+            lines.append('GRUB_CMDLINE_LINUX="{}"'.format(thp_param))
+        
+        # Write updated config
+        updated_content = '\\n'.join(lines)
+        if not write_temp_file_and_move('grub_updated', grub_file, updated_content):
+            return False
+        
+        # Update GRUB for RHEL and SUSE systems
+        grub_update_commands = [
+            'sudo grub2-mkconfig -o /boot/grub2/grub.cfg',  # RHEL/SUSE BIOS
+            'sudo grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg',  # RHEL UEFI
+            'sudo grub2-mkconfig -o /boot/efi/EFI/sles/grub.cfg'     # SUSE UEFI
+        ]
+        
+        grub_success = False
+        for cmd in grub_update_commands:
+            log('Trying GRUB update command: {}'.format(cmd))
+            result = subprocess.run(['bash', '-c', cmd], 
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=60)
+            if result.returncode == 0:
+                log('Successfully updated GRUB configuration with command: {}'.format(cmd))
+                grub_success = True
+                break
+            else:
+                log('GRUB command failed ({}): {}'.format(cmd, result.stderr.strip()))
+        
+        if grub_success:
+            log('Successfully configured GRUB for THP persistence')
+            return True
+        else:
+            log('All GRUB update commands failed - THP persistence via GRUB may not work')
+            return False
+            
+    except Exception as e:
+        log('GRUB persistence setup failed: {}'.format(str(e)))
+        return False
+
+def setup_rc_local_thp_persistence():
+    """Setup THP persistence using rc.local boot script"""
+    rc_local_path = '/etc/rc.local'
+    thp_commands = '''# Disable Transparent Huge Pages for Oracle
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+'''
+    
+    try:
+        if os.path.exists(rc_local_path):
+            with open(rc_local_path, 'r') as f:
+                content = f.read()
+            
+            if 'transparent_hugepage' in content:
+                log('THP commands already exist in rc.local')
+                return True
+            
+            # Insert before exit 0 or at the end
+            if 'exit 0' in content:
+                updated_content = content.replace('exit 0', '{}\\nexit 0'.format(thp_commands))
+            else:
+                updated_content = content + '\\n{}'.format(thp_commands)
+            
+            if not write_temp_file_and_move('rc_local_updated', rc_local_path, updated_content):
+                return False
+        else:
+            # Create new rc.local
+            rc_content = '''#!/bin/bash
+{}
+exit 0
+'''.format(thp_commands)
+            if not write_temp_file_and_move('rc_local_new', rc_local_path, rc_content):
+                return False
+        
+        # Make executable
+        result = subprocess.run(['sudo', 'chmod', '+x', rc_local_path], 
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
+        if result.returncode == 0:
+            log('Successfully configured rc.local for THP persistence')
+            return True
+        else:
+            log('Failed to make rc.local executable: {}'.format(result.stderr))
+            return False
+            
+    except Exception as e:
+        log('rc.local setup failed: {}'.format(str(e)))
+        return False
+
+def disable_thp_immediately():
+    """Disable THP settings immediately in the current session"""
+    # Disable THP enabled
+    result = subprocess.run(['sudo', 'sh', '-c', 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'], 
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
+    if result.returncode != 0:
+        return False, 'Failed to disable THP enabled: {}'.format(result.stderr)
+    
+    # Disable THP defrag
+    result = subprocess.run(['sudo', 'sh', '-c', 'echo never > /sys/kernel/mm/transparent_hugepage/defrag'], 
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
+    if result.returncode != 0:
+        return False, 'Failed to set THP defrag to never: {}'.format(result.stderr)
+    
+    log('Successfully disabled THP and set defrag to never')
+    return True, None
+
+# Fix Transparent Huge Pages settings for Oracle workloads
+def fix_transparent_hugepage():
+    try:
+        log('Starting Transparent Huge Pages (THP) optimization for Oracle workloads')
+        
+        # Step 1: Check current THP settings
+        log('Checking current Transparent Huge Pages configuration')
+        current = check_thp()
+        
+        error_response = check_for_error_and_return_failure(current, 'THP configuration check failed')
+        if error_response:
+            return error_response
+        
+        # Step 2: Check if already optimized
+        thp_disabled = current.get("thp-disabled", False)
+        thp_value = current.get("thp-value", "unknown")
+        
+        if thp_disabled:
+            log('Transparent Huge Pages are already optimized (disabled)')
+            return {"status": "already-optimized", "message": "THP is already disabled"}
+        
+        log('Current THP state - disabled: {}, value: {}'.format(thp_disabled, thp_value))
+        
+        # Step 3: Disable THP immediately
+        log('Disabling Transparent Huge Pages')
+        success, error_msg = disable_thp_immediately()
+        if not success:
+            log(error_msg)
+            return {"status": "failure", "error": error_msg}
+        
+        # Step 4: Setup persistence
+        log('Setting up THP persistence')
+        thp_param = 'transparent_hugepage=never'
+        persistence_success = False
+        
+        # Method 1: Try GRUB persistence
+        log('Attempting GRUB persistence setup')
+        if setup_grub_thp_persistence(thp_param):
+            persistence_success = True
+        
+        # Method 2: rc.local as fallback
+        if not persistence_success:
+            log('Setting up rc.local for THP persistence')
+            if setup_rc_local_thp_persistence():
+                persistence_success = True
+        
+        if not persistence_success:
+            log('Warning: Could not set up persistence mechanism, THP settings may not survive reboot')
+        
+        # Step 5: Verify the changes
+        log('Verifying THP configuration changes')
+        new_check = check_thp()
+        
+        error_response = check_for_error_and_return_failure(new_check, 'THP verification failed')
+        if error_response:
+            return error_response
+        
+        new_disabled = new_check.get("thp-disabled", False)
+        new_value = new_check.get("thp-value", "unknown")
+        
+        if new_disabled and new_value == "disabled":
+            if persistence_success:
+                log('THP optimization successful - THP is disabled and persistence configured')
+                return {"status": "success", "message": "THP successfully disabled with persistence"}
+            else:
+                log('THP optimization successful but persistence setup failed')
+                return {"status": "success", "message": "THP successfully disabled (persistence setup failed - manual reboot configuration may be needed)"}
+        else:
+            error_msg = 'THP verification failed - disabled: {}, value: {}'.format(new_disabled, new_value)
+            log(error_msg)
+            return {"status": "failure", "error": error_msg}
+    
+    except subprocess.TimeoutExpired as e:
+        error_msg = 'THP optimization timeout: {}'.format(str(e))
+        log(error_msg)
+        return {"status": "failure", "error": error_msg}
+    except Exception as e:
+        error_msg = 'Unexpected error during THP optimization: {}'.format(str(e))
+        log(error_msg)
+        return {"status": "failure", "error": error_msg}
+`;
+
+const fixTransparentHugepageTemplate = `
+${CHECK_TRANSPARENT_HUGEPAGE}
+${FIX_TRANSPARENT_HUGEPAGE}
+
+result = fix_transparent_hugepage()
+print(json.dumps(result))
+`;
+
+const fixTransparentHugepageCommand = `#!/bin/bash
+${logFileCheck(false)}
+
+# This script doesn't need to be run as oracle user
+${pythonScriptInit(fixTransparentHugepageTemplate, 'wlmdb-os-configuration-thp-optimization.log')}
+`;
+
+export {
+    optimizeTcpOptionsCommand,
+    optimizeIscsiReplacementTimeoutCommand,
+    optimizeMultipathIoSessionsCommand,
+    fixTransparentHugepageCommand
+};

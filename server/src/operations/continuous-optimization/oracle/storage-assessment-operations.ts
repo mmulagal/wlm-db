@@ -12,7 +12,6 @@ import {
 import { isDemo, parseMultipleCommandResponse } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob } from '../../database/job-operations';
-import { VOLUME_LUN_CONFIGURATION } from '../../workloads/oracle/storage-assessment-scripts';
 import {
     MAX_LUNS_PER_DG,
     MIN_OPTIMAL_LUN_PER_DG,
@@ -27,8 +26,6 @@ import {
     OracleSysFileTypes,
     OracleVolumeRecord
 } from '../../workloads/oracle/common-types';
-import { OS_ASSESSMENT } from '../../workloads/oracle/os-iscsi-assessment-scripts';
-import { NFS_OS_ASSESSMENT } from '../../workloads/oracle/os-nfs-assessment-scripts';
 import {
     defaultMultipathExpected,
     ISCIOSAssessment,
@@ -38,6 +35,9 @@ import {
     StorageIscsiAssessment,
     StorageNfsAssessment
 } from './common-types';
+import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
+import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
+import { VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();

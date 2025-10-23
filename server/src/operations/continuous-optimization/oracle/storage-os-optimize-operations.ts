@@ -20,7 +20,8 @@ import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../.
 import {
     optimizeTcpOptionsCommand,
     optimizeIscsiReplacementTimeoutCommand,
-    optimizeMultipathIoSessionsCommand
+    optimizeMultipathIoSessionsCommand,
+    fixTransparentHugepageCommand
 } from './ssm-scripts/os-optimization-scripts';
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import getLogger from '../../../utils/logger';
@@ -120,6 +121,9 @@ async function oracleOptimizeStorageOS(
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_IO_SESSIONS:
             jobDescription = `Fix Storage Operating System multipath IO sessions for ${serverNameWithHostName}`;
+            break;
+        case OptimizeOracleiSCSIStorageOperatingSystem.THP_DISABLE:
+            jobDescription = `Fix Storage Operating System transparent huge pages for ${serverNameWithHostName}`;
             break;
         default:
             jobDescription = '';
@@ -293,6 +297,37 @@ async function oracleOptimizeStorageOS(
                     error: jobError
                 });
                 await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+            }
+            break;
+        }
+
+        case OptimizeOracleiSCSIStorageOperatingSystem.THP_DISABLE: {
+            try {
+                await optimizeTransparentHugePages({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseInstanceId,
+                    activeNodeInstanceId,
+                    instanceMetadata
+                });
+            } catch (error) {
+                const errorMessage = `Error while fixing transparent huge pages settings ${error}`;
+                logger.error(errorMessage);
+                jobError = errorMessage;
+                jobStatus = JOBSTATUS.FAILED;
+            } finally {
+                await updateJobDetails(accountId, parentJobId, {
+                    status: jobStatus,
+                    endTime: Date.now(),
+                    error: jobError
+                });
+                if (jobStatus === JOBSTATUS.FAILED) {
+                    await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+                }
             }
             break;
         }
@@ -686,6 +721,116 @@ async function optimizeMultipathIoSessions(params: OptimizeOSParams) {
     if (jobStatus !== JOBSTATUS.COMPLETED && jobStatus !== JOBSTATUS.WARNING) {
         logger.info(
             `Skipping assessment trigger for databaseHost ${databaseHostId} as multipath IO sessions optimization job did not complete successfully.`
+        );
+        throw new Error(jobError);
+    }
+}
+
+async function optimizeTransparentHugePages(params: OptimizeOSParams) {
+    const {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        databaseInstanceId,
+        activeNodeInstanceId,
+        instanceMetadata
+    } = params;
+
+    logger.info('Optimizing Transparent Huge Pages', {
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        databaseInstanceId
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Disable transaparent huge pages(THP) for ${serverNameWithHostName}`,
+        description: `Disable transaparent huge pages(THP) settings for ${serverNameWithHostName}`,
+        resourceName: serverNameWithHostName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.WELL_ARCHITECTED,
+        parentJobId
+    });
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    try {
+        const ssmCommand = fixTransparentHugepageCommand;
+        const ssmComment = 'Disable transaparent huge pages(THP) settings';
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId,
+                ssmComment,
+                accountId,
+                false,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            ),
+            3,
+            5000
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+
+        if (parsedResponse.error) {
+            throw new Error(parsedResponse.error);
+        }
+
+        const status = parsedResponse?.status;
+        if (status === 'success') {
+            logger.info('Transparent Huge Pages optimization completed successfully');
+        } else if (status === 'already-optimized') {
+            const skippedMessage =
+                'Transparent Huge Pages are already disabled as per recommendations. No changes needed';
+            logger.info(skippedMessage);
+            jobError = skippedMessage;
+            jobStatus = JOBSTATUS.WARNING;
+        } else {
+            const failureMessage = parsedResponse?.error || 'Failed to optimize Transparent Huge Pages';
+            logger.error(failureMessage);
+            jobError = failureMessage;
+            jobStatus = JOBSTATUS.FAILED;
+        }
+
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['transparent-hugepages'],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+    } catch (error) {
+        jobError = jobError || `Error while fixing transparent huge pages settings ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING
+                ? AuditStatus.SUCCESS
+                : AuditStatus.FAILED,
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING ? '' : jobError
+        );
+    }
+
+    if (jobStatus === JOBSTATUS.FAILED) {
+        logger.info(
+            `Skipping assessment trigger for databaseHost ${databaseHostId} as transparent huge pages optimization job did not complete successfully.`
         );
         throw new Error(jobError);
     }

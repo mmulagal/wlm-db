@@ -97,12 +97,12 @@ import { onDemandTriggerMssqlDriftAssessment } from './continuous-optimization/m
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
 
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
-import { optimizeStorageConfigParamsOracle } from './workloads/oracle/storage-optimize-scripts';
 import { onDemandTriggerOracleDriftAssessment } from './continuous-optimization/oracle/assessment-operations';
 import {
     getOracleStorageConfigRecommendationMap,
     oracleSpecialStorageConfigNames
 } from './continuous-optimization/oracle/storage-optimize-operations';
+import { optimizeStorageConfigParamsOracle } from './continuous-optimization/oracle/ssm-scripts/storage-optimize-scripts';
 
 const isDemoFlow = isDemo();
 
