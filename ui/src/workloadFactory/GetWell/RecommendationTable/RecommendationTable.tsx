@@ -259,7 +259,7 @@ const RecommendationTable = ({
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOracleOs;
-            payload = getOracleOsPayload('iscsi-targets-sessions');
+            payload = getOracleOsPayload('multipath-io-sessions');
             apiInput = { payload };
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
