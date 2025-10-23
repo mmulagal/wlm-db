@@ -10,6 +10,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { setShowBanner } from '../../../store/workloadFactory/sandboxSlice';
 import { setSelectedSandboxHeaderValue } from '../../../store/workloadFactory/createSandboxSlice';
 import { useAppSelector } from '../../../store/storeHooks';
+import { createSandboxNavigation } from '../../../utils/utilityFunctions';
 
 const SandboxHeader = () => {
     const windowSize = useResize();
@@ -45,7 +46,7 @@ const SandboxHeader = () => {
                                         regionId: headerSelectedRegionSandbox?.label2
                                     })
                                 );
-                                navigate('../create-new-sandbox');
+                                createSandboxNavigation(navigate);
                             }}
                         >
                             {GENERAL.CREATE_SANDBOX}
@@ -81,7 +82,7 @@ const SandboxHeader = () => {
                                             regionId: headerSelectedRegionSandbox?.label2
                                         })
                                     );
-                                    navigate('../create-new-sandbox');
+                                    createSandboxNavigation(navigate);
                                 }}
                             >
                                 {GENERAL.CREATE_SANDBOX}
@@ -118,7 +119,7 @@ const SandboxHeader = () => {
                                             regionId: headerSelectedRegionSandbox?.label2
                                         })
                                     );
-                                    navigate('../create-new-sandbox');
+                                    createSandboxNavigation(navigate);
                                 }}
                             >
                                 {GENERAL.CREATE_SANDBOX}

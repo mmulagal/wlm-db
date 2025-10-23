@@ -47,7 +47,7 @@ import RebaseSplitContent from '../../../../Sandbox/SandboxTable/RebaseSplitCont
 import ViewDialog from '../../../../../common/ViewDialog/ViewDialog';
 import ConnectToCiCdContent from '../../../../Sandbox/SandboxTable/ConnectToCiCdContent/ConnectToCiCdContent';
 import MenuPopover from '../../../../../common/MenuPopover/MenuPopover';
-import { formatDateWithTime } from '../../../../../utils/utilityFunctions';
+import { createSandboxNavigation, formatDateWithTime } from '../../../../../utils/utilityFunctions';
 import SmallLoader from '../../../../../common/SmallLoader/SmallLoader';
 import {
     setSelectedCsData,
@@ -772,7 +772,7 @@ const SandboxInstanceTable = () => {
                                         database: null
                                     })
                                 );
-                                navigate('../create-new-sandbox');
+                                createSandboxNavigation(navigate);
                             }}
                             id="create-sandbox"
                         >

@@ -2780,3 +2780,21 @@ export const dashboardRedirection = () => {
         });
     }
 };
+
+export const createSandboxNavigation = (navigate: any) => {
+    const state = store.getState();
+    const isWorkloadFactory = state?.auth?.isWorkloadFactory;
+    if (isWorkloadFactory) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: { pathname: '../../databases/sandboxes/create-new-sandbox', replace: true }
+        });
+        navigate('../../databases/sandboxes/create-new-sandbox');
+    } else {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: { pathname: '../../fsxdb/sandboxes/create-new-sandbox', replace: true }
+        });
+        navigate('../../fsxdb/sandboxes/create-new-sandbox');
+    }
+};

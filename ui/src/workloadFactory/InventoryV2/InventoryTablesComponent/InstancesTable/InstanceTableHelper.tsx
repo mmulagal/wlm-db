@@ -33,6 +33,7 @@ import {
     setNotRegisteredOracleDatabasesView,
     setNotRegisteredSQLView
 } from '../../../../store/workloadFactory/inventorybannerSlice';
+import { createSandboxNavigation } from '../../../../utils/utilityFunctions';
 
 export interface InstanceMenuSelectionParams {
     menuId: string;
@@ -237,7 +238,7 @@ export const handleInstanceMenuSelection = ({
                             database: null
                         })
                     );
-                    navigate('../create-new-sandbox');
+                    createSandboxNavigation(navigate);
                     break;
                 case 'mssql-unManage':
                     handleDialog(rowData);

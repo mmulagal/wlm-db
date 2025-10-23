@@ -46,7 +46,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
 import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
-import { formatDateWithTime } from '../../../utils/utilityFunctions';
+import { createSandboxNavigation, formatDateWithTime } from '../../../utils/utilityFunctions';
 import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedSandboxHeaderValue } from '../../../store/workloadFactory/createSandboxSlice';
@@ -798,7 +798,7 @@ const SandboxTable = () => {
                                         regionId: headerSelectedRegionSandbox?.label2
                                     })
                                 );
-                                navigate('../create-new-sandbox');
+                                createSandboxNavigation(navigate);
                             }}
                             id="create-sandbox"
                         >
