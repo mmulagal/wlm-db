@@ -151,7 +151,7 @@ const Home = () => {
                         />
                         <Route path="/create-new-user" element={<WizardComponent />} />
                         <Route path="/job-monitor" element={<JobMonitoring />} />
-                        <Route path="/create-new-sandbox" element={<CreateNewSandbox />} />
+                        <Route path="/databases/sandboxes/create-new-sandbox" element={<CreateNewSandbox />} />
                         {/* Testing code */}
                         {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
                         <Route
@@ -225,7 +225,7 @@ const Home = () => {
                             />
                             <Route path="/create-new-user" element={<WizardComponent />} />
                             <Route path="/job-monitor" element={<JobMonitoring />} />
-                            <Route path="/create-new-sandbox" element={<CreateNewSandbox />} />
+                            <Route path="/fsxdb/sandboxes/create-new-sandbox" element={<CreateNewSandbox />} />
                             {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
                             <Route
                                 path="/fsxdb/register-wizard"
