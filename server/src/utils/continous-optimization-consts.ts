@@ -578,7 +578,14 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     'asm-setup',
     'asm-external-redundancy',
     'afd-logical-block-size',
-    'asmlib-logical-block-size'
+    'asmlib-logical-block-size',
+    'nfs-rootonly',
+    'export-policy',
+    'kernel-parameters',
+    'nfs-mount-options-databasefiles',
+    'nfs-mount-options-adrhome',
+    'nfsv4-domain-name',
+    'nfs-caching-options'
 ];
 
 const HOST_LEVEL_CONFIGURATIONS = [

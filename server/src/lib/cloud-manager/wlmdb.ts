@@ -70,15 +70,9 @@ async function getWlmdbPolicy(): Promise<WlmdbPolicyResponse> {
             .json<WorkloadPoliciesResponse>();
 
         // Find the required packages
-        const viewPackage = response.packages.find(pkg =>
-            pkg.name === PACKAGE_NAMES.VIEW_PLANNING_ANALYSIS
-        );
-        const operatePackage = response.packages.find(pkg =>
-            pkg.name === PACKAGE_NAMES.OPERATIONS_REMEDIATION
-        );
-        const hostCreationPackage = response.packages.find(pkg =>
-            pkg.name === PACKAGE_NAMES.DATABASE_HOST_CREATION
-        );
+        const viewPackage = response.packages.find(pkg => pkg.name === PACKAGE_NAMES.VIEW_PLANNING_ANALYSIS);
+        const operatePackage = response.packages.find(pkg => pkg.name === PACKAGE_NAMES.OPERATIONS_REMEDIATION);
+        const hostCreationPackage = response.packages.find(pkg => pkg.name === PACKAGE_NAMES.DATABASE_HOST_CREATION);
         if (!viewPackage) {
             throw new Error(`${PACKAGE_NAMES.VIEW_PLANNING_ANALYSIS} package not found in workload policies`);
         }
