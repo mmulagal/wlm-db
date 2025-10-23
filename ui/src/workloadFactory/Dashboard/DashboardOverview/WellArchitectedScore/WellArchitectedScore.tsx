@@ -1,6 +1,6 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
-import { useDialog } from '@netapp/design-system';
+import { Popover, useDialog } from '@netapp/design-system';
 import { useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import styles from './WellArchitectedScore.module.scss';
@@ -168,15 +168,26 @@ const WellArchitectedScore = () => {
                 <div className={styles.rightSection}>
                     {loading && <DsFlashingDotsLoader />}
                     <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isDisabled={loading || showNA}
-                            data-testid="wlm-db-optimize-instances-by-category"
-                            isThin
-                            onClick={() => handleClick()}
-                        >
-                            {t('databases.dashboard.investigate')}
-                        </DsButton>
+                        <Popover
+                            isAppendedToBody
+                            children={
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architected-tab.resource-view-fix-hover-msg')}
+                                </DsTypography>
+                            }
+                            trigger="hover"
+                            container={
+                                <DsButton
+                                    variant="secondary"
+                                    isDisabled={loading || showNA}
+                                    data-testid="wlm-db-optimize-instances-by-category"
+                                    isThin
+                                    onClick={() => handleClick()}
+                                >
+                                    {t('databases.dashboard.investigate')}
+                                </DsButton>
+                            }
+                        />
                     </div>
                 </div>
             </div>

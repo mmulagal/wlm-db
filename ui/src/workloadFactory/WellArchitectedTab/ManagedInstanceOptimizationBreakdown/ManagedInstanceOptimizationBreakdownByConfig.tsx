@@ -24,7 +24,12 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
 import BarComponent from '../../Dashboard/BarComponent/BarComponent';
-import { derivedSeverity, derivedType, getCategoryForAssessment } from '../../../utils/utilityFunctions';
+import {
+    allAssessmentKeys,
+    derivedSeverity,
+    derivedType,
+    getCategoryForAssessment
+} from '../../../utils/utilityFunctions';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { t } = useTranslation();
@@ -108,9 +113,17 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         const severityMatch =
             appliedSeverity.length > 0 && tileSeverity ? appliedSeverity.includes(tileSeverity) : false;
 
-        // Show tile if it matches either category OR severity (OR logic)
-        return categoryMatch || severityMatch;
+        // Show tile if it matches both category AND severity (AND logic)
+        return categoryMatch && severityMatch;
     };
+
+    // Calculate total and filtered counts
+    const totalConfigurations = allAssessmentKeys.length;
+    const filteredConfigurations = allAssessmentKeys.filter(key => shouldShowTile(key)).length;
+
+    // Check if no filters are applied (all categories and severities selected)
+    const noFiltersApplied =
+        appliedCategories.length === categoryOptions.length && appliedSeverity.length === severityOptions.length;
 
     // Ends here
 
@@ -205,7 +218,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         <div className={`${styles.managedBreakdown} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    {t('databases.dashboard.well-architected-breakdown-by-configurations')}
+                    {t('databases.dashboard.well-architected-breakdown-by-configurations')}{' '}
+                    {noFiltersApplied
+                        ? `(${totalConfigurations})`
+                        : `(${filteredConfigurations}/${totalConfigurations})`}
                 </DsTypography>
 
                 <div className={styles.rightSide}>

@@ -39,24 +39,12 @@ const ManagedInstanceOptimization = () => {
     );
 
     const ChartComponent = useMemo(() => {
-        const setColor = (value: any) => {
-            if (value <= 25) {
-                return '#FE5502';
-            }
-            if (value > 25 && value <= 50) {
-                return '#F7941D';
-            }
-            if (value > 50 && value <= 75) {
-                return '#FDC300';
-            }
-            if (value > 75 && value < 100) {
-                return '#68C6B3';
-            }
-            return '#E0E0E0';
+        const setColor = () => {
+            return '#68C6B3';
         };
         return () => (
             <HostDistributionChart
-                color1={showNA ? 'var(--border)' : setColor(instanceOptimizationSummary?.optimizedPercent)}
+                color1={showNA ? 'var(--border)' : setColor()}
                 color2="#E0E0E0"
                 data1={showNA ? 0 : instanceOptimizationSummary?.optimizedPercent}
                 data2={showNA ? 100 : 100 - instanceOptimizationSummary?.optimizedPercent}

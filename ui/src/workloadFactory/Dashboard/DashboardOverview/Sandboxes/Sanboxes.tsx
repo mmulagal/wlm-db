@@ -21,6 +21,7 @@ import { DBType, INVENTORY_STATUS } from '../../../../utils/consts';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import store from '../../../../store/store';
 import { createUniqueSandboxTableData, getUniqueSourceDatabasesCount } from '../../../Sandbox/SandboxUtility';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 
 const Sandboxes = () => {
     const { t } = useTranslation();
@@ -29,6 +30,7 @@ const Sandboxes = () => {
     const { loading: dataLoading, data: aggregatedSandboxList } = useAppSelector(
         state => state.inventoryV2.dashSandboxList
     );
+    const isWorkloadFactoryStatus = useAppSelector(state => state.auth?.isWorkloadFactory);
     const navigate = useNavigate();
     const { setDialog, closeDialog } = useDialog();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
@@ -65,6 +67,18 @@ const Sandboxes = () => {
     const sandboxRowClick = () => {
         const state = store.getState();
         const { selectedSandboxRow } = state.sandbox;
+
+        if (isWorkloadFactoryStatus) {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: { pathname: '../../databases/sandboxes', replace: true }
+            });
+        } else {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: { pathname: '../../fsxdb/sandboxes', replace: true }
+            });
+        }
         dispatch(
             setSelectedSandboxHeaderValue({
                 credId: selectedSandboxRow?.credentialId,

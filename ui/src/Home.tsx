@@ -68,6 +68,13 @@ const Home = () => {
     useEffect(() => {
         if (isWorkloadFactory && navigationPath && checkLeftNavRoute(navigationPath)) {
             navigate(navigationPath);
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: navigationPath,
+                    replace: true
+                }
+            });
         }
     }, [navigationPath]);
 
