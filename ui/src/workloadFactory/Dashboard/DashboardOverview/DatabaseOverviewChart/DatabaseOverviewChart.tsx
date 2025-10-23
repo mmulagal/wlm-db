@@ -85,11 +85,7 @@ const DatabaseOverviewChart = ({
                     {centerValue}
                 </DsTypography>
 
-                <DsTypography
-                    variant="Regular_14"
-                    style={{ lineHeight: 'unset', marginTop: '4px' }}
-                    className={CommonStyles.notAvailable}
-                >
+                <DsTypography variant="Regular_14" style={{ lineHeight: 'unset', marginTop: '4px' }}>
                     {centerText}
                 </DsTypography>
 

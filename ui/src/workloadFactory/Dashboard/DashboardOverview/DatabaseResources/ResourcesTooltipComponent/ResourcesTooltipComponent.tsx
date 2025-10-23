@@ -71,7 +71,7 @@ const ResourcesTooltipComponent = ({ type, data }: ResourcesTooltipComponentProp
                 <SeparatorComponent variant="horizontal" />
 
                 <div className={styles.row}>
-                    <DsTypography variant="Regular_13">{t('databases.dashboard.clusters')}</DsTypography>
+                    <DsTypography variant="Regular_13">{t('databases.dashboard.instances-caps')}</DsTypography>
                     <DsTypography variant="Semibold_13">{data?.totalInstances || 0}</DsTypography>
                 </div>
 

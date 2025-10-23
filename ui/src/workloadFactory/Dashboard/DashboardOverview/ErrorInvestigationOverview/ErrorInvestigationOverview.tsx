@@ -217,7 +217,7 @@ const ErrorInvestigationOverview = () => {
                                 data1={errInvestigationOverview?.severity1}
                                 data2={errInvestigationOverview?.severity2}
                                 data3={errInvestigationOverview?.severity3}
-                                centerText="Events"
+                                centerText="Errors"
                                 centerValue={String(errInvestigationOverview?.totalEvents)}
                                 loading={false}
                                 isDisabled={loading || showNA}

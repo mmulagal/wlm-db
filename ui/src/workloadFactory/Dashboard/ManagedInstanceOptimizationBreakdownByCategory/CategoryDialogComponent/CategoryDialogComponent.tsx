@@ -59,7 +59,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         },
         {
             id: '2',
-            Header: t('databases.dashboard.type'),
+            Header: t('databases.dashboard.engine-type'),
             accessor: 'type',
             width: 'auto',
             filterOptions: 'auto',
