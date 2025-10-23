@@ -25,7 +25,7 @@
         gap: 24px;
         .optimizeSeparator {
             border-top: 1px solid var(--border);
-            width: 928px;
+            width: calc(100% + 80px);
             margin-left: -40px;
         }
 

@@ -254,10 +254,10 @@ const BarComponent = ({
                         <div className={styles.severity}>
                             <div
                                 className={`${styles.circle} ${
-                                    severity === 'critical' ? styles.error : styles.warning
+                                    severity === 'Critical' ? styles.error : styles.warning
                                 }`}
                             />
-                            <DsTypography variant="Semibold_14">Critical</DsTypography>
+                            <DsTypography variant="Semibold_14">{severity}</DsTypography>
                         </div>
 
                         <Tag text={type} />

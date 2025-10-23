@@ -24,7 +24,7 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
 import BarComponent from '../../Dashboard/BarComponent/BarComponent';
-import { derivedType, getCategoryForAssessment } from '../../../utils/utilityFunctions';
+import { derivedSeverity, derivedType, getCategoryForAssessment } from '../../../utils/utilityFunctions';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { t } = useTranslation();
@@ -94,7 +94,22 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     // Function to check if a tile should be visible based on applied filters
     const shouldShowTile = (assessmentKey: string): boolean => {
         const tileCategory = getCategoryForAssessment(assessmentKey);
-        return appliedCategories.includes(tileCategory);
+        const tileSeverity = derivedSeverity(assessmentKey);
+
+        // If no filters are applied, show nothing
+        if (appliedCategories.length === 0 && appliedSeverity.length === 0) {
+            return false;
+        }
+
+        // Check category match
+        const categoryMatch = appliedCategories.length > 0 ? appliedCategories.includes(tileCategory) : false;
+
+        // Check severity match
+        const severityMatch =
+            appliedSeverity.length > 0 && tileSeverity ? appliedSeverity.includes(tileSeverity) : false;
+
+        // Show tile if it matches either category OR severity (OR logic)
+        return categoryMatch || severityMatch;
     };
 
     // Ends here
@@ -156,6 +171,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         const isLoading = loading || (inProgressOptimizationData?.[assessmentKey]?.length || 0) > 0;
         const width = windowSize.width > 1700 ? '328px' : '248px';
         const identifyType = derivedType(assessmentKey);
+        const identifySeverity = derivedSeverity(assessmentKey);
 
         return (
             <BarComponent
@@ -180,6 +196,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
                 isDisabled={showNA}
                 type={identifyType}
+                severity={identifySeverity}
             />
         );
     };
