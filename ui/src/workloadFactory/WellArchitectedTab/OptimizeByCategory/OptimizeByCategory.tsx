@@ -10,118 +10,29 @@ import { ReactComponent as Compute } from '../../../assets/Compute.svg';
 import styles from './OptimizeByCategory.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
-import {
-    getAssessmentGroupedByCategory,
-    getAssessmentHostListGroupedByCategory
-} from '../../DatabaseHomePage/DatabaseHomeUtils';
-import {
-    setFSXId,
-    setGwPageLoadInstanceData,
-    setLandingFrom,
-    setSelectedWellArchitectTab
-} from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { selectedTabSelection, setSelectedAssessmentRow } from '../../../store/workloadFactory/databaseHomeSlice';
-import { sortListOfDict } from '../../../utils/utilityFunctions';
-import { INVENTORY_STATUS, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
-import store from '../../../store/store';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
+import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { GENERAL } from '../../../utils/appConstants';
-
-import {
-    setSelectedHostname,
-    setSelectedResourcePageHostData
-} from '../../../store/workloadFactory/workloadFactoryResourceSlice';
-import CategoryDialogComponent from '../../Dashboard/ManagedInstanceOptimizationBreakdownByCategory/CategoryDialogComponent/CategoryDialogComponent';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading, allOracleHostAssessmentData } = useAppSelector(
-        state => state.inventoryV2
-    );
-    const { setDialog, closeDialog } = useDialog();
+    const {
+        allmssqlHostAssessmentData,
+        allmssqlHostAssessmentLoading,
+        allOracleHostAssessmentData,
+        allOracleHostAssessmentLoading
+    } = useAppSelector(state => state.inventoryV2);
     const categoryData = useMemo(
-        () => getAssessmentGroupedByCategory(allmssqlHostAssessmentData),
-        [allmssqlHostAssessmentData]
+        () => getAssessmentGroupedByCategory(allmssqlHostAssessmentData, allOracleHostAssessmentData),
+        [allmssqlHostAssessmentData, allOracleHostAssessmentData]
     );
-    const { multiDataLoading, showNA } = useAppSelector(state => state.headers);
+    const { showNA } = useAppSelector(state => state.headers);
 
     const loading = useMemo(
-        () => allmssqlHostAssessmentLoading || multiDataLoading,
-        [allmssqlHostAssessmentLoading, multiDataLoading]
+        () => allmssqlHostAssessmentLoading || allOracleHostAssessmentLoading,
+        [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading]
     );
 
-    const redirectToGetWellPage = () => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.DASHBOARD));
-        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
-
-        const updatedState = store.getState();
-        const { selectedAssessmentRow }: any = updatedState.databaseHome;
-        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(
-            setGwPageLoadInstanceData({
-                hostname: selectedAssessmentRow?.hostName,
-                resourceId: selectedAssessmentRow?.databaseHostId,
-                instanceId: selectedAssessmentRow?.instanceId,
-                instanceName: selectedAssessmentRow?.databaseInstanceName,
-                credId: selectedAssessmentRow?.credentialId,
-                regionId: selectedAssessmentRow?.regionId,
-                storageType: selectedAssessmentRow?.sqlServerDeploymentType
-            })
-        );
-
-        dispatch(setSelectedHostname(selectedAssessmentRow?.hostName));
-
-        dispatch(
-            setSelectedResourcePageHostData({
-                resourceId: selectedAssessmentRow?.databaseHostId,
-                databaseInstanceId: selectedAssessmentRow?.instanceId,
-                databaseInstanceName: selectedAssessmentRow?.databaseInstanceName,
-                credentialId: selectedAssessmentRow?.credentialId,
-                regionId: selectedAssessmentRow?.regionId
-            })
-        );
-        dispatch(
-            setFSXId({
-                fsxId: selectedAssessmentRow?.fsxId,
-                ec2InstanceId: selectedAssessmentRow?.ec2InstanceId
-            })
-        );
-
-        setTimeout(() => {
-            dispatch(setSelectedAssessmentRow(null));
-        }, 5);
-    };
-
-    const handleClick = () => {
-        const tableData = sortListOfDict(
-            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData, allOracleHostAssessmentData) || [],
-            'status',
-            false
-        );
-        const isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
-        setDialog(
-            <DialogComponent
-                header="Fix well-architected issues"
-                content={<CategoryDialogComponent tableData={tableData} />}
-                primaryButton={GENERAL.CONTINUE}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    redirectToGetWellPage();
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                    dispatch(setSelectedAssessmentRow(null));
-                }}
-                customClass={styles.dialog}
-                primaryButtonDisabled={!tableData || tableData.length === 0 || !isOnlineInstance}
-                testId="wlm-db-not optimize-instance-continue-button"
-            />
-        );
-    };
     return (
         <div className={`${styles.optimizeByCategory} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
@@ -147,7 +58,9 @@ const OptimizeByCategory = () => {
                                     {showNA
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
-                                              ((categoryData.storage || 0) / (categoryData.total || 1)) * 100
+                                              ((categoryData.mssqlStorage + categoryData.oracleStorage || 0) /
+                                                  (categoryData.mssqlTotal + categoryData.oracleTotal || 1)) *
+                                                  100
                                           )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
@@ -172,7 +85,7 @@ const OptimizeByCategory = () => {
                                     {showNA
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
-                                              ((categoryData.compute || 0) / (categoryData.total || 1)) * 100
+                                              ((categoryData.compute || 0) / (categoryData.mssqlTotal || 1)) * 100
                                           )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
@@ -196,7 +109,7 @@ const OptimizeByCategory = () => {
                                     {showNA
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
-                                              ((categoryData.application || 0) / (categoryData.total || 1)) * 100
+                                              ((categoryData.application || 0) / (categoryData.mssqlTotal || 1)) * 100
                                           )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
@@ -224,7 +137,7 @@ const OptimizeByCategory = () => {
                                     {showNA
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
-                                              ((categoryData.resiliency || 0) / (categoryData.total || 1)) * 100
+                                              ((categoryData.resiliency || 0) / (categoryData.mssqlTotal || 1)) * 100
                                           )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
@@ -248,7 +161,7 @@ const OptimizeByCategory = () => {
                                     {showNA
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
-                                              ((categoryData.cloning || 0) / (categoryData.total || 1)) * 100
+                                              ((categoryData.cloning || 0) / (categoryData.mssqlTotal || 1)) * 100
                                           )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}

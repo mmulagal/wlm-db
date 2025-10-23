@@ -1213,14 +1213,17 @@ export const getErrorInvestigationSummary = (allLogAnalysisData: any) => {
     };
 };
 
-export const getAssessmentGroupedByCategory = (assessmentData: any) => {
+export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssessmentData: any) => {
     const assessmentGroupedByCategory: any = {
-        storage: 0,
+        mssqlStorage: 0,
+        oracleStorage: 0,
         compute: 0,
         application: 0,
         resiliency: 0,
         cloning: 0,
-        total: 0
+        total: 0,
+        mssqlTotal: 0,
+        oracleTotal: 0
     };
 
     const state = store.getState();
@@ -1239,7 +1242,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                assessmentGroupedByCategory.total++;
+                assessmentGroupedByCategory.mssqlTotal++;
                 const instanceAssessmentData = instance?.assessments;
                 const isComputeOptimized = isOptimized(
                     instanceAssessmentData?.compute?.status,
@@ -1351,7 +1354,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     isStorageSizingOptimized &&
                     isStorageConfigOptimized
                 ) {
-                    assessmentGroupedByCategory.storage++;
+                    assessmentGroupedByCategory.mssqlStorage++;
                 }
                 if (isApplicationOptimized && isMicrosoftSqlPatchOptimized && isMaxdopPatchOptimized) {
                     assessmentGroupedByCategory.application++;
@@ -1368,6 +1371,48 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
 
                 if (isCloneOptimized) {
                     assessmentGroupedByCategory.cloning++;
+                }
+            }
+        });
+    });
+
+    oracleAssessmentData.map((databaseHost: any) => {
+        if (
+            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
+            uniqueResourceList.includes(databaseHost?.databaseHostId)
+        ) {
+            return;
+        }
+        uniqueResourceList.push(databaseHost?.databaseHostId);
+
+        databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
+                assessmentGroupedByCategory.oracleTotal++;
+                const instanceAssessmentData = instance?.assessments;
+
+                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
+                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+                        (config: any) => config.configurationName === item.name
+                    )?.configState;
+                    return isOptimized(item?.status, configState);
+                });
+                const isStorageConfigOptimized =
+                    instanceAssessmentData &&
+                    instanceAssessmentData?.storage &&
+                    instanceAssessmentData?.storage?.configuration &&
+                    Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
+                        item?.every((subItem: any) => {
+                            const configState =
+                                instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[item]?.find(
+                                    (config: any) => config.configurationName === subItem.name
+                                )?.configState;
+                            return isOptimized(subItem?.status, configState);
+                        })
+                    );
+
+                if (isStorageLayoutOptimized && isStorageConfigOptimized) {
+                    assessmentGroupedByCategory.oracleStorage++;
                 }
             }
         });

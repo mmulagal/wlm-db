@@ -33,9 +33,9 @@ const DashboardOptimizeInnerPage = () => {
                     <BreadCrumbs
                         items={[
                             {
-                                title: 'Dashboard',
+                                title: `${t('databases.general.well-architected')}`,
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.WELL_ARCHITECTED_TAB));
                                 }
                             },
                             {

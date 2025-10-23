@@ -28,7 +28,12 @@ import { derivedType, getCategoryForAssessment } from '../../../utils/utilityFun
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { t } = useTranslation();
-    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+    const {
+        allmssqlHostAssessmentData,
+        allmssqlHostAssessmentLoading,
+        allOracleHostAssessmentLoading,
+        allOracleHostAssessmentData
+    } = useAppSelector(state => state.inventoryV2);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const dispatch = useDispatch();
     const windowSize = useResize();
@@ -94,7 +99,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     // Ends here
 
-    const { multiDataLoading, showNA } = useAppSelector(state => state.headers);
+    const { showNA } = useAppSelector(state => state.headers);
 
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
@@ -104,8 +109,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     };
 
     const loading = useMemo(
-        () => allmssqlHostAssessmentLoading || multiDataLoading,
-        [allmssqlHostAssessmentLoading, multiDataLoading]
+        () => allmssqlHostAssessmentLoading || allOracleHostAssessmentLoading,
+        [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading]
     );
 
     const configData = useMemo(

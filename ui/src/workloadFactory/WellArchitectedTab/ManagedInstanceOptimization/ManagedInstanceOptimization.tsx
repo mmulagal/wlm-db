@@ -19,8 +19,9 @@ const ManagedInstanceOptimization = () => {
         allOracleHostAssessmentLoading,
         allOracleHostAssessmentData
     } = useAppSelector(state => state.inventoryV2);
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
-        useAppSelector(state => state.headers);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, showNA } = useAppSelector(
+        state => state.headers
+    );
 
     const instanceOptimizationSummary = useMemo(
         () => getManagedOptimizationSummary(allmssqlHostAssessmentData, allOracleHostAssessmentData),
@@ -33,8 +34,8 @@ const ManagedInstanceOptimization = () => {
     );
 
     const loading = useMemo(
-        () => allmssqlHostAssessmentLoading || allOracleHostAssessmentLoading || multiDataLoading,
-        [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading, multiDataLoading]
+        () => allmssqlHostAssessmentLoading || allOracleHostAssessmentLoading,
+        [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading]
     );
 
     const ChartComponent = useMemo(() => {

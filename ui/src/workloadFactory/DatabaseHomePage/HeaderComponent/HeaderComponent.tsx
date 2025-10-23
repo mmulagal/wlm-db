@@ -1240,7 +1240,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 variant="Regular_14"
                                                 className={
                                                     selectedHeaderTab === WLF_TABS.DASHBOARD ||
-                                                    selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE ||
                                                     selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE
                                                         ? `${
                                                               isWorkloadFactory
@@ -1297,7 +1296,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                             <Typography
                                                 variant="Regular_14"
                                                 className={
-                                                    selectedHeaderTab === WLF_TABS.WELL_ARCHITECTED_TAB
+                                                    selectedHeaderTab === WLF_TABS.WELL_ARCHITECTED_TAB ||
+                                                    selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE
                                                         ? `${
                                                               isWorkloadFactory
                                                                   ? styles.headerPart5
@@ -1600,6 +1600,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 {pendingQueriesCounter > 0 &&
                     (selectedHeaderTab === WLF_TABS.INVENTORY ||
                         selectedHeaderTab === WLF_TABS.DASHBOARD ||
+                        selectedHeaderTab === WLF_TABS.WELL_ARCHITECTED_TAB ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (

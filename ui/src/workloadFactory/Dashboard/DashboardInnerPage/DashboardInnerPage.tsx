@@ -1487,9 +1487,9 @@ const DashboardInnerPage = () => {
                     <BreadCrumbs
                         items={[
                             {
-                                title: `${t('databases.general.dashboard')}`,
+                                title: `${t('databases.general.well-architected')}`,
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.WELL_ARCHITECTED_TAB));
                                 }
                             },
                             {
