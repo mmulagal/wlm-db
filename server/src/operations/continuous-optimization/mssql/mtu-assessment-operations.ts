@@ -8,17 +8,14 @@ import {
     SEVERITY
 } from '../../../utils/continous-optimization-consts';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
+import { IS_DEMO_FLOW } from '../../../utils/utils';
 import { Metadata, ResourceAssessmentData, WorkloadInstance } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getInstanceInfo } from '../../database/database-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS } from '../../workloads/mssql/mtu-scripts';
-import { isDemo } from '../../../utils/utils';
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
-
 interface SqlInterface {
     name: string;
     mtu: number;
@@ -198,7 +195,7 @@ function calculateMTUAlignmentDrift(
             });
         }
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             const { optimizedMtus } = metadata;
             if (optimizedMtus && optimizedMtus.length > 0) {
                 // Filter out optimized interfaces from all violation arrays

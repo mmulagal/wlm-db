@@ -27,14 +27,8 @@ import {
     SSM_COMMAND_CACHE_TYPE,
     DatabaseTypes
 } from '../utils/consts';
-import { callSsmExecution } from './aws/ssm-operations';
-import { getInstanceInfo, getResources } from './database/database-operations';
-import { GET_ONTAP_LUN_DETAILS, RESCAN_EXTEND_LUN } from './workloads/mssql/storage-scripts';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT, SET_MAXDOP } from './workloads/mssql/optimization-scripts';
-import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
-import { registerJob, updateJobDetails } from './database/job-operations';
 import {
-    isDemo,
+    IS_DEMO_FLOW,
     sqlResponseParsing,
     convertToBytes,
     getResourceNameFromTags,
@@ -44,6 +38,12 @@ import {
     getServerNameWithHostname,
     parseMultipleCommandResponse
 } from '../utils/utils';
+import { callSsmExecution } from './aws/ssm-operations';
+import { getInstanceInfo, getResources } from './database/database-operations';
+import { GET_ONTAP_LUN_DETAILS, RESCAN_EXTEND_LUN } from './workloads/mssql/storage-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT, SET_MAXDOP } from './workloads/mssql/optimization-scripts';
+import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
+import { registerJob, updateJobDetails } from './database/job-operations';
 import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -103,8 +103,6 @@ import {
     oracleSpecialStorageConfigNames
 } from './continuous-optimization/oracle/storage-optimize-operations';
 import { optimizeStorageConfigParamsOracle } from './continuous-optimization/oracle/ssm-scripts/storage-optimize-scripts';
-
-const isDemoFlow = isDemo();
 
 const logger = getLogger();
 
@@ -220,7 +218,7 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             resourceName: serverNameWithHostName
         };
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             // update metadata in instances table to mark optimized configuration
             const configurationNames: string[] = optimizationTargets.map(config => config.configurationName);
 
@@ -345,7 +343,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                     objectsOptimized += parsedResp?.num_records || 0;
                 });
 
-                objectsOptimized = isDemoFlow ? objectsToOptimize.length : objectsOptimized;
+                objectsOptimized = IS_DEMO_FLOW ? objectsToOptimize.length : objectsOptimized;
                 // with bulk optimization of volumes, user can send 1/2/3 vol ids to optimize but ssm response will hardcoded to reply with 3 as optimized.
 
                 const optimizeMessage = `Optimized ${objectsOptimized}/${
@@ -629,7 +627,7 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
     const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
     try {
         const svmName = await getSvmNameFromId(credentialsId, region, fsxId, svmId);
-        if (!svmName && !isDemoFlow) {
+        if (!svmName && !IS_DEMO_FLOW) {
             const errorMessage = `No SVM with id ${svmId} found for ${fsxId} in ${region}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
@@ -772,7 +770,7 @@ async function modifySizingAttributes(
             }
         }
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 instanceId,
@@ -1060,7 +1058,7 @@ async function logDriveOptimization(
                                 errorMessage,
                                 jobStatus
                             ));
-                        } else if (isDemoFlow) {
+                        } else if (IS_DEMO_FLOW) {
                             logger.error('Cannot find matching FSx volume or LUN for the log drive');
                         } else {
                             throw createError(400, 'Cannot find matching FSx volume or LUN for the log drive');
@@ -1561,7 +1559,7 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             await validateAndRemediateMpioPolicy(optimizeMpioPolicyParams, false);
         }
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 instanceId,
@@ -1812,7 +1810,7 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
             jobError = `Error while enabling MPIO and configuring MPIO sessions on ${serverNameWithHostName}.`;
         }
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 instanceId,
@@ -2072,7 +2070,7 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
             resourceName: serverNameWithHostName
         };
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 instanceId,
@@ -2131,7 +2129,7 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
                 resourceName: serverNameWithHostName
             };
 
-            if (isDemoFlow) {
+            if (IS_DEMO_FLOW) {
                 await updateOptimizedConfigNameInInstanceTable(
                     accountId,
                     instanceId,
@@ -2275,7 +2273,7 @@ async function enableMpioTimeout(optimizeMpioTimeoutParams: OptimizeMpioTimeoutP
             activeNodeInstanceid: activeNodeInstanceId!,
             resourceName: serverNameWithHostName
         };
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 instanceId,
@@ -2454,7 +2452,7 @@ async function optimizeOperatingSystemSettings(
                 // Fetch iSCSCI target addresses
                 const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
 
-                if (!isDemoFlow && isEmpty(iscsiTargetAddresses)) {
+                if (!IS_DEMO_FLOW && isEmpty(iscsiTargetAddresses)) {
                     const errorMessage = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
                     throw createError(400, errorMessage);
                 }
@@ -2499,7 +2497,7 @@ async function optimizeOperatingSystemSettings(
                 // Fetch iSCSCI target addresses
                 const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
 
-                if (!isDemoFlow && isEmpty(iscsiTargetAddresses)) {
+                if (!IS_DEMO_FLOW && isEmpty(iscsiTargetAddresses)) {
                     const errorMessage = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
                     throw createError(400, errorMessage);
                 }
@@ -2675,7 +2673,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
             );
             const parsedResp = sqlResponseParsing(resp);
             const objectsOptimized = parsedResp.num_records || 0;
-            if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
+            if (objectsOptimized !== volumeNames.length && !IS_DEMO_FLOW) {
                 if (objectsOptimized === 0) {
                     jobError = `Failed to fix storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
                     logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
@@ -2689,7 +2687,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 jobStatus = JOBSTATUS.COMPLETED;
             }
         }
-        if (missingVolumes.length > 0 && !isDemoFlow) {
+        if (missingVolumes.length > 0 && !IS_DEMO_FLOW) {
             jobError += `Volumes ${missingVolumes} not found for ${serverNameWithHostName}.`;
             jobStatus = JOBSTATUS.WARNING;
         }
@@ -2723,7 +2721,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 resourceName: serverNameWithHostName
             };
 
-            if (isDemoFlow) {
+            if (IS_DEMO_FLOW) {
                 // update metadata in nstances table to mark optimized configuration
                 await updateOptimizedConfigNameInInstanceTable(
                     accountId,
@@ -2800,7 +2798,7 @@ async function optimizeStorageTier(
     const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
     try {
         const svmName = await getSvmNameFromId(credentialsId, region, fsxId, svmId);
-        if (!svmName && !isDemoFlow) {
+        if (!svmName && !IS_DEMO_FLOW) {
             const errorMessage = `No SVM with id ${svmId} found for ${fsxId} in ${region}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
@@ -2938,7 +2936,7 @@ async function handleMaxDopRemediation(
                 resourceName: serverNameWithHostName
             };
 
-            if (isDemoFlow) {
+            if (IS_DEMO_FLOW) {
                 // update metadata in instances table to mark optimized configuration
                 const metadata: DatabaseInstanceMetadata = isDatabaseInstanceMetadata(instanceMetadata)
                     ? instanceMetadata
@@ -3146,11 +3144,6 @@ async function triggerAssessmentAfterOptimization(
         fields
     });
 
-    // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
-    if (!isDemoFlow) {
-        await sleep(5000);
-    }
-
     if (databaseType === RESOURCESTYPE.MSSQL) {
         await onDemandTriggerMssqlDriftAssessment(
             accountId,
@@ -3177,7 +3170,7 @@ async function triggerAssessmentAfterOptimization(
 
     let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
-    if (!isDemoFlow) {
+    if (!IS_DEMO_FLOW) {
         let retries = 10;
         while (retries > 0) {
             retries -= 1;

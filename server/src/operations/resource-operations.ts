@@ -8,20 +8,19 @@ import {
     HttpErrorCodes,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
 } from '../utils/consts';
+import { IS_DEMO_FLOW, getArtifactsRegionBucketName, retryWithDelay, sqlResponseParsing } from '../utils/utils';
 import { listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
 import { ManageResourcesResponseType } from '../routes/types/resource.types';
 import { getResources } from './database/database-operations';
 import { Metadata } from '../utils/common-types';
 import { COPY_SCIRPTS_TO_MANAGE_RESOURCE } from './workloads/mssql/discover-consts';
-import { getArtifactsRegionBucketName, isDemo, retryWithDelay, sqlResponseParsing } from '../utils/utils';
 import { preSignedUrl } from '../lib/aws/s3';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CHECK_SCRIPT_AVAILABILITY_AND_VERSION } from './workloads/mssql/ssm-script-utils';
 import { createDemoResourcesPerRegion } from '../utils/demo-utils/demoDefaultUtils';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -177,7 +176,7 @@ async function copyScriptsToHost(accountId: string, credentialsId: string, regio
 
 async function createDemoDataforRegion(accountId: string, credentialsId: string, region: string) {
     logger.info('Creating demo data for region', accountId, credentialsId, region);
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         const response = await createDemoResourcesPerRegion(accountId, credentialsId, region, DEMO_AWS_ACCOUNT_ID);
         return response;
     }

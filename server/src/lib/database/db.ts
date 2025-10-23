@@ -2,7 +2,7 @@ import { DEPLOYMENT_STATUS, SOURCE, DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } fr
 import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
-import { checkAccount, isDemo } from '../../utils/utils';
+import { checkAccount, IS_DEMO_FLOW } from '../../utils/utils';
 import {
     Deployment,
     Event,
@@ -18,7 +18,6 @@ import { ResourceDetails } from '../../utils/common-types';
 import { RESOURCE_DEFAULT_SELECT_FIELDS, INSTANCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 async function listDeployments(
     accountId?: string,
@@ -325,7 +324,7 @@ async function listResources(params: ListResourcesParams = {}) {
         select
     });
 
-    if (!isEmpty(response) && isDemoFlow && includeDatabaseInstances) {
+    if (!isEmpty(response) && IS_DEMO_FLOW && includeDatabaseInstances) {
         for (const resource of response as ResourceDetails[]) {
             if (Array.isArray(resource.database_instances)) {
                 resource.database_instances = resource.database_instances
@@ -903,7 +902,7 @@ async function weeklyDemoDatabaseCleanup() {
     logger.info('Starting demo database cleanup', { cleanupTime: cleanupTime.toISOString() });
 
     try {
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             const cleanupResults = await Promise.allSettled([
                 // Delete child tables first (to avoid cascade conflicts)
                 prisma.client.database_instance_config_data.deleteMany({}),

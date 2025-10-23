@@ -15,12 +15,15 @@ import {
 import getLogger from '../../../utils/logger';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import {
+    CDB,
     ORACLE_DEFAULT_PDB,
+    ORACLE_DEPLOYMENT_ARCHITECTURE,
     OracleDeploymentTenacy,
+    PDB,
     SSM_RUN_SHELL_SCRIPT_DOC,
     SSM_RUN_SHELL_SCRIPT_DOC_VERSION
 } from './consts';
-import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
+import { parseMultipleCommandResponse, sqlResponseParsing, IS_DEMO_FLOW } from '../../../utils/utils';
 import {
     DatabaseHostInstanceSummaryResponseType,
     DatabasesResponseType,
@@ -58,11 +61,11 @@ import { AssessmentCategories } from '../../../utils/continous-optimization-cons
 import { MountPointDetails, OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getNodeTopology, getStorageData } from '../../database-hosts-util';
-import { MockOracleServerDetails } from '../../../utils/demo-utils/demoMockdata';
 import { PDB_DETAILS } from '../../../utils/demo-utils/demoInventoryData';
 
+const YES = 'YES';
+const NO = 'NO';
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 type ontapStorageSummary = {
     size: number;
@@ -86,7 +89,11 @@ async function getOracleInstanceDetails(
         fetchServerDetails,
         oracleSids
     });
-    const [parsedResponse, activeNodeDetails] = parseMultipleCommandResponse(ssmResponse || '[]');
+    let [parsedResponse, activeNodeDetails] = parseMultipleCommandResponse(ssmResponse || '[]');
+
+    if (IS_DEMO_FLOW && fetchServerDetails) {
+        activeNodeDetails = Object.fromEntries(oracleSids.map(sid => [sid, activeNodeDetails]));
+    }
 
     const instanceDetails = [];
     for (const dbInstance of parsedResponse) {
@@ -144,9 +151,6 @@ async function getOracleInstanceInfo(
                 SSM_RUN_SHELL_SCRIPT_DOC_VERSION
             );
             if (response) {
-                if (isDemoFlow) {
-                    response += JSON.stringify(MockOracleServerDetails(oracleSids));
-                }
                 return response;
             }
         }
@@ -176,7 +180,7 @@ async function getOracleDatabaseInstancesDetails(
     const managedInstancesName = instancesManaged.map((item: DatabaseInstance) => ({
         instanceName: item.database_instance_name,
         isDefault: item.is_default,
-        instanceState: isDemoFlow ? ServerState.UP : ServerState.DOWN,
+        instanceState: IS_DEMO_FLOW ? ServerState.UP : ServerState.DOWN,
         isManaged: true,
         databaseInstanceId: item.database_instance_id
     }));
@@ -276,11 +280,11 @@ async function parseProtectionDetails(credentialsId: string, region: string, fsx
     const { snapshot_count: snapshotCount, uuid } = records;
     const backupStatus = await isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, [uuid]);
     const volumeUuidsInBackups = backupStatus?.volumeUuidsInBackups || [];
-    const fsxnBackup = isDemoFlow ? true : volumeUuidsInBackups.includes(uuid);
+    const fsxnBackup = IS_DEMO_FLOW ? true : volumeUuidsInBackups.includes(uuid);
     return {
-        isSqlNativeBackupEnabled: isDemoFlow ? true : isNativeProtectionEnabled === 'true',
+        isSqlNativeBackupEnabled: IS_DEMO_FLOW ? true : isNativeProtectionEnabled === 'true', // TODO: why is this string?
         isAwsBackupEnabled: { fsxn: fsxnBackup },
-        isFsxOntapSnapshotsEnabled: isDemoFlow ? true : snapshotCount > 0
+        isFsxOntapSnapshotsEnabled: IS_DEMO_FLOW ? true : snapshotCount > 0
     };
 }
 
@@ -292,13 +296,13 @@ async function getOracleProtectionStatus(
     fsxnId: string,
     dbInstanceSid: string,
     mountPointDetails: MountPointDetails[][],
-    isCDB: string = 'NO',
+    isCDB: string = NO,
     pdbNames: string[] = []
 ) {
     logger.info('Fetching Oracle db protection status', { accountId, credentialsId, region, node1InstanceId });
 
     try {
-        if (isEmpty(mountPointDetails) || (isCDB === 'YES' && mountPointDetails?.length !== pdbNames?.length)) {
+        if (isEmpty(mountPointDetails) || (isCDB === YES && mountPointDetails?.length !== pdbNames?.length)) {
             throw createError(
                 HttpErrorCodes.BAD_REQUEST,
                 `Missing mountpoints for: ${fsxnId}, ${credentialsId}, ${region}`
@@ -306,7 +310,7 @@ async function getOracleProtectionStatus(
         }
 
         const command = [];
-        if (isCDB === 'YES' && pdbNames?.length > 0) {
+        if (isCDB === YES && pdbNames?.length > 0) {
             mountPointDetails?.forEach(mountPointDetail => {
                 const [{ mountIP, mountPoint, protocol }] = mountPointDetail;
                 if (!mountIP || !mountPoint || !protocol) {
@@ -360,7 +364,7 @@ async function getOracleProtectionStatus(
             const protectionResponse: any = {};
             const parsedResponse = parseMultipleCommandResponse(response);
 
-            if (isCDB === 'YES') {
+            if (isCDB === YES) {
                 let commonIsSqlNativeBackupEnabled = false;
                 let commonIsFsxOntapSnapshotsEnabled = false;
                 let commonIsAwsBackupEnabled = false;
@@ -487,22 +491,22 @@ async function getOracleDatabasesList(
             databases.push({
                 name: databaseDetails?.name,
                 size: rootDbSize,
-                status: databaseDetails?.status?.toLowerCase() === 'online' ? ONLINE : OFFLINE,
-                type: isCDB === 'YES' ? 'CDB' : 'Single tenant'
+                status: databaseDetails?.status?.toUpperCase() === ONLINE ? ONLINE : OFFLINE,
+                type: isCDB === YES ? CDB : ORACLE_DEPLOYMENT_ARCHITECTURE.SINGLE_TENANT
             });
 
-            if (isCDB === 'YES') {
+            if (isCDB === YES) {
                 for (const pdb of pdbsStatus) {
                     const pdbName = pdb.pdb_name;
-                    const status = pdb.status?.toLowerCase() || 'offline';
+                    const status = pdb.status?.toUpperCase() || OFFLINE;
                     const pdbSize = pdbsSize[pdbName] || 0; // Default to 0 if size is not found
                     if (pdbName !== ORACLE_DEFAULT_PDB) {
                         databases.push({
                             name: pdbName,
                             size: pdbSize,
-                            status: status === 'online' ? ONLINE : OFFLINE,
+                            status: status === ONLINE ? ONLINE : OFFLINE,
                             created: pdb.creation_time,
-                            type: 'PDB',
+                            type: PDB,
                             service: isEmpty(serviceName) ? 'n/a' : serviceName
                         });
                     }
@@ -647,13 +651,13 @@ async function getOracleDatabaseInstancesSummary(
                         }
                     ]
                 ];
-                let mountPointDetails = isDemoFlow ? demoMountPointDetails : metadata?.mountPointDetails;
+                let mountPointDetails = IS_DEMO_FLOW ? demoMountPointDetails : metadata?.mountPointDetails;
                 databaseInstance.storage_type = resourceDetails?.storage_type;
-                let isCDB = 'NO';
+                let isCDB = NO;
                 let pdbNames: string[] = [];
 
                 // Get the storage & mount point details for registered Oracle database instances
-                if (!mountPointDetails && (getProtectionStatus || getDatabasesWithProtection || isDemoFlow)) {
+                if (!mountPointDetails && (getProtectionStatus || getDatabasesWithProtection || IS_DEMO_FLOW)) {
                     const storageDetails = await getRegisteredOracleInstanceStorageDetails(
                         accountId,
                         credentialsId,
@@ -779,14 +783,14 @@ async function getOracleDatabaseInstancesSummary(
                             })
                         )
                     );
-                    if (isDemoFlow && databases?.length && databaseInstance?.metadata) {
+                    if (IS_DEMO_FLOW && databases?.length && databaseInstance?.metadata) {
                         databases?.forEach((database: DatabasesResponseType) => {
                             database.type =
                                 (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType ===
                                 OracleDeploymentTenacy.MULTI_TENANT
-                                    ? 'CDB'
-                                    : 'Single tenant';
-                            if (database.type !== 'Single tenant') {
+                                    ? CDB
+                                    : ORACLE_DEPLOYMENT_ARCHITECTURE.SINGLE_TENANT;
+                            if (database.type !== ORACLE_DEPLOYMENT_ARCHITECTURE.SINGLE_TENANT) {
                                 databases.push(PDB_DETAILS);
                             }
                         });
@@ -831,7 +835,7 @@ async function getOracleDatabaseInstancesSummary(
                 if (getDatabasesWithoutProtection || getDatabasesWithProtection) {
                     if (getDatabasesWithProtection) {
                         databases?.forEach((database: DatabasesResponseType) => {
-                            if (database.type === 'CDB') {
+                            if (database.type === CDB) {
                                 database.protection = protectionData?.[dbInstanceSid];
                             } else {
                                 database.protection = protectionData?.[database.name] || {
@@ -896,7 +900,7 @@ async function getOracleDatabaseInstancesSummary(
                 ...result?.storage,
                 ...{
                     fsxn: {
-                        ...(isDemoFlow
+                        ...(IS_DEMO_FLOW
                             ? storageInfoFromOntap.demoOracleSid
                             : storageInfoFromOntap[result.databaseInstanceId]),
                         protocol: storageProtocol?.split(',') ?? []
@@ -1083,7 +1087,7 @@ async function getOracleDatabaseMappedVolumes(
                         if (!instanceToFsxnMap.has(instanceId)) {
                             instanceToFsxnMap.set(instanceId, new Map<string, OracleInstanceMountpointResponse>());
                         }
-                        if (isDemoFlow) {
+                        if (IS_DEMO_FLOW) {
                             parsedMappedVolRes = {
                                 ...parsedMappedVolRes,
                                 protocol: instance.storage_protocol,

@@ -10,8 +10,8 @@ import {
     getArtifactsRegionBucketName,
     getEc2Hostname,
     getServerNameWithHostname,
-    isDemo,
-    retryWithDelay
+    retryWithDelay,
+    IS_DEMO_FLOW
 } from '../utils/utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 import { DiscoverOracleInstanceType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
@@ -103,7 +103,6 @@ import {
 import { getOracleDatabaseMappedVolumes } from './workloads/oracle/oracle-operations';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 const WINDOWS = 'windows';
 
 const { getPreSignedUrl } = preSignedUrl;
@@ -419,11 +418,12 @@ async function registerSqlInstance(
         const { awsAccountId } =
             derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn || '') || {};
         const [{ sqlServerInstances } = {}] = discoverDetails.items || [];
-        resourceId = isDemoFlow && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
+        resourceId =
+            IS_DEMO_FLOW && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
 
-        let isResourceTobeCreated = !(isDemoFlow && databaseHostId);
+        let isResourceTobeCreated = !(IS_DEMO_FLOW && databaseHostId);
         let alreadyManagedDatabaseInstances: DatabaseInstance[] = [];
-        if (!isDemoFlow || !databaseHostId) {
+        if (!IS_DEMO_FLOW || !databaseHostId) {
             const {
                 items: [resourceDetails]
             } = await getResources({
@@ -688,7 +688,7 @@ async function registerSqlInstance(
                             partnerEc2InstanceId
                         );
 
-                        const dbInstanceName = isDemoFlow
+                        const dbInstanceName = IS_DEMO_FLOW
                             ? sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
                                 ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
                                 : sqlInstanceInfo.sqlServerInstance
@@ -708,7 +708,7 @@ async function registerSqlInstance(
                             storageProtocol: storageProtocols ? storageProtocols.join() : '',
                             databaseType: DatabaseTypes.MS_SQL_SERVER
                         });
-                        if (isDemoFlow) {
+                        if (IS_DEMO_FLOW) {
                             await createAssessmentData(
                                 accountId,
                                 credentialsId,
@@ -971,7 +971,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                             );
                             const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
                             if (!isEmpty(temp)) {
-                                if (!isDemoFlow) {
+                                if (!IS_DEMO_FLOW) {
                                     node2InstanceId = temp.ec2InstanceId;
                                 }
 
@@ -1033,7 +1033,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                     const [{ sqlServerInstances } = {}] = items || [];
                     let resourceId;
                     let isResourceTobeCreated: boolean;
-                    if (isDemoFlow && databaseHostId) {
+                    if (IS_DEMO_FLOW && databaseHostId) {
                         resourceId = databaseHostId;
                         isResourceTobeCreated = false;
                     } else {
@@ -1214,7 +1214,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                     );
 
                                     let dbInstanceName;
-                                    if (isDemoFlow) {
+                                    if (IS_DEMO_FLOW) {
                                         dbInstanceName =
                                             sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
                                                 ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
@@ -1237,7 +1237,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                         storageProtocol: storageProtocols ? storageProtocols.join() : '',
                                         databaseType: DatabaseTypes.MS_SQL_SERVER
                                     });
-                                    if (isDemoFlow) {
+                                    if (IS_DEMO_FLOW) {
                                         await createAssessmentData(
                                             accountId,
                                             credentialsId,
@@ -1406,7 +1406,7 @@ async function registerOracleInstancesData(
 
             instanceJobStatus = JOBSTATUS.COMPLETED;
             // detect mapped vols for registered oracle instance
-            if (instanceJobStatus === JOBSTATUS.COMPLETED && !isDemoFlow) {
+            if (instanceJobStatus === JOBSTATUS.COMPLETED && !IS_DEMO_FLOW) {
                 try {
                     getOracleDatabaseMappedVolumes(accountId, credentialsId, region, resourceId, instanceId);
                 } catch (error) {
@@ -1421,7 +1421,7 @@ async function registerOracleInstancesData(
                 }
             }
 
-            if (isDemoFlow) {
+            if (IS_DEMO_FLOW) {
                 await createAssessmentDataForOracle(
                     accountId,
                     credentialsId,
@@ -1517,12 +1517,13 @@ async function registerOracleInstance(
         const ec2HostName = ec2PrivateDnsName || getEc2Hostname(DatabaseTypes.ORACLE, ec2InstanceTags);
 
         const [{ databaseInstanceDetails: oracleServerInstances } = {}] = discoverDetails.items || [];
-        resourceId = isDemoFlow && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
+        resourceId =
+            IS_DEMO_FLOW && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
 
-        let isResourceToBeCreated = !(isDemoFlow && databaseHostId);
+        let isResourceToBeCreated = !(IS_DEMO_FLOW && databaseHostId);
         let alreadyRegisteredDatabaseInstances: DatabaseInstance[] = [];
 
-        if (!isDemoFlow || !databaseHostId) {
+        if (!IS_DEMO_FLOW || !databaseHostId) {
             const {
                 items: [resourceDetails]
             } = await getResources({
@@ -1970,7 +1971,7 @@ async function validateAndStoreDiscoveredParameters(
         checkManageReadiness
     });
 
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         const response: SingleRegisterCredentialsResponseType[] = [];
 
         const processCredential = (cred: RegisterCredentialsType) => {
@@ -3050,7 +3051,7 @@ async function unmanageDatabaseInstance(
         // When all database instances are removed, the EC2 ceases to be a
         // managed resource, since  we aren't managing any SQL Server instance.
         // So we need to remove the EC2 resource from wlmdb.resource table.
-        if (postDeleteDatabaseInstances.length <= 0 && !isDemoFlow) {
+        if (postDeleteDatabaseInstances.length <= 0 && !IS_DEMO_FLOW) {
             deleteResource(accountId, resourceId, credentialsId);
         }
     }

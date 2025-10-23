@@ -33,7 +33,7 @@ import {
     manageInstanceRecommendationPreReqs,
     manageInstanceRecommendationPreReqsForManagedInstances
 } from './aws/compute-optimizer-operations';
-import { getEc2Arn, getRedisConnection, isDemo, sleep } from '../utils/utils';
+import { getEc2Arn, getRedisConnection, sleep, IS_DEMO_FLOW } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import {
     checkComputeOptimizerEnrollmentStatus,
@@ -49,8 +49,6 @@ import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/datab
 import { listAllManagedInstances, listTrackedEc2Operation } from './database/database-operations';
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
 
 type CronJobOptions = {
     queueName: string;
@@ -418,10 +416,10 @@ async function initiateCronOperations() {
         await sleep(5 * 60 * 1000); // Wait for 5 minutes before starting the cron jobs to ensure all services are up and running
         purgeOlderJobs();
         purgeAssessmentData();
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             scheduleDemoCleanupWithTimeout();
         }
-        if (!isDemoFlow) {
+        if (!IS_DEMO_FLOW) {
             failLongRunningDeploymentJobs();
             failLongRunningResourcePrepareJobs();
             updateTcoInstanceRecommendationPreferences();

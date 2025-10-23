@@ -8,7 +8,6 @@ import {
 } from '@aws-sdk/client-bedrock';
 import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from '@aws-sdk/client-bedrock-runtime';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { HttpRequest } from '@smithy/protocol-http';
 import { NodeHttpHandler, streamCollector } from '@smithy/node-http-handler';
@@ -16,7 +15,6 @@ import { MODEL, BEDROCK_REGION } from '../chatbot/consts';
 import getLogger from '../../utils/logger';
 import { MODEL_AVAILABILITY_STATUS } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
-import { isDemo } from '../../utils/utils';
 import { AWSSDKCacheParams } from '../../utils/common-types';
 import addCacheMiddleware from '../../utils/aws-sdk-middlewares';
 
@@ -108,7 +106,7 @@ async function getModelAvailability(accountId: string, credentialsId: string, re
         region,
         service: 'bedrock',
         sha256: Sha256,
-        credentials: isDemo() ? defaultProvider() : { accessKeyId, secretAccessKey, sessionToken }
+        credentials: { accessKeyId, secretAccessKey, sessionToken }
     });
     const signedRequest = await signer.sign(
         new HttpRequest({

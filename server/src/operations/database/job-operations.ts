@@ -26,11 +26,10 @@ import {
     JobSummaryQueryType
 } from '../../routes/types/jobs.types';
 import { GERERIC_JOB_ERROR_MESSAGE, JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
-import { getNextToken, getRegionDetails, isDemo, sleep } from '../../utils/utils';
+import { getNextToken, getRegionDetails, sleep } from '../../utils/utils';
 import { RegionDetailsType } from '../../routes/types/generic.types';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 interface Job extends JobRecordType {
     id: string;
@@ -175,7 +174,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         status,
         startTime,
         endTime,
-        limit = isDemoFlow ? undefined : 50,
+        limit = 50,
         nextToken,
         includeSubJobs = false,
         resourceName
@@ -229,7 +228,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
     return {
         count: items?.length,
         items,
-        ...(!isDemoFlow && { nextToken: getNextToken(items, totalParentJobIdCount, limit || 50) })
+        nextToken: getNextToken(items, totalParentJobIdCount, limit || 50)
     };
 }
 

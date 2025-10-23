@@ -29,12 +29,11 @@ import {
     PGSQL_TERRAFORM_FOLDER_PATH,
     PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION
 } from '../utils/consts';
-import { getArtifactsRegionBucketName, isDemo, isMssql, isPgsql } from '../utils/utils';
+import { getArtifactsRegionBucketName, isMssql, isPgsql } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { generateSignedUrls } from './template-operations';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -435,18 +434,18 @@ async function createAndUploadTheTerraformZipFile(
     try {
         if (isMssql(resourceType) || isPgsql(resourceType)) {
             const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/${deploymentName}.zip`;
-            if (!isDemoFlow) {
-                const archiveFolder = `./resources/${type}/${deploymentName}/${deploymentName}.zip`;
-                const folderToBeZipped = `./resources/${type}/${deploymentName}/terraform`;
-                await createArchive(archiveFolder, folderToBeZipped);
-                await putObjectBucket(
-                    TEMPLATE_BUCKET_REGION,
-                    SIGNED_TEMPLATES_BUCKET_NAME,
-                    customSQLStandaloneTFPath,
-                    '',
-                    archiveFolder
-                );
-            }
+
+            const archiveFolder = `./resources/${type}/${deploymentName}/${deploymentName}.zip`;
+            const folderToBeZipped = `./resources/${type}/${deploymentName}/terraform`;
+            await createArchive(archiveFolder, folderToBeZipped);
+            await putObjectBucket(
+                TEMPLATE_BUCKET_REGION,
+                SIGNED_TEMPLATES_BUCKET_NAME,
+                customSQLStandaloneTFPath,
+                '',
+                archiveFolder
+            );
+
             const zipSignedURL = await getPreSignedUrl(
                 TEMPLATE_BUCKET_REGION,
                 SIGNED_TEMPLATES_BUCKET_NAME,

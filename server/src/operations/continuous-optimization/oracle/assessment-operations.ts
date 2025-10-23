@@ -17,6 +17,7 @@ import {
     WorkloadInstance
 } from '../../../utils/common-types';
 import { AuditStatus, HttpErrorCodes, RESOURCESTYPE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../../utils/consts';
+import { IS_DEMO_FLOW } from '../../../utils/utils';
 import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
@@ -40,7 +41,6 @@ import {
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
-import { isDemo } from '../../../utils/utils';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoInventoryData';
 import { getLatestInstanceAssessmentTime, validateAssessment } from '../assessment-utils';
 import {
@@ -52,7 +52,6 @@ import { handleGetOracleAssessmentForDemo } from '../../demo-operations';
 import { StorageAssessment } from './common-types';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 async function initiateInstanceLevelAssessmentDataCollection(
     accountId: string,
@@ -102,7 +101,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
         const protocol = response.get(databaseInstanceName)?.get(fsxFileSystem)?.protocol;
         const isASMManaged = response.get(databaseInstanceName)?.get(fsxFileSystem)?.isASMManaged;
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             const mappedOntapVolumes = ORACLE_MAPPED_ONTAP_VOLUMES_DATA(
                 fsxFileSystem,
                 protocol!,
@@ -531,7 +530,7 @@ async function fetchOracleDriftAssessment(
         isASMManaged
     };
 
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         driftAssessmentData = handleGetOracleAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
     }
 
@@ -688,7 +687,6 @@ async function fetchOracleDriftAssessmentPerAccount(
         nextToken: clientNextToken,
         includeDatabaseInstances: true
     });
-
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId} in region ${region}.`);
         return { count: 0, assessmentsPerAccount: [], nextToken: '' };

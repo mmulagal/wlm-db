@@ -10,12 +10,12 @@ import {
     AssessmentCategories
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
-import { isDemo, sqlResponseParsing } from '../../../utils/utils';
+import { sqlResponseParsing, IS_DEMO_FLOW } from '../../../utils/utils';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { GET_RSS_CONFIG_DETAILS } from '../../workloads/mssql/assessment-scripts';
 
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
 
 const logger = getLogger();
 
@@ -43,7 +43,7 @@ function calculateRssConfigDrift(
         }
 
         rssConfigAssessment = rssConfig as RssConfigAssesment;
-        if (isDemo()) {
+        if (IS_DEMO_FLOW) {
             rssConfigAssessment.rssAdapters = rssConfigAssessment?.rssAdapters?.filter(
                 adapter => !(metadata as Metadata)?.isRssConfigOptimized?.includes(adapter.adapterName)
             );
@@ -212,7 +212,7 @@ async function runRssConfigAssessment(
         }
 
         rssAdapters = rssAdapters.filter(adapter => !adaptersToRemove.includes(adapter.adapterName));
-        if (isDemo()) {
+        if (IS_DEMO_FLOW) {
             rssAdapters = rssAdapters.filter(adapter => !metadata?.isRssConfigOptimized?.includes(adapter.adapterName));
         }
 

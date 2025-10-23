@@ -54,12 +54,4 @@ describe('mapSeverityLevel', () => {
         expect(mapSeverityLevel(25)).toBeUndefined();
         expect(mapSeverityLevel(30)).toBeUndefined();
     });
-
-    it('returns undefined for undefined input', () => {
-        expect(mapSeverityLevel(undefined)).toBeUndefined();
-    });
-
-    it('returns undefined for null input', () => {
-        expect(mapSeverityLevel(null as any)).toBeUndefined();
-    });
 });

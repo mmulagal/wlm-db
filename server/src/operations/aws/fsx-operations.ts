@@ -38,7 +38,14 @@ import {
 import { getNetworkInterfacesList } from './ec2-operations';
 import { AwsFsxNBackupConfig, ResourceDetails, VolumeRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { convertToBytes, divideArrayIntoChunks, getFsxArn, isDemo, sleep, sqlResponseParsing } from '../../utils/utils';
+import {
+    convertToBytes,
+    divideArrayIntoChunks,
+    getFsxArn,
+    sleep,
+    sqlResponseParsing,
+    IS_DEMO_FLOW
+} from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
@@ -48,8 +55,6 @@ import { describeInstance, describeSubnets } from '../../lib/aws/ec2';
 import { OntapRestRequestParams, GET_SNAPSHOT_DETAILS } from '../workloads/mssql/assessment-scripts';
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
 
 interface FsxStorage {
     storage: number;
@@ -224,7 +229,7 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
 async function getFSXFileSystemListForDemo(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get FSX file systems list for demo', { credentialsId, region, vpcId });
 
-    const items = await listFSXFileSystem(credentialsId, region, true);
+    const items = await listFSXFileSystem(credentialsId, region);
     logger.debug('file system list api response', {
         items
     });
@@ -319,7 +324,7 @@ async function getFsxnVolIdsFromOntapVolIds(
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
     const fsxVolumeIdUuidMap: Map<string, string> = new Map();
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         return demoGetFsxnVolIdsFromOntapVolIds(credentialsId, region, fsxId, volumeUuids);
     }
     volumes.forEach(volume => {
@@ -569,7 +574,7 @@ async function getMappedOntapVolumes(
         const instancesResponse: { [key: string]: any } = {};
         instanceNames?.forEach((iName: string) => {
             const originalInstanceName = iName;
-            iName = isDemoFlow ? DEFAULT_INSTANCE_NAME : iName;
+            iName = IS_DEMO_FLOW ? DEFAULT_INSTANCE_NAME : iName;
             if (
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
@@ -766,7 +771,7 @@ async function updateVolumeSizeAndWaitForUpdate(
             currentVolumeSizeBytes = volumeDetails?.OntapConfiguration?.SizeInBytes;
             logger.info(`Current size of volume ${fsxVolumeId}: ${currentVolumeSizeBytes} bytes`);
 
-            if (currentVolumeSizeBytes === fsxVolumeSizeBytes || isDemo()) {
+            if (currentVolumeSizeBytes === fsxVolumeSizeBytes || IS_DEMO_FLOW) {
                 logger.info(`Volume ${fsxVolumeId} has reached the desired size: ${fsxVolumeSizeBytes} bytes`);
                 return;
             }
@@ -890,7 +895,7 @@ async function isInstanceAppConsistentBackupEnabled(
         for (const db of volumeDBMap) {
             const { databaseName, ontapVolumeuuid } = db;
             const { comment = '' } = ssmResponse?.[ontapVolumeuuid] ?? {};
-            appConsistentBackupMap[databaseName] = isDemoFlow || comment === SNAPCENTER_BACKUP_SNAPSHOT_COMMENT;
+            appConsistentBackupMap[databaseName] = IS_DEMO_FLOW || comment === SNAPCENTER_BACKUP_SNAPSHOT_COMMENT;
         }
 
         return appConsistentBackupMap;

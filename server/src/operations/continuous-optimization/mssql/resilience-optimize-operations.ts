@@ -30,17 +30,17 @@ import {
     SqlServerDeploymentModel,
     SSM_COMMAND_CACHE_TYPE
 } from '../../../utils/consts';
+import {
+    IS_DEMO_FLOW,
+    getResourceNameFromTags,
+    getServerNameWithHostname,
+    retryWithDelay,
+    sqlResponseParsing
+} from '../../../utils/utils';
 import { activeSqlNodeDetails } from '../../cont-opt-optimize-operations';
 import { GET_CLUSTER_SNAPSHOT_POLICIES } from '../../workloads/mssql/assessment-scripts';
 import { SET_VOLUME_SNAPSHOT_POLICY } from '../../workloads/mssql/optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import {
-    getResourceNameFromTags,
-    getServerNameWithHostname,
-    isDemo,
-    retryWithDelay,
-    sqlResponseParsing
-} from '../../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
 import { getMappedOntapVolumes, getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
@@ -74,7 +74,6 @@ import { moveClusterGroupOwnership } from '../compute-optimize-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 async function getMappedVolumeDetails(credentialsId: string, region: string, instanceRecord: WorkloadInstance) {
     return (
@@ -171,7 +170,7 @@ async function getAvailableSnapshotPolicyList(
             { useCache: true }
         );
         const svmIdAssignedToInstance = svms.find(svm => {
-            if (isDemoFlow) {
+            if (IS_DEMO_FLOW) {
                 return svm;
             }
             return svm?.StorageVirtualMachineId === (svmRecord as Record<string, string>)[fsxId];
@@ -327,7 +326,7 @@ async function setSnapshotPolicyForVolumes(
                 jobStatus = JOBSTATUS.FAILED;
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, ssmError);
             }
-            if (!isDemoFlow && ssmResponse.length !== volumeUuids.length) {
+            if (!IS_DEMO_FLOW && ssmResponse.length !== volumeUuids.length) {
                 logger.error('Error setting snapshot policy for volumes. ONTAP job IDs:', ssmResponse, volumeUuids);
                 jobError = `Failed to set snapshot policy for some volumes: ONTAP job IDs:', ${ssmResponse}`;
                 jobStatus = JOBSTATUS.WARNING;
@@ -335,7 +334,7 @@ async function setSnapshotPolicyForVolumes(
             }
             jobStatus = JOBSTATUS.COMPLETED;
         }
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 instanceRecord.id,
@@ -345,7 +344,7 @@ async function setSnapshotPolicyForVolumes(
             );
             jobStatus = JOBSTATUS.COMPLETED;
         }
-        if (!isDemoFlow && missingVolumes.length > 0) {
+        if (!IS_DEMO_FLOW && missingVolumes.length > 0) {
             jobError = `Volumes UUIDs: ${missingVolumes.join(', ')} are not found for database instance: ${
                 instanceRecord.resourceName
             }`;
@@ -627,7 +626,7 @@ async function handleSharedStorageOptimize(
                             ? JOBSTATUS.WARNING
                             : JOBSTATUS.COMPLETED;
 
-                    if (isDemoFlow) {
+                    if (IS_DEMO_FLOW) {
                         // update metadata in instances table to mark optimized configuration
                         await updateOptimizedConfigNameInInstanceTable(
                             accountId,
@@ -745,7 +744,7 @@ async function handleHeartbeatSettings(
             logger.error(`Failed to remediate heartbeat settings for host "${databaseHostId}".`);
         }
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             metadata.isHeartBeatOptimized = true;
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
@@ -840,7 +839,7 @@ async function handleClusterQuorum(
             logger.error(`Failed to remediate cluster quorum for host "${databaseHostId}".`);
         }
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             metadata.isClusterQuorumOptimized = true;
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
@@ -1097,7 +1096,7 @@ async function optimizeSqlServerService(
             )
         ]);
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             // update metadata in instances table to mark optimized configuration
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
@@ -1288,8 +1287,8 @@ async function givebackClusterOwnership(
             `Preferred node: ${preferredNodeId}, Non-preferred node: ${standbyNodeId}, Active node: ${activeNodeInstanceId}`
         );
 
-        if (activeNodeInstanceId === preferredNodeId || isDemoFlow) {
-            // isDemoFlow check is used to skip the giveback operation in demo mode
+        if (activeNodeInstanceId === preferredNodeId || IS_DEMO_FLOW) {
+            // IS_DEMO_FLOW check is used to skip the giveback operation in demo mode
             jobStatus = JOBSTATUS.WARNING;
             errorMessage = `Cluster ownership is already on the preferred node (${preferredNodeId}).`;
         } else if (activeNodeInstanceId === standbyNodeId) {

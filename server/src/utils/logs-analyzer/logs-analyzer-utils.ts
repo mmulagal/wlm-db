@@ -1,4 +1,5 @@
 import getLogger from '../logger';
+import { MSSQL_SEVERITY_RANGE, SEVERITIES } from './logs-analyzer-consts';
 
 const logger = getLogger();
 
@@ -17,19 +18,25 @@ function parseConcatenatedJSON(input: string): object[] {
 }
 
 // Map SQL Server severity level (16-24) to high-level category used by UI
-function mapSeverityLevel(level?: number): 'warning' | 'severe' | 'critical' | undefined {
-    if (level) {
-        if (level === 16) {
-            return 'warning';
-        }
-        if (level >= 17 && level <= 19) {
-            return 'severe';
-        }
-        if (level >= 20 && level <= 24) {
-            return 'critical';
-        }
+function mapSeverityLevel(level: number) {
+    if (
+        level >= MSSQL_SEVERITY_RANGE[SEVERITIES.WARNING].start &&
+        level <= MSSQL_SEVERITY_RANGE[SEVERITIES.WARNING].end
+    ) {
+        return SEVERITIES.WARNING;
     }
-    return undefined;
+    if (
+        level >= MSSQL_SEVERITY_RANGE[SEVERITIES.SEVERE].start &&
+        level <= MSSQL_SEVERITY_RANGE[SEVERITIES.SEVERE].end
+    ) {
+        return SEVERITIES.SEVERE;
+    }
+    if (
+        level >= MSSQL_SEVERITY_RANGE[SEVERITIES.CRITICAL].start &&
+        level <= MSSQL_SEVERITY_RANGE[SEVERITIES.CRITICAL].end
+    ) {
+        return SEVERITIES.CRITICAL;
+    }
 }
 
 export { parseConcatenatedJSON, mapSeverityLevel };

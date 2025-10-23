@@ -1924,7 +1924,7 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         'Multipath I/O': 'multipath-io',
         'Host utilities': 'host-utilities',
         'Transparent hugepages': 'transparent-hugepages',
-        'SELinux': 'selinux',
+        SELinux: 'selinux',
         'ISCSI replacement timeout': 'iscsi-replacement-timeout',
         'Multipath friendly names': 'multipath-friendly-names',
         'TCP advanced options': 'tcp-advanced-options',

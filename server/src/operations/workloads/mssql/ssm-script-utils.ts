@@ -197,6 +197,7 @@ const GET_DEFAULT_DRIVES = (
     executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     sqlAuthEnabled: boolean = false
 ) => `
+#Get default drives script
 $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 $executableInstanceName = "${executableInstanceName}"
 $instanceName = "${instanceName}"
@@ -342,6 +343,7 @@ const GET_DEFAULT_COLLATION = (
     executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     sqlAuthEnabled: boolean = false
 ) => `
+#Get default collation script
 $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 $executableInstanceName = "${executableInstanceName}"
 $instanceName = "${instanceName}"

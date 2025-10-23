@@ -1,7 +1,6 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { SECRETS_MANAGER_KEYS, SECRETS } from './consts';
 import getLogger from './logger';
-import { isDemo } from './utils';
 
 const logger = getLogger();
 
@@ -47,7 +46,6 @@ export default async function initiateSecrets() {
             }
         })
     );
-    if (isDemo()) {
-        logger.info('Secrets initiated in demo');
-    }
+
+    logger.info('Secrets initiated');
 }

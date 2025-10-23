@@ -12,14 +12,13 @@ import { OptimizeOSParams } from './common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { optimiseTcpSunrpcSlotsScript } from './ssm-scripts/os-nfs-optimize-scripts';
 import { AuditStatus, RESOURCESTYPE } from '../../../utils/consts';
-import { isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
+import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import { triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 async function optimiseKernelTcpSunrpcSlots(params: OptimizeOSParams) {
     const {
@@ -78,7 +77,7 @@ async function optimiseKernelTcpSunrpcSlots(params: OptimizeOSParams) {
         }
 
         // Update demo instance if needed
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 databaseInstanceId,

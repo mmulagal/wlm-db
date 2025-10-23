@@ -35,7 +35,7 @@ import { getMappedOntapVolumes } from '../../aws/fsx-operations';
 import { listResources } from '../../../lib/database/db';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { getInstanceDetails, getInstanceOntapDetails } from '../../database-hosts-operations';
-import { getServerNameWithHostname, isDemo } from '../../../utils/utils';
+import { getServerNameWithHostname, IS_DEMO_FLOW } from '../../../utils/utils';
 import { updateAllOptimizedClonesDemoFlow } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
 import { triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
@@ -44,7 +44,6 @@ import { registerJob, updateJobDetails, updateParentJobStatus } from '../../data
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { paginateListInstanceConfigData } from '../../database/instance-config-operations';
 
-const isDemoFlow = isDemo();
 const logger = getLogger();
 
 async function optimizeClone(
@@ -273,7 +272,7 @@ async function handleBulkCloneOptimization(
                             })
                         )
                     );
-                    if (isDemoFlow) {
+                    if (IS_DEMO_FLOW) {
                         await updateAllOptimizedClonesDemoFlow(
                             accountId,
                             credentialsId,
@@ -376,7 +375,7 @@ async function handleCloneRemediation(
                 logger.info(`Deleting clone ${cloneDatabaseName} created by other source.`);
                 let canDelete = true;
                 // To Check a cloned volume is mapped to any other database while doing deletion.. Not for Demo flow
-                if (!isDemoFlow) {
+                if (!IS_DEMO_FLOW) {
                     const result = await extractVolumeDetailsForClonesInInstance(
                         accountId,
                         credentialsId,

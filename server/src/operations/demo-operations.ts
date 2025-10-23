@@ -418,7 +418,7 @@ async function createFileSystemForDemo(
         routeTableIds: ['rtb-11111111']
     };
 
-    return createFSX(requestBody, true);
+    return createFSX(requestBody);
 }
 
 async function updateUserDBIntoResourceData(

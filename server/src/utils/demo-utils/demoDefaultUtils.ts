@@ -153,25 +153,22 @@ async function createDemoResourcesPerRegion(
     region: string,
     awsAccountId: string
 ) {
-    // Workaround added till GROGU-5485 is resolved
-    if (region !== 'ap-southeast-5') {
-        const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, region, randomize('a0', 10));
-        const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
-        if (!fileSystemExists) {
-            const fsxConfiguration = {
-                fsxDeploymentMode: 'MULTI_AZ_1',
-                fsxFileSystemId: randomUUID(),
-                fsxUsername: 'wlmdb-user',
-                fsxPassword: randomize('a0', 10),
-                databaseSize: 1024,
-                ontapSgGroupId: [randomize('a0', 10)],
-                fsxVolThroughput: 256,
-                fsxIOPS: 10,
-                encryptionKey: randomize('a0', 10),
-                snapshotPolicy: 'daily_weekretention'
-            };
-            await createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
-        }
+    const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, region, randomize('a0', 10));
+    const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
+    if (!fileSystemExists) {
+        const fsxConfiguration = {
+            fsxDeploymentMode: 'MULTI_AZ_1',
+            fsxFileSystemId: randomUUID(),
+            fsxUsername: 'wlmdb-user',
+            fsxPassword: randomize('a0', 10),
+            databaseSize: 1024,
+            ontapSgGroupId: [randomize('a0', 10)],
+            fsxVolThroughput: 256,
+            fsxIOPS: 10,
+            encryptionKey: randomize('a0', 10),
+            snapshotPolicy: 'daily_weekretention'
+        };
+        await createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
     }
 
     const jobs = await listJobs(accountId, credentialsId, region);
@@ -375,19 +372,15 @@ async function createDemoResourcesPerRegion(
                 await createJobs(accountId, enableMpioJobMockData);
 
                 if (accountId && !isEmpty(resource.database_instances)) {
-                    await Promise.all(
-                        resource.database_instances.map(
-                            async ({ database_instance_id: sqlInstanceId }: { database_instance_id: string }) => {
-                                await triggerLogsAnalysis(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    resourceId,
-                                    sqlInstanceId,
-                                    {}
-                                );
-                            }
-                        )
+                    // Run logs analysis for only the first instance per resource so that dashboard has metrics to show by default; for other instances we still want to trigger the analysis
+                    const [firstInstance] = resource.database_instances;
+                    await triggerLogsAnalysis(
+                        accountId,
+                        credentialsId,
+                        region,
+                        resourceId,
+                        firstInstance.database_instance_id,
+                        {}
                     );
                 }
             }
@@ -430,8 +423,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
             arn,
             externalId,
             credentialsName,
-            'STANDARD',
-            true
+            'STANDARD'
         );
         credentialsId = credentialsDetails?.id || credentialsList?.[0]?.credentialsId;
     }

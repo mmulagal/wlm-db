@@ -347,7 +347,7 @@ const getOracleDefaultOrUserAuthCommand = (ec2InstanceId: string, dbSid: string)
 `;
 
 const getOracleInstanceData = (ec2InstanceId: string) => `
-
+    # oracle instance data script
     ec2InstanceId="${ec2InstanceId}"
     oracleCredsAvailable="false" 
     # Check if oratab exists
@@ -1251,6 +1251,7 @@ const isStorageASMmanaged = (dbSid: string) => `
 `;
 
 const GET_ORACLE_SERVER_DETAILS = (oracleSids: string[], ec2InstanceId: string) => `
+# Get oracle server details script
 oracleSids=(${oracleSids.map(sid => `"${sid}"`).join(' ')})
 ec2InstanceId="${ec2InstanceId}"
 resultObject="{}"

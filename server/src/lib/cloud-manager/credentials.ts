@@ -1,5 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { ACCOUNT_ID, WORKLOAD_FACTORY_ENDPOINT, HEADERS, USER_TOKEN, WF_USER_CRED_TYPE } from '../../utils/consts';
+import { IS_DEMO_FLOW } from '../../utils/utils';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
@@ -34,10 +35,8 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
     let authToken;
-    let isDemo = false;
     // In Demo credential service is using the user token itself to make the api call, not the service token
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        isDemo = true;
+    if (IS_DEMO_FLOW) {
         credentialsType = credentialsType.toUpperCase();
         authToken = getAsyncLocalStorageResource(USER_TOKEN) as string;
     } else {
@@ -52,7 +51,7 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: authToken,
-                ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
+                ...(IS_DEMO_FLOW && { [HEADERS.SIMULATOR]: 'true' })
             },
             ...(nextToken && {
                 searchParams: {
@@ -134,8 +133,7 @@ async function createAwsCredential(
     arn: string,
     externalId: string,
     credentialsName: string,
-    accountType: string,
-    isDemo: boolean
+    accountType: string
 ) {
     try {
         return await gotInstanceForInternalRequest
@@ -143,7 +141,7 @@ async function createAwsCredential(
                 prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
                 headers: {
                     [HEADERS.AUTHORIZATION]: token,
-                    ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
+                    ...(IS_DEMO_FLOW && { [HEADERS.SIMULATOR]: 'true' })
                 },
                 json: {
                     arn,

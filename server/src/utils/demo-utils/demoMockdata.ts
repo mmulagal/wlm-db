@@ -3304,22 +3304,6 @@ const DEMO_REGISTER_RESPONSE = {
     }
 };
 
-function MockOracleServerDetails(oracleSids: string[]) {
-    const serverDetails = {
-        prettyName: 'Red Hat Enterprise Linux 8.10 (Ootpa)',
-        name: 'Red Hat Enterprise Linux',
-        version: '8.10 (Ootpa)',
-        serverEdition: 'Enterprise Edition',
-        serverVersion: '19c',
-        activeNode: 'i-055ed011c2068033a',
-        nodeNames: 'i-055ed011c2068033a',
-        activeConnections: 54,
-        creationDate: '2025-02-20T04:37:27Z'
-    };
-
-    return Object.fromEntries(oracleSids.map(sid => [sid, serverDetails]));
-}
-
 const demoFsxId = 'fs-0d5efc3057c4f12cb';
 
 export {
@@ -3347,6 +3331,5 @@ export {
     onPremAOAGAUploadObject,
     onPremFCIUploadObject,
     DEMO_REGISTER_RESPONSE,
-    MockOracleServerDetails,
     demoFsxId
 };

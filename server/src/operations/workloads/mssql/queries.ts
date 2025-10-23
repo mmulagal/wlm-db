@@ -295,7 +295,9 @@ const DATABASES_COUNT_V2 = `${SET_NOCOUNT} SELECT COUNT(*) AS totalCount FROM sy
 
 const SERVER_VERSION = `${SET_NOCOUNT} SELECT @@VERSION AS version ${FOR_JSON_PATH}`;
 
-const GET_SANDBOXES = `${SET_NOCOUNT}
+const GET_SANDBOXES = `
+    #Get sandboxes script
+    ${SET_NOCOUNT}
     DROP TABLE IF EXISTS #properties;
 
     CREATE TABLE #properties (

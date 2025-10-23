@@ -9,6 +9,13 @@ import {
     SsmSqlServerRunningStatus
 } from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
+import {
+    IS_DEMO_FLOW,
+    formatSsmArrayResponse,
+    getServerNameWithHostname,
+    retryWithDelay,
+    sqlResponseParsing
+} from '../../utils/utils';
 import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
@@ -18,13 +25,6 @@ import {
 import { CHECK_RUNNING_STATUS_WITH_RESTART, MOVE_ALL_CLUSTER_GROUPS } from '../workloads/mssql/optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { updateJobDetails } from '../database/job-operations';
-import {
-    formatSsmArrayResponse,
-    getServerNameWithHostname,
-    isDemo,
-    retryWithDelay,
-    sqlResponseParsing
-} from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 import getLogger from '../../utils/logger';
@@ -420,7 +420,7 @@ async function handleComputeRemediation(
             };
             await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
             jobStatus = JOBSTATUS.COMPLETED;
-            if (isDemo()) {
+            if (IS_DEMO_FLOW) {
                 const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
                 updatedMetadata.isComputeOptimized = true;
                 await updateResourceMetaData(accountId, credentialsId, databaseHostId, updatedMetadata);
@@ -614,7 +614,7 @@ export default async function optimizeCompute(
     );
     const recommendedInstanceTypes =
         recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];
-    if (!isDemo() && !recommendedInstanceTypes.includes(instanceType)) {
+    if (!IS_DEMO_FLOW && !recommendedInstanceTypes.includes(instanceType)) {
         throw createError(400, 'Invalid instance type, please choose from the recommended instance types');
     }
 
@@ -671,7 +671,7 @@ export default async function optimizeCompute(
         databaseInstanceId
     );
 
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         (metadata as unknown as Metadata).isComputeOptimized = true;
         updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
@@ -909,7 +909,7 @@ async function updateNodeInstanceType(
         const oldDnsAddresses = dnsAddresses ?? (await getCurrentDnsSettings(credentialsId, region, ec2InstanceId));
         if (!isEmpty(oldDnsAddresses)) {
             await stopInstance(credentialsId, region, ec2InstanceId);
-            if (!isDemo()) {
+            if (!IS_DEMO_FLOW) {
                 await waitForInstanceToBeStopped(credentialsId, region, ec2InstanceId);
             }
 

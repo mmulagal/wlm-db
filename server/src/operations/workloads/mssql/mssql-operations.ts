@@ -49,9 +49,9 @@ import {
     getDatabaseInstanceName,
     sqlResponseParsing,
     getOriginalDatabaseInstanceName,
-    isDemo,
     generateSqlResourceId,
-    parseMultipleCommandResponse
+    parseMultipleCommandResponse,
+    IS_DEMO_FLOW
 } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
@@ -79,7 +79,6 @@ import { getOracleInstanceDetails } from '../oracle/oracle-operations';
 import { SQL_SERVER_VERSION_TO_YEAR } from './discover-consts';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 type activeSqlNodeParams = {
     node1InstanceId: string;
@@ -121,10 +120,8 @@ async function getDatabasesCount(
 ) {
     logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId, isSqlAuthEnabled);
 
-    let commands = [sqlQueryExecutionWithAuth(instanceNames, DATABASES_COUNT_V2, isSqlAuthEnabled)];
-    if (isDemoFlow) {
-        commands = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES_COUNT_V2, false)];
-    }
+    const commands = [sqlQueryExecutionWithAuth(instanceNames, DATABASES_COUNT_V2, isSqlAuthEnabled)];
+
     const response = await callSsmExecution(
         credentialsId,
         region,
@@ -135,7 +132,7 @@ async function getDatabasesCount(
     logger.debug('Fetching databases count response', response);
     let parsedResponse = response ? sqlResponseParsing(response) : {};
 
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         parsedResponse = instanceNames.reduce((result: { [key: string]: any }, name) => {
             result[name] = parsedResponse.MSSQLSERVER;
             return result;
@@ -188,10 +185,10 @@ async function getDataBasesSummary(
     }
 
     try {
-        sqlAuthEnabled = isDemoFlow ? false : sqlAuthEnabled;
+        sqlAuthEnabled = IS_DEMO_FLOW ? false : sqlAuthEnabled;
 
         // Changing the logic, as ssm response compression would take care of long responses.
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             databaseInstances = [DEFAULT_INSTANCE_NAME];
         }
         const commands = sqlQueryExecutionWithAuth(databaseInstances, DATABASES, sqlAuthEnabled);
@@ -232,7 +229,7 @@ async function getAllResourceUtilisationDetails(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
     }
     logger.info('Fetching resources utilization from primary', credentialsId, region, activeNodeInstanceId);
-    const updatedInstanceNames = isDemoFlow ? [DEFAULT_INSTANCE_NAME] : instanceNames;
+    const updatedInstanceNames = IS_DEMO_FLOW ? [DEFAULT_INSTANCE_NAME] : instanceNames;
     const commands = [RESOURCE_UTILIZATION(updatedInstanceNames, isSqlAuthEnabled)];
     const resourceUtilizationData = await callSsmExecution(
         credentialsId,
@@ -251,7 +248,7 @@ async function getAllResourceUtilisationDetails(
 
     instanceNames.forEach(iName => {
         const originalDatabaseInstanceName = iName;
-        iName = isDemoFlow ? DEFAULT_INSTANCE_NAME : iName;
+        iName = IS_DEMO_FLOW ? DEFAULT_INSTANCE_NAME : iName;
 
         if (
             parsedResourceUtilizationData?.[iName] &&
@@ -549,7 +546,7 @@ async function getServerDetails(
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
-    const updatedInstanceNames = isDemoFlow ? [DEFAULT_INSTANCE_NAME] : instanceNames;
+    const updatedInstanceNames = IS_DEMO_FLOW ? [DEFAULT_INSTANCE_NAME] : instanceNames;
     const command = [sqlQueryExecutionWithAuth(updatedInstanceNames, SERVER_DETAILS, isSqlAuthEnabled)];
     const serverAllDetails = await callSsmExecution(
         credentialsId,
@@ -567,7 +564,7 @@ async function getServerDetails(
     const parsedResponse = serverAllDetails ? sqlResponseParsing(serverAllDetails) : {};
 
     instanceNames.forEach((iname: any) => {
-        const instanceParsedResponse = isDemoFlow ? parsedResponse[DEFAULT_INSTANCE_NAME] : parsedResponse[iname];
+        const instanceParsedResponse = IS_DEMO_FLOW ? parsedResponse[DEFAULT_INSTANCE_NAME] : parsedResponse[iname];
         if (
             instanceParsedResponse &&
             !(typeof instanceParsedResponse === 'string' && instanceParsedResponse.includes('error'))
@@ -928,10 +925,7 @@ async function getPerformanceMetrics(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
     }
 
-    let commands = [sqlQueryExecutionWithAuth(instanceNames, PERFORMANCE_METRICS_WITH_LATENCY, isSqlAuthEnabled)];
-    if (isDemoFlow) {
-        commands = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], PERFORMANCE_METRICS_WITH_LATENCY, false)];
-    }
+    const commands = [sqlQueryExecutionWithAuth(instanceNames, PERFORMANCE_METRICS_WITH_LATENCY, isSqlAuthEnabled)];
 
     const response = await callSsmExecution(
         credentialsId,
@@ -946,7 +940,7 @@ async function getPerformanceMetrics(
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
 
     let parsedResponse = response ? sqlResponseParsing(response) : {};
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         parsedResponse = instanceNames.reduce((result: { [key: string]: any }, name) => {
             result[name] = parsedResponse;
             return result;
@@ -1007,10 +1001,7 @@ async function getNativeSQLBackedupDatabases(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
 
-        let commands = [sqlQueryExecutionWithAuth(instanceNames, SQL_BACKUPS, isSqlAuthEnabled)];
-        if (isDemoFlow) {
-            commands = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SQL_BACKUPS, false)];
-        }
+        const commands = [sqlQueryExecutionWithAuth(instanceNames, SQL_BACKUPS, isSqlAuthEnabled)];
 
         const response = await callSsmExecution(
             credentialsId,
@@ -1022,7 +1013,7 @@ async function getNativeSQLBackedupDatabases(
 
         const cleanedResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanedResponse);
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             parsedResponse = instanceNames.reduce((result: { [key: string]: any }, name) => {
                 result[name] = parsedResponse;
                 return result;
@@ -1408,7 +1399,7 @@ async function getActiveSqlNodeAndInstanceDetails(
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
                         (instance: InstanceDetails) =>
-                            (isDemoFlow
+                            (IS_DEMO_FLOW
                                 ? instance.instanceName.includes(databaseInstanceName)
                                 : instance.instanceName === databaseInstanceName) &&
                             instance.instanceState === SQL_SERVICE_STATE.RUNNING
@@ -1528,7 +1519,7 @@ async function getSqlServerVersionAndEdition(
 
         let databaseInstances = (instancesDetails || []).map((instance: InstanceDetails) => instance.instanceName);
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             sqlAuthEnabled = false;
             databaseInstances = [DEFAULT_INSTANCE_NAME];
         }
@@ -1599,7 +1590,7 @@ function getSqlAuthEnabledStatus(instanceName: string, sql: any[], domain: any[]
     logger.debug('Check if SQL authentication is enabled');
 
     let sqlAuthEnabled = false;
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         sqlAuthEnabled = true;
     } else if (!isEmpty(sql)) {
         sqlAuthEnabled = Boolean(

@@ -41,6 +41,26 @@ const PRE_REQ_MESSAGES = {
         'Ensure that the credentials selected is valid and have the permission bedrock:GetFoundationModelAvailability and bedrock:ListInferenceProfiles permissions attached.'
 };
 
+const SEVERITIES = {
+    WARNING: 'warning',
+    SEVERE: 'severe',
+    CRITICAL: 'critical'
+};
+
+const MSSQL_SEVERITY_RANGE = {
+    [SEVERITIES.WARNING]: {
+        start: 16,
+        end: 16
+    },
+    [SEVERITIES.SEVERE]: {
+        start: 17,
+        end: 19
+    },
+    [SEVERITIES.CRITICAL]: {
+        start: 20,
+        end: 24
+    }
+};
 export {
     MODEL_AVAILABILITY_STATUS,
     LOGS_ANALYZER_BUNDLE_PATH,
@@ -52,5 +72,7 @@ export {
     BEDROCK_PRICE,
     AVG_TOKEN_COUNT_PER_ERROR,
     MSSQL_ERROR_PATTERN,
-    PRE_REQ_MESSAGES
+    PRE_REQ_MESSAGES,
+    SEVERITIES,
+    MSSQL_SEVERITY_RANGE
 };

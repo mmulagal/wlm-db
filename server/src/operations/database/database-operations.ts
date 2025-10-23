@@ -34,11 +34,10 @@ import {
     PaginatedDatabaseInstancesResponse,
     ListTrackedEc2Params
 } from '../../lib/database/db-types';
-import { getInstancesWithResourceForDemo, getNextToken, isDemo } from '../../utils/utils';
+import { getInstancesWithResourceForDemo, getNextToken, IS_DEMO_FLOW } from '../../utils/utils';
 import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 async function handleDemoFlowMapping(
     items: any[],
@@ -46,7 +45,7 @@ async function handleDemoFlowMapping(
     credentialsId?: string,
     additionalResourceFields?: string[]
 ) {
-    if (!isEmpty(items) && isDemoFlow) {
+    if (!isEmpty(items) && IS_DEMO_FLOW) {
         const resourceSelectKeys = [...RESOURCE_DEFAULT_SELECT_FIELDS];
         if (additionalResourceFields?.length) {
             resourceSelectKeys.push(...additionalResourceFields);

@@ -1,8 +1,61 @@
 diff --git a/node_modules/prismock/build/main/lib/operations/find/find.js b/node_modules/prismock/build/main/lib/operations/find/find.js
-index 6a72534..5317a91 100644
+index 6a72534..90d5a4a 100644
 --- a/node_modules/prismock/build/main/lib/operations/find/find.js
 +++ b/node_modules/prismock/build/main/lib/operations/find/find.js
-@@ -189,16 +189,24 @@ const getFieldRelationshipWhere = (item, field, delegates) => {
+@@ -20,7 +20,13 @@ function findNextIncrement(properties, fieldName) {
+     return increment;
+ }
+ function findOne(args, current, delegates) {
+-    const found = (0, helpers_1.pipe)((items) => items.filter((item) => where(args.where, current, delegates)(item)), order(args, current, delegates), connect(args, current, delegates), paginate(args.skip, args.take))(current.getItems()).at(0);
++    // wlmdb patch: add cursor-aware pagination support (Prisma parity)
++    const found = (0, helpers_1.pipe)(
++        (items) => items.filter((item) => where(args.where, current, delegates)(item)),
++        order(args, current, delegates),
++        connect(args, current, delegates),
++        paginate(args.skip, args.take, args.cursor)
++    )(current.getItems()).at(0);
+     if (!found)
+         return null;
+     return structuredClone(select(args.select)(found));
+@@ -114,11 +120,34 @@ function order(args, delegate, delegates) {
+         return o;
+     };
+ }
+-function paginate(skip, take) {
++function paginate(skip, take, cursor) {
+     return (items) => {
+-        if (!skip && !take)
++        // wlmdb patch: cursor-based pagination implementation
++        // Behavior mirrors Prisma: if cursor present, find index of cursor record, then apply skip/take relative to that position.
++        if (!skip && !take && !cursor)
+             return items;
+-        return items.slice(skip !== null && skip !== void 0 ? skip : 0, take === undefined ? undefined : take + (skip !== null && skip !== void 0 ? skip : 0));
++
++        let startIndex = skip ?? 0;
++
++        if (cursor) {
++            // cursor shape expected: { id: value } or any unique field(s)
++            // Find first item matching all cursor fields
++            const cursorKeys = Object.keys(cursor);
++            const cursorIdx = items.findIndex((it) => cursorKeys.every((k) => it[k] === cursor[k]));
++            if (cursorIdx !== -1) {
++                // Prisma semantics: if skip not provided but cursor provided, default skip is 1 (to move past cursor)
++                if (skip == null) {
++                    startIndex = cursorIdx + 1;
++                } else {
++                    startIndex = cursorIdx + skip;
++                }
++            }
++        }
++
++        if (take === undefined) {
++            return items.slice(startIndex);
++        }
++        return items.slice(startIndex, startIndex + take);
+     };
+ }
+ function includes(args, current, delegates) {
+@@ -189,16 +218,24 @@ const getFieldRelationshipWhere = (item, field, delegates) => {
      };
  };
  exports.getFieldRelationshipWhere = getFieldRelationshipWhere;
@@ -33,11 +86,72 @@ index 6a72534..5317a91 100644
  };
  exports.getFieldToRelationshipWhere = getFieldToRelationshipWhere;
  function connect(args, current, delegates) {
+@@ -210,7 +247,13 @@ function connect(args, current, delegates) {
+     };
+ }
+ function findMany(args, current, delegates) {
+-    const found = (0, helpers_1.pipe)((items) => items.filter((item) => where(args.where, current, delegates)(item)), order(args, current, delegates), connect(args, current, delegates), paginate(args.skip, args.take))(current.getItems());
++    // wlmdb patch: cursor-aware pagination support (Prisma parity)
++    const found = (0, helpers_1.pipe)(
++        (items) => items.filter((item) => where(args.where, current, delegates)(item)),
++        order(args, current, delegates),
++        connect(args, current, delegates),
++        paginate(args.skip, args.take, args.cursor)
++    )(current.getItems());
+     if (args === null || args === void 0 ? void 0 : args.distinct) {
+         const values = {};
+         return found.filter((item) => {
 diff --git a/node_modules/prismock/build/module/lib/operations/find/find.js b/node_modules/prismock/build/module/lib/operations/find/find.js
-index 8771706..9e22079 100644
+index 8771706..934a53a 100644
 --- a/node_modules/prismock/build/module/lib/operations/find/find.js
 +++ b/node_modules/prismock/build/module/lib/operations/find/find.js
-@@ -170,15 +170,23 @@ export const getFieldRelationshipWhere = (item, field, delegates) => {
+@@ -7,7 +7,13 @@ export function findNextIncrement(properties, fieldName) {
+     return increment;
+ }
+ export function findOne(args, current, delegates) {
+-    const found = pipe((items) => items.filter((item) => where(args.where, current, delegates)(item)), order(args, current, delegates), connect(args, current, delegates), paginate(args.skip, args.take))(current.getItems()).at(0);
++    // wlmdb patch: add cursor-aware pagination support (Prisma parity)
++    const found = pipe(
++        (items) => items.filter((item) => where(args.where, current, delegates)(item)),
++        order(args, current, delegates),
++        connect(args, current, delegates),
++        paginate(args.skip, args.take, args.cursor)
++    )(current.getItems()).at(0);
+     if (!found)
+         return null;
+     return structuredClone(select(args.select)(found));
+@@ -100,11 +106,27 @@ export function order(args, delegate, delegates) {
+         return o;
+     };
+ }
+-export function paginate(skip, take) {
++export function paginate(skip, take, cursor) {
+     return (items) => {
+-        if (!skip && !take)
++        // wlmdb patch: cursor-based pagination implementation
++        if (!skip && !take && !cursor)
+             return items;
+-        return items.slice(skip ?? 0, take === undefined ? undefined : take + (skip ?? 0));
++        let startIndex = skip ?? 0;
++        if (cursor) {
++            const cursorKeys = Object.keys(cursor);
++            const cursorIdx = items.findIndex((it) => cursorKeys.every((k) => it[k] === cursor[k]));
++            if (cursorIdx !== -1) {
++                if (skip == null) {
++                    startIndex = cursorIdx + 1; // default skip past cursor
++                } else {
++                    startIndex = cursorIdx + skip;
++                }
++            }
++        }
++        if (take === undefined) {
++            return items.slice(startIndex);
++        }
++        return items.slice(startIndex, startIndex + take);
+     };
+ }
+ export function includes(args, current, delegates) {
+@@ -170,15 +192,23 @@ export const getFieldRelationshipWhere = (item, field, delegates) => {
          [field.relationToFields[0]]: item[field.relationFromFields[0]],
      };
  };
@@ -67,3 +181,18 @@ index 8771706..9e22079 100644
  };
  function connect(args, current, delegates) {
      return (items) => {
+@@ -189,7 +219,13 @@ function connect(args, current, delegates) {
+     };
+ }
+ export function findMany(args, current, delegates) {
+-    const found = pipe((items) => items.filter((item) => where(args.where, current, delegates)(item)), order(args, current, delegates), connect(args, current, delegates), paginate(args.skip, args.take))(current.getItems());
++    // wlmdb patch: cursor-aware pagination support (Prisma parity)
++    const found = pipe(
++        (items) => items.filter((item) => where(args.where, current, delegates)(item)),
++        order(args, current, delegates),
++        connect(args, current, delegates),
++        paginate(args.skip, args.take, args.cursor)
++    )(current.getItems());
+     if (args?.distinct) {
+         const values = {};
+         return found.filter((item) => {

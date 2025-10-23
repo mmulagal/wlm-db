@@ -9,7 +9,14 @@ import {
     AssessmentTriggeredBy,
     OPTIMIZATION_CATEGORIES
 } from '../../../utils/continous-optimization-consts';
-import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../../utils/utils';
+import {
+    getServerNameWithHostname,
+    retryWithDelay,
+    sleep,
+    sqlResponseParsing,
+    IS_DEMO_FLOW
+} from '../../../utils/utils';
+import { AuditStatus, SSM_COMMAND_CACHE_TYPE } from '../../../utils/consts';
 import { callSsmExecution, pollSSMConnectionStatus } from '../../aws/ssm-operations';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { OPTIMIZE_NETWORK_ADAPTERS } from '../../workloads/mssql/optimization-scripts';
@@ -25,7 +32,6 @@ import {
     transferClusterOwnershipToStandbyNode
 } from '../compute-optimize-operations';
 import { waitForInstanceOk } from '../../../lib/aws/ec2';
-import { AuditStatus, SSM_COMMAND_CACHE_TYPE } from '../../../utils/consts';
 import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
 
@@ -65,7 +71,7 @@ async function optimizeNetworkAdapters(
             throw new Error(msg);
         }
         await waitForInstanceOk(credentialsId, region, instanceId);
-        if (!isDemo()) {
+        if (!IS_DEMO_FLOW) {
             // Wait for 30 seconds to allow FCI setup to come online after ec2 is online
             await sleep(30000);
         }
@@ -336,7 +342,7 @@ async function handleOptimizeRssOptimization(
                 }
             }
 
-            if (isDemo()) {
+            if (IS_DEMO_FLOW) {
                 const resourceMeta = metadata as unknown as Metadata;
                 let optimizedAdapters = resourceMeta?.isRssConfigOptimized;
                 optimizedAdapters = isEmpty(optimizedAdapters)

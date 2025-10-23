@@ -1,6 +1,5 @@
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
-import randomize from 'randomatic';
 import {
     DescribeSubnetsRequest,
     DescribeSecurityGroupsRequest,
@@ -49,7 +48,7 @@ import {
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
-import { filterSqlAmis, getResourceNameFromTags, isCidrContained, isDemo, sleep } from '../../utils/utils';
+import { filterSqlAmis, getResourceNameFromTags, isCidrContained, sleep, IS_DEMO_FLOW } from '../../utils/utils';
 import { getEbsVolumeUtilization, getInstanceUtilization } from './cloud-watch-operations';
 import {
     ResourceDetails,
@@ -65,8 +64,6 @@ import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import describeAutoscalingInstances from '../../lib/aws/auto-scaling';
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
 
 type KeyPairType = Static<typeof KeyPairsSchema>;
 
@@ -416,7 +413,13 @@ async function getInstanceTypes(region: string, credentialsId?: string) {
         architecture: ProcessorInfo?.SupportedArchitectures
     }));
 
-    if (isDemoFlow && region === 'ap-southeast-5') {
+    /*
+    https://jira.ngage.netapp.com/browse/DBS-5283:
+    Pricing information is not available for Malaysia region for all instance types,
+    Since demo returns a static ec2 instance type list, and pricing is from actual APIS,
+    selecting a certain instance type may not work in Malaysia region, hence limitng it to certain instance types in demo
+    */
+    if (IS_DEMO_FLOW && region === 'ap-southeast-5') {
         // Filtering m6i* & c6i* instances for malaysia region, TODO: as DBS extends support for more regions, this call should be modified to be an actual AWS API call & not a static list
         filteredInstances = filteredInstances.filter(
             ({ instanceType }) => instanceType?.startsWith('m6i') || instanceType?.startsWith('c6i')
@@ -694,7 +697,7 @@ async function validateVpcEndpoints(
     //     }
     // ];
 
-    if (!isDemoFlow && endpointsWithIssues?.length) {
+    if (!IS_DEMO_FLOW && endpointsWithIssues?.length) {
         const combinedIssues = (endpointsWithIssues || []).reduce((acc, issue) => {
             if (!issue) {
                 return acc;
@@ -1049,7 +1052,7 @@ async function getInstanceDetailsByPrivateIp(
                     ec2InstanceId: InstanceId,
                     ec2InstancePrivateIpAddress: PrivateIpAddress,
                     ec2InstanceType: InstanceType,
-                    ec2InstanceName: isDemoFlow ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(Tags),
+                    ec2InstanceName: getResourceNameFromTags(Tags),
                     ec2UsageOperation: UsageOperation
                 });
             }

@@ -22,7 +22,7 @@ import {
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import { isDemo, sqlResponseParsing } from '../../../utils/utils';
+import { IS_DEMO_FLOW, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import { calculateStorageDrift, mapVolumeTypesToIdName } from './storage-assessment-operations';
@@ -41,7 +41,7 @@ import {
 } from './ssm-scripts/storage-optimize-scripts';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
+
 const STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS = [
     GOLDEN_CONFIG.dataDiskLunLayout.name,
     GOLDEN_CONFIG.redoLogDiskLunLayout.name,
@@ -115,7 +115,7 @@ async function handleAfdDriftOptimization(params: OptimizeAsmConfigParams) {
             SSM_RUN_SHELL_SCRIPT_DOC,
             SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 databaseInstanceId,
@@ -192,7 +192,7 @@ async function handleAsmLibDriftOptimization(params: OptimizeAsmConfigParams) {
             SSM_RUN_SHELL_SCRIPT_DOC,
             SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 databaseInstanceId,
@@ -476,7 +476,7 @@ async function triggerAssessmentAndStartOptimization(
             }
         });
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 databaseInstanceId,

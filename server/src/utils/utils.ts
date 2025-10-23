@@ -61,7 +61,6 @@ import { readFromCacheByKey, writeToCache } from './cache';
 import { DatabaseInstance, DatabaseInstances, DatabaseInstancesIncludingResource, Resource } from './common-types';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
 const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
@@ -417,7 +416,7 @@ function derivePropertiesFromARN(awsResourceArn: string) {
 }
 
 async function sleep(ms: number) {
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         await new Promise(resolve => {
             setTimeout(resolve, 1000);
         });
@@ -724,7 +723,7 @@ function getMonthlyPriceFromHourlyPrice(hourlyPrice?: number) {
 function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {
     logger.info('Generate database instance name', { instanceName, isDefault });
 
-    if (isDemoFlow || isDefault) {
+    if (IS_DEMO_FLOW || isDefault) {
         return DEFAULT_MSSQL_INSTANCE_NAME;
     }
 
@@ -737,7 +736,7 @@ function extractSqlInstanceName(serverName: string): string {
     const defaultInstancePattern = /^\$env:COMPUTERNAME$/i; // Case-insensitive match for $env:COMPUTERNAME
     const namedInstancePattern = /^\$env:COMPUTERNAME\\(.+)$/i; // Case-insensitive match for $env:COMPUTERNAME\instanceName
 
-    if (isDemoFlow || defaultInstancePattern.test(serverName)) {
+    if (IS_DEMO_FLOW || defaultInstancePattern.test(serverName)) {
         return DEFAULT_INSTANCE_NAME; // Default instance
     }
 
@@ -749,10 +748,6 @@ function extractSqlInstanceName(serverName: string): string {
     throw createError(HttpErrorCodes.BAD_REQUEST, `Invalid server name format: ${serverName}`);
 }
 
-function isDemo() {
-    return process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
-}
-
 function getOriginalDatabaseInstanceName(instanceName: string | undefined): string {
     return instanceName?.split('\\')?.[1] || DEFAULT_INSTANCE_NAME;
 }
@@ -761,7 +756,7 @@ function getOriginalDatabaseInstanceName(instanceName: string | undefined): stri
  * Returns formatted instance name with hostname for MSSQL
  */
 function getServerNameWithHostname(sqlServerName?: string, instanceName?: string, databaseName?: string) {
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         // In ssm-scope, the instance name is appended with the hostname. (like below)
         // instanceName: "MSSQL$SQL-Managed-Host-ProdPROD-MarketingCampaigns"
         // check this
@@ -784,7 +779,7 @@ function getServerNameWithHostname(sqlServerName?: string, instanceName?: string
 }
 
 function getEc2Hostname(dbEngine: DatabaseTypes, ec2InstanceTags?: Tag[]) {
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         switch (dbEngine) {
             case DatabaseTypes.PG_SQL:
                 return `pgsqlnode-${randomize('0', 4)}`;
@@ -802,7 +797,7 @@ async function decompressSSMResponse(response: string) {
     logger.debug('Decompressing SSM response', { response });
 
     response = response.replaceAll('\r\n', '');
-    if (isDemoFlow || isEmpty(response) || !isBase64(response)) {
+    if (IS_DEMO_FLOW || isEmpty(response) || !isBase64(response)) {
         return response;
     }
 
@@ -1364,6 +1359,8 @@ function getFsxNameFromTags(tags?: Tag[]) {
     return tags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
 }
 
+const IS_DEMO_FLOW = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1400,7 +1397,6 @@ export {
     convertToBytes,
     getMonthlyPriceFromHourlyPrice,
     getDatabaseInstanceName,
-    isDemo,
     getOriginalDatabaseInstanceName,
     decompressSSMResponse,
     retryWithDelay,
@@ -1441,5 +1437,6 @@ export {
     addIncludeSelect,
     buildSelectFields,
     determineStorageType,
-    getFsxNameFromTags
+    getFsxNameFromTags,
+    IS_DEMO_FLOW
 };

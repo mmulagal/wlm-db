@@ -39,6 +39,11 @@ const pythonRelativePaths = [
     'wlmdb/oracle/packages/suse15_python311_rpms.tar.gz'
 ];
 
+const CDB = 'CDB';
+const PDB = 'PDB';
+const ORACLE_DEPLOYMENT_ARCHITECTURE = {
+    SINGLE_TENANT: 'Single tenant'
+};
 export {
     SSM_RUN_SHELL_SCRIPT_DOC,
     SSM_RUN_SHELL_SCRIPT_DOC_VERSION,
@@ -49,5 +54,8 @@ export {
     MIN_OPTIMAL_LUN_PER_DG,
     MAX_LUNS_PER_DG,
     pythonRelativePaths,
+    CDB,
+    PDB,
+    ORACLE_DEPLOYMENT_ARCHITECTURE,
     STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS
 };

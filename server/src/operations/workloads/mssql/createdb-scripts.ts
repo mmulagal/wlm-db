@@ -12,7 +12,7 @@ const cleanupResources = (
     fSxDataVolumeName: string = '',
     fSxLogVolumeName: string = ''
 ) => `
-
+#Clean up resources script
 $FileSystemId = '${fileSystemId}'
 $SQLVMName = '${sqlVMName}'
 $IGROUP = '${iGROUP}'

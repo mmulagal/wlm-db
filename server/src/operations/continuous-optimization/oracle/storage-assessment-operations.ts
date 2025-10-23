@@ -4,12 +4,12 @@ import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
 import { ASSESSMENT_SSM_EXECUTION_TIMEOUT, STORAGE_PROTOCOLS } from '../../../utils/consts';
+import { IS_DEMO_FLOW, parseMultipleCommandResponse } from '../../../utils/utils';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus
 } from '../../../utils/continous-optimization-consts';
-import { isDemo, parseMultipleCommandResponse } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob } from '../../database/job-operations';
 import {
@@ -40,7 +40,6 @@ import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
 import { VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 const volumeConfigData = storageGoldenConfigData.configuration.volume;
 const volumeNfsConfigData = storageGoldenConfigData.configuration.volume_nfs;
@@ -54,7 +53,7 @@ function mapVolumeTypesToIdName(
     mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>
 ) {
     let instanceVolumeMappings;
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         instanceVolumeMappings = Object.values(mappedOntapVolumes)
             .flatMap(volumeResponse => volumeResponse.volumeMappings || [])
             .flatMap(volumeMapping => Object.values(volumeMapping))

@@ -142,6 +142,7 @@ const getDbMappedOntapVolumes = (
     logPrefix: string = '',
     sqlAuthEnabled: boolean = false
 ) => `
+    #Get DB mapped ontap volumes script
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
@@ -1450,6 +1451,7 @@ const getSnapshotsToClone = (
     sandboxName: string,
     window = 60
 ) => `
+    #Get snapshots to clone script
     $fsxid = '${fsxId}'
     $fsxregion = '${fsxRegion}'
     $volumeids = '${volumeids}' | ConvertFrom-Json

@@ -4,7 +4,7 @@ import { EmailResponseType } from '../routes/types/notification.types';
 import { sendEmail } from './aws/ses-operations';
 import getLogger from '../utils/logger';
 import { EMAIL_RATE_LIMIT_TYPE, EMAIL_TYPES, HttpErrorCodes, MAX_EMAIL_ATTACHMENT_SIZE } from '../utils/consts';
-import { isDemo, isRateLimited, isValidEmail } from '../utils/utils';
+import { IS_DEMO_FLOW, isRateLimited, isValidEmail } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -23,7 +23,7 @@ export default async function processEmailRequest(
     const cacheKey = accountId + userEmail;
 
     if (
-        !isDemo() &&
+        !IS_DEMO_FLOW &&
         isRateLimited(EMAIL_RATE_LIMIT_TYPE, cacheKey, config.get('notification.max-emails-per-day'), '1d')
     ) {
         throw createError(HttpErrorCodes.TOO_MANY_REQUESTS, 'Too many requests');
@@ -67,7 +67,7 @@ async function sendSavingsCalculationEmail(
     logger.info('Sending savings calculation email', { accountId, fileName, userEmail, storageType });
     const successMsg = { message: 'Email sent successfully' };
 
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         return successMsg;
     }
 

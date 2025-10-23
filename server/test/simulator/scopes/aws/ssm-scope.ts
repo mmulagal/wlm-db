@@ -311,30 +311,6 @@ const getStandbyNodeDriveList = {
     commands: [GET_STANDBY_NODE_DRIVE_LIST]
 };
 
-const configureLuns = {
-    commands: [
-        'C:\\SSM\\Configure-LUNs.ps1 -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false'
-    ]
-};
-
-const createDatabase = {
-    commands: [
-        'C:\\SSM\\Create-Database.ps1 -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf'
-    ]
-};
-
-const newDBInitialize = {
-    commands: [
-        'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1 -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true'
-    ]
-};
-
-const cleanUpDB = {
-    commands: [
-        'C:\\SSM\\Cleanup-ONTAP.ps1 -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786'
-    ]
-};
-
 const checkDBExists = {
     commands: [
         // prettier-ignore
@@ -372,10 +348,6 @@ const instanceDetails = {
 
 const instanceDetailsWithFqdnAndIp = {
     commands: [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME]
-};
-
-const getVolumeLunMappingsCommand = {
-    commands: [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')]
 };
 
 const cloneVolumeCommand = {
@@ -515,18 +487,6 @@ const enterpriseFeatureUsageCheck = {
 
 const checkDatabaseIntegirty = {
     commands: [checkDatabaseIntegrityScript('test-db', DEFAULT_INSTANCE_NAME, '.', '', false)]
-};
-
-const getSnapshotsToCloneCommand = {
-    commands: [
-        getSnapshotsToClone(
-            'test-fsx',
-            'us-east-1',
-            JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
-            '5c1075d2-03a0-11ef-a514-55070fbfcab1',
-            'testdb1_clone'
-        )
-    ]
 };
 
 const readExtendedPropertiesCommand = {
@@ -669,13 +629,19 @@ ssmMock
     .resolves(listSendCommandCommandResponse.serverIoLatencyCommandResponse)
     .on(SendCommandCommand, { Parameters: nativeSqlBackupParams })
     .resolves(listSendCommandCommandResponse.nativeSqlBackupCommandResponse)
-    .on(SendCommandCommand, { Parameters: nativeSqlBackupDatabasesParams })
+    .on(SendCommandCommand, params => {
+        const comment = 'Get native SQL backedup databases';
+        return params.Comment === comment;
+    })
     .resolves(listSendCommandCommandResponse.nativeSqlBackupDatabasesCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
     .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
     .on(SendCommandCommand, { Parameters: getStorageParams })
     .resolves(listSendCommandCommandResponse.storageCommandResponse)
-    .on(SendCommandCommand, { Parameters: getPerformanceWithLatencyMetrics })
+    .on(SendCommandCommand, params => {
+        const comment = 'Fetch SQL server performance metrics (assessment, latency, IOPS, throughput) for resource';
+        return params.Comment === comment;
+    })
     .resolves(listSendCommandCommandResponse.getPerformancemetricsCommandResponse)
     .on(SendCommandCommand, { Parameters: getServerInstallDate })
     .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse)
@@ -687,15 +653,30 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
     .on(SendCommandCommand, { Parameters: getStandbyNodeDriveList })
     .resolves(listSendCommandCommandResponse.getStandbyNodeDriveList)
-    .on(SendCommandCommand, { Parameters: getDefaultDriveLetters })
+    .on(SendCommandCommand, params => {
+        const getDefaultDrivesRegex = /#Get default drives script/;
+        return getDefaultDrivesRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse)
-    .on(SendCommandCommand, { Parameters: createDatabase })
+    .on(SendCommandCommand, params => {
+        const commandRegex = /Create-Database.ps1/;
+        return commandRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.createDBResponse)
-    .on(SendCommandCommand, { Parameters: configureLuns })
+    .on(SendCommandCommand, params => {
+        const commandRegex = /Configure-LUNs.ps1/;
+        return commandRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.configureLunsResponse)
-    .on(SendCommandCommand, { Parameters: newDBInitialize })
+    .on(SendCommandCommand, params => {
+        const commandRegex = /NewDB_Initialize-Iscsidisk.ps1/;
+        return commandRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.newDBInitalizeResponse)
-    .on(SendCommandCommand, { Parameters: cleanUpDB })
+    .on(SendCommandCommand, params => {
+        const commandRegex = /#Clean up resources script/;
+        return commandRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.cleanUpDBResponse)
     .on(SendCommandCommand, { Parameters: checkDBExists })
     .resolves(listSendCommandCommandResponse.checkDBExistsResponse)
@@ -703,17 +684,26 @@ ssmMock
     .resolves(listSendCommandCommandResponse.serverDetailsResponse)
     .on(SendCommandCommand, { Parameters: resourceUtilization })
     .resolves(listSendCommandCommandResponse.resourceUtilizationResponse)
-    .on(SendCommandCommand, { Parameters: getCollationDetails })
+    .on(SendCommandCommand, params => {
+        const commandRegex = /#Get default collation script/;
+        return commandRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.getCollationDetailsResponse)
     .on(SendCommandCommand, { Parameters: clusterNetwokIpInfo })
     .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo)
     .on(SendCommandCommand, { Parameters: getOntapSandboxVolumeSavingsParams })
     .resolves(listSendCommandCommandResponse.ontapSandboxVolumesSavings)
-    .on(SendCommandCommand, { Parameters: getSandboxDetails })
+    .on(SendCommandCommand, params => {
+        const commandRegex = /#Get sandboxes script/;
+        return commandRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.getSandboxDetails)
     .on(SendCommandCommand, { Parameters: instanceDetails })
     .resolves(listSendCommandCommandResponse.instanceDetails)
-    .on(SendCommandCommand, { Parameters: getVolumeLunMappingsCommand })
+    .on(SendCommandCommand, params => {
+        const commandRegex = /#Get DB mapped ontap volumes script/;
+        return commandRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.getDbVolumeLunMapping)
     .on(SendCommandCommand, { Parameters: cloneVolumeCommand })
     .resolves(listSendCommandCommandResponse.createCloneVolume)
@@ -739,11 +729,16 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getActiveDirectoryCommand)
     .on(SendCommandCommand, { Parameters: enterpriseFeatureUsageCheck })
     .resolves(listSendCommandCommandResponse.enterpriseFeatureUsageCheckCommand)
-    .on(SendCommandCommand, { Parameters: dbCountParamasV2 })
+    .on(SendCommandCommand, params => {
+        return params.Comment === 'Get databases count';
+    })
     .resolves(listSendCommandCommandResponse.dbCountParamasV2Command)
     .on(SendCommandCommand, { Parameters: checkDatabaseIntegirty })
     .resolves(listSendCommandCommandResponse.checkDatabaseIntegrity)
-    .on(SendCommandCommand, { Parameters: getSnapshotsToCloneCommand })
+    .on(SendCommandCommand, params => {
+        const commandRegex = /#Get snapshots to clone script/;
+        return commandRegex.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.getSnapshotsToCloneCommand)
     .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
     .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand)
@@ -917,8 +912,22 @@ ssmMock
     .resolves(getSampleCommandResponse('oracleProtectionDetails'))
     .on(SendCommandCommand, params => params.Comment === 'oracle performance metrics')
     .resolves(getSampleCommandResponse('oraclePerformanceMetrics'))
-    .on(SendCommandCommand, params => params.Comment === 'oracle instance info')
+    .on(
+        SendCommandCommand,
+        params =>
+            params.Comment === 'oracle instance info' &&
+            params.Parameters.commands?.length === 1 &&
+            /# oracle instance data script/.test(params.Parameters.commands?.[0])
+    )
     .resolves(getSampleCommandResponse('oracleInstanceInfo'))
+    .on(
+        SendCommandCommand,
+        params =>
+            params.Comment === 'oracle instance info' &&
+            params.Parameters.commands?.length === 2 &&
+            /# Get oracle server details script/.test(params.Parameters.commands?.[1])
+    )
+    .resolves(getSampleCommandResponse('oracleInstanceInfoWithHostDetails'))
     .on(SendCommandCommand, params => params.Comment === 'Get SQL server version and edition')
     .resolves(getSampleCommandResponse('getSqlServerVersionEditionDetails'))
     .on(SendCommandCommand, params => params.Comment === 'Check PowerShell 7 availability')
@@ -1389,6 +1398,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'oracleInstanceInfo',
             '[{"sid":"ordbsdl","instance_details":{"instance_id":1,"instance_name":"ordbsdl","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"},"modules_availability":{"isAwsCliInstalled":true,"isJqInstalled":true}},{"sid":"oraclesan1","instance_details":{"instance_id":1,"instance_name":"oraclesan1","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"STARTED"},"modules_availability":{"isAwsCliInstalled":true,"isJqInstalled":false}},{"sid":"oracle","instance_details":{"instance_id":1,"instance_name":"oracle","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"},"modules_availability":{"isAwsCliInstalled":false,"isJqInstalled":true}}]'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleInstanceInfoWithHostDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleInstanceInfoWithHostDetails',
+            '[{"sid":"ordbsdl","instance_details":{"instance_id":1,"instance_name":"ordbsdl","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"},"modules_availability":{"isAwsCliInstalled":true,"isJqInstalled":true}},{"sid":"oraclesan1","instance_details":{"instance_id":1,"instance_name":"oraclesan1","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"STARTED"},"modules_availability":{"isAwsCliInstalled":true,"isJqInstalled":false}},{"sid":"oracle","instance_details":{"instance_id":1,"instance_name":"oracle","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"},"modules_availability":{"isAwsCliInstalled":false,"isJqInstalled":true}}]{"prettyName":"Red Hat Enterprise Linux 8.10 (Ootpa)","name":"Red Hat Enterprise Linux","version":"8.10 (Ootpa)","serverEdition":"Enterprise Edition","serverVersion":"19c","activeNode":"i-055ed011c2068033a","nodeNames":"i-055ed011c2068033a","activeConnections":54,"creationDate":"2025-02-20T04:37:27Z"}'
         )
     )
     .on(GetCommandInvocationCommand, {

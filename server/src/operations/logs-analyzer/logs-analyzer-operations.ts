@@ -18,8 +18,8 @@ import {
     generateHash,
     getArtifactsRegionBucketName,
     getNextToken,
-    isDemo,
-    sqlResponseParsing
+    sqlResponseParsing,
+    IS_DEMO_FLOW
 } from '../../utils/utils';
 import {
     AVG_TOKEN_COUNT_PER_ERROR,
@@ -31,7 +31,9 @@ import {
     LOGS_COUNT_TO_CONSIDER,
     MODEL_AVAILABILITY_STATUS,
     MSSQL_ERROR_PATTERN,
-    PRE_REQ_MESSAGES
+    MSSQL_SEVERITY_RANGE,
+    PRE_REQ_MESSAGES,
+    SEVERITIES
 } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { DatabaseInstance, DatabaseInstancesIncludingResource } from '../../utils/common-types';
 import getLogger from '../../utils/logger';
@@ -315,7 +317,7 @@ async function handleLogsAnalysis(
             'Fetch Logs Path for sql server instance'
         );
         const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
-        const [{ path: logsPath } = {}] = isDemo()
+        const [{ path: logsPath } = {}] = IS_DEMO_FLOW
             ? parsedResponse?.[DEFAULT_INSTANCE_NAME] || []
             : parsedResponse?.[databaseInstanceName] || [];
         if (!logsPath) {
@@ -1147,11 +1149,11 @@ async function getLatestLogsAnalysisReports(
                 critical: 0
             };
             for (const rec of logsAnalysisData.remediationRecommendation) {
-                const { severity: initialSeverity, count } = rec;
+                const { severity: initialSeverity = MSSQL_SEVERITY_RANGE[SEVERITIES.SEVERE].start } = rec; // marking errors with unknown severities as 'SEVERE; by default
                 if (initialSeverity) {
                     const severity = mapSeverityLevel(Number(initialSeverity));
                     severityCounts[severity as keyof SeverityCountsType] =
-                        (severityCounts[severity as keyof SeverityCountsType] || 0) + (count || 0);
+                        (severityCounts[severity as keyof SeverityCountsType] || 0) + 1;
                 }
             }
             latestReports.push({

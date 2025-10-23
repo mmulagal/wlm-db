@@ -5,7 +5,7 @@ import getLogger from '../../../utils/logger';
 import { Metadata, WorkloadInstance } from '../../../utils/common-types';
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import { AssessmentCategories, AssessmentTriggeredBy } from '../../../utils/continous-optimization-consts';
-import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
+import { getServerNameWithHostname, retryWithDelay, sqlResponseParsing, IS_DEMO_FLOW } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { FETCH_FSX_MTU_DETAILS, OPTIMIZE_NETWORK_INTERFACE_MTU } from '../../workloads/mssql/mtu-scripts';
@@ -17,8 +17,6 @@ import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
 interface MTUOptimizationInterface {
     interfaceName: string;
 }
@@ -256,7 +254,7 @@ async function handleOptimizeMTUAlignment(
             interfaceNames
         );
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
             updatedMetadata.optimizedMtus = !updatedMetadata.optimizedMtus
                 ? [...interfaceNames]

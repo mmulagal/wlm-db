@@ -4,6 +4,7 @@ import throat from 'throat';
 import getLogger from '../utils/logger';
 import { DatabaseInstancesIncludingResource } from '../utils/common-types';
 import { DatabaseTypes } from '../utils/consts';
+import { IS_DEMO_FLOW, formatDuration, sleep } from '../utils/utils';
 import { registerJob, updateParentJobStatus } from './database/job-operations';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
 import { getPaginatedDatabaseInstances } from './database/database-operations';
@@ -11,12 +12,10 @@ import {
     triggerMssqlAssessment,
     updateAssessmentResultsInInstanceMetadata
 } from './continuous-optimization/mssql/assessment-operations';
-import { formatDuration, isDemo, sleep } from '../utils/utils';
 import { INSTANCE_DEFAULT_SELECT_FIELDS } from '../utils/database-consts';
 import { triggerOracleAssessment } from './continuous-optimization/oracle/assessment-operations';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 interface AccountJobInfo {
     parentJobId: string;
     totalInstances: number;
@@ -204,7 +203,7 @@ async function processAccountInstancesBatch(
         logger.info(
             `Updating metadata for ${instances.length} instances in account ${accountId}, batch ${batchNumber}`
         );
-        if (!isDemoFlow) {
+        if (!IS_DEMO_FLOW) {
             await Promise.all(
                 instances.map(throat(3, instance => updateAssessmentResultsInInstanceMetadata(instance)))
             );

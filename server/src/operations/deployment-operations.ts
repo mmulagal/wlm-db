@@ -101,7 +101,7 @@ import {
     splitDomainUsername,
     getCollationForMSSQLVersion,
     filterActions,
-    isDemo
+    IS_DEMO_FLOW
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -494,7 +494,7 @@ async function getCloudformationTemplate(
     );
 
     let masterTemplateContents;
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         const filePathSim = path.join(
             process.cwd(),
             '..',
@@ -654,7 +654,7 @@ async function getPgSqlCfTemplate(
     );
 
     let masterTemplateContents;
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         const filePathSim = path.join(
             process.cwd(),
             '..',
@@ -1448,7 +1448,7 @@ async function deployCloudFormationTemplate(
     // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
     const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);
@@ -1848,7 +1848,7 @@ async function deployCfTemplateForPgSql(
     // logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
     const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);

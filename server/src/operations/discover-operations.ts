@@ -24,13 +24,13 @@ import {
     getResourceNameFromTags,
     sleep,
     getArtifactsRegionBucketName,
-    isDemo,
     decompressSSMResponse,
     retryWithDelay,
     sqlResponseParsing,
     isValidProp,
     getEc2Hostname,
-    getFsxNameFromTags
+    getFsxNameFromTags,
+    IS_DEMO_FLOW
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -101,7 +101,6 @@ import { OracleDeploymentTenacy } from './workloads/oracle/consts';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
-const isDemoFlow = isDemo();
 const NO_PGSQL = 'no_pgsql';
 interface SsmTargetsInfo {
     ec2InstanceId: string;
@@ -155,7 +154,7 @@ async function getHostAndSqlServerInfo(
     instances: string[] = []
 ): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('Get host and SQL Server info:', { accountId, credentialsId, region, nextToken, instances });
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (IS_DEMO_FLOW) {
         return returnInventorydata(DatabaseTypes.MS_SQL_SERVER, instances) as unknown as DiscoverMsSqlResponseBodyType;
     }
     let api1StartTime;
@@ -859,7 +858,7 @@ async function fetchUnmanagedHostsInformationV2(
         )
     );
 
-    if (isDemoFlow && instances.includes(DEMO_BYOL_INSTANCE_ID)) {
+    if (IS_DEMO_FLOW && instances.includes(DEMO_BYOL_INSTANCE_ID)) {
         // In demo flow update the sql edition for specific instance
         response = response.map(item => {
             if (item?.databaseInstancesSummary) {
@@ -1163,7 +1162,7 @@ async function discoverEc2Instances(
     let ec2Instances = ec2InstanceList?.map(ec2Instance => {
         const name = getEc2Hostname(discoveryDbType, ec2Instance?.Tags);
         return {
-            ec2InstanceId: isDemoFlow ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
+            ec2InstanceId: IS_DEMO_FLOW ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
             ec2InstanceType: ec2Instance?.InstanceType || '',
             ec2InstanceName: name || '',
             ec2HostName: ec2Instance?.PrivateDnsName || '',
@@ -1181,7 +1180,7 @@ async function discoverEc2Instances(
         };
     });
 
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         ec2Instances = ec2Instances.filter(
             ec2InstanceDetails => ec2InstanceDetails.ssmState === ConnectionStatus.CONNECTED
         );
@@ -1551,7 +1550,7 @@ async function getPgSqlResourceDetails(
         )
     );
 
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         response.forEach((item, index) => {
             item.id = instances[index];
         });
@@ -1648,7 +1647,7 @@ async function discoverOracleResources(
         ec2InstanceIds
     });
 
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         return returnInventorydata(DatabaseTypes.ORACLE, ec2InstanceIds) as unknown as DiscoverOracleResponseBodyType;
     }
 
@@ -2028,7 +2027,7 @@ async function getOracleResourceDetails(
                 instanceState: dbInstanceState,
                 region,
                 credentials_id: credentialsId,
-                metadata: isDemoFlow
+                metadata: IS_DEMO_FLOW
                     ? { mountPointDetails: { protocol: 'NFS', mountPoint: '/oracleData', mountIp: '0.0.0.0' } }
                     : { mountPointDetails },
                 fsxn_ids: fsxnId || '',
@@ -2056,7 +2055,7 @@ async function getOracleResourceDetails(
         )
     );
 
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         response.forEach((item, index) => {
             item.id = instances[index];
         });

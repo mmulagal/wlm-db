@@ -29,7 +29,8 @@ import {
     getAllResourceUtilisation,
     getMssqlInstanceGuid,
     getAllInstanceDetails,
-    getActiveSqlNodeAndInstanceDetails
+    getActiveSqlNodeAndInstanceDetails,
+    getPerformanceMetrics
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
 import { DATABASE_METRIC_TYPE, DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../src/utils/consts';
@@ -94,6 +95,13 @@ describe('MSSQL Resource methods', () => {
             DEFAULT_INSTANCE_NAME
         ]);
         expect(resp?.[DEFAULT_INSTANCE_NAME]?.[0]?.totalCount).toEqual(8);
+    });
+
+    it('Get performance metrics', async () => {
+        const response = await getPerformanceMetrics(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, [
+            DEFAULT_INSTANCE_NAME
+        ]);
+        expect(response?.[DEFAULT_INSTANCE_NAME]).toBeDefined();
     });
 
     it('Get resource details ', async () => {

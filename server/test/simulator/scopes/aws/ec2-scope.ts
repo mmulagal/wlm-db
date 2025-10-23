@@ -3,6 +3,7 @@
 import sinon from 'sinon';
 import { faker } from '@faker-js/faker';
 import { cloneDeep, sample } from 'lodash-es';
+import randomize from 'randomatic';
 import {
     EC2Client,
     DescribeVpcsCommand,
@@ -198,6 +199,12 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
             const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
             const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
             dummyInstanceDetails.PrivateIpAddress = privateIp;
+            dummyInstanceDetails.Tags = [
+                {
+                    Key: 'Name',
+                    Value: `sqlnode-${randomize('0', 5)}`
+                }
+            ];
             const dummyInstanceRef = sample(instancesWithEbs);
             const dummyInstanceId = dummyInstanceRef.ec2InstanceId;
             dummyInstanceDetails.InstanceId = dummyInstanceId;

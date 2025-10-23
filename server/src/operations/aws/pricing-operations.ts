@@ -10,7 +10,7 @@ import {
     PricingServiceResponseType
 } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
-import { calculateFsxnStorageCapacity, isDemo } from '../../utils/utils';
+import { calculateFsxnStorageCapacity, IS_DEMO_FLOW } from '../../utils/utils';
 import {
     DEFAULT_AWS_REGION,
     FCI,
@@ -509,7 +509,7 @@ async function calculatePrice(
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage, osType));
     let productRates = await getProductRates(inputList);
 
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         productRates = mergeWith(productRates, DEMO_PRODUCT_RATE, (objValue, srcValue) => {
             if (isEmpty(objValue)) {
                 return srcValue;

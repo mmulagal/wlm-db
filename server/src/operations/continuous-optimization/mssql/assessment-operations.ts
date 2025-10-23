@@ -4,7 +4,7 @@ import throat from 'throat';
 import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import getLogger from '../../../utils/logger';
-import { extractSqlInstanceName, isDemo } from '../../../utils/utils';
+import { extractSqlInstanceName, IS_DEMO_FLOW } from '../../../utils/utils';
 import {
     getInstanceInfo,
     getResources,
@@ -86,7 +86,6 @@ import {
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetMssqlAssessmentForDemo } from '../../demo-operations';
 
-const isDemoFlow = isDemo();
 const logger = getLogger();
 
 function hostLevelDriftData(
@@ -381,7 +380,7 @@ async function fetchMssqlDriftAssessment(
         deploymentType: databaseDeploymentType
     };
 
-    if (isDemoFlow) {
+    if (IS_DEMO_FLOW) {
         driftAssessmentData = handleGetMssqlAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
     }
 
@@ -821,7 +820,7 @@ async function initiateHostLevelAssessmentDataCollection(
             'license,compute,host-os-patch,rss-config,mssql-patch,high-availability,mtu-alignment',
             { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
-        if (!isDemoFlow) {
+        if (!IS_DEMO_FLOW) {
             await updateDatabaseHostAssessmentResults(accountId, credentialsId, region, databaseHostId, {
                 license: assessmentResults.license,
                 compute: assessmentResults.compute,
@@ -870,7 +869,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
     );
 
     databaseInstanceRecord.svmOntapUuid = svms.find(svm =>
-        isDemoFlow ? svm : svm?.StorageVirtualMachineId === databaseInstanceRecord.svmId
+        IS_DEMO_FLOW ? svm : svm?.StorageVirtualMachineId === databaseInstanceRecord.svmId
     )?.UUID;
 
     let instanceVolumeMapping: MappedOnTapVolumeResponse[] = [];
@@ -935,7 +934,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
         sqlServerDeploymentType: RESOURCESTYPE.MSSQL
     });
 
-    const resourceWithInstanceName = isDemoFlow
+    const resourceWithInstanceName = IS_DEMO_FLOW
         ? `${databaseInstanceRecord.resourceName}\\${databaseInstanceRecord.name.replace(
               databaseInstanceRecord.resourceName,
               ''
@@ -1214,7 +1213,7 @@ async function triggerMssqlAssessment(
                 );
             }
         }
-        if (!isDemoFlow) {
+        if (!IS_DEMO_FLOW) {
             await updateAssessmentResultsInInstanceMetadata(managedInstance);
         }
     }
@@ -1253,7 +1252,7 @@ async function onDemandTriggerMssqlDriftAssessment(
             resource: { resource_name: resourceName },
             database_instance_name: instanceName
         } = managedInstance;
-        const savedInstanceName = isDemoFlow
+        const savedInstanceName = IS_DEMO_FLOW
             ? `${resourceName}\\${instanceName.replace(resourceName!, '')}`
             : `${resourceName}\\${instanceName}`;
         const jobName = `Microsoft SQL Server assessment for instance ${savedInstanceName}`;

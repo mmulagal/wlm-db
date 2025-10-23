@@ -9,13 +9,12 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getEc2Hostname, isDemo } from '../utils/utils';
+import { getEc2Hostname, IS_DEMO_FLOW } from '../utils/utils';
 import { AWS_ERROR_CODES, AWS_REGIONS, DatabaseTypes, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
 import { getEBSVolumesForDemo, getMssqlStorageDataForDemo } from './demo-operations';
 import { describeInstance, describeVolumes, describeVpc } from '../lib/aws/ec2';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
     0: 'nodeTopology',
@@ -74,7 +73,7 @@ async function getEbsResourceInfo(
     });
 
     let volumes;
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         const sqlServerDeploymentType = databaseInstanceDetails?.length
             ? databaseInstanceDetails[0].database_deployment_type
             : '';
@@ -147,7 +146,13 @@ async function getStorageData(
 
         ebsVolumeIds = ebsVolumeIds || [];
         const response = {} as StoragePerStorageTypeResponseType;
-        if (readFsxnData && fsxnId && region && credentialsId && !(databaseInstanceDetails?.isManaged && !isDemoFlow)) {
+        if (
+            readFsxnData &&
+            fsxnId &&
+            region &&
+            credentialsId &&
+            !(databaseInstanceDetails?.isManaged && !IS_DEMO_FLOW)
+        ) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxnId));
             response.fsxn = {
@@ -156,7 +161,7 @@ async function getStorageData(
                 spaceSavings: totalSpaceSavings,
                 spaceSavingsPercentage: totalSpaceSavingsPercentage,
                 protocol: storageProtocol ? storageProtocol.split(',') : [],
-                ...(isDemoFlow && { ...getMssqlStorageDataForDemo(totalUsed as number) })
+                ...(IS_DEMO_FLOW && { ...getMssqlStorageDataForDemo(totalUsed as number) })
             };
         }
         if (fsxwId && region && credentialsId) {

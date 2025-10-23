@@ -8,7 +8,7 @@ import {
     OptimizeOracleiSCSIStorageOperatingSystem,
     OptimizeOracleNFSStorageOperatingSystem
 } from '../../../utils/continous-optimization-consts';
-import { isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
+import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
@@ -31,7 +31,6 @@ import { oracleOptimizeStorageOSForNfs } from './storage-os-nfs-optimise-operati
 import { OptimizeOSParams } from './common-types';
 
 const logger = getLogger();
-const isDemoFlow = isDemo();
 
 async function oracleOptimizeStorageOS(
     accountId: string,
@@ -451,7 +450,7 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
 
         logger.info(`TCP optimization status: ${status ? 'SUCCESS' : 'FAILED'}`, { status, errors });
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 databaseInstanceId,
@@ -552,7 +551,7 @@ async function optimizeIscsiReplacementTimeout(params: OptimizeOSParams) {
             jobError = skippedMessage;
             jobStatus = JOBSTATUS.WARNING;
         }
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 databaseInstanceId,
@@ -692,7 +691,7 @@ async function optimizeMultipathIoSessions(params: OptimizeOSParams) {
             jobError = `Multipath IO sessions optimization completed with unexpected status: ${status}`;
         }
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 databaseInstanceId,
@@ -802,7 +801,7 @@ async function optimizeTransparentHugePages(params: OptimizeOSParams) {
             jobStatus = JOBSTATUS.FAILED;
         }
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 databaseInstanceId,

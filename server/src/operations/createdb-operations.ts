@@ -15,9 +15,9 @@ import {
     sqlResponseParsing,
     getCollationForMSSQLVersion,
     getDatabaseInstanceName,
-    isDemo,
     getOriginalDatabaseInstanceName,
-    retryWithDelay
+    retryWithDelay,
+    IS_DEMO_FLOW
 } from '../utils/utils';
 import {
     ACCOUNT_ID,
@@ -48,7 +48,7 @@ import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateUserDBIntoInstanceTable, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
-import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
+import { CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 import { cleanupResources } from './workloads/mssql/createdb-scripts';
 import { checkScriptNeedsUpdate, copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -61,7 +61,6 @@ interface SqlInstance {
     executableName: string;
     sqlAuthEnabled: boolean;
 }
-const isDemoFlow = isDemo();
 
 async function getDefaultDrives(
     credentialsId: string,
@@ -74,11 +73,7 @@ async function getDefaultDrives(
 ) {
     const ssmComment = 'Getting MSSQL default data and log drives';
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
-    let defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
-
-    if (isDemoFlow) {
-        defaultDrivesCommand = [GET_DEFAULT_DRIVES(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, true)];
-    }
+    const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
 
     const defaultDriveResponse = await callSsmExecution(
         credentialsId,
@@ -176,14 +171,11 @@ async function getDriveInfoFromNodes(
                         driveLetter: item.LogicalDisk?.charAt(0),
                         availableSize: item.FileSystem,
                         isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
-                        ...(sqlDeploymentType === 'FCI' &&
-                            !isDemoFlow && {
-                                isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})`
-                            }),
-                        ...(sqlDeploymentType === 'FCI' &&
-                            isDemoFlow && {
-                                isClusteredWithSelectedInstance: item.Owner?.includes('SQL Server ') ?? false
-                            })
+                        ...(sqlDeploymentType === 'FCI' && {
+                            isClusteredWithSelectedInstance: IS_DEMO_FLOW
+                                ? item.Owner?.includes('SQL Server ') ?? false
+                                : item.Owner === `SQL Server (${instanceName})`
+                        })
                     };
                 }
                 return null;
@@ -281,7 +273,7 @@ async function getDriveInfoFromSSM(
 
         const isInstanceRunning = instancesDetails.some(
             instance =>
-                (isDemoFlow
+                (IS_DEMO_FLOW
                     ? instance.instanceName.includes(instanceDetail.database_instance_name)
                     : instance.instanceName === instanceDetail.database_instance_name) &&
                 instance.instanceState === SQL_SERVICE_STATE.RUNNING
@@ -438,20 +430,21 @@ async function getDriveInfo(
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
-    const { getDriveInfoFromNodesResponse, getDefaultDrivesResponse } = driveResponse;
+    const { getDriveInfoFromNodesResponse, getDefaultDrivesResponse: { currentDataDrive, currentLogDrive } = {} } =
+        driveResponse;
     const { storage } = fsxStorageCapacity ?? {};
 
     const response: DriveInfoResponseBodyType = {
         existingDriveInfo: getDriveInfoFromNodesResponse.updatedExitingDrives,
         ...{ availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters },
-        ...(storage && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
+        ...(storage && { fsxStorageCapacity: convertGiBToBytes(storage) }),
         ...(!forSandbox &&
-            getDefaultDrivesResponse?.currentDataDrive && {
-                defaultDataDrive: getDefaultDrivesResponse.currentDataDrive
+            currentDataDrive && {
+                defaultDataDrive: currentDataDrive
             }),
         ...(!forSandbox &&
-            getDefaultDrivesResponse?.currentLogDrive && {
-                defaultLogDrive: getDefaultDrivesResponse.currentLogDrive
+            currentLogDrive && {
+                defaultLogDrive: currentLogDrive
             })
     };
 
@@ -681,7 +674,7 @@ async function invokeSSMForDatabaseDeployment(
 
             const runningInstance = instancesDetails.find(
                 instance =>
-                    (isDemoFlow
+                    (IS_DEMO_FLOW
                         ? instance.instanceName.includes(instanceDetail.database_instance_name)
                         : instance.instanceName === instanceDetail.database_instance_name) &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
@@ -769,7 +762,7 @@ async function invokeSSMForDatabaseDeployment(
                 error: undefined
             });
             updateLongRunningAuditGroup(AuditStatus.SUCCESS);
-            if (isDemoFlow) {
+            if (IS_DEMO_FLOW) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(
                     accountId,
@@ -898,7 +891,7 @@ async function invokeSSMForDatabaseDeployment(
             updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             await updateCreateDbMetrics(accountId, credentialsId, resourceId, metaData as Metadata);
 
-            if (isDemoFlow) {
+            if (IS_DEMO_FLOW) {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(
                     accountId,
@@ -1011,11 +1004,7 @@ async function createDatabase(
     let createDatabaseCommand;
     const { name: instanceName, executableName: instanceExecutableName, sqlAuthEnabled } = sqlInstance;
 
-    if (isDemoFlow) {
-        createDatabaseCommand = [
-            `${CREATEDBSCRIPT} -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf`
-        ];
-    } else if (sqlAuthEnabled) {
+    if (sqlAuthEnabled) {
         createDatabaseCommand = [
             `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${instanceExecutableName} -InstanceName ${instanceName} -ResourceID ${activeNodeInstanceId}`
         ];
@@ -1125,11 +1114,7 @@ async function configureLuns(
     });
 
     let configureLuncommands;
-    if (isDemoFlow) {
-        configureLuncommands = [
-            `${CONFIGURELUNSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false`
-        ];
-    } else if (standbyIqn) {
+    if (standbyIqn) {
         configureLuncommands = [
             `$env:path = $env:path + ";C:\\Program Files\\PowerShell\\7";pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -StandbyIQN ${standbyIqn}}`
         ];
@@ -1251,16 +1236,10 @@ async function newDBInitialization(
         serverNameWithHostName,
         customSSMTimeoutValue
     });
-    let dbInitializecommands;
-    if (isDemoFlow) {
-        dbInitializecommands = [
-            `${INITIALIZEDBSCRIPT} -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true`
-        ];
-    } else {
-        dbInitializecommands = [
-            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -DataSerial '${dataSerial}' -LogSerial '${logSerial}' -Virtualmount '${isVirtualMountSelected}' -InstanceName '${instanceName}' -isDefaultInstance '${isDefaultInstance}'`
-        ];
-    }
+
+    const dbInitializecommands = [
+        `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -DataSerial '${dataSerial}' -LogSerial '${logSerial}' -Virtualmount '${isVirtualMountSelected}' -InstanceName '${instanceName}' -isDefaultInstance '${isDefaultInstance}'`
+    ];
 
     const description =
         isClustered === 'true'
@@ -1387,31 +1366,20 @@ async function cleanUpDatabaseDeployment(
     let status;
     let errMsg;
     try {
-        let cleaupCommand;
-        if (isDemoFlow) {
-            cleaupCommand = [
-                `${CLEANUPSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786`
-            ];
-        } else {
-            // cleaupCommand = [
-            //     `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered} -InstanceName ${instanceNameForScript} -IsDefaultInstance ${isDefaultInstance} -FilePathString '${filePaths}'}`
-            // ];
-
-            cleaupCommand = [
-                cleanupResources(
-                    fileSystemId!,
-                    sqlVMName!,
-                    iGroup,
-                    databaseName,
-                    isClustered,
-                    instanceNameForScript,
-                    isDefaultInstance,
-                    filePaths!,
-                    dataVolumeName,
-                    logVolumeName
-                )
-            ];
-        }
+        const cleaupCommand = [
+            cleanupResources(
+                fileSystemId!,
+                sqlVMName!,
+                iGroup,
+                databaseName,
+                isClustered,
+                instanceNameForScript,
+                isDefaultInstance,
+                filePaths!,
+                dataVolumeName,
+                logVolumeName
+            )
+        ];
 
         const cleanUpResponse = await retryWithDelay(
             callSsmExecution.bind(
@@ -1844,7 +1812,7 @@ async function getCollationDetails(
 
             const runningInstance = instancesDetails.find(
                 instance =>
-                    (isDemoFlow
+                    (IS_DEMO_FLOW
                         ? instance.instanceName.includes(instanceDetail.database_instance_name)
                         : instance.instanceName === instanceDetail.database_instance_name) &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
@@ -1882,11 +1850,7 @@ async function getDefaultCollationAndVersion(
     logger.info(ssmComment, { credentialsId, region, activeNodeInstanceId });
     const { name: instanceName, executableName, sqlAuthEnabled } = sqlInstance;
 
-    let defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
-
-    if (isDemoFlow) {
-        defaultCollationCommand = [GET_DEFAULT_COLLATION('MSSQLSERVER', '$env:computername', false)];
-    }
+    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
 
     const defaultCollationResponse = await callSsmExecution(
         credentialsId,

@@ -16,8 +16,8 @@ import { LogDriveDetails, StorageAssessment, TempDbDriveDetails, WorkloadInstanc
 import {
     calculateFsxStorageCapacityForHeadroomOptimization,
     convertToBytes,
-    isDemo,
-    sqlResponseParsing
+    sqlResponseParsing,
+    IS_DEMO_FLOW
 } from '../../../utils/utils';
 import getMissingPermissionsList from '../../aws/iam-operations';
 import { getFsxStorageDetails } from '../../aws/fsx-operations';
@@ -120,7 +120,7 @@ async function initiateStorageAssessmentCollection(
 
         const parsedResponse = response ? sqlResponseParsing(response) : {};
         const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
-        if (!isDemo()) {
+        if (!IS_DEMO_FLOW) {
             // add snapshot copy details to volumes
             parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
         }
@@ -137,7 +137,7 @@ async function initiateStorageAssessmentCollection(
             }
         ]);
 
-        const configJobStatus = isDemo()
+        const configJobStatus = IS_DEMO_FLOW
             ? JOBSTATUS.COMPLETED
             : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
             ? JOBSTATUS.FAILED
@@ -164,7 +164,7 @@ async function initiateStorageAssessmentCollection(
                 resourceName: resourceWithInstanceName,
                 startTime: Date.now(),
                 endTime: Date.now(),
-                status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                status: IS_DEMO_FLOW ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
                 type: JOBTYPE.ASSESSMENT,
                 parentJobId
             });
@@ -174,7 +174,7 @@ async function initiateStorageAssessmentCollection(
                 resourceName: resourceWithInstanceName,
                 startTime: Date.now(),
                 endTime: Date.now(),
-                status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                status: IS_DEMO_FLOW ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
                 type: JOBTYPE.ASSESSMENT,
                 parentJobId
             });

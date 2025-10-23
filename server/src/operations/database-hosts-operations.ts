@@ -85,7 +85,7 @@ import {
     isEbsAwsBackupEnabled
 } from './aws/ec2-operations';
 import { getSqlInstanceUtilizationAndPerformance } from './aws/cloud-watch-operations';
-import { assessMssqlServerPerformance, determineStorageType, formatDuration, isDemo } from '../utils/utils';
+import { assessMssqlServerPerformance, determineStorageType, formatDuration, IS_DEMO_FLOW } from '../utils/utils';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
@@ -115,8 +115,6 @@ import {
 } from './database-hosts-util';
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
 
 async function getUniqueCrrDetails(
     accountId: string,
@@ -208,7 +206,7 @@ async function getProtectionStatus(
         const commonResult = instanceNames.reduce((acc, instName) => {
             acc[instName] = {
                 isAwsBackupEnabled: {
-                    fsxn: isDemoFlow
+                    fsxn: IS_DEMO_FLOW
                         ? true
                         : awsBackup[instName]?.volumeDBMapWithBackupFlag &&
                           typeof awsBackup[instName]?.volumeDBMapWithBackupFlag === 'object'
@@ -217,10 +215,10 @@ async function getProtectionStatus(
                     fsxw: Boolean(fsxwBackup),
                     ebs: Boolean(ebsBackup)
                 },
-                isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup[instName]),
-                isCRREnabled: isDemoFlow ? true : checkAllTrue(crrBackup[instName]),
+                isFsxOntapSnapshotsEnabled: IS_DEMO_FLOW ? true : checkAllTrue(ontapBackup[instName]),
+                isCRREnabled: IS_DEMO_FLOW ? true : checkAllTrue(crrBackup[instName]),
                 isAppConsistentBackupEnabled:
-                    isDemoFlow || checkAllTrue(protectionResponse?.isAppConsistentBackupEnabled[instName] ?? {})
+                    IS_DEMO_FLOW || checkAllTrue(protectionResponse?.isAppConsistentBackupEnabled[instName] ?? {})
             };
             return acc;
         }, {} as Record<string, any>);
@@ -756,7 +754,7 @@ async function getDatabaseHostSummaryV2(
         }
     }
 
-    if (isDemo()) {
+    if (IS_DEMO_FLOW) {
         instancesManaged.map(instance => {
             const hostResourceName = resourceDetail?.resource_name || '';
 
@@ -815,7 +813,7 @@ async function getDatabaseHostSummaryV2(
 
     try {
         if (credentialsId && region) {
-            if (isDemo()) {
+            if (IS_DEMO_FLOW) {
                 const hostResourceName = resourceDetail?.resource_name || '';
                 instancesDetails = instancesDetails!
                     .filter((instance: { instanceName: string | (string | null)[] }) => {
@@ -1020,28 +1018,6 @@ async function getDatabaseHostSummaryV2(
             }
 
             if (shouldQueryNodeTopology && nodeTopology && nodeTopology.ec2Details.length > 0) {
-                if (isDemo()) {
-                    // updating the instance type only for explore savings demo
-                    if (resourceDetail?.resource_name === 'app-server-15') {
-                        const modifiedEc2Details = nodeTopology.ec2Details?.map((ec2: any) => ({
-                            ...ec2,
-                            instanceType: 'm5.xlarge'
-                        }));
-                        nodeTopology.ec2Details = modifiedEc2Details;
-                    } else if (
-                        (resourceDetail?.resource_name === 'app-server-14' ||
-                            resourceDetail?.resource_name === 'app-server-19') &&
-                        instanceResults?.length
-                    ) {
-                        instanceResults = instanceResults.map((item: any) => ({
-                            ...item,
-                            databaseServer: {
-                                ...item.databaseServer,
-                                serverEdition: 'SQL Server Enterprise Edition'
-                            }
-                        }));
-                    }
-                }
                 databaseHostDetails.nodeTopology = nodeTopology;
             }
 
@@ -1051,12 +1027,6 @@ async function getDatabaseHostSummaryV2(
 
             // ClusterNodeDetails is used in TCO
             if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
-                if (isDemo()) {
-                    resourceDetail.clusterNodeDetails = resourceDetail?.clusterNodeDetails?.map(node => ({
-                        ...node,
-                        ec2InstanceType: 'm5.xlarge'
-                    }));
-                }
                 databaseHostDetails.clusterNodeDetails = resourceDetail?.clusterNodeDetails;
             }
         }
@@ -1505,7 +1475,7 @@ async function getDatabaseDetails(
                         ...(getProtection && {
                             protection: {
                                 isAwsBackupEnabled: {
-                                    fsxn: isDemoFlow
+                                    fsxn: IS_DEMO_FLOW
                                         ? true
                                         : checkKey(
                                               awsBackup[instName]?.volumeDBMapWithBackupFlag,
@@ -1514,7 +1484,7 @@ async function getDatabaseDetails(
                                     fsxw: false,
                                     ebs: false
                                 },
-                                isFsxOntapSnapshotsEnabled: isDemoFlow
+                                isFsxOntapSnapshotsEnabled: IS_DEMO_FLOW
                                     ? true
                                     : checkKey(ontapBackup[instName], database.databaseName),
                                 isSqlNativeEnabled:
@@ -1527,9 +1497,11 @@ async function getDatabaseDetails(
                                                           e.backedupDatabases === database.databaseName
                                                   )
                                           ),
-                                isCRREnabled: isDemoFlow ? true : checkKey(crrBackup[instName], database.databaseName),
+                                isCRREnabled: IS_DEMO_FLOW
+                                    ? true
+                                    : checkKey(crrBackup[instName], database.databaseName),
                                 isAppConsistentBackupEnabled:
-                                    isDemoFlow ||
+                                    IS_DEMO_FLOW ||
                                     checkKey(isAppConsistentBackupEnabled[instName], database.databaseName)
                             }
                         })
@@ -1543,7 +1515,7 @@ async function getDatabaseDetails(
             return acc;
         }, {} as Record<string, any[]>);
 
-        if (isDemo()) {
+        if (IS_DEMO_FLOW) {
             const defaultResponse = response[DEFAULT_INSTANCE_NAME];
             databaseInstances!.forEach((databaseInstance: DatabaseInstance, index) => {
                 const instanceName = newinstanceNames[index];
@@ -1636,11 +1608,11 @@ async function getDatabaseInstancesSummary(
         shouldQueryDatabasesWithoutProtection
     ) {
         // const instances = await determineSqlAuthEnabled(accountId, credentialsId, activeNodeInstanceId, region, databaseInstances);
-        isSqlAuthEnabled = isDemoFlow
+        isSqlAuthEnabled = IS_DEMO_FLOW
             ? isSqlAuthEnabled
             : databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
-    const shouldGetStorageSavingsFromOntap = databaseInstances.some(i => i.isManaged && !isDemoFlow);
+    const shouldGetStorageSavingsFromOntap = databaseInstances.some(i => i.isManaged && !IS_DEMO_FLOW);
     const fsxIds = resourceDetails?.database_instances?.map((instance: DatabaseInstance) => instance.fsxn_ids);
 
     try {
@@ -1796,7 +1768,7 @@ async function getDatabaseInstancesSummary(
         const instanceServerDetails = serverDetails?.[instanceName];
         if (shouldQueryServerDetails && instanceServerDetails) {
             if (
-                isDemoFlow &&
+                IS_DEMO_FLOW &&
                 databaseInstancetopologyData &&
                 databaseInstancetopologyData[index].serverInstallationMode === 'Standalone'
             ) {
@@ -1807,7 +1779,7 @@ async function getDatabaseInstancesSummary(
             databaseInstanceDetails.databaseServer = instanceServerDetails;
         }
 
-        if (isDemo() && databasesCount && getDbCount && databasesCount?.[instanceName]?.[index]?.totalCount) {
+        if (IS_DEMO_FLOW && databasesCount && getDbCount && databasesCount?.[instanceName]?.[index]?.totalCount) {
             databasesCount[instanceName][index].totalCount += userDatabase.length;
         }
 

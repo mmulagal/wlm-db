@@ -23,6 +23,7 @@ import {
 } from '../../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-config';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../../utils/consts';
+import { IS_DEMO_FLOW, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import {
     DatabaseInstance,
     DatabaseInstanceMetadata,
@@ -37,7 +38,6 @@ import {
     ResourceAssessmentData,
     HighAvailabilitySharedStorage
 } from '../../../utils/common-types';
-import { isDemo, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import { getInstanceInfo } from '../../database/database-operations';
 import { describeFSx } from '../../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../../workloads/mssql/resiliency-scripts';
@@ -54,7 +54,6 @@ import {
     GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
 } from '../../workloads/mssql/high-availability-scripts';
 
-const isDemoFlow = isDemo();
 const logger = getLogger();
 
 function filterDataLogVolumes(instanceVolumeMapping: MappedOnTapVolumeResponse) {
@@ -337,7 +336,7 @@ async function getSnapshotPolicyDriftData(
                 }
             }
         });
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             snapshotPolicyAssessmentData.totalObjectsAssessed = volumes.length;
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { configsOptimized } =
@@ -1041,7 +1040,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
         parentJobId
     });
 
-    const { isHeartBeatOptimized, isClusterQuorumOptimized } = metadata;
+    const { isHeartBeatOptimized, isClusterQuorumOptimized } = metadata; // applicable only in case of demo flow
     const { resourceName, name: databaseInstanceName, activeNodeInstanceid } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
@@ -1086,7 +1085,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
             error?: string;
         };
 
-        if (isDemoFlow && isClusterQuorumOptimized) {
+        if (IS_DEMO_FLOW && isClusterQuorumOptimized) {
             clusterQuorumResult = {
                 status: AssessmentStatus.OPTIMIZED,
                 details: null
@@ -1122,7 +1121,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
             error?: string;
         };
 
-        if (isDemoFlow && isHeartBeatOptimized) {
+        if (IS_DEMO_FLOW && isHeartBeatOptimized) {
             heartbeatResult = {
                 status: AssessmentStatus.OPTIMIZED,
                 details: null
@@ -1297,7 +1296,7 @@ async function getHighAvailabilityDriftData(
             `Assessment data found for: sharedStorage=${!!sharedStorage}, driveLetter=${!!driveLetter}, clusterQuorum=${!!clusterQuorum}, heartbeat=${!!heartbeat}, sqlServerServices=${!!sqlServerServices}`
         );
 
-        if (isDemoFlow) {
+        if (IS_DEMO_FLOW) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { configsOptimized } =
                 ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
