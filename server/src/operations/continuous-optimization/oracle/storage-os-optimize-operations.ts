@@ -5,7 +5,8 @@ import { Metadata, DatabaseInstance, WorkloadInstance } from '../../../utils/com
 import { RESOURCESTYPE, HttpErrorCodes, DatabaseTypes, AuditStatus } from '../../../utils/consts';
 import {
     AssessmentCategories,
-    OptimizeOracleiSCSIStorageOperatingSystem
+    OptimizeOracleiSCSIStorageOperatingSystem,
+    OptimizeOracleNFSStorageOperatingSystem
 } from '../../../utils/continous-optimization-consts';
 import { isDemo, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
@@ -25,23 +26,11 @@ import { handleOptimizeJobCreation } from '../assessment-utils';
 import getLogger from '../../../utils/logger';
 import { OracleJobMetadata, TcpFeatures, TcpOptimizationResponse } from './consts';
 import { handleAfdDriftOptimization, handleAsmLibDriftOptimization } from './storage-optimize-operations';
+import { oracleOptimizeStorageOSForNfs } from './storage-os-nfs-optimise-operations';
+import { OptimizeOSParams } from './common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
-
-interface OptimizeOSParams {
-    accountId: string;
-    credentialsId: string;
-    region: string;
-    databaseHostId: string;
-    serverNameWithHostName: string;
-    parentJobId: string;
-    databaseInstanceId: string;
-    databaseInstanceName?: string;
-    fsxId?: string;
-    activeNodeInstanceId: string;
-    instanceMetadata: unknown;
-}
 
 async function oracleOptimizeStorageOS(
     accountId: string,
@@ -87,6 +76,26 @@ async function oracleOptimizeStorageOS(
             : `Unable to fix host ${oracleResourceName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    if (
+        Object.values(OptimizeOracleNFSStorageOperatingSystem).includes(
+            configurationName as OptimizeOracleNFSStorageOperatingSystem
+        )
+    ) {
+        await oracleOptimizeStorageOSForNfs(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            configurationName,
+            activeNodeInstanceId,
+            instancesDetails as DatabaseInstance[],
+            resourceDetail,
+            masterJobId
+        );
+        return;
     }
 
     const [instanceDetail] = instancesDetails || [];

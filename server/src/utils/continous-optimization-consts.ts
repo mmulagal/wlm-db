@@ -83,6 +83,14 @@ enum OptimizeOracleiSCSIStorageOperatingSystem {
     ORACLE_ASM_LOGICAL_BLOCK_SIZE = 'asm-logical-block-size'
 }
 
+enum OptimizeOracleNFSStorageOperatingSystem {
+    KERNEL_PARAMETERS = 'kernel-parameters',
+    NFS_MOUNT_OPTIONS_DATABASEFILES = 'nfs-mount-options-databasefiles',
+    NFS_MOUNT_OPTIONS_ADRHOME = 'nfs-mount-options-adrhome',
+    NFSV4_DOMAIN_NAME = 'nfsv4-domain-name',
+    NFS_CACHING_OPTIONS = 'nfs-caching-options'
+}
+
 enum OptimizeStorageConfigs {
     THIN_PROVISIONING = 'thin-provision',
     AUTOSIZE = 'autosize',
@@ -646,5 +654,6 @@ export {
     OptimizeOracleTypes,
     OptimizeOracleiSCSIStorageOperatingSystem,
     OracleOptimizeJobDescriptions,
-    ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP
+    ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    OptimizeOracleNFSStorageOperatingSystem
 };

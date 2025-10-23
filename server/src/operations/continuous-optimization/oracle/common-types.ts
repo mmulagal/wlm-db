@@ -218,6 +218,20 @@ const nfsMountOptionExpected = {
     timeo: '600'
 };
 
+interface OptimizeOSParams {
+    accountId: string;
+    credentialsId: string;
+    region: string;
+    databaseHostId: string;
+    serverNameWithHostName: string;
+    parentJobId: string;
+    databaseInstanceId: string;
+    databaseInstanceName?: string;
+    fsxId?: string;
+    activeNodeInstanceId: string;
+    instanceMetadata: unknown;
+}
+
 export {
     ISCIOSAssessment,
     NFSOSAssessment,
@@ -226,5 +240,6 @@ export {
     StorageNfsAssessment,
     defaultMultipathExpected,
     netappMultipathExpected,
-    nfsMountOptionExpected
+    nfsMountOptionExpected,
+    OptimizeOSParams
 };

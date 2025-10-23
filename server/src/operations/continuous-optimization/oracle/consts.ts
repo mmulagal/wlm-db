@@ -29,4 +29,21 @@ interface TcpOptimizationResponse {
     error?: string;
 }
 
-export { NETAPP_HOST_UTILITIES_RELATIVE_PATH, OracleJobMetadata, TcpOptimizationResponse, TcpFeatures };
+interface KernelTcpSlotOptimiseResponse {
+    status: 'optimized' | 'failed' | 'partial' | 'optimized-offline';
+    'sunrpc-options': {
+        [key: string]: {
+            expected: string;
+            actual: string;
+        };
+    };
+    error?: string;
+}
+
+export {
+    NETAPP_HOST_UTILITIES_RELATIVE_PATH,
+    OracleJobMetadata,
+    TcpOptimizationResponse,
+    TcpFeatures,
+    KernelTcpSlotOptimiseResponse
+};

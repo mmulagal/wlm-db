@@ -3,6 +3,7 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     OptimizeOracleiSCSIStorageOperatingSystem,
+    OptimizeOracleNFSStorageOperatingSystem,
     OptimizeOracleTypes
 } from '../../utils/continous-optimization-consts';
 import {
@@ -86,10 +87,31 @@ const OptimizePerHostRequestBody = Type.Object({
 
 const HostsToOptimize = Type.Array(
     Type.Object({
-        configurationName: Type.Enum(OptimizeOracleiSCSIStorageOperatingSystem, {
-            description:
-                'Optimization configuration name for the type specified. \n For storage-operating-system type, valid values are:\n - tcp-advanced-options\n - multipath-enable\n - host-utilities\n - thp-disable\n - selinux-disable\n - iscsi-replacement-timeout\n - iscsi-targets-sessions\n - filesystem-io-options\n - multipath-configuration\n - multipath-friendly-names\n - multipath-readcount'
-        }),
+        configurationName: Type.Union(
+            [Type.Enum(OptimizeOracleiSCSIStorageOperatingSystem), Type.Enum(OptimizeOracleNFSStorageOperatingSystem)],
+            {
+                description:
+                    'Optimization configuration name for the type specified.\n\n' +
+                    'For iscsi-storage-operating-system type, valid values are:\n' +
+                    '- tcp-advanced-options\n' +
+                    '- multipath-enable\n' +
+                    '- host-utilities\n' +
+                    '- thp-disable\n' +
+                    '- selinux-disable\n' +
+                    '- iscsi-replacement-timeout\n' +
+                    '- iscsi-targets-sessions\n' +
+                    '- filesystem-io-options\n' +
+                    '- multipath-configuration\n' +
+                    '- multipath-friendly-names\n' +
+                    '- multipath-readcount\n\n' +
+                    'For nfs-storage-operating-system type, valid values are:\n' +
+                    '- kernel-parameters\n' +
+                    '- nfs-mount-options-databasefiles\n' +
+                    '- nfs-mount-options-adrhome\n' +
+                    '- nfsv4-domain-name\n' +
+                    '- nfs-caching-options'
+            }
+        ),
         databaseHosts: Type.Array(OptimizePerHostRequestBody)
     })
 );
