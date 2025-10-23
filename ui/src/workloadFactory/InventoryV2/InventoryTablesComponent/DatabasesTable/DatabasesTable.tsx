@@ -3,7 +3,13 @@ import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS } from '../../../../utils/consts';
+import {
+    DBType,
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    INVENTORY_STATUS,
+    DEMO_MODE_PROTECTION_CRITERIA
+} from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -11,7 +17,7 @@ import { setSelectedFilterValue, setTableManageColumnState } from '../../../../s
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
-import { bxpRedirect, getProtectionHydrationFailureReason } from '../../../../utils/utilityFunctions';
+import { bxpRedirect } from '../../../../utils/utilityFunctions';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
@@ -477,7 +483,7 @@ const DatabasesTable = () => {
     const orgId = useAppSelector(state => state.auth?.orgId);
     const { databaseProtection } = useAppSelector(state => state.snapCenter);
     useEffect(() => {
-        if (prefetchRun.current) return;
+        if (prefetchRun.current || isDemoMode) return;
         prefetchRun.current = true;
         (async () => {
             try {
@@ -555,7 +561,8 @@ const DatabasesTable = () => {
         getConnector,
         dispatch,
         isWorkloadFactory,
-        getOrganizationIds
+        getOrganizationIds,
+        isDemoMode
     ]);
 
     const tableProps = useTable({
@@ -589,20 +596,34 @@ const DatabasesTable = () => {
                     disableOption = true;
                     disableMessage = 'Create sandbox option is not available for system database.';
                 }
-                // Determine protection via cache first, fall back to status text
-                const hostFqdn = (rowData?.hostRow?.fqdn || rowData?.hostName || '').toLowerCase();
-                const hostShort = hostFqdn.split('.')[0];
-                const instanceShort = (rowData?.databaseInstanceName || '').toLowerCase();
-                const dbName = (rowData?.name || '').toLowerCase();
-                const possibleKeys = [
-                    `${hostFqdn}::${instanceShort}::${dbName}`,
-                    `${hostShort}::${instanceShort}::${dbName}`,
-                    `${hostFqdn}::mssqlserver::${dbName}`,
-                    `${hostShort}::mssqlserver::${dbName}`
-                ];
-                const isProtectedCache = possibleKeys.some(k => databaseProtection?.[k]?.protected === true);
-                const statusVal = (rowData?.protectionStatus || rowData?.status || '').toLowerCase();
-                const isProtected = isProtectedCache || statusVal === 'protected' || statusVal === 'instance protected';
+                // Determine protection status
+                let isProtected = false;
+
+                if (isDemoMode) {
+                    // Demo mode: Specific databases should show "Edit Protection" based on mock data
+                    const hostName = (rowData?.hostRow?.name || rowData?.hostName || '').toLowerCase();
+                    const dbName = (rowData?.name || '').toLowerCase();
+
+                    // Check against demo mode criteria from constants
+                    isProtected = DEMO_MODE_PROTECTION_CRITERIA.databases.some(
+                        criteria => criteria.hostName === hostName && criteria.databaseNames.includes(dbName)
+                    );
+                } else {
+                    // Normal mode: Use SnapCenter cache first, fall back to status text
+                    const hostFqdn = (rowData?.hostRow?.fqdn || rowData?.hostName || '').toLowerCase();
+                    const hostShort = hostFqdn.split('.')[0];
+                    const instanceShort = (rowData?.databaseInstanceName || '').toLowerCase();
+                    const dbName = (rowData?.name || '').toLowerCase();
+                    const possibleKeys = [
+                        `${hostFqdn}::${instanceShort}::${dbName}`,
+                        `${hostShort}::${instanceShort}::${dbName}`,
+                        `${hostFqdn}::mssqlserver::${dbName}`,
+                        `${hostShort}::mssqlserver::${dbName}`
+                    ];
+                    const isProtectedCache = possibleKeys.some(k => databaseProtection?.[k]?.protected === true);
+                    const statusVal = (rowData?.protectionStatus || rowData?.status || '').toLowerCase();
+                    isProtected = isProtectedCache || statusVal === 'protected' || statusVal === 'instance protected';
+                }
                 const menu = [
                     {
                         id: 'createSandbox',

@@ -35,8 +35,16 @@ import {
     uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
-import { bxpRedirect, getProtectionHydrationFailureReason, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import { ACTION_CTA, DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import {
+    ACTION_CTA,
+    DBType,
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    INVENTORY_STATUS,
+    WLF_TABS,
+    DEMO_MODE_PROTECTION_CRITERIA
+} from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -162,7 +170,7 @@ const InstancesTable = () => {
     // Prefetch SnapCenter hosts and instances to decide Protect/Edit Protection
     const protectionPrefetchRun = useRef(false);
     useEffect(() => {
-        if (protectionPrefetchRun.current) return;
+        if (protectionPrefetchRun.current || isDemoMode) return;
         protectionPrefetchRun.current = true;
 
         (async () => {
@@ -244,7 +252,8 @@ const InstancesTable = () => {
         getDiscoverInstanceResult,
         isWorkloadFactory,
         getOrganizationIds,
-        dispatch
+        dispatch,
+        isDemoMode
     ]);
 
     // Direct Edit Protection handler - no prereqs, redirect only
@@ -781,18 +790,32 @@ const InstancesTable = () => {
                 // Compute protection from cache
                 const hostFqdn = (row?.hostRow?.fqdn || row?.hostRow?.name || row?.name || '').toLowerCase();
                 const hostShort = hostFqdn.split('.')[0];
-                const instName = (row?.databaseInstanceName || '').toLowerCase();
-                const possibleKeys = [
-                    `${hostFqdn}::${instName}`,
-                    `${hostShort}::${instName}`,
-                    // Named instance full form host\\instance
-                    `${hostFqdn}::${hostShort}\\${instName}`,
-                    `${hostShort}::${hostShort}\\${instName}`,
-                    // Default instance MSSQLSERVER variants
-                    `${hostFqdn}::${hostShort}`,
-                    `${hostShort}::${hostShort}`
-                ];
-                const isProtected = possibleKeys.some(k => instanceProtection?.[k]?.protected === true);
+                let isProtected = false;
+
+                if (isDemoMode) {
+                    // Demo mode: Specific instances should show "Edit Protection" based on mock data
+                    const hostName = (row?.hostRow?.name || row?.name || '').toLowerCase();
+                    const instanceName = (row?.databaseInstanceName || '').toLowerCase();
+
+                    // Check against demo mode criteria from constants
+                    isProtected = DEMO_MODE_PROTECTION_CRITERIA.instances.some(
+                        criteria => criteria.hostName === hostName && criteria.instanceNames.includes(instanceName)
+                    );
+                } else {
+                    // Normal mode: Use SnapCenter cache
+                    const instName = (row?.databaseInstanceName || '').toLowerCase();
+                    const possibleKeys = [
+                        `${hostFqdn}::${instName}`,
+                        `${hostShort}::${instName}`,
+                        // Named instance full form host\\instance
+                        `${hostFqdn}::${hostShort}\\${instName}`,
+                        `${hostShort}::${hostShort}\\${instName}`,
+                        // Default instance MSSQLSERVER variants
+                        `${hostFqdn}::${hostShort}`,
+                        `${hostShort}::${hostShort}`
+                    ];
+                    isProtected = possibleKeys.some(k => instanceProtection?.[k]?.protected === true);
+                }
 
                 return {
                     ...row,
@@ -812,7 +835,7 @@ const InstancesTable = () => {
                     }
                 };
             }),
-        [instanceTableRows, instanceProtection]
+        [instanceTableRows, instanceProtection, isDemoMode]
     );
 
     const isUnregisteredRows = useMemo(

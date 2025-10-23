@@ -1206,3 +1206,25 @@ export const TCO_CALCULATOR_MODE = {
     OPTIMIZED: 'optimized',
     STANDARD: 'standard'
 };
+
+// Demo mode protection criteria for instances and databases
+// WARNING: These conditions depend on specific mock data from backend
+// If mock data changes, these conditions must be updated accordingly
+export const DEMO_MODE_PROTECTION_CRITERIA = {
+    instances: [
+        {
+            hostName: 'sql-managed-host-prod',
+            instanceNames: ['prod-marketingcampaigns', 'prod-productcatalog']
+        },
+        {
+            hostName: 'sql-managed-host-dev',
+            instanceNames: ['dev-salesanalytics', 'mssqlserver']
+        }
+    ],
+    databases: [
+        {
+            hostName: 'sql-managed-host-prod',
+            databaseNames: ['mfgsales', 'hraudit', 'salesdata', 'timesheet']
+        }
+    ]
+};
