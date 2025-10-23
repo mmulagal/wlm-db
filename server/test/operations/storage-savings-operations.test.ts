@@ -33,7 +33,7 @@ describe('Marketing API operations ', () => {
                 ACCOUNT_ID,
                 CREDENTIALS_ID,
                 DEFAULT_AWS_REGION,
-                instanceWithEbs.ec2InstanceId,
+                [instanceWithEbs.ec2InstanceId],
                 {
                     snapshotFrequency: 'daily',
                     clonedCopiesCount: 1,
@@ -63,7 +63,7 @@ describe('Marketing API operations ', () => {
                     ACCOUNT_ID,
                     CREDENTIALS_ID,
                     DEFAULT_AWS_REGION,
-                    instanceWithoutEbs.ec2InstanceId,
+                    [instanceWithoutEbs.ec2InstanceId],
                     {
                         snapshotFrequency: 'daily',
                         clonedCopiesCount: 1,
@@ -94,7 +94,7 @@ describe('Marketing API operations ', () => {
                 ACCOUNT_ID,
                 CREDENTIALS_ID,
                 DEFAULT_AWS_REGION,
-                instanceWithEbs.ec2InstanceId,
+                [instanceWithEbs.ec2InstanceId],
                 {
                     snapshotFrequency: 'daily',
                     clonedCopiesCount: 1,
@@ -126,7 +126,7 @@ describe('Marketing API operations ', () => {
                     ACCOUNT_ID,
                     CREDENTIALS_ID,
                     DEFAULT_AWS_REGION,
-                    instanceWithoutEbs.ec2InstanceId,
+                    [instanceWithoutEbs.ec2InstanceId],
                     {
                         snapshotFrequency: 'daily',
                         clonedCopiesCount: 1,

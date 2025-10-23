@@ -1,4 +1,5 @@
 import { RouteTags } from '../../utils/consts';
+import { CredentialsIdParams } from '../types/generic.types';
 import {
     StorageSavingsRequestParams,
     StorageSavingsRequestBody,
@@ -6,7 +7,10 @@ import {
     StorageSavingsCalculationsMetricsResponse,
     ManualStorageSavingsRequestBody,
     ManualStorageSavingsRequestParams,
-    InternalUpdateInstRecQueryString
+    InternalUpdateInstRecQueryString,
+    BulkStorageSavingsRequestBody,
+    BulkStorageSavingsResponse,
+    BulkStorageSavingsCalculationsMetricsResponse
 } from '../types/storage-savings.types';
 
 const internalUpdateRecommendationPreferenceSchema = {
@@ -111,6 +115,29 @@ const getFsxwManualStorageSavingsCalculationMetricsSchema = {
     }
 };
 
+const getEbsBulkStorageSavingsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'Bulk EBS Storage savings calculations for MSSQL server',
+    description: 'Calculates the storage savings for MSSQL server if FSxN is used instead of EBS in bulk mode',
+    params: CredentialsIdParams,
+    body: BulkStorageSavingsRequestBody,
+    response: {
+        200: BulkStorageSavingsResponse
+    }
+};
+
+const getEbsBulkStorageSavingsCalculationMetricsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'Bulk EBS Storage savings calculation metrics for MSSQL server',
+    description:
+        'Retrieves the calculation metrics for storage savings in MSSQL server if FSxN is used instead of EBS in bulk mode',
+    params: CredentialsIdParams,
+    body: BulkStorageSavingsRequestBody,
+    response: {
+        200: BulkStorageSavingsCalculationsMetricsResponse
+    }
+};
+
 export {
     internalUpdateRecommendationPreferenceSchema,
     getEbsStorageSavingsSchema,
@@ -120,5 +147,7 @@ export {
     getFsxwStorageSavingsSchema,
     getFsxwStorageSavingsCalculationMetricsSchema,
     getFsxwManualStorageSavingsSchema,
-    getFsxwManualStorageSavingsCalculationMetricsSchema
+    getFsxwManualStorageSavingsCalculationMetricsSchema,
+    getEbsBulkStorageSavingsSchema,
+    getEbsBulkStorageSavingsCalculationMetricsSchema
 };

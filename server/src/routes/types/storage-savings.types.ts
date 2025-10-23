@@ -28,6 +28,15 @@ const StorageSavingsRequestBody = Type.Object({
     monthlySqlByolCost: Type.Optional(Type.Number())
 });
 
+const BulkStorageSavingsRequestBody = Type.Object({
+    ...StorageSavingsRequestBody.properties,
+    instanceIds: Type.Array(Type.String({ pattern: '^i-[0-9a-f]{8,17}$', description: 'AWS EC2 instance IDs' }), {
+        minItems: 1,
+        maxItems: 5,
+        uniqueItems: true
+    })
+});
+
 const ManualStorageSavingsRequestParams = Type.Object({
     accountId: Type.String({ minLength: 1 }),
     region: Type.String({ minLength: 1 })
@@ -177,9 +186,7 @@ const fsxCalculationData = Type.Object({
     })
 });
 
-const StorageSavingsResponse = Type.Object({
-    compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
-    license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }),
+const StorageSavingsCapacityResponse = Type.Object({
     ebs: Type.Optional(StorageMetrics),
     fsxw: Type.Optional(StorageMetrics),
     fsx: StorageMetrics,
@@ -193,6 +200,22 @@ const StorageSavingsResponse = Type.Object({
     fsxOptimizedSingle: Type.Optional(fsxCalculationData),
     fsxOptimized: Type.Optional(StorageMetrics)
 });
+
+const StorageSavingsResponse = Type.Intersect([
+    StorageSavingsCapacityResponse,
+    Type.Object({
+        compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
+        license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense })
+    })
+]);
+
+const BulkStorageSavingsResponse = Type.Intersect([
+    StorageSavingsCapacityResponse,
+    Type.Object({
+        compute: Type.Array(Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute })),
+        license: Type.Array(Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }))
+    })
+]);
 
 const PriceUnitObject = Type.Object({
     price: Type.Number(),
@@ -413,11 +436,7 @@ const EBSSnapshotCalculationResp = Type.Object({
     st1: Type.Optional(EbsSnapshotCalculation)
 });
 
-const StorageSavingsCalculationsMetricsResponse = Type.Object({
-    recommendedComputeCalculation: ComputeCalculationObject,
-    recommendedLicenseCalculation: LicenseCalculationObject,
-    existingComputeCalculation: ComputeCalculationObject,
-    existingLicenseCalculation: LicenseCalculationObject,
+const StorageSavingsCapacityCalculationsMetricsResponse = Type.Object({
     ebsCalculation: Type.Optional(EBSCostCalculationResp),
     ebsCloneCalculation: Type.Optional(EBSCloneCostCalculationResp),
     ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),
@@ -432,6 +451,26 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         recommended: Type.Number()
     })
 });
+
+const StorageSavingsCalculationsMetricsResponse = Type.Intersect([
+    StorageSavingsCapacityCalculationsMetricsResponse,
+    Type.Object({
+        recommendedComputeCalculation: ComputeCalculationObject,
+        recommendedLicenseCalculation: LicenseCalculationObject,
+        existingComputeCalculation: ComputeCalculationObject,
+        existingLicenseCalculation: LicenseCalculationObject
+    })
+]);
+
+const BulkStorageSavingsCalculationsMetricsResponse = Type.Intersect([
+    StorageSavingsCapacityCalculationsMetricsResponse,
+    Type.Object({
+        recommendedComputeCalculation: Type.Array(ComputeCalculationObject),
+        recommendedLicenseCalculation: Type.Array(LicenseCalculationObject),
+        existingComputeCalculation: Type.Array(ComputeCalculationObject),
+        existingLicenseCalculation: Type.Array(LicenseCalculationObject)
+    })
+]);
 
 const StorageSavingsCalculationsMetrics = Type.Object({
     ebs: Type.Optional(StorageMetrics),
@@ -454,7 +493,7 @@ type EbsSnapshotCalculationType = Static<typeof EbsSnapshotCalculation>;
 type EbsCostCalculationType = Static<typeof EbsCostCalculation>;
 
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;
-type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
+type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody> & { bulk?: boolean };
 type ManualStorageSavingsRequestBodyType = Static<typeof ManualStorageSavingsRequestBody>;
 
 const ComputeDetails = Type.Object({
@@ -517,6 +556,10 @@ type EBSSnapshotCalculationRespType = Static<typeof EBSSnapshotCalculationResp>;
 
 type ManualModeInstancesType = Static<typeof ManualModeInstances>;
 
+type BulkStorageSavingsRequestBodyType = Static<typeof BulkStorageSavingsRequestBody> & { bulk?: boolean };
+type BulkStorageSavingsCalculationsMetricsResponseType = Static<typeof BulkStorageSavingsCalculationsMetricsResponse>;
+type BulkStorageSavingsResponseType = Static<typeof BulkStorageSavingsResponse>;
+
 export {
     InternalUpdateInstRecQueryString,
     EbsCostCalculationType,
@@ -544,5 +587,11 @@ export {
     EBSCloneCostCalculationRespType,
     EBSSnapshotCalculationRespType,
     StorageSavingsCalculationsMetricsType,
-    ManualModeInstancesType
+    ManualModeInstancesType,
+    BulkStorageSavingsRequestBody,
+    BulkStorageSavingsRequestBodyType,
+    BulkStorageSavingsCalculationsMetricsResponse,
+    BulkStorageSavingsResponse,
+    BulkStorageSavingsCalculationsMetricsResponseType,
+    BulkStorageSavingsResponseType
 };

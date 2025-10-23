@@ -738,15 +738,13 @@ async function getSqlInstanceLicenseRecommendations(
     region: string,
     ec2HostDetails: DiscoverResponseInfoType,
     monthlySqlByolCostPerHost?: number,
-    partnerNodeDetails?: DiscoverResponseInfoType[],
     isFsxwCalcs: boolean = false
 ) {
     logger.info('Getting sql instance and license recommendations', {
         accountId,
         credentialsId,
         region,
-        ec2HostDetails,
-        partnerNodeDetails
+        ec2HostDetails
     });
 
     const { ec2InstanceId: instanceId, sqlServerInstances, ec2InstanceType, ec2UsageOperation } = ec2HostDetails;

@@ -213,7 +213,7 @@ async function invokeMarketingApi(
     sqlServerDeploymentType: string,
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
-    instanceId?: string,
+    instanceIds?: string[],
     fileSystemsIds?: string[]
 ) {
     // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
@@ -280,7 +280,7 @@ async function invokeMarketingApi(
         ];
         if (
             sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
-            instanceId === DEMO_STANADLONE_INSTANCE_ID
+            instanceIds?.includes(DEMO_STANADLONE_INSTANCE_ID)
         ) {
             volumes = [
                 {
@@ -740,7 +740,7 @@ async function formatStorageSavingsCalculationMetrics(
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
     sqlServerDeploymentType: string,
-    instanceId?: string,
+    instanceIds?: string[],
     fileSystemsIds?: string[]
 ): Promise<StorageSavingsCalculationsMetricsType> {
     logger.debug('Formatting storage savings calculation metrics', {
@@ -749,7 +749,7 @@ async function formatStorageSavingsCalculationMetrics(
         region,
         ebsVolumeIds,
         params,
-        instanceId
+        instanceIds
     });
 
     const {
@@ -768,7 +768,7 @@ async function formatStorageSavingsCalculationMetrics(
         sqlServerDeploymentType,
         ebsVolumeIds,
         params,
-        instanceId,
+        instanceIds,
         fileSystemsIds
     );
 
