@@ -443,7 +443,7 @@ async function processCloudFormationMessages() {
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
             if (!isEmpty(sqsMessages)) {
-                logger.debug(`>>> SQS MESSAGES @${Date.now()} `, { sqsMessages });
+                logger.info(`>>> SQS MESSAGES @${Date.now()} `, { sqsMessages });
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
