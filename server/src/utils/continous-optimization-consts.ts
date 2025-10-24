@@ -49,6 +49,7 @@ enum AwsWellArchitecturedPillars {
 
 const VOLUME = 'volume';
 const LUN = 'lun';
+const VSERVER = 'vserver';
 
 const NUMASTATIC = 'NUMAStatic';
 
@@ -111,7 +112,9 @@ enum OptimizeStorageConfigs {
     ARCHIVE_LOG_LAYOUT = 'archivelog-dg-lun-layout',
     FRA_LAYOUT = 'fra-dg-lun-layout',
     REDO_LOG_LAYOUT = 'redolog-dg-lun-layout',
-    DATA_LAYOUT = 'data-dg-lun-layout'
+    DATA_LAYOUT = 'data-dg-lun-layout',
+    NFS_ROOTONLY = 'nfs-rootonly',
+    EXPORT_POLICY = 'export-policy'
 }
 
 enum OptimizeStorageConfigsJobNames {
@@ -128,7 +131,8 @@ enum OptimizeStorageConfigsJobNames {
     SPACE_ALLOCATION = 'space allocation',
     COMPRESSION = 'compression',
     DEDUPLICATION = 'deduplication',
-    COMPACTION = 'compaction'
+    COMPACTION = 'compaction',
+    NFS_ROOTONLY = 'nfs rootonly'
 }
 
 enum OptimizeOperatingSystemParams {
@@ -281,6 +285,11 @@ const OptimizeStorageApiData = {
         api: '/private/cli/volume',
         body: { space_mgmt_try_first: 'volume_grow' },
         type: VOLUME
+    }),
+    NFS_ROOTONLY: () => ({
+        api: '/private/cli/vserver/nfs',
+        body: { 'nfs-rootonly': 'disabled' },
+        type: VSERVER
     })
 };
 
@@ -341,12 +350,14 @@ interface OptimizeStorageOperationParams {
 
 const QUERY_PARAMS = {
     volume: 'volume',
-    lun: 'path'
+    lun: 'path',
+    vserver: 'vserver'
 };
 
 const STORAGE_OPTIMIZE_JOB_PARAM = {
     volume: 'volumes',
-    lun: 'LUN paths'
+    lun: 'LUN paths',
+    vserver: 'vserver'
 };
 
 const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';

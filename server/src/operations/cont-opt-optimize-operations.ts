@@ -142,6 +142,20 @@ interface OptimizeStorageOperationParams {
     volumeTypeMap?: Map<string, string[]>;
 }
 
+function getApiQueryFilter(
+    svmName: string,
+    objectsToOptimize: string[],
+    configKey: string,
+    value: string,
+    queryParamKey: string
+) {
+    return ['DEDUPLICATION', 'COMPACTION'].includes(configKey) || (value === 'none' && configKey === 'COMPRESSION')
+        ? `svm=${svmName}&name=${objectsToOptimize.join('|')}`
+        : ['NFS_ROOTONLY'].includes(configKey)
+        ? `vserver=${svmName}`
+        : `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
+}
+
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
     logger.info('Optimizing storage for', params);
     try {
@@ -303,7 +317,12 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                     oracleSpecialStorageConfigNames.includes(configurationName as OptimizeStorageConfigs)
                 ) {
                     if (!recommendationMap?.[configurationName]) {
-                        throw new Error('Failed to fetch latest well-architected recommendations');
+                        newJobError = 'Failed to fetch latest well-architected recommendations';
+                        if (OptimizeStorageConfigs.NFS_ROOTONLY === configurationName) {
+                            newJobError =
+                                'NFS rootonly configuration not applicable when dNFS is not enabled and NFSv4 is not in use.';
+                        }
+                        throw new Error(newJobError);
                     }
                     const map = recommendationMap[configurationName];
                     Object.entries(map).forEach(([recommendedValue, objectNames]) => {
@@ -430,10 +449,7 @@ async function callOntapApi(
     const optimizeType = apiData.type;
     const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
     const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
-    const apiQueryFilter =
-        ['DEDUPLICATION', 'COMPACTION'].includes(configKey) || (value === 'none' && configKey === 'COMPRESSION')
-            ? `svm=${svmName}&name=${objectsToOptimize.join('|')}`
-            : `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
+    const apiQueryFilter = getApiQueryFilter(svmName, objectsToOptimize, configKey, value || '', queryParamKey);
     const apiEndpoint = apiData.api;
 
     let commands: string[] = [];

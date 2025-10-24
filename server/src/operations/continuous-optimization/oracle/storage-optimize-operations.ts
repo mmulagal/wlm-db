@@ -54,7 +54,8 @@ const oracleSpecialStorageConfigNames = [
     OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS,
     OptimizeStorageConfigs.COMPRESSION,
     OptimizeStorageConfigs.DEDUPLICATION,
-    OptimizeStorageConfigs.COMPACTION
+    OptimizeStorageConfigs.COMPACTION,
+    OptimizeStorageConfigs.NFS_ROOTONLY
 ];
 
 interface OptimizeAsmConfigParams {
@@ -689,8 +690,6 @@ async function getOracleStorageConfigRecommendationMap(
                             });
                     });
             });
-
-        logger.info('Got optimization recommendations', { recommendationMap });
         return recommendationMap;
     } catch (error) {
         logger.error('Failed to refresh assessment data', { error });
