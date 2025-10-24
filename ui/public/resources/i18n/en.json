@@ -12,6 +12,7 @@
             "hostname": "Host name",
             "optimization-score": "Optimization score",
             "resource-view-fix-hover-msg": "Selecting 'View and Fix' will redirect you to the Inventory tab",
+            "well-architected-score-hover-msg": "Selecting 'View and Fix' will redirect you to the Well-architected tab",
             "registered-resources": "Registered resources",
             "registered-resource": "Registered resource"
         },

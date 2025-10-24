@@ -12,7 +12,11 @@ import {
     getAssessmentHostListGroupedByCategory,
     getManagedOptimizationSummary
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
-import { dashboardRedirection, sortListOfDict } from '../../../../utils/utilityFunctions';
+import {
+    dashboardRedirection,
+    dashboardRedirectionToWellArchitected,
+    sortListOfDict
+} from '../../../../utils/utilityFunctions';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import CategoryDialogComponent from '../../ManagedInstanceOptimizationBreakdownByCategory/CategoryDialogComponent/CategoryDialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -158,6 +162,7 @@ const WellArchitectedScore = () => {
             />
         );
     };
+
     return (
         <div className={styles.wellArchitectedScore}>
             <div className={styles.headSection}>
@@ -172,7 +177,7 @@ const WellArchitectedScore = () => {
                             isAppendedToBody
                             children={
                                 <DsTypography variant="Regular_14">
-                                    {t('databases.well-architected-tab.resource-view-fix-hover-msg')}
+                                    {t('databases.well-architected-tab.well-architected-score-hover-msg')}
                                 </DsTypography>
                             }
                             trigger="hover"
@@ -182,7 +187,7 @@ const WellArchitectedScore = () => {
                                     isDisabled={loading || showNA}
                                     data-testid="wlm-db-optimize-instances-by-category"
                                     isThin
-                                    onClick={() => handleClick()}
+                                    onClick={() => dashboardRedirectionToWellArchitected()}
                                 >
                                     {t('databases.dashboard.investigate')}
                                 </DsButton>

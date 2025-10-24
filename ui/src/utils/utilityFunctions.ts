@@ -2138,6 +2138,7 @@ export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
 export const isClusteredWithSelectedInstance = (val: any) =>
     'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 
+//Route path mapping function for console
 export const setRoutePath = (path: string, search?: string) => {
     switch (path) {
         case 'Inventory':
@@ -2145,6 +2146,9 @@ export const setRoutePath = (path: string, search?: string) => {
             break;
         case 'Create new sandbox':
             path = 'sandboxes/create-new-sandbox';
+            break;
+        case 'Well Architected Tab':
+            path = 'well-architected';
             break;
         case 'Dashboard':
             path = 'dashboard';
@@ -2192,6 +2196,8 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
             return WLF_TABS.DASHBOARD;
         case '/fsxdb/sandboxes/create-new-sandbox':
             return 'Create new sandbox';
+        case '/fsxdb/well-architected':
+            return WLF_TABS.WELL_ARCHITECTED_TAB;
         case '/fsxdb/inventory':
         case '/fsxdb/inventory/optimize/oracle':
         case '/fsxdb/inventory/optimize/mssql':
@@ -2804,5 +2810,27 @@ export const createSandboxNavigation = (navigate: any) => {
             payload: { pathname: '../../fsxdb/sandboxes/create-new-sandbox', replace: true }
         });
         navigate('../../fsxdb/sandboxes/create-new-sandbox');
+    }
+};
+
+export const dashboardRedirectionToWellArchitected = () => {
+    const state = store.getState();
+    const isWorkloadFactory = state?.auth?.isWorkloadFactory;
+    if (isWorkloadFactory) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: '../../databases/well-architected',
+                replace: true
+            }
+        });
+    } else {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: '../../fsxdb/well-architected',
+                replace: true
+            }
+        });
     }
 };
