@@ -164,7 +164,7 @@ const snapCenterSlice = createSlice({
                 if (!dbName) return;
 
                 const statusVal = (db?.status || '').toLowerCase();
-                const isProtected = statusVal === 'protected' || statusVal === 'instance protected';
+                const isProtected = statusVal === 'protected';
 
                 const keys = new Set<string>();
                 // Full
