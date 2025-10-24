@@ -204,8 +204,8 @@ export const bxpRedirect = async (
     getDiscoverInstanceResult?: any,
     getDiscoverHostResult?: any
 ) => {
-    const stageURL = 'https://staging.console.bluexp.netapp.com/unified-backup-restore';
-    const prodURL = 'https://console.bluexp.netapp.com/unified-backup-restore';
+    const stageURL = 'https://staging.console.netapp.com/unified-backup-restore';
+    const prodURL = 'https://console.netapp.com/unified-backup-restore';
     const { dispatch } = store;
     const { selectedAgent, alreadyExistAgentId, workSpaceData } = store.getState().snapCenter;
     const { isDemoMode, orgId } = store.getState().auth;

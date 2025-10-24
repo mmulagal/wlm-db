@@ -622,7 +622,7 @@ const DatabasesTable = () => {
                     ];
                     const isProtectedCache = possibleKeys.some(k => databaseProtection?.[k]?.protected === true);
                     const statusVal = (rowData?.protectionStatus || rowData?.status || '').toLowerCase();
-                    isProtected = isProtectedCache || statusVal === 'protected' || statusVal === 'instance protected';
+                    isProtected = isProtectedCache || statusVal === 'protected';
                 }
                 const menu = [
                     {
