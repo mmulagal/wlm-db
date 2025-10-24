@@ -73,9 +73,9 @@ export function OracleHostTableColDefs({ t, hostTableRows }: { t: TFunction; hos
         },
         {
             id: '1',
-            Header: t('databases.host-table.headers.registered-instances'),
+            Header: t('databases.host-table.oracle.headers.registered-databases'),
             accessor: 'totalInstance',
-            width: '200px',
+            width: '228px',
             isSortable: true,
             accessorForTextFilter: 'sqlServerInstancesText',
             renderCell: (cellData: any, rowData: any) => (

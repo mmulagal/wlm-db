@@ -107,6 +107,9 @@ export const PermissionListComponentItems = (
                 content: (
                     <PermissionContent
                         title={t('databases.register-flow.prerequisites-list')}
+                        infoBlock={t(
+                            'databases.register-flow.capabilities-information.oracle-capabilities.review-well-architected-issues'
+                        )}
                         blocks={oracleBlocks}
                         policies={policiesList}
                     />
@@ -132,6 +135,7 @@ export const PermissionListComponentItems = (
             content: (
                 <PermissionContent
                     title={t('databases.register-flow.prerequisites-list')}
+                    infoBlock={t('databases.register-flow.capabilities-information.review-well-architected-issues')}
                     blocks={mssqlBlocks}
                     policies={policiesList}
                 />
@@ -152,6 +156,7 @@ export const PermissionListComponentItems = (
             content: (
                 <PermissionContent
                     title={t('databases.register-flow.prerequisites-list')}
+                    infoBlock={t('databases.register-flow.capabilities-information.fix-well-architected-issues')}
                     blocks={[
                         {
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
@@ -215,6 +220,7 @@ export const PermissionListComponentItems = (
             content: (
                 <PermissionContent
                     title={t('databases.register-flow.prerequisites-list')}
+                    infoBlock={t('databases.register-flow.capabilities-information.create-database')}
                     blocks={[
                         {
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
@@ -265,6 +271,7 @@ export const PermissionListComponentItems = (
             content: (
                 <PermissionContent
                     title={t('databases.register-flow.prerequisites-list')}
+                    infoBlock={t('databases.register-flow.capabilities-information.create-sandbox')}
                     blocks={[
                         {
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
@@ -326,6 +333,7 @@ export const PermissionListComponentItems = (
             content: (
                 <PermissionContent
                     title={t('databases.register-flow.prerequisites-list')}
+                    infoBlock={t('databases.register-flow.capabilities-information.error-investigation')}
                     blocks={[
                         {
                             label: t('databases.register-flow.amazon-bedrock-model-activation'),

@@ -214,7 +214,18 @@
             "sql-server-instance-down": "SQL Server instance is down.",
             "oracle-server-instance-down": "Oracle Server instance is down.",
             "non-mssql-assessment-na": "Well-architected analysis is only available for Microsoft SQL Server and Oracle registered instances.",
-            "optional-credentials": "(Optional)"
+            "optional-credentials": "(Optional)",
+            "capabilities-information": {
+                "review-well-architected-issues": "Gain deep insights into the health and performance of your Microsoft SQL Server instances on FSx for ONTAP with the well-architected feature. It continuously analyzes configurations against industry and vendor best practices, reports misalignments, and provides clear, actionable recommendations to optimize performance, security, and compliance.",
+                "fix-well-architected-issues": "Resolve configuration issues effortlessly with the well-architected feature for Microsoft SQL Server instances on FSx for ONTAP. Fix storage misalignments and other configuration issues automatically with a single click or follow guided steps for manual remediation to ensure optimal performance and compliance.",
+                "create-database": "Streamline database provisioning on your SQL Server instances with automated scripting that incorporate best practices. This capability enables quick database creation that are tailored to your workload, reducing manual setup time and ensuring compliance with security and performance standards from the start.",
+                "create-sandbox": "Create isolated database environments, or sandboxes, for testing, integration, diagnostics, and training without affecting production data. Streamline development while maintaining data integrity and security.",
+                "error-investigation": "Optimize SQL Server performance with AI-powered error log analysis with Amazon Bedrock. The analysis scans your SQL instance logs, groups insights by unique errors, severity, and categories, and provides clear explanations with actionable remediation steps.",
+                "oracle-capabilities": {
+                    "review-well-architected-issues": "Gain deep insights into the health and performance of your Oracle databases on FSx for ONTAP with the well-architected feature. It continuously analyzes configurations against industry and vendor best practices, reports misalignments, and provides clear, actionable recommendations to optimize performance, security, and compliance.",
+                    "fix-well-architected-issues": "Resolve configuration issues effortlessly with the well-architected feature for Oracle databases on FSx for ONTAP. Fix storage misalignments and other configuration issues automatically with a single click or follow guided steps for manual remediation to ensure optimal performance and compliance."
+                }
+            }
         },
         "deregister-flow": {
             "content-part1": "Are you sure you want to deregister the ",
@@ -1161,7 +1172,8 @@
             "oracle": {
                 "headers": {
                     "operating-system": "Operating system",
-                    "fsx-for-ontap": "FSx for ONTAP"
+                    "fsx-for-ontap": "FSx for ONTAP",
+                    "registered-databases": "Registered databases"
                 }
             }
         },
