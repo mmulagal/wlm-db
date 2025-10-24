@@ -1,4 +1,4 @@
-import { DsButton, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { DsButton, DsPopover, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import {
     categoryOptions,
     CONFIG_STATES,
     CONFIG_STATES_UI,
+    DBType,
     severityOptions,
     WLF_TABS
 } from '../../../utils/consts';
@@ -142,8 +143,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     );
 
     const configData = useMemo(
-        () => getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData),
-        [allmssqlHostAssessmentData]
+        () => getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData, allOracleHostAssessmentData),
+        [allmssqlHostAssessmentData, allOracleHostAssessmentData]
     );
 
     const hasDismissedOrPosponed = (state: any) => {
@@ -169,15 +170,25 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         return '';
     };
 
-    const renderOptimizationBar = (assessmentKey: string, headingText: string, key: string) => {
+    const renderOptimizationBar = (assessmentKey: string, headingText: string, key: string, type?: string) => {
         const optimizedCount =
             (configData?.[key]?.optimized || 0) +
             (configData?.[key]?.dismissed || 0) +
             (configData?.[key]?.activating || 0);
         const configStateKey = configData?.configState?.[key] || [];
         const dismissedOrPostponedText = hasDismissedOrPosponed(configStateKey);
-        const total = configData?.total || 1;
-        const afterOutOfTotal = configData?.total;
+        let total = 0;
+        if (type === DBType.ORACLE) {
+            total = configData?.oracleTotal || 1;
+        } else {
+            total = configData?.total || 1;
+        }
+        let afterOutOfTotal = 0;
+        if (type === DBType.ORACLE) {
+            afterOutOfTotal = configData?.oracleTotal;
+        } else {
+            afterOutOfTotal = configData?.total;
+        }
         const optimizePercentage = Math.round(
             ((inProgressOptimizationData?.[assessmentKey]?.length || 0) / total) * 100
         );
@@ -214,10 +225,52 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         );
     };
 
+    // Helper function to render Oracle configuration tiles
+    const renderOracleConfigTile = (
+        assessmentConfigName: string,
+        dataKey: string,
+        testId: string,
+        displayName?: string,
+        optimizeHandler?: string,
+        isAlwaysDisabled?: boolean
+    ) => {
+        if (!shouldShowTile(assessmentConfigName)) return null;
+
+        const titleText = displayName || assessmentConfigName;
+        const handleOptimizeClick = optimizeHandler || assessmentConfigName;
+        const isDisabled = isAlwaysDisabled !== undefined ? isAlwaysDisabled : true;
+
+        return (
+            <div className={styles.tile}>
+                {renderOptimizationBar(assessmentConfigName, titleText, dataKey, DBType.ORACLE)}
+
+                <SeparatorComponent variant="vertical" height="60px" />
+
+                <div className={styles.buttonContainer}>
+                    <DsPopover trigger="hover" title={t('databases.general.coming-soon')} placement="bottom">
+                        <DsButton
+                            variant="secondary"
+                            isThin
+                            onClick={() => {
+                                handleOptimize(handleOptimizeClick);
+                            }}
+                            data-testid={testId}
+                            isDisabled={
+                                isDisabled || loading || inProgressOptimizationData[assessmentConfigName]?.length > 0
+                            }
+                        >
+                            {t('databases.well-architect.view-and-fix')}
+                        </DsButton>
+                    </DsPopover>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className={`${styles.managedBreakdown} ${showNA ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
-                <DsTypography variant="Regular_16" className={styles.title}>
+                <DsTypography variant="Regular_16">
                     {t('databases.dashboard.well-architected-breakdown-by-configurations')}{' '}
                     {noFiltersApplied
                         ? `(${totalConfigurations})`
@@ -869,6 +922,84 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </DsButton>
                         </div>
                     </div>
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+                    'oracleBinaryPlacement',
+                    'wlm-db-optimize-oracle-binary-placement'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
+                    'datafilesPlacement',
+                    'wlm-db-optimize-datafiles-placement'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
+                    'controlfilesPlacement',
+                    'wlm-db-optimize-controlfiles-placement'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
+                    'redoLogsPlacement',
+                    'wlm-db-optimize-redo-logs-placement'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
+                    'tempLogsPlacement',
+                    'wlm-db-optimize-temp-logs-placement'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
+                    'archivePlacement',
+                    'wlm-db-optimize-archive-placement'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
+                    'dataDgLunLayout',
+                    'wlm-db-optimize-data-dg-lun-layout'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
+                    'logDgLunLayout',
+                    'wlm-db-optimize-log-dg-lun-layout'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
+                    'fraDgLunLayout',
+                    'wlm-db-optimize-fra-dg-lun-layout'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
+                    'archiveLogDgLunLayout',
+                    'wlm-db-optimize-archive-dg-lun-layout'
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.ONTAP,
+                    'oracleOntapConfiguration',
+                    'wlm-db-optimize-oracle-ontap',
+                    'Oracle - ONTAP',
+                    ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS,
+                    true
+                )}
+
+                {renderOracleConfigTile(
+                    ASSESSMENT_CONFIG_NAMES.OS,
+                    'oracleOperatingSystem',
+                    'wlm-db-optimize-oracle-operating-system',
+                    'Oracle - Operating system',
+                    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
+                    true
                 )}
             </div>
         </div>

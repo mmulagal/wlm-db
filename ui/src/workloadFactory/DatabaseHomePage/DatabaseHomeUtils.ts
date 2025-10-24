@@ -1428,7 +1428,125 @@ export const setConfigState = (configState: any, configName: string, state: stri
     return configState;
 };
 
-export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
+/**
+ * Helper function to process storage layout configuration for Oracle
+ */
+const processStorageLayoutConfig = (
+    instanceAssessmentData: any,
+    configName: string,
+    resultKey: string,
+    configState: any,
+    getAssessmentGroupedByConfigurations: any
+) => {
+    const configObj = instanceAssessmentData?.storage?.layout?.find((item: any) => item.name === configName);
+    const configStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+        (item: any) => item?.configurationName === configName
+    );
+    const isConfigOptimized = isOptimizedDashInner(configObj?.status, configStateObj?.configState);
+    setConfigState(configState, resultKey, configStateObj?.configState);
+
+    getAssessmentGroupedByConfigurations[resultKey].optimized += isConfigOptimized ? 1 : 0;
+    getAssessmentGroupedByConfigurations[resultKey].dismissed += isDismissed(configStateObj?.configState) ? 1 : 0;
+    getAssessmentGroupedByConfigurations[resultKey].activating += isActivating(configStateObj?.configState) ? 1 : 0;
+    getAssessmentGroupedByConfigurations.severityObj[resultKey] =
+        GETWELL_VALUES[configObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.[resultKey];
+};
+
+/**
+ * Helper function to process Oracle assessment data for configurations
+ */
+const processOracleConfigurationData = (
+    oracleAssessmentData: any,
+    headerSelectedMultiCredIdsList: any,
+    headerSelectedMultiRegionIdsList: any,
+    uniqueResourceList: Array<string>,
+    configState: any,
+    getAssessmentGroupedByConfigurations: any
+) => {
+    oracleAssessmentData?.map((databaseHost: any) => {
+        if (
+            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
+            uniqueResourceList.includes(databaseHost?.databaseHostId)
+        ) {
+            return;
+        }
+        uniqueResourceList.push(databaseHost?.databaseHostId);
+
+        databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
+                getAssessmentGroupedByConfigurations.oracleTotal++;
+                const instanceAssessmentData = instance?.assessments;
+
+                // Process Oracle storage layout configurations
+                const oracleLayoutConfigs = [
+                    { configName: 'oracle-binary-placement', resultKey: 'oracleBinaryPlacement' },
+                    { configName: 'datafiles-placement', resultKey: 'datafilesPlacement' },
+                    { configName: 'controlfiles-placement', resultKey: 'controlfilesPlacement' },
+                    { configName: 'redologs-placement', resultKey: 'redoLogsPlacement' },
+                    { configName: 'templogs-placement', resultKey: 'tempLogsPlacement' },
+                    { configName: 'archive-placement', resultKey: 'archivePlacement' },
+                    { configName: 'data-dg-lun-layout', resultKey: 'dataDgLunLayout' },
+                    { configName: 'redolog-dg-lun-layout', resultKey: 'logDgLunLayout' },
+                    { configName: 'fra-dg-lun-layout', resultKey: 'fraDgLunLayout' },
+                    { configName: 'archivelog-dg-lun-layout', resultKey: 'archiveLogDgLunLayout' }
+                ];
+
+                oracleLayoutConfigs.forEach(({ configName, resultKey }) => {
+                    processStorageLayoutConfig(
+                        instanceAssessmentData,
+                        configName,
+                        resultKey,
+                        configState,
+                        getAssessmentGroupedByConfigurations
+                    );
+                });
+
+                const isOntapConfigurationOptimized =
+                    instanceAssessmentData?.storage &&
+                    instanceAssessmentData?.storage?.configuration &&
+                    instanceAssessmentData?.storage?.configuration?.luns?.every((item: any) => {
+                        const configStateVal =
+                            instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.luns?.find(
+                                (config: any) => config?.configurationName === item.name
+                            )?.configState;
+                        setConfigState(configState, 'oracleOntapConfiguration', configStateVal);
+                        return isOptimizedDashInner(item?.status, configStateVal);
+                    }) &&
+                    instanceAssessmentData?.storage?.configuration?.volumes?.every((item: any) => {
+                        const configStateVal =
+                            instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.volumes?.find(
+                                (config: any) => config?.configurationName === item.name
+                            )?.configState;
+                        setConfigState(configState, 'oracleOntapConfiguration', configStateVal);
+                        return isOptimizedDashInner(item?.status, configStateVal);
+                    });
+                const isOperatingSystemOptimized =
+                    instanceAssessmentData &&
+                    instanceAssessmentData?.storage &&
+                    instanceAssessmentData?.storage?.configuration &&
+                    instanceAssessmentData?.storage?.configuration?.os?.every((item: any) => {
+                        const configStateVal =
+                            instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os?.find(
+                                (config: any) => config?.configurationName === item.name
+                            )?.configState;
+                        setConfigState(configState, 'oracleOperatingSystem', configStateVal);
+                        return isOptimizedDashInner(item?.status, configStateVal);
+                    });
+                getAssessmentGroupedByConfigurations.oracleOntapConfiguration.optimized += isOntapConfigurationOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleOntapConfiguration = 'Critical';
+                getAssessmentGroupedByConfigurations.oracleOperatingSystem.optimized += isOperatingSystemOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleOperatingSystem = 'Critical';
+            }
+        });
+    });
+};
+
+export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracleAssessmentData?: any) => {
     const getAssessmentGroupedByConfigurations: any = {
         storageTier: {
             optimized: 0,
@@ -1535,7 +1653,68 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
             dismissed: 0,
             activating: 0
         },
+        oracleBinaryPlacement: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        datafilesPlacement: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        controlfilesPlacement: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        redoLogsPlacement: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        tempLogsPlacement: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        archivePlacement: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        dataDgLunLayout: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        logDgLunLayout: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        fraDgLunLayout: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        archiveLogDgLunLayout: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        oracleOntapConfiguration: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        oracleOperatingSystem: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         total: 0,
+        oracleTotal: 0,
         severityObj: {}
     };
 
@@ -1560,7 +1739,19 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         scheduledawsBackup: [],
         mssqlhighAvailability: [],
         clone: [],
-        crr: []
+        crr: [],
+        oracleBinaryPlacement: [],
+        datafilesPlacement: [],
+        controlfilesPlacement: [],
+        redoLogsPlacement: [],
+        tempLogsPlacement: [],
+        archivePlacement: [],
+        dataDgLunLayout: [],
+        logDgLunLayout: [],
+        fraDgLunLayout: [],
+        archiveLogDgLunLayout: [],
+        oracleOntapConfiguration: [],
+        oracleOperatingSystem: []
     };
 
     const state = store.getState();
@@ -2111,6 +2302,17 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
             }
         });
     });
+
+    // Process oracle data
+    processOracleConfigurationData(
+        oracleAssessmentData,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList,
+        uniqueResourceList,
+        configState,
+        getAssessmentGroupedByConfigurations
+    );
+
     return {
         ...getAssessmentGroupedByConfigurations,
         configState
