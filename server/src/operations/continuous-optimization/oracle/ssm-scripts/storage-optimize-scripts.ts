@@ -391,10 +391,40 @@ for diskGrp in diskGroups:
             continue
 `;
 
-const oracleAsmLibOptimizeScript = `
+const oracleAsmLibOptimizeScript = (shouldRestart: boolean) => `
 
 config_file = "/etc/sysconfig/oracleasm"
 result = {}
+
+shouldRestart = ${shouldRestart ? 'True' : 'False'}
+def restart_oracleasm_service():
+    # Check if service is active
+    cmd = ["systemctl", "is-active", "oracleasm"]
+    is_active_result = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        check=False
+    )
+    if is_active_result.returncode == 0:
+        cmd = ["systemctl", "restart", "oracleasm"]
+        restart_result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            check=False
+        )
+        if restart_result.returncode == 0:
+            result['success'] = "Oracle ASM service restarted successfully"
+            log(f"Oracle ASM service restarted successfully")
+        else:
+            result['error'] = "Failed to restart Oracle ASM service"
+            log(f"Error: Failed to restart Oracle ASM service - {restart_result.stderr}")
+    else:
+        result['error'] = "Oracle ASM service is not running."
+        log(f"Oracle ASM service is not running.")
 
 if os.path.exists(config_file):
     with open(config_file, 'r') as f:
@@ -422,6 +452,8 @@ if os.path.exists(config_file):
         if command_result.returncode == 0:
             log(f"Successfully modified ORACLEASM_USE_LOGICAL_BLOCK_SIZE to true in {config_file}")
             result['success'] = "Successfully modified ORACLEASM_USE_LOGICAL_BLOCK_SIZE to true"
+            if shouldRestart:
+                restart_oracleasm_service()
         else:
             result['error'] = "Failed to modify oracleasm lib config file"
             log(f"Error: Failed to modify file - {command_result.stderr}")
@@ -430,36 +462,6 @@ if os.path.exists(config_file):
         result['success'] = "ORACLEASM_USE_LOGICAL_BLOCK_SIZE is already set to true, nothing to do."
         log(f"ORACLEASM_USE_LOGICAL_BLOCK_SIZE is already set to true, nothing to do.")
 
-        # commenting out the restart section as it may cause disruption, uncomment if needed
-        # Check if service is active
-        # cmd = ["systemctl", "is-active", "oracleasm"]
-        # is_active_result = subprocess.run(
-        #     cmd,
-        #     stdout=subprocess.PIPE,
-        #     stderr=subprocess.PIPE,
-        #     universal_newlines=True,
-        #     check=False
-        # )
-        
-        # if is_active_result.returncode == 0:
-        #    cmd = ["systemctl", "restart", "oracleasm"]
-        #    restart_result = subprocess.run(
-        #        cmd,
-        #        stdout=subprocess.PIPE,
-        #        stderr=subprocess.PIPE,
-        #        universal_newlines=True,
-        #        check=False
-        #    )
-
-        #    if restart_result.returncode == 0:
-        #        result['success'] = "Oracle ASM service restarted successfully"
-        #        log(f"Oracle ASM service restarted successfully")
-        #    else:
-        #        result['error'] = "Failed to restart Oracle ASM service"
-        #        log(f"Error: Failed to restart Oracle ASM service - {restart_result.stderr}")
-        # else:
-        #    result['error'] = "Oracle ASM service is not running."
-        #    log(f"Oracle ASM service is not running, starting it...")
 else:
     log(f"oracleasm lib config file does not exist.")
     result['error'] = "oracleasm lib config file does not exist."
@@ -467,11 +469,92 @@ else:
 print(json.dumps(result))
 `;
 
-const oracleAfdOptimizeScript = `
+const oracleAfdOptimizeScript = (shouldRestart: boolean) => `
 
 CONF_FILE = "/etc/modprobe.d/oracleafd.conf"
 REQ_LINE = "options oracleafd oracleafd_use_logical_block_size=1"
 result = {}
+
+shouldRestart = ${shouldRestart ? 'True' : 'False'}
+def restart_oracleafd_module():
+    # Unload & reload the kernel module
+    # Check if crsctl exists
+    cmd = ["which", "crsctl"]
+    crsctl_check = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        check=False
+    )
+    crsctl_exists = crsctl_check.returncode == 0
+    
+    if crsctl_exists:
+        log(f"Grid Infrastructure detected, stopping Oracle services...")
+        # Stop Oracle services first
+        cmd = ["crsctl", "stop", "has", "-f"]
+        stop_result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            check=False
+        )
+        
+        if stop_result.returncode != 0:
+            log(f"Warning: Failed to stop Oracle services: {stop_result.stderr}")
+    else:
+        log(f"Grid Infrastructure not detected, proceeding without stopping services...")
+    cmd = ["lsmod"]
+    lsmod_result = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        check=False
+    )
+    if lsmod_result.returncode == 0 and "oracleafd" in lsmod_result.stdout:
+        cmd = ["modprobe", "-r", "oracleafd"]
+        unload_result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            check=False
+        )
+        if unload_result.returncode != 0:
+            log(f"Warning: Failed to unload oracleafd module: {unload_result.stderr}")
+    cmd = ["modprobe", "oracleafd"]
+    load_result = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        check=False
+    )
+    if load_result.returncode != 0:
+        log(f"Error: Failed to load oracleafd module: {load_result.stderr}")
+        result['error'] = f"Failed to reload AFD module: {load_result.stderr}"
+    
+    # Restart Oracle services if it exists
+    if crsctl_exists:
+        log(f"Restarting Oracle services...")
+        cmd = ["crsctl", "start", "has"]
+        start_result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            check=False
+        )
+        
+        if start_result.returncode != 0:
+            log(f"Warning: Failed to start Oracle services: {start_result.stderr}")
+            result['error'] = f"Failed to start Oracle services: {start_result.stderr}"
+        else:
+            log(f"Oracle services restarted successfully.")
+    
+    result['success'] = "AFD driver reloaded successfully with logical-block-size option."
     
 cmd = ["modinfo", "oracleafd"]
 command_result = subprocess.run(
@@ -504,6 +587,8 @@ if os.path.exists(CONF_FILE):
             )
             
             if command_result.returncode == 0:
+                if shouldRestart:
+                        restart_oracleafd_module()
                 result['success'] = "Successfully updated oracleafd_use_logical_block_size to 1"
                 log(f"Successfully updated oracleafd_use_logical_block_size to 1")
             else:
@@ -517,84 +602,14 @@ if os.path.exists(CONF_FILE):
         log(f"Adding parameter to config file")
         with open(CONF_FILE, 'a') as f:
             f.write(f"\\n{REQ_LINE}\\n")
+        if shouldRestart:
+            restart_oracleafd_module()
         result['success'] = "Successfully added oracleafd_use_logical_block_size=1 to conf file"
         log(f"Successfully added oracleafd_use_logical_block_size=1 to config file")
 else:
     result['error'] = "Config file oracleafd.conf does not exist."
     log(f"Config file oracleafd.conf does not exist.")
 
-# Commenting out the HAS/ASM stop-start section as it will be disruptive
-# and could lead to unintended downtime.
-
-# Stop HAS / ASM (single-node GI). Ignore errors if HAS is already down.
-# cmd = ["which", "crsctl"]
-# crsctl_check = subprocess.run(
-#   cmd,
-#   stdout=subprocess.PIPE,
-#   stderr=subprocess.PIPE,
-#   universal_newlines=True,
-#   check=False
-# )
-# crsctl_exists = crsctl_check.returncode == 0
-
-# if crsctl_exists:
-#    cmd = ["crsctl", "stop", "has", "-f"]
-#    subprocess.run(
-#        cmd,
-#        stdout=subprocess.PIPE,
-#        stderr=subprocess.PIPE,
-#        universal_newlines=True,
-#        check=False
-#    )  # Ignore return code as mentioned in original script
-
-# Unload & reload the kernel module
-# cmd = ["lsmod"]
-# lsmod_result = subprocess.run(
-#     cmd,
-#     stdout=subprocess.PIPE,
-#     stderr=subprocess.PIPE,
-#     universal_newlines=True,
-#     check=False
-# )
-
-# if lsmod_result.returncode == 0 and "oracleafd" in lsmod_result.stdout:
-#    cmd = ["modprobe", "-r", "oracleafd"]
-#    unload_result = subprocess.run(
-#        cmd,
-#        stdout=subprocess.PIPE,
-#        stderr=subprocess.PIPE,
-#        universal_newlines=True,
-#        check=False
-#    )
-#    if unload_result.returncode != 0:
-#        log(f"Warning: Failed to unload oracleafd module: {unload_result.stderr}")
-
-# cmd = ["modprobe", "oracleafd"]
-# load_result = subprocess.run(
-#     cmd,
-#     stdout=subprocess.PIPE,
-#     stderr=subprocess.PIPE,
-#     universal_newlines=True,
-#     check=False
-# )
-# if load_result.returncode != 0:
-#    log(f"Error: Failed to load oracleafd module: {load_result.stderr}")
-#    sys.exit(1)
-
-# Start HAS again (if GI is installed)
-# if crsctl_exists:
-#     cmd = ["crsctl", "start", "has"]
-#     start_result = subprocess.run(
-#         cmd,
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE,
-#         universal_newlines=True,
-#         check=False
-#     )
-#     )
-#    if start_result.returncode != 0:
-#        log(f"Error: Failed to start HAS: {start_result.stderr}")
-#        sys.exit(1)
 
 log(f"AFD driver reloaded successfully with logical-block-size option.")
 print(json.dumps(result))
@@ -642,21 +657,21 @@ ${pythonScriptInit(addDiskToDiskGroupsScript(diskGroups), 'wlmdb-oracle-storage-
 ORACLE_SHELL
 `;
 
-const optimizeAsmLibDriftConfigParam = `
+const optimizeAsmLibDriftConfigParam = (shouldRestart: boolean) => `
 #!/bin/bash
 ${logFileCheck(true)}
 
 sudo -i -u oracle bash <<'ORACLE_SHELL'
-${pythonScriptInit(oracleAsmLibOptimizeScript, 'wlmdb-oracle-asmlib-drift-optimization')}
+${pythonScriptInit(oracleAsmLibOptimizeScript(shouldRestart), 'wlmdb-oracle-asmlib-drift-optimization')}
 ORACLE_SHELL
 `;
 
-const optimizeAfdDriftConfigParam = `
+const optimizeAfdDriftConfigParam = (shouldRestart: boolean) => `
 #!/bin/bash
 ${logFileCheck(true)}
 
 sudo -i -u oracle bash <<'ORACLE_SHELL'
-${pythonScriptInit(oracleAfdOptimizeScript, 'wlmdb-oracle-afd-drift-optimization')}
+${pythonScriptInit(oracleAfdOptimizeScript(shouldRestart), 'wlmdb-oracle-afd-drift-optimization')}
 ORACLE_SHELL
 `;
 

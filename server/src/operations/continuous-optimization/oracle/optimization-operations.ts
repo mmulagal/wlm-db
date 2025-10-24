@@ -94,36 +94,47 @@ async function handleBulkOptimization(
     try {
         await Promise.all(
             flattenedHosts.map(
-                throat(3, async ({ id: databaseHostId, databases, credentialsId, region, optimizationSubcategory }) => {
-                    if (isEmpty(databases)) {
-                        logger.error(`No instances given for resource ${databaseHostId}.`);
+                throat(
+                    3,
+                    async ({
+                        id: databaseHostId,
+                        databases,
+                        credentialsId,
+                        region,
+                        optimizationSubcategory,
+                        shouldRestart
+                    }) => {
+                        if (isEmpty(databases)) {
+                            logger.error(`No instances given for resource ${databaseHostId}.`);
+                        }
+
+                        await Promise.all(
+                            databases.map(async databaseInstanceId => {
+                                switch (optimizationCategory) {
+                                    case OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM: {
+                                        await oracleOptimizeStorageOS(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            databaseHostId,
+                                            databaseInstanceId,
+                                            optimizationSubcategory,
+                                            masterOptimizeParentId,
+                                            shouldRestart
+                                        );
+                                        break;
+                                    }
+
+                                    default: {
+                                        const errMsg = `Unsupported optimization type: ${optimizationCategory}`;
+                                        logger.error(errMsg);
+                                        throw new Error(errMsg);
+                                    }
+                                }
+                            })
+                        );
                     }
-
-                    await Promise.all(
-                        databases.map(async databaseInstanceId => {
-                            switch (optimizationCategory) {
-                                case OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM: {
-                                    await oracleOptimizeStorageOS(
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        databaseHostId,
-                                        databaseInstanceId,
-                                        optimizationSubcategory,
-                                        masterOptimizeParentId
-                                    );
-                                    break;
-                                }
-
-                                default: {
-                                    const errMsg = `Unsupported optimization type: ${optimizationCategory}`;
-                                    logger.error(errMsg);
-                                    throw new Error(errMsg);
-                                }
-                            }
-                        })
-                    );
-                })
+                )
             )
         );
     } catch (error: any) {

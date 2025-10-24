@@ -81,7 +81,7 @@ enum OptimizeOracleiSCSIStorageOperatingSystem {
     MULTIPATH_FRIENDLY_NAMES = 'multipath-friendly-names',
     MULTIPATH_READCOUNT = 'multipath-readcount',
     ORACLE_AFD_LOGICAL_BLOCK_SIZE = 'afd-logical-block-size',
-    ORACLE_ASM_LOGICAL_BLOCK_SIZE = 'asm-logical-block-size'
+    ORACLE_ASM_LOGICAL_BLOCK_SIZE = 'asmlib-logical-block-size'
 }
 
 enum OptimizeOracleNFSStorageOperatingSystem {

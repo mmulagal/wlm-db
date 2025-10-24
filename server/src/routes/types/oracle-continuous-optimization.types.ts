@@ -82,7 +82,10 @@ const OptimizePerHostRequestBody = Type.Object({
     id: Type.String({ minLength: 1, description: 'WLMDB registered database host identifier' }),
     region: Type.String({ minLength: 1, description: 'AWS region of the database host' }),
     credentialsId: Type.String({ minLength: 1, description: 'WLMDB registered credentials identifier' }),
-    databases: Type.Array(Type.String({ minLength: 1, description: 'Oracle database sid' }))
+    databases: Type.Array(Type.String({ minLength: 1, description: 'Oracle database sid' })),
+    shouldRestart: Type.Optional(
+        Type.Boolean({ default: false, description: 'Whether to restart the database after optimization' })
+    )
 });
 
 const HostsToOptimize = Type.Array(

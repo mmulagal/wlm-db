@@ -39,7 +39,8 @@ async function oracleOptimizeStorageOS(
     databaseHostId: string,
     databaseInstanceId: string,
     configurationName: string,
-    masterJobId?: string
+    masterJobId?: string,
+    shouldRestart: boolean = false
 ) {
     logger.info(
         `Optimizing operating system settings for ${accountId}, ${credentialsId} ${databaseHostId} ${databaseInstanceId} in ${region} for configuration ${configurationName}`
@@ -254,7 +255,8 @@ async function oracleOptimizeStorageOS(
                     databaseInstanceId,
                     node1InstanceId,
                     instanceMetadata,
-                    parentJobId
+                    parentJobId,
+                    shouldRestart
                 });
             } catch (error) {
                 const errorMessage = `Error while fixing AFD logical block size settings ${error}`;
@@ -282,7 +284,8 @@ async function oracleOptimizeStorageOS(
                     databaseInstanceId,
                     node1InstanceId,
                     instanceMetadata,
-                    parentJobId
+                    parentJobId,
+                    shouldRestart
                 });
             } catch (error) {
                 const errorMessage = `Error while fixing Asm lib logical block size settings ${error}`;
