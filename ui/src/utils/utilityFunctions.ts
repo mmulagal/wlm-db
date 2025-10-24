@@ -2143,6 +2143,9 @@ export const setRoutePath = (path: string, search?: string) => {
         case 'Inventory':
             path = 'inventory';
             break;
+        case 'Create new sandbox':
+            path = 'sandboxes/create-new-sandbox';
+            break;
         case 'Dashboard':
             path = 'dashboard';
             break;
@@ -2187,6 +2190,8 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
     switch (tab) {
         case '/fsxdb/dashboard':
             return WLF_TABS.DASHBOARD;
+        case '/fsxdb/sandboxes/create-new-sandbox':
+            return 'Create new sandbox';
         case '/fsxdb/inventory':
         case '/fsxdb/inventory/optimize/oracle':
         case '/fsxdb/inventory/optimize/mssql':
@@ -2478,6 +2483,9 @@ export const setSelectedTabInformation = (tabInfo: string, pathName: string) => 
     }
     if (pathName === '/fsxdb/inventory/optimize/oracle') {
         return WLF_TABS.ORACLE_WELL_ARCHITECTED;
+    }
+    if (pathName === '/fsxdb/sandboxes/create-new-sandbox') {
+        return WLF_TABS.SANDBOXES;
     }
     return tabInfo;
 };
