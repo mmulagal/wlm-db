@@ -3214,7 +3214,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         'host-utilities': {
             error: 'sanlun command not found',
             'sanlun-version': null,
-            'sanlun-installed': false
+            'sanlun-installed': false,
+            'os-version': 'sles15'
         },
         'oracle-parameters': {
             error: null,

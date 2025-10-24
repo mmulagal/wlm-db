@@ -2,13 +2,19 @@ import createError from 'http-errors';
 import { JOBTYPE, JOBSTATUS } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import { Metadata, DatabaseInstance, WorkloadInstance } from '../../../utils/common-types';
-import { RESOURCESTYPE, HttpErrorCodes, DatabaseTypes, AuditStatus } from '../../../utils/consts';
+import {
+    RESOURCESTYPE,
+    HttpErrorCodes,
+    DatabaseTypes,
+    AuditStatus,
+    LINUX_HOST_UTILITIES_RELATIVE_PATH
+} from '../../../utils/consts';
 import {
     AssessmentCategories,
     OptimizeOracleiSCSIStorageOperatingSystem,
     OptimizeOracleNFSStorageOperatingSystem
 } from '../../../utils/continous-optimization-consts';
-import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing } from '../../../utils/utils';
+import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing, getArtifactsRegionBucketName } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
@@ -21,16 +27,19 @@ import {
     optimizeTcpOptionsCommand,
     optimizeIscsiReplacementTimeoutCommand,
     optimizeMultipathIoSessionsCommand,
+    installHostUtilitiesCommand,
     fixTransparentHugepageCommand
 } from './ssm-scripts/os-optimization-scripts';
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import getLogger from '../../../utils/logger';
-import { OracleJobMetadata, TcpFeatures, TcpOptimizationResponse } from './consts';
+import { OracleJobMetadata, TcpFeatures, TcpOptimizationResponse, InstallHostUtilitiesResponse } from './consts';
 import { handleAfdDriftOptimization, handleAsmLibDriftOptimization } from './storage-optimize-operations';
+import { preSignedUrl } from '../../../lib/aws/s3';
 import { oracleOptimizeStorageOSForNfs } from './storage-os-nfs-optimise-operations';
 import { OptimizeOSParams } from './common-types';
 
 const logger = getLogger();
+const { getPreSignedUrl } = preSignedUrl;
 
 async function oracleOptimizeStorageOS(
     accountId: string,
@@ -62,14 +71,22 @@ async function oracleOptimizeStorageOS(
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
-    const { metadata, resource_name: oracleResourceName } = resourceDetail;
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { metadata, resource_name: resourceName } = resourceDetail;
+    const oracleResourceName = resourceName || '';
+    const metadataTyped = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId } = metadataTyped;
 
-    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(credentialsId, region, {
+    const {
+        isSSMConnected,
+        activeNodeInstanceId: activeNode,
+        instancesDetails
+    } = await getActiveSqlNode(credentialsId, region, {
         node1InstanceId,
         node2InstanceId,
         resourceType: DatabaseTypes.ORACLE
     });
+
+    const activeNodeInstanceId = activeNode;
 
     if (!activeNodeInstanceId || !isSSMConnected) {
         const errorMessage = !activeNodeInstanceId
@@ -151,8 +168,8 @@ async function oracleOptimizeStorageOS(
         jobMetadata
     );
 
-    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let jobError = '';
+    let parentJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let parentJobError = '';
     switch (configurationName) {
         case OptimizeOracleiSCSIStorageOperatingSystem.TCP_OPTIONS: {
             try {
@@ -168,17 +185,31 @@ async function oracleOptimizeStorageOS(
                     instanceMetadata
                 });
             } catch (error) {
-                const errorMessage = `Error while fixing operating system settings ${error}`;
-                logger.error(errorMessage);
-                jobError = errorMessage;
-                jobStatus = JOBSTATUS.WARNING;
-            } finally {
-                await updateJobDetails(accountId, parentJobId, {
-                    status: jobStatus,
-                    endTime: Date.now(),
-                    error: jobError
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
+            }
+            break;
+        }
+        case OptimizeOracleiSCSIStorageOperatingSystem.HOST_UTILITIES: {
+            try {
+                await installHostUtilities({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseInstanceId,
+                    databaseInstanceName: instanceName,
+                    fsxId,
+                    activeNodeInstanceId: activeNodeInstanceId!,
+                    instanceMetadata
                 });
-                await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+            } catch (error) {
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
             }
             break;
         }
@@ -197,19 +228,9 @@ async function oracleOptimizeStorageOS(
                     instanceMetadata
                 });
             } catch (error) {
-                const errorMessage = `Error while fixing iSCSI replacement timeout settings ${error}`;
-                logger.error(errorMessage);
-                jobError = errorMessage;
-                jobStatus = JOBSTATUS.FAILED;
-            } finally {
-                await updateJobDetails(accountId, parentJobId, {
-                    status: jobStatus,
-                    endTime: Date.now(),
-                    error: jobError
-                });
-                if (jobStatus === JOBSTATUS.FAILED) {
-                    await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
-                }
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
             }
             break;
         }
@@ -228,19 +249,9 @@ async function oracleOptimizeStorageOS(
                     instanceMetadata
                 });
             } catch (error) {
-                const errorMessage = `Error while fixing multipath IO sessions settings ${error}`;
-                logger.error(errorMessage);
-                jobError = errorMessage;
-                jobStatus = JOBSTATUS.FAILED;
-            } finally {
-                await updateJobDetails(accountId, parentJobId, {
-                    status: jobStatus,
-                    endTime: Date.now(),
-                    error: jobError
-                });
-                if (jobStatus === JOBSTATUS.FAILED) {
-                    await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
-                }
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
             }
             break;
         }
@@ -259,17 +270,9 @@ async function oracleOptimizeStorageOS(
                     shouldRestart
                 });
             } catch (error) {
-                const errorMessage = `Error while fixing AFD logical block size settings ${error}`;
-                logger.error(errorMessage);
-                jobError = errorMessage;
-                jobStatus = JOBSTATUS.WARNING;
-            } finally {
-                await updateJobDetails(accountId, parentJobId, {
-                    status: jobStatus,
-                    endTime: Date.now(),
-                    error: jobError
-                });
-                await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
             }
             break;
         }
@@ -288,17 +291,9 @@ async function oracleOptimizeStorageOS(
                     shouldRestart
                 });
             } catch (error) {
-                const errorMessage = `Error while fixing Asm lib logical block size settings ${error}`;
-                logger.error(errorMessage);
-                jobError = errorMessage;
-                jobStatus = JOBSTATUS.WARNING;
-            } finally {
-                await updateJobDetails(accountId, parentJobId, {
-                    status: jobStatus,
-                    endTime: Date.now(),
-                    error: jobError
-                });
-                await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
             }
             break;
         }
@@ -317,34 +312,26 @@ async function oracleOptimizeStorageOS(
                     instanceMetadata
                 });
             } catch (error) {
-                const errorMessage = `Error while fixing transparent huge pages settings ${error}`;
-                logger.error(errorMessage);
-                jobError = errorMessage;
-                jobStatus = JOBSTATUS.FAILED;
-            } finally {
-                await updateJobDetails(accountId, parentJobId, {
-                    status: jobStatus,
-                    endTime: Date.now(),
-                    error: jobError
-                });
-                if (jobStatus === JOBSTATUS.FAILED) {
-                    await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
-                }
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
             }
             break;
         }
 
-        default: {
-            const errorMessage = `Configuration name ${configurationName} is not supported`;
-            jobStatus = JOBSTATUS.FAILED;
-            jobError = errorMessage;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
-        }
+        default:
     }
 
+    // Update audit status based on final job status
+    await updateLongRunningAuditGroup(
+        parentJobStatus === JOBSTATUS.COMPLETED || parentJobStatus === JOBSTATUS.WARNING
+            ? AuditStatus.SUCCESS
+            : AuditStatus.FAILED,
+        parentJobStatus === JOBSTATUS.COMPLETED ? '' : parentJobError
+    );
+
     // Common assessment trigger logic for all successful optimizations
-    if (jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING) {
+    try {
         const instanceToAssess: WorkloadInstance = {
             id: databaseInstanceId,
             name: instanceName,
@@ -366,6 +353,18 @@ async function oracleOptimizeStorageOS(
             AssessmentCategories.STORAGE,
             RESOURCESTYPE.ORACLE
         );
+    } catch (error) {
+        logger.error(`Error triggering assessment after optimization for databaseHost ${databaseHostId}: ${error}`);
+        parentJobStatus = JOBSTATUS.WARNING;
+    }
+
+    await updateJobDetails(accountId, parentJobId, {
+        status: parentJobStatus,
+        endTime: Date.now(),
+        error: parentJobError
+    });
+    if (parentJobStatus !== JOBSTATUS.COMPLETED) {
+        throw new Error(parentJobError);
     }
 }
 
@@ -471,10 +470,6 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
             endTime: Date.now(),
             error: jobError
         });
-        updateLongRunningAuditGroup(
-            jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
-            jobStatus === JOBSTATUS.COMPLETED ? '' : jobError
-        );
     }
 
     if (jobStatus !== JOBSTATUS.COMPLETED) {
@@ -572,12 +567,6 @@ async function optimizeIscsiReplacementTimeout(params: OptimizeOSParams) {
             endTime: Date.now(),
             error: jobError
         });
-        updateLongRunningAuditGroup(
-            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING
-                ? AuditStatus.SUCCESS
-                : AuditStatus.FAILED,
-            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING ? '' : jobError
-        );
     }
 
     if (jobStatus !== JOBSTATUS.COMPLETED && jobStatus !== JOBSTATUS.WARNING) {
@@ -712,12 +701,6 @@ async function optimizeMultipathIoSessions(params: OptimizeOSParams) {
             endTime: Date.now(),
             error: jobError
         });
-        updateLongRunningAuditGroup(
-            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING
-                ? AuditStatus.SUCCESS
-                : AuditStatus.FAILED,
-            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING ? '' : jobError
-        );
     }
 
     if (jobStatus !== JOBSTATUS.COMPLETED && jobStatus !== JOBSTATUS.WARNING) {
@@ -834,6 +817,108 @@ async function optimizeTransparentHugePages(params: OptimizeOSParams) {
         logger.info(
             `Skipping assessment trigger for databaseHost ${databaseHostId} as transparent huge pages optimization job did not complete successfully.`
         );
+        throw new Error(jobError);
+    }
+}
+
+async function installHostUtilities(params: OptimizeOSParams) {
+    const {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        databaseInstanceId,
+        activeNodeInstanceId,
+        instanceMetadata
+    } = params;
+
+    logger.info('Installing host utilities', { accountId, databaseHostId, serverNameWithHostName, databaseInstanceId });
+
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Install Host Utilities for ${serverNameWithHostName}`,
+        description: `Install Host Utilities for ${serverNameWithHostName}`,
+        resourceName: serverNameWithHostName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.WELL_ARCHITECTED,
+        parentJobId
+    });
+
+    try {
+        // Generate presigned URL based on OS
+        const artifactsBucketName = getArtifactsRegionBucketName(region);
+        const linuxHostUtilitiesSignedUrl = await getPreSignedUrl(
+            region,
+            artifactsBucketName,
+            LINUX_HOST_UTILITIES_RELATIVE_PATH
+        );
+
+        if (!linuxHostUtilitiesSignedUrl) {
+            throw new Error('Failed to generate presigned URL for host utilities package');
+        }
+
+        const ssmCommand = installHostUtilitiesCommand(linuxHostUtilitiesSignedUrl);
+        const ssmComment = 'Installing NetApp Host Utilities';
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId,
+                ssmComment,
+                accountId,
+                false,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            ),
+            3,
+            5000
+        );
+
+        const parsedResponse = sqlResponseParsing(response) as InstallHostUtilitiesResponse;
+        logger.info(`Installed host utilities on ${activeNodeInstanceId}`, { parsedResponse });
+
+        const { status, error } = parsedResponse;
+
+        if (error || status === 'failed') {
+            throw new Error(`Host utilities installation failed: ${error}`);
+        }
+        if (status === 'optimised-offline') {
+            jobError = 'Host utilities are already installed. No further action needed.';
+            logger.info(jobError);
+            jobStatus = JOBSTATUS.WARNING;
+        }
+
+        if (IS_DEMO_FLOW) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['host-utilities'],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+    } catch (error) {
+        logger.error(`Error while installing host utilities: ${error}`);
+        jobError = `Error while installing host utilities: ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+    }
+
+    if (jobStatus !== JOBSTATUS.COMPLETED) {
         throw new Error(jobError);
     }
 }

@@ -4,6 +4,7 @@ import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../../simulator/scopes/aws/fsx-scope';
 import '../../../simulator/scopes/aws/cloud-watch-logs-scope';
 import '../../../simulator/scopes/aws/cloud-watch-scope';
+import '../../../simulator/scopes/aws/s3-scope';
 
 import { JOBTYPE, JOBSTATUS } from '@prisma/client';
 import { createResource, upsertDatabaseInstance, deleteResource } from '../../../../src/lib/database/db';
@@ -160,52 +161,155 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
         });
     });
 
-    it('should optimize kernel TCP sunrpc slots successfully', async () => {
-        await oracleOptimizeStorageOS(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            RESOURCE_ID,
-            dbInstanceSid,
-            OptimizeOracleNFSStorageOperatingSystem.KERNEL_PARAMETERS
-        );
-
-        const { items: jobItems } = await getJobs(ACCOUNT_ID, {
-            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
-            includeSubJobs: true
-        });
-
-        // Find the parent job for kernel TCP sunrpc slots optimization
-        const tcpSunrpcOptimizeJob = jobItems?.find(
-            (job: any) =>
-                (job.description.toLowerCase().includes('tcp sunrpc slots') ||
-                    job.description?.includes('Optimization completed for')) &&
-                job.type === JOBTYPE.WELL_ARCHITECTED &&
-                job.resourceName === dbInstanceSid
-        );
-
-        expect(tcpSunrpcOptimizeJob).toBeDefined();
-        expect(tcpSunrpcOptimizeJob?.resourceName).toBe(dbInstanceSid);
-
-        // Wait for job completion
-        if (tcpSunrpcOptimizeJob?.id) {
-            await waitForJobCompletion(
+    describe('TCP Options Optimization', () => {
+        it('should optimize TCP options successfully', async () => {
+            await oracleOptimizeStorageOS(
                 ACCOUNT_ID,
                 DEFAULT_AWS_CREDENTIALS_ID,
                 DEFAULT_AWS_REGION,
-                tcpSunrpcOptimizeJob.id
+                RESOURCE_ID,
+                dbInstanceSid,
+                OptimizeOracleiSCSIStorageOperatingSystem.TCP_OPTIONS
             );
 
-            // Check final job status
-            const { items: finalJobItems } = await getJobs(ACCOUNT_ID, {
+            const { items: jobItems } = await getJobs(ACCOUNT_ID, {
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                includeSubJobs: true
+            });
+            // Find the parent job for TCP options optimization
+            const tcpOptimizeJob = jobItems?.find(
+                (job: any) =>
+                    (job.description?.includes('TCP options') ||
+                        job.description?.includes('Optimization completed for')) &&
+                    job.type === JOBTYPE.WELL_ARCHITECTED &&
+                    job.resourceName === dbInstanceSid
+            );
+
+            expect(tcpOptimizeJob).toBeDefined();
+            expect(tcpOptimizeJob?.resourceName).toBe(dbInstanceSid);
+
+            // Wait for job completion
+            if (tcpOptimizeJob?.id) {
+                await waitForJobCompletion(
+                    ACCOUNT_ID,
+                    DEFAULT_AWS_CREDENTIALS_ID,
+                    DEFAULT_AWS_REGION,
+                    tcpOptimizeJob.id
+                );
+
+                // Check final job status
+                const { items: finalJobItems } = await getJobs(ACCOUNT_ID, {
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
+                    includeSubJobs: true
+                });
+
+                const completedJob = finalJobItems?.find((job: any) => job.id === tcpOptimizeJob.id);
+                expect(completedJob?.status).toBe(JOBSTATUS.COMPLETED);
+            }
+        });
+    });
+
+    describe('Host Utilities Installation', () => {
+        it('should install host utilities successfully', async () => {
+            await oracleOptimizeStorageOS(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                dbInstanceSid,
+                OptimizeOracleiSCSIStorageOperatingSystem.HOST_UTILITIES
+            );
+
+            const { items: jobItems } = await getJobs(ACCOUNT_ID, {
                 credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
                 region: DEFAULT_AWS_REGION,
                 includeSubJobs: true
             });
 
-            const completedJob = finalJobItems?.find((job: any) => job.id === tcpSunrpcOptimizeJob.id);
-            expect(completedJob?.status).toBe(JOBSTATUS.COMPLETED);
-        }
+            // Find the parent job for host utilities installation
+            const hostUtilitiesJob = jobItems?.find(
+                (job: any) =>
+                    (job.description?.includes('Install Host Utilities') ||
+                        job.description?.includes('Optimization completed for')) &&
+                    job.type === JOBTYPE.WELL_ARCHITECTED &&
+                    job.resourceName === dbInstanceSid
+            );
+
+            expect(hostUtilitiesJob).toBeDefined();
+            expect(hostUtilitiesJob?.resourceName).toBe(dbInstanceSid);
+
+            // Wait for job completion
+            if (hostUtilitiesJob?.id) {
+                await waitForJobCompletion(
+                    ACCOUNT_ID,
+                    DEFAULT_AWS_CREDENTIALS_ID,
+                    DEFAULT_AWS_REGION,
+                    hostUtilitiesJob.id
+                );
+
+                // Check final job status
+                const { items: finalJobItems } = await getJobs(ACCOUNT_ID, {
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
+                    includeSubJobs: true
+                });
+
+                const completedJob = finalJobItems?.find((job: any) => job.id === hostUtilitiesJob.id);
+                expect(completedJob?.status).toBe(JOBSTATUS.COMPLETED);
+            }
+        });
+    });
+
+    describe('optimize kernel TCP sunrpc slots', () => {
+        it('should optimize kernel TCP sunrpc slots successfully', async () => {
+            await oracleOptimizeStorageOS(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                dbInstanceSid,
+                OptimizeOracleNFSStorageOperatingSystem.KERNEL_PARAMETERS
+            );
+
+            const { items: jobItems } = await getJobs(ACCOUNT_ID, {
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                includeSubJobs: true
+            });
+
+            // Find the parent job for kernel TCP sunrpc slots optimization
+            const tcpSunrpcOptimizeJob = jobItems?.find(
+                (job: any) =>
+                    (job.description.toLowerCase().includes('tcp sunrpc slots') ||
+                        job.description?.includes('Optimization completed for')) &&
+                    job.type === JOBTYPE.WELL_ARCHITECTED &&
+                    job.resourceName === dbInstanceSid
+            );
+
+            expect(tcpSunrpcOptimizeJob).toBeDefined();
+            expect(tcpSunrpcOptimizeJob?.resourceName).toBe(dbInstanceSid);
+
+            // Wait for job completion
+            if (tcpSunrpcOptimizeJob?.id) {
+                await waitForJobCompletion(
+                    ACCOUNT_ID,
+                    DEFAULT_AWS_CREDENTIALS_ID,
+                    DEFAULT_AWS_REGION,
+                    tcpSunrpcOptimizeJob.id
+                );
+
+                // Check final job status
+                const { items: finalJobItems } = await getJobs(ACCOUNT_ID, {
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
+                    includeSubJobs: true
+                });
+
+                const completedJob = finalJobItems?.find((job: any) => job.id === tcpSunrpcOptimizeJob.id);
+                expect(completedJob?.status).toBe(JOBSTATUS.COMPLETED);
+            }
+        });
     });
 });

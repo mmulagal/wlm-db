@@ -1480,6 +1480,7 @@ const MAX_DATA_LUN_SIZE_IN_GIB = 86049.3;
 const AWS_CLI_LINUX_RELATIVE_PATH = `${WLMDB}/oracle/packages/awscliv2.tar.gz`;
 const JQ_LINUX_RELATIVE_PATH = `${WLMDB}/oracle/packages/jq-1.8.0.tar.gz`;
 const MAKE_LINUX_RELATIVE_PATH = `${WLMDB}/oracle/packages/make-4.4.1.tar.gz`;
+const LINUX_HOST_UTILITIES_RELATIVE_PATH = `${WLMDB}/oracle/packages/netapp-linux-host-utilities-7.1.tar.gz`;
 
 const PERMISSION_DENIAL_POSSIBLE_REASONS = {
     MISSING: 'permission statement is missing',
@@ -2203,5 +2204,6 @@ export {
     JOB_MONITORING_ENDPOINT,
     LOCAL_AUTH,
     SSM_COMMAND_RUNTIMES,
-    CLOUDFLARE_DNS_IP
+    CLOUDFLARE_DNS_IP,
+    LINUX_HOST_UTILITIES_RELATIVE_PATH
 };

@@ -3,6 +3,7 @@ interface ISCIOSAssessment {
         error?: string | null;
         'sanlun-version'?: string | null;
         'sanlun-installed'?: boolean;
+        'os-version': string;
     };
     selinux?: {
         error?: string | null;

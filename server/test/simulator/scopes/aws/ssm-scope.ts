@@ -1002,7 +1002,9 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Optimize Asm Lib Config Param')
     .resolves(getSampleCommandResponse('optimizeOracleAsmLibDriftConfigParam'))
     .on(SendCommandCommand, params => params.Comment === 'Optimize AFD Drift Config Param')
-    .resolves(getSampleCommandResponse('optimizeOracleAfdDriftConfigParam'));
+    .resolves(getSampleCommandResponse('optimizeOracleAfdDriftConfigParam'))
+    .on(SendCommandCommand, params => params.Comment === 'Installing NetApp Host Utilities')
+    .resolves(getSampleCommandResponse('installNetAppHostUtilities'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1632,6 +1634,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'optimizeOracleAfdDriftConfigParam',
             JSON.stringify(getCommandInvocationResponse.oracleAfdDriftConfigParamOptimizationResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installNetAppHostUtilities'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'installNetAppHostUtilities',
+            JSON.stringify(getCommandInvocationResponse.installNetAppHostUtilitiesResponse)
         )
     );
 

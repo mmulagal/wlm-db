@@ -29,6 +29,19 @@ interface TcpOptimizationResponse {
     error?: string;
 }
 
+interface InstallHostUtilitiesResponse {
+    'os-version': string;
+    status: 'optimised' | 'failed' | 'optimised-offline';
+    error?: string;
+}
+
+interface LinuxOsInfoResponse {
+    os: string | null;
+    version: string | null;
+    code: string | null;
+    error: string | null;
+}
+
 interface KernelTcpSlotOptimiseResponse {
     status: 'optimized' | 'failed' | 'partial' | 'optimized-offline';
     'sunrpc-options': {
@@ -45,5 +58,7 @@ export {
     OracleJobMetadata,
     TcpOptimizationResponse,
     TcpFeatures,
+    InstallHostUtilitiesResponse,
+    LinuxOsInfoResponse,
     KernelTcpSlotOptimiseResponse
 };

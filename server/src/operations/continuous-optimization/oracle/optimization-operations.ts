@@ -39,11 +39,16 @@ async function optimizeOracleDatabase(accountId: string, params: OptimizeRequest
         `Starting optimization of type ${optimizationType} for account ${accountId} on ${hostsToOptimize.length} hosts`
     );
 
-    await Promise.all(
-        hostsToOptimize.map(async host => {
-            host.databaseHosts = await validateAndFilterDatabaseHosts(accountId, host.databaseHosts);
-        })
-    );
+    try {
+        await Promise.all(
+            hostsToOptimize.map(async host => {
+                host.databaseHosts = await validateAndFilterDatabaseHosts(accountId, host.databaseHosts);
+            })
+        );
+    } catch (error) {
+        logger.error(error);
+        throw createError(HttpErrorCodes.BAD_REQUEST, String(error));
+    }
 
     const allEmpty = hostsToOptimize.every(host => isEmpty(host.databaseHosts));
     if (allEmpty) {
@@ -84,55 +89,56 @@ async function handleBulkOptimization(
 
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
 
-    const flattenedHosts = hostsToOptimize.flatMap(({ configurationName: optimizationSubcategory, databaseHosts }) =>
-        databaseHosts.map(databaseHost => ({
-            ...databaseHost,
-            optimizationSubcategory
-        }))
+    const flattenedTasks = hostsToOptimize.flatMap(({ configurationName: optimizationSubcategory, databaseHosts }) =>
+        databaseHosts.flatMap(({ id: databaseHostId, databases, credentialsId, region, shouldRestart }) =>
+            databases.map(databaseInstanceId => ({
+                databaseHostId,
+                databaseInstanceId,
+                credentialsId,
+                region,
+                optimizationSubcategory,
+                shouldRestart
+            }))
+        )
     );
 
     try {
         await Promise.all(
-            flattenedHosts.map(
+            flattenedTasks.map(
                 throat(
                     3,
                     async ({
-                        id: databaseHostId,
-                        databases,
+                        databaseHostId,
+                        databaseInstanceId,
                         credentialsId,
                         region,
                         optimizationSubcategory,
                         shouldRestart
                     }) => {
-                        if (isEmpty(databases)) {
-                            logger.error(`No instances given for resource ${databaseHostId}.`);
-                        }
-
-                        await Promise.all(
-                            databases.map(async databaseInstanceId => {
-                                switch (optimizationCategory) {
-                                    case OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM: {
-                                        await oracleOptimizeStorageOS(
-                                            accountId,
-                                            credentialsId,
-                                            region,
-                                            databaseHostId,
-                                            databaseInstanceId,
-                                            optimizationSubcategory,
-                                            masterOptimizeParentId,
-                                            shouldRestart
-                                        );
-                                        break;
-                                    }
-
-                                    default: {
-                                        const errMsg = `Unsupported optimization type: ${optimizationCategory}`;
-                                        logger.error(errMsg);
-                                        throw new Error(errMsg);
-                                    }
+                        try {
+                            switch (optimizationCategory) {
+                                case OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM: {
+                                    await oracleOptimizeStorageOS(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        databaseHostId,
+                                        databaseInstanceId,
+                                        optimizationSubcategory,
+                                        masterOptimizeParentId,
+                                        shouldRestart
+                                    );
+                                    break;
                                 }
-                            })
-                        );
+
+                                default:
+                            }
+                        } catch (error: any) {
+                            logger.error(
+                                `Error optimizing database ${databaseInstanceId} on host ${databaseHostId}: ${error.message}`
+                            );
+                            masterOptimizeParentStatus = JOBSTATUS.WARNING;
+                        }
                     }
                 )
             )
@@ -143,17 +149,11 @@ async function handleBulkOptimization(
         );
         masterOptimizeParentStatus = JOBSTATUS.WARNING;
     } finally {
-        if (masterOptimizeParentStatus === JOBSTATUS.COMPLETED) {
-            await updateJobDetails(accountId, masterOptimizeParentId, {
-                status: JOBSTATUS.COMPLETED,
-                endTime: Date.now()
-            });
-        } else {
-            await updateJobDetails(accountId, masterOptimizeParentId, {
-                status: JOBSTATUS.WARNING,
-                endTime: Date.now()
-            });
-        }
+        await updateJobDetails(accountId, masterOptimizeParentId, {
+            status:
+                masterOptimizeParentStatus === JOBSTATUS.COMPLETED ? JOBSTATUS.COMPLETED : masterOptimizeParentStatus,
+            endTime: Date.now()
+        });
     }
 }
 

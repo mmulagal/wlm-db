@@ -1350,8 +1350,10 @@ import shutil
 import time
 import stat
 import textwrap
+import tarfile
 from urllib.parse import urlparse
-from urllib.request import urlopen, Request
+from urllib.request import urlopen, Request, urlretrieve
+from urllib.error import HTTPError
 from pathlib import Path
 `;
 

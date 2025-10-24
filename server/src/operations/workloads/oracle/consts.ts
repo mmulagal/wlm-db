@@ -39,6 +39,8 @@ const pythonRelativePaths = [
     'wlmdb/oracle/packages/suse15_python311_rpms.tar.gz'
 ];
 
+const supportedOracleOsVersions = ['sles15', 'rhel8'];
+
 const CDB = 'CDB';
 const PDB = 'PDB';
 const ORACLE_DEPLOYMENT_ARCHITECTURE = {
@@ -54,6 +56,7 @@ export {
     MIN_OPTIMAL_LUN_PER_DG,
     MAX_LUNS_PER_DG,
     pythonRelativePaths,
+    supportedOracleOsVersions,
     CDB,
     PDB,
     ORACLE_DEPLOYMENT_ARCHITECTURE,

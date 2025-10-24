@@ -594,9 +594,9 @@ async function validateAndFilterDatabaseHosts<T extends { credentialsId: string;
             const isValid = await validateRequestDetails(accountId, credentialsId, region, databaseHostId);
 
             if (!isValid) {
-                logger.error(
-                    `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`
-                );
+                const errMsg = `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`;
+                logger.error(errMsg);
+                throw new Error(errMsg);
             }
 
             return isValid;

@@ -1,3 +1,4 @@
+import { supportedOracleOsVersions } from '../../../workloads/oracle/consts';
 import { getOracleDefaultOrUserAuthCommand, pythonLogger } from '../../../workloads/oracle/oracle-ssm-script-utils';
 
 const CONVERT_TO_JSON = `
@@ -460,9 +461,79 @@ def check_multipath_io():
         }
 `;
 
+const GET_OS_INFO = `
+def get_os_info():
+    """
+    Reads /etc/os-release and returns the OS distribution and version.
+    Returns dict like {'os': 'rhel', 'version': '8.5', 'code': 'rhel8', 'error': None}
+    """
+    try:
+        os_id = None
+        version_id = None
+
+        # Use grep to extract ID
+        try:
+            id_result = subprocess.run(
+                ['grep', '^ID=', '/etc/os-release'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                timeout=5
+            )
+            if id_result.returncode == 0 and id_result.stdout.strip():
+                os_id = id_result.stdout.strip().split('=')[1].strip('"').strip("'")
+        except Exception as e:
+            log(f'Error reading ID from /etc/os-release: {str(e)}')
+
+        # Use grep to extract VERSION_ID
+        try:
+            version_result = subprocess.run(
+                ['grep', 'VERSION_ID', '/etc/os-release'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                timeout=5
+            )
+            if version_result.returncode == 0 and version_result.stdout.strip():
+                version_id = version_result.stdout.strip().split('=')[1].strip('"').strip("'")
+        except Exception as e:
+            log(f'Error reading VERSION_ID from /etc/os-release: {str(e)}')
+
+        if os_id and version_id:
+            major_version = version_id.split('.')[0]
+            code = f'{os_id}{major_version}'
+            return {'os': os_id, 'version': version_id, 'code': code, 'error': None}
+        else:
+            error_msg = f'Could not determine OS distro. ID={os_id}, VERSION_ID={version_id}'
+            log(error_msg)
+            return {'os': None, 'version': None, 'code': None, 'error': error_msg}
+    except Exception as e:
+        error_msg = f'Error reading /etc/os-release: {str(e)}'
+        log(error_msg)
+        return {'os': None, 'version': None, 'code': None, 'error': error_msg}
+`;
+
 const CHECK_SANLUN = `
 # Check if ONTAP sanlun is installed and get version
 def check_sanlun():
+    os_info = get_os_info()
+    os_code = os_info.get('code')
+    os_error = os_info.get('error')
+    
+    # Handle case where OS detection failed
+    if not os_code or os_error:
+        error_msg = os_error or "Could not determine OS information"
+        log(f'Failed to detect OS: {error_msg}')
+
+    if os_code not in ${JSON.stringify(supportedOracleOsVersions)}:
+        log(f'ONTAP sanlun not supported on {os_code}')
+        return {
+            "sanlun-installed": False,
+            "sanlun-version": None,
+            "error": f"sanlun not supported on {os_code}",
+            "os-version": os_code
+        }
+
     log('Checking ONTAP sanlun installation and version')
     try:
         # Set up environment with additional PATH entries
@@ -480,14 +551,16 @@ def check_sanlun():
             return {
                 "sanlun-installed": True,
                 "sanlun-version": version_output,
-                "error": None
+                "error": None,
+                "os-version": os_code
             }
         else:
             log(f'sanlun command failed: {result.stderr.strip()}')
             return {
                 "sanlun-installed": False,
                 "sanlun-version": None,
-                "error": "sanlun command failed"
+                "error": "sanlun command failed",
+                "os-version": os_code
             }
             
     except FileNotFoundError:
@@ -495,14 +568,16 @@ def check_sanlun():
         return {
             "sanlun-installed": False,
             "sanlun-version": None,
-            "error": "sanlun command not found"
+            "error": "sanlun command not found",
+            "os-version": os_code
         }
     except Exception as e:
         log(f'Exception while checking sanlun: {str(e)}')
         return {
             "sanlun-installed": False,
             "sanlun-version": None,
-            "error": str(e)
+            "error": str(e),
+            "os-version": os_code
         }      
 `;
 
@@ -939,6 +1014,8 @@ ${pythonLogger('storageOsAssessment.log')}
 
 ${CHECK_MULTIPATH_IO_STATUS}
 
+${GET_OS_INFO}
+
 ${CHECK_SANLUN}
 
 ${CHECK_ISCSI_TARGETS_SESSIONS}
@@ -1046,6 +1123,8 @@ PYTHON
 export {
     OS_ASSESSMENT,
     CHECK_TCP_FEATURES,
+    GET_OS_INFO,
+    CHECK_SANLUN,
     CHECK_ISCSI_REPLACEMENT_TIMEOUT,
     CHECK_ISCSI_TARGETS_SESSIONS,
     CHECK_TRANSPARENT_HUGEPAGE

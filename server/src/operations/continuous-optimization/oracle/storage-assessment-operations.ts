@@ -16,7 +16,8 @@ import {
     MAX_LUNS_PER_DG,
     MIN_OPTIMAL_LUN_PER_DG,
     SSM_RUN_SHELL_SCRIPT_DOC,
-    SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+    SSM_RUN_SHELL_SCRIPT_DOC_VERSION,
+    supportedOracleOsVersions
 } from '../../workloads/oracle/consts';
 import storageGoldenConfigData from './golden-config';
 import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
@@ -321,6 +322,13 @@ function getOSConfigDrift(
 
             case 'host-utilities': {
                 const hostUtilsData = os?.['host-utilities'];
+                if (hostUtilsData && !supportedOracleOsVersions.includes(hostUtilsData?.['os-version'])) {
+                    logger.info(`Skipping ONTAP sanlun assessment for ${hostUtilsData?.['os-version']}`, {
+                        ec2InstanceId,
+                        databaseInstanceName
+                    });
+                    break;
+                }
                 if (hostUtilsData?.['sanlun-installed'] === false) {
                     violationDetails.push(
                         createViolationDetail('sanlun', 'package', 'not installed', 'sanlun is installed')

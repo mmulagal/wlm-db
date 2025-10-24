@@ -1,9 +1,12 @@
+import { supportedOracleOsVersions } from '../../../workloads/oracle/consts';
 import { logFileCheck, pythonScriptInit } from '../../../workloads/oracle/oracle-ssm-script-utils';
 import {
     CHECK_ISCSI_REPLACEMENT_TIMEOUT,
     CHECK_ISCSI_TARGETS_SESSIONS,
     CHECK_TCP_FEATURES,
-    CHECK_TRANSPARENT_HUGEPAGE
+    CHECK_TRANSPARENT_HUGEPAGE,
+    GET_OS_INFO,
+    CHECK_SANLUN
 } from './os-iscsi-assessment-scripts';
 
 const OPTIMIZE_TCP_OPTIONS = `
@@ -307,6 +310,191 @@ ${logFileCheck(false)}
 ${pythonScriptInit(optimizeTcpOptionsTemplate, 'wlmdb-os-configuration-tcp-optimization.log')}
 `;
 
+const DOWNLOAD_AND_EXTRACT_TARGZ = `
+def download_and_extract_targz(url, download_path, extract_dir):
+    try:
+        # Download tar.gz using urllib
+        log(f'Downloading tar.gz file from URL to {download_path}')
+        try:
+            urlretrieve(url, download_path)
+            log(f'Successfully downloaded file to {download_path}')
+        except HTTPError as e:
+            error_msg = f'HTTP {e.code}: {e.reason}'
+            if e.code in [403, 404]:
+                error_msg = f'URL expired or invalid: {error_msg}'
+            log(f'Download failed: {error_msg}')
+            return {"success": False, "error": error_msg, "extract_dir": None}
+        except Exception as e:
+            error_msg = f'Download failed: {str(e)}'
+            log(error_msg)
+            return {"success": False, "error": error_msg, "extract_dir": None}
+        
+        # Create extraction directory
+        log(f'Creating extraction directory {extract_dir}')
+        os.makedirs(extract_dir, exist_ok=True)
+        
+        # Extract tar.gz using tarfile module
+        log(f'Extracting tar.gz file to {extract_dir}')
+        try:
+            with tarfile.open(download_path, 'r:gz') as tar:
+                tar.extractall(path=extract_dir)
+            log(f'Successfully extracted tar.gz to {extract_dir}')
+            return {"success": True, "error": None, "extract_dir": extract_dir}
+        except Exception as e:
+            error_msg = f'Extraction failed: {str(e)}'
+            log(error_msg)
+            return {"success": False, "error": error_msg, "extract_dir": None}
+            
+    except Exception as e:
+        error_msg = f'Unexpected error during download/extract: {str(e)}'
+        log(error_msg)
+        return {"success": False, "error": error_msg, "extract_dir": None}
+`;
+
+const INSTALL_HOST_UTILITIES = `
+def install_linux_host_utilities(presigned_url):
+    """
+    Install NetApp Linux Host Utilities from S3 presigned URL.
+    Returns InstallHostUtilitiesResponse format:
+    {
+        "os-version": string,
+        "status": "optimised" | "failed" | "optimised-offline",
+        "error": optional string
+    }
+    """
+    
+    existing_status = check_sanlun()
+    distro = existing_status.get("os-version")
+    
+    # Check if OS is supported
+    if distro not in ${JSON.stringify(supportedOracleOsVersions)}:
+        log(f'Linux host utilities not supported on {distro}')
+        return {
+            "os-version": distro or "unknown",
+            "status": "failed",
+            "error": f"Host utilities not supported on {distro}"
+        }
+    
+    # Check if already installed
+    if existing_status.get("sanlun-installed"):
+        log('NetApp host utilities already installed')
+        return {
+            "os-version": distro,
+            "status": "optimised-offline"
+        }
+    
+    # Select the correct presigned URL based on OS
+    if not presigned_url:
+        return {
+            "os-version": distro,
+            "status": "failed",
+            "error": f"No presigned URL available for {distro}"
+        }
+    
+    # Download and install
+    tar_file = '/tmp/netapp-host-utilities.tar.gz'
+    extract_dir = '/tmp/netapp-host-utilities-extract'
+    rpm_file = None
+    
+    try:
+        # Download and extract using reusable function
+        log(f'Downloading NetApp host utilities for {distro} from S3')
+        result = download_and_extract_targz(presigned_url, tar_file, extract_dir)
+        
+        if not result["success"]:
+            return {
+                "os-version": distro,
+                "status": "failed",
+                "error": result["error"]
+            }
+        
+        # Find the RPM file in the extraction directory
+        # Filter out macOS metadata files (._*) and hidden files
+        rpm_files = [f for f in os.listdir(extract_dir) if f.endswith('.rpm') and not f.startswith('._') and not f.startswith('.')]
+        if not rpm_files:
+            error_msg = 'No RPM file found in extracted archive'
+            log(error_msg)
+            return {
+                "os-version": distro,
+                "status": "failed",
+                "error": error_msg
+            }
+        
+        rpm_file = os.path.join(extract_dir, rpm_files[0])
+        log(f'Found RPM file: {rpm_file}')
+
+        # Install RPM
+        log('Installing NetApp host utilities RPM')
+        result = subprocess.run(
+            ['sudo', 'rpm', '-ivh', rpm_file],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, timeout=120
+        )
+        
+        if result.returncode != 0:
+            return {
+                "os-version": distro,
+                "status": "failed",
+                "error": f'Installation failed: {result.stderr.strip()}'
+            }
+        
+        log('Successfully installed NetApp host utilities')
+        
+        # Verify installation
+        verification = check_sanlun()
+        if verification.get("sanlun-installed"):
+            return {
+                "os-version": distro,
+                "status": "optimised"
+            }
+        else:
+            return {
+                "os-version": distro,
+                "status": "failed",
+                "error": "Installation completed but verification failed"
+            }
+        
+    except Exception as e:
+        return {
+            "os-version": distro,
+            "status": "failed",
+            "error": str(e)
+        }
+    finally:
+        # Cleanup - always executed
+        try:
+            if tar_file and os.path.exists(tar_file):
+                os.remove(tar_file)
+                log(f'Removed tar.gz file: {tar_file}')
+        except:
+            pass
+        
+        try:
+            if extract_dir and os.path.exists(extract_dir):
+                shutil.rmtree(extract_dir)
+                log(f'Removed extraction directory: {extract_dir}')
+        except:
+            pass
+`;
+
+const installHostUtilitiesTemplate = (presignedUrl: string) => `
+${GET_OS_INFO}
+${CHECK_SANLUN}
+${DOWNLOAD_AND_EXTRACT_TARGZ}
+${INSTALL_HOST_UTILITIES}
+
+result = install_linux_host_utilities("${presignedUrl}")
+print(json.dumps(result))
+`;
+
+const installHostUtilitiesCommand = (preSignedUrl: string) => `
+#!/bin/bash
+${logFileCheck(false)}
+
+# This script doesn't need to be run as oracle user
+${pythonScriptInit(installHostUtilitiesTemplate(preSignedUrl), 'wlmdb-os-configuration-host-utilities.log')}
+`;
+
 const optimizeIscsiReplacementTimeoutCommand = `
 #!/bin/bash
 ${logFileCheck(false)}
@@ -596,5 +784,7 @@ export {
     optimizeTcpOptionsCommand,
     optimizeIscsiReplacementTimeoutCommand,
     optimizeMultipathIoSessionsCommand,
+    installHostUtilitiesCommand,
+    DOWNLOAD_AND_EXTRACT_TARGZ,
     fixTransparentHugepageCommand
 };
