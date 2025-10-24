@@ -10,20 +10,48 @@ import { workloadPolicies } from '../../../../../../../../utils/workloadPolicies
 const WellArchitectPolicyDialog = ({ data, label }: any) => {
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(t('databases.register-flow.aws-iam-policy-permissions'));
-    const [permissionData, setPermissionData] = useState<any>(
-        JSON.stringify(
-            data?.packages?.find?.((pkg: any) => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY)?.permissions,
-            null,
-            2
-        )
-    );
+
+    // Merge VIEW and OPERATE policies for initial state
+    const getInitialPermissionData = () => {
+        const viewPermissions = data?.packages?.find?.(
+            (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY
+        )?.permissions;
+        const operatePackage = data?.packages?.find?.((pkg: any) => pkg?.name === POLICIES_PERMISSIONS.OPERATE_POLICY);
+
+        const mergedStatements = [
+            ...(viewPermissions?.Statement ?? []),
+            ...(operatePackage?.permissions?.Statement ?? [])
+        ];
+
+        const permissionsData = {
+            Version: viewPermissions?.Version ?? operatePackage?.permissions?.Version ?? '2012-10-17',
+            Statement: mergedStatements
+        };
+
+        return JSON.stringify(permissionsData, null, 2);
+    };
+
+    const [permissionData, setPermissionData] = useState<any>(getInitialPermissionData());
 
     const handleClick = (value: string) => {
         let permissionData: any = '';
         if (value === t('databases.register-flow.aws-iam-policy-permissions')) {
-            permissionData = data?.packages?.find?.(
+            const viewPermissions = data?.packages?.find?.(
                 (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY
             )?.permissions;
+            const operatePackage = data?.packages?.find?.(
+                (pkg: any) => pkg?.name === POLICIES_PERMISSIONS.OPERATE_POLICY
+            );
+
+            const mergedStatements = [
+                ...(viewPermissions?.Statement ?? []),
+                ...(operatePackage?.permissions?.Statement ?? [])
+            ];
+
+            permissionData = {
+                Version: viewPermissions?.Version ?? operatePackage?.permissions?.Version ?? '2012-10-17',
+                Statement: mergedStatements
+            };
         } else if (value === t('databases.register-flow.fsx-for-ontap-permissions')) {
             permissionData = workloadPolicies.find(
                 policy => policy.name === POLICIES_PERMISSIONS.WELL_ARCHITECTED_FSX__POLICY

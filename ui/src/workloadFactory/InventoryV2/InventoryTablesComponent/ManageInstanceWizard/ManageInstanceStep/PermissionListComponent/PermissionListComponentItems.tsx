@@ -162,7 +162,7 @@ export const PermissionListComponentItems = (
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
                             values: [
                                 {
-                                    title: t('databases.register-flow.dbwl-read-only-permissions'),
+                                    title: t('databases.register-flow.dbwl-operate-only-permissions'),
                                     items: []
                                 },
                                 {
