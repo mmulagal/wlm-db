@@ -56,20 +56,6 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     type: DBType.MSSQL
                 };
                 tableData.push(perTableData);
-            } else {
-                const perTableData: any = {
-                    id: id++,
-                    hostName: databaseHost?.databaseHostName,
-                    score: 0,
-                    optimized: 0,
-                    databaseInstanceName: instance?.databaseInstanceName,
-                    databaseHostId: databaseHost?.databaseHostId,
-                    instanceId: instance?.databaseInstanceId,
-                    credentialId: databaseHost?.credentialId,
-                    regionId: databaseHost?.regionId,
-                    type: DBType.MSSQL
-                };
-                tableData.push(perTableData);
             }
         });
     });
@@ -96,20 +82,6 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     hostName: databaseHost?.databaseHostName,
                     score,
                     optimized,
-                    databaseInstanceName: instance?.databaseInstanceName,
-                    databaseHostId: databaseHost?.databaseHostId,
-                    instanceId: instance?.databaseInstanceId,
-                    credentialId: databaseHost?.credentialId,
-                    regionId: databaseHost?.regionId,
-                    type: DBType.ORACLE
-                };
-                tableData.push(perTableData);
-            } else {
-                const perTableData: any = {
-                    id: id++,
-                    hostName: databaseHost?.databaseHostName,
-                    score: 0,
-                    optimized: 0,
                     databaseInstanceName: instance?.databaseInstanceName,
                     databaseHostId: databaseHost?.databaseHostId,
                     instanceId: instance?.databaseInstanceId,

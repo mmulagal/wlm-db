@@ -972,7 +972,7 @@
             "warning": "Warning",
             "log-analyzer": "Log analyzer",
             "activation": "Activation",
-            "resource-active-msg": "of your resources activated Agentic AI",
+            "resource-active-msg": " registered Microsoft SQL Server instances has been analyzed for errors.",
             "hostname": "Host name",
             "optimization-score": "Well-architected score",
             "instance-well-arch-score": "Investigate resources",

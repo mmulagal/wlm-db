@@ -2138,7 +2138,7 @@ export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
 export const isClusteredWithSelectedInstance = (val: any) =>
     'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 
-//Route path mapping function for console
+// Route path mapping function for console
 export const setRoutePath = (path: string, search?: string) => {
     switch (path) {
         case 'Inventory':

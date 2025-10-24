@@ -4,6 +4,7 @@ import { DsButton, DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useDispatch } from 'react-redux';
 import { useDialog } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { ReactComponent as SandboxIcon } from '../../../../assets/SandboxIcon.svg';
 import { ReactComponent as SourceDatabase } from '../../../../assets/SourceDatabase.svg';
 import { ReactComponent as SourceDatabaseDisabled } from '../../../../assets/SourceDataDIsabled.svg';
@@ -21,7 +22,6 @@ import { DBType, INVENTORY_STATUS } from '../../../../utils/consts';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import store from '../../../../store/store';
 import { createUniqueSandboxTableData, getUniqueSourceDatabasesCount } from '../../../Sandbox/SandboxUtility';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { createSandboxNavigation } from '../../../../utils/utilityFunctions';
 
 const Sandboxes = () => {

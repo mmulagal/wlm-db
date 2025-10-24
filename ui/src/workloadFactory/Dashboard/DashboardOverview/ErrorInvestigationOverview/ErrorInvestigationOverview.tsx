@@ -55,6 +55,16 @@ const ErrorInvestigationOverview = () => {
         [allLogAnalysisData, inventoryTableData]
     );
 
+    const activeTableRows: any = useMemo(
+        () => createLogAnalyzerActiveInstance(allLogAnalysisData),
+        [allLogAnalysisData, inventoryTableData]
+    );
+
+    const notActiveTableRows: any = useMemo(
+        () => createLogAnalyzerNotActiveInstance(allLogAnalysisData),
+        [allLogAnalysisData, inventoryTableData]
+    );
+
     const redirectToLogAnalyzerPage = (type: string) => {
         const updatedState = store.getState();
         const { selectedErrorInvestigationRow, selectedViewInvestigationRow }: any = updatedState.agenticAI;
@@ -114,9 +124,9 @@ const ErrorInvestigationOverview = () => {
     const handleClick = (type: string) => {
         let tableData: any = [];
         if (type === 'activate') {
-            tableData = createLogAnalyzerNotActiveInstance(allLogAnalysisData);
+            tableData = notActiveTableRows;
         } else {
-            tableData = createLogAnalyzerActiveInstance(allLogAnalysisData);
+            tableData = activeTableRows;
         }
         const isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
         setDialog(
@@ -153,6 +163,25 @@ const ErrorInvestigationOverview = () => {
         );
     };
 
+    const ChartComponent = useMemo(
+        () => () =>
+            (
+                <DatabaseOverviewChart
+                    color1="#FE5502"
+                    color2="#F7941D"
+                    color3="#FDC300"
+                    data1={errInvestigationOverview?.severity1}
+                    data2={errInvestigationOverview?.severity2}
+                    data3={errInvestigationOverview?.severity3}
+                    centerText="Errors"
+                    centerValue={String(errInvestigationOverview?.totalEvents)}
+                    loading={false}
+                    isDisabled={loading || showNA}
+                />
+            ),
+        [errInvestigationOverview, loading, showNA]
+    );
+
     return (
         <div className={styles.errorInvestigationOverview}>
             <div className={styles.headSection}>
@@ -177,14 +206,16 @@ const ErrorInvestigationOverview = () => {
                                         label: t('databases.dashboard.activate-error-investigation'),
                                         onClick: () => {
                                             handleClick('activate');
-                                        }
+                                        },
+                                        isDisabled: notActiveTableRows?.length === 0
                                     },
                                     {
                                         id: 'wlm-db-view-error-investigation',
                                         label: t('databases.dashboard.view-error-investigation'),
                                         onClick: () => {
                                             handleClick('view');
-                                        }
+                                        },
+                                        isDisabled: activeTableRows?.length === 0
                                     }
                                 ]
                             }}
@@ -210,18 +241,7 @@ const ErrorInvestigationOverview = () => {
                 <div className={styles.mainSection}>
                     <div className={styles.sectionOne}>
                         <div className={styles.chartContainer}>
-                            <DatabaseOverviewChart
-                                color1="#FE5502"
-                                color2="#F7941D"
-                                color3="#FDC300"
-                                data1={errInvestigationOverview?.severity1}
-                                data2={errInvestigationOverview?.severity2}
-                                data3={errInvestigationOverview?.severity3}
-                                centerText="Errors"
-                                centerValue={String(errInvestigationOverview?.totalEvents)}
-                                loading={false}
-                                isDisabled={loading || showNA}
-                            />
+                            <ChartComponent />
                         </div>
 
                         <div className={styles.fullBlock}>
@@ -304,7 +324,7 @@ const ErrorInvestigationOverview = () => {
                         <DsTypography className={showNA ? CommonStyles.notAvailable : ''} variant="Regular_14">
                             {showNA
                                 ? t('databases.general.not-available')
-                                : `${errInvestigationOverview?.activeResource} of ${
+                                : `${errInvestigationOverview?.activeResource} out of ${
                                       errInvestigationOverview?.totalResource
                                   } ${t('databases.dashboard.resource-active-msg')}`}
                         </DsTypography>

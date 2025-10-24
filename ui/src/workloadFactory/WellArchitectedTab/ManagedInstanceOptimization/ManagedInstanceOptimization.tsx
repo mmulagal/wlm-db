@@ -39,9 +39,7 @@ const ManagedInstanceOptimization = () => {
     );
 
     const ChartComponent = useMemo(() => {
-        const setColor = () => {
-            return '#68C6B3';
-        };
+        const setColor = () => '#68C6B3';
         return () => (
             <HostDistributionChart
                 color1={showNA ? 'var(--border)' : setColor()}

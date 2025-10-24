@@ -1132,7 +1132,25 @@ export const getErrorInvestigationSummary = (allLogAnalysisData: any) => {
         return [];
     }
 
+    if (!allLogAnalysisData || allLogAnalysisData?.length === 0) {
+        return {
+            emptyState: true,
+            totalResource: 0,
+            activeResource: 0,
+            totalEvents: 0,
+            severity1: 0,
+            severity2: 0,
+            severity3: 0
+        };
+    }
+
+    let emptyState = true;
     let totalResource = 0;
+    let activeResource = 0;
+    let totalEvents = 0;
+    let severity1 = 0;
+    let severity2 = 0;
+    let severity3 = 0;
 
     const uniqueResourceList: Array<string> = [];
     Object.keys(inventoryTableData)?.forEach((key: any) => {
@@ -1153,58 +1171,34 @@ export const getErrorInvestigationSummary = (allLogAnalysisData: any) => {
                 return;
             }
             totalResource += 1;
+
+            // Find matching log analysis data for this managed instance
+            const logAnalysisMatch = allLogAnalysisData?.find(
+                (logHost: any) =>
+                    logHost?.databaseHostId === item?.resourceId &&
+                    logHost?.databaseInstanceId === instance?.databaseInstanceId &&
+                    logHost?.credentialId === item?.credentialId &&
+                    logHost?.regionId === item?.regionId
+            );
+
+            if (logAnalysisMatch) {
+                emptyState = false;
+                if (logAnalysisMatch?.status === ERROR_ANALYZER_STATUS.ACTIVE) {
+                    activeResource++;
+                }
+                totalEvents += logAnalysisMatch?.latestReport?.errorCount || 0;
+
+                // Get severity counts from log analysis data
+                severity1 += logAnalysisMatch?.latestReport?.severityCounts?.critical || 0;
+                severity2 += logAnalysisMatch?.latestReport?.severityCounts?.severe || 0;
+                severity3 += logAnalysisMatch?.latestReport?.severityCounts?.warning || 0;
+            }
         });
     });
 
-    const headerFilters = {
-        headerSelectedMultiCredIdsList: state.headers.headerSelectedMultiCredIdsList,
-        headerSelectedMultiRegionIdsList: state.headers.headerSelectedMultiRegionIdsList
-    };
-    const uniqueResourceAssList: Array<string> = [];
-
-    if (!allLogAnalysisData || allLogAnalysisData?.length === 0) {
-        return {
-            emptyState: true,
-            totalResource: 0,
-            activeResource: 0,
-            totalEvents: 0,
-            severity1: 0,
-            severity2: 0,
-            severity3: 0
-        };
-    }
-
-    let totalPresentResource = 0;
-    let activeResource = 0;
-    let totalEvents = 0;
-    let severity1 = 0;
-    let severity2 = 0;
-    let severity3 = 0;
-
-    allLogAnalysisData?.forEach((databaseHost: any) => {
-        if (
-            !headerFilters?.headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerFilters?.headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceAssList.includes(databaseHost?.databaseHostId)
-        ) {
-            return;
-        }
-        uniqueResourceAssList.push(databaseHost?.databaseHostId);
-
-        totalPresentResource++;
-        if (databaseHost?.status === ERROR_ANALYZER_STATUS.ACTIVE) {
-            activeResource++;
-        }
-        totalEvents += databaseHost?.latestReport?.errorCount || 0;
-
-        severity1 += databaseHost?.latestReport?.severityCounts?.critical || 0;
-        severity2 += databaseHost?.latestReport?.severityCounts?.severe || 0;
-        severity3 += databaseHost?.latestReport?.severityCounts?.warning || 0;
-    });
-
     return {
-        emptyState: false,
-        totalResource: totalResource || totalPresentResource,
+        emptyState,
+        totalResource,
         activeResource,
         totalEvents,
         severity1,
