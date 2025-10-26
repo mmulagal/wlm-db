@@ -1,4 +1,4 @@
-import { DsButton, DsPopover, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { DsButton, DsPopover, DsTypography, FlashingDotsLoader, RadioButton } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,11 +22,12 @@ import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
-import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setLandingFrom, setSelectedConfigEngineType } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
 import BarComponent from '../../Dashboard/BarComponent/BarComponent';
 import {
-    allAssessmentKeys,
+    mssqlAssessmentKeys,
+    oracleAssessmentKeys,
     derivedSeverity,
     derivedType,
     getCategoryForAssessment
@@ -40,9 +41,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         allOracleHostAssessmentLoading,
         allOracleHostAssessmentData
     } = useAppSelector(state => state.inventoryV2);
-    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, configEngineType } = useAppSelector(state => state.getWellOptimize);
     const dispatch = useDispatch();
     const windowSize = useResize();
+    const mainSectionRef = useRef<HTMLDivElement>(null);
+    const [hasScrollbar, setHasScrollbar] = useState(false);
 
     // For popup
     const [isOpen, setIsOpen] = useState(false);
@@ -99,6 +102,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     // Function to check if a tile should be visible based on applied filters
     const shouldShowTile = (assessmentKey: string): boolean => {
+        const currentAssessmentKeys = configEngineType === DBType.ORACLE ? oracleAssessmentKeys : mssqlAssessmentKeys;
+
+        // Check if the assessment key belongs to the current engine type
+        if (!currentAssessmentKeys.includes(assessmentKey)) {
+            return false;
+        }
+
         const tileCategory = getCategoryForAssessment(assessmentKey);
         const tileSeverity = derivedSeverity(assessmentKey);
 
@@ -118,15 +128,54 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         return categoryMatch && severityMatch;
     };
 
-    // Calculate total and filtered counts
-    const totalConfigurations = allAssessmentKeys.length;
-    const filteredConfigurations = allAssessmentKeys.filter(key => shouldShowTile(key)).length;
+    // Get current engine-specific assessment keys
+    const currentAssessmentKeys = configEngineType === DBType.ORACLE ? oracleAssessmentKeys : mssqlAssessmentKeys;
+
+    // Calculate total and filtered counts for current engine
+    const totalConfigurations = currentAssessmentKeys.length;
+    const filteredConfigurations = currentAssessmentKeys.filter(key => shouldShowTile(key)).length;
+
+    // Calculate separate counts for MSSQL and Oracle radio buttons
+    const mssqlTotalConfigurations = mssqlAssessmentKeys.length;
+    const mssqlFilteredConfigurations = mssqlAssessmentKeys.filter(key => {
+        const tileCategory = getCategoryForAssessment(key);
+        const tileSeverity = derivedSeverity(key);
+        if (appliedCategories.length === 0 && appliedSeverity.length === 0) return false;
+        const categoryMatch = appliedCategories.length > 0 ? appliedCategories.includes(tileCategory) : false;
+        const severityMatch =
+            appliedSeverity.length > 0 && tileSeverity ? appliedSeverity.includes(tileSeverity) : false;
+        return categoryMatch && severityMatch;
+    }).length;
+
+    const oracleTotalConfigurations = oracleAssessmentKeys.length;
+    const oracleFilteredConfigurations = oracleAssessmentKeys.filter(key => {
+        const tileCategory = getCategoryForAssessment(key);
+        const tileSeverity = derivedSeverity(key);
+        if (appliedCategories.length === 0 && appliedSeverity.length === 0) return false;
+        const categoryMatch = appliedCategories.length > 0 ? appliedCategories.includes(tileCategory) : false;
+        const severityMatch =
+            appliedSeverity.length > 0 && tileSeverity ? appliedSeverity.includes(tileSeverity) : false;
+        return categoryMatch && severityMatch;
+    }).length;
 
     // Check if no filters are applied (all categories and severities selected)
     const noFiltersApplied =
         appliedCategories.length === categoryOptions.length && appliedSeverity.length === severityOptions.length;
 
-    // Ends here
+    // Check if scrollbar is needed
+    useEffect(() => {
+        const checkScrollbar = () => {
+            if (mainSectionRef.current) {
+                const { scrollHeight, clientHeight } = mainSectionRef.current;
+                setHasScrollbar(scrollHeight > clientHeight);
+            }
+        };
+
+        checkScrollbar();
+        // Recheck when content changes
+        const timer = setTimeout(checkScrollbar, 100);
+        return () => clearTimeout(timer);
+    }, [filteredConfigurations, configEngineType, appliedCategories, appliedSeverity]); // Ends here
 
     const { showNA } = useAppSelector(state => state.headers);
 
@@ -272,13 +321,42 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16">
                     {t('databases.dashboard.well-architected-breakdown-by-configurations')}{' '}
-                    {noFiltersApplied
-                        ? `(${totalConfigurations})`
-                        : `(${filteredConfigurations}/${totalConfigurations})`}
                 </DsTypography>
 
+                <div className={styles.rightSide}>{loading && <FlashingDotsLoader />}</div>
+            </div>
+
+            <div className={styles.filterSection}>
+                <div className={styles.radioSection}>
+                    <RadioButton
+                        id="select-config-mssql"
+                        isChecked={configEngineType === DBType.MSSQL}
+                        onChange={() => {
+                            dispatch(setSelectedConfigEngineType(DBType.MSSQL));
+                        }}
+                        children={`${DBType.MSSQL} ${
+                            noFiltersApplied
+                                ? `(${mssqlTotalConfigurations})`
+                                : `(${mssqlFilteredConfigurations}/${mssqlTotalConfigurations})`
+                        }`}
+                        className=""
+                    />
+                    <RadioButton
+                        id="select-config-oracle"
+                        isChecked={configEngineType === DBType.ORACLE}
+                        onChange={() => {
+                            dispatch(setSelectedConfigEngineType(DBType.ORACLE));
+                        }}
+                        children={`${DBType.ORACLE} ${
+                            noFiltersApplied
+                                ? `(${oracleTotalConfigurations})`
+                                : `(${oracleFilteredConfigurations}/${oracleTotalConfigurations})`
+                        }`}
+                        className=""
+                    />
+                </div>
+
                 <div className={styles.rightSide}>
-                    {loading && <FlashingDotsLoader />}
                     <div className={`${styles.imageFilter} ${loading ? styles.loading : ''}`} ref={buttonRef}>
                         <Filter />
                         <DsButton isDisabled={loading} type="text" onClick={() => setIsOpen(!isOpen)}>
@@ -343,8 +421,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
             </div>
 
-            <div className={styles.mainSection}>
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) && (
+            <div
+                ref={mainSectionRef}
+                className={`${styles.mainSection} ${hasScrollbar ? styles.withScrollbar : styles.withoutScrollbar}`}
+            >
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) && (
                     <div className={`${styles.tile} ${styles.firstTile}`}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, 'Storage tier', 'storageTier')}
 
@@ -369,7 +450,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
@@ -398,7 +479,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
@@ -427,7 +508,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
@@ -456,7 +537,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
@@ -484,7 +565,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF, 'Log files (.ldf)', 'logFiles')}
 
@@ -508,7 +589,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
@@ -536,7 +617,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.ONTAP) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.ONTAP) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.ONTAP, 'ONTAP', 'ontapConfiguration')}
 
@@ -558,7 +639,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.OS) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.OS) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.OS, 'Operating system', 'operatingSystem')}
 
@@ -580,7 +661,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
@@ -609,37 +690,38 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH) && (
-                    <div className={styles.tile}>
-                        {renderOptimizationBar(
-                            ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-                            ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-                            'operatingSystemPatch'
-                        )}
+                {configEngineType === DBType.MSSQL &&
+                    shouldShowTile(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH) && (
+                        <div className={styles.tile}>
+                            {renderOptimizationBar(
+                                ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                                ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                                'operatingSystemPatch'
+                            )}
 
-                        <SeparatorComponent variant="vertical" height="60px" />
+                            <SeparatorComponent variant="vertical" height="60px" />
 
-                        <div className={styles.buttonContainer}>
-                            <DsButton
-                                data-testid="wlm-db-optimize-operating-system-patch"
-                                isThin
-                                variant="secondary"
-                                onClick={() => {
-                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH);
-                                }}
-                                isDisabled={
-                                    loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]?.length >
-                                        0
-                                }
-                            >
-                                {t('databases.well-architect.view-and-fix')}
-                            </DsButton>
+                            <div className={styles.buttonContainer}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-operating-system-patch"
+                                    isThin
+                                    variant="secondary"
+                                    onClick={() => {
+                                        handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH);
+                                    }}
+                                    isDisabled={
+                                        loading ||
+                                        inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]
+                                            ?.length > 0
+                                    }
+                                >
+                                    {t('databases.well-architect.view-and-fix')}
+                                </DsButton>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
@@ -667,7 +749,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.MTU) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.MTU) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.MTU,
@@ -692,7 +774,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.LICENSE) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.LICENSE) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.LICENSE,
@@ -720,36 +802,37 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH) && (
-                    <div className={styles.tile}>
-                        {renderOptimizationBar(
-                            ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-                            ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-                            'mssqlPatch'
-                        )}
+                {configEngineType === DBType.MSSQL &&
+                    shouldShowTile(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH) && (
+                        <div className={styles.tile}>
+                            {renderOptimizationBar(
+                                ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+                                ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+                                'mssqlPatch'
+                            )}
 
-                        <SeparatorComponent variant="vertical" height="60px" />
+                            <SeparatorComponent variant="vertical" height="60px" />
 
-                        <div className={styles.buttonContainer}>
-                            <DsButton
-                                data-testid="wlm-db-optimize-microsoft-sql-server"
-                                variant="secondary"
-                                onClick={() => {
-                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH);
-                                }}
-                                isDisabled={
-                                    loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]
-                                        ?.length > 0
-                                }
-                            >
-                                {t('databases.well-architect.view-and-fix')}
-                            </DsButton>
+                            <div className={styles.buttonContainer}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-microsoft-sql-server"
+                                    variant="secondary"
+                                    onClick={() => {
+                                        handleOptimize(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH);
+                                    }}
+                                    isDisabled={
+                                        loading ||
+                                        inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]
+                                            ?.length > 0
+                                    }
+                                >
+                                    {t('databases.well-architect.view-and-fix')}
+                                </DsButton>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.MAXDOP) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.MAXDOP) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.MAXDOP,
@@ -777,37 +860,38 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) && (
-                    <div className={styles.tile}>
-                        {renderOptimizationBar(
-                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
-                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
-                            'scheduledLocalSnapshot'
-                        )}
+                {configEngineType === DBType.MSSQL &&
+                    shouldShowTile(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) && (
+                        <div className={styles.tile}>
+                            {renderOptimizationBar(
+                                ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+                                ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+                                'scheduledLocalSnapshot'
+                            )}
 
-                        <SeparatorComponent variant="vertical" height="60px" />
+                            <SeparatorComponent variant="vertical" height="60px" />
 
-                        <div className={styles.buttonContainer}>
-                            <DsButton
-                                variant="secondary"
-                                isThin
-                                onClick={() => {
-                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
-                                }}
-                                data-testid="wlm-db-optimize-snapshot"
-                                isDisabled={
-                                    loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]
-                                        ?.length > 0
-                                }
-                            >
-                                {t('databases.well-architect.view-and-fix')}
-                            </DsButton>
+                            <div className={styles.buttonContainer}>
+                                <DsButton
+                                    variant="secondary"
+                                    isThin
+                                    onClick={() => {
+                                        handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
+                                    }}
+                                    data-testid="wlm-db-optimize-snapshot"
+                                    isDisabled={
+                                        loading ||
+                                        inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]
+                                            ?.length > 0
+                                    }
+                                >
+                                    {t('databases.well-architect.view-and-fix')}
+                                </DsButton>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.CRR) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.CRR) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.CRR, 'Cross-Region Replication (CRR)', 'crr')}
 
@@ -836,66 +920,69 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) && (
-                    <div className={styles.tile}>
-                        {renderOptimizationBar(
-                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-                            'scheduledawsBackup'
-                        )}
+                {configEngineType === DBType.MSSQL &&
+                    shouldShowTile(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) && (
+                        <div className={styles.tile}>
+                            {renderOptimizationBar(
+                                ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                                ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                                'scheduledawsBackup'
+                            )}
 
-                        <SeparatorComponent variant="vertical" height="60px" />
+                            <SeparatorComponent variant="vertical" height="60px" />
 
-                        <div className={styles.buttonContainer}>
-                            <DsButton
-                                variant="secondary"
-                                isThin
-                                onClick={() => {
-                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
-                                }}
-                                data-testid="wlm-db-optimize-awsbackup"
-                                isDisabled={
-                                    loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
-                                        ?.length > 0
-                                }
-                            >
-                                {t('databases.well-architect.view-and-fix')}
-                            </DsButton>
+                            <div className={styles.buttonContainer}>
+                                <DsButton
+                                    variant="secondary"
+                                    isThin
+                                    onClick={() => {
+                                        handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
+                                    }}
+                                    data-testid="wlm-db-optimize-awsbackup"
+                                    isDisabled={
+                                        loading ||
+                                        inProgressOptimizationData[
+                                            ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+                                        ]?.length > 0
+                                    }
+                                >
+                                    {t('databases.well-architect.view-and-fix')}
+                                </DsButton>
+                            </div>
                         </div>
-                    </div>
-                )}
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) && (
-                    <div className={styles.tile}>
-                        {renderOptimizationBar(
-                            ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
-                            t('databases.general.mssql-high-availability'),
-                            'mssqlhighAvailability'
-                        )}
+                    )}
+                {configEngineType === DBType.MSSQL &&
+                    shouldShowTile(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) && (
+                        <div className={styles.tile}>
+                            {renderOptimizationBar(
+                                ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
+                                t('databases.general.mssql-high-availability'),
+                                'mssqlhighAvailability'
+                            )}
 
-                        <SeparatorComponent variant="vertical" height="60px" />
+                            <SeparatorComponent variant="vertical" height="60px" />
 
-                        <div className={styles.buttonContainer}>
-                            <DsButton
-                                variant="secondary"
-                                isThin
-                                data-testid="wlm-db-optimize-mssql-high-availability"
-                                onClick={() => {
-                                    handleOptimize(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
-                                }}
-                                isDisabled={
-                                    loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]
-                                        ?.length > 0
-                                }
-                            >
-                                {t('databases.well-architect.view-and-fix')}
-                            </DsButton>
+                            <div className={styles.buttonContainer}>
+                                <DsButton
+                                    variant="secondary"
+                                    isThin
+                                    data-testid="wlm-db-optimize-mssql-high-availability"
+                                    onClick={() => {
+                                        handleOptimize(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
+                                    }}
+                                    isDisabled={
+                                        loading ||
+                                        inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]
+                                            ?.length > 0
+                                    }
+                                >
+                                    {t('databases.well-architect.view-and-fix')}
+                                </DsButton>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {shouldShowTile(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) && (
+                {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
@@ -924,83 +1011,95 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
-                    'oracleBinaryPlacement',
-                    'wlm-db-optimize-oracle-binary-placement'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+                        'oracleBinaryPlacement',
+                        'wlm-db-optimize-oracle-binary-placement'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
-                    'datafilesPlacement',
-                    'wlm-db-optimize-datafiles-placement'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
+                        'datafilesPlacement',
+                        'wlm-db-optimize-datafiles-placement'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
-                    'controlfilesPlacement',
-                    'wlm-db-optimize-controlfiles-placement'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
+                        'controlfilesPlacement',
+                        'wlm-db-optimize-controlfiles-placement'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
-                    'redoLogsPlacement',
-                    'wlm-db-optimize-redo-logs-placement'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
+                        'redoLogsPlacement',
+                        'wlm-db-optimize-redo-logs-placement'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
-                    'tempLogsPlacement',
-                    'wlm-db-optimize-temp-logs-placement'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
+                        'tempLogsPlacement',
+                        'wlm-db-optimize-temp-logs-placement'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
-                    'archivePlacement',
-                    'wlm-db-optimize-archive-placement'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
+                        'archivePlacement',
+                        'wlm-db-optimize-archive-placement'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
-                    'dataDgLunLayout',
-                    'wlm-db-optimize-data-dg-lun-layout'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
+                        'dataDgLunLayout',
+                        'wlm-db-optimize-data-dg-lun-layout'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
-                    'logDgLunLayout',
-                    'wlm-db-optimize-log-dg-lun-layout'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
+                        'logDgLunLayout',
+                        'wlm-db-optimize-log-dg-lun-layout'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
-                    'fraDgLunLayout',
-                    'wlm-db-optimize-fra-dg-lun-layout'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
+                        'fraDgLunLayout',
+                        'wlm-db-optimize-fra-dg-lun-layout'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
-                    'archiveLogDgLunLayout',
-                    'wlm-db-optimize-archive-dg-lun-layout'
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
+                        'archiveLogDgLunLayout',
+                        'wlm-db-optimize-archive-dg-lun-layout'
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.ONTAP,
-                    'oracleOntapConfiguration',
-                    'wlm-db-optimize-oracle-ontap',
-                    'Oracle - ONTAP',
-                    ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS,
-                    true
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.ONTAP,
+                        'oracleOntapConfiguration',
+                        'wlm-db-optimize-oracle-ontap',
+                        'Oracle - ONTAP',
+                        ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS,
+                        true
+                    )}
 
-                {renderOracleConfigTile(
-                    ASSESSMENT_CONFIG_NAMES.OS,
-                    'oracleOperatingSystem',
-                    'wlm-db-optimize-oracle-operating-system',
-                    'Oracle - Operating system',
-                    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
-                    true
-                )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.OS,
+                        'oracleOperatingSystem',
+                        'wlm-db-optimize-oracle-operating-system',
+                        'Oracle - Operating system',
+                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
+                        true
+                    )}
             </div>
         </div>
     );

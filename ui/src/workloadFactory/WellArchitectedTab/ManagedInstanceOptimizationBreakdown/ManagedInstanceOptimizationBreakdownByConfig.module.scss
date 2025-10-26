@@ -11,24 +11,38 @@
         align-items: center;
         border-bottom: 1px solid var(--border);
         justify-content: space-between;
+    }
 
-        .rightSide {
+    .filterSection {
+        height: 56px;
+        width: 100%;
+        padding: 16px 40px;
+        display: flex;
+        justify-content: space-between;
+
+        .radioSection {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 24px;
+        }
+    }
 
-            .imageFilter {
-                display: flex;
-                gap: 8px;
-                align-items: center;
+    .rightSide {
+        display: flex;
+        align-items: center;
+        gap: 16px;
 
-                &.loading {
-                    svg {
+        .imageFilter {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+
+            &.loading {
+                svg {
+                    fill: var(--icon-primary-disabled);
+
+                    path {
                         fill: var(--icon-primary-disabled);
-
-                        path {
-                            fill: var(--icon-primary-disabled);
-                        }
                     }
                 }
             }
@@ -36,13 +50,28 @@
     }
 
     .mainSection {
-        max-height: 484px;
+        max-height: 428px;
         overflow-y: scroll;
-        width: calc(100% - 16px);
         margin-top: 24px;
         margin-bottom: 24px;
+
+        &.withScrollbar {
+            width: calc(100% - 16px);
+
+            .tile {
+                width: 94.67%;
+            }
+        }
+
+        &.withoutScrollbar {
+            width: 100%;
+
+            .tile {
+                width: 100%;
+                padding: 24px 24px 24px 40px;
+            }
+        }
         .tile {
-            width: 94.67%;
             height: 124px;
             padding: 24px 0 24px 40px;
             display: flex;

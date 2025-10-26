@@ -2,7 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { cardDataDefault } from '../../workloadFactory/GetWell/GetWellUtils';
 import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
 import { GENERAL } from '../../utils/appConstants';
-import { WELL_ARCHITECTED_TABS } from '../../utils/consts';
+import { DBType, WELL_ARCHITECTED_TABS } from '../../utils/consts';
 
 const initialState: GetWellSliceInterface = {
     optimizePageLoading: null,
@@ -56,13 +56,17 @@ const initialState: GetWellSliceInterface = {
         fsxId: '',
         ec2InstanceId: '',
         isInstanceStorageAsmManaged: false
-    }
+    },
+    configEngineType: DBType.MSSQL
 };
 
 const getWellOptimizeSlice = createSlice({
     name: 'getWellOptimize',
     initialState,
     reducers: {
+        setSelectedConfigEngineType: (state, action: PayloadAction<any>) => {
+            state.configEngineType = action.payload;
+        },
         setFSXId: (state, action: PayloadAction<any>) => {
             state.innerPageDetails = action.payload;
         },
@@ -240,7 +244,7 @@ const getWellOptimizeSlice = createSlice({
 
 export const {
     setFSXId,
-
+    setSelectedConfigEngineType,
     setTabVisited,
     resetVisitedTabs,
     setSelectedWellArchitectTab,

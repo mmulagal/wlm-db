@@ -205,6 +205,7 @@ export interface GwSqlServerInstanceInterface {
 }
 
 export interface GetWellSliceInterface {
+    configEngineType: string;
     innerPageDetails: InnerPageDetailsInterface;
     visitedTabs: any;
     selectedWellArchitectTab: string;
