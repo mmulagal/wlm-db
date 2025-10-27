@@ -507,7 +507,7 @@ async function triggerAssessmentAndStartOptimization(
                 managedInstance,
                 parentJobId,
                 [AssessmentCategoriesOracle.STORAGE],
-                true,
+                false,
                 AssessmentTriggeredBy.SYSTEM
             );
         }

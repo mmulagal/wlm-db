@@ -1,5 +1,9 @@
 import { supportedOracleOsVersions } from '../../../workloads/oracle/consts';
-import { getOracleDefaultOrUserAuthCommand, pythonLogger } from '../../../workloads/oracle/oracle-ssm-script-utils';
+import {
+    getOracleDefaultOrUserAuthCommand,
+    logFileCheck,
+    pythonLogger
+} from '../../../workloads/oracle/oracle-ssm-script-utils';
 
 const CONVERT_TO_JSON = `
 
@@ -1051,6 +1055,7 @@ print(json.dumps(all_results))
 PYTHON
 )
 
+${logFileCheck(true)}
 ORACLE_RESULTS=$(sudo -i -u oracle bash <<ORACLE_SHELL
 export SQLPLUS_CMD="$sqlplus_command"
 export ORACLE_SID="${dbSid}"
@@ -1063,7 +1068,7 @@ import subprocess
 import re
 import datetime
 
-${pythonLogger('storageOsAssessment.log')}
+${pythonLogger('storageOsIscsiAssessment.log')}
 
 ${CHECK_ORACLE_PARAMETERS}
 
@@ -1091,6 +1096,7 @@ print(json.dumps({"oracle-parameters": oracle_params_result, "oracle-init-parame
 PYTHON
 ORACLE_SHELL
 )
+${logFileCheck()}
 
 $PYTHON_LATEST <<PYTHON
 import os

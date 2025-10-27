@@ -399,12 +399,6 @@ const HIGH_AVAILABILITY = [
     'drive-letter'
 ];
 
-const ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS = [
-    'data-dg-lun-layout',
-    'redolog-dg-lun-layout',
-    'fra-dg-lun-layout',
-    'archivelog-dg-lun-layout'
-];
 const MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP = {
     sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size', 'headroom'],
     layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
@@ -424,6 +418,17 @@ const MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
     ],
     luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
     os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size', 'mpio-timeout']
+};
+
+const ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS = [
+    'data-dg-lun-layout',
+    'redolog-dg-lun-layout',
+    'fra-dg-lun-layout',
+    'archivelog-dg-lun-layout'
+];
+
+const ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
+    os: ['asm-setup', 'asm-external-redundancy', 'afd-logical-block-size', 'asmlib-logical-block-size']
 };
 
 const ORACLE_STORAGE_LAYOUT_CONFIGS_MAP = {
@@ -451,6 +456,7 @@ const ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'nfs-caching-options'
     ]
 };
+
 const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
     volumes: [
         'thin-provision',
@@ -472,7 +478,7 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
     os: [
         'multipath-io',
         'host-utilities',
-        'iscsi-targets-sessions',
+        'multipath-io-sessions',
         'transparent-hugepages',
         'selinux',
         'iscsi-replacement-timeout',
@@ -481,7 +487,8 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'filesystems-io-options',
         'multipath-readcount',
         'multipath-configuration',
-        ...ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
+        ...ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
+        ...ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
     ]
 };
 
@@ -525,45 +532,29 @@ const DISMISS_UPDATE_STATUS = {
 };
 
 const INSTANCE_LEVEL_CONFIGURATIONS = [
+    // Common instance-level configurations
     'storage',
     'maxdop',
     'mssql-patch',
     'mapped-ontap-volumes',
     'clone',
-    'snapshot-policy',
     'crr',
     'shared-storage',
     'sqlServer-service',
     'drive-letter',
-    'thin-provision',
-    'autosize',
-    'autosize-mode',
-    'fractional-reserve',
-    'snapshot-copy-reserve',
-    'snapshot-autodelete',
-    'space-mgmt-try-first',
-    'tiering-policy',
-    'tiering-min-cooling-days',
-    'os-type',
-    'space-reservation-enabled',
-    'space-allocation-allocated',
-    'mpio-enabled',
-    'mpio-iscsi-count',
-    'mpio-load-balance-policy',
-    'ntfs-allocation-unit-size',
-    'mpio-timeout',
-    'performance-tier',
-    'tempdb-drive-size',
-    'log-drive-size',
-    'headroom',
-    'tempdb-files-location',
-    'data-files-location',
-    'log-files-location',
+    // Expand MSSQL storage configuration assessment map
+    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
+    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns,
+    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
+    // Expand MSSQL storage assessment configs map
+    ...MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP.sizing,
+    ...MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP.layout,
+    // Expand Oracle storage configuration assessment map
+    ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
+    ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns,
+    ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
     'clone-management',
-    // Oracle-specific configurations
-    'compression',
-    'deduplication',
-    'compaction',
+    // Oracle layout configurations
     'archive-placement',
     'datafiles-placement',
     'controlfiles-placement',
@@ -574,29 +565,8 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     'redolog-dg-lun-layout',
     'fra-dg-lun-layout',
     'archivelog-dg-lun-layout',
-    'multipath-io',
-    'host-utilities',
-    'iscsi-targets-sessions',
-    'transparent-hugepages',
-    'selinux',
-    'iscsi-replacement-timeout',
-    'multipath-friendly-names',
-    'tcp-advanced-options',
-    'filesystems-io-options',
-    'multipath-readcount',
-    'multipath-configuration',
-    'snapshot-policy',
-    'asm-setup',
-    'asm-external-redundancy',
-    'afd-logical-block-size',
-    'asmlib-logical-block-size',
-    'nfs-rootonly',
-    'export-policy',
-    'kernel-parameters',
-    'nfs-mount-options-databasefiles',
-    'nfs-mount-options-adrhome',
-    'nfsv4-domain-name',
-    'nfs-caching-options'
+    // Oracle-ISCSI-specific configurations
+    ...ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
 ];
 
 const HOST_LEVEL_CONFIGURATIONS = [
@@ -673,5 +643,6 @@ export {
     OptimizeOracleiSCSIStorageOperatingSystem,
     OracleOptimizeJobDescriptions,
     ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
-    OptimizeOracleNFSStorageOperatingSystem
+    OptimizeOracleNFSStorageOperatingSystem,
+    ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP
 };

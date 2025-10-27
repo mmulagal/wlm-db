@@ -13,7 +13,8 @@ import {
     ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,
     ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS,
-    ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP
+    ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import {
@@ -786,6 +787,10 @@ function updateFieldsBasedOnDismissedConfigurations(
             ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os.includes(fieldValue)
         ) {
             return false;
+        }
+
+        if (!isOracleWithNFS && ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os.includes(fieldValue)) {
+            return true;
         }
 
         return !Object.entries(dismissedConfigurations).some(

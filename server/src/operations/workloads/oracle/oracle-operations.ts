@@ -1074,7 +1074,7 @@ async function getOracleDatabaseMappedVolumes(
                         node1InstanceId,
                         'Get mapped volume details for Oracle db',
                         accountId,
-                        undefined,
+                        false,
                         '300', // the more the # of pdbs in the setup the longer it takes to fetch the details
                         undefined,
                         SSM_RUN_SHELL_SCRIPT_DOC,

@@ -229,7 +229,7 @@ function getAsmOSConfigDrift(osData: ISCIOSAssessment, databaseInstanceName: str
                                     asmOsConfigData?.['afd-logical-block-size']?.assessment?.result === '0'
                                         ? [databaseInstanceName]
                                         : [],
-                                    []
+                                    violationDetails
                                 )
                             );
                         }
@@ -245,7 +245,7 @@ function getAsmOSConfigDrift(osData: ISCIOSAssessment, databaseInstanceName: str
                                 errorMessage: asmOsConfigData?.['asmlib-logical-block-size']?.error
                             });
                         } else if (asmOsConfigData?.['asmlib-logical-block-size']?.assessment) {
-                            const isUnoptimized = ['Y', 'YES'].includes(
+                            const isUnoptimized = !['Y', 'YES'].includes(
                                 asmOsConfigData?.['asmlib-logical-block-size']?.assessment?.result?.toUpperCase() ?? ''
                             );
                             if (isUnoptimized) {

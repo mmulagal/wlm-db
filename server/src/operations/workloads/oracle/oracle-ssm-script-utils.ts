@@ -1469,10 +1469,6 @@ def log(msg):
     LOG_FILE = f"{LOG_DIR}/${logFileName}"
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR, exist_ok=True)
-    if not os.path.isfile(LOG_FILE):
-        with open(LOG_FILE, "w") as f:
-            f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\\n") 
-        os.chmod(LOG_FILE, 0o666) # Set R/W for all users
     with open(LOG_FILE, "a") as f:
         f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\\n") 
 

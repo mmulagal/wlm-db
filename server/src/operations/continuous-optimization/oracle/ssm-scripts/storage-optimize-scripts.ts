@@ -85,7 +85,7 @@ for diskGrp in unOptimizedDiskGroups:
 
     lunPayload = {
         "location": {"volume": {"name": ""}, "logical_unit": "lun1"},
-        "space": {"size": str(lunSize) + 'b', "guarantee": {"requested": "false"}},
+        "space": {"size": str(lunSize) + 'b', "guarantee": {"requested": "true"}},
         "os_type": "linux",
         "svm": {"name": diskGrp['svmName']},
 

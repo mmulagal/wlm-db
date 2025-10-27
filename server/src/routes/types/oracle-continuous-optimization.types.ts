@@ -102,7 +102,7 @@ const HostsToOptimize = Type.Array(
                     '- thp-disable\n' +
                     '- selinux-disable\n' +
                     '- iscsi-replacement-timeout\n' +
-                    '- iscsi-targets-sessions\n' +
+                    '- multipath-io-sessions\n' +
                     '- filesystem-io-options\n' +
                     '- multipath-configuration\n' +
                     '- multipath-friendly-names\n' +
