@@ -257,7 +257,13 @@ EOF
 
     get_loop_device_associated_with_disk() {
         local diskName="$1"
-        local udevInfo=$(sudo udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
+        local toolInUse="$2"
+        local udevInfo=""
+        if [ "$toolInUse" == "asmlib" ]; then
+            udevInfo=$(sudo udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
+        else
+            udevInfo=$(sudo udevadm info --query=all --name=$(cat "/dev/oracleafd/disks/$diskName"))
+        fi
 
         # Process the output only if it contains a valid device
         local loopDev=$(echo "$udevInfo" | grep "^E: DEVNAME=" | cut -d '=' -f2)
@@ -284,7 +290,8 @@ EOF
 
     get_asm_nfs_details() {
         local diskName="$1"
-        loopDevice=$(get_loop_device_associated_with_disk $diskName)
+        local toolInUse="$2"
+        loopDevice=$(get_loop_device_associated_with_disk $diskName $toolInUse)
         if [ -n "$loopDevice" ]; then
             backFilePath=$(get_back_file_path "$loopDevice")
             if [ -n "$backFilePath" ]; then
@@ -305,8 +312,13 @@ EOF
 
     get_asm_iscsi_details() {
         local diskName="$1"
+        local toolInUse="$2"
         
-        rawUdevInfo=$(udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
+        if [ "$toolInUse" == "asmlib" ]; then
+            rawUdevInfo=$(udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
+        else
+            rawUdevInfo=$(udevadm info --query=all --name=$(cat "/dev/oracleafd/disks/$diskName"))
+        fi
         serialUdevInfo=$(printf '%b' "$rawUdevInfo")
         mountDevice=$(echo "$serialUdevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
         mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
@@ -320,6 +332,22 @@ EOF
         fi
         mountPoint=$iscsiSerialNumber
         echo "$mountIp,$mountPoint,$protocol"
+    }
+
+    is_oracle_afd_setup() {
+        if lsmod | grep -q '^oracleafd'; then
+            echo "true"
+        else
+            echo "false"
+        fi
+    }
+
+    is_asmlib_setup() {
+        if lsmod | grep -q '^oracleasm'; then
+            echo "true"
+        else
+            echo "false"
+        fi
     }
 
     get_diskgroup_mappings() {
@@ -341,8 +369,21 @@ EOF
                 # Get first disk from the disk group, all disks in a diskgroup must follow same protocol & storage type. 
                 diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup" | head -n 2 | tail -n 1)
                 if [ -n "$diskName" ]; then
+
+                    isAsmLibSetup=$(is_asmlib_setup)
+                    isAfdSetup=$(is_oracle_afd_setup)
                     
-                    result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details $diskName)
+                    toolInUse="asmlib"
+                    if [ "$isAfdSetup" == "true" ]; then
+                        toolInUse="afd"
+                    fi
+
+                    if [[ "$isAsmLibSetup" == "false" && "$isAfdSetup" == "false" ]]; then
+                        echo "Neither ASMLIB nor AFD is set up on the system."
+                        continue
+                    fi
+
+                    result=$(get_asm_nfs_details "$diskName" "$toolInUse") || result=$(get_asm_iscsi_details "$diskName" "$toolInUse")
                     if [ $? -ne 0 ]; then
                         echo "Failed to get NFS or iSCSI details for disk $diskName"
                         continue
@@ -654,6 +695,13 @@ get_multipath_mount_details() {
 
         # Get Oracle DB file paths
         db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES" | tr -d '\n' | tr -d ' ')
+        local isAsmLibSetup=$(is_asmlib_setup)
+        local isAfdSetup=$(is_oracle_afd_setup)
+                    
+        local toolInUse="asmlib"
+        if [ "$isAfdSetup" == "true" ]; then
+            toolInUse="afd"
+        fi
         oracleMountDetails="{"
         for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
             diskgroups_csv=$(jq -r --arg ft "$fileType" '.[$ft].directories[]? | split("/") | .[0] | ltrimstr("+")' <<< "$db_paths_json" | sort -u | paste -sd ',' -)
@@ -676,7 +724,7 @@ get_multipath_mount_details() {
                         fi
                         while IFS= read -r diskName; do
                             [ -z "$diskName" ] && continue
-                            result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details "$diskName")
+                            result=$(get_asm_nfs_details "$diskName" "$toolInUse") || result=$(get_asm_iscsi_details "$diskName" "$toolInUse")
                             if [ $? -ne 0 ]; then
                                 continue
                             fi
