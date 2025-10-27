@@ -319,8 +319,8 @@ const GOLDEN_CONFIG = {
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
             },
             {
-                parameter: 'multipath-readcount',
-                name: 'multipath-readcount',
+                parameter: 'multiblock-readcount',
+                name: 'multiblock-readcount',
                 recommended: 'disabled',
                 severity: SEVERITY.WARNING,
                 resourceType: 'EC2 Instance',

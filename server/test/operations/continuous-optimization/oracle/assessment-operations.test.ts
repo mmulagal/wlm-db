@@ -230,9 +230,9 @@ describe('Oracle assessment operations', () => {
         expect((filesystemIo as any).resourceType).toBe('EC2 Instance');
         expect(filesystemIo.violationDetails?.[0]?.value).toBe('none');
 
-        // Test multipath-readcount assessment (Database specific)
+        // Test multiblock-readcount assessment (Database specific)
         const multipathReadcount = osAssessment.find(
-            item => item.name === 'multipath-readcount'
+            item => item.name === 'multiblock-readcount'
         ) as OracleGenericParameterDriftResponseType;
         expect(multipathReadcount).toBeDefined();
 

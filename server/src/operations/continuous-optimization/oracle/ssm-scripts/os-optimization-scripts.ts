@@ -1,10 +1,18 @@
 import { supportedOracleOsVersions } from '../../../workloads/oracle/consts';
-import { logFileCheck, pythonScriptInit } from '../../../workloads/oracle/oracle-ssm-script-utils';
+import {
+    logFileCheck,
+    pythonScriptInit,
+    getOracleDefaultOrUserAuthCommand,
+    pythonLogger
+} from '../../../workloads/oracle/oracle-ssm-script-utils';
 import {
     CHECK_ISCSI_REPLACEMENT_TIMEOUT,
     CHECK_ISCSI_TARGETS_SESSIONS,
     CHECK_TCP_FEATURES,
     CHECK_TRANSPARENT_HUGEPAGE,
+    GET_ORACLE_SPFILE,
+    CHECK_INIT_ORA_PARAMETERS,
+    ORACLE_HOME,
     GET_OS_INFO,
     CHECK_SANLUN,
     CHECK_MULTIPATH_IO_STATUS,
@@ -1144,6 +1152,310 @@ def fix_transparent_hugepage():
         return {"status": "failure", "error": error_msg}
 `;
 
+// Common reusable functions for Oracle parameter optimization
+const ORACLE_PARAM_COMMON_FUNCTIONS = `
+# Common utility functions for Oracle parameter optimization
+
+def get_oracle_environment():
+    """Get and validate Oracle environment variables"""
+    sqlplus_cmd = os.environ.get('SQLPLUS_CMD', '')
+    oracle_sid = os.environ.get('ORACLE_SID', '')
+    
+    if not sqlplus_cmd:
+        return None, {"status": "failure", "error": "SQLPLUS_CMD not set"}
+    
+    if not oracle_sid:
+        return None, {"status": "failure", "error": "ORACLE_SID not set"}
+    
+    return {"sqlplus_cmd": sqlplus_cmd, "oracle_sid": oracle_sid}, None
+
+def validate_spfile_usage():
+    """Check if database is using SPFILE and return SPFILE info"""
+    spfile_result = get_oracle_spfile()
+    
+    if spfile_result.get("error"):
+        error_msg = 'Failed to get SPFILE info: {}'.format(spfile_result["error"])
+        log(error_msg)
+        return None, {"status": "failure", "error": error_msg}
+    
+    spfile_path = spfile_result.get("spfile-path")
+    spfile_type = spfile_result.get("spfile-type")
+    
+    log('SPFILE path: {}, type: {}'.format(spfile_path, spfile_type))
+    
+    if spfile_type != "spfile" or not spfile_path:
+        log('Database not using SPFILE - skipping')
+        return None, {
+            "status": "skipped",
+            "message": "Database not using SPFILE, manual PFILE optimization required",
+            "spfile-path": spfile_path,
+            "spfile-type": spfile_type
+        }
+    
+    return {"spfile-path": spfile_path, "spfile-type": spfile_type}, None
+
+def execute_sql_command(sqlplus_cmd, oracle_sid, sql_query, operation_name):
+    """Execute SQL command and return result with error handling"""
+    cmd_parts = sqlplus_cmd.split()
+    env = os.environ.copy()
+    env['ORACLE_SID'] = oracle_sid
+    
+    try:
+        result = subprocess.run(
+            cmd_parts,
+            input=sql_query,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            timeout=30
+        )
+        
+        log('{} return code: {}'.format(operation_name, result.returncode))
+        log('{} stdout: {}'.format(operation_name, result.stdout.strip()))
+        log('{} stderr: {}'.format(operation_name, result.stderr.strip()))
+        
+        return {
+            "returncode": result.returncode,
+            "stdout": result.stdout.strip(),
+            "stderr": result.stderr.strip()
+        }
+    except subprocess.TimeoutExpired:
+        error_msg = 'SQL command timed out'
+        log(error_msg)
+        return {"error": error_msg}
+    except Exception as e:
+        error_msg = 'Unexpected error: {}'.format(str(e))
+        log(error_msg)
+        return {"error": error_msg}
+
+def check_privilege_error(output, stderr, sqlplus_cmd):
+    """Check for Oracle privilege errors and return formatted error response"""
+    combined_output = (output + stderr).lower()
+    
+    if 'ora-01031' in combined_output or 'insufficient privileges' in combined_output:
+        username_match = re.search(r'sqlplus\\s+-S\\s+([^/\\s]+)/', sqlplus_cmd)
+        username = username_match.group(1) if username_match else '<username>'
+        
+        log('User {} lacks ALTER SYSTEM privilege'.format(username))
+        return {
+            "status": "skipped",
+            "error": "Insufficient privileges to execute ALTER SYSTEM",
+            "message": "User {} does not have ALTER SYSTEM privilege. A DBA must grant this privilege by running: GRANT ALTER SYSTEM TO {};".format(username, username),
+            "grant-command": "GRANT ALTER SYSTEM TO {};".format(username)
+        }
+    return None
+
+def get_parameter_current_value(sqlplus_cmd, oracle_sid, param_name):
+    """Query current value of an Oracle parameter from v$parameter"""
+    check_param_sql = """SET PAGESIZE 0
+SET FEEDBACK OFF
+SET HEADING OFF
+SELECT value FROM v$parameter WHERE name = '{param_name}';
+EXIT;""".format(param_name=param_name)
+    
+    result = execute_sql_command(sqlplus_cmd, oracle_sid, check_param_sql, 'Check parameter {}'.format(param_name))
+    
+    if result.get("error"):
+        return None, result["error"]
+    
+    if result["returncode"] != 0:
+        error_msg = 'Failed to check {}: {}'.format(param_name, result["stderr"])
+        log(error_msg)
+        return None, error_msg
+    
+    return result["stdout"], None
+`;
+
+const OPTIMIZE_MULTIBLOCK_READ_COUNT = `
+# Optimize db_file_multiblock_read_count parameter for Oracle workloads
+def optimize_multiblock_read_count():
+    """Remove db_file_multiblock_read_count from SPFILE using ALTER SYSTEM"""
+    try:
+        log('Starting db_file_multiblock_read_count optimization')
+        
+        # Step 1: Get and validate Oracle environment
+        env_vars, error = get_oracle_environment()
+        if error:
+            return error
+        
+        sqlplus_cmd = env_vars["sqlplus_cmd"]
+        oracle_sid = env_vars["oracle_sid"]
+        log('Using sqlplus command from SQLPLUS_CMD environment variable')
+        
+        # Step 2: Validate SPFILE usage
+        spfile_info, error = validate_spfile_usage()
+        if error:
+            return error
+        
+        spfile_path = spfile_info["spfile-path"]
+        
+        # Step 3: Check if parameter exists using CHECK_INIT_ORA_PARAMETERS
+        log('Checking if db_file_multiblock_read_count parameter exists')
+        init_params_result = check_init_ora_parameters()
+        
+        if init_params_result.get("error"):
+            error_msg = 'Failed to check init parameters: {}'.format(init_params_result["error"])
+            log(error_msg)
+            return {"status": "failure", "error": error_msg}
+        
+        init_files = init_params_result.get("db-file-multiblock-read-count-in-init", [])
+        param_found = False
+        param_value = None
+        
+        for file_info in init_files:
+            if file_info.get("parameter-found"):
+                param_found = True
+                param_value = file_info.get("parameter-value")
+                log('Parameter db_file_multiblock_read_count found in SPFILE: {}'.format(param_value))
+                break
+        
+        if not param_found:
+            log('Parameter db_file_multiblock_read_count not found in SPFILE')
+            return {
+                "status": "already-optimized",
+                "message": "db_file_multiblock_read_count not set in SPFILE",
+                "spfile-path": spfile_path
+            }
+        
+        # Step 4: Reset db_file_multiblock_read_count to default using ALTER SYSTEM
+        log('Resetting db_file_multiblock_read_count to default value using ALTER SYSTEM')
+        
+        reset_param_sql = """SET PAGESIZE 0
+SET FEEDBACK ON
+SET HEADING OFF
+ALTER SYSTEM RESET db_file_multiblock_read_count SCOPE=BOTH;
+EXIT;"""
+        
+        result = execute_sql_command(sqlplus_cmd, oracle_sid, reset_param_sql, 'ALTER SYSTEM RESET')
+        
+        if result.get("error"):
+            return {"status": "failure", "error": result["error"]}
+        
+        output = result["stdout"]
+        error_output = result["stderr"]
+        
+        # Check for privilege errors
+        privilege_error = check_privilege_error(output, error_output, sqlplus_cmd)
+        if privilege_error:
+            privilege_error["previous-value"] = param_value
+            return privilege_error
+        
+        # Check for success
+        if result["returncode"] == 0 and ('system altered' in output.lower() or 'system reset' in output.lower()):
+            log('Successfully reset db_file_multiblock_read_count in SPFILE and current instance')
+            return {
+                "status": "success",
+                "message": "Reset db_file_multiblock_read_count to default (was: {}) - effective immediately, no restart required".format(param_value),
+                "spfile-path": spfile_path,
+                "previous-value": param_value,
+                "restart-required": False,
+                "action": "ALTER SYSTEM RESET SCOPE=BOTH",
+                "immediate-effect": True
+            }
+        else:
+            error_msg = 'Failed to reset parameter. Return code: {}, output: {}, stderr: {}'.format(
+                result["returncode"], output, error_output)
+            log(error_msg)
+            return {"status": "failure", "error": error_msg}
+    
+    except Exception as e:
+        error_msg = 'Unexpected error: {}'.format(str(e))
+        log(error_msg)
+        return {"status": "failure", "error": error_msg}
+`;
+
+const OPTIMIZE_FILESYSTEMIO_OPTIONS = `
+# Optimize filesystemio_options parameter for Oracle workloads
+def optimize_filesystemio_options():
+    """Set filesystemio_options to setall in SPFILE using ALTER SYSTEM"""
+    try:
+        log('Starting filesystemio_options optimization')
+        
+        # Step 1: Get and validate Oracle environment
+        env_vars, error = get_oracle_environment()
+        if error:
+            return error
+        
+        sqlplus_cmd = env_vars["sqlplus_cmd"]
+        oracle_sid = env_vars["oracle_sid"]
+        log('Using sqlplus command from SQLPLUS_CMD environment variable')
+        
+        # Step 2: Validate SPFILE usage
+        spfile_info, error = validate_spfile_usage()
+        if error:
+            return error
+        
+        spfile_path = spfile_info["spfile-path"]
+        
+        # Step 3: Check current filesystemio_options value
+        log('Checking current filesystemio_options parameter value')
+        current_value, error = get_parameter_current_value(sqlplus_cmd, oracle_sid, 'filesystemio_options')
+        
+        if error:
+            return {"status": "failure", "error": error}
+        
+        log('Current filesystemio_options value: {}'.format(current_value))
+        
+        # Step 4: Check if already optimized
+        if current_value.lower() == 'setall':
+            log('filesystemio_options is already set to setall')
+            return {
+                "status": "already-optimized",
+                "message": "filesystemio_options is already set to setall",
+                "spfile-path": spfile_path,
+                "current-value": current_value
+            }
+        
+        # Step 5: Set filesystemio_options to setall using ALTER SYSTEM
+        log('Setting filesystemio_options to setall using ALTER SYSTEM')
+        
+        set_param_sql = """SET PAGESIZE 0
+SET FEEDBACK ON
+SET HEADING OFF
+ALTER SYSTEM SET filesystemio_options = 'setall' SCOPE=SPFILE;
+EXIT;"""
+        
+        result = execute_sql_command(sqlplus_cmd, oracle_sid, set_param_sql, 'ALTER SYSTEM SET')
+        
+        if result.get("error"):
+            return {"status": "failure", "error": result["error"]}
+        
+        output = result["stdout"]
+        error_output = result["stderr"]
+        
+        # Check for privilege errors
+        privilege_error = check_privilege_error(output, error_output, sqlplus_cmd)
+        if privilege_error:
+            privilege_error["previous-value"] = current_value
+            return privilege_error
+        
+        # Check for success
+        if result["returncode"] == 0 and 'system altered' in output.lower():
+            log('Successfully set filesystemio_options to setall in SPFILE')
+            
+            return {
+                "status": "success",
+                "message": "Set filesystemio_options to setall in SPFILE (was: {}) - database restart required for changes to take effect".format(current_value),
+                "spfile-path": spfile_path,
+                "previous-value": current_value,
+                "current-value": "setall",
+                "restart-required": True,
+                "action": "ALTER SYSTEM SET SCOPE=SPFILE",
+                "immediate-effect": False
+            }
+        else:
+            error_msg = 'Failed to set parameter. Return code: {}, output: {}, stderr: {}'.format(
+                result["returncode"], output, error_output)
+            log(error_msg)
+            return {"status": "failure", "error": error_msg}
+    
+    except Exception as e:
+        error_msg = 'Unexpected error: {}'.format(str(e))
+        log(error_msg)
+        return {"status": "failure", "error": error_msg}
+`;
+
 const fixTransparentHugepageTemplate = `
 ${CHECK_TRANSPARENT_HUGEPAGE}
 ${FIX_TRANSPARENT_HUGEPAGE}
@@ -1274,6 +1586,130 @@ ${logFileCheck(false)}
 ${pythonScriptInit(optimizeMultiPathConfigFriendlyNamesTemplate, 'wlmdb-multipath-friendly-names-optimization.log')}
 `;
 
+const optimizeMultiblockReadCountTemplate = `
+${ORACLE_HOME}
+
+${GET_ORACLE_SPFILE}
+
+${CHECK_INIT_ORA_PARAMETERS}
+
+${ORACLE_PARAM_COMMON_FUNCTIONS}
+
+${OPTIMIZE_MULTIBLOCK_READ_COUNT}
+
+result = optimize_multiblock_read_count()
+print(json.dumps(result))
+`;
+
+const optimizeMultiblockReadCountCommand = (ec2InstanceId: string, dbSid: string) => `#!/bin/bash
+${logFileCheck(true)}
+
+# Set up Oracle environment for database access
+${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+
+# Find Python interpreter before switching to oracle user
+export PYTHON_LATEST=$(ls /usr/bin/python* /usr/local/bin/python* 2>/dev/null | xargs -I {} sh -c 'version=$({} -c "import sys; print(f\\"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\\")" 2>/dev/null); if [[ "$version" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then echo "{}|$version"; fi' | sort -t'|' -k2 -V | tail -n1 | cut -d'|' -f1)
+
+if [ -z "$PYTHON_LATEST" ]; then
+    echo "ERROR: No Python interpreter found"
+    exit 1
+fi
+
+# This script needs to run as oracle user for database access
+# Use sudo -i to properly set up oracle environment (PATH, ORACLE_HOME, etc.)
+RESULT=$(sudo -i -u oracle bash <<ORACLE_SHELL
+export SQLPLUS_CMD="$sqlplus_command"
+export ORACLE_SID="${dbSid}"
+
+$PYTHON_LATEST <<'PYTHON'
+import os
+import sys
+import json
+import subprocess
+import re
+import datetime
+import shutil
+from pathlib import Path
+
+aws_path = shutil.which("aws") or '/usr/local/bin/aws'
+
+${pythonLogger('wlmdb-oracle-multiblock-read-count-optimization.log')}
+${optimizeMultiblockReadCountTemplate}
+PYTHON
+ORACLE_SHELL
+)
+
+# Check if RESULT is empty
+if [ -z "$RESULT" ]; then
+    echo "ERROR: No output from Oracle shell execution"
+    exit 1
+fi
+
+# Output the result
+echo "$RESULT"
+`;
+
+const optimizeFilesystemioOptionsTemplate = `
+${ORACLE_HOME}
+
+${GET_ORACLE_SPFILE}
+
+${ORACLE_PARAM_COMMON_FUNCTIONS}
+
+${OPTIMIZE_FILESYSTEMIO_OPTIONS}
+
+result = optimize_filesystemio_options()
+print(json.dumps(result))
+`;
+
+const optimizeFilesystemioOptionsCommand = (ec2InstanceId: string, dbSid: string) => `#!/bin/bash
+${logFileCheck(true)}
+
+# Set up Oracle environment for database access
+${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+
+# Find Python interpreter before switching to oracle user
+export PYTHON_LATEST=$(ls /usr/bin/python* /usr/local/bin/python* 2>/dev/null | xargs -I {} sh -c 'version=$({} -c "import sys; print(f\\"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\\")" 2>/dev/null); if [[ "$version" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then echo "{}|$version"; fi' | sort -t'|' -k2 -V | tail -n1 | cut -d'|' -f1)
+
+if [ -z "$PYTHON_LATEST" ]; then
+    echo "ERROR: No Python interpreter found"
+    exit 1
+fi
+
+# This script needs to run as oracle user for database access
+# Use sudo -i to properly set up oracle environment (PATH, ORACLE_HOME, etc.)
+RESULT=$(sudo -i -u oracle bash <<ORACLE_SHELL
+export SQLPLUS_CMD="$sqlplus_command"
+export ORACLE_SID="${dbSid}"
+
+$PYTHON_LATEST <<'PYTHON'
+import os
+import sys
+import json
+import subprocess
+import re
+import datetime
+import shutil
+from pathlib import Path
+
+aws_path = shutil.which("aws") or '/usr/local/bin/aws'
+
+${pythonLogger('wlmdb-oracle-filesystemio-options-optimization.log')}
+${optimizeFilesystemioOptionsTemplate}
+PYTHON
+ORACLE_SHELL
+)
+
+# Check if RESULT is empty
+if [ -z "$RESULT" ]; then
+    echo "ERROR: No output from Oracle shell execution"
+    exit 1
+fi
+
+# Output the result
+echo "$RESULT"
+`;
+
 export {
     optimizeTcpOptionsCommand,
     optimizeIscsiReplacementTimeoutCommand,
@@ -1284,5 +1720,7 @@ export {
     fixTransparentHugepageCommand,
     enableMultipathIoCommand,
     disableSelinuxCommand,
-    DOWNLOAD_AND_EXTRACT_TARGZ
+    DOWNLOAD_AND_EXTRACT_TARGZ,
+    optimizeMultiblockReadCountCommand,
+    optimizeFilesystemioOptionsCommand
 };

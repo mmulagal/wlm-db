@@ -1007,6 +1007,12 @@ ssmMock
     .resolves(getSampleCommandResponse('optimizeMultipathConfiguration'))
     .on(SendCommandCommand, params => params.Comment === 'Optimize multipath friendly names configuration')
     .resolves(getSampleCommandResponse('optimizeMultipathFriendlyNames'))
+    .on(SendCommandCommand, params => params.Comment === 'Disable transparent huge pages(THP) settings')
+    .resolves(getSampleCommandResponse('optimizeTransparentHugePages'))
+    .on(SendCommandCommand, params => params.Comment === 'Optimize Oracle multiblock read count parameter')
+    .resolves(getSampleCommandResponse('optimizeMultiblockReadcount'))
+    .on(SendCommandCommand, params => params.Comment === 'Optimize Oracle filesystem I/O options parameter')
+    .resolves(getSampleCommandResponse('optimizeFilesystemioOptions'))
     .on(SendCommandCommand, params => params.Comment === 'Installing NetApp Host Utilities')
     .resolves(getSampleCommandResponse('installNetAppHostUtilities'))
     .on(SendCommandCommand, params => params.Comment === 'Enabling Multipath IO')
@@ -1652,6 +1658,18 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeMultipathFriendlyNames'
     })
     .resolves(getSampleCommandResponseWithOutput('optimizeMultipathFriendlyNames', '{"status":"success"}'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeTransparentHugePages'
+    })
+    .resolves(getSampleCommandResponseWithOutput('optimizeTransparentHugePages', '{"status":"success"}'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeMultiblockReadcount'
+    })
+    .resolves(getSampleCommandResponseWithOutput('optimizeMultiblockReadcount', '{"status":"success"}'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeFilesystemioOptions'
+    })
+    .resolves(getSampleCommandResponseWithOutput('optimizeFilesystemioOptions', '{"status":"success"}'))
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installNetAppHostUtilities'
     })

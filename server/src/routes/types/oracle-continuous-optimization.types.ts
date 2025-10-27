@@ -103,10 +103,10 @@ const HostsToOptimize = Type.Array(
                     '- selinux-disable\n' +
                     '- iscsi-replacement-timeout\n' +
                     '- multipath-io-sessions\n' +
-                    '- filesystem-io-options\n' +
+                    '- filesystems-io-options\n' +
                     '- multipath-configuration\n' +
                     '- multipath-friendly-names\n' +
-                    '- multipath-readcount\n\n' +
+                    '- multiblock-readcount\n\n' +
                     'For nfs-storage-operating-system type, valid values are:\n' +
                     '- kernel-parameters\n' +
                     '- nfs-mount-options-databasefiles\n' +

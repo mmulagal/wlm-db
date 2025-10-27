@@ -712,7 +712,7 @@ const oracleAssessmentMetadata = {
                 resourceType: 'EC2 Instance'
             },
             {
-                name: 'multipath-readcount',
+                name: 'multiblock-readcount',
                 status: 'optimized',
                 recommended: 'disabled',
                 severity: 'warning',

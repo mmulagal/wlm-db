@@ -31,6 +31,8 @@ import {
     fixTransparentHugepageCommand,
     enableMultipathIoCommand,
     disableSelinuxCommand,
+    optimizeMultiblockReadCountCommand,
+    optimizeFilesystemioOptionsCommand,
     optimizeMultipathIoConfigCommand,
     optimizeMultiPathConfigFriendlyNamesCommand
 } from './ssm-scripts/os-optimization-scripts';
@@ -164,7 +166,12 @@ async function oracleOptimizeStorageOS(
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_FRIENDLY_NAMES:
             jobDescription = `Fix Storage Operating System multipath friendly names for ${serverNameWithHostName}`;
             break;
-
+        case OptimizeOracleiSCSIStorageOperatingSystem.MULTIBLOCK_READCOUNT:
+            jobDescription = `Fix Storage Operating System Oracle multiblock read count for ${serverNameWithHostName}`;
+            break;
+        case OptimizeOracleiSCSIStorageOperatingSystem.FILESYSTEM_IO_OPTIONS:
+            jobDescription = `Fix Storage Operating System Oracle filesystem I/O options for ${serverNameWithHostName}`;
+            break;
         default:
             jobDescription = '';
             break;
@@ -418,6 +425,48 @@ async function oracleOptimizeStorageOS(
                     databaseInstanceName: instanceName,
                     fsxId,
                     activeNodeInstanceId: activeNodeInstanceId!,
+                    instanceMetadata
+                });
+            } catch (error) {
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
+            }
+            break;
+        }
+
+        case OptimizeOracleiSCSIStorageOperatingSystem.MULTIBLOCK_READCOUNT: {
+            try {
+                await optimizeMultiblockReadcount({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseInstanceId,
+                    activeNodeInstanceId,
+                    instanceMetadata
+                });
+            } catch (error) {
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
+            }
+            break;
+        }
+
+        case OptimizeOracleiSCSIStorageOperatingSystem.FILESYSTEM_IO_OPTIONS: {
+            try {
+                await optimizeFilesystemioOptions({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseInstanceId,
+                    activeNodeInstanceId,
                     instanceMetadata
                 });
             } catch (error) {
@@ -1413,4 +1462,227 @@ async function disableSelinux(params: OptimizeOSParams) {
     }
 }
 
+async function optimizeMultiblockReadcount(params: OptimizeOSParams) {
+    const {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        databaseInstanceId,
+        activeNodeInstanceId,
+        instanceMetadata
+    } = params;
+
+    logger.info('Optimizing Oracle multiblock read count', {
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        databaseInstanceId
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Fix Oracle multiblock read count for ${serverNameWithHostName}`,
+        description: `Remove db_file_multiblock_read_count parameter for automatic optimization on ${serverNameWithHostName}`,
+        resourceName: serverNameWithHostName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.WELL_ARCHITECTED,
+        parentJobId
+    });
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    try {
+        const ssmCommand = optimizeMultiblockReadCountCommand(activeNodeInstanceId, databaseInstanceId);
+        const ssmComment = 'Optimize Oracle multiblock read count parameter';
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId,
+                ssmComment,
+                accountId,
+                false,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            ),
+            3,
+            5000
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+
+        if (parsedResponse.error) {
+            throw new Error(parsedResponse.error);
+        }
+
+        const status = parsedResponse?.status;
+        if (status === 'success') {
+            logger.info('Oracle multiblock read count fix completed successfully');
+        } else if (status === 'already-optimized') {
+            jobError =
+                'db_file_multiblock_read_count parameter is not set - Oracle will use automatic optimization. No changes needed';
+            logger.info(jobError);
+            jobStatus = JOBSTATUS.WARNING;
+        } else if (status === 'skipped') {
+            jobError = parsedResponse?.message || 'Multiblock read count fix was skipped';
+            logger.info(jobError);
+            jobStatus = JOBSTATUS.WARNING;
+        } else {
+            jobError = parsedResponse?.error || 'Failed to fix multiblock read count parameter';
+            logger.error(jobError);
+            jobStatus = JOBSTATUS.FAILED;
+        }
+
+        if (IS_DEMO_FLOW) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['multiblock-readcount'],
+                'Oracle',
+                instanceMetadata || {}
+            );
+        }
+    } catch (error) {
+        jobError = jobError || `Error while optimizing multiblock read count ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING
+                ? AuditStatus.SUCCESS
+                : AuditStatus.FAILED,
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING ? '' : jobError
+        );
+    }
+
+    if (jobStatus === JOBSTATUS.FAILED) {
+        logger.info(
+            `Skipping assessment trigger for databaseHost ${databaseHostId} as multiblock read count optimization job did not complete successfully.`
+        );
+        throw new Error(jobError);
+    }
+}
+
+async function optimizeFilesystemioOptions(params: OptimizeOSParams) {
+    const {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        databaseInstanceId,
+        activeNodeInstanceId,
+        instanceMetadata
+    } = params;
+
+    logger.info('Optimizing Oracle filesystem I/O options', {
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        databaseInstanceId
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Fix Oracle filesystem I/O options for ${serverNameWithHostName}`,
+        description: `Set filesystemio_options = setall for optimal I/O performance on ${serverNameWithHostName}`,
+        resourceName: serverNameWithHostName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.WELL_ARCHITECTED,
+        parentJobId
+    });
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    try {
+        const ssmCommand = optimizeFilesystemioOptionsCommand(activeNodeInstanceId, databaseInstanceId);
+        const ssmComment = 'Optimize Oracle filesystem I/O options parameter';
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId,
+                ssmComment,
+                accountId,
+                false,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            ),
+            3,
+            5000
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+
+        if (parsedResponse.error) {
+            throw new Error(parsedResponse.error);
+        }
+
+        const status = parsedResponse?.status;
+        if (status === 'success') {
+            logger.info('Oracle filesystem I/O options optimization completed successfully');
+        } else if (status === 'already-optimized') {
+            jobError =
+                'filesystemio_options is already set to setall - optimal I/O performance configuration. No changes needed';
+            logger.info(jobError);
+            jobStatus = JOBSTATUS.WARNING;
+        } else if (status === 'skipped') {
+            jobError = parsedResponse?.message || 'Filesystem I/O options optimization was skipped';
+            logger.info(jobError);
+            jobStatus = JOBSTATUS.WARNING;
+        } else {
+            jobError = parsedResponse?.error || 'Failed to optimize filesystem I/O options parameter';
+            logger.error(jobError);
+            jobStatus = JOBSTATUS.FAILED;
+        }
+
+        if (IS_DEMO_FLOW) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['filesystem-io-options'],
+                'Oracle',
+                instanceMetadata || {}
+            );
+        }
+    } catch (error) {
+        jobError = jobError || `Error while optimizing filesystem I/O options ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING
+                ? AuditStatus.SUCCESS
+                : AuditStatus.FAILED,
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING ? '' : jobError
+        );
+    }
+
+    if (jobStatus === JOBSTATUS.FAILED) {
+        logger.info(
+            `Skipping assessment trigger for databaseHost ${databaseHostId} as filesystem I/O options optimization job did not complete successfully.`
+        );
+        throw new Error(jobError);
+    }
+}
 export { oracleOptimizeStorageOS };

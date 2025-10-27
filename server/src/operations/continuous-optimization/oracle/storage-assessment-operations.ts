@@ -490,7 +490,7 @@ function getOSConfigDrift(
                 break;
             }
 
-            case 'multipath-readcount': {
+            case 'multiblock-readcount': {
                 const oracleParamsData =
                     os?.['oracle-parameters-from-init']?.['db-file-multiblock-read-count-in-init'] || [];
                 violationDetails = oracleParamsData

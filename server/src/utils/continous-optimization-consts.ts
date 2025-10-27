@@ -76,10 +76,10 @@ enum OptimizeOracleiSCSIStorageOperatingSystem {
     SELINUX_DISABLE = 'selinux',
     ISCSI_REPLACEMENT_TIMEOUT = 'iscsi-replacement-timeout',
     MULTIPATH_IO_SESSIONS = 'multipath-io-sessions',
-    FILESYSTEM_IO_OPTIONS = 'filesystem-io-options',
+    FILESYSTEM_IO_OPTIONS = 'filesystems-io-options',
     MULTIPATH_CONFIGURATION = 'multipath-configuration',
     MULTIPATH_FRIENDLY_NAMES = 'multipath-friendly-names',
-    MULTIPATH_READCOUNT = 'multipath-readcount',
+    MULTIBLOCK_READCOUNT = 'multiblock-readcount',
     ORACLE_AFD_LOGICAL_BLOCK_SIZE = 'afd-logical-block-size',
     ORACLE_ASM_LOGICAL_BLOCK_SIZE = 'asmlib-logical-block-size'
 }
@@ -485,7 +485,7 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'multipath-friendly-names',
         'tcp-advanced-options',
         'filesystems-io-options',
-        'multipath-readcount',
+        'multiblock-readcount',
         'multipath-configuration',
         ...ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
         ...ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
