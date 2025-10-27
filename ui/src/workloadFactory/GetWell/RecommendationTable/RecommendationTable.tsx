@@ -264,7 +264,7 @@ const RecommendationTable = ({
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOracleOs;
-            payload = getOracleOsPayload('filesystem-io-options');
+            payload = getOracleOsPayload('filesystems-io-options');
             apiInput = { payload };
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
@@ -279,7 +279,7 @@ const RecommendationTable = ({
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOracleOs;
-            payload = getOracleOsPayload('multipath-readcount');
+            payload = getOracleOsPayload('multiblock-readcount');
             apiInput = { payload };
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE) {
             statusType = ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE;

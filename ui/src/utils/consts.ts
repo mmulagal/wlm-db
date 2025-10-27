@@ -891,7 +891,7 @@ export const GETWELL_CONFIG: any = {
     'multipath-friendly-names': 'Multipath friendly names',
     'tcp-advanced-options': 'TCP advanced options',
     'filesystems-io-options': 'Filesystem I/O options',
-    'multipath-readcount': 'Multiblock read count',
+    'multiblock-readcount': 'Multiblock read count',
     'multipath-io-sessions': 'Multipath I/O sessions',
     'multipath-configuration': 'Multipath config file',
     'kernel-parameters': 'Kernel parameters',
@@ -1075,7 +1075,7 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         'multipath-friendly-names': 'os',
         'tcp-advanced-options': 'os',
         'filesystems-io-options': 'os',
-        'multipath-readcount': 'os',
+        'multiblock-readcount': 'os',
         'multipath-io-sessions': 'os',
         'multipath-configuration': 'os',
         // Oracle placement configurations

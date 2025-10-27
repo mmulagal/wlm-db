@@ -1929,7 +1929,7 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         'Multipath friendly names': 'multipath-friendly-names',
         'TCP advanced options': 'tcp-advanced-options',
         'Filesystem I/O options': 'filesystems-io-options',
-        'Multiblock read count': 'multipath-readcount',
+        'Multiblock read count': 'multiblock-readcount',
         'Multipath I/O sessions': 'multipath-io-sessions',
         'Multipath config file': 'multipath-configuration',
 

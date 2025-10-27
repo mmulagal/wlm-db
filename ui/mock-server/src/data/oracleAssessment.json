@@ -599,7 +599,7 @@
                     "resourceType": "Database"
                 },
                 {
-                    "name": "multipath-readcount",
+                    "name": "multiblock-readcount",
                     "status": "not-optimized",
                     "recommended": "disabled",
                     "severity": "warning",
