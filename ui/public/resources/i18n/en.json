@@ -18,6 +18,7 @@
             "registered-resource": "Registered resource"
         },
         "general": {
+            "inventory": "Inventory",
             "view-and-fix": "View and fix",
             "instance-well-architected-dashboard": "instance well-architected dashboard",
             "database-well-architected-dashboard-for-oracle": "database well-architected dashboard for oracle",
@@ -903,7 +904,9 @@
             "unique-errors-severity": "Unique errors by severity",
             "errors": "Errors",
             "n/a": "n/a",
+            "unique-error-distribution": " Unique errors distribution",
             "unique-errors-over-time": " Unique errors over the time",
+            "unique-errors-by-tags": " Unique errors by tags",
             "error-code": "Error code",
             "error-count": "Error count",
             "first-occurrence": "First occurrence",

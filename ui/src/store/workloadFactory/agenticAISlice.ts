@@ -44,13 +44,17 @@ export const initialSandboxState: AgenticAIEntities = {
         loading: false
     },
     selectedErrorInvestigationRow: null,
-    selectedViewInvestigationRow: null
+    selectedViewInvestigationRow: null,
+    uniqueErrorGraphType: 'over-time'
 };
 
 const agenticAISlice = createSlice({
     name: 'agenticAI',
     initialState: initialSandboxState,
     reducers: {
+        setSelectedGraphType: (state, action: PayloadAction<any>) => {
+            state.uniqueErrorGraphType = action.payload;
+        },
         setSelectedErrorTags: (state, action: PayloadAction<string[]>) => {
             state.selectedErrorTags = action.payload;
         },
@@ -165,6 +169,7 @@ const agenticAISlice = createSlice({
 });
 
 export const {
+    setSelectedGraphType,
     setSelectedErrorTags,
     setSelectedViewErrorInvestigationRow,
     setSelectedErrorInvestigationRow,

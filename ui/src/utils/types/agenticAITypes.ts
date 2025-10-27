@@ -20,6 +20,7 @@ export interface ErrorInvestigationGetApiResponse {
 }
 
 export interface AgenticAIEntities {
+    uniqueErrorGraphType: string;
     selectedErrorTags: string[];
     selectedViewInvestigationRow: [] | any;
     selectedErrorInvestigationRow: [] | any;
