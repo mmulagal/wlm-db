@@ -2,8 +2,8 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
 import {
-    TriggerDriftAssessmentSchema,
-    BulkDismissConfigurationSchema
+    BulkDismissOracleConfigurationSchema,
+    TriggerOracleDriftAssessmentSchema
 } from './schemas/mssql-continuous-optimization-schema';
 import castRequest from './utils';
 import {
@@ -35,7 +35,7 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
     server
         .post(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
-            { schema: TriggerDriftAssessmentSchema },
+            { schema: TriggerOracleDriftAssessmentSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
@@ -126,7 +126,7 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
         })
         .post(
             `${ORACLE_BULK_OPTIMIZATION_API_PREFIX_PATH}/assessment/dismiss`,
-            { schema: BulkDismissConfigurationSchema },
+            { schema: BulkDismissOracleConfigurationSchema },
             async (request, reply) => {
                 const {
                     params: { accountId },

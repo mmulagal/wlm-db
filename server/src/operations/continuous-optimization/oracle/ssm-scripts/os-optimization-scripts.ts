@@ -88,6 +88,369 @@ def optimize_tcp_options():
     return statusAfterOptimization
 `;
 
+const CHECK_MULTIPATHD_RUNNING_STATUS = `
+def is_multipathd_running():
+    try:
+        result = subprocess.run(['systemctl', 'is-active', '--quiet', 'multipathd'], 
+                              check=False, timeout=5)
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        log(f'Exception while checking multipathd status: {str(e)}')
+        return False
+    except Exception as e:
+        log(f'Unexpected error checking multipathd status: {str(e)}')
+        return False`;
+
+const RELOAD_MULTIPATHD_SERVICE = `
+def reload_multipathd():
+    try:
+        result = subprocess.run(['sudo', 'systemctl', 'reload', 'multipathd'], 
+                              check=False, timeout=10, 
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                              universal_newlines=True)
+        if result.returncode != 0:
+            log(f'multipathd reload failed: {result.stderr.strip()}')
+        return result.returncode == 0
+    except subprocess.TimeoutExpired:
+        log('multipathd reload timed out after 10 seconds')
+        return False
+    except FileNotFoundError:
+        log('systemctl command not found')
+        return False
+    except Exception as e:
+        log(f'Unexpected error reloading multipathd: {str(e)}')
+        return False`;
+
+const VALIDATE_MULTIPATH_CONF = `
+def validate_multipath_conf():
+    try:
+        # Comprehensive validation using multipath -d (checks both syntax and runtime)
+        result = subprocess.run(['multipath', '-d'], 
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                               universal_newlines=True, timeout=15)
+        
+        if result.returncode != 0:
+            # Command failed - log the error and return false
+            error_output = result.stderr.strip() or result.stdout.strip()
+            log(f"multipath -d validation failed: {error_output}")
+            return False
+        
+        log("multipath -d validation passed")
+        return True
+        
+    except subprocess.TimeoutExpired as e:
+        log(f"multipath validation timed out: {str(e)}")
+        return False
+    except FileNotFoundError:
+        log("multipath command not found")
+        return False
+    except Exception as e:
+        log(f"Exception while validating multipath.conf: {str(e)}")
+        return False
+`;
+
+const CHECK_NETAPP_BLOCK_EXISTS_IN_FILE = `
+# Parse config text robustly to find NETAPP/LUN device block 
+def check_netapp_block_exists_in_file(configText):
+    if not configText or not configText.strip():
+        log("Empty or invalid config text provided")
+        return False
+    
+    try:
+        devices_section = re.search(r'devices\\s*{.*}', configText, flags=re.DOTALL)
+        if not devices_section:
+            log("No devices section found in config")
+            return False
+        
+        devices_text = devices_section.group(0)
+        device_blocks = re.findall(r'device\\s*{.*?}', devices_text, flags=re.DOTALL)
+        
+        for block in device_blocks:
+            vendor_match = re.search(r'vendor\\s+"NETAPP"', block, re.IGNORECASE)
+            product_match = re.search(r'product\\s+"LUN"', block, re.IGNORECASE)
+            if vendor_match and product_match:
+                log("NETAPP LUN device block found")
+                return True
+        
+        log("No NETAPP LUN device block found")
+        return False
+        
+    except re.error as e:
+        log(f"Regex error while parsing config: {str(e)}")
+        return False
+    except Exception as e:
+        log(f"Error parsing multipath config: {str(e)}")
+        return False
+`;
+
+const ENSURE_MULTIPATH_CONF = `
+${CHECK_MULTIPATHD_RUNNING_STATUS}
+${RELOAD_MULTIPATHD_SERVICE}
+${VALIDATE_MULTIPATH_CONF}
+${CHECK_NETAPP_BLOCK_EXISTS_IN_FILE}
+# ensure multipath config is validated
+def ensure_multipath_conf():
+    log('Checking if multipathd is running')
+    if not is_multipathd_running():
+        log('multipathd daemon is not running. Exiting.')
+        return {"status": "failed", "error": "multipathd daemon is not running"}
+    # Early validation of existing config before making changes
+    if Path('/etc/multipath.conf').exists():
+        log("Validating existing multipath.conf before changes")
+        if not validate_multipath_conf():
+            return {"status": "failed", "error": "Existing multipath.conf has syntax/runtime errors. Fix it before running this script."}
+    config_path = Path('/etc/multipath.conf')
+    backup_path = Path('/etc/wlmdb-multipath-backup.conf')
+    file_created = False
+    # Single source of truth for key-values
+    new_values = {
+        'path_grouping_policy': '"group_by_prio"',
+        'path_selector': '"service-time 0"',
+        'prio': '"ontap"',
+        'features': '"3 queue_if_no_path pg_init_retries 50"',
+        'hardware_handler': '"0"',
+        'failback': 'immediate',
+        'rr_weight': '"uniform"',
+        'no_path_retry': 'queue',
+        'user_friendly_names': 'yes',
+        'fast_io_fail_tmo': '5',
+        'dev_loss_tmo': '"infinity"',
+        'detect_prio': 'yes',
+        'flush_on_last_del': '"yes"',
+        'retain_attached_hw_handler': 'yes',
+        'path_checker': '"tur"',
+        'max_sectors_kb': '4096'
+    }
+    # Dynamically build NETAPP block
+    netapp_block = "    device {\\n        vendor \\"NETAPP\\"\\n        product \\"LUN\\"\\n"
+    for key, value in new_values.items():
+        netapp_block += f"        {key} {value}\\n"
+    netapp_block += "    }\\n"
+    try:
+        if config_path.exists():
+            shutil.copy2(config_path, backup_path)
+            config = config_path.read_text()
+            if check_netapp_block_exists_in_file(config):
+                log("NETAPP block found, updating keys if needed")
+                def update_device_block(match):
+                    block = match.group(0)
+                    for key, value in new_values.items():
+                        if re.search(rf'{key}\\s+.*', block):
+                            block = re.sub(rf'{key}\\s+.*', f'{key} {value}', block)
+                        else:
+                            # Add the key only once before the closing brace
+                            block = re.sub(r'(\\n\\s*}\\s*$)', f'\\n        {key} {value}\\1', block)
+                    return block
+                updated_config = re.sub(
+                    r'(device\\s*{\\s*vendor\\s*"NETAPP"\\s*product\\s*"LUN".*?})',
+                    update_device_block,
+                    config,
+                    flags=re.DOTALL
+                )
+                config_path.write_text(updated_config)
+            else:
+                log("NETAPP block not found, adding it")
+                if "devices {" in config:
+                    config = re.sub(r'(devices\\s*{)', r'\\1\\n' + netapp_block, config, 1)
+                else:
+                    config += "\\ndevices {\\n" + netapp_block + "}\\n"
+                config_path.write_text(config)
+        else:
+            log('/etc/multipath.conf not found, creating new file')
+            new_config_content = f"""defaults {{
+    find_multipaths yes
+    user_friendly_names no
+    polling_interval 5
+}}
+blacklist {{
+    devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|hd|cciss|nvme|nvm)[0-9]*"
+}}
+devices {{
+{netapp_block}}}
+"""
+            config_path.write_text(new_config_content)
+            os.chown(config_path, 0, 0)
+            os.chmod(config_path, 0o644)
+            file_created = True
+        # Validate config syntax & runtime after modifications
+        if not validate_multipath_conf():
+            log("Invalid multipath.conf after changes, rolling back")
+            if file_created:
+                config_path.unlink()
+            else:
+                shutil.copy2(backup_path, config_path)
+            return {"status": "failed", "error": "Invalid multipath.conf after changes"}
+        # Reload daemon and verify
+        log('Reloading multipathd daemon')
+        if reload_multipathd() and is_multipathd_running():
+            log('multipathd daemon reloaded successfully')
+            if backup_path.exists():
+                backup_path.unlink()
+        else:
+            log('Failed to reload multipathd daemon')
+            if file_created:
+                config_path.unlink()
+            else:
+                shutil.copy2(backup_path, config_path)
+            return {"status": "failed", "error": "Failed to reload multipathd daemon"}
+        return {"status": "success", "error": None}
+    except Exception as e:
+        log(f'Exception: {str(e)}')
+        return {"status": "failed", "error": str(e)}
+`;
+
+const ENSURE_MULTIPATH_FRIENDLY_NAMES = `
+${CHECK_MULTIPATHD_RUNNING_STATUS}
+${RELOAD_MULTIPATHD_SERVICE}
+${VALIDATE_MULTIPATH_CONF}
+${CHECK_NETAPP_BLOCK_EXISTS_IN_FILE}
+# ensure multipath friendly names is set to yes
+def ensure_multipath_friendly_names():
+    #  Check file existence first
+    config_path = Path('/etc/multipath.conf')
+    if not config_path.exists():
+        log('/etc/multipath.conf not found - cannot optimize friendly names without existing NETAPP LUN block')
+        return {"status": "failed", "error": "multipath.conf not found - NETAPP LUN device block is required for optimization"}
+    # Check multipathd status 
+    log('Checking if multipathd is running')
+    if not is_multipathd_running():
+        log('multipathd daemon is not running. Exiting.')
+        return {"status": "failed", "error": "multipathd daemon is not running"}
+    # Early validation of existing config before making changes
+    log("Validating existing multipath.conf before changes")
+    if not validate_multipath_conf():
+        return {"status": "failed", "error": "Existing multipath.conf has syntax/runtime errors. Fix it before running this script."}
+    #  Check NETAPP block exists before proceeding
+    config = config_path.read_text()
+    if not check_netapp_block_exists_in_file(config):
+        log('NETAPP LUN device block not found in multipath.conf')
+        return {"status": "failed", "error": "NETAPP LUN device block not found in multipath.conf"}
+    backup_path = Path('/etc/wlmdb-multipath-friendly-names-backup.conf')
+    file_created = False
+    try:
+        defaults_pattern = re.compile(r'defaults\\s*{([\\s\\S]*?)}', re.DOTALL)
+        friendly_names_pattern = re.compile(r'user_friendly_names\\s+(\\w+)')
+        netapp_device_pattern = re.compile(
+            r'device\\s*{\\s*vendor\\s*"NETAPP"\\s*product\\s*"LUN"[^}]*user_friendly_names\\s+(\\w+)[^}]*}',
+            re.DOTALL | re.IGNORECASE
+        )
+        
+        # Check defaults section once
+        defaults_match = defaults_pattern.search(config)
+        defaults_has_friendly_names_yes = False
+        
+        if defaults_match:
+            defaults_content = defaults_match.group(1)
+            friendly_names_match = friendly_names_pattern.search(defaults_content)
+            if friendly_names_match:
+                current_value = friendly_names_match.group(1).strip().lower()
+                defaults_has_friendly_names_yes = (current_value == 'yes')
+        
+        # Check NETAPP device section once
+        netapp_device_match = netapp_device_pattern.search(config)
+        netapp_device_has_friendly_names_yes = False
+        if netapp_device_match:
+            device_friendly_names_value = netapp_device_match.group(1).strip().lower()
+            netapp_device_has_friendly_names_yes = (device_friendly_names_value == 'yes')
+        
+        #  Skip if already optimized
+        if defaults_has_friendly_names_yes and netapp_device_has_friendly_names_yes:
+            log('user_friendly_names is already set to yes in both defaults and NETAPP device block, skipping optimization')
+            return {"status": "skipped", "message": "user_friendly_names is already set to yes in both defaults and NETAPP device block"}
+        # Create backup before any modifications
+        shutil.copy2(config_path, backup_path)
+        log("Created backup of existing multipath.conf")
+        
+        # Update user_friendly_names to yes in defaults section
+        log("Setting user_friendly_names to yes in defaults section")
+        
+        updated_config = config
+        if defaults_match:
+            defaults_content = defaults_match.group(1)
+            # Check if user_friendly_names exists in defaults
+            if friendly_names_pattern.search(defaults_content):
+                # Replace existing value
+                updated_defaults = re.sub(r'user_friendly_names\\s+\\w+', 'user_friendly_names yes', defaults_content)
+            else:
+                # Add user_friendly_names to existing defaults
+                updated_defaults = defaults_content.rstrip() + '\\n    user_friendly_names yes\\n'
+            
+            # Replace the defaults block
+            updated_config = re.sub(
+                r'(defaults\\s*{)[^}]*(})',
+                f'\\\\1{updated_defaults}\\\\2',
+                config,
+                flags=re.DOTALL
+            )
+        else:
+            # No defaults section exists, add one
+            defaults_block = """defaults {
+    user_friendly_names yes
+}
+"""
+            updated_config = defaults_block + config
+        
+        # Write intermediate config and validate
+        config_path.write_text(updated_config)
+        
+        # Also update user_friendly_names in NETAPP device block
+        log("Updating user_friendly_names in NETAPP device block")
+        
+        def update_netapp_device_block(match):
+            block = match.group(0)
+            # Check if user_friendly_names exists in the device block
+            if re.search(r'user_friendly_names\\s+', block):
+                # Replace existing value
+                block = re.sub(r'user_friendly_names\\s+\\w+', 'user_friendly_names yes', block)
+            else:
+                # Add user_friendly_names to the device block (before closing brace)
+                block = re.sub(r'(\\n\\s*}\\s*$)', r'\\n        user_friendly_names yes\\1', block)
+            return block
+        
+        # Update the NETAPP device block with user_friendly_names yes
+        final_config = re.sub(
+            r'(device\\s*{\\s*vendor\\s*"NETAPP"\\s*product\\s*"LUN".*?})',
+            update_netapp_device_block,
+            updated_config,
+            flags=re.DOTALL | re.IGNORECASE
+        )
+        
+        config_path.write_text(final_config)
+        # Validate config and handle reload with clear rollback logic
+        if not validate_multipath_conf():
+            log("Invalid multipath.conf after changes, rolling back")
+            shutil.copy2(backup_path, config_path)
+            return {"status": "failed", "error": "Invalid multipath.conf after changes"}
+        # Reload daemon and verify with better error handling
+        log('Reloading multipathd daemon')
+        reload_success = reload_multipathd()
+        daemon_running = is_multipathd_running()
+        
+        if reload_success and daemon_running:
+            log('multipathd daemon reloaded successfully')
+            # Clean up backup only after successful completion
+            if backup_path.exists():
+                backup_path.unlink()
+                log('Removed backup file after successful optimization')
+            return {"status": "success", "error": None}
+        else:
+            log('Failed to reload multipathd daemon or daemon not running after reload')
+            # Rollback configuration
+            shutil.copy2(backup_path, config_path)
+            error_msg = "Failed to reload multipathd daemon" if not reload_success else "multipathd daemon not running after reload"
+            return {"status": "failed", "error": error_msg}
+    except Exception as e:
+        log(f'Exception during friendly names optimization: {str(e)}')
+        # Better error flow: Ensure rollback happens on any exception
+        try:
+            if backup_path.exists() and config_path.exists():
+                shutil.copy2(backup_path, config_path)
+                log('Configuration rolled back due to exception')
+        except Exception as rollback_error:
+            log(f'Failed to rollback configuration: {str(rollback_error)}')
+        return {"status": "failed", "error": f"Exception during optimization: {str(e)}"}
+`;
+
 const OPTIMIZE_ISCSI_REPLACEMENT_TIMEOUT = `
 # Optimize ISCSI Replacement timeout
 def set_iscsi_replacement_timeout():
@@ -300,6 +663,20 @@ if all_optimized:
     }))
 else:
     print(json.dumps(optimize_tcp_options()))    
+`;
+
+const optimizeMultiPathConfigFriendlyNamesTemplate = `
+${ENSURE_MULTIPATH_FRIENDLY_NAMES}
+result = ensure_multipath_friendly_names()
+log(result)
+print(json.dumps(result))
+`;
+
+const optimizeMultiPathConfigTemplate = `
+${ENSURE_MULTIPATH_CONF}
+result = ensure_multipath_conf()
+log(result)
+print(json.dumps(result))
 `;
 
 const optimizeTcpOptionsCommand = `
@@ -780,11 +1157,23 @@ ${logFileCheck(false)}
 ${pythonScriptInit(fixTransparentHugepageTemplate, 'wlmdb-os-configuration-thp-optimization.log')}
 `;
 
+const optimizeMultipathIoConfigCommand = `#!/bin/bash
+${logFileCheck(false)}
+${pythonScriptInit(optimizeMultiPathConfigTemplate, 'wlmdb-multipath-IO-config-optimization.log')}
+`;
+
+const optimizeMultiPathConfigFriendlyNamesCommand = `#!/bin/bash
+${logFileCheck(false)}
+${pythonScriptInit(optimizeMultiPathConfigFriendlyNamesTemplate, 'wlmdb-multipath-friendly-names-optimization.log')}
+`;
+
 export {
     optimizeTcpOptionsCommand,
     optimizeIscsiReplacementTimeoutCommand,
     optimizeMultipathIoSessionsCommand,
+    fixTransparentHugepageCommand,
+    optimizeMultipathIoConfigCommand,
+    optimizeMultiPathConfigFriendlyNamesCommand,
     installHostUtilitiesCommand,
-    DOWNLOAD_AND_EXTRACT_TARGZ,
-    fixTransparentHugepageCommand
+    DOWNLOAD_AND_EXTRACT_TARGZ
 };

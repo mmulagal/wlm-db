@@ -27,8 +27,10 @@ import {
     optimizeTcpOptionsCommand,
     optimizeIscsiReplacementTimeoutCommand,
     optimizeMultipathIoSessionsCommand,
-    installHostUtilitiesCommand,
-    fixTransparentHugepageCommand
+    fixTransparentHugepageCommand,
+    optimizeMultipathIoConfigCommand,
+    optimizeMultiPathConfigFriendlyNamesCommand,
+    installHostUtilitiesCommand
 } from './ssm-scripts/os-optimization-scripts';
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import getLogger from '../../../utils/logger';
@@ -141,6 +143,12 @@ async function oracleOptimizeStorageOS(
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.THP_DISABLE:
             jobDescription = `Fix Storage Operating System transparent huge pages for ${serverNameWithHostName}`;
+            break;
+        case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_CONFIGURATION:
+            jobDescription = `Fix Storage Operating System multipath configuration for ${serverNameWithHostName}`;
+            break;
+        case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_FRIENDLY_NAMES:
+            jobDescription = `Fix Storage Operating System multipath friendly names for ${serverNameWithHostName}`;
             break;
         default:
             jobDescription = '';
@@ -301,6 +309,47 @@ async function oracleOptimizeStorageOS(
         case OptimizeOracleiSCSIStorageOperatingSystem.THP_DISABLE: {
             try {
                 await optimizeTransparentHugePages({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseInstanceId,
+                    activeNodeInstanceId,
+                    instanceMetadata
+                });
+            } catch (error) {
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
+            }
+            break;
+        }
+        case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_CONFIGURATION: {
+            try {
+                await optimizeMultipathConfig({
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseInstanceId,
+                    activeNodeInstanceId,
+                    instanceMetadata
+                });
+            } catch (error) {
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.WARNING;
+            }
+            break;
+        }
+
+        case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_FRIENDLY_NAMES: {
+            try {
+                await optimizeMultipathFriendlyNames({
                     accountId,
                     credentialsId,
                     region,
@@ -820,6 +869,207 @@ async function optimizeTransparentHugePages(params: OptimizeOSParams) {
         throw new Error(jobError);
     }
 }
+async function optimizeMultipathConfig(params: OptimizeOSParams) {
+    const {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        databaseInstanceId,
+        activeNodeInstanceId,
+        instanceMetadata
+    } = params;
+
+    logger.info('Optimizing Multipath Configuration', {
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        databaseInstanceId
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Fix Multipath Configuration for ${serverNameWithHostName}`,
+        description: `Fix multipath configuration for ${serverNameWithHostName}`,
+        resourceName: serverNameWithHostName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.WELL_ARCHITECTED,
+        parentJobId
+    });
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    try {
+        const ssmCommand = optimizeMultipathIoConfigCommand;
+        const ssmComment = 'Optimize multipath configuration';
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId,
+                ssmComment,
+                accountId,
+                false,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            ),
+            3,
+            5000
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+        const status = parsedResponse?.status;
+
+        if (parsedResponse.error || status === 'failed') {
+            throw new Error(parsedResponse.error);
+        }
+
+        if (status === 'success') {
+            logger.info('Multipath configuration optimization completed successfully');
+        }
+
+        if (IS_DEMO_FLOW) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['multipath-configuration'],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+    } catch (error) {
+        jobError = `Error while fixing multipath configuration ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
+            jobStatus === JOBSTATUS.COMPLETED ? '' : jobError
+        );
+    }
+
+    if (jobStatus !== JOBSTATUS.COMPLETED) {
+        logger.info(
+            `Skipping assessment trigger for databaseHost ${databaseHostId} as multipath configuration optimization job did not complete successfully.`
+        );
+        throw new Error(jobError);
+    }
+}
+
+async function optimizeMultipathFriendlyNames(params: OptimizeOSParams) {
+    const {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        databaseInstanceId,
+        activeNodeInstanceId,
+        instanceMetadata
+    } = params;
+
+    logger.info('Optimizing Multipath Friendly Names Configuration', {
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        databaseInstanceId
+    });
+
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Fix Multipath Friendly Names Configuration for ${serverNameWithHostName}`,
+        description: `Fix multipath friendly names configuration for ${serverNameWithHostName}`,
+        resourceName: serverNameWithHostName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.WELL_ARCHITECTED,
+        parentJobId
+    });
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError;
+
+    try {
+        const ssmCommand = optimizeMultiPathConfigFriendlyNamesCommand;
+        const ssmComment = 'Optimize multipath friendly names configuration';
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId,
+                ssmComment,
+                accountId,
+                false,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            ),
+            3,
+            5000
+        );
+
+        const parsedResponse = sqlResponseParsing(response);
+
+        if (parsedResponse.error) {
+            throw new Error(parsedResponse.error);
+        }
+
+        const status = parsedResponse?.status;
+        if (status === 'success') {
+            logger.info('Multipath friendly names configuration optimization completed successfully');
+        } else if (status === 'skipped') {
+            const skippedMessage =
+                'Multipath friendly names configuration is already optimized as per recommendations. No changes needed';
+            logger.info(skippedMessage);
+            jobError = skippedMessage;
+            jobStatus = JOBSTATUS.WARNING;
+        }
+
+        if (IS_DEMO_FLOW) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                databaseInstanceId,
+                ['multipath-friendly-names'],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+    } catch (error) {
+        jobError = `Error while fixing multipath friendly names configuration ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        updateLongRunningAuditGroup(
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING
+                ? AuditStatus.SUCCESS
+                : AuditStatus.FAILED,
+            jobStatus === JOBSTATUS.COMPLETED || jobStatus === JOBSTATUS.WARNING ? '' : jobError
+        );
+    }
+
+    if (jobStatus !== JOBSTATUS.COMPLETED && jobStatus !== JOBSTATUS.WARNING) {
+        logger.info(
+            `Skipping assessment trigger for databaseHost ${databaseHostId} as multipath friendly names optimization job did not complete successfully.`
+        );
+        throw new Error(jobError);
+    }
+}
 
 async function installHostUtilities(params: OptimizeOSParams) {
     const {
@@ -922,5 +1172,4 @@ async function installHostUtilities(params: OptimizeOSParams) {
         throw new Error(jobError);
     }
 }
-
 export { oracleOptimizeStorageOS };

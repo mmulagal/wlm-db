@@ -55,7 +55,7 @@ const DriftAssessmentPerHost = {
     }
 };
 
-const TriggerDriftAssessmentSchema = {
+const BaseTriggerDriftAssessmentSchema = {
     ...resourceRequest,
     summary: 'Trigger assessment for a database instance',
     description: 'Trigger assessment for best practice misalignments on a managed database instance',
@@ -65,6 +65,16 @@ const TriggerDriftAssessmentSchema = {
     response: {
         202: JobIdResponse
     }
+};
+
+const TriggerDriftAssessmentSchema = {
+    ...BaseTriggerDriftAssessmentSchema,
+    tags: [RouteTags.MSSQL_ASSESSMENT]
+};
+
+const TriggerOracleDriftAssessmentSchema = {
+    ...BaseTriggerDriftAssessmentSchema,
+    tags: [RouteTags.ORACLE_ASSESSMENT]
 };
 
 const OptimizeStorageSchemaDescription =
@@ -224,7 +234,7 @@ const BulkOptimizeAwsBackupSchema = {
     }
 };
 
-const BulkDismissConfigurationSchema = {
+const BaseBulkDismissConfigurationSchema = {
     params: AccountIdParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkDismissConfigurationRequestBody,
@@ -233,6 +243,16 @@ const BulkDismissConfigurationSchema = {
     response: {
         200: BulkDismissConfigurationResponse
     }
+};
+
+const BulkDismissConfigurationSchema = {
+    ...BaseBulkDismissConfigurationSchema,
+    tags: [RouteTags.MSSQL_ASSESSMENT]
+};
+
+const BulkDismissOracleConfigurationSchema = {
+    ...BaseBulkDismissConfigurationSchema,
+    tags: [RouteTags.ORACLE_ASSESSMENT]
 };
 
 const BulkOptimizeCloneSchema = {
@@ -307,5 +327,7 @@ export {
     BulkOptimizeHeartbeatSchema,
     BulkOptimizeClusterQuorumSchema,
     BulkOptimizeSQLServerServiceSchema,
-    BulkOptimizeMTUAlignmentSchema
+    BulkOptimizeMTUAlignmentSchema,
+    BulkDismissOracleConfigurationSchema,
+    TriggerOracleDriftAssessmentSchema
 };

@@ -313,3 +313,105 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
         });
     });
 });
+
+describe('Multipath Configuration Optimization', () => {
+    it('should optimize multipath configuration successfully', async () => {
+        await oracleOptimizeStorageOS(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            dbInstanceSid,
+            OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_CONFIGURATION
+        );
+
+        const { items: jobItems } = await getJobs(ACCOUNT_ID, {
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            includeSubJobs: true
+        });
+
+        // Find the parent job for multipath configuration optimization
+        const multipathConfigOptimizeJob = jobItems?.find(
+            (job: any) =>
+                (job.description?.includes('multipath configuration') ||
+                    job.description?.includes('Optimization completed for')) &&
+                job.type === JOBTYPE.WELL_ARCHITECTED &&
+                job.resourceName === dbInstanceSid
+        );
+
+        expect(multipathConfigOptimizeJob).toBeDefined();
+        expect(multipathConfigOptimizeJob?.resourceName).toBe(dbInstanceSid);
+
+        // Wait for job completion
+        if (multipathConfigOptimizeJob?.id) {
+            await waitForJobCompletion(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                multipathConfigOptimizeJob.id
+            );
+
+            // Check final job status
+            const { items: finalJobItems } = await getJobs(ACCOUNT_ID, {
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                includeSubJobs: true
+            });
+
+            const completedJob = finalJobItems?.find((job: any) => job.id === multipathConfigOptimizeJob.id);
+            expect(completedJob?.status).toBe(JOBSTATUS.COMPLETED);
+        }
+    });
+});
+
+describe('Multipath Friendly Names Optimization', () => {
+    it('should optimize multipath friendly names successfully', async () => {
+        await oracleOptimizeStorageOS(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            dbInstanceSid,
+            OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_FRIENDLY_NAMES
+        );
+
+        const { items: jobItems } = await getJobs(ACCOUNT_ID, {
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            includeSubJobs: true
+        });
+
+        // Find the parent job for multipath friendly names optimization
+        const multipathFriendlyNamesOptimizeJob = jobItems?.find(
+            (job: any) =>
+                (job.description?.includes('multipath friendly names') ||
+                    job.description?.includes('Optimization completed for')) &&
+                job.type === JOBTYPE.WELL_ARCHITECTED &&
+                job.resourceName === dbInstanceSid
+        );
+
+        expect(multipathFriendlyNamesOptimizeJob).toBeDefined();
+        expect(multipathFriendlyNamesOptimizeJob?.resourceName).toBe(dbInstanceSid);
+
+        // Wait for job completion
+        if (multipathFriendlyNamesOptimizeJob?.id) {
+            await waitForJobCompletion(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                multipathFriendlyNamesOptimizeJob.id
+            );
+
+            // Check final job status
+            const { items: finalJobItems } = await getJobs(ACCOUNT_ID, {
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                includeSubJobs: true
+            });
+
+            const completedJob = finalJobItems?.find((job: any) => job.id === multipathFriendlyNamesOptimizeJob.id);
+            expect(completedJob?.status).toBe(JOBSTATUS.COMPLETED);
+        }
+    });
+});

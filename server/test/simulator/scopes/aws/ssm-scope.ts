@@ -1003,6 +1003,10 @@ ssmMock
     .resolves(getSampleCommandResponse('optimizeOracleAsmLibDriftConfigParam'))
     .on(SendCommandCommand, params => params.Comment === 'Optimize AFD Drift Config Param')
     .resolves(getSampleCommandResponse('optimizeOracleAfdDriftConfigParam'))
+    .on(SendCommandCommand, params => params.Comment === 'Optimize multipath configuration')
+    .resolves(getSampleCommandResponse('optimizeMultipathConfiguration'))
+    .on(SendCommandCommand, params => params.Comment === 'Optimize multipath friendly names configuration')
+    .resolves(getSampleCommandResponse('optimizeMultipathFriendlyNames'))
     .on(SendCommandCommand, params => params.Comment === 'Installing NetApp Host Utilities')
     .resolves(getSampleCommandResponse('installNetAppHostUtilities'));
 
@@ -1636,6 +1640,14 @@ ssmMock
             JSON.stringify(getCommandInvocationResponse.oracleAfdDriftConfigParamOptimizationResponse)
         )
     )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeMultipathConfiguration'
+    })
+    .resolves(getSampleCommandResponseWithOutput('optimizeMultipathConfiguration', '{"status":"success"}'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeMultipathFriendlyNames'
+    })
+    .resolves(getSampleCommandResponseWithOutput('optimizeMultipathFriendlyNames', '{"status":"success"}'))
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installNetAppHostUtilities'
     })
