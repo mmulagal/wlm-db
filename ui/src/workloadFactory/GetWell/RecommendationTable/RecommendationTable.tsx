@@ -1143,7 +1143,7 @@ const RecommendationTable = ({
                                             </div>
                                         </TooltipComponent>
                                     ) : (
-                                        <div id={`${rowData?.id}-optimize`}>
+                                        <div id={`${engineType}-${rowData?.id}-optimize`}>
                                             <DsButton
                                                 variant="secondary"
                                                 onClick={(e: any) => {
