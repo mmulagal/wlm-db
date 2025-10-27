@@ -6,6 +6,7 @@ export type TimeRange = {
 };
 
 export interface ErrorInvestigationGetApiResponse {
+    tags: string[] | undefined;
     error: string;
     cause: string;
     count: number;
@@ -19,6 +20,7 @@ export interface ErrorInvestigationGetApiResponse {
 }
 
 export interface AgenticAIEntities {
+    selectedErrorTags: string[];
     selectedViewInvestigationRow: [] | any;
     selectedErrorInvestigationRow: [] | any;
     selectedSeverity: [] | any;

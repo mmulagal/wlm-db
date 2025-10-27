@@ -11,6 +11,7 @@ export const initialSandboxState: AgenticAIEntities = {
     selectedSeverity: '',
     selectedTimeFrame: '',
     selectedErrorCodes: '',
+    selectedErrorTags: ['Storage', 'Compute', 'Network', 'Security'],
     timeRange: {
         from: '01:00',
         fromPeriod: 'AM',
@@ -50,6 +51,9 @@ const agenticAISlice = createSlice({
     name: 'agenticAI',
     initialState: initialSandboxState,
     reducers: {
+        setSelectedErrorTags: (state, action: PayloadAction<string[]>) => {
+            state.selectedErrorTags = action.payload;
+        },
         setSelectedViewErrorInvestigationRow: (state, action: PayloadAction<any>) => {
             state.selectedViewInvestigationRow = action.payload;
         },
@@ -92,6 +96,7 @@ const agenticAISlice = createSlice({
             state.selectedTimeFrame = action.payload.selectedTimeFrame;
             state.selectedSeverity = action.payload.selectedSeverity;
             state.selectedErrorCodes = action.payload.selectedErrorCodes;
+            state.selectedErrorTags = action.payload.selectedErrorTags;
             state.timeRange = {
                 from: '01:00',
                 fromPeriod: 'AM',
@@ -160,6 +165,7 @@ const agenticAISlice = createSlice({
 });
 
 export const {
+    setSelectedErrorTags,
     setSelectedViewErrorInvestigationRow,
     setSelectedErrorInvestigationRow,
     setSelectedSeverity,

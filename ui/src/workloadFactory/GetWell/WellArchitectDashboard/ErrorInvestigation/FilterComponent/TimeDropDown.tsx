@@ -1,11 +1,13 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useState, useEffect, useRef } from 'react';
-import { DsTypography } from '@tlveng/wlm-ds';
+import { DsTypography, DsCheckbox } from '@tlveng/wlm-ds';
+import { DsButton } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import styles from './TimeDropDown.module.scss'; // you can replace this with SCSS
 import {
     setSelectedErrorCodes,
+    setSelectedErrorTags,
     setSelectedSeverity,
     setSelectedTimeFrame,
     updateTimeRangeField
@@ -24,18 +26,29 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
     const dispatch = useDispatch();
     const { t } = useTranslation();
 
-    const { timeRange, noData, investigationDatesLoading, noErrorsDetected } = useAppSelector(state => state.agenticAI);
+    const { timeRange, noData, investigationDatesLoading, noErrorsDetected, selectedErrorTags } = useAppSelector(
+        state => state.agenticAI
+    );
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const loading = investigationDatesLoading || errorInvestigationLoading;
 
     const [showOptions, setShowOptions] = useState(false);
     const [showCustomTimeOption, setShowCustomTimeOption] = useState(false);
+    const [selectedTags, setSelectedTags] = useState<string[]>(['Compute', 'Storage', 'Network', 'Security']); // All tags selected by default (temp state)
+    const [appliedTags, setAppliedTags] = useState<string[]>(['Compute', 'Storage', 'Network', 'Security']); // Applied tags (what shows in label)
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setShowOptions(false);
         setShowCustomTimeOption(false);
     }, [selectedValue]);
+
+    useEffect(() => {
+        if (dropDownType === 'tags' && selectedErrorTags) {
+            setSelectedTags([...selectedErrorTags]);
+            setAppliedTags([...selectedErrorTags]);
+        }
+    }, [selectedErrorTags, dropDownType]);
 
     const duration = [
         { id: '1', label: 'AM', value: 'AM' },
@@ -73,6 +86,50 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
         setShowOptions(false);
     };
 
+    const generateTagOptions = () => [
+            { id: '1', label: t('databases.log-analyzer.Compute'), value: 'Compute' },
+            { id: '2', label: t('databases.log-analyzer.Storage'), value: 'Storage' },
+            { id: '3', label: t('databases.log-analyzer.Network'), value: 'Network' },
+            { id: '4', label: t('databases.log-analyzer.Security'), value: 'Security' }
+        ];
+
+    const formatLabelForMultiSelectTags = () => {
+        const totalTags = generateTagOptions().length;
+        const selectedCount = appliedTags.length;
+
+        if (selectedCount === 0) {
+            return 'No tag selected';
+        } if (selectedCount === totalTags) {
+            return 'All error tags';
+        } if (selectedCount === 1) {
+            return '1 tag selected';
+        } 
+            return `${selectedCount} tags selected`;
+        
+    };
+
+    const handleTagToggle = (tagValue: string) => {
+        setSelectedTags(prev =>
+            prev.includes(tagValue) ? prev.filter(value => value !== tagValue) : [...prev, tagValue]
+        );
+    };
+
+    const handleSelectAllTags = () => {
+        const allTagValues = generateTagOptions().map(tag => tag.value);
+        setSelectedTags(prev => (prev.length === allTagValues.length ? [] : allTagValues));
+    };
+
+    const handleApplyTags = () => {
+        setAppliedTags([...selectedTags]);
+        dispatch(setSelectedErrorTags(selectedTags));
+        setShowOptions(false);
+    };
+
+    const handleCancelTags = () => {
+        setSelectedTags([...appliedTags]); // Reset to applied tags
+        setShowOptions(false);
+    };
+
     return (
         <div className={styles['time-dropdown']} ref={dropdownRef}>
             <div
@@ -103,7 +160,7 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
                         variant="Semibold_13"
                     >
                         {' '}
-                        {selectedValue}
+                        {dropDownType === 'tags' ? formatLabelForMultiSelectTags() : selectedValue}
                     </DsTypography>
                 </span>
                 <span
@@ -119,31 +176,71 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
 
             {showOptions && (
                 <div className={styles['dropdown-menu']} style={{ width }}>
-                    {options.map(option => (
-                        <div
-                            key={option}
-                            className={`${styles['dropdown-option']} ${
-                                option === selectedValue ? styles.selected : ''
-                            }`}
-                            role="option"
-                            tabIndex={0}
-                            aria-selected={option === selectedValue}
-                            onClick={() => handleSelect(option)}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    handleSelect(option);
-                                    e.preventDefault();
-                                }
-                            }}
-                        >
-                            <DsTypography
-                                className={` ${option === selectedValue ? styles.selected : ''}`}
-                                variant="Regular_14"
-                            >
-                                {option}
-                            </DsTypography>
+                    {dropDownType === 'tags' ? (
+                        <div className={styles.popup}>
+                            <div className={styles.filterGrid}>
+                                <div className={styles.column}>
+                                    {/* Select All Option */}
+                                    <DsCheckbox
+                                        id="select-all-tags"
+                                        title="Select All"
+                                        isSelected={selectedTags.length === generateTagOptions().length}
+                                        onSelect={handleSelectAllTags}
+                                        className={styles.item}
+                                        style={{ borderBottom: '1px solid var(--border)', width: '180px' }}
+                                    />
+
+                                    {/* Tag Options */}
+                                    {generateTagOptions().map(tag => (
+                                        <DsCheckbox
+                                            id={tag.id}
+                                            key={tag.id}
+                                            title={tag.label}
+                                            isSelected={selectedTags.includes(tag.value)}
+                                            onSelect={() => handleTagToggle(tag.value)}
+                                            className={styles.item}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className={styles.footer}>
+                                <DsButton className={styles.buttonItem} type="text" onClick={handleApplyTags}>
+                                    {t('databases.log-analyzer.apply')}
+                                </DsButton>
+                                <DsButton className={styles.buttonItem1} type="text" onClick={handleCancelTags}>
+                                    {t('databases.log-analyzer.cancel')}
+                                </DsButton>
+                            </div>
                         </div>
-                    ))}
+                    ) : (
+                        /* Regular dropdown options for non-tags */
+                        options.map(option => (
+                            <div
+                                key={option}
+                                className={`${styles['dropdown-option']} ${
+                                    option === selectedValue ? styles.selected : ''
+                                }`}
+                                role="option"
+                                tabIndex={0}
+                                aria-selected={option === selectedValue}
+                                onClick={() => handleSelect(option)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        handleSelect(option);
+                                        e.preventDefault();
+                                    }
+                                }}
+                            >
+                                <DsTypography
+                                    className={` ${option === selectedValue ? styles.selected : ''}`}
+                                    variant="Regular_14"
+                                >
+                                    {option}
+                                </DsTypography>
+                            </div>
+                        ))
+                    )}
                 </div>
             )}
 

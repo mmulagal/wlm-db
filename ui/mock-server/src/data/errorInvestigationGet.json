@@ -38,7 +38,8 @@
                 { "hour": 1740510000000, "count": 0 },
                 { "hour": 1740513600000, "count": 6 },
                 { "hour": 1740517200000, "count": 4 }
-            ]
+            ],
+            "tags": ["Storage", "Security"]
         },
         {
             "error": "Error: 26079, Severity: 22, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -84,7 +85,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 1 },
                 { "hour": 1740528000000, "count": 2 }
-            ]
+            ],
+            "tags": ["Compute"]
         },
         {
             "error": "Error: 30038, Severity: 21, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -129,7 +131,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Network"]
         },
         {
             "error": "Error: 25726, Severity: 17, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -174,7 +177,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Security"]
         },
         {
             "error": "Error: 25729, Severity: 18, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -219,7 +223,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Security", "Compute"]
         },
         {
             "error": "Error: 30029, Severity: 17, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -265,7 +270,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Security", "Network"]
         },
         {
             "error": "Error: 28405, Severity: 15, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -311,7 +317,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Security", "Compute"]
         },
         {
             "error": "Error: 26040, Severity: 24, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -358,7 +365,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Storage", "Network"]
         },
         {
             "error": "Error: 29227, Severity: 22, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -403,7 +411,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Storage", "Network"]
         },
         {
             "error": "Error: 26042, Severity: 19, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -448,7 +457,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Storage", "Network"]
         },
         {
             "error": "Error: 30039, Severity: 17, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -493,7 +503,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Compute"]
         },
         {
             "error": "Error: 25699, Severity: 15, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -539,7 +550,8 @@
                 { "hour": 1740520800000, "count": 0 },
                 { "hour": 1740524400000, "count": 1 },
                 { "hour": 1740528000000, "count": 2 }
-            ]
+            ],
+            "tags": ["Storage", "Compute"]
         },
         {
             "error": "Error: 25608, Severity: 24, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -583,7 +595,8 @@
                 { "hour": 1740520800000, "count": 0 },
                 { "hour": 1740524400000, "count": 1 },
                 { "hour": 1740528000000, "count": 2 }
-            ]
+            ],
+            "tags": ["Storage", "Network"]
         },
         {
             "error": "Error: 29223, Severity: 22, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -627,7 +640,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Security"]
         },
         {
             "error": "Error: 29201, Severity: 17, State: 1. 2025-02-24 20:08:17.83 Logon- Login failed for user 'r7'. Reason: Could not find a login matching the name provided. [CLIENT: 10.193.34.102]",
@@ -673,7 +687,8 @@
                 { "hour": 1740520800000, "count": 2 },
                 { "hour": 1740524400000, "count": 3 },
                 { "hour": 1740528000000, "count": 4 }
-            ]
+            ],
+            "tags": ["Network", "Compute"]
         }
     ]
 }

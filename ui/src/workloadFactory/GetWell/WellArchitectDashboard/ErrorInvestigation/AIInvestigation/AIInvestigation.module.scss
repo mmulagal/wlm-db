@@ -9,6 +9,24 @@
             flex-direction: column;
             gap: 8px;
 
+            .bottomHeaderSection {
+                display: flex;
+                gap: 24px;
+                align-items: center;
+
+                .item {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+
+                .tagsSection {
+                    display: flex;
+                    gap: 16px;
+                    align-items: center;
+                }
+            }
+
             .tag {
                 width: max-content;
                 height: 20px;

@@ -9,10 +9,33 @@
     flex-direction: column;
     gap: 16px;
 
+    .errorCardTopSection {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    }
+
+    .tagSection {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        .tagHeading {
+            position: relative;
+            top: 3px;
+        }
+    }
+
     .tag {
         margin-top: 6px;
         width: max-content;
-        height: 20px;
+        height: 24px;
         border-radius: 24px;
         display: flex;
         justify-content: center;

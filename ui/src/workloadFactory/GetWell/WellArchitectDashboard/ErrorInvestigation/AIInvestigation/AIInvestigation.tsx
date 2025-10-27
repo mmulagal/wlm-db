@@ -26,10 +26,33 @@ const AIInvestigation = ({
                 <AIInvestigationIcon />
                 <div className={styles.rightHeaderSection}>
                     <DsTypography variant="Semibold_14">{t('databases.log-analyzer.ai-investigation')}</DsTypography>
-                    <DsTypography variant="Semibold_13" className={styles.tag}>
-                        {t('databases.log-analyzer.error-code')}:{' '}
-                        {selectedErrorData?.errorCode || t('databases.log-analyzer.n/a')}
-                    </DsTypography>
+
+                    <div className={styles.bottomHeaderSection}>
+                        <div className={styles.item}>
+                            <DsTypography variant="Regular_14">{t('databases.log-analyzer.error-code')}:</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {selectedErrorData?.errorCode || t('databases.log-analyzer.n/a')}
+                            </DsTypography>
+                        </div>
+
+                        <SeparatorComponent variant="vertical" height="20px" />
+
+                        <div className={styles.tagsSection}>
+                            <DsTypography variant="Regular_14">{t('databases.log-analyzer.tags')}:</DsTypography>
+
+                            {selectedErrorData?.tags && selectedErrorData.tags.length > 0 ? (
+                                selectedErrorData.tags.map((tag: string, index: number) => (
+                                    <DsTypography key={index} variant="Semibold_13" className={styles.tag}>
+                                        {tag}
+                                    </DsTypography>
+                                ))
+                            ) : (
+                                <DsTypography variant="Semibold_13" className={styles.tag}>
+                                    {t('databases.log-analyzer.n/a')}
+                                </DsTypography>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -187,4 +187,79 @@
         color: var(--text-disabled) !important;
         cursor: not-allowed;
     }
+
+    .filterWrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .imageFilter {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: relative;
+    }
+
+    .separator {
+        width: 1px;
+        height: 24px;
+    }
+
+    .popup {
+        position: absolute;
+        top: calc(100% + 8px);
+
+        min-width: 180px;
+        background: var(--content-background);
+        border: 1px solid var(--border);
+        box-shadow: 2px 2px 6px 0px var(--border);
+        z-index: 1000;
+
+        .headerContainer {
+            height: 48px;
+            border-bottom: 1px solid var(--border);
+            width: 365px;
+            padding: 12px 16px;
+        }
+    }
+
+    .title {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .filterGrid {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .column {
+        display: flex;
+        flex-direction: column;
+
+        width: 182px;
+    }
+
+    .item {
+        height: 48px;
+        padding: 16px;
+    }
+
+    .footer {
+        display: flex;
+        align-items: center;
+
+        border-top: 1px solid var(--border);
+        height: 40px;
+
+        .buttonItem {
+            width: 50%;
+            border-right: 1px solid var(--border);
+        }
+        .buttonItem1 {
+            width: 50%;
+        }
+    }
 }

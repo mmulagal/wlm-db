@@ -248,6 +248,27 @@ export const filterByErrorCodes = (
     return result;
 };
 
+export const filterByErrorTags = (
+    data: ErrorInvestigationGetApiResponse[],
+    selectedErrorTags: string[]
+): ErrorInvestigationGetApiResponse[] => {
+    // If no tags are selected or selectedErrorTags is empty, return all data
+    if (!selectedErrorTags || selectedErrorTags.length === 0) {
+        return data;
+    }
+
+    // Filter data where error tags intersect with selected tags
+    return data.filter(obj => {
+        // If the error has no tags, exclude it when tags are selected
+        if (!obj.tags || !Array.isArray(obj.tags) || obj.tags.length === 0) {
+            return false;
+        }
+
+        // Check if any of the error's tags match any of the selected tags
+        return obj.tags.some(tag => selectedErrorTags.includes(tag));
+    });
+};
+
 export const recalculateErrorFields = (data: ErrorInvestigationGetApiResponse[]) => {
     let result = [...data];
     result = result.map(obj => {

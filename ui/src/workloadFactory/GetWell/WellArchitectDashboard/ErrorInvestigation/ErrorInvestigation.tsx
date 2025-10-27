@@ -19,6 +19,7 @@ import {
     filterBySeverity,
     filterByTime,
     filterByErrorCodes,
+    filterByErrorTags,
     getUniqueErrBySeverity,
     eiErrorCodesOptions,
     eiSeverityOptionList,
@@ -55,6 +56,7 @@ const ErrorInvestigation = () => {
         noData,
         selectedSeverity,
         selectedErrorCodes,
+        selectedErrorTags,
         selectedTimeFrame,
         timeRange,
         investigationDates,
@@ -69,15 +71,17 @@ const ErrorInvestigation = () => {
             const filtered = filterBySeverity(errorInvestigationData, selectedSeverity);
             const timeFiltered = filterByTime(filtered, selectedTimeFrame, timeRange);
             const codesFiltered = filterByErrorCodes(timeFiltered, selectedErrorCodes);
+            const tagsFiltered = filterByErrorTags(codesFiltered, selectedErrorTags);
 
             // Set filteredCount for UI
             let filteredCount = 0;
             if (selectedErrorCodes !== eiErrorCodesOptions?.all) filteredCount += 1;
             if (selectedSeverity !== eiSeverityOptionList?.all) filteredCount += 1;
             if (selectedTimeFrame !== eiTimeOptions?.last24) filteredCount += 1;
+            if (selectedErrorTags && selectedErrorTags.length > 0 && selectedErrorTags.length < 4) filteredCount += 1;
             setFiltersApplied(filteredCount);
 
-            const newFilteredData = recalculateErrorFields(codesFiltered);
+            const newFilteredData = recalculateErrorFields(tagsFiltered);
             setErrorCardsData(newFilteredData);
             setSelectedErrorData(newFilteredData[0]);
 
@@ -109,7 +113,7 @@ const ErrorInvestigation = () => {
             setheaderData({ uniqueErrors, totalErrors, lastScan });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [errorInvestigationData, selectedSeverity, selectedErrorCodes, selectedTimeFrame, timeRange]);
+    }, [errorInvestigationData, selectedSeverity, selectedErrorCodes, selectedErrorTags, selectedTimeFrame, timeRange]);
 
     const handleCardClick = (index: number) => {
         setSelectedIndex(index);
@@ -228,6 +232,7 @@ const ErrorInvestigation = () => {
                                             filteredCount={error.totalFilteredCount}
                                             isSelected={selectedIndex === index}
                                             onClick={() => handleCardClick(index)}
+                                            tags={error?.tags}
                                         />
                                     ))}
                                 </div>

@@ -10,6 +10,7 @@ type ErrorCardProps = {
     filteredCount?: number;
     isSelected?: boolean;
     onClick?: () => void;
+    tags?: string[];
 };
 
 const ErrorCards = ({
@@ -19,7 +20,8 @@ const ErrorCards = ({
     errorCount,
     filteredCount,
     isSelected = false,
-    onClick
+    onClick,
+    tags
 }: ErrorCardProps) => {
     const { t } = useTranslation();
     return (
@@ -35,9 +37,27 @@ const ErrorCards = ({
                 }
             }}
         >
-            <DsTypography variant="Semibold_13" className={styles.tag}>
-                {t('databases.log-analyzer.error-code')}: {errorCode || t('databases.log-analyzer.n/a')}
-            </DsTypography>
+            <div className={styles.errorCardTopSection}>
+                <div className={styles.item}>
+                    <DsTypography variant="Regular_14">{t('databases.log-analyzer.error-code')}:</DsTypography>
+                    <DsTypography variant="Semibold_14">{errorCode || t('databases.log-analyzer.n/a')}</DsTypography>
+                </div>
+
+                <div className={styles.item}>
+                    <DsTypography variant="Regular_14">{t('databases.log-analyzer.severity')}:</DsTypography>
+                    <DsTypography variant="Semibold_14">{severity || t('databases.log-analyzer.n/a')}</DsTypography>
+                </div>
+
+                <div className={styles.item}>
+                    <DsTypography variant="Regular_14">{t('databases.log-analyzer.error-count')}:</DsTypography>
+                    <DsTypography variant="Semibold_14">
+                        {' '}
+                        {(filteredCount && errorCount && errorCount > filteredCount
+                            ? `${filteredCount}/${errorCount}`
+                            : errorCount) || t('databases.log-analyzer.n/a')}
+                    </DsTypography>
+                </div>
+            </div>
 
             <div className={styles.errorMessage}>
                 <DsTypography variant="Semibold_14" title={errorMessage}>
@@ -45,16 +65,22 @@ const ErrorCards = ({
                 </DsTypography>
             </div>
 
-            <div className={styles.severitySection}>
-                <DsTypography variant="Regular_14" className={styles.severity}>
-                    {t('databases.log-analyzer.severity')}: {severity || t('databases.log-analyzer.n/a')}
+            <div className={styles.tagSection}>
+                <DsTypography variant="Regular_14" className={styles.tagHeading}>
+                    {t('databases.log-analyzer.tags')}:
                 </DsTypography>
-                <DsTypography variant="Regular_14" className={styles.severity}>
-                    {t('databases.log-analyzer.error-count')}:{' '}
-                    {(filteredCount && errorCount && errorCount > filteredCount
-                        ? `${filteredCount}/${errorCount}`
-                        : errorCount) || t('databases.log-analyzer.n/a')}
-                </DsTypography>
+
+                {tags && tags.length > 0 ? (
+                    tags.map((tag, index) => (
+                        <DsTypography key={index} variant="Semibold_13" className={styles.tag}>
+                            {tag}
+                        </DsTypography>
+                    ))
+                ) : (
+                    <DsTypography variant="Semibold_13" className={styles.tag}>
+                        {t('databases.log-analyzer.n/a')}
+                    </DsTypography>
+                )}
             </div>
         </div>
     );
