@@ -412,7 +412,7 @@ async function handleLogsAnalysis(
             endTime ? new Date(endTime) : undefined
         );
         await updateLongRunningAuditGroup(AuditStatus.SUCCESS, 'Logs analysis completed successfully');
-        const { items: [{ id, latestReport: { creationTime, errorCount } = {} } = {}] = [] } =
+        const { items: [{ id, latestReport: { creationTime, errorCount, severityCounts } = {} } = {}] = [] } =
             await getLatestLogsAnalysisReports(accountId, credentialsId, databaseType, jobId);
 
         await updateJobDetails(accountId, jobId, {
@@ -422,7 +422,8 @@ async function handleLogsAnalysis(
                 latestReport: {
                     creationTime,
                     id,
-                    errorCount
+                    errorCount,
+                    severityCounts
                 }
             }
         });
