@@ -5492,7 +5492,7 @@ export const nameToIdConfigMapping = (name: string) =>
         ? 'rss-config'
         : '';
 
-export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {
+export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any, dbType?: string) => {
     let configKey = '';
     switch (type) {
         case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
@@ -5560,6 +5560,25 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         case ASSESSMENT_CONFIG_NAMES.MTU:
             configKey = 'mtuConfiguration';
             break;
+        // Oracle configurations
+        case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+            configKey = 'oracleBinaryPlacement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+            configKey = 'datafilesPlacement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+            configKey = 'controlfilesPlacement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+            configKey = 'redoLogsPlacement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+            configKey = 'tempLogsPlacement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            configKey = 'archivePlacement';
+            break;
     }
     const optimizedInstances = configData?.[configKey]?.optimized || 0;
     const dismissedInstances = configData?.[configKey]?.dismissed || 0;
@@ -5581,19 +5600,37 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
     ) {
         tooltipText = GENERAL.DISMISS_MIX_CASE_TOOLTIP;
     }
-    dispatch(
-        setSelectedConfigSummary({
-            totalInstances: configData?.total || 0,
-            optimizedInstances,
-            dismissedInstances,
-            activatingInstances,
-            notOptimizedInstances: configData?.total - (optimizedInstances + dismissedInstances + activatingInstances),
-            optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
-            severity: configData?.severityObj?.[configKey] || '',
-            configState: configStateValue,
-            tooltipText
-        })
-    );
+    if (dbType === DBType.ORACLE) {
+        dispatch(
+            setSelectedConfigSummary({
+                totalInstances: configData?.oracleTotal || 0,
+                optimizedInstances,
+                dismissedInstances,
+                activatingInstances,
+                notOptimizedInstances:
+                    configData?.oracleTotal - (optimizedInstances + dismissedInstances + activatingInstances),
+                optimizationScore: `${Math.round((optimizedInstances / (configData?.oracleTotal || 1)) * 100)}%`,
+                severity: configData?.severityObj?.[configKey] || '',
+                configState: configStateValue,
+                tooltipText
+            })
+        );
+    } else {
+        dispatch(
+            setSelectedConfigSummary({
+                totalInstances: configData?.total || 0,
+                optimizedInstances,
+                dismissedInstances,
+                activatingInstances,
+                notOptimizedInstances:
+                    configData?.total - (optimizedInstances + dismissedInstances + activatingInstances),
+                optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
+                severity: configData?.severityObj?.[configKey] || '',
+                configState: configStateValue,
+                tooltipText
+            })
+        );
+    }
 };
 
 // storageMockData used when all the storage configurations are dismissed then storage object will not be coming in the Assessment response so will add mock storage object

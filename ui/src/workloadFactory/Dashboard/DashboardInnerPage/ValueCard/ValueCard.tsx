@@ -1,6 +1,7 @@
 import { DsTypography, TooltipInfo } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import styles from './ValueCard.module.scss';
+import { engineTypeBasedResourceStr } from '../../../WellArchitectedTab/WellArchitectedTabUtils';
 
 type ValueCardProps = {
     valueCardData: {
@@ -11,9 +12,10 @@ type ValueCardProps = {
         activatingInstances?: number;
         severity?: string;
     };
+    configEngineType?: string;
 };
 
-const ValueCard = ({ valueCardData }: ValueCardProps) => {
+const ValueCard = ({ valueCardData, configEngineType }: ValueCardProps) => {
     const {
         optimizedInstances,
         notOptimizedInstances,
@@ -32,10 +34,18 @@ const ValueCard = ({ valueCardData }: ValueCardProps) => {
                     </DsTypography>
                     <DsTypography
                         className={styles.label}
-                        title={t('databases.well-architect.total-instances')}
+                        title={engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.total-instances'),
+                            t('databases.well-architect.total-databases')
+                        )}
                         variant="Regular_14"
                     >
-                        {t('databases.well-architect.total-instances')}
+                        {engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.total-instances'),
+                            t('databases.well-architect.total-databases')
+                        )}
                     </DsTypography>
                 </div>
 
@@ -45,10 +55,18 @@ const ValueCard = ({ valueCardData }: ValueCardProps) => {
                     </DsTypography>
                     <DsTypography
                         className={styles.label}
-                        title={t('databases.well-architect.well-architected-instances')}
+                        title={engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.well-architected-instances'),
+                            t('databases.well-architect.well-architected-databases')
+                        )}
                         variant="Regular_14"
                     >
-                        {t('databases.well-architect.well-architected-instances')}
+                        {engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.well-architected-instances'),
+                            t('databases.well-architect.well-architected-databases')
+                        )}
                     </DsTypography>
                 </div>
 
@@ -58,10 +76,18 @@ const ValueCard = ({ valueCardData }: ValueCardProps) => {
                     </DsTypography>
                     <DsTypography
                         className={styles.label}
-                        title={t('databases.well-architect.not-optimized-instances')}
+                        title={engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.not-optimized-instances'),
+                            t('databases.well-architect.not-optimized-databases')
+                        )}
                         variant="Regular_14"
                     >
-                        {t('databases.well-architect.not-optimized-instances')}
+                        {engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.not-optimized-instances'),
+                            t('databases.well-architect.not-optimized-databases')
+                        )}
                     </DsTypography>
                 </div>
 
@@ -72,10 +98,18 @@ const ValueCard = ({ valueCardData }: ValueCardProps) => {
                         </DsTypography>
                         <DsTypography
                             className={styles.label}
-                            title={t('databases.well-architect.dismissed-instances')}
+                            title={engineTypeBasedResourceStr(
+                                configEngineType,
+                                t('databases.well-architect.dismissed-instances'),
+                                t('databases.well-architect.dismissed-databases')
+                            )}
                             variant="Regular_14"
                         >
-                            {t('databases.well-architect.dismissed-instances')}
+                            {engineTypeBasedResourceStr(
+                                configEngineType,
+                                t('databases.well-architect.dismissed-instances'),
+                                t('databases.well-architect.dismissed-databases')
+                            )}
                         </DsTypography>
                     </div>
                 )}
@@ -87,10 +121,18 @@ const ValueCard = ({ valueCardData }: ValueCardProps) => {
                         </DsTypography>
                         <DsTypography
                             className={styles.label}
-                            title={t('databases.well-architect.pending-instances')}
+                            title={engineTypeBasedResourceStr(
+                                configEngineType,
+                                t('databases.well-architect.pending-instances'),
+                                t('databases.well-architect.pending-databases')
+                            )}
                             variant="Regular_14"
                         >
-                            {t('databases.well-architect.pending-instances')}
+                            {engineTypeBasedResourceStr(
+                                configEngineType,
+                                t('databases.well-architect.pending-instances'),
+                                t('databases.well-architect.pending-databases')
+                            )}
                         </DsTypography>
                     </div>
                 )}

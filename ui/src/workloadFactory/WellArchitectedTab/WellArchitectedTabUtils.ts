@@ -139,3 +139,10 @@ export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any)
         })
     );
 };
+
+export const engineTypeBasedResourceStr = (engineType: string | undefined, mssqlStr: string, oracleStr: string) => {
+    if (engineType === DBType.ORACLE) {
+        return oracleStr;
+    }
+    return mssqlStr;
+};

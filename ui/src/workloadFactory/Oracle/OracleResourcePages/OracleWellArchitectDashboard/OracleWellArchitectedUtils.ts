@@ -8,8 +8,10 @@ import {
     setOptimizationBreakDown,
     setOsConfigTableData
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { addAllOracleHostAssessmentData } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_NAME_TO_ID_MAPPING,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
     GETWELL_CONFIG,
@@ -1242,4 +1244,101 @@ const getOracleCategoryForSubCategory = (subCategory: string) => {
     const categoryData = getOracleCategoryData();
     const entry = Object.values(categoryData).find((item: any) => item.subCategory === subCategory);
     return entry ? entry.category : '';
+};
+
+// Helper function to update storage layout configuration
+const updateStorageLayoutConfig = (
+    existingLayout: any[],
+    configurationName: string,
+    setAction: string,
+    endTime: string
+) => {
+    const itemIndex = existingLayout.findIndex((item: any) => item?.configurationName === configurationName);
+
+    if (itemIndex !== -1) {
+        // Update existing item
+        return existingLayout.map((item: any, index: number) =>
+            index === itemIndex ? { ...item, configState: setAction, endTime } : item
+        );
+    }
+
+    // Add new item
+    return [...existingLayout, { configurationName, configState: setAction, endTime }];
+};
+
+// Helper function to create dismissed configurations structure
+const createDismissedConfigStructure = (
+    instance: any,
+    configurationName: string,
+    setAction: string,
+    endTime: string
+) => {
+    const existingStorage = instance?.assessments?.dismissedConfigurations?.storage;
+    const existingLayout = existingStorage?.layout;
+
+    const updatedLayout = existingLayout
+        ? updateStorageLayoutConfig(existingLayout, configurationName, setAction, endTime)
+        : [{ configurationName, configState: setAction, endTime }];
+
+    return {
+        ...instance?.assessments?.dismissedConfigurations,
+        storage: {
+            ...existingStorage,
+            layout: updatedLayout
+        }
+    };
+};
+
+export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, action: any, apiResponseData?: any) => {
+    let setAction = '';
+    if (action === CONFIG_STATE_ACTIONS.DISMISS) {
+        setAction = CONFIG_STATES.DISMISSED;
+    } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
+        setAction = CONFIG_STATES.POSTPONED;
+    } else if (action === CONFIG_STATE_ACTIONS.ACTIVE || action === CONFIG_STATES.ACTIVATING) {
+        setAction = CONFIG_STATES.ACTIVATING;
+    }
+
+    const state = store.getState();
+    const { allOracleHostAssessmentData } = state.inventoryV2;
+    let updatedAsessmentData = [...allOracleHostAssessmentData]; // Clone the original data
+
+    rowList?.forEach((rowData: any) => {
+        updatedAsessmentData = updatedAsessmentData?.map((hostData: any) => {
+            if (
+                hostData?.databaseHostId === rowData?.hostId &&
+                hostData?.credentialId === rowData?.credentialId &&
+                hostData?.regionId === rowData?.regionId
+            ) {
+                const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
+                    if (instance?.databaseInstanceId === rowData?.instanceId) {
+                        const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.ORACLE_STORAGE_LAYOUT_MAP;
+
+                        if (storageLayoutMap[rowData?.name]) {
+                            const configurationName = storageLayoutMap[rowData?.name];
+                            const dismissedConfigurations = createDismissedConfigStructure(
+                                instance,
+                                configurationName,
+                                setAction,
+                                rowData?.endTime
+                            );
+
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations
+                                }
+                            };
+                        }
+                        return instance;
+                    }
+                    return instance;
+                });
+                return { ...hostData, instancesAssessment: updatedInstancesAssessment };
+            }
+            return hostData;
+        });
+    });
+    dispatch(addAllOracleHostAssessmentData(updatedAsessmentData));
 };

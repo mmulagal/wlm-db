@@ -1113,6 +1113,14 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
         [ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]: 'mssqlHighAvailability',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
+    },
+    ORACLE_STORAGE_LAYOUT_MAP: {
+        [ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT]: 'oracle-binary-placement',
+        [ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT]: 'datafiles-placement',
+        [ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT]: 'controlfiles-placement',
+        [ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT]: 'redologs-placement',
+        [ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT]: 'templogs-placement',
+        [ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT]: 'archive-placement'
     }
 };
 

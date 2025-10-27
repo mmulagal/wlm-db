@@ -2,10 +2,17 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../store/notification
 import store from '../../../store/store';
 import { setSelectedRowsForOptimize } from '../../../store/workloadFactory/databaseHomeSlice';
 import { setInProgressStateData } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATE_ACTIONS, CONFIG_STATES, GETWELL_STATUS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATE_ACTIONS,
+    CONFIG_STATES,
+    DBType,
+    GETWELL_STATUS
+} from '../../../utils/consts';
 import { categorizeStateInstances } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { updateConfigStateStatus } from '../../GetWell/GetWellUtils';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import { updateConfigStateStatusOracle } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 const getPayloadType = (type: string) => {
     switch (type) {
@@ -63,6 +70,24 @@ const getPayloadType = (type: string) => {
         case ASSESSMENT_CONFIG_NAMES.MTU:
             type = 'mtu-alignment';
             break;
+        case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+            type = 'oracle-binary-placement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+            type = 'datafiles-placement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+            type = 'controlfiles-placement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+            type = 'redologs-placement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+            type = 'templogs-placement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            type = 'archive-placement';
+            break;
         default:
             break;
     }
@@ -74,7 +99,8 @@ const createSuccessMsg = (
     failedList: any[],
     action: string | undefined,
     rowData: any,
-    translation: any
+    translation: any,
+    configEngineType?: string
 ) => {
     const successCount = successList.length;
     const failedCount = failedList.length;
@@ -82,83 +108,115 @@ const createSuccessMsg = (
 
     let notificationType = '';
     let message = '';
+    let resourceType = '';
+
+    if (configEngineType === DBType.ORACLE) {
+        resourceType = 'database';
+    } else {
+        resourceType = 'instance';
+    }
 
     if (rowLength === 1 && successCount) {
         if (action === CONFIG_STATE_ACTIONS.DISMISS) {
             notificationType = NOTIFICATION_TYPES.SUCCESS;
             message = translation('databases.well-architect.dismiss-msg.dismiss-success', {
-                name: rowData?.[0].serverInstanceName
+                name: rowData?.[0].serverInstanceName,
+                resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
             notificationType = NOTIFICATION_TYPES.SUCCESS;
             message = translation('databases.well-architect.dismiss-msg.postpone-success', {
-                name: rowData?.[0].serverInstanceName
+                name: rowData?.[0].serverInstanceName,
+                resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.ACTIVE) {
             notificationType = NOTIFICATION_TYPES.SUCCESS;
             message = translation('databases.well-architect.dismiss-msg.active-success', {
-                name: rowData?.[0].serverInstanceName
+                name: rowData?.[0].serverInstanceName,
+                resourceType
             });
         }
     } else if (rowLength === 1 && failedCount) {
         if (action === CONFIG_STATE_ACTIONS.DISMISS) {
             notificationType = NOTIFICATION_TYPES.FAILED;
             message = translation('databases.well-architect.dismiss-msg.dismiss-failed', {
-                name: rowData?.[0].serverInstanceName
+                name: rowData?.[0].serverInstanceName,
+                resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
             notificationType = NOTIFICATION_TYPES.FAILED;
             message = translation('databases.well-architect.dismiss-msg.postpone-failed', {
-                name: rowData?.[0].serverInstanceName
+                name: rowData?.[0].serverInstanceName,
+                resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.ACTIVE) {
             notificationType = NOTIFICATION_TYPES.FAILED;
             message = translation('databases.well-architect.dismiss-msg.active-failed', {
-                name: rowData?.[0].serverInstanceName
+                name: rowData?.[0].serverInstanceName,
+                resourceType
             });
         }
     } else if (successCount && !failedCount) {
         if (action === CONFIG_STATE_ACTIONS.DISMISS) {
             notificationType = NOTIFICATION_TYPES.SUCCESS;
-            message = translation('databases.well-architect.dismiss-msg.bulk-dismiss-success', { count: successCount });
+            message = translation('databases.well-architect.dismiss-msg.bulk-dismiss-success', {
+                count: successCount,
+                resourceType
+            });
         } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
             notificationType = NOTIFICATION_TYPES.SUCCESS;
             message = translation('databases.well-architect.dismiss-msg.bulk-postpone-success', {
-                count: successCount
+                count: successCount,
+                resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.ACTIVE) {
             notificationType = NOTIFICATION_TYPES.SUCCESS;
-            message = translation('databases.well-architect.dismiss-msg.bulk-active-success', { count: successCount });
+            message = translation('databases.well-architect.dismiss-msg.bulk-active-success', {
+                count: successCount,
+                resourceType
+            });
         }
     } else if (!successCount && failedCount) {
         if (action === CONFIG_STATE_ACTIONS.DISMISS) {
             notificationType = NOTIFICATION_TYPES.ERROR;
-            message = translation('databases.well-architect.dismiss-msg.bulk-dismiss-failed', { count: failedCount });
+            message = translation('databases.well-architect.dismiss-msg.bulk-dismiss-failed', {
+                count: failedCount,
+                resourceType
+            });
         } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
             notificationType = NOTIFICATION_TYPES.ERROR;
-            message = translation('databases.well-architect.dismiss-msg.bulk-postpone-failed', { count: failedCount });
+            message = translation('databases.well-architect.dismiss-msg.bulk-postpone-failed', {
+                count: failedCount,
+                resourceType
+            });
         } else if (action === CONFIG_STATE_ACTIONS.ACTIVE) {
             notificationType = NOTIFICATION_TYPES.ERROR;
-            message = translation('databases.well-architect.dismiss-msg.bulk-active-failed', { count: failedCount });
+            message = translation('databases.well-architect.dismiss-msg.bulk-active-failed', {
+                count: failedCount,
+                resourceType
+            });
         }
     } else if (successCount && failedCount) {
         if (action === CONFIG_STATE_ACTIONS.DISMISS) {
             notificationType = NOTIFICATION_TYPES.INFO;
             message = translation('databases.well-architect.dismiss-msg.mix-dismiss-status', {
                 successCount,
-                failedCount
+                failedCount,
+                resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
             notificationType = NOTIFICATION_TYPES.INFO;
             message = translation('databases.well-architect.dismiss-msg.mix-postpone-status', {
                 successCount,
-                failedCount
+                failedCount,
+                resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.ACTIVE) {
             notificationType = NOTIFICATION_TYPES.INFO;
             message = translation('databases.well-architect.dismiss-msg.mix-active-status', {
                 successCount,
-                failedCount
+                failedCount,
+                resourceType
             });
         }
     }
@@ -170,9 +228,10 @@ export const callDashboardDismissApi = (
     type: any,
     rowData?: any,
     action?: string,
-    dismissMssqlAssessment?: any,
+    dismissApi?: any,
     dispatch?: any,
-    translation?: any
+    translation?: any,
+    configEngineType?: any
 ) => {
     const state = store.getState();
     const { inProgressStateData } = state.getWellOptimize;
@@ -248,11 +307,16 @@ export const callDashboardDismissApi = (
         })
     );
 
-    dismissMssqlAssessment({ payload })
+    dismissApi({ payload })
         .then((res: any) => {
             if (!res.error) {
                 const { successList, failedList } = categorizeStateInstances(res?.data, type);
-                updateConfigStateStatus(successList, dispatch, action, res?.data);
+                if (configEngineType === DBType.ORACLE) {
+                    updateConfigStateStatusOracle(successList, dispatch, action, res?.data);
+                } else {
+                    updateConfigStateStatus(successList, dispatch, action, res?.data);
+                }
+
                 dispatch(
                     setInProgressStateData({
                         ...inProgressStateData,
@@ -266,7 +330,8 @@ export const callDashboardDismissApi = (
                     failedList,
                     action,
                     rowData,
-                    translation
+                    translation,
+                    configEngineType
                 );
                 dispatch(
                     addNotification({

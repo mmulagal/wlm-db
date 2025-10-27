@@ -6,18 +6,20 @@ import { T } from 'vitest/dist/chunks/reporters.d.DG9VKi4m';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../store/storeHooks';
 import CloneTabs from '../../GetWell/OptimizeInnerPage/CloneTabs';
 import OptimizeCard from '../../GetWell/OptimizeInnerPage/OptimizeCard/OptimizeCard';
 import TagComponent from './TagComponent/TagComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
+import { engineTypeBasedResourceStr } from '../../WellArchitectedTab/WellArchitectedTabUtils';
 
 const DashboardOptimizeInnerPage = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
+    const { configEngineType } = useAppSelector(state => state.getWellOptimize);
 
     const selectedConfigName = useMemo(() => {
         if (selectedConfig === ASSESSMENT_CONFIG_NAMES.CRR) {
@@ -67,7 +69,11 @@ const DashboardOptimizeInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Regular_16"
                     >
-                        {t('databases.well-architect.register-instance-fixing')}
+                        {engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.register-database-fixing'),
+                            t('databases.well-architect.register-instance-fixing')
+                        )}
                     </DsTypography>
                 </div>
 

@@ -17,6 +17,7 @@ import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
+    DBType,
     GETWELL_STATUS,
     GETWELL_VALUES
 } from '../../../../utils/consts';
@@ -33,6 +34,7 @@ import FirstColumnComponent from './FirstColumnComponent';
 import BulkCombineActionController from '../../../../common/BulkAction/BulkCombineActionController';
 import { GwSqlServerInstanceInterface, RSSConfigAdapterInterface } from '../../../../utils/types/getWellTypes';
 import { bulkFixDisableCheck, sortOptimizeDashboardInnerTable } from '../DashboardInnerPageHelper';
+import { engineTypeBasedResourceStr } from '../../../WellArchitectedTab/WellArchitectedTabUtils';
 
 interface DashboardConfigsTableProps {
     configType: string;
@@ -516,6 +518,60 @@ const CONFIG_MAPPING: Record<string, any> = {
             }
         ]
     }
+};
+
+// Helper function to create Oracle placement configuration
+const createOraclePlacementConfig = (configName: string, dismissConfigName: string) => ({
+    assessmentPath: ['storage', 'layout'],
+    configName,
+    dismissConfigName,
+    dataMapping: (obj: any) => ({
+        current: obj?.current,
+        totalObjectsAssessed: obj?.totalObjectsAssessed,
+        totalObjectsInViolation: obj?.totalObjectsInViolation
+    }),
+    isFixSupported: false, // Fix is not supported for Oracle placement configurations
+    customColumns: [
+        {
+            Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
+            accessor: 'totalObjectsInViolation',
+            id: '4',
+            width: '220px',
+            renderCell: (cellData: string, rowData: any) =>
+                `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+        }
+    ]
+});
+
+// Oracle placement configurations mapping
+const oraclePlacementConfigs = {
+    [ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT]: createOraclePlacementConfig(
+        'oracle-binary-placement',
+        'oracle-binary-placement'
+    ),
+    [ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT]: createOraclePlacementConfig(
+        'datafiles-placement',
+        'datafiles-placement'
+    ),
+    [ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT]: createOraclePlacementConfig(
+        'controlfiles-placement',
+        'controlfiles-placement'
+    ),
+    [ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT]: createOraclePlacementConfig(
+        'redologs-placement',
+        'redologs-placement'
+    ),
+    [ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT]: createOraclePlacementConfig(
+        'templogs-placement',
+        'templogs-placement'
+    ),
+    [ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT]: createOraclePlacementConfig('archive-placement', 'archive-placement')
+};
+
+// Merge all configurations
+const FULL_CONFIG_MAPPING = {
+    ...CONFIG_MAPPING,
+    ...oraclePlacementConfigs
     // Add more configurations as needed
 };
 
@@ -530,19 +586,18 @@ const DashboardConfigsTable = ({
     const dispatch = useDispatch();
     const [showDismissed, setShowDismissed] = useState(false);
 
-    const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const { allmssqlHostAssessmentData, allOracleHostAssessmentData, inventoryTableData, getDatabaseHosts } =
+        useAppSelector(state => state.inventoryV2);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
-    const { inProgressOptimizationData, inProgressHostData, inProgressStateData } = useAppSelector(
+    const { inProgressOptimizationData, inProgressHostData, inProgressStateData, configEngineType } = useAppSelector(
         state => state.getWellOptimize
     );
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     // Get configuration for the current config type
-    const config = CONFIG_MAPPING[configType];
+    const config = FULL_CONFIG_MAPPING[configType];
 
     if (!config) {
         return null;
@@ -552,7 +607,10 @@ const DashboardConfigsTable = ({
         let assessmentData: any = [];
         const uniqueResourceList: Array<string> = [];
 
-        allmssqlHostAssessmentData?.map((hostData: any) => {
+        const engineTypeAssessmentData =
+            configEngineType === DBType.ORACLE ? allOracleHostAssessmentData : allmssqlHostAssessmentData;
+
+        engineTypeAssessmentData?.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
                 !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
@@ -628,6 +686,7 @@ const DashboardConfigsTable = ({
         );
     }, [
         allmssqlHostAssessmentData,
+        allOracleHostAssessmentData,
         inventoryTableData,
         getDatabaseHosts,
         headerSelectedMultiCredIdsList,
@@ -674,21 +733,45 @@ const DashboardConfigsTable = ({
     const { pluralTitle, singularTitle } = useMemo(() => {
         if (isToggleDisabled) {
             return {
-                pluralTitle: `${t('databases.well-architect.instances')} (${totalCount})`,
-                singularTitle: `${t('databases.well-architect.instance')} (${totalCount})`
+                pluralTitle: `${engineTypeBasedResourceStr(
+                    configEngineType,
+                    t('databases.well-architect.instances'),
+                    t('databases.well-architect.databases')
+                )} (${totalCount})`,
+                singularTitle: `${engineTypeBasedResourceStr(
+                    configEngineType,
+                    t('databases.well-architect.instance'),
+                    t('databases.well-architect.database')
+                )} (${totalCount})`
             };
         }
 
         if (showDismissed) {
             return {
-                pluralTitle: `${t('databases.well-architect.dismissed-instances')} (${dismissedCount}/${totalCount})`,
-                singularTitle: `${t('databases.well-architect.dismissed-instance')} (${dismissedCount}/${totalCount})`
+                pluralTitle: `${engineTypeBasedResourceStr(
+                    configEngineType,
+                    t('databases.well-architect.dismissed-instances'),
+                    t('databases.well-architect.dismissed-databases')
+                )} (${dismissedCount}/${totalCount})`,
+                singularTitle: `${engineTypeBasedResourceStr(
+                    configEngineType,
+                    t('databases.well-architect.dismissed-instance'),
+                    t('databases.well-architect.dismissed-database')
+                )} (${dismissedCount}/${totalCount})`
             };
         }
         const nonDismissedCount = totalCount - dismissedCount;
         return {
-            pluralTitle: `${t('databases.well-architect.instances')} (${nonDismissedCount}/${totalCount})`,
-            singularTitle: `${t('databases.well-architect.instance')} (${nonDismissedCount}/${totalCount})`
+            pluralTitle: `${engineTypeBasedResourceStr(
+                configEngineType,
+                t('databases.well-architect.instances'),
+                t('databases.well-architect.databases')
+            )} (${nonDismissedCount}/${totalCount})`,
+            singularTitle: `${engineTypeBasedResourceStr(
+                configEngineType,
+                t('databases.well-architect.instance'),
+                t('databases.well-architect.database')
+            )} (${nonDismissedCount}/${totalCount})`
         };
     }, [dismissedCount, totalCount, showDismissed, isToggleDisabled]);
 
@@ -704,7 +787,7 @@ const DashboardConfigsTable = ({
     };
 
     const handleStateOperation = (operationType: string) => {
-        handleBulkDismissPostpone(configType, selectedRowsForOptimize, operationType);
+        handleBulkDismissPostpone(configType, selectedRowsForOptimize, operationType, configEngineType);
     };
 
     const handleToggle = (checked: boolean) => {
@@ -728,7 +811,11 @@ const DashboardConfigsTable = ({
     const TableColDefs: ColumnProps[] = [
         // Standard columns that are common across all configs
         {
-            Header: `${t('databases.well-architect.dashboard-table-headers.sql-server-instance-name')}`,
+            Header: `${engineTypeBasedResourceStr(
+                configEngineType,
+                t('databases.well-architect.dashboard-table-headers.sql-server-instance-name'),
+                t('databases.well-architect.dashboard-table-headers.sql-server-database-name')
+            )}`,
             accessor: 'serverInstanceName',
             id: '1',
             isSortable: false,
@@ -930,7 +1017,8 @@ const DashboardConfigsTable = ({
                                                 handleSingleDismissPostpone(
                                                     rowData,
                                                     configType,
-                                                    CONFIG_STATE_ACTIONS.DISMISS
+                                                    CONFIG_STATE_ACTIONS.DISMISS,
+                                                    configEngineType
                                                 );
                                             }
                                         },
@@ -941,7 +1029,8 @@ const DashboardConfigsTable = ({
                                                 handleSingleDismissPostpone(
                                                     rowData,
                                                     configType,
-                                                    CONFIG_STATE_ACTIONS.POSTPONED
+                                                    CONFIG_STATE_ACTIONS.POSTPONED,
+                                                    configEngineType
                                                 );
                                             }
                                         }
@@ -967,8 +1056,16 @@ const DashboardConfigsTable = ({
         if (hasTableFilters) {
             // When table filters are active, show actual filtered count
             return {
-                finalPluralTitle: `${t('databases.well-architect.instances')} (${actualFilteredCount}/${totalCount})`,
-                finalSingularTitle: `${t('databases.well-architect.instance')} (${actualFilteredCount}/${totalCount})`
+                finalPluralTitle: `${engineTypeBasedResourceStr(
+                    configEngineType,
+                    t('databases.well-architect.instances'),
+                    t('databases.well-architect.databases')
+                )} (${actualFilteredCount}/${totalCount})`,
+                finalSingularTitle: `${engineTypeBasedResourceStr(
+                    configEngineType,
+                    t('databases.well-architect.instance'),
+                    t('databases.well-architect.database')
+                )} (${actualFilteredCount}/${totalCount})`
             };
         }
         // When no table filters, use the original toggle-based titles
@@ -1002,7 +1099,11 @@ const DashboardConfigsTable = ({
                     <div className={styles.toggle}>
                         <DsToggleSwitch
                             onChange={handleToggle}
-                            title={`${t('databases.well-architect.dismissed-instances')}`}
+                            title={engineTypeBasedResourceStr(
+                                configEngineType,
+                                t('databases.well-architect.dismissed-instances'),
+                                t('databases.well-architect.dismissed-databases')
+                            )}
                             isDisabled={isToggleDisabled}
                             value={showDismissed}
                         />

@@ -13,6 +13,7 @@ import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
+    DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FROM_DIALOG,
@@ -51,7 +52,8 @@ import {
     useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeResiliencyMutation,
     useOptimizeAwsBackupMutation,
-    useDismissMssqlAssessmentMutation
+    useDismissMssqlAssessmentMutation,
+    useDismissOracleAssessmentMutation
 } from '../../../utils/apiService';
 import {
     setCloneDashboardData,
@@ -76,17 +78,19 @@ import {
 } from './DashboardInnerPageHelper';
 import DashboardConfigsTable from './RenderTables/DashboardConfigsTable';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
+import { oracleCardData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import { engineTypeBasedResourceStr } from '../../WellArchitectedTab/WellArchitectedTabUtils';
 
 const DashboardInnerPage = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
-    const { inProgressOptimizationData, inProgressHostData, cloneIsOptimizedRows } = useAppSelector(
+    const { inProgressOptimizationData, inProgressHostData, cloneIsOptimizedRows, configEngineType } = useAppSelector(
         state => state.getWellOptimize
     );
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
-    const { allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
+    const { allmssqlHostAssessmentData, allOracleHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
@@ -129,6 +133,7 @@ const DashboardInnerPage = () => {
     const [optimizeMTUConfigForBulk] = useOptimizeMTUConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
+    const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
 
     const callOptimizeApi = (type: any, fullRowData?: any, operation?: string) => {
         // Filter rows to only include those with "Not optimized" status if fullRowData is an array
@@ -825,15 +830,25 @@ const DashboardInnerPage = () => {
         );
     };
 
-    const handleSingleDismissPostpone = (rowData: any, type: string, operation: string) => {
+    const handleSingleDismissPostpone = (rowData: any, type: string, operation: string, configEngineType?: string) => {
+        const dismissApi = configEngineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment;
         if (operation === CONFIG_STATE_ACTIONS.DISMISS) {
             setDialog(
                 <DialogComponent
-                    header={t('databases.dismiss.dismiss-instance')}
+                    header={engineTypeBasedResourceStr(
+                        configEngineType,
+                        t('databases.dismiss.dismiss-instance'),
+                        t('databases.dismiss.dismiss-database')
+                    )}
                     content={
                         <div className={styles.dismissDialog}>
                             <DsTypography variant="Regular_14">
-                                {t('databases.dismiss.dialog-text-1')} {rowData?.data?.databaseInstanceName} ?
+                                {engineTypeBasedResourceStr(
+                                    configEngineType,
+                                    t('databases.dismiss.dialog-text-1'),
+                                    t('databases.dismiss.dialog-text-database-1')
+                                )}{' '}
+                                {rowData?.data?.databaseInstanceName} ?
                             </DsTypography>
                             <DsTypography variant="Regular_14">{t('databases.dismiss.dialog-text-2')}</DsTypography>
                         </div>
@@ -841,7 +856,7 @@ const DashboardInnerPage = () => {
                     primaryButton={t('databases.dismiss.dismiss')}
                     secondaryButton={t('databases.dismiss.cancel')}
                     callback={() => {
-                        callDashboardDismissApi(type, [rowData], operation, dismissMssqlAssessment, dispatch, t);
+                        callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, configEngineType);
                     }}
                     closeCallback={() => {
                         closeDialog();
@@ -852,11 +867,20 @@ const DashboardInnerPage = () => {
         if (operation === CONFIG_STATE_ACTIONS.POSTPONED) {
             setDialog(
                 <DialogComponent
-                    header={t('databases.dismiss.postpone-days')}
+                    header={engineTypeBasedResourceStr(
+                        configEngineType,
+                        t('databases.dismiss.postpone-days'),
+                        t('databases.dismiss.postpone-days-database')
+                    )}
                     content={
                         <div className={styles.dismissDialog}>
                             <DsTypography variant="Regular_14">
-                                {t('databases.dismiss.postpone-line-1')} {rowData?.data?.databaseInstanceName} ?
+                                {engineTypeBasedResourceStr(
+                                    configEngineType,
+                                    t('databases.dismiss.postpone-line-1'),
+                                    t('databases.dismiss.postpone-line-database-1')
+                                )}{' '}
+                                {rowData?.data?.databaseInstanceName} ?
                             </DsTypography>
                             <DsTypography variant="Regular_14">{t('databases.dismiss.dialog-text-2')}</DsTypography>
                         </div>
@@ -864,7 +888,7 @@ const DashboardInnerPage = () => {
                     primaryButton={t('databases.dismiss.dismiss')}
                     secondaryButton={t('databases.dismiss.cancel')}
                     callback={() => {
-                        callDashboardDismissApi(type, [rowData], operation, dismissMssqlAssessment, dispatch, t);
+                        callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, configEngineType);
                     }}
                     closeCallback={() => {
                         closeDialog();
@@ -873,7 +897,7 @@ const DashboardInnerPage = () => {
             );
         }
         if (operation === CONFIG_STATE_ACTIONS.ACTIVE) {
-            callDashboardDismissApi(type, [rowData], operation, dismissMssqlAssessment, dispatch, t);
+            callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, configEngineType);
         }
     };
 
@@ -986,10 +1010,13 @@ const DashboardInnerPage = () => {
 
     useEffect(() => {
         if (selectedConfig) {
-            const configData = getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
-            setOptimizeInnerpageSummary(selectedConfig, configData, dispatch);
+            const configData = getAssessmentGroupedByConfigurations(
+                allmssqlHostAssessmentData,
+                allOracleHostAssessmentData
+            );
+            setOptimizeInnerpageSummary(selectedConfig, configData, dispatch, configEngineType);
         }
-    }, [allmssqlHostAssessmentData]);
+    }, [allmssqlHostAssessmentData, allOracleHostAssessmentData]);
 
     useEffect(() => {
         switch (selectedConfig) {
@@ -1256,6 +1283,78 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+                setValueCardData({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.oracle_binary_placement?.recommendation?.description
+                    }
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+                setValueCardData({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '156px',
+                    tagHeight: '253px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.datafiles_placement?.recommendation?.description
+                    }
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+                setValueCardData({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '176px',
+                    tagHeight: '273px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.controlfiles_placement?.recommendation?.description
+                    }
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+                setValueCardData({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '206px',
+                    tagHeight: '303px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.redologs_placement?.recommendation?.description
+                    }
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+                setValueCardData({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '176px',
+                    tagHeight: '273px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.templogs_placement?.recommendation?.description
+                    }
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+                setValueCardData({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '176px',
+                    tagHeight: '273px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.archive_placement?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -1315,7 +1414,12 @@ const DashboardInnerPage = () => {
                                 variant="secondary"
                                 isDisabled={selectedRowsForOptimize?.length > 0}
                                 onClick={() => {
-                                    handleSingleDismissPostpone(rowData, name, CONFIG_STATE_ACTIONS.ACTIVE);
+                                    handleSingleDismissPostpone(
+                                        rowData,
+                                        name,
+                                        CONFIG_STATE_ACTIONS.ACTIVE,
+                                        configEngineType
+                                    );
                                 }}
                             >
                                 {t('databases.well-architect.reactivate')}
@@ -1388,16 +1492,30 @@ const DashboardInnerPage = () => {
     };
 
     // Function to handle dismiss bulk and postpone bulk action
-    const handleBulkDismissPostpone = (type: string, rowData: any, operationType: string) => {
+    const handleBulkDismissPostpone = (
+        type: string,
+        rowData: any,
+        operationType: string,
+        configEngineType?: string
+    ) => {
+        const dismissApi = configEngineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment;
         if (operationType === CONFIG_STATE_ACTIONS.DISMISS) {
             setDialog(
                 <DialogComponent
-                    header={t('databases.dismiss.dismiss-instance')}
+                    header={engineTypeBasedResourceStr(
+                        configEngineType,
+                        t('databases.dismiss.dismiss-instance'),
+                        t('databases.dismiss.dismiss-database')
+                    )}
                     content={
                         <div className={styles.dismissDialog}>
                             <DsTypography variant="Regular_14">
                                 {t('databases.dismiss.dialog-bulk-text-1')} {rowData?.length}{' '}
-                                {t('databases.dismiss.selected-instances')}
+                                {engineTypeBasedResourceStr(
+                                    configEngineType,
+                                    t('databases.dismiss.selected-instances'),
+                                    t('databases.dismiss.selected-databases')
+                                )}
                             </DsTypography>
                             <DsTypography variant="Regular_14">{t('databases.dismiss.dialog-text-2')}</DsTypography>
                         </div>
@@ -1405,7 +1523,15 @@ const DashboardInnerPage = () => {
                     primaryButton={t('databases.dismiss.dismiss')}
                     secondaryButton={t('databases.dismiss.cancel')}
                     callback={() => {
-                        callDashboardDismissApi(type, rowData, operationType, dismissMssqlAssessment, dispatch, t);
+                        callDashboardDismissApi(
+                            type,
+                            rowData,
+                            operationType,
+                            dismissApi,
+                            dispatch,
+                            t,
+                            configEngineType
+                        );
                     }}
                     closeCallback={() => {
                         closeDialog();
@@ -1416,12 +1542,20 @@ const DashboardInnerPage = () => {
         if (operationType === CONFIG_STATE_ACTIONS.POSTPONED) {
             setDialog(
                 <DialogComponent
-                    header={t('databases.dismiss.postpone-days')}
+                    header={engineTypeBasedResourceStr(
+                        configEngineType,
+                        t('databases.dismiss.postpone-days'),
+                        t('databases.dismiss.postpone-days-database')
+                    )}
                     content={
                         <div className={styles.dismissDialog}>
                             <DsTypography variant="Regular_14">
                                 {t('databases.dismiss.postpone-bulk-line-1')} {rowData?.length}{' '}
-                                {t('databases.dismiss.selected-instances')}
+                                {engineTypeBasedResourceStr(
+                                    configEngineType,
+                                    t('databases.dismiss.selected-instances'),
+                                    t('databases.dismiss.selected-databases')
+                                )}
                             </DsTypography>
                             <DsTypography variant="Regular_14">{t('databases.dismiss.dialog-text-2')}</DsTypography>
                         </div>
@@ -1429,7 +1563,15 @@ const DashboardInnerPage = () => {
                     primaryButton={t('databases.dismiss.dismiss')}
                     secondaryButton={t('databases.dismiss.cancel')}
                     callback={() => {
-                        callDashboardDismissApi(type, rowData, operationType, dismissMssqlAssessment, dispatch, t);
+                        callDashboardDismissApi(
+                            type,
+                            rowData,
+                            operationType,
+                            dismissApi,
+                            dispatch,
+                            t,
+                            configEngineType
+                        );
                     }}
                     closeCallback={() => {
                         closeDialog();
@@ -1438,7 +1580,7 @@ const DashboardInnerPage = () => {
             );
         }
         if (operationType === CONFIG_STATE_ACTIONS.ACTIVE) {
-            callDashboardDismissApi(type, rowData, operationType, dismissMssqlAssessment, dispatch, t);
+            callDashboardDismissApi(type, rowData, operationType, dismissApi, dispatch, t, configEngineType);
         }
     };
 
@@ -1477,6 +1619,23 @@ const DashboardInnerPage = () => {
                 return <OperatingSystemTable />;
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
                 return <MSSQLHighAvailabilityConfig />;
+
+            // Oracle configurations inner page
+            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+                return (
+                    <DashboardConfigsTable
+                        configType={selectedConfig}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                        handleSingleDismissPostpone={handleSingleDismissPostpone}
+                        handleBulkDismissPostpone={handleBulkDismissPostpone}
+                    />
+                );
         }
     };
 
@@ -1515,13 +1674,17 @@ const DashboardInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Regular_16"
                     >
-                        {t('databases.well-architect.register-instance-fixing')}
+                        {engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.register-instance-fixing'),
+                            t('databases.well-architect.register-database-fixing')
+                        )}
                     </DsTypography>
                 </div>
 
                 <div className={styles.mainSection}>
                     <div className={styles.leftSection}>
-                        <ValueCard valueCardData={valueCardData} />
+                        <ValueCard valueCardData={valueCardData} configEngineType={configEngineType} />
 
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
                             <RecommendationText

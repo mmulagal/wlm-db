@@ -179,11 +179,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     const { showNA } = useAppSelector(state => state.headers);
 
-    const handleOptimize = (type: string) => {
+    const handleOptimize = (type: string, dbType?: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(setSelectedConfig(type));
-        setOptimizeInnerpageSummary(type, configData, dispatch);
+        setOptimizeInnerpageSummary(type, configData, dispatch, dbType);
     };
 
     const loading = useMemo(
@@ -302,21 +302,32 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <SeparatorComponent variant="vertical" height="60px" />
 
                 <div className={styles.buttonContainer}>
-                    <DsPopover trigger="hover" title={t('databases.general.coming-soon')} placement="bottom">
+                    {isDisabled && (
+                        <DsPopover trigger="hover" title={t('databases.general.coming-soon')} placement="bottom">
+                            <DsButton
+                                variant="secondary"
+                                isThin
+                                onClick={() => {}}
+                                data-testid={testId}
+                                isDisabled={isDisabled}
+                            >
+                                {t('databases.well-architect.view-and-fix')}
+                            </DsButton>
+                        </DsPopover>
+                    )}
+                    {!isDisabled && (
                         <DsButton
                             variant="secondary"
                             isThin
                             onClick={() => {
-                                handleOptimize(handleOptimizeClick);
+                                handleOptimize(handleOptimizeClick, DBType.ORACLE);
                             }}
                             data-testid={testId}
-                            isDisabled={
-                                isDisabled || loading || inProgressOptimizationData[assessmentConfigName]?.length > 0
-                            }
+                            isDisabled={loading || inProgressOptimizationData[assessmentConfigName]?.length > 0}
                         >
                             {t('databases.well-architect.view-and-fix')}
                         </DsButton>
-                    </DsPopover>
+                    )}
                 </div>
             </div>
         );
@@ -1021,42 +1032,60 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
                         'oracleBinaryPlacement',
-                        'wlm-db-optimize-oracle-binary-placement'
+                        'wlm-db-optimize-oracle-binary-placement',
+                        ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+                        ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
                         'datafilesPlacement',
-                        'wlm-db-optimize-datafiles-placement'
+                        'wlm-db-optimize-datafiles-placement',
+                        ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
+                        ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
                         'controlfilesPlacement',
-                        'wlm-db-optimize-controlfiles-placement'
+                        'wlm-db-optimize-controlfiles-placement',
+                        ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
+                        ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
                         'redoLogsPlacement',
-                        'wlm-db-optimize-redo-logs-placement'
+                        'wlm-db-optimize-redo-logs-placement',
+                        ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
+                        ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
                         'tempLogsPlacement',
-                        'wlm-db-optimize-temp-logs-placement'
+                        'wlm-db-optimize-temp-logs-placement',
+                        ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
+                        ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
                         'archivePlacement',
-                        'wlm-db-optimize-archive-placement'
+                        'wlm-db-optimize-archive-placement',
+                        ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
+                        ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&

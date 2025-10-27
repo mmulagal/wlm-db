@@ -87,11 +87,11 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
     };
 
     const generateTagOptions = () => [
-            { id: '1', label: t('databases.log-analyzer.Compute'), value: 'Compute' },
-            { id: '2', label: t('databases.log-analyzer.Storage'), value: 'Storage' },
-            { id: '3', label: t('databases.log-analyzer.Network'), value: 'Network' },
-            { id: '4', label: t('databases.log-analyzer.Security'), value: 'Security' }
-        ];
+        { id: '1', label: t('databases.log-analyzer.Compute'), value: 'Compute' },
+        { id: '2', label: t('databases.log-analyzer.Storage'), value: 'Storage' },
+        { id: '3', label: t('databases.log-analyzer.Network'), value: 'Network' },
+        { id: '4', label: t('databases.log-analyzer.Security'), value: 'Security' }
+    ];
 
     const formatLabelForMultiSelectTags = () => {
         const totalTags = generateTagOptions().length;
@@ -99,13 +99,14 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
 
         if (selectedCount === 0) {
             return 'No tag selected';
-        } if (selectedCount === totalTags) {
+        }
+        if (selectedCount === totalTags) {
             return 'All error tags';
-        } if (selectedCount === 1) {
+        }
+        if (selectedCount === 1) {
             return '1 tag selected';
-        } 
-            return `${selectedCount} tags selected`;
-        
+        }
+        return `${selectedCount} tags selected`;
     };
 
     const handleTagToggle = (tagValue: string) => {
