@@ -259,7 +259,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 }
                 beforeOutOf={showNA ? undefined : dismissedOrPostponedText ? undefined : optimizedCount}
                 afterOutOf={showNA ? undefined : dismissedOrPostponedText ? undefined : afterOutOfTotal}
-                bottomText={showNA ? undefined : dismissedOrPostponedText ? undefined : 'Well-architected:'}
+                bottomText={
+                    showNA
+                        ? undefined
+                        : dismissedOrPostponedText
+                        ? undefined
+                        : t('databases.well-architected-tab.well-architected-resources')
+                }
                 width={width}
                 from="dashboard"
                 optimizePercentage={showNA ? 100 : dismissedOrPostponedText ? 0 : optimizePercentage}
@@ -1086,7 +1092,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.ONTAP,
                         'oracleOntapConfiguration',
                         'wlm-db-optimize-oracle-ontap',
-                        'Oracle - ONTAP',
+                        'ONTAP',
                         ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS,
                         true
                     )}
@@ -1096,7 +1102,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.OS,
                         'oracleOperatingSystem',
                         'wlm-db-optimize-oracle-operating-system',
-                        'Oracle - Operating system',
+                        'Operating system',
                         ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
                         true
                     )}

@@ -1,6 +1,7 @@
 {
     "databases": {
         "well-architected-tab": {
+            "well-architected-resources": "Well-architected resources:",
             "application": "Application",
             "apply": "Apply",
             "cancel": "Cancel",

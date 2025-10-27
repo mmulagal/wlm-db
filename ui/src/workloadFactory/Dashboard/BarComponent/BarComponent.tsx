@@ -225,14 +225,24 @@ const BarComponent = ({
                                         {bottomText}
                                     </DsTypography>
                                 )}
-                                {beforeOutOf !== undefined && afterOutOf !== undefined && (
-                                    <DsTypography
-                                        variant="Semibold_14"
-                                        className={isDisabled ? CommonStyles.notAvailable : ''}
-                                    >
-                                        {beforeOutOf} out of {afterOutOf}
-                                    </DsTypography>
-                                )}
+                                {from === 'dashboard'
+                                    ? beforeOutOf !== undefined && (
+                                          <DsTypography
+                                              variant="Semibold_14"
+                                              className={isDisabled ? CommonStyles.notAvailable : ''}
+                                          >
+                                              {beforeOutOf}
+                                          </DsTypography>
+                                      )
+                                    : beforeOutOf !== undefined &&
+                                      afterOutOf !== undefined && (
+                                          <DsTypography
+                                              variant="Semibold_14"
+                                              className={isDisabled ? CommonStyles.notAvailable : ''}
+                                          >
+                                              {beforeOutOf} out of {afterOutOf}
+                                          </DsTypography>
+                                      )}
                             </>
                         )}
 
