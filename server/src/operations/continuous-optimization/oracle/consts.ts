@@ -29,17 +29,13 @@ interface TcpOptimizationResponse {
     error?: string;
 }
 
-interface InstallHostUtilitiesResponse {
-    'os-version': string;
+interface GenericOptimizationResponse {
     status: 'optimised' | 'failed' | 'optimised-offline';
     error?: string;
 }
 
-interface LinuxOsInfoResponse {
-    os: string | null;
-    version: string | null;
-    code: string | null;
-    error: string | null;
+interface InstallHostUtilitiesResponse extends GenericOptimizationResponse {
+    'os-version': string;
 }
 
 interface KernelTcpSlotOptimiseResponse {
@@ -59,6 +55,6 @@ export {
     TcpOptimizationResponse,
     TcpFeatures,
     InstallHostUtilitiesResponse,
-    LinuxOsInfoResponse,
-    KernelTcpSlotOptimiseResponse
+    KernelTcpSlotOptimiseResponse,
+    GenericOptimizationResponse
 };

@@ -6,7 +6,9 @@ import {
     CHECK_TCP_FEATURES,
     CHECK_TRANSPARENT_HUGEPAGE,
     GET_OS_INFO,
-    CHECK_SANLUN
+    CHECK_SANLUN,
+    CHECK_MULTIPATH_IO_STATUS,
+    CHECK_SELINUX
 } from './os-iscsi-assessment-scripts';
 
 const OPTIMIZE_TCP_OPTIONS = `
@@ -1157,6 +1159,111 @@ ${logFileCheck(false)}
 ${pythonScriptInit(fixTransparentHugepageTemplate, 'wlmdb-os-configuration-thp-optimization.log')}
 `;
 
+const ENABLE_MULTIPATH_IO = `
+def enable_multipath_io():
+    log('Starting multipath I/O enablement')
+    
+    try:
+        # Check current status
+        current = check_multipath_io()        
+        if current.get("multipath-io-is-active") and current.get("multipath-io-is-enabled"):
+            log('Multipath I/O already enabled')
+            return {"status": "optimized-offline"}
+
+        # Enable and start service
+        os_info = get_os_info()
+        os_version = os_info.get("os-version", "").lower()            
+        if 'rhel' in os_version:
+            result = subprocess.run(['sudo', 'mpathconf', '--enable', '--with_multipathd', 'y'],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=30)
+            if result.returncode != 0:
+                return {"status": "failed", "error": result.stderr.strip()}
+        
+        result = subprocess.run(['sudo', 'systemctl', 'enable', '--now', 'multipathd'],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=30)
+        if result.returncode != 0:
+            return {"status": "failed", "error": result.stderr.strip()}
+        
+        # Verify
+        final = check_multipath_io()
+        if final.get("error") or not (final.get("multipath-io-is-active") and final.get("multipath-io-is-enabled")):
+            return {"status": "failed", "error": final.get("error", "Verification failed")}
+        
+        log('Multipath I/O successfully enabled')
+        return {"status": "optimized"}
+        
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
+`;
+
+const enableMultipathIoEnableTemplate = `
+${CHECK_MULTIPATH_IO_STATUS}
+${GET_OS_INFO}
+${ENABLE_MULTIPATH_IO}
+
+result = enable_multipath_io()
+print(json.dumps(result))
+`;
+
+const enableMultipathIoCommand = `
+#!/bin/bash
+${logFileCheck(false)}
+
+# This script doesn't need to be run as oracle user
+${pythonScriptInit(enableMultipathIoEnableTemplate, 'wlmdb-multipath-IO-enable.log')}
+`;
+
+const DISABLE_SELINUX = `
+def disable_selinux():
+    log('Disabling SELinux')
+    
+    try:
+        current = check_selinux()
+        if current.get("selinux-disabled") or current.get("selinux-value") == "permissive":
+            return {"status": "optimized-offline"}
+        
+        # Set to permissive immediately
+        if current.get("selinux-value") == "enforcing":
+            result = subprocess.run(['sudo', 'setenforce', '0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
+            if result.returncode != 0:
+                return {"status": "failed", "error": result.stderr.strip()}
+        
+        # Update config for persistence using sed
+        config_file = '/etc/selinux/config'
+        if os.path.exists(config_file):
+            result = subprocess.run(
+                ['sudo', 'sed', '-i', 's/^SELINUX=enforcing/SELINUX=disabled/', config_file],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10
+            )
+            if result.returncode != 0:
+                return {"status": "failed", "error": result.stderr.strip()}
+        
+        # Verify
+        final = check_selinux()
+        if final.get("selinux-value") in ["disabled", "permissive"]:
+            return {"status": "optimized"}
+        
+        return {"status": "failed", "error": "Verification failed"}
+        
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
+`;
+
+const disableSelinuxTemplate = `
+${CHECK_SELINUX}
+${DISABLE_SELINUX}
+
+result = disable_selinux()
+print(json.dumps(result))
+`;
+
+const disableSelinuxCommand = `#!/bin/bash
+${logFileCheck(false)}
+
+# This script doesn't need to be run as oracle user
+${pythonScriptInit(disableSelinuxTemplate, 'wlmdb-os-configuration-disable-selinux.log')}
+`;
+
 const optimizeMultipathIoConfigCommand = `#!/bin/bash
 ${logFileCheck(false)}
 ${pythonScriptInit(optimizeMultiPathConfigTemplate, 'wlmdb-multipath-IO-config-optimization.log')}
@@ -1171,9 +1278,11 @@ export {
     optimizeTcpOptionsCommand,
     optimizeIscsiReplacementTimeoutCommand,
     optimizeMultipathIoSessionsCommand,
-    fixTransparentHugepageCommand,
     optimizeMultipathIoConfigCommand,
     optimizeMultiPathConfigFriendlyNamesCommand,
     installHostUtilitiesCommand,
+    fixTransparentHugepageCommand,
+    enableMultipathIoCommand,
+    disableSelinuxCommand,
     DOWNLOAD_AND_EXTRACT_TARGZ
 };

@@ -4061,5 +4061,11 @@
     "installNetAppHostUtilitiesResponse": {
         "os-version": "sles15",
         "status": "optimized"
+    },
+    "enableMultipathIoResponse": {
+        "status": "optimized"
+    },
+    "disableSelinuxResponse": {
+        "status": "optimized"
     }
 }

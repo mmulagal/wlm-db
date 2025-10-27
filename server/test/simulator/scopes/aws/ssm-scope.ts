@@ -1008,7 +1008,11 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Optimize multipath friendly names configuration')
     .resolves(getSampleCommandResponse('optimizeMultipathFriendlyNames'))
     .on(SendCommandCommand, params => params.Comment === 'Installing NetApp Host Utilities')
-    .resolves(getSampleCommandResponse('installNetAppHostUtilities'));
+    .resolves(getSampleCommandResponse('installNetAppHostUtilities'))
+    .on(SendCommandCommand, params => params.Comment === 'Enabling Multipath IO')
+    .resolves(getSampleCommandResponse('enableMultipathIo'))
+    .on(SendCommandCommand, params => params.Comment === 'Disabling SELinux')
+    .resolves(getSampleCommandResponse('disableSelinux'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1655,6 +1659,24 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'installNetAppHostUtilities',
             JSON.stringify(getCommandInvocationResponse.installNetAppHostUtilitiesResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-enableMultipathIo'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'enableMultipathIo',
+            JSON.stringify(getCommandInvocationResponse.enableMultipathIoResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-disableSelinux'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'disableSelinux',
+            JSON.stringify(getCommandInvocationResponse.disableSelinuxResponse)
         )
     );
 

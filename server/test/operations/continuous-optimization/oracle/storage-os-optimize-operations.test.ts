@@ -312,6 +312,110 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             }
         });
     });
+
+    describe('Enable Multipath IO', () => {
+        it('should enable multipath IO successfully', async () => {
+            await oracleOptimizeStorageOS(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                dbInstanceSid,
+                OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_ENABLE
+            );
+
+            const { items: jobItems } = await getJobs(ACCOUNT_ID, {
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                includeSubJobs: true
+            });
+
+            // Find the parent job for multipath IO enablement
+            const multipathEnableJob = jobItems?.find(
+                (job: any) =>
+                    (job.description?.toLowerCase().includes('multipath') ||
+                        job.description?.toLowerCase().includes('enable multipath') ||
+                        job.description?.includes('Optimization completed for')) &&
+                    job.type === JOBTYPE.WELL_ARCHITECTED &&
+                    job.resourceName === dbInstanceSid
+            );
+
+            expect(multipathEnableJob).toBeDefined();
+            expect(multipathEnableJob?.resourceName).toBe(dbInstanceSid);
+
+            // Wait for job completion
+            if (multipathEnableJob?.id) {
+                await waitForJobCompletion(
+                    ACCOUNT_ID,
+                    DEFAULT_AWS_CREDENTIALS_ID,
+                    DEFAULT_AWS_REGION,
+                    multipathEnableJob.id
+                );
+
+                // Check final job status
+                const { items: finalJobItems } = await getJobs(ACCOUNT_ID, {
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
+                    includeSubJobs: true
+                });
+
+                const completedJob = finalJobItems?.find((job: any) => job.id === multipathEnableJob.id);
+                expect(completedJob?.status).toBe(JOBSTATUS.COMPLETED);
+            }
+        });
+    });
+
+    describe('Disable SELinux', () => {
+        it('should disable SELinux successfully', async () => {
+            await oracleOptimizeStorageOS(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                dbInstanceSid,
+                OptimizeOracleiSCSIStorageOperatingSystem.SELINUX_DISABLE
+            );
+
+            const { items: jobItems } = await getJobs(ACCOUNT_ID, {
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                includeSubJobs: true
+            });
+
+            // Find the parent job for SELinux disable
+            const selinuxDisableJob = jobItems?.find(
+                (job: any) =>
+                    (job.description?.toLowerCase().includes('selinux') ||
+                        job.description?.toLowerCase().includes('disable selinux') ||
+                        job.description?.includes('Optimization completed for')) &&
+                    job.type === JOBTYPE.WELL_ARCHITECTED &&
+                    job.resourceName === dbInstanceSid
+            );
+
+            expect(selinuxDisableJob).toBeDefined();
+            expect(selinuxDisableJob?.resourceName).toBe(dbInstanceSid);
+
+            // Wait for job completion
+            if (selinuxDisableJob?.id) {
+                await waitForJobCompletion(
+                    ACCOUNT_ID,
+                    DEFAULT_AWS_CREDENTIALS_ID,
+                    DEFAULT_AWS_REGION,
+                    selinuxDisableJob.id
+                );
+
+                // Check final job status
+                const { items: finalJobItems } = await getJobs(ACCOUNT_ID, {
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
+                    includeSubJobs: true
+                });
+
+                const completedJob = finalJobItems?.find((job: any) => job.id === selinuxDisableJob.id);
+                expect(completedJob?.status).toBe(JOBSTATUS.COMPLETED);
+            }
+        });
+    });
 });
 
 describe('Multipath Configuration Optimization', () => {
