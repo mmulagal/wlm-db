@@ -13,6 +13,7 @@ import {
     setSelectedResourcePageHostData
 } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { DBType, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
+import { dashboardRedirection } from '../../utils/utilityFunctions';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 import {
     formatOracleOptimizationBreakDown,
@@ -97,6 +98,7 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
 };
 
 export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any) => {
+    dashboardRedirection();
     if (selectedAssessmentRow?.type === DBType.ORACLE) {
         dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
         dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
