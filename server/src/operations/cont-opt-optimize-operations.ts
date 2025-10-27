@@ -3213,7 +3213,7 @@ async function triggerAssessmentAfterOptimization(
     await updateJobDetails(accountId, parentJobId, {
         status: masterJobStatus,
         endTime: Date.now(),
-        description: `Optimization completed for ${serverNameWithHostName}`,
+        description: `Fix completed for ${serverNameWithHostName}`,
         error: errorMessage
     });
 
