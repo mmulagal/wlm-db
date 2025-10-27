@@ -962,9 +962,9 @@ EXIT;
             result['afd-logical-block-size']['error'] = ''
             result['afd-logical-block-size']['assessment']['result'] = ''
             afdBlockSizeCmd = 'cat /sys/module/oracleafd/parameters/oracleafd_use_logical_block_size'
-            afdBlockSizeCmdOutput = subprocess.run(['bash', '-c', checkAFDModuleCmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
+            afdBlockSizeCmdOutput = subprocess.run(['bash', '-c', afdBlockSizeCmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
             if afdBlockSizeCmdOutput.returncode == 0 and afdBlockSizeCmdOutput.stdout.strip():
-                result['afd-logical-block-size']['result'] = afdBlockSizeCmdOutput.stdout.strip()
+                result['afd-logical-block-size']['assessment']['result'] = afdBlockSizeCmdOutput.stdout.strip()
             else:
                 result['afd-logical-block-size']['error'] = f"Command failed: {afdBlockSizeCmdOutput.stderr.strip()}"
         elif result_proc.returncode != 0:

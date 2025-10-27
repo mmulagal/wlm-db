@@ -3413,7 +3413,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             'afd-logical-block-size': {},
             'asmlib-logical-block-size': {
                 assessment: {
-                    result: 'Y'
+                    result: 'N'
                 },
                 error: ''
             }

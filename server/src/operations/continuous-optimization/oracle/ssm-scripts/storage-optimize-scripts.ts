@@ -659,20 +659,14 @@ ORACLE_SHELL
 
 const optimizeAsmLibDriftConfigParam = (shouldRestart: boolean) => `
 #!/bin/bash
-${logFileCheck(true)}
-
-sudo -i -u oracle bash <<'ORACLE_SHELL'
+${logFileCheck()}
 ${pythonScriptInit(oracleAsmLibOptimizeScript(shouldRestart), 'wlmdb-oracle-asmlib-drift-optimization')}
-ORACLE_SHELL
 `;
 
 const optimizeAfdDriftConfigParam = (shouldRestart: boolean) => `
 #!/bin/bash
-${logFileCheck(true)}
-
-sudo -i -u oracle bash <<'ORACLE_SHELL'
+${logFileCheck()}
 ${pythonScriptInit(oracleAfdOptimizeScript(shouldRestart), 'wlmdb-oracle-afd-drift-optimization')}
-ORACLE_SHELL
 `;
 
 export {
