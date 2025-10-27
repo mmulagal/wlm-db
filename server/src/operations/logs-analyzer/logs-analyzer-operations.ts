@@ -413,7 +413,7 @@ async function handleLogsAnalysis(
         );
         await updateLongRunningAuditGroup(AuditStatus.SUCCESS, 'Logs analysis completed successfully');
         const { items: [{ id, latestReport: { creationTime, errorCount, severityCounts } = {} } = {}] = [] } =
-            await getLatestLogsAnalysisReports(accountId, credentialsId, databaseType, jobId);
+            await getLatestLogsAnalysisReports(accountId, region, credentialsId, databaseType, jobId);
 
         await updateJobDetails(accountId, jobId, {
             endTime: Date.now(),
@@ -1075,12 +1075,14 @@ async function analyzePreRequisites(
 
 async function getLatestLogsAnalysisReports(
     accountId: string,
+    region?: string,
     credentialsId?: string,
     databaseType?: string,
     jobId?: string
 ) {
     logger.info('Getting latest report data of database instances at account level', {
         accountId,
+        region,
         credentialsId,
         databaseType
     });
@@ -1088,7 +1090,7 @@ async function getLatestLogsAnalysisReports(
     let processedCount = 0;
     let nextToken: string | undefined;
     const DEFAULT_PAGE_SIZE = 50;
-    const totalReportCount = await countLogsAnalysisReports(accountId, credentialsId);
+    const totalReportCount = await countLogsAnalysisReports(accountId, credentialsId, region);
 
     const instanceReportsMap = new Map<string, any>();
 
@@ -1097,6 +1099,7 @@ async function getLatestLogsAnalysisReports(
         const reports = await listLogsAnalysisReports({
             accountId,
             credentialsId,
+            region,
             sort: 'creation_time',
             sortOrder: 'desc',
             pageSize: DEFAULT_PAGE_SIZE,

@@ -66,6 +66,7 @@ async function listLogsAnalysisReports(params: {
     databaseHostId?: string;
     databaseInstanceId?: string;
     credentialsId?: string;
+    region?: string;
     jobId?: string;
     reportId?: string;
     sort?: string;
@@ -80,6 +81,7 @@ async function listLogsAnalysisReports(params: {
         databaseHostId,
         databaseInstanceId,
         credentialsId,
+        region,
         jobId,
         reportId,
         sort = 'creation_time',
@@ -102,7 +104,12 @@ async function listLogsAnalysisReports(params: {
             ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
             ...(credentialsId && { credentials_id: credentialsId }),
             ...(jobId && { job_id: jobId }),
-            ...(reportId && { id: reportId })
+            ...(reportId && { id: reportId }),
+            ...(region && {
+                database_instances: {
+                    region
+                }
+            })
         },
         orderBy: [
             {
@@ -129,17 +136,22 @@ async function listLogsAnalysisReports(params: {
     });
 }
 
-async function countLogsAnalysisReports(accountId: string, credentialsId?: string) {
-    logger.info('Counting logs analysis reports', { accountId, credentialsId });
+async function countLogsAnalysisReports(accountId: string, credentialsId?: string, region?: string) {
+    logger.info('Counting logs analysis reports', { accountId, credentialsId, region });
 
     if (accountId) {
         accountId = checkAccount(accountId);
     }
 
-    return prisma.client.resource.count({
+    return prisma.client.logs_analysis_reports.count({
         where: {
             ...(accountId && { account_id: accountId }),
-            ...(credentialsId && { credentials_id: credentialsId })
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && {
+                database_instances: {
+                    region
+                }
+            })
         }
     });
 }

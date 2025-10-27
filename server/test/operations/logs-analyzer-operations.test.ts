@@ -171,7 +171,7 @@ describe('Logs Analyzer Operations', () => {
     it('Should get latest logs analysis reports at account level', async () => {
         await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
 
-        const response = await getLatestLogsAnalysisReports(ACCOUNT_ID, TEST_CREDENTIALS_ID, 'mssql');
+        const response = await getLatestLogsAnalysisReports(ACCOUNT_ID, TEST_REGION, TEST_CREDENTIALS_ID, 'mssql');
 
         expect(response).toBeDefined();
         expect(response).toHaveProperty('items');
@@ -223,7 +223,7 @@ describe('Logs Analyzer Operations', () => {
 
         await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, secondJobId);
 
-        const response = await getLatestLogsAnalysisReports(ACCOUNT_ID, TEST_CREDENTIALS_ID, 'mssql');
+        const response = await getLatestLogsAnalysisReports(ACCOUNT_ID, TEST_REGION, TEST_CREDENTIALS_ID, 'mssql');
 
         expect(response).toBeDefined();
         expect(response.items).toBeDefined();

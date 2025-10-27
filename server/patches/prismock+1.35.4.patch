@@ -101,6 +101,80 @@ index 6a72534..90d5a4a 100644
      if (args === null || args === void 0 ? void 0 : args.distinct) {
          const values = {};
          return found.filter((item) => {
+diff --git a/node_modules/prismock/build/main/lib/operations/find/match.js b/node_modules/prismock/build/main/lib/operations/find/match.js
+index 7236dbc..531f76e 100644
+--- a/node_modules/prismock/build/main/lib/operations/find/match.js
++++ b/node_modules/prismock/build/main/lib/operations/find/match.js
+@@ -75,6 +75,7 @@ const matchMultiple = (item, where, current, delegates) => {
+                 if (info === null || info === void 0 ? void 0 : info.relationName) {
+                     const childName = (0, helpers_1.camelize)(info.type);
+                     let childWhere = {};
++                    
+                     if (filter.every) {
+                         childWhere = filter.every;
+                     }
+@@ -84,12 +85,40 @@ const matchMultiple = (item, where, current, delegates) => {
+                     else if (filter.none) {
+                         childWhere = filter.none;
+                     }
++                    else if (filter.is && typeof filter.is === 'object') {
++                        childWhere = filter.is;
++                    }
+                     else {
+                         childWhere = filter;
+                     }
+-                    const res = delegates[childName]
+-                        .getItems()
+-                        .filter(matchFnc(Object.assign(Object.assign({}, childWhere), (0, find_1.getFieldRelationshipWhere)(item, info, delegates)), delegates[childName]));
++                    const relationshipWhere = (0, find_1.getFieldRelationshipWhere)(item, info, delegates);
++                    const finalWhere = Object.assign(Object.assign({}, childWhere), relationshipWhere);
++                    const allChildItems = delegates[childName].getItems();
++                    const res = allChildItems.filter(matchFnc(finalWhere, delegates[childName]));
++                    
++                    // Check if this current record is actually linked to the filtered child records
++                    const isCurrentRecordLinked = () => {
++                        if (res.length === 0) return false;
++                        
++                        // Get the composite foreign key from current record
++                        const currentRecordForeignKey = {};
++                        if (info.relationFromFields && info.relationFromFields.length > 0) {
++                            info.relationFromFields.forEach((fromField, idx) => {
++                                const toField = info.relationToFields[idx];
++                                currentRecordForeignKey[toField] = item[fromField];
++                            });
++                        }
++                        
++                        // Check if any of the filtered child records matches the current record's foreign key
++                        const isLinked = res.some(childRecord => {
++                            return Object.keys(currentRecordForeignKey).every(key => 
++                                childRecord[key] === currentRecordForeignKey[key]
++                            );
++                        });
++                        
++                        return isLinked;
++                    };
++                    
+                     if (filter.every) {
+                         if (res.length === 0)
+                             return false;
+@@ -97,7 +126,7 @@ const matchMultiple = (item, where, current, delegates) => {
+                         return res.length === all.length;
+                     }
+                     else if (filter.some) {
+-                        return res.length > 0;
++                        return isCurrentRecordLinked();
+                     }
+                     else if (filter.is === null) {
+                         return res.length === 0;
+@@ -105,7 +134,7 @@ const matchMultiple = (item, where, current, delegates) => {
+                     else if (filter.none) {
+                         return res.length === 0;
+                     }
+-                    return res.length > 0;
++                    return isCurrentRecordLinked();
+                 }
+                 const compositeIndex = current.model.uniqueIndexes.map((index) => index.name).includes(child) ||
+                     ((_a = current.model.primaryKey) === null || _a === void 0 ? void 0 : _a.name) === child ||
 diff --git a/node_modules/prismock/build/module/lib/operations/find/find.js b/node_modules/prismock/build/module/lib/operations/find/find.js
 index 8771706..934a53a 100644
 --- a/node_modules/prismock/build/module/lib/operations/find/find.js
@@ -196,3 +270,69 @@ index 8771706..934a53a 100644
      if (args?.distinct) {
          const values = {};
          return found.filter((item) => {
+diff --git a/node_modules/prismock/build/module/lib/operations/find/match.js b/node_modules/prismock/build/module/lib/operations/find/match.js
+index f5d6c9b..1844be9 100644
+--- a/node_modules/prismock/build/module/lib/operations/find/match.js
++++ b/node_modules/prismock/build/module/lib/operations/find/match.js
+@@ -80,12 +80,40 @@ export const matchMultiple = (item, where, current, delegates) => {
+                     else if (filter.none) {
+                         childWhere = filter.none;
+                     }
++                    else if (filter.is && typeof filter.is === 'object') {
++                        childWhere = filter.is;
++                    }
+                     else {
+                         childWhere = filter;
+                     }
+-                    const res = delegates[childName]
+-                        .getItems()
+-                        .filter(matchFnc(Object.assign(Object.assign({}, childWhere), getFieldRelationshipWhere(item, info, delegates)), delegates[childName]));
++                    const relationshipWhere = getFieldRelationshipWhere(item, info, delegates);
++                    const finalWhere = Object.assign(Object.assign({}, childWhere), relationshipWhere);
++                    const allChildItems = delegates[childName].getItems();
++                    const res = allChildItems.filter(matchFnc(finalWhere, delegates[childName]));
++                    
++                    // Check if this current record is actually linked to the filtered child records
++                    const isCurrentRecordLinked = () => {
++                        if (res.length === 0) return false;
++                        
++                        // Get the composite foreign key from current record
++                        const currentRecordForeignKey = {};
++                        if (info.relationFromFields && info.relationFromFields.length > 0) {
++                            info.relationFromFields.forEach((fromField, idx) => {
++                                const toField = info.relationToFields[idx];
++                                currentRecordForeignKey[toField] = item[fromField];
++                            });
++                        }
++                        
++                        // Check if any of the filtered child records matches the current record's foreign key
++                        const isLinked = res.some(childRecord => {
++                            return Object.keys(currentRecordForeignKey).every(key => 
++                                childRecord[key] === currentRecordForeignKey[key]
++                            );
++                        });
++                        
++                        return isLinked;
++                    };
++                    
+                     if (filter.every) {
+                         if (res.length === 0)
+                             return false;
+@@ -93,7 +121,7 @@ export const matchMultiple = (item, where, current, delegates) => {
+                         return res.length === all.length;
+                     }
+                     else if (filter.some) {
+-                        return res.length > 0;
++                        return isCurrentRecordLinked();
+                     }
+                     else if (filter.is === null) {
+                         return res.length === 0;
+@@ -101,7 +129,7 @@ export const matchMultiple = (item, where, current, delegates) => {
+                     else if (filter.none) {
+                         return res.length === 0;
+                     }
+-                    return res.length > 0;
++                    return isCurrentRecordLinked();
+                 }
+                 const compositeIndex = current.model.uniqueIndexes.map((index) => index.name).includes(child) ||
+                     current.model.primaryKey?.name === child ||

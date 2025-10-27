@@ -49,10 +49,10 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
         { schema: LatestReportsSchema },
         async (request, reply) => {
             const {
-                params: { accountId, credentialsId }
+                params: { accountId, region, credentialsId }
             } = castRequest(request);
 
-            const response = await getLatestLogsAnalysisReports(accountId, credentialsId, DATABASE_TYPE.mssql);
+            const response = await getLatestLogsAnalysisReports(accountId, region, credentialsId, DATABASE_TYPE.mssql);
 
             return reply.send(response);
         }
