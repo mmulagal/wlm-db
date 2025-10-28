@@ -1006,6 +1006,10 @@ export const ASSESSMENT_CONFIG_NAMES = {
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
 export const severityOptions = ['Critical', 'Warning'];
 
+export const oracleCategoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency'];
+
+export const oracleSeverityOptions = ['Critical', 'Warning'];
+
 export const CONFIG_STATES = {
     ACTIVE: 'ACTIVE',
     POSTPONED: 'POSTPONED',

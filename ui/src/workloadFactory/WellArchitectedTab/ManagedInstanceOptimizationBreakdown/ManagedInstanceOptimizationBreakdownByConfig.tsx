@@ -10,10 +10,12 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import {
     ASSESSMENT_CONFIG_NAMES,
     categoryOptions,
+    oracleCategoryOptions,
     CONFIG_STATES,
     CONFIG_STATES_UI,
     DBType,
     severityOptions,
+    oracleSeverityOptions,
     WLF_TABS
 } from '../../../utils/consts';
 import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
@@ -49,11 +51,18 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     // For popup
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(categoryOptions);
-    const [selectedSeverity, setSelectedSeverity] = useState<string[]>(severityOptions);
-    // Applied filters (only updated when Apply button is clicked)
-    const [appliedCategories, setAppliedCategories] = useState<string[]>(categoryOptions);
-    const [appliedSeverity, setAppliedSeverity] = useState<string[]>(severityOptions);
+    // Maintain separate category selections/applied filters for MSSQL and Oracle
+    const [selectedCategoriesMssql, setSelectedCategoriesMssql] = useState<string[]>(categoryOptions);
+    const [appliedCategoriesMssql, setAppliedCategoriesMssql] = useState<string[]>(categoryOptions);
+    // For Oracle: Storage should be checked and disabled; others unchecked and disabled
+    const ORACLE_DEFAULT_SELECTED = ['Storage'];
+    const [selectedCategoriesOracle, setSelectedCategoriesOracle] = useState<string[]>(ORACLE_DEFAULT_SELECTED);
+    const [appliedCategoriesOracle, setAppliedCategoriesOracle] = useState<string[]>(ORACLE_DEFAULT_SELECTED);
+    // Separate severity selections per engine so severity filtering affects only that engine
+    const [selectedSeverityMssql, setSelectedSeverityMssql] = useState<string[]>(severityOptions);
+    const [appliedSeverityMssql, setAppliedSeverityMssql] = useState<string[]>(severityOptions);
+    const [selectedSeverityOracle, setSelectedSeverityOracle] = useState<string[]>(oracleSeverityOptions);
+    const [appliedSeverityOracle, setAppliedSeverityOracle] = useState<string[]>(oracleSeverityOptions);
     const popupRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
 
@@ -73,32 +82,63 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     }, []);
 
     const toggleCategory = (item: string) => {
-        setSelectedCategories(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+        // For Oracle the category checkboxes are disabled, prevent toggling
+        if (configEngineType === DBType.ORACLE) return;
+        setSelectedCategoriesMssql(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
     };
 
     const toggleSeverity = (item: string) => {
-        setSelectedSeverity(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+        if (configEngineType === DBType.ORACLE) {
+            setSelectedSeverityOracle(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+        } else {
+            setSelectedSeverityMssql(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+        }
     };
 
     const handleApply = () => {
-        // Apply the selected filters
-        setAppliedCategories(selectedCategories);
-        setAppliedSeverity(selectedSeverity);
+        // Apply the selected filters for the current engine
+        if (configEngineType === DBType.ORACLE) {
+            setAppliedCategoriesOracle(selectedCategoriesOracle);
+            setAppliedSeverityOracle(selectedSeverityOracle);
+        } else {
+            setAppliedCategoriesMssql(selectedCategoriesMssql);
+            setAppliedSeverityMssql(selectedSeverityMssql);
+        }
         setIsOpen(false);
     };
 
     const handleReset = () => {
-        setSelectedCategories(categoryOptions);
-        setSelectedSeverity(severityOptions);
-        // Also reset the applied filters immediately
-        setAppliedCategories(categoryOptions);
-        setAppliedSeverity(severityOptions);
+        // Reset filters only for the current engine
+        if (configEngineType === DBType.ORACLE) {
+            setSelectedCategoriesOracle(ORACLE_DEFAULT_SELECTED);
+            setAppliedCategoriesOracle(ORACLE_DEFAULT_SELECTED);
+            setSelectedSeverityOracle(oracleSeverityOptions);
+            setAppliedSeverityOracle(oracleSeverityOptions);
+        } else {
+            setSelectedCategoriesMssql(categoryOptions);
+            setAppliedCategoriesMssql(categoryOptions);
+            setSelectedSeverityMssql(severityOptions);
+            setAppliedSeverityMssql(severityOptions);
+        }
     };
 
-    // Check if reset button should be disabled (when all categories are selected - default state)
+    // Determine current engine's category options and applied/selected values
+    const currentCategoryOptions = configEngineType === DBType.ORACLE ? oracleCategoryOptions : categoryOptions;
+    const currentAppliedCategories =
+        configEngineType === DBType.ORACLE ? appliedCategoriesOracle : appliedCategoriesMssql;
+    const currentSelectedCategories =
+        configEngineType === DBType.ORACLE ? selectedCategoriesOracle : selectedCategoriesMssql;
+
+    const currentAppliedSeverity = configEngineType === DBType.ORACLE ? appliedSeverityOracle : appliedSeverityMssql;
+
+    const currentDefaultCategories = configEngineType === DBType.ORACLE ? ORACLE_DEFAULT_SELECTED : categoryOptions;
+    const currentDefaultSeverity = configEngineType === DBType.ORACLE ? oracleSeverityOptions : severityOptions;
+
     const isResetDisabled =
-        appliedCategories.length === categoryOptions.length &&
-        appliedCategories.every(category => categoryOptions.includes(category));
+        currentAppliedCategories.length === currentDefaultCategories.length &&
+        currentAppliedCategories.every(category => currentDefaultCategories.includes(category)) &&
+        currentAppliedSeverity.length === currentDefaultSeverity.length &&
+        currentAppliedSeverity.every(s => currentDefaultSeverity.includes(s));
 
     // Function to check if a tile should be visible based on applied filters
     const shouldShowTile = (assessmentKey: string): boolean => {
@@ -113,16 +153,17 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         const tileSeverity = derivedSeverity(assessmentKey);
 
         // If no filters are applied, show nothing
-        if (appliedCategories.length === 0 && appliedSeverity.length === 0) {
+        const appliedCats = configEngineType === DBType.ORACLE ? appliedCategoriesOracle : appliedCategoriesMssql;
+        const appliedSev = configEngineType === DBType.ORACLE ? appliedSeverityOracle : appliedSeverityMssql;
+        if (appliedCats.length === 0 && appliedSev.length === 0) {
             return false;
         }
 
         // Check category match
-        const categoryMatch = appliedCategories.length > 0 ? appliedCategories.includes(tileCategory) : false;
+        const categoryMatch = appliedCats.length > 0 ? appliedCats.includes(tileCategory) : false;
 
         // Check severity match
-        const severityMatch =
-            appliedSeverity.length > 0 && tileSeverity ? appliedSeverity.includes(tileSeverity) : false;
+        const severityMatch = appliedSev.length > 0 && tileSeverity ? appliedSev.includes(tileSeverity) : false;
 
         // Show tile if it matches both category AND severity (AND logic)
         return categoryMatch && severityMatch;
@@ -131,19 +172,18 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     // Get current engine-specific assessment keys
     const currentAssessmentKeys = configEngineType === DBType.ORACLE ? oracleAssessmentKeys : mssqlAssessmentKeys;
 
-    // Calculate total and filtered counts for current engine
-    const totalConfigurations = currentAssessmentKeys.length;
     const filteredConfigurations = currentAssessmentKeys.filter(key => shouldShowTile(key)).length;
 
-    // Calculate separate counts for MSSQL and Oracle radio buttons
+    // Calculate separate counts for MSSQL and Oracle radio buttons using per-engine applied categories
     const mssqlTotalConfigurations = mssqlAssessmentKeys.length;
     const mssqlFilteredConfigurations = mssqlAssessmentKeys.filter(key => {
         const tileCategory = getCategoryForAssessment(key);
         const tileSeverity = derivedSeverity(key);
-        if (appliedCategories.length === 0 && appliedSeverity.length === 0) return false;
-        const categoryMatch = appliedCategories.length > 0 ? appliedCategories.includes(tileCategory) : false;
-        const severityMatch =
-            appliedSeverity.length > 0 && tileSeverity ? appliedSeverity.includes(tileSeverity) : false;
+        const appliedCats = appliedCategoriesMssql;
+        const appliedSev = appliedSeverityMssql;
+        if (appliedCats.length === 0 && appliedSev.length === 0) return false;
+        const categoryMatch = appliedCats.length > 0 ? appliedCats.includes(tileCategory) : false;
+        const severityMatch = appliedSev.length > 0 && tileSeverity ? appliedSev.includes(tileSeverity) : false;
         return categoryMatch && severityMatch;
     }).length;
 
@@ -151,16 +191,23 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const oracleFilteredConfigurations = oracleAssessmentKeys.filter(key => {
         const tileCategory = getCategoryForAssessment(key);
         const tileSeverity = derivedSeverity(key);
-        if (appliedCategories.length === 0 && appliedSeverity.length === 0) return false;
-        const categoryMatch = appliedCategories.length > 0 ? appliedCategories.includes(tileCategory) : false;
-        const severityMatch =
-            appliedSeverity.length > 0 && tileSeverity ? appliedSeverity.includes(tileSeverity) : false;
+        const appliedCats = appliedCategoriesOracle;
+        const appliedSev = appliedSeverityOracle;
+        if (appliedCats.length === 0 && appliedSev.length === 0) return false;
+        const categoryMatch = appliedCats.length > 0 ? appliedCats.includes(tileCategory) : false;
+        const severityMatch = appliedSev.length > 0 && tileSeverity ? appliedSev.includes(tileSeverity) : false;
         return categoryMatch && severityMatch;
     }).length;
 
-    // Check if no filters are applied (all categories and severities selected)
-    const noFiltersApplied =
-        appliedCategories.length === categoryOptions.length && appliedSeverity.length === severityOptions.length;
+    // Check if no filters are applied (all categories and severities selected) per engine
+    const noFiltersAppliedMssql =
+        appliedCategoriesMssql.length === categoryOptions.length &&
+        appliedSeverityMssql.length === severityOptions.length;
+
+    const noFiltersAppliedOracle =
+        appliedCategoriesOracle.length === ORACLE_DEFAULT_SELECTED.length &&
+        appliedCategoriesOracle.every(category => ORACLE_DEFAULT_SELECTED.includes(category)) &&
+        appliedSeverityOracle.length === oracleSeverityOptions.length;
 
     // Check if scrollbar is needed
     useEffect(() => {
@@ -175,7 +222,14 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         // Recheck when content changes
         const timer = setTimeout(checkScrollbar, 100);
         return () => clearTimeout(timer);
-    }, [filteredConfigurations, configEngineType, appliedCategories, appliedSeverity]); // Ends here
+    }, [
+        filteredConfigurations,
+        configEngineType,
+        appliedCategoriesMssql,
+        appliedCategoriesOracle,
+        appliedSeverityMssql,
+        appliedSeverityOracle
+    ]); // Ends here
 
     const { showNA } = useAppSelector(state => state.headers);
 
@@ -352,7 +406,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             dispatch(setSelectedConfigEngineType(DBType.MSSQL));
                         }}
                         children={`${DBType.MSSQL} ${
-                            noFiltersApplied
+                            noFiltersAppliedMssql
                                 ? `(${mssqlTotalConfigurations})`
                                 : `(${mssqlFilteredConfigurations}/${mssqlTotalConfigurations})`
                         }`}
@@ -365,7 +419,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             dispatch(setSelectedConfigEngineType(DBType.ORACLE));
                         }}
                         children={`${DBType.ORACLE} ${
-                            noFiltersApplied
+                            noFiltersAppliedOracle
                                 ? `(${oracleTotalConfigurations})`
                                 : `(${oracleFilteredConfigurations}/${oracleTotalConfigurations})`
                         }`}
@@ -389,29 +443,48 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
                                 <div className={styles.filterGrid}>
                                     <div className={styles.column}>
-                                        {categoryOptions.map(option => (
-                                            <DsCheckbox
-                                                id={option}
-                                                key={option}
-                                                title={option}
-                                                isSelected={selectedCategories.includes(option)}
-                                                onSelect={() => toggleCategory(option)}
-                                                className={styles.item}
-                                            />
-                                        ))}
+                                        {currentCategoryOptions.map(option => {
+                                            const isOracle = configEngineType === DBType.ORACLE;
+                                            // For Oracle: Storage should be selected and all options disabled
+                                            const isDisabled = isOracle;
+                                            const isSelected = isOracle
+                                                ? ORACLE_DEFAULT_SELECTED.includes(option)
+                                                : currentSelectedCategories.includes(option);
+                                            return (
+                                                <div className={styles.itemWrapper} key={option}>
+                                                    <DsCheckbox
+                                                        id={option}
+                                                        title={option}
+                                                        isSelected={isSelected}
+                                                        onSelect={() => toggleCategory(option)}
+                                                        className={styles.item}
+                                                        isDisabled={isDisabled}
+                                                    />
+                                                </div>
+                                            );
+                                        })}
                                     </div>
 
                                     <div className={styles.column}>
-                                        {severityOptions.map(option => (
-                                            <DsCheckbox
-                                                id={option}
-                                                key={option}
-                                                title={option}
-                                                isSelected={selectedSeverity.includes(option)}
-                                                onSelect={() => toggleSeverity(option)}
-                                                className={styles.item}
-                                            />
-                                        ))}
+                                        {(configEngineType === DBType.ORACLE
+                                            ? oracleSeverityOptions
+                                            : severityOptions
+                                        ).map(option => {
+                                            const isSelected =
+                                                configEngineType === DBType.ORACLE
+                                                    ? selectedSeverityOracle.includes(option)
+                                                    : selectedSeverityMssql.includes(option);
+                                            return (
+                                                <DsCheckbox
+                                                    id={option}
+                                                    key={option}
+                                                    title={option}
+                                                    isSelected={isSelected}
+                                                    onSelect={() => toggleSeverity(option)}
+                                                    className={styles.item}
+                                                />
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
