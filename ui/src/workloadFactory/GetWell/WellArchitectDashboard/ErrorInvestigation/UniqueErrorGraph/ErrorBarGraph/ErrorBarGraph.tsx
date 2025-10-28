@@ -1,4 +1,4 @@
-import React from 'react';
+import { useMemo, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -13,16 +13,14 @@ import {
 } from 'chart.js';
 import styles from './ErrorBarGraph.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
+import { ErrorInvestigationGetApiResponse } from '../../../../../../utils/types/agenticAITypes';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const ErrorBarGraph: React.FC = () => {
-    const { errorInvestigationData, errorInvestigationLoading } = useAppSelector(
-        (state: any) => state.agenticAI.errorInvestigation
-    );
-
-    // Function to count tags from errorInvestigationData with memoization
-    const tagCounts = React.useMemo(() => {
+const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiResponse[] }> = ({ errorCardsData }) => {
+    const { selectedErrorTags } = useAppSelector(state => state.agenticAI);
+    // Function to count tags from errorInvestigationData
+    const tagCounts = useMemo(() => {
         const counts = {
             Compute: 0,
             Storage: 0,
@@ -30,8 +28,8 @@ const ErrorBarGraph: React.FC = () => {
             Security: 0
         };
 
-        if (errorInvestigationData && errorInvestigationData.length > 0) {
-            errorInvestigationData.forEach((errorItem: any) => {
+        if (errorCardsData && errorCardsData.length > 0) {
+            errorCardsData.forEach((errorItem: any) => {
                 if (errorItem.tags && Array.isArray(errorItem.tags)) {
                     errorItem.tags.forEach((tag: string) => {
                         if (Object.prototype.hasOwnProperty.call(counts, tag)) {
@@ -43,15 +41,30 @@ const ErrorBarGraph: React.FC = () => {
         }
 
         return counts;
-    }, [errorInvestigationData]);
+    }, [errorCardsData]);
+
+    const labels = ['Compute', 'Storage', 'Network', 'Security'];
+
+    // If no filter is applied (empty or undefined), treat all tags as selected
+    const effectiveSelected = selectedErrorTags && selectedErrorTags.length > 0 ? selectedErrorTags : labels;
+
+    // Build displayed data array and per-bar colors: show counts only for selected tags
+    const displayedData = [
+        effectiveSelected.includes('Compute') ? tagCounts.Compute : 0,
+        effectiveSelected.includes('Storage') ? tagCounts.Storage : 0,
+        effectiveSelected.includes('Network') ? tagCounts.Network : 0,
+        effectiveSelected.includes('Security') ? tagCounts.Security : 0
+    ];
+
+    const backgroundColors = labels.map((label, i) => (effectiveSelected.includes(label) ? '#FDC300' : 'transparent'));
 
     const data = {
-        labels: ['Compute', 'Storage', 'Network', 'Security'],
+        labels,
         datasets: [
             {
                 label: 'Errors',
-                data: [tagCounts.Compute, tagCounts.Storage, tagCounts.Network, tagCounts.Security],
-                backgroundColor: '#FDC300',
+                data: displayedData,
+                backgroundColor: backgroundColors,
                 borderRadius: 16, // Rounded corners
                 borderSkipped: 'bottom' as const, // Only top rounded
                 barThickness: 24, // Fixed width of each bar
@@ -80,11 +93,21 @@ const ErrorBarGraph: React.FC = () => {
             return;
         }
 
-        // Set text
+        // Set text (but ignore unselected/transparent bars)
         if (tooltip.dataPoints && tooltip.dataPoints.length) {
             const dataPoint = tooltip.dataPoints[0];
+            const ds = chart.data.datasets[dataPoint.datasetIndex];
+            // dataset backgroundColor may be string or array; normalize to array
+            const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[dataPoint.dataIndex] : ds.backgroundColor;
+
+            if (!bg || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') {
+                // hide tooltip for unselected bars
+                tooltipEl.style.opacity = '0';
+                return;
+            }
+
             const value = dataPoint.raw ?? dataPoint.parsed?.y ?? dataPoint.parsed ?? '';
-            tooltipEl.innerHTML = `<div class=\"${styles.tooltipInner}\">Error: ${value}</div>`;
+            tooltipEl.innerHTML = `<div class="${styles.tooltipInner}">Errors: ${value}</div>`;
         }
 
         const canvasRect = chart.canvas.getBoundingClientRect();
@@ -141,7 +164,8 @@ const ErrorBarGraph: React.FC = () => {
                 grace: '5%',
                 ticks: {
                     // stepSize expects number | undefined
-                    stepSize: Math.max(1, Math.ceil(Math.max(...Object.values(tagCounts)) / 5)) as unknown as number,
+                    // Compute stepSize based on visible (displayed) data so the scale matches filtered bars
+                    stepSize: Math.max(1, Math.ceil(Math.max(...displayedData) / 5)) as unknown as number,
                     // callback signature: (this, value, index, ticks)
                     callback: function (this: any, tickValue: string | number) {
                         const value = typeof tickValue === 'string' ? Number(tickValue) : tickValue;
@@ -161,7 +185,7 @@ const ErrorBarGraph: React.FC = () => {
     };
 
     // Ensure we remove any external tooltip element when the component unmounts
-    React.useEffect(() => {
+    useEffect(() => {
         return () => {
             const el = document.getElementById('chartjs-external-tooltip');
             if (el && el.parentNode) {

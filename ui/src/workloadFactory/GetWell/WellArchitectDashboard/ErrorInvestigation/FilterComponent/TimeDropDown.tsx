@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { DsTypography, DsCheckbox } from '@tlveng/wlm-ds';
 import { DsButton } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
@@ -38,10 +38,33 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
     const [appliedTags, setAppliedTags] = useState<string[]>(['Compute', 'Storage', 'Network', 'Security']); // Applied tags (what shows in label)
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const instanceId = useId();
+
     useEffect(() => {
         setShowOptions(false);
         setShowCustomTimeOption(false);
     }, [selectedValue]);
+
+    useEffect(() => {
+        const onOtherOpen = (e: Event) => {
+            try {
+                const detail = (e as CustomEvent).detail;
+                if (!detail) return;
+                const { id: openId } = detail;
+
+                if (openId && openId !== instanceId) {
+                    setShowOptions(false);
+                    setShowCustomTimeOption(false);
+                }
+            } catch (err) {}
+        };
+
+        document.addEventListener('timeDropdownOpen', onOtherOpen as EventListener);
+
+        return () => {
+            document.removeEventListener('timeDropdownOpen', onOtherOpen as EventListener);
+        };
+    }, [instanceId]);
 
     useEffect(() => {
         if (dropDownType === 'tags' && selectedErrorTags) {
@@ -139,14 +162,28 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
                 tabIndex={0}
                 onClick={() => {
                     if (!loading && !noData && !noErrorsDetected) {
-                        setShowOptions(!showOptions);
+                        const willOpen = !showOptions;
+                        setShowOptions(willOpen);
+                        // if we're opening, notify other instances so they close
+                        if (willOpen) {
+                            // close custom panel as well when opening main options
+                            setShowCustomTimeOption(false);
+                            const ev = new CustomEvent('timeDropdownOpen', { detail: { id: instanceId } });
+                            document.dispatchEvent(ev);
+                        }
                     } else {
                         setShowOptions(false);
                     }
                 }}
                 onKeyDown={e => {
                     if ((e.key === 'Enter' || e.key === ' ') && !loading && !noData && !noErrorsDetected) {
-                        setShowOptions(!showOptions);
+                        const willOpen = !showOptions;
+                        setShowOptions(willOpen);
+                        if (willOpen) {
+                            setShowCustomTimeOption(false);
+                            const ev = new CustomEvent('timeDropdownOpen', { detail: { id: instanceId } });
+                            document.dispatchEvent(ev);
+                        }
                         e.preventDefault();
                     }
                 }}

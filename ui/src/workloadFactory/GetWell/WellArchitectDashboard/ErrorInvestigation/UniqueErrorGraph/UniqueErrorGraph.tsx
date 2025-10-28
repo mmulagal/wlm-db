@@ -5,6 +5,7 @@ import { RadioButton } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import styles from './UniqueErrorGraph.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { ErrorInvestigationGetApiResponse } from '../../../../../utils/types/agenticAITypes';
 import ErrorLineGraph from './ErrorLineGraph';
 import { setSelectedGraphType } from '../../../../../store/workloadFactory/agenticAISlice';
 import ErrorBarGraph from './ErrorBarGraph/ErrorBarGraph';
@@ -12,11 +13,13 @@ import ErrorBarGraph from './ErrorBarGraph/ErrorBarGraph';
 const UniqueErrorGraph = ({
     startTime,
     endTime,
-    data
+    data,
+    errorCardsData
 }: {
     startTime: number;
     endTime: number;
     data: Array<{ hour: number; count: number }>;
+    errorCardsData: ErrorInvestigationGetApiResponse[];
 }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -60,7 +63,7 @@ const UniqueErrorGraph = ({
                             color={!isDarkTheme ? '#FDC300' : '#E7BE36'}
                         />
                     )}
-                    {uniqueErrorGraphType === 'by-tags' && <ErrorBarGraph />}
+                    {uniqueErrorGraphType === 'by-tags' && <ErrorBarGraph errorCardsData={errorCardsData} />}
                 </div>
             </div>
         </div>

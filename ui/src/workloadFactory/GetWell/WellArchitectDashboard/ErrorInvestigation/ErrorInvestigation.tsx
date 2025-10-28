@@ -158,7 +158,12 @@ const ErrorInvestigation = () => {
                 <>
                     <div className={styles.sectionTwo}>
                         <UniqueErrorsSeverity uniqueErrBySeverity={uniqueErrBySeverity} />
-                        <UniqueErrorGraph startTime={startTime} endTime={endTime} data={totalHourlyErrorCounts || []} />
+                        <UniqueErrorGraph
+                            startTime={startTime}
+                            endTime={endTime}
+                            data={totalHourlyErrorCounts || []}
+                            errorCardsData={errorCardsData}
+                        />
                     </div>
 
                     {loading && (
