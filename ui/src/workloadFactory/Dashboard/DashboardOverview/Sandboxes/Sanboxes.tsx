@@ -118,12 +118,7 @@ const Sandboxes = () => {
                 </DsTypography>
 
                 <div className={styles.buttonContainer}>
-                    <DsButton
-                        variant="secondary"
-                        isThin
-                        onClick={() => handleClick()}
-                        isDisabled={loading || (data && data.length === 0) || isNA}
-                    >
+                    <DsButton variant="secondary" isThin onClick={() => handleClick()} isDisabled={loading || isNA}>
                         {t('databases.dashboard.create-sandbox')}
                     </DsButton>
                 </div>

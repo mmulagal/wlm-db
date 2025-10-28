@@ -1,7 +1,7 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { GENERAL } from '../../utils/appConstants';
-import { DBType, INVENTORY_STATUS } from '../../utils/consts';
+import { DBType, INVENTORY_STATUS, STATUS_CONST } from '../../utils/consts';
 import { CreateSandboxPayloadEntities, SandboxListEntities } from '../../utils/types/sandBoxTypes';
 import { formatDateWithTime, formatSize, getTimeDifferenceInDays } from '../../utils/utilityFunctions';
 import { uniqueHostRow } from '../InventoryV2/InventoryUtilsV2';
@@ -282,7 +282,10 @@ export const createUniqueSandboxTableData = (tableData: any[]) => {
                 status: instance?.status,
                 sandboxCount: 0,
                 loadingStatus: false,
-                id: id++
+                id: id++,
+                cellProps: {
+                    isDisabled: instance?.status === STATUS_CONST.DOWN
+                }
             });
         });
     });
@@ -335,7 +338,10 @@ export const createUniqueSandboxTableData = (tableData: any[]) => {
                     status,
                     sandboxCount: 1,
                     loadingStatus,
-                    id: id++
+                    id: id++,
+                    cellProps: {
+                        isDisabled: status === STATUS_CONST.DOWN
+                    }
                 });
             } else {
                 // Already exists, just increment count

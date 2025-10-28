@@ -35,7 +35,7 @@ const NewPotentialSavings = () => {
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
-        dashboardRedirection('explore-savings');
+        dashboardRedirection('explore-savings/explore-savings-ebs');
     };
 
     useEffect(() => {
