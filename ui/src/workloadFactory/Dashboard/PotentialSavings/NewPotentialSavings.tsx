@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import styles from './PotentialSavings.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { formatNumberWithCustomComma, handleURL } from '../../../utils/utilityFunctions';
+import { dashboardRedirection, formatNumberWithCustomComma } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { WLF_TABS } from '../../../utils/consts';
 import ComparisonChartStack from '../../../ui-components/Charts/ComparionChartStack';
@@ -35,7 +35,7 @@ const NewPotentialSavings = () => {
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
-        handleURL(value, isWorkloadFactory);
+        dashboardRedirection('explore-savings');
     };
 
     useEffect(() => {

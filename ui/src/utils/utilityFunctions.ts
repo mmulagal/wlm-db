@@ -2789,14 +2789,14 @@ export const getCategoryForAssessment = (assessmentKey: string): string => {
     return categoryMap[assessmentKey] || 'Storage';
 };
 
-export const dashboardRedirection = () => {
+export const dashboardRedirection = (path: string = 'inventory') => {
     const state = store.getState();
     const isWorkloadFactory = state?.auth?.isWorkloadFactory;
     if (isWorkloadFactory) {
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
             payload: {
-                pathname: '../../databases/inventory',
+                pathname: `../../databases/${path}`,
                 replace: true
             }
         });
@@ -2804,7 +2804,7 @@ export const dashboardRedirection = () => {
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
             payload: {
-                pathname: '../../fsxdb/inventory',
+                pathname: `../../fsxdb/${path}`,
                 replace: true
             }
         });
