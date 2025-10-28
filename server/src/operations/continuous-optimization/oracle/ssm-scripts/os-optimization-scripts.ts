@@ -335,9 +335,17 @@ devices {{
         reload_success, reload_error = reload_and_verify_multipathd()
         
         if reload_success:
-            if backup_path.exists():
-                backup_path.unlink()
-            return {"status": "success", "error": None}
+            # Verify daemon status after reload
+            final_status = check_multipath_io()
+            daemon_running = final_status.get("multipath-io-is-active", False)
+            if daemon_running:
+                if backup_path.exists():
+                    backup_path.unlink()
+                return {"status": "success", "error": None}
+            else:
+                log('multipathd daemon not running after reload')
+                rollback_config()
+                return {"status": "failed", "error": "multipathd daemon not running after reload"}
         else:
             log('Failed to reload multipathd daemon')
             rollback_config()
@@ -521,9 +529,32 @@ def set_iscsi_replacement_timeout():
         # Step 4: Validate change
         new_check = check_iscsi_replacement_timeout()
         if new_check["error"] is None and new_check["replacement-timeout"] == 5:
-            BACKUP_PATH.unlink(missing_ok=True)
-            log('iSCSI replacement timeout successfully set to 5')
-            print(json.dumps({"status": "success"}))
+            # Step 5: Restart iscsid daemon to apply changes
+            log('Restarting iscsid daemon to apply configuration changes')
+            restart_result = subprocess.run(
+                ['sudo', 'systemctl', 'restart', 'iscsid'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                timeout=15
+            )
+            
+            if restart_result.returncode == 0:
+                log('iscsid daemon restarted successfully')
+                BACKUP_PATH.unlink(missing_ok=True)
+                log('iSCSI replacement timeout successfully set to 5')
+                print(json.dumps({"status": "success", "message": "iSCSI replacement timeout successfully set to 5"}))
+            else:
+                error_msg = restart_result.stderr.strip() if restart_result.stderr else "iscsid daemon restart failed with no error output"
+                log(f'Failed to restart iscsid daemon: {error_msg}')
+                try:
+                    shutil.copy(BACKUP_PATH, CONFIG_PATH)
+                    log('Configuration rolled back due to daemon restart failure')
+                    BACKUP_PATH.unlink(missing_ok=True)
+                    print(json.dumps({"status": "failure", "error": f"Failed to restart iscsid daemon: {error_msg}"}))
+                except Exception as rollback_exc:
+                    log(f'Rollback failed: {str(rollback_exc)}')
+                    print(json.dumps({"status": "failure", "error": f"Failed to restart iscsid daemon and rollback failed: {error_msg} | Rollback error: {str(rollback_exc)}"}))
         else:
             shutil.copy(BACKUP_PATH, CONFIG_PATH)
             log(f'iSCSI replacement timeout validation failed: {new_check["error"]}')
